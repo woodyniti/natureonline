@@ -1464,14 +1464,17 @@ async function dashboard() {
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes] = await Promise.all([
+  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active',true),
-    sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me)
+    sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me),
+    // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
+    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000)
   ]);
 
+  const allOrdersForRepeat = repeatRes.data || [];
   const orders   = ordRes.data || [];
   const expenses = expRes.data || [];
   const products = prodRes.data || [];
@@ -1578,40 +1581,50 @@ async function dashboard() {
   });
   const top5 = Object.entries(prodMap).sort((a,b)=>b[1].rev-a[1].rev).slice(0,5);
 
-// Calculate repeat purchases
+// Calculate repeat purchases (ข้ามทุกช่วงเวลา — ใช้ allOrdersForRepeat)
+  // "ซื้อซ้ำ" = ลูกค้าคนเดียวกันซื้อสินค้าตัวเดียวกันใน >= 2 ออเดอร์ที่แยกกัน (นับ order ไม่ซ้ำ)
   const custProductOrders = {};
-  orders.forEach(o => {
+  allOrdersForRepeat.forEach(o => {
     const custName = (o.customer_name || '').trim().toLowerCase();
     if (!custName || custName === 'ไม่ระบุ' || custName === '-' || custName === 'ไม่ระบุชื่อ') return;
-    
+
     if (!custProductOrders[custName]) custProductOrders[custName] = {};
-    
+    const cpo = custProductOrders[custName];
+
     (o.order_items || []).forEach(item => {
       const pid = item.product_id;
       if (!pid) return;
-      if (!custProductOrders[custName][pid]) custProductOrders[custName][pid] = [];
-      custProductOrders[custName][pid].push({
-        order_id: o.id,
-        order_no: o.order_no,
-        order_date: o.order_date,
-        customer_name: o.customer_name,
-        customer_social: o.customer_social,
-        qty: Number(item.qty || 0),
-        total_amount: o.total_amount,
-        shipping_status: o.shipping_status,
-        doc_status: o.doc_status
-      });
+      if (!cpo[pid]) cpo[pid] = {};
+      // key ด้วย order id → ถ้าออเดอร์เดียวมีสินค้าเดิมหลาย line item ให้รวม qty เข้าออเดอร์เดิม (ไม่นับเป็นซื้อซ้ำ)
+      const existing = cpo[pid][o.id];
+      if (existing) {
+        existing.qty += Number(item.qty || 0);
+      } else {
+        cpo[pid][o.id] = {
+          order_id: o.id,
+          order_no: o.order_no,
+          order_date: o.order_date,
+          customer_name: o.customer_name,
+          customer_social: o.customer_social,
+          product_name: item.product_name,
+          qty: Number(item.qty || 0),
+          total_amount: o.total_amount,
+          shipping_status: o.shipping_status,
+          doc_status: o.doc_status
+        };
+      }
     });
   });
 
   const repeatProductMap = {};
   Object.entries(custProductOrders).forEach(([custName, pMap]) => {
-    Object.entries(pMap).forEach(([pid, ordList]) => {
+    Object.entries(pMap).forEach(([pid, ordMap]) => {
+      const ordList = Object.values(ordMap);   // ออเดอร์ไม่ซ้ำของลูกค้าคนนี้สำหรับสินค้านี้
       if (ordList.length >= 2) {
         const prod = products.find(p => p.id === pid);
-        const pname = prod?.name || ordList[0].productName || 'สินค้าทั่วไป';
+        const pname = prod?.name || ordList[0].product_name || 'สินค้าทั่วไป';
         const pcat = prod?.category || 'ไม่ระบุหมวด';
-        
+
         if (!repeatProductMap[pid]) {
           repeatProductMap[pid] = {
             product_id: pid,
@@ -1622,8 +1635,8 @@ async function dashboard() {
             totalQty: 0
           };
         }
-        
-        repeatProductMap[pid].repeatBuyersCount += 1;
+
+        repeatProductMap[pid].repeatBuyersCount += 1;   // +1 ลูกค้าที่ซื้อซ้ำสินค้านี้
         ordList.forEach(ord => {
           repeatProductMap[pid].orders.push(ord);
           repeatProductMap[pid].totalQty += ord.qty;
@@ -1995,7 +2008,7 @@ function viewProductRepeatOrders(productId) {
   const tbody = document.getElementById('repeat-orders-table-body');
   if (!tbody) return;
   
-  const sortedOrders = [...prodData.orders].sort((a,b) => b.order_date.localeCompare(a.order_date));
+  const sortedOrders = [...prodData.orders].sort((a,b) => (b.order_date||'').localeCompare(a.order_date||''));
   
   tbody.innerHTML = sortedOrders.map(ord => {
     return `<tr>
@@ -9287,25 +9300,32 @@ async function loadShopeeFromFile(input) {
 }
 
 function parseShopeeCSV(text) {
-  const lines = text.trim().split('\n');
-  if (lines.length < 2) return [];
-  // parse CSV รองรับ quoted fields
-  function parseLine(line) {
-    const result = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { result.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
+  // Robust CSV parser — จัดการ field ที่มี comma, ขึ้นบรรทัดใหม่ (\n) และ escaped quote ("") ภายใน quote
+  // สำคัญ: Shopee export มีคอลัมน์ "หมายเหตุจากผู้ซื้อ" / "บันทึก" ที่มีการขึ้นบรรทัดใหม่ภายในเซลล์
+  // ถ้า split ด้วย '\n' ตรงๆ จะทำให้แถวนั้นแตกเป็นหลายแถว → คอลัมน์เลื่อน → ข้อมูล map ผิด
+  const s = String(text).replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const rows = [];
+  let row = [], cur = '', inQ = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (inQ) {
+      if (ch === '"') {
+        if (s[i+1] === '"') { cur += '"'; i++; }   // escaped quote ("")
+        else inQ = false;                          // ปิด quote
+      } else { cur += ch; }
+    } else {
+      if (ch === '"') inQ = true;
+      else if (ch === ',') { row.push(cur); cur = ''; }
+      else if (ch === '\n') { row.push(cur); rows.push(row); row = []; cur = ''; }
+      else cur += ch;
     }
-    result.push(cur.trim());
-    return result;
   }
-  return lines.slice(1).map(line => {
-    const vals = parseLine(line);
-    return mapShopeeRow(vals); // ส่ง array → ใช้ index
-  }).filter(r => r.orderId);
+  if (cur !== '' || row.length) { row.push(cur); rows.push(row); }
+  if (rows.length < 2) return [];
+  return rows.slice(1)
+    .map(vals => mapShopeeRow(vals.map(v => v.trim())))
+    // orderId ของ Shopee เป็นตัวอักษร/ตัวเลขล้วน (เช่น 260227RTFBCHXN) — กันแถวขยะจาก note ที่มีช่องว่าง/ภาษาไทย
+    .filter(r => r.orderId && /^[A-Za-z0-9]{6,}$/.test(r.orderId));
 }
 
 // Column indices จาก Shopee export (อ้างอิง Excel ไฟล์)
