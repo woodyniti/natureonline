@@ -3027,7 +3027,11 @@ async function orders() {
               <option>TikTok</option><option>Offline</option><option>อื่นๆ</option>
             </select>
           </div>
-          <div class="form-group"><label>ชื่อลูกค้า</label><input type="text" id="o-cust" placeholder="ชื่อลูกค้า"></div>
+          <div class="form-group" style="position:relative">
+            <label>ชื่อลูกค้า</label>
+            <input type="text" id="o-cust" placeholder="พิมพ์ชื่อลูกค้า..." autocomplete="off" oninput="searchOrderCustomer(this.value)">
+            <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
+          </div>
           <div class="form-group"><label>Customer Ref</label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่ใบสั่ง"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
           <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
@@ -3250,10 +3254,21 @@ let productList = [];
 let editingPOId = null;
 let editingPONo = null;
 
+let _orderCustomerList = [];
 async function openNewOrder() {
   orderItems = [];
-  const { data } = await sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name');
-  productList = data || [];
+  const [prodRes, custRes] = await Promise.all([
+    sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name'),
+    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_username').eq('shop_id', currentShop.id).not('customer_name','is',null).order('id',{ascending:false}).limit(500)
+  ]);
+  productList = prodRes.data || [];
+  // dedupe customers by name
+  const seen = new Set();
+  _orderCustomerList = (custRes.data || []).filter(c => {
+    const k = (c.customer_name||'').trim().toLowerCase();
+    if (!k || seen.has(k)) return false;
+    seen.add(k); return true;
+  });
   renderOrderItems();
   openModal('modal-order');
   // reset discount
@@ -3265,6 +3280,51 @@ async function openNewOrder() {
     updateOrderSummary();
   }, 50);
 }
+
+function searchOrderCustomer(q) {
+  const dd = document.getElementById('o-cust-dd');
+  if (!dd) return;
+  const term = q.trim().toLowerCase();
+  if (!term) { dd.style.display = 'none'; return; }
+  const matches = _orderCustomerList.filter(c =>
+    (c.customer_name||'').toLowerCase().includes(term) ||
+    (c.customer_phone||'').includes(term) ||
+    (c.customer_username||'').toLowerCase().includes(term)
+  ).slice(0, 8);
+  if (!matches.length) { dd.style.display = 'none'; return; }
+  dd.innerHTML = matches.map((c,i) =>
+    `<div data-i="${i}" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px"
+      onmousedown="fillCustomerFromOrder(${i})"
+      onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
+      <div style="font-weight:600">${c.customer_name}</div>
+      <div style="font-size:11px;color:var(--text3)">${[c.customer_phone,c.customer_username].filter(Boolean).join(' · ')}</div>
+    </div>`
+  ).join('');
+  dd.style.display = 'block';
+  // เก็บ matches ไว้ใช้ตอนกด
+  dd._matches = matches;
+}
+
+function fillCustomerFromOrder(idx) {
+  const dd = document.getElementById('o-cust-dd');
+  const c = dd?._matches?.[idx];
+  if (!c) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('o-cust',    c.customer_name);
+  set('o-contact', c.customer_contact);
+  set('o-phone',   c.customer_phone);
+  set('o-address', c.customer_address);
+  // ไม่ fill o-ref (Customer Ref) และ o-track (Tracking) ตามที่กำหนด
+  dd.style.display = 'none';
+}
+
+// ซ่อน dropdown เมื่อ click นอก
+document.addEventListener('click', e => {
+  if (!e.target.closest('#o-cust-dd') && e.target.id !== 'o-cust') {
+    const dd = document.getElementById('o-cust-dd');
+    if (dd) dd.style.display = 'none';
+  }
+});
 
 // คำนวณราคาสุทธิต่อรายการ (หักส่วนลด)
 function itemNet(item) {
@@ -9255,18 +9315,18 @@ function mapShopeeRow(r) {
   const isArr = Array.isArray(r);
   const g = (idx, key) => {
     if (isArr) return r[idx];
-    // ลอง key ตรง
     if (r[key] !== undefined) return r[key];
-    // ลอง SHOPEE_COLS mapping
     const mapped = Object.entries(SHOPEE_COLS).find(([k,v]) => v === key);
     if (mapped && r[mapped[0]] !== undefined) return r[mapped[0]];
     return '';
   };
+  // strip ฿ และ comma ก่อนแปลงเป็นตัวเลข (CSV มีค่าแบบ "฿45.00")
+  const n = v => parseFloat(String(v||'').replace(/[฿,\s]/g,'')) || 0;
 
-  const totalAmt   = Number(g(SHOPEE_IDX.totalAmt,   'จำนวนเงินทั้งหมด')||0);
-  const commission = Number(g(SHOPEE_IDX.commission,  'ค่าคอมมิชชั่น')||0);
-  const txFee      = Number(g(SHOPEE_IDX.txFee,       'Transaction Fee')||0);
-  const serviceFee = Number(g(SHOPEE_IDX.serviceFee,  'ค่าบริการ')||0);
+  const totalAmt   = n(g(SHOPEE_IDX.totalAmt,   'จำนวนเงินทั้งหมด'));
+  const commission = n(g(SHOPEE_IDX.commission,  'ค่าคอมมิชชั่น'));
+  const txFee      = n(g(SHOPEE_IDX.txFee,       'Transaction Fee'));
+  const serviceFee = n(g(SHOPEE_IDX.serviceFee,  'ค่าบริการ'));
   const totalFee   = commission + txFee + serviceFee;
   const netSeller  = totalAmt - totalFee;
 
@@ -9277,11 +9337,11 @@ function mapShopeeRow(r) {
     buyer:       String(g(SHOPEE_IDX.buyer,     'ชื่อผู้ใช้ (ผู้ซื้อ)')||'ไม่ระบุ').trim() || 'ไม่ระบุ',
     sku:         String(g(SHOPEE_IDX.skuRef,    'เลขอ้างอิง SKU (SKU Reference No.)')||''),
     productName: String(g(SHOPEE_IDX.productName,'ชื่อสินค้า')||''),
-    salePrice:   Number(g(SHOPEE_IDX.salePrice, 'ราคาขาย')||0),
-    qty:         Number(g(SHOPEE_IDX.qty,        'จำนวน')||0),
-    netSale:     Number(g(SHOPEE_IDX.netSale,    'ราคาขายสุทธิ')||0),
+    salePrice:   n(g(SHOPEE_IDX.salePrice, 'ราคาขาย')),
+    qty:         n(g(SHOPEE_IDX.qty,        'จำนวน')),
+    netSale:     n(g(SHOPEE_IDX.netSale,    'ราคาขายสุทธิ')),
     totalAmt, commission, txFee, serviceFee, totalFee, netSeller,
-    shipping:    Number(g(SHOPEE_IDX.shipping,  'ค่าจัดส่งที่ชำระโดยผู้ซื้อ')||0),
+    shipping:    n(g(SHOPEE_IDX.shipping,  'ค่าจัดส่งที่ชำระโดยผู้ซื้อ')),
   };
 }
 
