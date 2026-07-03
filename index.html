@@ -3045,7 +3045,7 @@ async function orders() {
             <input type="text" id="o-cust" placeholder="พิมพ์ชื่อลูกค้า..." autocomplete="off" oninput="searchOrderCustomer(this.value)">
             <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
-          <div class="form-group"><label>Customer Ref</label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่ใบสั่ง"></div>
+          <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-social" placeholder="@username Shopee / Lazada / ร้านค้า"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
           <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>ช่องทางชำระ</label>
@@ -3272,7 +3272,7 @@ async function openNewOrder() {
   orderItems = [];
   const [prodRes, custRes] = await Promise.all([
     sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name'),
-    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_username').eq('shop_id', currentShop.id).not('customer_name','is',null).order('id',{ascending:false}).limit(500)
+    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social').eq('shop_id', currentShop.id).not('customer_name','is',null).order('id',{ascending:false}).limit(500)
   ]);
   productList = prodRes.data || [];
   // dedupe customers by name
@@ -3284,6 +3284,11 @@ async function openNewOrder() {
   });
   renderOrderItems();
   openModal('modal-order');
+  // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
+  ['o-cust','o-social','o-contact','o-phone','o-address','o-track','o-note'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
   // reset discount
   setTimeout(() => {
     const bd = document.getElementById('o-bill-disc');
@@ -3302,7 +3307,7 @@ function searchOrderCustomer(q) {
   const matches = _orderCustomerList.filter(c =>
     (c.customer_name||'').toLowerCase().includes(term) ||
     (c.customer_phone||'').includes(term) ||
-    (c.customer_username||'').toLowerCase().includes(term)
+    (c.customer_social||'').toLowerCase().includes(term)
   ).slice(0, 8);
   if (!matches.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = matches.map((c,i) =>
@@ -3310,7 +3315,7 @@ function searchOrderCustomer(q) {
       onmousedown="fillCustomerFromOrder(${i})"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <div style="font-weight:600">${c.customer_name}</div>
-      <div style="font-size:11px;color:var(--text3)">${[c.customer_phone,c.customer_username].filter(Boolean).join(' · ')}</div>
+      <div style="font-size:11px;color:var(--text3)">${[c.customer_social,c.customer_phone].filter(Boolean).join(' · ')}</div>
     </div>`
   ).join('');
   dd.style.display = 'block';
@@ -3324,10 +3329,11 @@ function fillCustomerFromOrder(idx) {
   if (!c) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   set('o-cust',    c.customer_name);
+  set('o-social',  c.customer_social);   // ชื่อผู้ใช้ Shopee/Lazada
   set('o-contact', c.customer_contact);
   set('o-phone',   c.customer_phone);
   set('o-address', c.customer_address);
-  // ไม่ fill o-ref (Customer Ref) และ o-track (Tracking) ตามที่กำหนด
+  // ไม่ fill o-track (Tracking) — เป็นข้อมูลเฉพาะออเดอร์
   dd.style.display = 'none';
 }
 
@@ -3750,7 +3756,7 @@ async function saveOrder() {
     order_date: document.getElementById('o-date').value,
     channel: document.getElementById('o-channel').value,
     customer_name: document.getElementById('o-cust').value,
-    customer_social: document.getElementById('o-ref').value,
+    customer_social: document.getElementById('o-social').value,
     customer_contact: document.getElementById('o-contact')?.value || '',
     customer_phone:   document.getElementById('o-phone')?.value   || '',
     customer_address: document.getElementById('o-address')?.value || '',
@@ -4108,7 +4114,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
         <div><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">Customer Ref</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="รหัสอ้างอิง" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
@@ -9162,14 +9168,28 @@ let _shopeeCostMap = null;
 
 async function loadShopeeCostMap() {
   if (_shopeeCostMap) return _shopeeCostMap;
-  const { data } = await sb.from('products')
-    .select('sku,supplier_sku,name,current_cost')
-    .eq('shop_id', currentShop.id)
-    .eq('active', true);
+  // ดึง part_no ด้วย — ถ้า column ยังไม่มีให้ fallback
+  let data = [];
+  try {
+    const r1 = await sb.from('products')
+      .select('sku,supplier_sku,part_no,name,current_cost')
+      .eq('shop_id', currentShop.id).eq('active', true);
+    if (r1.error) throw r1.error;
+    data = r1.data || [];
+  } catch(e) {
+    const r2 = await sb.from('products')
+      .select('sku,supplier_sku,name,current_cost')
+      .eq('shop_id', currentShop.id).eq('active', true);
+    data = r2.data || [];
+  }
   _shopeeCostMap = {};
-  (data||[]).forEach(p => {
-    if (p.sku)          _shopeeCostMap[p.sku.toLowerCase().trim()]          = Number(p.current_cost||0);
-    if (p.supplier_sku) _shopeeCostMap[p.supplier_sku.toLowerCase().trim()] = Number(p.current_cost||0);
+  // จับคู่ด้วย sku / supplier_sku / part_no ให้ตรงกับการจับคู่ stock (เพิ่ม current_cost เฉพาะที่ > 0)
+  data.forEach(p => {
+    const cost = Number(p.current_cost||0);
+    [p.sku, p.supplier_sku, p.part_no].forEach(k => {
+      const key = (k||'').toLowerCase().trim();
+      if (key && cost > 0) _shopeeCostMap[key] = cost;
+    });
   });
   return _shopeeCostMap;
 }
@@ -9461,14 +9481,20 @@ async function renderShopeeReport() {
   // คำนวณต้นทุนรวมจาก costMap
   let totalCost = 0;
   let unmatchedSkus = [];
+  const _unmatchedSeen = new Set();
   rows.forEach(r => {
     const cost = getCostBySKU(r.sku);
     if (cost !== null) {
       totalCost += cost * r.qty;
-    } else if (r.sku && !unmatchedSkus.includes(r.sku)) {
-      unmatchedSkus.push(r.sku);
+    } else {
+      const key = r.sku || r.productName;
+      if (key && !_unmatchedSeen.has(key)) {
+        _unmatchedSeen.add(key);
+        unmatchedSkus.push({ sku: r.sku || '(ไม่มี SKU)', name: r.productName || '-' });
+      }
     }
   });
+  window._shopeeUnmatched = unmatchedSkus;
   const totalShipping  = rows.reduce((s,r) => s + r.shipping, 0);
   // ยอดขายไม่รวมค่าขนส่งแล้ว → ไม่ต้องหักค่าขนส่งซ้ำ
   const totalAllCost   = totalCost + totalCommission;
@@ -9501,7 +9527,7 @@ async function renderShopeeReport() {
         <div style="border-top:1px solid var(--border);margin-top:2px;padding-top:4px;display:flex;justify-content:space-between"><span style="font-weight:600">GP%</span><span style="font-weight:700;color:${grossProfit>=0?'var(--green)':'var(--red)'}">${gpPct}%</span></div>
       </div>
     </div>
-    ${unmatchedSkus.length ? '<div class="stat-card" style="border-left:3px solid var(--amber)"><div class="stat-label">⚠️ ไม่พบต้นทุน</div><div style="font-size:11px;color:var(--amber)">'+ unmatchedSkus.slice(0,3).join(', ')+(unmatchedSkus.length>3?' +'+(unmatchedSkus.length-3)+' more':'')+'</div><div style="font-size:10px;color:var(--text3)">GP อาจไม่ถูกต้อง</div></div>' : ''}
+    ${unmatchedSkus.length ? '<div class="stat-card" style="border-left:3px solid var(--amber);cursor:pointer" onclick="drillUnmatchedSkus()" title="คลิกดูรายการที่ไม่พบต้นทุน"><div class="stat-label">⚠️ ไม่พบต้นทุน <span style="font-size:10px;color:var(--accent)">→ ดูรายการ</span></div><div class="stat-value" style="font-size:20px;color:var(--amber)">'+unmatchedSkus.length+' SKU</div><div style="font-size:10px;color:var(--text3)">GP ยังไม่รวมต้นทุนกลุ่มนี้</div></div>' : ''}
   `;
 
   // ── Group by SKU ────────────────────────────────────────
@@ -9650,6 +9676,32 @@ function drillSkuOrders(idx) {
         '<td class="text-right font-mono" style="color:' + (rowGp !== null ? (rowGp>=0?'var(--accent)':'var(--red)') : '#aaa') + '">' + (rowGp !== null ? fmtB(rowGp) : '-') + '</td>' +
         '<td class="text-right font-mono" style="color:' + gc + ';font-weight:600">' + (gpPct !== null ? gpPct+'%' : '-') + '</td></tr>';
     }).join('') +
+    '</tbody></table></div>' +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+// ── รายการ SKU ที่จับคู่ต้นทุนไม่ได้ ──────────────────────
+function drillUnmatchedSkus() {
+  const list = window._shopeeUnmatched || [];
+  if (!list.length) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '300';
+  modal.innerHTML =
+    '<div class="modal" style="max-width:640px">' +
+    '<div class="modal-title">⚠️ SKU ที่จับคู่ต้นทุนไม่ได้ (' + list.length + ' รายการ)</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.6">' +
+    'รายการเหล่านี้ยังคำนวณกำไร (GP) ไม่ได้ เพราะ SKU ในไฟล์ Shopee ไม่ตรงกับ <strong>SKU / Supplier SKU / Part No.</strong> ของสินค้าในระบบ ' +
+    'หรือสินค้านั้นยังไม่ได้ตั้ง <strong>ต้นทุน (current_cost)</strong><br>' +
+    'วิธีแก้: ไปที่หน้า <strong>สินค้า</strong> แล้วตั้งค่า SKU ให้ตรงกับ Shopee หรือกรอกต้นทุนให้สินค้านั้น</div>' +
+    '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr>' +
+    '<th>SKU (จาก Shopee)</th><th>ชื่อสินค้า</th></tr></thead><tbody>' +
+    list.map(u =>
+      '<tr><td style="font-family:var(--mono);font-size:12px;color:var(--amber);white-space:nowrap">' + (u.sku||'-') + '</td>' +
+      '<td style="font-size:12px">' + (u.name||'-') + '</td></tr>'
+    ).join('') +
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
