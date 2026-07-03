@@ -3282,25 +3282,11 @@ let editingPONo = null;
 let _orderCustomerList = [];
 async function openNewOrder() {
   orderItems = [];
-  const [prodRes, custRes] = await Promise.all([
+  const [prodRes] = await Promise.all([
     sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name'),
-    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username').eq('shop_id', currentShop.id).not('customer_name','is',null).order('created_at',{ascending:false}).limit(500)
+    loadOrderCustomerList()
   ]);
   productList = prodRes.data || [];
-  // รวมลูกค้าตามชื่อ: เก็บออเดอร์ล่าสุด แล้วเติม field ที่ว่างจากออเดอร์เก่า (ให้ข้อมูลครบที่สุด)
-  const _byName = {};
-  (custRes.data || []).forEach(c => {           // เรียงจาก id ล่าสุดมาก่อนแล้ว
-    const k = (c.customer_name||'').trim().toLowerCase();
-    if (!k) return;
-    if (!_byName[k]) {
-      _byName[k] = { ...c };
-    } else {
-      ['customer_username','customer_social','customer_contact','customer_phone','customer_address'].forEach(f => {
-        if (!_byName[k][f] && c[f]) _byName[k][f] = c[f];
-      });
-    }
-  });
-  _orderCustomerList = Object.values(_byName);
   renderOrderItems();
   openModal('modal-order');
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
@@ -3318,12 +3304,29 @@ async function openNewOrder() {
   }, 50);
 }
 
-function searchOrderCustomer(q) {
-  const dd = document.getElementById('o-cust-dd');
+// โหลดรายชื่อลูกค้าจากออเดอร์เดิม (รวม field ให้ครบที่สุดต่อลูกค้า) → _orderCustomerList
+async function loadOrderCustomerList() {
+  const { data } = await sb.from('orders')
+    .select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username')
+    .eq('shop_id', currentShop.id).not('customer_name','is',null)
+    .order('created_at',{ascending:false}).limit(500);
+  const byName = {};
+  (data || []).forEach(c => {                    // เรียงจากล่าสุดมาก่อน
+    const k = (c.customer_name||'').trim().toLowerCase();
+    if (!k) return;
+    if (!byName[k]) byName[k] = { ...c };
+    else ['customer_username','customer_social','customer_contact','customer_phone','customer_address']
+      .forEach(f => { if (!byName[k][f] && c[f]) byName[k][f] = c[f]; });
+  });
+  _orderCustomerList = Object.values(byName);
+}
+
+// generic: แสดง dropdown ลูกค้าใน element ddId, เลือกแล้วเรียก fillFn(idx)
+function _renderCustDropdown(ddId, fillFn, q) {
+  const dd = document.getElementById(ddId);
   if (!dd) return;
   if (!_orderCustomerList.length) { dd.style.display = 'none'; return; }
   const term = (q||'').trim().toLowerCase();
-  // ว่าง (ตอน focus) → แสดงลูกค้าล่าสุด ; มีคำค้น → กรอง
   const matches = (!term
     ? _orderCustomerList
     : _orderCustomerList.filter(c =>
@@ -3337,39 +3340,49 @@ function searchOrderCustomer(q) {
     ? '<div style="padding:6px 12px;font-size:10px;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border)">ลูกค้าล่าสุด — คลิกเพื่อเติมข้อมูลอัตโนมัติ</div>'
     : '';
   dd.innerHTML = header + matches.map((c,i) =>
-    `<div data-i="${i}" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px"
-      onmousedown="fillCustomerFromOrder(${i})"
+    `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px"
+      onmousedown="${fillFn}(${i})"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <div style="font-weight:600">${c.customer_name}</div>
       <div style="font-size:11px;color:var(--text3)">${[c.customer_username,c.customer_phone,c.customer_contact].filter(Boolean).join(' · ')||'—'}</div>
     </div>`
   ).join('');
   dd.style.display = 'block';
-  // เก็บ matches ไว้ใช้ตอนกด
   dd._matches = matches;
 }
 
-function fillCustomerFromOrder(idx) {
-  const dd = document.getElementById('o-cust-dd');
-  const c = dd?._matches?.[idx];
+// generic: เติมข้อมูลลูกค้าลง field ตาม mapping ids
+function _fillCustFields(c, ids) {
   if (!c) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('o-cust',     c.customer_name);
-  set('o-username', c.customer_username);  // ชื่อผู้ใช้ Shopee/Lazada
-  set('o-ref',      c.customer_social);    // Customer Ref / เลขอ้างอิงเอกสาร Shopee
-  set('o-contact',  c.customer_contact);
-  set('o-phone',    c.customer_phone);
-  set('o-address',  c.customer_address);
-  // ไม่ fill o-track (Tracking) — เป็นข้อมูลเฉพาะออเดอร์
-  dd.style.display = 'none';
+  set(ids.name,    c.customer_name);
+  set(ids.user,    c.customer_username);  // ชื่อผู้ใช้ Shopee/Lazada
+  set(ids.ref,     c.customer_social);    // Customer Ref / เลขอ้างอิงเอกสาร Shopee
+  set(ids.contact, c.customer_contact);
+  set(ids.phone,   c.customer_phone);
+  set(ids.addr,    c.customer_address);
 }
 
-// ซ่อน dropdown เมื่อ click นอก
+// ── หน้าบันทึกออเดอร์ใหม่ ──
+function searchOrderCustomer(q) { _renderCustDropdown('o-cust-dd', 'fillCustomerFromOrder', q); }
+function fillCustomerFromOrder(idx) {
+  const dd = document.getElementById('o-cust-dd');
+  _fillCustFields(dd?._matches?.[idx], {name:'o-cust',user:'o-username',ref:'o-ref',contact:'o-contact',phone:'o-phone',addr:'o-address'});
+  if (dd) dd.style.display = 'none';
+}
+
+// ── หน้าแก้ไขออเดอร์ ──
+function searchEditCustomer(q) { _renderCustDropdown('ed-cust-dd', 'fillEditCustomer', q); }
+function fillEditCustomer(idx) {
+  const dd = document.getElementById('ed-cust-dd');
+  _fillCustFields(dd?._matches?.[idx], {name:'ed-cust',user:'ed-username',ref:'ed-ref',contact:'ed-contact',phone:'ed-phone',addr:'ed-address'});
+  if (dd) dd.style.display = 'none';
+}
+
+// ซ่อน dropdown เมื่อ click นอก (รองรับทั้ง 2 ฟอร์ม)
 document.addEventListener('click', e => {
-  if (!e.target.closest('#o-cust-dd') && e.target.id !== 'o-cust') {
-    const dd = document.getElementById('o-cust-dd');
-    if (dd) dd.style.display = 'none';
-  }
+  if (!e.target.closest('#o-cust-dd')  && e.target.id !== 'o-cust')  { const dd = document.getElementById('o-cust-dd');  if (dd) dd.style.display = 'none'; }
+  if (!e.target.closest('#ed-cust-dd') && e.target.id !== 'ed-cust') { const dd = document.getElementById('ed-cust-dd'); if (dd) dd.style.display = 'none'; }
 });
 
 // คำนวณราคาสุทธิต่อรายการ (หักส่วนลด)
@@ -4128,6 +4141,7 @@ async function viewOrder(orderId) {
   if (!order) return;
   editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount'}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
+  await loadOrderCustomerList(); // โหลดรายชื่อลูกค้าสำหรับ auto-fill
   // คำนวณต้นทุน/กำไร โดย fallback ไป current_cost ของสินค้าเมื่อ item cost=0 (ขายก่อนรับเข้า)
   const _pcMap = {}; editProdList.forEach(p => { _pcMap[p.id] = Number(p.current_cost||0); });
   const _effCost = (it) => { const c = Number(it.cost_per_unit||0); return c > 0 ? c : Number(_pcMap[it.product_id]||0); };
@@ -4148,7 +4162,7 @@ async function viewOrder(orderId) {
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:13px">
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
-        <div><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" style="${iStyle}"></div>
+        <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
