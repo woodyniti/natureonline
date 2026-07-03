@@ -2980,7 +2980,7 @@ function drillMonthlyDay(date) {
 
 
 async function orders() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
 
   setContent(`
     <!-- Quick filter รายเดือน/รายปี -->
@@ -5732,6 +5732,54 @@ async function recalcStockQty(productIds) {
     const updatePayload = { stock_qty: newQty };
     if (avgCost !== null) updatePayload.current_cost = avgCost;
     await sb.from('products').update(updatePayload).eq('id', pid);
+    // เติมต้นทุนย้อนหลังให้ order ที่ขายไปก่อนรับเข้า (ตอนขาย cost=0) เมื่อมีต้นทุนแล้ว
+    if (avgCost && avgCost > 0) await backfillOrderItemCosts(pid, avgCost);
+  }
+}
+
+// เติมต้นทุนให้ order_items ที่ cost_per_unit = 0 (ขายก่อนรับเข้าสต๊อก) แล้วคำนวณ total_cost ของ order ใหม่
+// คืนค่าจำนวน order_items ที่แก้ไข
+async function backfillOrderItemCosts(productId, cost) {
+  const { data: items } = await sb.from('order_items')
+    .select('id,order_id,cost_per_unit')
+    .eq('product_id', productId);
+  if (!items || !items.length) return 0;
+  // เฉพาะรายการที่ยังไม่มีต้นทุน (0/null) — ไม่แตะรายการที่ snapshot ต้นทุนไว้แล้ว
+  const toFix = items.filter(it => !(Number(it.cost_per_unit) > 0));
+  if (!toFix.length) return 0;
+  await sb.from('order_items').update({ cost_per_unit: cost }).in('id', toFix.map(it => it.id));
+  // อัพเดต stock_movements 'out' ให้ต้นทุนตรงกันด้วย (เพื่อให้ประวัติ/รายงานสอดคล้อง)
+  await sb.from('stock_movements').update({ cost_per_unit: cost })
+    .eq('product_id', productId).eq('move_type', 'out').or('cost_per_unit.is.null,cost_per_unit.eq.0');
+  // คำนวณ total_cost ของแต่ละ order ที่ได้รับผลกระทบใหม่
+  const orderIds = [...new Set(toFix.map(it => it.order_id))].filter(Boolean);
+  for (const oid of orderIds) {
+    const { data: its } = await sb.from('order_items').select('qty,cost_per_unit').eq('order_id', oid);
+    const newTotalCost = (its || []).reduce((s, it) => s + Number(it.qty || 0) * Number(it.cost_per_unit || 0), 0);
+    await sb.from('orders').update({ total_cost: newTotalCost }).eq('id', oid);
+  }
+  return toFix.length;
+}
+
+// คำนวณต้นทุนออเดอร์ย้อนหลังทั้งหมด (สำหรับข้อมูลเก่าที่ขายก่อนรับเข้า) — เรียกจากปุ่มในหน้าออเดอร์
+async function backfillAllOrderCosts() {
+  if (!confirm('คำนวณต้นทุนย้อนหลังให้ทุกออเดอร์ที่ขายก่อนรับสินค้าเข้า?\n\nระบบจะเติมต้นทุนปัจจุบันให้รายการที่ยังไม่มีต้นทุน แล้วคำนวณกำไรใหม่')) return;
+  const btn = document.getElementById('btn-backfill-costs');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังคำนวณ...'; }
+  try {
+    const { data: prods } = await sb.from('products')
+      .select('id,current_cost').eq('shop_id', currentShop.id).gt('current_cost', 0);
+    let fixedItems = 0, touchedProds = 0;
+    for (const p of (prods || [])) {
+      const n = await backfillOrderItemCosts(p.id, Number(p.current_cost));
+      if (n > 0) { fixedItems += n; touchedProds++; }
+    }
+    toast(`เติมต้นทุนย้อนหลังสำเร็จ: ${fixedItems} รายการ (${touchedProds} สินค้า) ✓`, 'success');
+    if (typeof loadOrders === 'function') loadOrders();
+  } catch (e) {
+    toast('เกิดข้อผิดพลาด: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 คำนวณต้นทุนย้อนหลัง'; }
   }
 }
 
