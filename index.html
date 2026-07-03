@@ -9148,13 +9148,14 @@ const SHOPEE_COLS = {
 };
 
 let shopeeData    = [];
-const _SHOPEE_NEW_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQmY88i_dyo7svFRouIra-P_PEPtrbwULDi0PpmcP0B0d5XnYJ4Q7-2r4A9p7tCQQ_dT0x6v7q9FnxU/pub?gid=1622976105&single=true&output=csv';
-const _SHOPEE_OLD_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR53laVihyZ1h0wqrBjihtDWxX8_kM9bC6LXYnELttVBKThb5fz127IxFec6AOeDh3juKUIx8sBdNZP/pub?gid=880541665&single=true&output=csv';
-// migrate: ถ้ายังเป็น URL เก่าให้เปลี่ยนเป็น URL ใหม่อัตโนมัติ
-if (localStorage.getItem('ns_shopee_url') === _SHOPEE_OLD_URL) {
-  localStorage.setItem('ns_shopee_url', _SHOPEE_NEW_URL);
+// URL ที่ถูกต้องสำหรับ map ข้อมูล Shopee dashboard (gid=880541665)
+const _SHOPEE_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR53laVihyZ1h0wqrBjihtDWxX8_kM9bC6LXYnELttVBKThb5fz127IxFec6AOeDh3juKUIx8sBdNZP/pub?gid=880541665&single=true&output=csv';
+// URL เก่าที่เลิกใช้ (gid=1622976105) — ถ้า localStorage ยังชี้อันเก่าให้เปลี่ยนมาอันที่ถูกต้องอัตโนมัติ
+const _SHOPEE_DEPRECATED_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQmY88i_dyo7svFRouIra-P_PEPtrbwULDi0PpmcP0B0d5XnYJ4Q7-2r4A9p7tCQQ_dT0x6v7q9FnxU/pub?gid=1622976105&single=true&output=csv';
+if (localStorage.getItem('ns_shopee_url') === _SHOPEE_DEPRECATED_URL) {
+  localStorage.setItem('ns_shopee_url', _SHOPEE_URL);
 }
-let shopeeGSheetUrl = localStorage.getItem('ns_shopee_url') || _SHOPEE_NEW_URL;
+let shopeeGSheetUrl = localStorage.getItem('ns_shopee_url') || _SHOPEE_URL;
 
 function saveShopeeURL() {
   const url = document.getElementById('settings-shopee-url')?.value?.trim() || '';
