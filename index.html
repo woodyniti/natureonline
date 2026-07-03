@@ -3053,7 +3053,7 @@ async function orders() {
           </div>
           <div class="form-group" style="position:relative">
             <label>ชื่อลูกค้า</label>
-            <input type="text" id="o-cust" placeholder="พิมพ์ชื่อลูกค้า..." autocomplete="off" oninput="searchOrderCustomer(this.value)">
+            <input type="text" id="o-cust" placeholder="🔍 พิมพ์/คลิกเพื่อค้นหาลูกค้าเดิม..." autocomplete="off" oninput="searchOrderCustomer(this.value)" onfocus="searchOrderCustomer(this.value)">
             <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
           <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-username" placeholder="@username Shopee / Lazada"></div>
@@ -3284,16 +3284,23 @@ async function openNewOrder() {
   orderItems = [];
   const [prodRes, custRes] = await Promise.all([
     sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name'),
-    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username').eq('shop_id', currentShop.id).not('customer_name','is',null).order('id',{ascending:false}).limit(500)
+    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username').eq('shop_id', currentShop.id).not('customer_name','is',null).order('created_at',{ascending:false}).limit(500)
   ]);
   productList = prodRes.data || [];
-  // dedupe customers by name
-  const seen = new Set();
-  _orderCustomerList = (custRes.data || []).filter(c => {
+  // รวมลูกค้าตามชื่อ: เก็บออเดอร์ล่าสุด แล้วเติม field ที่ว่างจากออเดอร์เก่า (ให้ข้อมูลครบที่สุด)
+  const _byName = {};
+  (custRes.data || []).forEach(c => {           // เรียงจาก id ล่าสุดมาก่อนแล้ว
     const k = (c.customer_name||'').trim().toLowerCase();
-    if (!k || seen.has(k)) return false;
-    seen.add(k); return true;
+    if (!k) return;
+    if (!_byName[k]) {
+      _byName[k] = { ...c };
+    } else {
+      ['customer_username','customer_social','customer_contact','customer_phone','customer_address'].forEach(f => {
+        if (!_byName[k][f] && c[f]) _byName[k][f] = c[f];
+      });
+    }
   });
+  _orderCustomerList = Object.values(_byName);
   renderOrderItems();
   openModal('modal-order');
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
@@ -3314,20 +3321,27 @@ async function openNewOrder() {
 function searchOrderCustomer(q) {
   const dd = document.getElementById('o-cust-dd');
   if (!dd) return;
-  const term = q.trim().toLowerCase();
-  if (!term) { dd.style.display = 'none'; return; }
-  const matches = _orderCustomerList.filter(c =>
-    (c.customer_name||'').toLowerCase().includes(term) ||
-    (c.customer_phone||'').includes(term) ||
-    (c.customer_username||'').toLowerCase().includes(term)
+  if (!_orderCustomerList.length) { dd.style.display = 'none'; return; }
+  const term = (q||'').trim().toLowerCase();
+  // ว่าง (ตอน focus) → แสดงลูกค้าล่าสุด ; มีคำค้น → กรอง
+  const matches = (!term
+    ? _orderCustomerList
+    : _orderCustomerList.filter(c =>
+        (c.customer_name||'').toLowerCase().includes(term) ||
+        (c.customer_phone||'').includes(term) ||
+        (c.customer_username||'').toLowerCase().includes(term) ||
+        (c.customer_contact||'').toLowerCase().includes(term))
   ).slice(0, 8);
   if (!matches.length) { dd.style.display = 'none'; return; }
-  dd.innerHTML = matches.map((c,i) =>
+  const header = !term
+    ? '<div style="padding:6px 12px;font-size:10px;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border)">ลูกค้าล่าสุด — คลิกเพื่อเติมข้อมูลอัตโนมัติ</div>'
+    : '';
+  dd.innerHTML = header + matches.map((c,i) =>
     `<div data-i="${i}" style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px"
       onmousedown="fillCustomerFromOrder(${i})"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <div style="font-weight:600">${c.customer_name}</div>
-      <div style="font-size:11px;color:var(--text3)">${[c.customer_username,c.customer_phone].filter(Boolean).join(' · ')}</div>
+      <div style="font-size:11px;color:var(--text3)">${[c.customer_username,c.customer_phone,c.customer_contact].filter(Boolean).join(' · ')||'—'}</div>
     </div>`
   ).join('');
   dd.style.display = 'block';
