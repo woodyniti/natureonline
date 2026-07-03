@@ -3047,7 +3047,7 @@ async function orders() {
             <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
           <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-username" placeholder="@username Shopee / Lazada"></div>
-          <div class="form-group"><label>Customer Ref <span style="font-size:11px;color:var(--text3)">(เลขอ้างอิงเอกสาร Shopee)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ"></div>
+          <div class="form-group"><label>เลขอ้างอิงเอกสาร Shopee <span style="font-size:11px;color:var(--text3)">(Customer Ref)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
           <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>ช่องทางชำระ</label>
@@ -4119,7 +4119,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
         <div><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">Customer Ref</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="เลขอ้างอิงเอกสาร Shopee" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
