@@ -9199,6 +9199,38 @@ function getCostBySKU(sku) {
   return _shopeeCostMap[sku.toLowerCase().trim()] ?? null;
 }
 
+// ── ถอดรหัส SKU/ชื่อ ซีล → คีย์มาตรฐาน { mat, dims } เพื่อจับคู่แม้รูปแบบต่างกัน ──
+// เช่น "OS-VI-10X20X6", "OIL SEAL VITON 10X20X6 TC", "ออยซีล Viton 10x20x6" → { mat:'vi', dims:'10x20x6' }
+//  OS=Oil Seal, VI=VITON, NB=NBR ; ตัวเลข = ID x OD x THK
+function _sealKey(str) {
+  if (!str) return null;
+  const s = String(str).toLowerCase();
+  // หา dimension แบบ IDxODxTHK (รองรับตัวคั่น x × * และช่องว่าง, มีทศนิยมได้)
+  const m = s.match(/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const dims = [m[1], m[2], m[3]].map(x => String(parseFloat(x))).join('x');
+  // วัสดุ: viton/fkm/vi → vi, nbr/nb → nb (ตรวจ vi/nb แบบมีขอบเขตคำ กันชนคำอื่น)
+  let mat = '';
+  if (/viton|fkm|(?:^|[^a-z])vi(?:[^a-z]|$)/.test(s)) mat = 'vi';
+  else if (/nbr|(?:^|[^a-z])nb(?:[^a-z]|$)/.test(s)) mat = 'nb';
+  return { mat, dims, key: (mat || '?') + '|' + dims };
+}
+
+// จับคู่สินค้า: exact (sku/supplier_sku/part_no) ก่อน แล้วค่อย fallback ด้วยคีย์มาตรฐาน (material + มิติ)
+function matchShopeeProd(sku, name) {
+  const exactMap = window._shopeeProdMap || {};
+  if (sku) {
+    const hit = exactMap[String(sku).toLowerCase().trim()];
+    if (hit) return hit;
+  }
+  const normMap = window._shopeeProdMapNorm || {};
+  const k1 = _sealKey(sku);
+  if (k1 && k1.mat && normMap[k1.key]) return normMap[k1.key];   // ต้องมี material เพื่อกันจับผิดวัสดุ
+  const k2 = _sealKey(name);
+  if (k2 && k2.mat && normMap[k2.key]) return normMap[k2.key];
+  return null;
+}
+
 async function shopee() {
   document.getElementById('topbar-actions').innerHTML =
     '<button class="btn btn-secondary btn-sm" onclick="loadShopeeFromURL(true)">🔄 รีเฟรช</button>';
@@ -9420,8 +9452,8 @@ function _sheetViewUrl() {
 }
 
 async function renderShopeeReport() {
-  const costMap = await loadShopeeCostMap();
-  // โหลด products จาก Supabase เสมอ (fresh) สำหรับ stock value
+  // โหลด products จาก Supabase เสมอ (fresh) สำหรับ stock value + ต้นทุน
+  // ต้นทุน/stock ใช้ matchShopeeProd จาก prods ชุดนี้โดยตรง (ไม่ต้องพึ่ง loadShopeeCostMap แยก)
   // ลอง query พร้อม part_no — ถ้า error (column ยังไม่มี) ให้ fallback
   let prods = [];
   try {
@@ -9440,12 +9472,18 @@ async function renderShopeeReport() {
   window.allProducts = prods;
   // Build lookup map: sku / supplier_sku / part_no → product (lowercase)
   const _prodMap = {};
+  const _prodMapNorm = {};   // คีย์มาตรฐาน (material + มิติ) → product สำหรับ fallback จับคู่
   (prods || []).forEach(p => {
     if (p.sku)          _prodMap[p.sku.toLowerCase().trim()]          = p;
     if (p.supplier_sku) _prodMap[p.supplier_sku.toLowerCase().trim()] = p;
     if (p.part_no)      _prodMap[p.part_no.toLowerCase().trim()]      = p;
+    [p.sku, p.supplier_sku, p.part_no, p.name].forEach(field => {
+      const k = _sealKey(field);
+      if (k && k.mat && !_prodMapNorm[k.key]) _prodMapNorm[k.key] = p;  // ต้องมี material เพื่อกันชนวัสดุ
+    });
   });
   window._shopeeProdMap = _prodMap;
+  window._shopeeProdMapNorm = _prodMapNorm;
   const rows = getShopeeFiltered();
   if (!rows.length) {
     document.getElementById('shopee-stats').innerHTML = '';
@@ -9483,7 +9521,8 @@ async function renderShopeeReport() {
   let unmatchedSkus = [];
   const _unmatchedSeen = new Set();
   rows.forEach(r => {
-    const cost = getCostBySKU(r.sku);
+    const prod = matchShopeeProd(r.sku, r.productName);
+    const cost = (prod && Number(prod.current_cost) > 0) ? Number(prod.current_cost) : null;
     if (cost !== null) {
       totalCost += cost * r.qty;
     } else {
@@ -9535,7 +9574,8 @@ async function renderShopeeReport() {
   rows.forEach(r => {
     const key = r.sku || r.productName;
     if (!skuMap[key]) skuMap[key] = { sku:r.sku, name:r.productName, qty:0, revenue:0, commission:0, net:0, cost:0, hasCost:false };
-    const costPerUnit = getCostBySKU(r.sku);
+    const _mp = matchShopeeProd(r.sku, r.productName);
+    const costPerUnit = (_mp && Number(_mp.current_cost) > 0) ? Number(_mp.current_cost) : null;
     skuMap[key].qty        += r.qty;
     skuMap[key].revenue    += r.totalAmt - r.shipping; // ยอดขายสินค้า (ไม่รวมค่าขนส่ง)
     skuMap[key].commission += r.totalFee;    // ค่าธรรมเนียมรวม
@@ -9557,12 +9597,7 @@ async function renderShopeeReport() {
   // คำนวณ stock value รวมทุก SKU
   let totalStockVal = 0;
   skuRows.forEach(r => {
-    const _k = (r.sku||'').toLowerCase().trim();
-    const pm = (window._shopeeProdMap||{})[_k] ||
-               (window.allProducts||[]).find(p =>
-                 (p.sku||'').toLowerCase()===_k ||
-                 (p.supplier_sku||'').toLowerCase()===_k ||
-                 (p.part_no||'').toLowerCase()===_k);
+    const pm = matchShopeeProd(r.sku, r.name);
     if (pm && pm.current_cost) {
       totalStockVal += Number(pm.stock_qty||0) * Number(pm.current_cost||0);
     }
@@ -9593,13 +9628,9 @@ async function renderShopeeReport() {
       const gross  = r.hasCost ? r.net - r.cost : null;
       const margin = (gross !== null && r.revenue > 0) ? (gross/r.revenue*100).toFixed(1) : null;
       const mColor = margin === null ? '#aaa' : Number(margin)>=20?'var(--accent)':Number(margin)>=10?'var(--amber)':'var(--red)';
-      // หา stock จาก allProducts ที่โหลดแล้ว (match ด้วย sku)
+      // หา stock/สินค้า ด้วยตัวจับคู่ยืดหยุ่น (exact ก่อน แล้ว fallback material+มิติ)
       const _skuKey = (r.sku||'').toLowerCase().trim();
-      const prodMatch = (window._shopeeProdMap||{})[_skuKey] ||
-                        (window.allProducts||[]).find(p =>
-                          (p.sku||'').toLowerCase()===_skuKey ||
-                          (p.supplier_sku||'').toLowerCase()===_skuKey ||
-                          (p.part_no||'').toLowerCase()===_skuKey);
+      const prodMatch = matchShopeeProd(r.sku, r.name);
       const stockQty  = prodMatch ? Number(prodMatch.stock_qty||0) : null;
       const stockVal  = (prodMatch && prodMatch.current_cost) ? stockQty * Number(prodMatch.current_cost||0) : null;
       const skuIdx = skuRows.indexOf(r);
@@ -9617,10 +9648,12 @@ async function renderShopeeReport() {
         '<td class="text-right font-mono" style="color:var(--blue);font-weight:600">' + (stockVal !== null ? fmtB(stockVal) : '<span style="color:#ccc">-</span>') + '</td>' +
         (function(){
           if (!prodMatch) return '<td style="text-align:center;font-size:12px"><span style="color:#ccc" title="ไม่พบสินค้าใน system">—</span></td>';
-          const matchField = (prodMatch.sku||'').toLowerCase()===_skuKey ? 'SKU'
-            : (prodMatch.supplier_sku||'').toLowerCase()===_skuKey ? 'Supplier SKU'
-            : (prodMatch.part_no||'').toLowerCase()===_skuKey ? 'Part No' : '?';
-          return '<td style="text-align:center;font-size:11px"><span style="color:var(--accent);font-weight:600" title="Match via: '+matchField+' → '+prodMatch.name+'">✓ <span style="color:var(--text3);font-weight:400">'+matchField+'</span></span></td>';
+          const matchField = (prodMatch.sku||'').toLowerCase().trim()===_skuKey ? 'SKU'
+            : (prodMatch.supplier_sku||'').toLowerCase().trim()===_skuKey ? 'Supplier SKU'
+            : (prodMatch.part_no||'').toLowerCase().trim()===_skuKey ? 'Part No'
+            : 'มิติ';  // จับคู่ด้วย material + IDxODxTHK (ไม่ตรง SKU ตรงๆ)
+          const isDim = matchField === 'มิติ';
+          return '<td style="text-align:center;font-size:11px"><span style="color:'+(isDim?'var(--amber)':'var(--accent)')+';font-weight:600" title="Match via: '+matchField+' → '+prodMatch.name+'">'+(isDim?'≈':'✓')+' <span style="color:var(--text3);font-weight:400">'+matchField+'</span></span></td>';
         })() +
       '</tr>';
     }).join('') +
