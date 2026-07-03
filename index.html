@@ -1471,7 +1471,7 @@ async function dashboard() {
     sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me),
     // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
-    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000)
+    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000)
   ]);
 
   const allOrdersForRepeat = repeatRes.data || [];
@@ -1606,6 +1606,7 @@ async function dashboard() {
           order_date: o.order_date,
           customer_name: o.customer_name,
           customer_social: o.customer_social,
+          customer_username: o.customer_username,
           product_name: item.product_name,
           qty: Number(item.qty || 0),
           total_amount: o.total_amount,
@@ -2015,7 +2016,7 @@ function viewProductRepeatOrders(productId) {
       <td style="white-space:nowrap">${ord.order_date}</td>
       <td><a href="javascript:void(0)" onclick="closeModal('modal-repeat-orders'); viewOrder('${ord.order_id}')" class="font-mono" style="color:var(--accent);font-weight:600;text-decoration:underline">${ord.order_no || '-'}</a></td>
       <td>${ord.customer_name || '-'}</td>
-      <td style="color:var(--text3);font-size:12px">${ord.customer_social || '-'}</td>
+      <td style="color:var(--text3);font-size:12px">${ord.customer_username || '-'}</td>
       <td class="text-right font-mono">${fmt(ord.qty)}</td>
       <td class="text-right font-mono text-accent">${fmtB(ord.total_amount)}</td>
       <td>${shippingBadge(ord.shipping_status)}</td>
@@ -2949,7 +2950,7 @@ function drillMonthlyDay(date) {
                   return `<tr>
                     <td><a href="javascript:void(0)" onclick="this.closest('.modal-overlay').remove(); viewOrder('${o.id}')" class="font-mono" style="color:var(--accent);font-weight:600;text-decoration:underline">${o.order_no || '-'}</a></td>
                     <td>${o.customer_name || '-'}</td>
-                    <td style="color:var(--text3);font-size:12px">${o.customer_social || '-'}</td>
+                    <td style="color:var(--text3);font-size:12px">${o.customer_username || '-'}</td>
                     <td>${channelBadge(o.channel)}</td>
                     <td class="text-right font-mono text-accent">${fmtB(o.total_amount)}</td>
                     <td>${shippingBadge(o.shipping_status)}</td>
@@ -3045,7 +3046,8 @@ async function orders() {
             <input type="text" id="o-cust" placeholder="พิมพ์ชื่อลูกค้า..." autocomplete="off" oninput="searchOrderCustomer(this.value)">
             <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
-          <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-social" placeholder="@username Shopee / Lazada / ร้านค้า"></div>
+          <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-username" placeholder="@username Shopee / Lazada"></div>
+          <div class="form-group"><label>Customer Ref <span style="font-size:11px;color:var(--text3)">(เลขอ้างอิงเอกสาร Shopee)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
           <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>ช่องทางชำระ</label>
@@ -3154,7 +3156,7 @@ async function loadOrders() {
   const search = (document.getElementById('ord-search')?.value || '').trim().toLowerCase();
   if (search) {
     rows = rows.filter(o => [
-      o.order_no, o.customer_name, o.customer_social, o.customer_contact,
+      o.order_no, o.customer_name, o.customer_username, o.customer_social, o.customer_contact,
       o.customer_phone, o.tracking_no, o.channel, o.payment_method,
       o.note, o.customer_address,
       o.employee_id ? empMap[o.employee_id] : ''
@@ -3193,7 +3195,7 @@ async function loadOrders() {
           <td style="white-space:nowrap">${o.order_date}</td>
           <td class="font-mono" style="color:var(--text3);font-size:12px">${o.order_no||'-'}</td>
           <td>${o.customer_name||'-'}</td>
-          <td style="color:var(--text3);font-size:12px">${o.customer_social||'-'}</td>
+          <td style="color:var(--text3);font-size:12px">${o.customer_username||'-'}</td>
           <td>${channelBadge(o.channel)}</td>
           <td style="font-size:12px;color:var(--text2)">${o.employees?.name||'-'}</td>
           <td class="text-right font-mono text-accent">${fmtB(o.total_amount)}</td>
@@ -3272,7 +3274,7 @@ async function openNewOrder() {
   orderItems = [];
   const [prodRes, custRes] = await Promise.all([
     sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name'),
-    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social').eq('shop_id', currentShop.id).not('customer_name','is',null).order('id',{ascending:false}).limit(500)
+    sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username').eq('shop_id', currentShop.id).not('customer_name','is',null).order('id',{ascending:false}).limit(500)
   ]);
   productList = prodRes.data || [];
   // dedupe customers by name
@@ -3285,7 +3287,7 @@ async function openNewOrder() {
   renderOrderItems();
   openModal('modal-order');
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-social','o-contact','o-phone','o-address','o-track','o-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-track','o-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
@@ -3307,7 +3309,7 @@ function searchOrderCustomer(q) {
   const matches = _orderCustomerList.filter(c =>
     (c.customer_name||'').toLowerCase().includes(term) ||
     (c.customer_phone||'').includes(term) ||
-    (c.customer_social||'').toLowerCase().includes(term)
+    (c.customer_username||'').toLowerCase().includes(term)
   ).slice(0, 8);
   if (!matches.length) { dd.style.display = 'none'; return; }
   dd.innerHTML = matches.map((c,i) =>
@@ -3315,7 +3317,7 @@ function searchOrderCustomer(q) {
       onmousedown="fillCustomerFromOrder(${i})"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <div style="font-weight:600">${c.customer_name}</div>
-      <div style="font-size:11px;color:var(--text3)">${[c.customer_social,c.customer_phone].filter(Boolean).join(' · ')}</div>
+      <div style="font-size:11px;color:var(--text3)">${[c.customer_username,c.customer_phone].filter(Boolean).join(' · ')}</div>
     </div>`
   ).join('');
   dd.style.display = 'block';
@@ -3328,11 +3330,12 @@ function fillCustomerFromOrder(idx) {
   const c = dd?._matches?.[idx];
   if (!c) return;
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('o-cust',    c.customer_name);
-  set('o-social',  c.customer_social);   // ชื่อผู้ใช้ Shopee/Lazada
-  set('o-contact', c.customer_contact);
-  set('o-phone',   c.customer_phone);
-  set('o-address', c.customer_address);
+  set('o-cust',     c.customer_name);
+  set('o-username', c.customer_username);  // ชื่อผู้ใช้ Shopee/Lazada
+  set('o-ref',      c.customer_social);    // Customer Ref / เลขอ้างอิงเอกสาร Shopee
+  set('o-contact',  c.customer_contact);
+  set('o-phone',    c.customer_phone);
+  set('o-address',  c.customer_address);
   // ไม่ fill o-track (Tracking) — เป็นข้อมูลเฉพาะออเดอร์
   dd.style.display = 'none';
 }
@@ -3756,7 +3759,8 @@ async function saveOrder() {
     order_date: document.getElementById('o-date').value,
     channel: document.getElementById('o-channel').value,
     customer_name: document.getElementById('o-cust').value,
-    customer_social: document.getElementById('o-social').value,
+    customer_username: document.getElementById('o-username').value, // ชื่อผู้ใช้ Shopee/Lazada
+    customer_social: document.getElementById('o-ref').value,        // Customer Ref / เลขอ้างอิงเอกสาร Shopee
     customer_contact: document.getElementById('o-contact')?.value || '',
     customer_phone:   document.getElementById('o-phone')?.value   || '',
     customer_address: document.getElementById('o-address')?.value || '',
@@ -4114,7 +4118,8 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
         <div><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">Customer Ref</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="เลขอ้างอิงเอกสาร Shopee" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
@@ -4228,7 +4233,8 @@ async function saveOrderEdit(orderId) {
   const { error: updErr } = await sb.from('orders').update({
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
     customer_name:    document.getElementById('ed-cust').value,
-    customer_social:  document.getElementById('ed-ref').value,
+    customer_username: document.getElementById('ed-username')?.value || '', // ชื่อผู้ใช้ Shopee/Lazada
+    customer_social:  document.getElementById('ed-ref').value,             // Customer Ref
     customer_contact: document.getElementById('ed-contact')?.value || '',
     customer_phone:   document.getElementById('ed-phone')?.value   || '',
     customer_address: document.getElementById('ed-address')?.value || '',
