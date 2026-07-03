@@ -9256,6 +9256,18 @@ async function shopee() {
         <span class="btn btn-secondary btn-sm">📂 .xlsx</span>
         <input type="file" accept=".xlsx,.csv" style="display:none" onchange="loadShopeeFromFile(this)">
       </label>
+      <button class="btn btn-secondary btn-sm" onclick="toggleShopeeUrlPanel()">⚙️ แหล่งข้อมูล</button>
+    </div>
+
+    <!-- Shopee data source (Google Sheet URL) — ใช้ได้ทุก role ที่เห็นหน้านี้ -->
+    <div id="shopee-url-panel" style="display:none;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <label style="font-size:12px;color:var(--text2);display:block;margin-bottom:4px">Google Sheets CSV URL (Shopee Export)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" id="shopee-url" value="${shopeeGSheetUrl}" placeholder="https://docs.google.com/spreadsheets/d/e/...&output=csv" style="flex:1;min-width:240px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:12px">
+        <button class="btn btn-primary btn-sm" onclick="saveShopeeUrlAndReload()">💾 บันทึก & โหลด</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetShopeeUrl()">↺ ค่าเริ่มต้น</button>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">ค่าเริ่มต้น = ชีตที่ตั้งไว้ (gid=880541665) · เปลี่ยนแล้วกด "บันทึก &amp; โหลด" เพื่อดึงข้อมูลใหม่ทันที</div>
     </div>
 
     <!-- Data info bar -->
@@ -9284,6 +9296,30 @@ async function shopee() {
 
   // auto-load
   setTimeout(() => loadShopeeFromURL(true), 200);
+}
+
+function toggleShopeeUrlPanel() {
+  const p = document.getElementById('shopee-url-panel');
+  if (p) p.style.display = (p.style.display === 'none' || !p.style.display) ? 'block' : 'none';
+}
+
+function saveShopeeUrlAndReload() {
+  const el = document.getElementById('shopee-url');
+  const url = (el?.value || '').trim();
+  if (!url) { toast('กรุณาใส่ URL', 'error'); return; }
+  shopeeGSheetUrl = url;
+  localStorage.setItem('ns_shopee_url', url);
+  toast('บันทึก URL ✓ กำลังโหลด...', 'success');
+  loadShopeeFromURL(true);
+}
+
+function resetShopeeUrl() {
+  shopeeGSheetUrl = _SHOPEE_URL;
+  localStorage.setItem('ns_shopee_url', _SHOPEE_URL);
+  const el = document.getElementById('shopee-url');
+  if (el) el.value = _SHOPEE_URL;
+  toast('รีเซ็ตเป็นชีตเริ่มต้น (gid=880541665) ✓ กำลังโหลด...', 'success');
+  loadShopeeFromURL(true);
 }
 
 async function loadShopeeFromURL(autoLoad) {
