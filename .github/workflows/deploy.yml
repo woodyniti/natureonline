@@ -1,0 +1,42 @@
+name: Deploy to GitHub Pages
+
+on:
+  # เผยแพร่เมื่อ push ขึ้น branch main
+  push:
+    branches: [main]
+  # เผยแพร่เองด้วยมือได้จากแท็บ Actions
+  workflow_dispatch:
+
+# สิทธิ์ที่ deploy-pages ต้องใช้
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# กันคิวชนกัน: อนุญาตให้ deploy ทีละ 1 อัน ไม่ยกเลิกอันที่กำลังเผยแพร่อยู่
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # เผยแพร่ทั้งโฟลเดอร์ (เว็บเป็น static ไฟล์เดียว index.html)
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
