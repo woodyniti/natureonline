@@ -1481,8 +1481,18 @@ async function dashboard() {
   const employees = empRes.data || [];
   const pos      = poRes.data || [];
 
+  // fallback ต้นทุน: ถ้า order_item ขายก่อนรับเข้า (cost_per_unit=0) ให้ใช้ current_cost ของสินค้าแทน
+  const prodCostMap = {};
+  products.forEach(p => { if (p.id) prodCostMap[p.id] = Number(p.current_cost||0); });
+  const itemCostUnit = (it) => {
+    const c = Number(it.cost_per_unit||0);
+    return c > 0 ? c : Number(prodCostMap[it.product_id]||0);
+  };
+  const orderCostWithFallback = (o) => (o.order_items||[]).reduce((s,it)=>s+Number(it.qty||0)*itemCostUnit(it),0);
+
   const totalRevenue  = orders.reduce((s,o) => s + Number(o.total_amount||0), 0);
-  const totalCost     = orders.reduce((s,o) => s + Number(o.total_cost||0), 0);
+  // ใช้ต้นทุนที่มี fallback (แทน o.total_cost ที่อาจเป็น 0 จากการขายก่อนรับเข้า)
+  const totalCost     = orders.reduce((s,o) => s + orderCostWithFallback(o), 0);
   const totalExpenses = expenses.reduce((s,e) => s + Number(e.amount||0), 0);
   const orderCount    = orders.length;
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
@@ -1550,12 +1560,12 @@ async function dashboard() {
       if (!catSalesMap[cat]) catSalesMap[cat] = { rev:0, qty:0, cost:0, items:{} };
       catSalesMap[cat].rev += Number(item.qty||0) * Number(item.sell_price||0);
       catSalesMap[cat].qty += Number(item.qty||0);
-      catSalesMap[cat].cost += Number(item.qty||0) * Number(item.cost_per_unit||0);
+      catSalesMap[cat].cost += Number(item.qty||0) * itemCostUnit(item);
       const pname = item.product_name;
       if (!catSalesMap[cat].items[pname]) catSalesMap[cat].items[pname] = {rev:0,qty:0,cost:0,stock:prod?.stock_qty||0,sell_price:prod?.sell_price||item.sell_price,sku:prod?.sku||''};
       catSalesMap[cat].items[pname].rev += Number(item.qty||0) * Number(item.sell_price||0);
       catSalesMap[cat].items[pname].qty += Number(item.qty||0);
-      catSalesMap[cat].items[pname].cost += Number(item.qty||0) * Number(item.cost_per_unit||0);
+      catSalesMap[cat].items[pname].cost += Number(item.qty||0) * itemCostUnit(item);
     });
   });
 
@@ -8979,8 +8989,16 @@ async function loadDashData() {
   const ap       = apRes.data   || [];
   const emps     = empRes.data  || [];
 
+  // fallback ต้นทุน: ถ้า order_item ขายก่อนรับเข้า (cost_per_unit=0) ให้ใช้ current_cost ของสินค้าแทน
+  const _prodCostMap = {};
+  products.forEach(p => { if (p.id) _prodCostMap[p.id] = Number(p.current_cost||0); });
+  const _orderCost = (o) => (o.order_items||[]).reduce((s,it)=>{
+    const c = Number(it.cost_per_unit||0);
+    return s + Number(it.qty||0) * (c > 0 ? c : Number(_prodCostMap[it.product_id]||0));
+  }, 0);
+
   const sales    = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
-  const costSum  = orders.reduce((s,o)=>s+Number(o.total_cost||0),0);
+  const costSum  = orders.reduce((s,o)=>s+_orderCost(o),0);
   const expSum   = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
   const gross    = sales - costSum;
   const net      = gross - expSum;
@@ -9009,7 +9027,7 @@ async function loadDashData() {
     if (!d) return;
     if (!dateMap[d]) dateMap[d] = {sales:0,cost:0};
     dateMap[d].sales += Number(o.total_amount||0);
-    dateMap[d].cost  += Number(o.total_cost||0);
+    dateMap[d].cost  += _orderCost(o);
   });
   const dates    = Object.keys(dateMap).sort();
   let cumProfit  = 0;
