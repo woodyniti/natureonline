@@ -4759,7 +4759,7 @@ async function products() {
 
   setContent(`
     <div class="filter-bar mb-4">
-      <input type="text" id="prod-search" placeholder="🔍 ค้นหา ชื่อ / SKU / Supplier SKU / Part No / หมวด" oninput="filterProducts()" style="flex:1;min-width:180px">
+      <input type="text" id="prod-search" placeholder="🔍 ค้นหา ชื่อ / SKU / Part No / หมวด — ใช้ * ได้ เช่น OS*20X6 หรือหลายคำ เช่น oil 20 viton" oninput="filterProducts()" title="* = อักขระใดๆ, ? = 1 ตัว ; เว้นวรรคหลายคำ = ต้องเจอทุกคำ" style="flex:1;min-width:180px">
       <select id="prod-cat-filter" onchange="filterProducts()">
         <option value="">ทุกหมวดหมู่</option>
       </select>
@@ -4916,11 +4916,16 @@ async function loadProducts() {
   loadProductDashboard();
 }
 
+// ค้นหาแบบ wildcard: * = อักขระใดๆ (รวมว่าง), ? = 1 ตัว ; ไม่มี wildcard = ค้นแบบมีคำนี้อยู่ (substring)
 function wildcardMatch(str, pattern) {
-  // supports * (any chars) and ? (single char)
-  if (pattern === '*' || pattern === '') return true;
-  const re = new RegExp('^' + pattern.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.') + '$', 'i');
-  return re.test(str) || str.toLowerCase().includes(pattern.toLowerCase().replace(/\*/g,''));
+  if (!pattern) return true;
+  str = String(str||'').toLowerCase();
+  pattern = String(pattern).toLowerCase();
+  if (pattern.indexOf('*') >= 0 || pattern.indexOf('?') >= 0) {
+    const re = new RegExp(pattern.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.'), 'i');
+    return re.test(str);
+  }
+  return str.includes(pattern);
 }
 
 function filterProducts() {
@@ -4928,10 +4933,12 @@ function filterProducts() {
   const catF = document.getElementById('prod-cat-filter')?.value || '';
   let filtered = allProducts;
   if (q) {
-    filtered = filtered.filter(p =>
-      wildcardMatch(p.name, q) || wildcardMatch(p.sku||'', q) ||
-      wildcardMatch(p.supplier_sku||'', q) || wildcardMatch(p.part_no||'', q) || wildcardMatch(p.category||'', q)
-    );
+    // แยกคำด้วยช่องว่าง → ทุกคำต้องเจอ (AND) แต่ละคำหาได้ทุก field (OR) ; รองรับ * และ ?
+    const terms = q.split(/\s+/).filter(Boolean);
+    filtered = filtered.filter(p => {
+      const fields = [p.name, p.sku, p.supplier_sku, p.part_no, p.category];
+      return terms.every(t => fields.some(f => wildcardMatch(f, t)));
+    });
   }
   if (catF) filtered = filtered.filter(p => (p.category||'').trim() === catF.trim());
   renderProductTable(filtered);
