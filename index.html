@@ -5223,13 +5223,12 @@ async function saveProduct() {
     const r = await sb.from('products').insert(insertPayload).select().single();
     prod = r.data; error = r.error;
     if (!error) break;
-    if (error.code === '42703') {
-      let stripped = false;
-      for (const col of ['purchase_price','part_no']) {
-        if (error.message?.includes(col) && (col in insertPayload)) { delete insertPayload[col]; stripped = true; }
-      }
-      if (stripped) continue;
+    // column ยังไม่มีใน DB — ครอบคลุมทั้ง 42703 (undefined) และ PGRST204 (schema cache) โดยดูจากชื่อคอลัมน์ใน message
+    let stripped = false;
+    for (const col of ['purchase_price','part_no']) {
+      if ((col in insertPayload) && (error.message||'').includes(col)) { delete insertPayload[col]; stripped = true; }
     }
+    if (stripped) continue;
     break;
   }
   if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
@@ -5382,13 +5381,12 @@ async function updateProduct(id) {
     const r = await sb.from('products').update(updatePayload).eq('id', id).select();
     updData = r.data; updErr = r.error;
     if (!updErr) break;
-    if (updErr.code === '42703') {
-      let stripped = false;
-      for (const col of ['purchase_price','part_no']) {
-        if (updErr.message?.includes(col) && (col in updatePayload)) { delete updatePayload[col]; stripped = true; }
-      }
-      if (stripped) continue;
+    // column ยังไม่มีใน DB — ครอบคลุมทั้ง 42703 และ PGRST204 (schema cache) โดยดูจากชื่อคอลัมน์ใน message
+    let stripped = false;
+    for (const col of ['purchase_price','part_no']) {
+      if ((col in updatePayload) && (updErr.message||'').includes(col)) { delete updatePayload[col]; stripped = true; }
     }
+    if (stripped) continue;
     break;
   }
   if (updErr) { toast('บันทึกไม่สำเร็จ: ' + updErr.message, 'error'); return; }
