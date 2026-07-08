@@ -3240,7 +3240,7 @@ async function loadOrders() {
           <td class="text-right font-mono ${(o.total_amount-o.total_cost)>=0?'text-green':'text-red'}">${fmtB(o.total_amount-o.total_cost)}</td>
           <td>${docStatusBadge(o.doc_status||'draft')}</td>
           <td data-sort="${_shipRank[o.shipping_status] ?? 9}">
-            <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value)"
+            <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value,this)"
               style="border:1px solid;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;font-weight:600;${shipSelStyle(o.shipping_status)}">
               ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
             </select>
@@ -3275,7 +3275,7 @@ async function loadOrders() {
         <div style="display:flex;gap:4px;align-items:center">
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openShippingLabelModal('${o.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;font-size:11px;padding:4px 6px">📦 ใบปะหน้าพัสดุ</button>
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:11px;padding:4px 6px">🏷️ สติกเกอร์สินค้า</button>
-          <select class="status-sel" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value)"
+          <select class="status-sel" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value,this)"
             style="border:1px solid;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;${shipSelStyle(o.shipping_status)}">
             ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
           </select>
@@ -3297,11 +3297,23 @@ function clearOrdFilter() {
   loadOrders();
 }
 
-async function quickUpdateStatus(orderId, status) {
+async function quickUpdateStatus(orderId, status, selEl) {
+  const _lbl = {pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'};
   // ดึงสถานะเดิม + รายการสินค้า เพื่อจัดการสต๊อกเมื่อ ยกเลิก ↔ กลับมาใช้งาน
   const { data: ord } = await sb.from('orders')
     .select('order_no,order_date,shipping_status,doc_status,order_items(product_id,qty,cost_per_unit)')
     .eq('id', orderId).single();
+  const oldStatus = ord?.shipping_status;
+
+  // ── ยืนยันก่อนเปลี่ยน (กันกดผิด) ──
+  let _msg = 'เปลี่ยนสถานะจัดส่งเป็น "' + (_lbl[status]||status) + '"?';
+  if (status === 'cancelled')       _msg += '\n\n⚠️ สต๊อกสินค้าจะถูกบวกคืนกลับเข้าระบบ';
+  else if (oldStatus === 'cancelled') _msg += '\n\n⚠️ สต๊อกจะถูกตัดออกใหม่ (นับเป็นขายอีกครั้ง)';
+  if (!confirm(_msg)) {
+    if (selEl && oldStatus != null) selEl.value = oldStatus;  // เด้ง dropdown กลับค่าเดิม
+    return;
+  }
+
   await sb.from('orders').update({ shipping_status: status }).eq('id', orderId);
 
   const wasCancel = ord?.shipping_status === 'cancelled';
