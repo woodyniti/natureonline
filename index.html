@@ -5809,11 +5809,17 @@ function renderLandedCostRows() {
   updateStockTotal();
 }
 
+let _stockSaving = false;
 async function saveStockBatch() {
   const date = document.getElementById('s-date').value;
   const lot  = document.getElementById('s-lot').value;
   const valid = stockRows.filter(r=>r&&r.product_id&&r.qty>0);
   if (!valid.length) { toast('กรุณาเลือกสินค้าและใส่จำนวนอย่างน้อย 1 รายการ','error'); return; }
+  // ── ยืนยันก่อนบันทึก (กันกดผิด) ──
+  const _grand = document.getElementById('s-grand-total')?.textContent || '';
+  if (!confirm('ยืนยันรับสินค้าเข้าสต๊อก ' + valid.length + ' รายการ' + (_grand?' · รวม '+_grand:'') + '?\n\nสต๊อกและต้นทุนเฉลี่ยจะถูกอัพเดต')) return;
+  if (_stockSaving) return;   // กันกดซ้ำ
+  _stockSaving = true;
 
   // ── คำนวณ Landed Cost แบ่งตามสัดส่วนมูลค่า ──────────────
   const totalLanded = landedCostRows.reduce((s,r)=>s+Number(r.amount||0), 0);
@@ -5847,7 +5853,7 @@ async function saveStockBatch() {
   });
 
   const { error } = await sb.from('stock_movements').insert(inserts);
-  if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
+  if (error) { _stockSaving=false; toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
 
   const productIds = [...new Set(valid.map(r => r.product_id))];
   await recalcStockQty(productIds);
@@ -5879,6 +5885,7 @@ async function saveStockBatch() {
 
   // reset landed cost rows
   landedCostRows = [];
+  _stockSaving = false;
 
   closeModal('modal-stock');
   toast('บันทึกสำเร็จ '+valid.length+' รายการ' + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
@@ -6551,7 +6558,11 @@ function openStockModal() {
   if (wrap) wrap.innerHTML = '';
   document.getElementById('s-lot').value = '';
   document.getElementById('s-date').value = today();
+  // default: ติ๊ก VAT 7%
+  const _sv = document.getElementById('s-vat-on');   if (_sv)  _sv.checked = true;
+  const _svt = document.getElementById('s-vat-type'); if (_svt) _svt.value = 'excluded';
   addStockRow();
+  updateStockTotal();   // แสดงแถว VAT ตาม default
   loadPODropdownForStock();
 }
 
