@@ -4825,9 +4825,12 @@ async function products() {
         </div>
         <div class="grid-2">
           <div class="form-group"><label>ราคาขาย (บาท)</label><input type="number" id="p-sell" placeholder="0"></div>
-          <div class="form-group"><label>ต้นทุนเริ่มต้น (บาท)</label><input type="number" id="p-cost" placeholder="0"></div>
+          <div class="form-group"><label>ราคาซื้อ (บาท) <span style="font-size:11px;color:var(--text3)">ราคาที่ซื้อเข้า</span></label><input type="number" id="p-buy" placeholder="0"></div>
         </div>
-        <div class="form-group"><label>สต๊อกเริ่มต้น (ชิ้น)</label><input type="number" id="p-stock" placeholder="0"></div>
+        <div class="grid-2">
+          <div class="form-group"><label>ต้นทุนเริ่มต้น (บาท) <span style="font-size:11px;color:var(--text3)">สำหรับตั้งต้นทุนสต๊อกเริ่มต้น</span></label><input type="number" id="p-cost" placeholder="0"></div>
+          <div class="form-group"><label>สต๊อกเริ่มต้น (ชิ้น)</label><input type="number" id="p-stock" placeholder="0"></div>
+        </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal('modal-product')">ยกเลิก</button>
           <button class="btn btn-primary" onclick="saveProduct()">💾 บันทึก</button>
@@ -5019,6 +5022,7 @@ function renderProductTable(prods) {
       case 'part_no':  return sd*((a.part_no||'').localeCompare(b.part_no||''));
       case 'name':     return sd*(a.name||'').localeCompare(b.name||'','th');
       case 'category': return sd*((a.category||'').localeCompare(b.category||'','th'));
+      case 'buy':      return sd*(Number(a.purchase_price||0)-Number(b.purchase_price||0));
       case 'cost':     return sd*(Number(a.current_cost||0)-Number(b.current_cost||0));
       case 'sell':     return sd*(Number(a.sell_price||0)-Number(b.sell_price||0));
       case 'margin':   return sd*((Number(a.sell_price||0)-Number(a.current_cost||0))-(Number(b.sell_price||0)-Number(b.current_cost||0)));
@@ -5038,7 +5042,7 @@ function renderProductTable(prods) {
     '<table><thead><tr>' +
     '<th style="width:32px;text-align:center;color:var(--text3);font-size:12px">#</th>' +
     '<th style="width:44px">รูป</th>' + th('SKU','sku') + th('Supplier SKU','supplier') + th('Part No','part_no') + th('ชื่อสินค้า','name') + th('หมวดหมู่','category') +
-    th('ต้นทุน','cost','text-right') + th('ราคาขาย','sell','text-right') +
+    th('ราคาซื้อ','buy','text-right') + th('ต้นทุนเฉลี่ย','cost','text-right') + th('ราคาขาย','sell','text-right') +
     th('กำไร/ชิ้น','margin','text-right') + th('คงเหลือ','stock','text-right') +
     th('มูลค่าสต๊อก','value','text-right') + '<th></th>' +
     '</tr></thead><tbody>' +
@@ -5058,6 +5062,7 @@ function renderProductTable(prods) {
         '<td class="font-mono" style="color:var(--purple,#7c3aed);font-size:12px">'+(p.part_no||'-')+'</td>' +
         '<td style="font-weight:500">'+p.name+'</td>' +
         '<td>'+(p.category?'<span class="badge badge-gray">'+( p.category||'-')+'</span>':'<span style="color:var(--text3);font-size:12px">-</span>')+'</td>' +
+        '<td class="text-right font-mono" style="color:var(--text2)">'+fmtB(p.purchase_price||0)+'</td>' +
         '<td class="text-right font-mono">'+fmtB(p.current_cost)+'</td>' +
         '<td class="text-right font-mono text-accent">'+fmtB(p.sell_price)+'</td>' +
         '<td class="text-right font-mono '+(margin>=0?'text-green':'text-red')+'">'+fmtB(margin)+'</td>' +
@@ -5179,11 +5184,21 @@ async function saveProduct() {
   // ลอง insert พร้อม part_no — ถ้า error fallback โดยไม่มี part_no
   const partNoNewVal = (document.getElementById('p-part-no')?.value || '').trim() || null;
   insertPayload.part_no = partNoNewVal;
-  let { data:prod, error } = await sb.from('products').insert(insertPayload).select().single();
-  if (error && (error.message?.includes('part_no') || error.code === '42703')) {
-    delete insertPayload.part_no;
-    const r2 = await sb.from('products').insert(insertPayload).select().single();
-    prod = r2.data; error = r2.error;
+  insertPayload.purchase_price = Number(document.getElementById('p-buy')?.value) || 0;
+  // ลอง insert — ถ้า column ไหนยังไม่มีใน DB (เช่น purchase_price/part_no) ให้ตัดออกแล้วลองใหม่
+  let prod, error;
+  for (let a = 0; a < 3; a++) {
+    const r = await sb.from('products').insert(insertPayload).select().single();
+    prod = r.data; error = r.error;
+    if (!error) break;
+    if (error.code === '42703') {
+      let stripped = false;
+      for (const col of ['purchase_price','part_no']) {
+        if (error.message?.includes(col) && (col in insertPayload)) { delete insertPayload[col]; stripped = true; }
+      }
+      if (stripped) continue;
+    }
+    break;
   }
   if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
   if (stockQty > 0) {
@@ -5232,9 +5247,10 @@ async function editProduct(id) {
     </div>
     <div class="grid-2">
       <div class="form-group"><label>ราคาขาย</label><input type="number" id="ep-sell"></div>
-      <div class="form-group"><label>ต้นทุน (อ่านอย่างเดียว)</label>
-        <input type="number" id="ep-cost" disabled style="opacity:0.5"></div>
+      <div class="form-group"><label>ราคาซื้อ <span style="font-size:11px;color:var(--text3)">ราคาที่ซื้อเข้า</span></label><input type="number" id="ep-buy"></div>
     </div>
+    <div class="form-group"><label>ต้นทุนเฉลี่ยปัจจุบัน <span style="font-size:11px;color:var(--text3)">(อ่านอย่างเดียว · แปรผันตามการรับเข้า)</span></label>
+      <input type="number" id="ep-cost" disabled style="opacity:0.5"></div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="document.getElementById('modal-edit-prod').remove()">ยกเลิก</button>
       <button class="btn btn-primary" id="ep-save-btn">💾 บันทึก</button>
@@ -5250,6 +5266,7 @@ async function editProduct(id) {
   document.getElementById('ep-name').value         = p.name || '';
   document.getElementById('ep-cat').value          = p.category || '';
   document.getElementById('ep-sell').value         = p.sell_price || 0;
+  const _epBuy = document.getElementById('ep-buy'); if (_epBuy) _epBuy.value = p.purchase_price || 0;
   document.getElementById('ep-cost').value         = p.current_cost || 0;
   document.getElementById('ep-save-btn').onclick   = () => updateProduct(id);
   // ใส่รูปเดิม
@@ -5326,11 +5343,21 @@ async function updateProduct(id) {
   // ลอง update พร้อม part_no — ถ้า error (column ไม่มี) fallback โดยไม่มี part_no
   const partNoEditVal = (document.getElementById('ep-part-no')?.value || '').trim() || null;
   updatePayload.part_no = partNoEditVal;
-  let { data: updData, error: updErr } = await sb.from('products').update(updatePayload).eq('id', id).select();
-  if (updErr && (updErr.message?.includes('part_no') || updErr.code === '42703')) {
-    delete updatePayload.part_no;
-    const r2 = await sb.from('products').update(updatePayload).eq('id', id).select();
-    updData = r2.data; updErr = r2.error;
+  updatePayload.purchase_price = Number(document.getElementById('ep-buy')?.value) || 0;
+  // ลอง update — ถ้า column ยังไม่มีใน DB ให้ตัดออกแล้วลองใหม่
+  let updData, updErr;
+  for (let a = 0; a < 3; a++) {
+    const r = await sb.from('products').update(updatePayload).eq('id', id).select();
+    updData = r.data; updErr = r.error;
+    if (!updErr) break;
+    if (updErr.code === '42703') {
+      let stripped = false;
+      for (const col of ['purchase_price','part_no']) {
+        if (updErr.message?.includes(col) && (col in updatePayload)) { delete updatePayload[col]; stripped = true; }
+      }
+      if (stripped) continue;
+    }
+    break;
   }
   if (updErr) { toast('บันทึกไม่สำเร็จ: ' + updErr.message, 'error'); return; }
   // อัปเดต allProducts in-place ก่อน
@@ -8184,7 +8211,7 @@ function renderPOItems() {
       n.oninput=()=>{onch(+n.value);calcPOTotal();}; w.appendChild(l); w.appendChild(n); return w;
     }
     r2.appendChild(nf(it.qty_ordered||1,'จำนวน',v=>poItems[i].qty_ordered=v));
-    r2.appendChild(nf(it.unit_cost||0,'ต้นทุน/ชิ้น',v=>poItems[i].unit_cost=v));
+    r2.appendChild(nf(it.unit_cost||0,'ราคาซื้อ/ชิ้น',v=>poItems[i].unit_cost=v));
     const tw=document.createElement('div'); tw.style.cssText='text-align:right;padding-bottom:8px';
     const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวม';
     const tv=document.createElement('div'); tv.className='font-mono text-amber'; tv.style.cssText='font-size:14px;font-weight:700';
