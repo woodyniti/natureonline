@@ -1387,9 +1387,21 @@ function channelBadge(ch) {
 }
 
 function shippingBadge(s) {
-  const map = { pending:['badge-amber','รอจัดส่ง'], shipped:['badge-blue','จัดส่งแล้ว'], delivered:['badge-green','ส่งถึงแล้ว'], cancelled:['badge-red','ยกเลิก'] };
+  // รอจัดส่ง=เหลือง, จัดส่งแล้ว=เขียว, ส่งถึงแล้ว(สำเร็จ)=ฟ้า, ยกเลิก=แดง
+  const map = { pending:['badge-amber','รอจัดส่ง'], shipped:['badge-green','จัดส่งแล้ว'], delivered:['badge-blue','ส่งถึงแล้ว'], cancelled:['badge-red','ยกเลิก'] };
   const b = map[s] || ['badge-gray', s];
   return `<span class="badge ${b[0]}">${b[1]}</span>`;
+}
+
+// สีพื้นหลัง select สถานะจัดส่งในตารางออเดอร์ (ให้ติดตามงานค้างส่งง่าย)
+function shipSelStyle(s) {
+  const m = {
+    pending:  'background:#fef9c3;color:#854d0e;border-color:#eab308',  // เหลือง
+    shipped:  'background:#dcfce7;color:#166534;border-color:#22c55e',  // เขียว
+    delivered:'background:#dbeafe;color:#1e40af;border-color:#3b82f6',  // ฟ้า
+    cancelled:'background:#fee2e2;color:#991b1b;border-color:#ef4444'   // แดง
+  };
+  return m[s] || 'background:#fff;color:var(--text);border-color:var(--border2)';
 }
 
 async function loadUsersForEmployeeModal() {
@@ -3173,6 +3185,14 @@ async function loadOrders() {
     ].some(v => String(v||'').toLowerCase().includes(search)));
   }
 
+  // เรียง: วันที่เอกสารล่าสุด → เลขที่ออเดอร์ล่าสุด → รอจัดส่งก่อน (ให้ติดตามงานค้างส่งง่าย)
+  const _shipRank = { pending:0, shipped:1, delivered:2, cancelled:3 };
+  rows.sort((a,b) =>
+    (b.order_date||'').localeCompare(a.order_date||'') ||
+    (b.order_no||'').localeCompare(a.order_no||'') ||
+    ((_shipRank[a.shipping_status] ?? 9) - (_shipRank[b.shipping_status] ?? 9))
+  );
+
   const totalRev = rows.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const totalProfit = rows.reduce((s,o)=>s+Number(o.total_amount||0)-Number(o.total_cost||0),0);
 
@@ -3194,16 +3214,18 @@ async function loadOrders() {
       <thead><tr>
         <th class="sortable" onclick="sortTable('tbl-orders',0,'str')">วันที่</th>
         <th class="sortable" onclick="sortTable('tbl-orders',1,'str')">เลขที่</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',2,'str')">ลูกค้า</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',2,'str')">เลขอ้างอิง Shopee</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',3,'str')">ลูกค้า</th>
         <th>ชื่อลูกค้า(User) Shopee,Lazada</th><th>ช่องทาง</th><th>พนักงาน</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',6,'num')">ยอดขาย</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',7,'num')">กำไร</th>
+        <th class="sortable text-right" onclick="sortTable('tbl-orders',7,'num')">ยอดขาย</th>
+        <th class="sortable text-right" onclick="sortTable('tbl-orders',8,'num')">กำไร</th>
         <th>สถานะเอกสาร</th><th>จัดส่ง</th><th></th>
       </tr></thead>
       <tbody>
         ${rows.map(o=>`<tr>
           <td style="white-space:nowrap">${o.order_date}</td>
           <td class="font-mono" style="color:var(--text3);font-size:12px">${o.order_no||'-'}</td>
+          <td class="font-mono" style="color:var(--blue);font-size:12px">${o.customer_social||'-'}</td>
           <td>${o.customer_name||'-'}</td>
           <td style="color:var(--text3);font-size:12px">${o.customer_username||'-'}</td>
           <td>${channelBadge(o.channel)}</td>
@@ -3213,7 +3235,7 @@ async function loadOrders() {
           <td>${docStatusBadge(o.doc_status||'draft')}</td>
           <td>
             <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value)"
-              style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:3px 6px;font-size:12px;color:var(--text);cursor:pointer">
+              style="border:1px solid;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;font-weight:600;${shipSelStyle(o.shipping_status)}">
               ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
             </select>
           </td>
@@ -3232,7 +3254,7 @@ async function loadOrders() {
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
         <div>
           <div style="font-weight:600;font-size:14px">${o.customer_name||'ไม่ระบุชื่อ'}</div>
-          <div style="font-size:11px;color:var(--text3)">${o.order_date} · ${o.order_no||'-'}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
+          <div style="font-size:11px;color:var(--text3)">${o.order_date} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
         </div>
         <div style="text-align:right">
           <div class="font-mono text-accent" style="font-size:15px;font-weight:700">${fmtB(o.total_amount)}</div>
@@ -3248,7 +3270,7 @@ async function loadOrders() {
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openShippingLabelModal('${o.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;font-size:11px;padding:4px 6px">📦 ใบปะหน้าพัสดุ</button>
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:11px;padding:4px 6px">🏷️ สติกเกอร์สินค้า</button>
           <select class="status-sel" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value)"
-            style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text)">
+            style="border:1px solid;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;${shipSelStyle(o.shipping_status)}">
             ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
           </select>
         </div>
@@ -3272,6 +3294,7 @@ function clearOrdFilter() {
 async function quickUpdateStatus(orderId, status) {
   await sb.from('orders').update({ shipping_status: status }).eq('id', orderId);
   toast('อัพเดทสถานะแล้ว ✓','success');
+  if (typeof loadOrders === 'function') loadOrders();  // refresh สี + เรียงลำดับใหม่
 }
 
 let orderItems = [];
