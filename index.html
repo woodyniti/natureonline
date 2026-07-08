@@ -1428,6 +1428,15 @@ function changeDashboardRange(val) {
   window._currentDashboardRange = val;
   dashboard();
 }
+function changeDashMonth(mo) {
+  window._dashMonth = Number(mo);
+  window._currentDashboardRange = 'monthly';   // กดเดือน = มุมมองรายเดือน
+  dashboard();
+}
+function changeDashYear(yr) {
+  window._dashYear = Number(yr);
+  dashboard();
+}
 
 async function dashboard() {
   const now = new Date();
@@ -1443,6 +1452,9 @@ async function dashboard() {
   if (!window._currentDashboardRange) {
     window._currentDashboardRange = 'monthly';
   }
+  if (!window._dashYear)  window._dashYear  = y;
+  if (!window._dashMonth) window._dashMonth = m;
+  const selY = Number(window._dashYear), selM = Number(window._dashMonth);
   const range = window._currentDashboardRange;
   let ms, me, rangeLabel;
 
@@ -1467,14 +1479,14 @@ async function dashboard() {
     me = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
     rangeLabel = start3M.toLocaleDateString('th-TH', { month:'long' }) + ' - ' + now.toLocaleDateString('th-TH', { year:'numeric', month:'long' });
   } else if (range === 'yearly') {
-    ms = `${y}-01-01`;
-    me = `${y}-12-31`;
-    rangeLabel = 'ปี ' + (y + 543);
+    ms = `${selY}-01-01`;
+    me = `${selY}-12-31`;
+    rangeLabel = 'ปี ' + (selY + 543);
   } else {
-    // monthly (default)
-    ms = monthStart(y,m);
-    me = formatLocalDate(new Date(y, m, 0));
-    rangeLabel = now.toLocaleDateString('th-TH', { year:'numeric', month:'long' });
+    // monthly — ใช้เดือน/ปีที่เลือก
+    ms = monthStart(selY, selM);
+    me = formatLocalDate(new Date(selY, selM, 0));
+    rangeLabel = new Date(selY, selM-1, 1).toLocaleDateString('th-TH', { year:'numeric', month:'long' });
   }
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
@@ -1698,11 +1710,21 @@ async function dashboard() {
       <select id="dash-range-sel" onchange="changeDashboardRange(this.value)" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px">
         <option value="daily" ${range==='daily'?'selected':''}>รายวัน (วันนี้)</option>
         <option value="weekly" ${range==='weekly'?'selected':''}>รายสัปดาห์ (สัปดาห์นี้)</option>
-        <option value="monthly" ${range==='monthly'?'selected':''}>รายเดือน (เดือนนี้)</option>
+        <option value="monthly" ${range==='monthly'?'selected':''}>รายเดือน</option>
         <option value="3month" ${range==='3month'?'selected':''}>รายสามเดือน (3 เดือนล่าสุด)</option>
-        <option value="yearly" ${range==='yearly'?'selected':''}>รายปี (ปีนี้)</option>
+        <option value="yearly" ${range==='yearly'?'selected':''}>รายปี</option>
+      </select>
+      <select id="dash-year-sel" onchange="changeDashYear(this.value)" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px" title="เลือกปี">
+        ${[0,1,2,3,4].map(i=>{const yy=y-i; return '<option value="'+yy+'" '+(selY===yy?'selected':'')+'>ปี '+(yy+543)+'</option>';}).join('')}
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
+    </div>
+    <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
+    <div class="mb-4" style="display:flex;flex-wrap:wrap;gap:4px">
+      ${['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'].map((mn,idx)=>{
+        const mo=idx+1; const active=(range==='monthly'&&selM===mo);
+        return '<button onclick="changeDashMonth('+mo+')" style="padding:5px 12px;border-radius:6px;border:1px solid '+(active?'var(--accent)':'var(--border2)')+';background:'+(active?'var(--accent)':'#fff')+';color:'+(active?'#fff':'var(--text2)')+';font-size:12px;cursor:pointer;font-weight:'+(active?'700':'400')+'">'+mn+'</button>';
+      }).join('')}
     </div>
 
     <div class="stat-grid">
