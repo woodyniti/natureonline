@@ -368,10 +368,27 @@ tbody td:first-child { color: var(--text); }
 .mobile-only  { display: none !important; }
 .desktop-only { display: block !important; }
 
+/* ── Back to top ── */
+#back-to-top {
+  position: fixed; bottom: 24px; right: 24px;
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: none;
+  font-size: 22px; line-height: 1; cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0,168,130,0.4);
+  z-index: 200; display: none;
+  align-items: center; justify-content: center;
+  transition: transform 0.15s, opacity 0.2s;
+}
+#back-to-top.show { display: flex; }
+#back-to-top:hover { transform: translateY(-2px); background: var(--accent2); }
+
 /* ══════════════════════════════════════════
    RESPONSIVE — Mobile First
 ══════════════════════════════════════════ */
 @media (max-width: 768px) {
+  /* ปุ่ม Back to top ให้ลอยเหนือเมนูล่าง */
+  #back-to-top { bottom: 74px; right: 16px; width: 42px; height: 42px; font-size: 20px; }
+
 
   /* ── Layout ── */
   .sidebar { transform: translateX(-100%); transition: transform 0.25s ease; }
@@ -449,8 +466,13 @@ tbody td:first-child { color: var(--text); }
     position: fixed;
     bottom: 0; left: 0; right: 0;
     height: 60px;
-    background: var(--sidebar-bg);
-    border-top: 1px solid var(--border);
+    /* frosted glass แบบ iOS — ขุ่น อ่านง่าย ไม่โปร่งแสง */
+    background: rgba(255,255,255,0.82);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border-top: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 -1px 12px rgba(99,115,150,0.12);
+    padding-bottom: env(safe-area-inset-bottom);
     z-index: 100;
     align-items: stretch;
   }
@@ -1431,6 +1453,13 @@ async function loadUsersForEmployeeModal() {
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── Back to top ──
+function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+window.addEventListener('scroll', () => {
+  const b = document.getElementById('back-to-top');
+  if (b) b.classList.toggle('show', window.scrollY > 300);
+}, { passive: true });
 
 // ─── PAGE: DASHBOARD ──────────────────────────────────
 let dashboardData = {}; // cache for drill-down
@@ -12447,6 +12476,8 @@ function setOrdYear(year) {
 </script>
 
 <!-- Mobile Bottom Nav -->
+<button id="back-to-top" onclick="scrollToTop()" title="กลับขึ้นบนสุด" aria-label="กลับขึ้นบนสุด">↑</button>
+
 <div class="mobile-bottom-nav" id="mobile-bottom-nav">
   <button class="mob-nav-item" onclick="showPage('dashboard')" data-page="dashboard">
     <span class="mob-icon">📊</span><span>ภาพรวม</span>
