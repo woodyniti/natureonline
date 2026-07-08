@@ -990,20 +990,23 @@ function sortTable(tableId, colIdx, type='str') {
   const tbl = document.getElementById(tableId);
   if (!tbl) return;
   const tbody = tbl.querySelector('tbody');
-  const ths   = tbl.querySelectorAll('th.sortable');
-  // toggle direction
-  const th = ths[colIdx];
+  if (!tbody) return;
+  // ใช้ th ตามตำแหน่งคอลัมน์จริง (ตรงกับ cell index) — รองรับตารางที่บาง column ไม่ sortable
+  const ths = tbl.querySelectorAll('thead th');
+  const th  = ths[colIdx];
+  if (!th) return;
   const asc = !th.classList.contains('sort-asc');
   ths.forEach(t => t.classList.remove('sort-asc','sort-desc'));
   th.classList.add(asc ? 'sort-asc' : 'sort-desc');
-  // sort rows
+  // อ่านค่าจาก data-sort ก่อน (สำหรับ cell ที่มี select/badge) ไม่งั้นใช้ textContent
+  const cellVal = c => (c && (c.dataset && c.dataset.sort != null ? c.dataset.sort : c.textContent) || '').trim();
   const rows = [...tbody.querySelectorAll('tr')];
   rows.sort((a, b) => {
-    const av = a.cells[colIdx]?.textContent?.trim() || '';
-    const bv = b.cells[colIdx]?.textContent?.trim() || '';
+    const av = cellVal(a.cells[colIdx]);
+    const bv = cellVal(b.cells[colIdx]);
     if (type === 'num') {
-      const an = parseFloat(av.replace(/[฿,]/g,'')) || 0;
-      const bn = parseFloat(bv.replace(/[฿,]/g,'')) || 0;
+      const an = parseFloat(String(av).replace(/[฿,]/g,'')) || 0;
+      const bn = parseFloat(String(bv).replace(/[฿,]/g,'')) || 0;
       return asc ? an-bn : bn-an;
     }
     return asc ? av.localeCompare(bv,'th') : bv.localeCompare(av,'th');
@@ -3210,16 +3213,19 @@ async function loadOrders() {
 
   // Desktop table
   document.getElementById('ord-table').innerHTML = `
-    <table class="desktop-only">
+    <table class="desktop-only" id="tbl-orders">
       <thead><tr>
         <th class="sortable" onclick="sortTable('tbl-orders',0,'str')">วันที่</th>
         <th class="sortable" onclick="sortTable('tbl-orders',1,'str')">เลขที่</th>
         <th class="sortable" onclick="sortTable('tbl-orders',2,'str')">เลขอ้างอิง Shopee</th>
         <th class="sortable" onclick="sortTable('tbl-orders',3,'str')">ลูกค้า</th>
-        <th>ชื่อลูกค้า(User) Shopee,Lazada</th><th>ช่องทาง</th><th>พนักงาน</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',4,'str')">ชื่อลูกค้า(User) Shopee,Lazada</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',5,'str')">ช่องทาง</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',6,'str')">พนักงาน</th>
         <th class="sortable text-right" onclick="sortTable('tbl-orders',7,'num')">ยอดขาย</th>
         <th class="sortable text-right" onclick="sortTable('tbl-orders',8,'num')">กำไร</th>
-        <th>สถานะเอกสาร</th><th>จัดส่ง</th><th></th>
+        <th class="sortable" onclick="sortTable('tbl-orders',9,'str')">สถานะเอกสาร</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',10,'num')">จัดส่ง</th><th></th>
       </tr></thead>
       <tbody>
         ${rows.map(o=>`<tr>
@@ -3233,7 +3239,7 @@ async function loadOrders() {
           <td class="text-right font-mono text-accent">${fmtB(o.total_amount)}</td>
           <td class="text-right font-mono ${(o.total_amount-o.total_cost)>=0?'text-green':'text-red'}">${fmtB(o.total_amount-o.total_cost)}</td>
           <td>${docStatusBadge(o.doc_status||'draft')}</td>
-          <td>
+          <td data-sort="${_shipRank[o.shipping_status] ?? 9}">
             <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value)"
               style="border:1px solid;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;font-weight:600;${shipSelStyle(o.shipping_status)}">
               ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
