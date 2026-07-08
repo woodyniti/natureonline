@@ -1479,14 +1479,16 @@ async function dashboard() {
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes] = await Promise.all([
+  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me),
     // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
-    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000)
+    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
+    // ค่าจัดการ/ค่าขนส่ง จากการรับสินค้าจริง (ถ้าตารางยังไม่มี จะได้ error → ใช้ [] แทน)
+    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me)
   ]);
 
   const allOrdersForRepeat = repeatRes.data || [];
@@ -1495,6 +1497,10 @@ async function dashboard() {
   const products = prodRes.data || [];
   const employees = empRes.data || [];
   const pos      = poRes.data || [];
+  const landed   = landedRes?.data || [];   // landed_costs (ค่าขนส่ง/ค่าจัดการ จากรับสินค้า)
+  window._dashLanded = landed;
+  const handlingCost   = landed.filter(l => l.type === 'ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
+  const shippingCostGR = landed.filter(l => l.type === 'ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
 
   // fallback ต้นทุน: ถ้า order_item ขายก่อนรับเข้า (cost_per_unit=0) ให้ใช้ current_cost ของสินค้าแทน
   const prodCostMap = {};
@@ -1551,7 +1557,7 @@ async function dashboard() {
 
   // ── Net Profit Breakdown ────────────────────────────────
   const grossProfit = totalRevenue - totalCost;
-  const netProfit   = grossProfit - totalExpenses - shopeeComm - shopeeShip - supplierComm - totalEmpComm;
+  const netProfit   = grossProfit - totalExpenses - shopeeComm - shopeeShip - handlingCost - shippingCostGR - totalEmpComm;
   const netPct      = totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : '0.0';
 
   // Sales by day of week
@@ -1746,21 +1752,22 @@ async function dashboard() {
       <div style="margin-bottom:16px">
         ${(()=>{
           const items = [
-            { label:'💰 ยอดขายรวม',        val: totalRevenue,     color:'var(--accent)', plus:true  },
-            { label:'📦 ต้นทุนสินค้า',      val: -totalCost,       color:'#7c3aed',       plus:false },
+            { label:'💰 ยอดขายรวม',        val: totalRevenue,     color:'var(--accent)', plus:true, drill:'drillDashOrders()'  },
+            { label:'📦 ต้นทุนสินค้า',      val: -totalCost,       color:'#7c3aed',       plus:false, drill:'drillDashOrders()' },
             { label:'💸 ค่าคอม Shopee '+SHOPEE_COMM_PCT+'%', val: -shopeeComm, color:'var(--red)', plus:false, sub:'จากยอด Shopee '+fmtB(shopeeRev) },
             { label:'🚚 ค่าขนส่ง Shopee '+SHOPEE_SHIP_PCT+'%', val: -shopeeShip, color:'#f97316', plus:false, sub:'จากยอด Shopee' },
-            { label:'🏭 ค่าคอม Supplier '+SUPPLIER_COMM_PCT+'%', val: -supplierComm, color:'#0891b2', plus:false, sub:'จากยอดซื้อ '+fmtB(totalPurchase) },
+            { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
+            { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
             ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:'จากยอด '+fmtB(e.revenue) })),
-            { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false },
+            { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false, drill:'drillDashExpenses()' },
             { label:'✅ กำไรสุทธิ',         val: netProfit,        color: netProfit>=0?'var(--green)':'var(--red)', plus:netProfit>=0, isFinal:true },
           ];
           const maxAbs = Math.max(...items.map(i=>Math.abs(i.val)));
           return items.map(item => {
             const pct = totalRevenue > 0 ? (item.val/totalRevenue*100).toFixed(1) : '0.0';
             const barW = maxAbs > 0 ? Math.abs(item.val)/maxAbs*100 : 0;
-            return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:'+(item.isFinal?'10px 8px':'6px 8px')+';border-radius:8px;background:'+(item.isFinal?'var(--bg3)':'transparent')+(item.isFinal?';border:1px solid var(--border)':'')+'">' +
-              '<div style="flex:0 0 220px;font-size:12px;color:var(--text2)'+( item.isFinal?';font-weight:700;color:var(--text1)':'')+'">' + item.label + (item.sub ? '<div style="font-size:10px;color:var(--text3)">'+item.sub+'</div>' : '') + '</div>' +
+            return '<div '+(item.drill?'onclick="'+item.drill+'" title="คลิกดูที่มาของค่านี้" ':'')+'style="display:flex;align-items:center;gap:10px;margin-bottom:8px;padding:'+(item.isFinal?'10px 8px':'6px 8px')+';border-radius:8px;background:'+(item.isFinal?'var(--bg3)':'transparent')+(item.isFinal?';border:1px solid var(--border)':'')+(item.drill?';cursor:pointer':'')+'" '+(item.drill?'onmouseover="this.style.background=\'var(--bg3)\'" onmouseout="this.style.background=\''+(item.isFinal?'var(--bg3)':'transparent')+'\'"':'')+'>' +
+              '<div style="flex:0 0 220px;font-size:12px;color:var(--text2)'+( item.isFinal?';font-weight:700;color:var(--text1)':'')+'">' + item.label + (item.drill?' <span style="font-size:9px;color:var(--accent)">🔍</span>':'') + (item.sub ? '<div style="font-size:10px;color:var(--text3)">'+item.sub+'</div>' : '') + '</div>' +
               '<div style="flex:1;background:var(--border);border-radius:4px;height:'+(item.isFinal?'10':'6')+'px;overflow:hidden">' +
                 '<div style="background:'+item.color+';height:100%;width:'+barW+'%;border-radius:4px;transition:width 0.6s"></div>' +
               '</div>' +
@@ -1788,10 +1795,15 @@ async function dashboard() {
           <div style="font-size:14px;font-weight:700;color:#be185d">${fmtB(totalEmpComm)}</div>
           <div style="font-size:11px;color:var(--text3)">${empCommList.map(e=>e.name+' '+fmtB(e.commission)).join(' · ')||'-'}</div>
         </div>
-        <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
-          <div style="font-size:11px;color:var(--text3)">ค่าคอม Supplier</div>
-          <div style="font-size:14px;font-weight:700;color:#0891b2">${fmtB(supplierComm)}</div>
-          <div style="font-size:11px;color:var(--text3)">${SUPPLIER_COMM_PCT}% ของยอดซื้อ</div>
+        <div onclick="drillLandedCost('ค่าจัดการ')" title="คลิกดูที่มา" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer">
+          <div style="font-size:11px;color:var(--text3)">🔧 ค่าจัดการ 🔍</div>
+          <div style="font-size:14px;font-weight:700;color:#0891b2">${fmtB(handlingCost)}</div>
+          <div style="font-size:11px;color:var(--text3)">จากรับสินค้า</div>
+        </div>
+        <div onclick="drillLandedCost('ค่าขนส่ง')" title="คลิกดูที่มา" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer">
+          <div style="font-size:11px;color:var(--text3)">🚚 ค่าขนส่ง 🔍</div>
+          <div style="font-size:14px;font-weight:700;color:#0ea5e9">${fmtB(shippingCostGR)}</div>
+          <div style="font-size:11px;color:var(--text3)">จากรับสินค้า</div>
         </div>
         <div style="text-align:center;padding:10px;background:${netProfit>=0?'#e8fdf0':'#fef2f2'};border-radius:8px;border:2px solid ${netProfit>=0?'var(--green)':'var(--red)'}">
           <div style="font-size:11px;color:var(--text3)">กำไรสุทธิ</div>
@@ -2053,6 +2065,34 @@ function viewProductRepeatOrders(productId) {
 }
 
 // ─── DRILL-DOWN: Dashboard ──────────────────────────────
+// drill: ที่มาของค่าจัดการ/ค่าขนส่ง จากการรับสินค้า (landed_costs)
+function drillLandedCost(type) {
+  const rows = (window._dashLanded || []).filter(l => l.type === type).sort((a,b)=>(b.move_date||'').localeCompare(a.move_date||''));
+  const total = rows.reduce((s,l)=>s+Number(l.amount||0),0);
+  const icon = type === 'ค่าขนส่ง' ? '🚚' : '🔧';
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '300';
+  modal.innerHTML =
+    '<div class="modal" style="max-width:640px">' +
+    '<div class="modal-title">'+icon+' '+type+' — จากการรับสินค้า ('+rows.length+' รายการ)</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">รวม <strong style="color:var(--amber)">'+fmtB(total)+'</strong> · ดึงจาก Landed Cost ตอนรับสินค้าเข้าสต๊อก</div>' +
+    (rows.length ?
+      '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr>'+
+      '<th>วันที่</th><th>ล็อต / PO</th><th>หมายเหตุ</th><th class="text-right">จำนวนเงิน</th></tr></thead><tbody>'+
+      rows.map(l =>
+        '<tr><td style="white-space:nowrap;font-size:12px">'+(l.move_date||'-')+'</td>'+
+        '<td style="font-size:12px">'+(l.lot_name||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+(l.note||'-')+'</td>'+
+        '<td class="text-right font-mono text-amber">'+fmtB(l.amount)+'</td></tr>'
+      ).join('')+
+      '</tbody></table></div>'
+      : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+type+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อก โดยใส่ Landed Cost ประเภท "'+type+'"</span></div></div>') +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
 function drillDashOrders() {
   const orders = window._dashOrders || [];
   if (!orders.length) return;
@@ -5854,6 +5894,17 @@ async function saveStockBatch() {
 
   const { error } = await sb.from('stock_movements').insert(inserts);
   if (error) { _stockSaving=false; toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
+
+  // เก็บ Landed Cost แยกตามประเภท (ค่าขนส่ง/ค่าจัดการ ฯลฯ) สำหรับ Dashboard — ถ้าตาราง landed_costs ยังไม่มี จะข้าม (ไม่ block)
+  const _poIdSave = document.getElementById('s-po-sel')?.value || null;
+  const landedToSave = (landedCostRows||[]).filter(r => Number(r.amount) > 0).map(r => ({
+    shop_id: currentShop.id, type: r.type, amount: Number(r.amount)||0, note: r.note||'',
+    lot_name: lot, move_date: date, po_id: _poIdSave
+  }));
+  if (landedToSave.length) {
+    const { error: lcErr } = await sb.from('landed_costs').insert(landedToSave);
+    if (lcErr) console.warn('landed_costs insert skipped (ตารางยังไม่มี?):', lcErr.message);
+  }
 
   const productIds = [...new Set(valid.map(r => r.product_id))];
   await recalcStockQty(productIds);
