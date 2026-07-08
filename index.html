@@ -5490,37 +5490,44 @@ async function archiveProduct(id) {
 let stockProductList = [];   // all active products for search
 let stockRows = [];          // current batch rows
 
-// นำเข้า Landed Cost ย้อนหลัง: รวม other_cost ต่อครั้งที่รับของ → ลงเป็น "ค่าขนส่ง" (กันซ้ำ)
+// นำเข้า Landed Cost ย้อนหลัง (กันซ้ำต่อประเภท):
+//  ค่าขนส่ง = ยอดรวม other_cost จริงต่อครั้งที่รับ ; ค่าจัดการ = 10% ของยอดรับเข้า (qty×ต้นทุน/หน่วย รวม VAT)
 async function backfillLandedCosts() {
-  if (!confirm('นำเข้า Landed Cost ย้อนหลัง?\n\nดึงยอดรวม Landed ของทุกครั้งที่เคยรับสินค้า (จาก other_cost) มาลงเป็นประเภท "ค่าขนส่ง"\nรายการที่นำเข้าแล้วจะไม่ทำซ้ำ')) return;
+  if (!confirm('นำเข้า Landed Cost ย้อนหลัง?\n\n• ค่าขนส่ง = ยอด Landed จริงของแต่ละครั้งที่รับ (จาก other_cost)\n• ค่าจัดการ = 10% ของยอดรับเข้า (รวม VAT)\n\nรายการที่มีอยู่แล้วจะไม่ทำซ้ำ')) return;
   const btn = document.getElementById('btn-backfill-landed');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังนำเข้า...'; }
   try {
     const { data: moves, error: mErr } = await sb.from('stock_movements')
-      .select('lot_name,move_date,po_id,other_cost')
+      .select('lot_name,move_date,po_id,qty,cost_per_unit,other_cost')
       .eq('shop_id', currentShop.id).eq('move_type','in');
     if (mErr) throw mErr;
+    // รวมต่อ batch (lot_name|move_date|po_id)
     const batches = {};
     (moves||[]).forEach(m => {
-      const oc = Number(m.other_cost||0);
-      if (oc <= 0) return;
       const key = (m.lot_name||'')+'|'+(m.move_date||'')+'|'+(m.po_id||'');
-      if (!batches[key]) batches[key] = { lot_name:m.lot_name, move_date:m.move_date, po_id:m.po_id, total:0 };
-      batches[key].total += oc;
+      if (!batches[key]) batches[key] = { lot_name:m.lot_name, move_date:m.move_date, po_id:m.po_id, landed:0, received:0 };
+      batches[key].landed   += Number(m.other_cost||0);
+      batches[key].received += Number(m.qty||0) * Number(m.cost_per_unit||0);  // ยอดรับเข้า (รวม VAT/landed)
     });
-    const batchList = Object.values(batches).filter(b => b.total > 0);
-    if (!batchList.length) { toast('ไม่พบ Landed Cost ย้อนหลัง','success'); return; }
-    // กันซ้ำ: ข้าม batch ที่มี landed_costs อยู่แล้ว (key = lot_name|move_date)
-    const { data: existing } = await sb.from('landed_costs').select('lot_name,move_date').eq('shop_id', currentShop.id);
-    const existKeys = new Set((existing||[]).map(e => (e.lot_name||'')+'|'+(e.move_date||'')));
-    const toInsert = batchList
-      .filter(b => !existKeys.has((b.lot_name||'')+'|'+(b.move_date||'')))
-      .map(b => ({ shop_id: currentShop.id, type:'ค่าขนส่ง', amount: Math.round(b.total*100)/100, note:'นำเข้าย้อนหลัง', lot_name:b.lot_name, move_date:b.move_date, po_id:b.po_id }));
+    const batchList = Object.values(batches).filter(b => b.received > 0 || b.landed > 0);
+    if (!batchList.length) { toast('ไม่พบข้อมูลการรับสินค้าย้อนหลัง','success'); return; }
+    // กันซ้ำระดับ (batch + ประเภท) — ถ้ามีประเภทนั้นแล้วจะข้าม
+    const { data: existing } = await sb.from('landed_costs').select('lot_name,move_date,type').eq('shop_id', currentShop.id);
+    const existKeys = new Set((existing||[]).map(e => (e.lot_name||'')+'|'+(e.move_date||'')+'|'+(e.type||'')));
+    const has = (b,type) => existKeys.has((b.lot_name||'')+'|'+(b.move_date||'')+'|'+type);
+    const toInsert = [];
+    batchList.forEach(b => {
+      const ship = Math.round(b.landed*100)/100;
+      const handle = Math.round(b.received*0.10*100)/100;
+      if (ship  > 0 && !has(b,'ค่าขนส่ง'))  toInsert.push({ shop_id:currentShop.id, type:'ค่าขนส่ง',  amount:ship,   note:'นำเข้าย้อนหลัง',      lot_name:b.lot_name, move_date:b.move_date, po_id:b.po_id });
+      if (handle> 0 && !has(b,'ค่าจัดการ')) toInsert.push({ shop_id:currentShop.id, type:'ค่าจัดการ', amount:handle, note:'นำเข้าย้อนหลัง 10%', lot_name:b.lot_name, move_date:b.move_date, po_id:b.po_id });
+    });
     if (!toInsert.length) { toast('นำเข้าครบแล้ว ไม่มีรายการใหม่ ✓','success'); return; }
     const { error } = await sb.from('landed_costs').insert(toInsert);
     if (error) throw error;
-    const sum = toInsert.reduce((s,x)=>s+x.amount,0);
-    toast('นำเข้า Landed ย้อนหลัง '+toInsert.length+' รายการ รวม '+fmtB(sum)+' ✓','success');
+    const nShip = toInsert.filter(x=>x.type==='ค่าขนส่ง').length;
+    const nHandle = toInsert.filter(x=>x.type==='ค่าจัดการ').length;
+    toast('นำเข้าย้อนหลัง: ค่าขนส่ง '+nShip+' · ค่าจัดการ '+nHandle+' รายการ ✓','success');
   } catch(e) {
     toast('นำเข้าไม่สำเร็จ: '+(e.message||e),'error');
   } finally {
