@@ -8307,6 +8307,7 @@ function calcPOTotal(){
   return total;
 }
 
+let _poSaving = false;
 async function savePO(status) {
   const date=document.getElementById('po-date').value;
   if(!date){toast('กรุณาระบุวันที่','error');return;}
@@ -8316,7 +8317,9 @@ async function savePO(status) {
     ? (allSuppliers.find(s=>s.id===supplierId)?.name||'')
     : '';
   if(!supplierName){toast('กรุณาเลือก Supplier','error');return;}
-  
+  if (_poSaving) return;   // กันกดบันทึก/ส่งซ้ำ → รายการสินค้าซ้ำ
+  _poSaving = true;
+
   let poNo = editingPONo;
   if(!editingPOId) {
     poNo = await generatePONo(date);
@@ -8351,10 +8354,12 @@ async function savePO(status) {
     error = res.error;
   }
   
-  if(error){toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
-  
+  if(error){_poSaving=false;toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
+
   if (editingPOId) {
-    await sb.from('purchase_order_items').delete().eq('po_id', editingPOId);
+    // ต้องลบรายการเดิมให้สำเร็จก่อน insert ใหม่ ไม่งั้นจะซ้ำ
+    const { error: delErr } = await sb.from('purchase_order_items').delete().eq('po_id', editingPOId);
+    if (delErr) { _poSaving=false; toast('ลบรายการเดิมไม่สำเร็จ: '+delErr.message,'error'); return; }
   }
   
   if(poItems.length){
@@ -8373,11 +8378,35 @@ async function savePO(status) {
   
   editingPOId = null;
   editingPONo = null;
-  
+  _poSaving = false;
+
   closeModal('modal-po');
   closeModal('modal-po-detail');
   toast('บันทึก '+poNo+' ✓','success');
   loadPOs();
+}
+
+// ลบรายการสินค้าที่ซ้ำใน PO (product+จำนวน+ราคาซื้อ เหมือนกัน) — เก็บตัวที่รับของแล้วมากสุด
+async function dedupePOItems(poId) {
+  const { data: items } = await sb.from('purchase_order_items').select('*').eq('po_id', poId).order('id');
+  if (!items || !items.length) return;
+  const groups = {};
+  items.forEach(it => {
+    const key = (it.product_id || it.product_name || '') + '|' + it.qty_ordered + '|' + it.unit_cost;
+    (groups[key] = groups[key] || []).push(it);
+  });
+  const toDelete = [];
+  Object.values(groups).forEach(g => {
+    if (g.length <= 1) return;
+    g.sort((a,b) => Number(b.qty_received||0) - Number(a.qty_received||0)); // เก็บตัวที่รับของแล้วมากสุด
+    toDelete.push(...g.slice(1).map(x => x.id));
+  });
+  if (!toDelete.length) { toast('ไม่พบรายการซ้ำ', 'success'); return; }
+  if (!confirm('พบรายการซ้ำ ' + toDelete.length + ' รายการ — ต้องการลบออกไหม?')) return;
+  const { error } = await sb.from('purchase_order_items').delete().in('id', toDelete);
+  if (error) { toast('ลบไม่สำเร็จ: ' + error.message, 'error'); return; }
+  toast('ลบรายการซ้ำ ' + toDelete.length + ' รายการแล้ว ✓', 'success');
+  viewPO(poId);
 }
 
 async function viewPO(poId) {
@@ -8391,6 +8420,13 @@ async function viewPO(poId) {
   if(!po) return;
   const el=document.getElementById('po-detail-content');
   if(!el) return;
+
+  // ตรวจรายการซ้ำ (product + จำนวน + ราคาซื้อ เหมือนกัน)
+  const _seenPO = new Set();
+  const hasDupItems = (items||[]).some(it => {
+    const k = (it.product_id||it.product_name||'') + '|' + it.qty_ordered + '|' + it.unit_cost;
+    if (_seenPO.has(k)) return true; _seenPO.add(k); return false;
+  });
 
   const totalOrdered=items.reduce((s,it)=>s+Number(it.qty_ordered||0)*Number(it.unit_cost||0),0);
 
@@ -8406,7 +8442,7 @@ async function viewPO(poId) {
       '</div>'+
       '<div><span style="color:var(--text3)">วันที่สั่ง</span><div>'+po.po_date+'</div></div>'+
     '</div>'+
-    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า</div>'+
+    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า'+(hasDupItems?' <span style="color:var(--red);font-weight:400;font-size:11px">⚠️ พบรายการซ้ำ — กดปุ่ม "🧹 ลบรายการซ้ำ" ด้านล่าง</span>':'')+'</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
       '<th>#</th><th class="left">สินค้า</th>'+
       '<th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>'+
@@ -8446,6 +8482,7 @@ async function viewPO(poId) {
   const footer=document.getElementById('po-detail-footer');
   if(footer){
     let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-po-detail&quot;)">ปิด</button>';
+    if (hasDupItems) btns+='<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" title="พบรายการสินค้าซ้ำใน PO นี้">🧹 ลบรายการซ้ำ</button>';
     btns+='<button class="btn btn-secondary btn-sm" onclick="printPO(&quot;'+poId+'&quot;)">🖨 พิมพ์ PO</button>';
     if (po.status === 'draft') {
       btns+='<button class="btn btn-warning btn-sm" onclick="editPO(&quot;'+poId+'&quot;)">✏️ แก้ไขแบบร่าง</button>';
