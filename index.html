@@ -3380,7 +3380,7 @@ function _fillCustFields(c, ids) {
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
   set(ids.name,    c.customer_name);
   set(ids.user,    c.customer_username);  // ชื่อผู้ใช้ Shopee/Lazada
-  set(ids.ref,     c.customer_social);    // Customer Ref / เลขอ้างอิงเอกสาร Shopee
+  // ไม่เติม Customer Ref (customer_social) — เลขอ้างอิงเอกสาร Shopee เปลี่ยนทุกออเดอร์ ต้องกรอกเอง
   set(ids.contact, c.customer_contact);
   set(ids.phone,   c.customer_phone);
   set(ids.addr,    c.customer_address);
