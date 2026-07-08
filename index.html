@@ -1583,6 +1583,15 @@ async function dashboard() {
   // Sales by channel
   const chMap = {};
   orders.forEach(o => { chMap[o.channel] = (chMap[o.channel]||0) + Number(o.total_amount||0); });
+  // ยอดขาย + จำนวนออเดอร์ แยกช่องทาง (เรียงมากไปน้อย) สำหรับกราฟย่อย
+  const channelStats = {};
+  orders.forEach(o => {
+    const ch = (o.channel||'').trim() || 'ไม่ระบุ';
+    if (!channelStats[ch]) channelStats[ch] = { rev:0, count:0 };
+    channelStats[ch].rev += Number(o.total_amount||0);
+    channelStats[ch].count++;
+  });
+  const channelList = Object.entries(channelStats).sort((a,b)=>b[1].rev-a[1].rev);
 
   // ── หมวดหมู่สินค้า: ยอดขาย + สต๊อก ──
   const catSalesMap = {}; // category -> { rev, qty, cost, items: {productName -> {rev,qty,cost,stock,sell_price,sku}} }
@@ -1802,10 +1811,10 @@ async function dashboard() {
 
       <!-- Summary row -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;border-top:2px solid var(--border);padding-top:12px">
-        <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
-          <div style="font-size:11px;color:var(--text3)">Shopee Revenue</div>
-          <div style="font-size:14px;font-weight:700;color:var(--accent)">${fmtB(shopeeRev)}</div>
-          <div style="font-size:11px;color:var(--text3)">${totalRevenue>0?(shopeeRev/totalRevenue*100).toFixed(1):0}% ของยอดรวม</div>
+        <div onclick="drillDashOrders()" title="คลิกดูออเดอร์" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer">
+          <div style="font-size:11px;color:var(--text3)">💰 ยอดขายรวมทั้งหมด 🔍</div>
+          <div style="font-size:14px;font-weight:700;color:var(--accent)">${fmtB(totalRevenue)}</div>
+          <div style="font-size:11px;color:var(--text3)">${orderCount} ออเดอร์ · ทุกช่องทาง</div>
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าใช้จ่าย Shopee</div>
@@ -1841,7 +1850,21 @@ async function dashboard() {
         <div class="chart-box"><canvas id="ch-dow"></canvas></div>
       </div>
       <div class="card">
-        <div class="card-title">🥧 ช่องทางการขาย</div>
+        <div class="card-title">🥧 ยอดขายแยกช่องทาง <span style="font-size:11px;font-weight:400;color:var(--text3)">— กดดูออเดอร์</span></div>
+        <div style="margin-bottom:12px">
+          ${channelList.map(([ch,d],i)=>{
+            const pct = totalRevenue>0 ? (d.rev/totalRevenue*100) : 0;
+            const barW = channelList[0][1].rev>0 ? d.rev/channelList[0][1].rev*100 : 0;
+            const color = catColors[i % catColors.length];
+            return '<div onclick="drillDashChannel(&quot;'+String(ch).replace(/"/g,'')+'&quot;)" title="คลิกดูออเดอร์" style="cursor:pointer;margin-bottom:8px">'+
+              '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">'+
+                '<span style="font-weight:600">'+(i===0?'🏆 ':'')+ch+' <span style="color:var(--text3);font-weight:400">· '+d.count+' ออเดอร์</span></span>'+
+                '<span class="font-mono" style="font-weight:600">'+fmtB(d.rev)+' <span style="color:var(--text3);font-size:11px">'+pct.toFixed(1)+'%</span></span>'+
+              '</div>'+
+              '<div style="background:var(--border);border-radius:4px;height:8px;overflow:hidden"><div style="background:'+color+';height:100%;width:'+barW+'%;border-radius:4px;transition:width .5s"></div></div>'+
+            '</div>';
+          }).join('')}
+        </div>
         <div class="chart-box"><canvas id="ch-channel"></canvas></div>
       </div>
     </div>
@@ -2110,6 +2133,34 @@ function drillLandedCost(type) {
       ).join('')+
       '</tbody></table></div>'
       : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+type+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อก โดยใส่ Landed Cost ประเภท "'+type+'"</span></div></div>') +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+// drill: ออเดอร์ของช่องทางที่เลือก (Shopee/Lazada/Line OA ฯลฯ)
+function drillDashChannel(channel) {
+  const orders = (window._dashOrders||[]).filter(o => (((o.channel||'').trim())||'ไม่ระบุ') === channel)
+    .slice().sort((a,b)=>(b.order_date||'').localeCompare(a.order_date||''));
+  const total = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '300';
+  modal.innerHTML =
+    '<div class="modal" style="max-width:700px">' +
+    '<div class="modal-title">📦 ช่องทาง: '+channel+' ('+orders.length+' ออเดอร์)</div>' +
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">ยอดขายรวม <strong style="color:var(--accent)">'+fmtB(total)+'</strong></div>' +
+    (orders.length ?
+      '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr>'+
+      '<th>วันที่</th><th>เลขที่</th><th>ลูกค้า</th><th class="text-right">ยอดขาย</th></tr></thead><tbody>'+
+      orders.map(o =>
+        '<tr><td style="white-space:nowrap;font-size:12px">'+(o.order_date||'-')+'</td>'+
+        '<td class="font-mono" style="font-size:12px">'+(o.order_no||'-')+'</td>'+
+        '<td style="font-size:12px">'+(o.customer_name||'-')+'</td>'+
+        '<td class="text-right font-mono text-accent">'+fmtB(o.total_amount)+'</td></tr>'
+      ).join('')+
+      '</tbody></table></div>'
+      : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ไม่มีออเดอร์</div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
