@@ -3298,8 +3298,33 @@ function clearOrdFilter() {
 }
 
 async function quickUpdateStatus(orderId, status) {
+  // ดึงสถานะเดิม + รายการสินค้า เพื่อจัดการสต๊อกเมื่อ ยกเลิก ↔ กลับมาใช้งาน
+  const { data: ord } = await sb.from('orders')
+    .select('order_no,order_date,shipping_status,doc_status,order_items(product_id,qty,cost_per_unit)')
+    .eq('id', orderId).single();
   await sb.from('orders').update({ shipping_status: status }).eq('id', orderId);
-  toast('อัพเดทสถานะแล้ว ✓','success');
+
+  const wasCancel = ord?.shipping_status === 'cancelled';
+  const nowCancel = status === 'cancelled';
+  if (ord && wasCancel !== nowCancel) {
+    const note = 'ขาย ' + (ord.order_no || '');
+    const pids = [...new Set((ord.order_items||[]).map(it=>it.product_id).filter(Boolean))];
+    // ลบ movement 'out' เดิมของออเดอร์นี้ก่อนเสมอ (กันซ้ำ) → ทำให้สต๊อกถูกคืน
+    await sb.from('stock_movements').delete().eq('shop_id', currentShop.id).eq('note', note);
+    // ถ้ากลับมาใช้งาน (ไม่ยกเลิก) และเอกสารไม่ได้ยกเลิก → ตัดสต๊อกใหม่
+    if (!nowCancel && ord.doc_status !== 'cancelled') {
+      const mvs = (ord.order_items||[]).filter(it=>it.product_id).map(it=>({
+        shop_id: currentShop.id, product_id: it.product_id, move_type: 'out',
+        qty: Number(it.qty)||0, cost_per_unit: Number(it.cost_per_unit)||0,
+        note, move_date: ord.order_date
+      }));
+      if (mvs.length) await sb.from('stock_movements').insert(mvs);
+    }
+    if (pids.length) await recalcStockQty(pids);
+    toast(nowCancel ? 'ยกเลิกออเดอร์ + คืนสต๊อกแล้ว ✓' : 'อัพเดทสถานะ + ตัดสต๊อกใหม่ ✓', 'success');
+  } else {
+    toast('อัพเดทสถานะแล้ว ✓','success');
+  }
   if (typeof loadOrders === 'function') loadOrders();  // refresh สี + เรียงลำดับใหม่
 }
 
