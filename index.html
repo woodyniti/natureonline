@@ -5490,12 +5490,51 @@ async function archiveProduct(id) {
 let stockProductList = [];   // all active products for search
 let stockRows = [];          // current batch rows
 
+// นำเข้า Landed Cost ย้อนหลัง: รวม other_cost ต่อครั้งที่รับของ → ลงเป็น "ค่าขนส่ง" (กันซ้ำ)
+async function backfillLandedCosts() {
+  if (!confirm('นำเข้า Landed Cost ย้อนหลัง?\n\nดึงยอดรวม Landed ของทุกครั้งที่เคยรับสินค้า (จาก other_cost) มาลงเป็นประเภท "ค่าขนส่ง"\nรายการที่นำเข้าแล้วจะไม่ทำซ้ำ')) return;
+  const btn = document.getElementById('btn-backfill-landed');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังนำเข้า...'; }
+  try {
+    const { data: moves, error: mErr } = await sb.from('stock_movements')
+      .select('lot_name,move_date,po_id,other_cost')
+      .eq('shop_id', currentShop.id).eq('move_type','in');
+    if (mErr) throw mErr;
+    const batches = {};
+    (moves||[]).forEach(m => {
+      const oc = Number(m.other_cost||0);
+      if (oc <= 0) return;
+      const key = (m.lot_name||'')+'|'+(m.move_date||'')+'|'+(m.po_id||'');
+      if (!batches[key]) batches[key] = { lot_name:m.lot_name, move_date:m.move_date, po_id:m.po_id, total:0 };
+      batches[key].total += oc;
+    });
+    const batchList = Object.values(batches).filter(b => b.total > 0);
+    if (!batchList.length) { toast('ไม่พบ Landed Cost ย้อนหลัง','success'); return; }
+    // กันซ้ำ: ข้าม batch ที่มี landed_costs อยู่แล้ว (key = lot_name|move_date)
+    const { data: existing } = await sb.from('landed_costs').select('lot_name,move_date').eq('shop_id', currentShop.id);
+    const existKeys = new Set((existing||[]).map(e => (e.lot_name||'')+'|'+(e.move_date||'')));
+    const toInsert = batchList
+      .filter(b => !existKeys.has((b.lot_name||'')+'|'+(b.move_date||'')))
+      .map(b => ({ shop_id: currentShop.id, type:'ค่าขนส่ง', amount: Math.round(b.total*100)/100, note:'นำเข้าย้อนหลัง', lot_name:b.lot_name, move_date:b.move_date, po_id:b.po_id }));
+    if (!toInsert.length) { toast('นำเข้าครบแล้ว ไม่มีรายการใหม่ ✓','success'); return; }
+    const { error } = await sb.from('landed_costs').insert(toInsert);
+    if (error) throw error;
+    const sum = toInsert.reduce((s,x)=>s+x.amount,0);
+    toast('นำเข้า Landed ย้อนหลัง '+toInsert.length+' รายการ รวม '+fmtB(sum)+' ✓','success');
+  } catch(e) {
+    toast('นำเข้าไม่สำเร็จ: '+(e.message||e),'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 นำเข้า Landed ย้อนหลัง'; }
+  }
+}
+
 async function stock() {
   document.getElementById('topbar-actions').innerHTML =
     `<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="openStockModal()">+ รับสินค้าเข้า</button>
       <button class="btn btn-secondary btn-sm" onclick="openGoodsReturnModal()">↩ คืนสินค้า</button>
       <button class="btn btn-secondary btn-sm" onclick="openGoodsIssueModal()">📤 จ่ายสินค้าออก</button>
+      <button class="btn btn-secondary btn-sm" id="btn-backfill-landed" onclick="backfillLandedCosts()" title="ดึงยอด Landed Cost เก่ามาลงเป็นค่าขนส่ง (ทำครั้งเดียว)">🔄 นำเข้า Landed ย้อนหลัง</button>
     </div>`;
 
   setContent(`
