@@ -4626,13 +4626,9 @@ async function expenses() {
         <div class="modal-title">💸 บันทึกค่าใช้จ่าย</div>
         <div class="form-group"><label>วันที่</label><input type="date" id="e-date" value="${today()}"></div>
         <div class="form-group">
-          <label>หมวดหมู่</label>
-          <select id="e-cat">
-            <option>ค่า Ads Facebook</option><option>ค่า Ads อื่นๆ</option>
-            <option>ค่าแพคสินค้า</option><option>ค่าจัดส่ง</option>
-            <option>เอกสาร/กระดาษ</option><option>ค่าน้ำ/ไฟ</option>
-            <option>ค่าสินค้า/วัตถุดิบ</option><option>ค่าจ้าง</option><option>อื่นๆ</option>
-          </select>
+          <label>หมวดหมู่ <span style="font-size:11px;color:var(--text3)">เลือกหรือพิมพ์หมวดใหม่ได้</span></label>
+          <input type="text" id="e-cat" list="e-cat-list" placeholder="เลือกหรือพิมพ์หมวดใหม่..." autocomplete="off">
+          <datalist id="e-cat-list"></datalist>
         </div>
         <div class="form-group"><label>จำนวนเงิน (บาท)</label><input type="number" id="e-amt" placeholder="0.00"></div>
         <div class="form-group"><label>หมายเหตุ</label><input type="text" id="e-note" placeholder="รายละเอียด..."></div>
@@ -4644,6 +4640,7 @@ async function expenses() {
     </div>
   `);
   loadExpenses();
+  loadExpenseCatList();
 }
 
 async function loadExpenses() {
@@ -4712,55 +4709,84 @@ async function loadExpenses() {
 
 let editingExpenseId = null;
 
+// ── หมวดค่าใช้จ่าย: default + ที่เคยใช้ (จาก DB) + ที่เพิ่มเอง (localStorage) ──
+const DEFAULT_EXPENSE_CATS = ['ค่า Ads Facebook','ค่า Ads อื่นๆ','ค่าแพคสินค้า','ค่าจัดส่ง','เอกสาร/กระดาษ','ค่าน้ำ/ไฟ','ค่าสินค้า/วัตถุดิบ','ค่าจ้าง','อื่นๆ'];
+function _expenseCustomCats() { try { return JSON.parse(localStorage.getItem('ns_expense_cats')||'[]'); } catch(e) { return []; } }
+function getExpenseCategories() {
+  return [...new Set([...DEFAULT_EXPENSE_CATS, ..._expenseCustomCats(), ...(window._expenseUsedCats||[])])].filter(Boolean);
+}
+function refreshExpenseCatList() {
+  const dl = document.getElementById('e-cat-list');
+  if (!dl) return;
+  dl.innerHTML = getExpenseCategories().map(c => '<option value="'+String(c).replace(/"/g,'&quot;')+'"></option>').join('');
+}
+function rememberExpenseCat(cat) {
+  cat = (cat||'').trim();
+  if (!cat || getExpenseCategories().includes(cat)) return;
+  const custom = _expenseCustomCats(); custom.push(cat);
+  localStorage.setItem('ns_expense_cats', JSON.stringify(custom));
+}
+// โหลดหมวดที่เคยใช้ทั้งหมด (ทุกเดือน) มาเป็นตัวเลือก
+async function loadExpenseCatList() {
+  const { data } = await sb.from('expenses').select('category').eq('shop_id', currentShop.id).limit(2000);
+  window._expenseUsedCats = [...new Set((data||[]).map(e=>e.category).filter(Boolean))];
+  refreshExpenseCatList();
+}
+
 function openNewExpense() {
   editingExpenseId = null;
   const titleEl = document.querySelector('#modal-expense .modal-title');
   if (titleEl) titleEl.textContent = '💸 บันทึกค่าใช้จ่าย';
-  
+
+  refreshExpenseCatList();
   document.getElementById('e-date').value = today();
-  document.getElementById('e-cat').value = 'ค่า Ads Facebook';
+  document.getElementById('e-cat').value = '';
   document.getElementById('e-amt').value = '';
   document.getElementById('e-note').value = '';
-  
+
   openModal('modal-expense');
 }
 
 function editExpense(id) {
   const e = (window._activeExpenses || []).find(x => x.id === id);
   if (!e) return;
-  
+
   editingExpenseId = id;
   const titleEl = document.querySelector('#modal-expense .modal-title');
   if (titleEl) titleEl.textContent = '✏️ แก้ไขค่าใช้จ่าย';
-  
+
+  refreshExpenseCatList();
   document.getElementById('e-date').value = e.expense_date;
   document.getElementById('e-cat').value = e.category;
   document.getElementById('e-amt').value = e.amount;
   document.getElementById('e-note').value = e.note || '';
-  
+
   openModal('modal-expense');
 }
 
 async function saveExpense() {
   const amt = Number(document.getElementById('e-amt').value);
   if (!amt) { toast('กรุณาใส่จำนวนเงิน', 'error'); return; }
-  
+  const cat = (document.getElementById('e-cat').value || '').trim();
+  if (!cat) { toast('กรุณาเลือกหรือพิมพ์หมวดหมู่', 'error'); return; }
+
   const payload = {
     shop_id: currentShop.id,
     expense_date: document.getElementById('e-date').value,
-    category: document.getElementById('e-cat').value,
+    category: cat,
     amount: amt,
     note: document.getElementById('e-note').value
   };
-  
+
   let res;
   if (editingExpenseId) {
     res = await sb.from('expenses').update(payload).eq('id', editingExpenseId);
   } else {
     res = await sb.from('expenses').insert(payload);
   }
-  
+
   if (res.error) { toast('บันทึกไม่สำเร็จ', 'error'); return; }
+  rememberExpenseCat(cat);   // จำหมวดใหม่ไว้เป็นตัวเลือกครั้งต่อไป
   closeModal('modal-expense');
   toast('บันทึกสำเร็จ ✓', 'success');
   loadExpenses();
