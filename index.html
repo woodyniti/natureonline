@@ -8094,15 +8094,16 @@ async function openNewPO() {
   document.getElementById('po-note').value = '';
   document.getElementById('po-sup-phone').value = '';
   const vatOnEl = document.getElementById('po-vat-on');
-  if (vatOnEl) vatOnEl.checked = false;
+  if (vatOnEl) vatOnEl.checked = true;   // default: ติ๊ก VAT 7%
   const vatRowEl = document.getElementById('po-vat-row');
-  if (vatRowEl) vatRowEl.style.display = 'none';
+  if (vatRowEl) vatRowEl.style.display = 'flex';
   const vatTypeEl = document.getElementById('po-vat-type');
   if (vatTypeEl) vatTypeEl.value = 'excluded';
 
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
   renderPOItems();
+  calcPOTotal();   // sync ยอด + แสดงแถว VAT ตาม default
   openModal('modal-po');
   // โหลด supplier dropdown หลัง modal เปิด
   await loadSupplierDropdown('po-supplier-sel', null);
@@ -8146,7 +8147,7 @@ function renderPOItems() {
         d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
         d.onmousedown=async e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
-          let cost = p.current_cost || 0;
+          let cost = Number(p.purchase_price) || Number(p.current_cost) || 0;  // ใช้ราคาซื้อก่อน
           if (!cost && p.id) {
             const { data: lastPOItem } = await sb.from('purchase_order_items')
               .select('unit_cost')
@@ -8192,7 +8193,7 @@ function renderPOItems() {
         );
         if (matchedProd) {
           if (poItems[i].product_id !== matchedProd.id) {
-            let cost = matchedProd.current_cost || 0;
+            let cost = Number(matchedProd.purchase_price) || Number(matchedProd.current_cost) || 0;  // ใช้ราคาซื้อก่อน
             if (!cost && matchedProd.id) {
               const { data: lastPOItem } = await sb.from('purchase_order_items')
                 .select('unit_cost')
@@ -8440,9 +8441,9 @@ async function editPO(poId) {
   editingPOId = po.id;
   editingPONo = po.po_no;
   
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
-  
+
   const titleEl = document.getElementById('po-modal-title');
   if (titleEl) titleEl.textContent = '✏️ แก้ไขแบบร่าง Purchase Order';
   
