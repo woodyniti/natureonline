@@ -3346,12 +3346,12 @@ async function loadOrders() {
     ].some(v => String(v||'').toLowerCase().includes(search)));
   }
 
-  // เรียง: วันที่เอกสารล่าสุด → เลขที่ออเดอร์ล่าสุด → รอจัดส่งก่อน (ให้ติดตามงานค้างส่งง่าย)
+  // เรียง: รอจัดส่งขึ้นก่อน → วันที่ล่าสุด → เลขที่ล่าสุด (เห็นงานค้างส่งบนสุด)
   const _shipRank = { pending:0, shipped:1, delivered:2, cancelled:3 };
   rows.sort((a,b) =>
+    ((_shipRank[a.shipping_status] ?? 9) - (_shipRank[b.shipping_status] ?? 9)) ||
     (b.order_date||'').localeCompare(a.order_date||'') ||
-    (b.order_no||'').localeCompare(a.order_no||'') ||
-    ((_shipRank[a.shipping_status] ?? 9) - (_shipRank[b.shipping_status] ?? 9))
+    (b.order_no||'').localeCompare(a.order_no||'')
   );
 
   const totalRev = rows.reduce((s,o)=>s+Number(o.total_amount||0),0);
