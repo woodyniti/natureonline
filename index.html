@@ -3302,7 +3302,7 @@ async function loadOrders() {
   // ดึง orders และ employees แยกกัน แล้ว join ใน JS
   // (ป้องกันกรณี FK ยังไม่ได้ตั้งใน Supabase)
   let q = sb.from('orders')
-    .select('*')
+    .select('*,order_items(product_name,qty)')
     .eq('shop_id', currentShop.id)
     .order('order_date',{ascending:false})
     .order('created_at',{ascending:false});
@@ -3341,7 +3341,8 @@ async function loadOrders() {
       o.order_no, o.customer_name, o.customer_username, o.customer_social, o.customer_contact,
       o.customer_phone, o.tracking_no, o.channel, o.payment_method,
       o.note, o.customer_address,
-      o.employee_id ? empMap[o.employee_id] : ''
+      o.employee_id ? empMap[o.employee_id] : '',
+      (o.order_items||[]).map(it=>it.product_name).join(' ')   // ค้นหาจากชื่อสินค้าในออเดอร์ได้
     ].some(v => String(v||'').toLowerCase().includes(search)));
   }
 
@@ -3376,13 +3377,14 @@ async function loadOrders() {
         <th class="sortable" onclick="sortTable('tbl-orders',1,'str')">เลขที่</th>
         <th class="sortable" onclick="sortTable('tbl-orders',2,'str')">เลขอ้างอิง Shopee</th>
         <th class="sortable" onclick="sortTable('tbl-orders',3,'str')">ลูกค้า</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',4,'str')">ชื่อลูกค้า(User) Shopee,Lazada</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',5,'str')">ช่องทาง</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',6,'str')">พนักงาน</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',7,'num')">ยอดขาย</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',8,'num')">กำไร</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',9,'str')">สถานะเอกสาร</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',10,'num')">จัดส่ง</th><th></th>
+        <th>รายการสินค้า</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',5,'str')">ชื่อลูกค้า(User) Shopee,Lazada</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',6,'str')">ช่องทาง</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',7,'str')">พนักงาน</th>
+        <th class="sortable text-right" onclick="sortTable('tbl-orders',8,'num')">ยอดขาย</th>
+        <th class="sortable text-right" onclick="sortTable('tbl-orders',9,'num')">กำไร</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',10,'str')">สถานะเอกสาร</th>
+        <th class="sortable" onclick="sortTable('tbl-orders',11,'num')">จัดส่ง</th><th></th>
       </tr></thead>
       <tbody>
         ${rows.map(o=>`<tr>
@@ -3390,6 +3392,7 @@ async function loadOrders() {
           <td class="font-mono" style="color:var(--text3);font-size:12px">${o.order_no||'-'}</td>
           <td class="font-mono" style="color:var(--blue);font-size:12px">${o.customer_social||'-'}</td>
           <td>${o.customer_name||'-'}</td>
+          <td style="font-size:11px;color:var(--text3);max-width:240px;line-height:1.4">${(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-'}</td>
           <td style="color:var(--text3);font-size:12px">${o.customer_username||'-'}</td>
           <td>${channelBadge(o.channel)}</td>
           <td style="font-size:12px;color:var(--text2)">${o.employees?.name||'-'}</td>
@@ -3424,6 +3427,7 @@ async function loadOrders() {
           ${channelBadge(o.channel)}
         </div>
       </div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-'}</div>
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="display:flex;gap:6px;align-items:center">
           ${docStatusBadge(o.doc_status||'draft')}
