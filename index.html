@@ -209,7 +209,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .shop-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Main Content ── */
-.main { margin-left: var(--sidebar-w); flex: 1; min-height: 100vh; display: flex; flex-direction: column; }
+.main { margin-left: var(--sidebar-w); flex: 1; min-width: 0; min-height: 100vh; display: flex; flex-direction: column; }
 .topbar {
   position: sticky; top: 0; z-index: 50;
   background: rgba(244,246,251,0.92); backdrop-filter: blur(12px);
@@ -219,7 +219,7 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 }
 .topbar-title { font-size: 16px; font-weight: 700; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
-.page-content { padding: 24px; flex: 1; }
+.page-content { padding: 24px; flex: 1; min-width: 0; }
 
 /* ── Cards / Stat Cards ── */
 .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -253,8 +253,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .gap-3 { gap: 12px; }
 
 /* ── Table ── */
-.table-wrap { overflow-x: auto; }
+.table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#tbl-orders { min-width: 1100px; }  /* ตารางออเดอร์กว้าง → เลื่อนแนวนอนในกรอบ ไม่ตกขอบ */
 thead th {
   text-align: left; padding: 10px 12px;
   font-size: 11px; font-weight: 600; color: var(--text3);
