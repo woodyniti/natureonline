@@ -255,7 +255,16 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 /* ── Table ── */
 .table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
-#tbl-orders { min-width: 1100px; }  /* ตารางออเดอร์กว้าง → เลื่อนแนวนอนในกรอบ ไม่ตกขอบ */
+/* ── ตารางออเดอร์แบบกระชับ 6 คอลัมน์: พอดีจอ ไม่ต้องเลื่อนซ้าย-ขวา ── */
+.orders-compact { table-layout: fixed; width: 100%; min-width: 0; }
+.orders-compact th, .orders-compact td { padding: 9px 10px; vertical-align: top; }
+.orders-compact .col-order    { width: 12%; white-space: nowrap; }
+.orders-compact .col-customer { width: 20%; }
+.orders-compact .col-products { width: 26%; word-break: break-word; }
+.orders-compact .col-money    { width: 15%; }
+.orders-compact .col-status   { width: 13%; }
+.orders-compact .col-actions  { width: 14%; }
+.orders-compact td .btn-sm { font-size: 12px; }
 thead th {
   text-align: left; padding: 10px 12px;
   font-size: 11px; font-weight: 600; color: var(--text3);
@@ -3201,6 +3210,9 @@ async function orders() {
         <option value="">ทุกสถานะ</option>
         ${DOC_STATUSES.map(s=>'<option value="'+s.key+'">'+s.th+'</option>').join('')}
       </select>
+      <select id="ord-sort" title="เรียงลำดับรายการ" onchange="window._ordSort=this.value;loadOrders()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px">
+        ${(()=>{const cur=window._ordSort||'status';return [['status','↕️ รอจัดส่งก่อน'],['date','📅 วันที่ล่าสุด'],['sale','💰 ยอดขายสูงสุด'],['profit','📈 กำไรมากสุด'],['profit_asc','📉 กำไรน้อยสุด']].map(([v,l])=>'<option value="'+v+'"'+(cur===v?' selected':'')+'>'+l+'</option>').join('');})()}
+      </select>
       <input type="text" id="ord-search" placeholder="🔍 ค้นหา ชื่อ / เลขที่ / ref / tracking..." oninput="loadOrders()" onkeydown="if(event.key==='Enter')loadOrders()" style="min-width:200px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;color:var(--text)">
       <button class="btn btn-secondary btn-sm" onclick="loadOrders()">🔍 ค้นหา</button>
       <button class="btn btn-secondary btn-sm" onclick="clearOrdFilter()">📋 ทั้งหมด</button>
@@ -3347,13 +3359,23 @@ async function loadOrders() {
     ].some(v => String(v||'').toLowerCase().includes(search)));
   }
 
-  // เรียง: รอจัดส่งขึ้นก่อน → วันที่ล่าสุด → เลขที่ล่าสุด (เห็นงานค้างส่งบนสุด)
+  // เรียงตามตัวเลือกในดรอปดาวน์ "เรียงตาม" (ค่าเริ่มต้น: รอจัดส่งขึ้นก่อน → วันที่ล่าสุด → เลขที่ล่าสุด)
   const _shipRank = { pending:0, shipped:1, delivered:2, cancelled:3 };
-  rows.sort((a,b) =>
-    ((_shipRank[a.shipping_status] ?? 9) - (_shipRank[b.shipping_status] ?? 9)) ||
-    (b.order_date||'').localeCompare(a.order_date||'') ||
-    (b.order_no||'').localeCompare(a.order_no||'')
-  );
+  const _profitOf = o => {
+    const s = Number(o.total_amount||0), c = Number(o.total_cost||0);
+    return s - c - (/shopee|lazada/i.test(o.channel||'') ? s*0.30 : 0);
+  };
+  const _sortMode = window._ordSort || 'status';
+  rows.sort((a,b) => {
+    if (_sortMode === 'date')       return (b.order_date||'').localeCompare(a.order_date||'') || (b.order_no||'').localeCompare(a.order_no||'');
+    if (_sortMode === 'sale')       return Number(b.total_amount||0) - Number(a.total_amount||0);
+    if (_sortMode === 'profit')     return _profitOf(b) - _profitOf(a);
+    if (_sortMode === 'profit_asc') return _profitOf(a) - _profitOf(b);
+    // 'status' (ค่าเริ่มต้น)
+    return ((_shipRank[a.shipping_status] ?? 9) - (_shipRank[b.shipping_status] ?? 9)) ||
+           (b.order_date||'').localeCompare(a.order_date||'') ||
+           (b.order_no||'').localeCompare(a.order_no||'');
+  });
 
   const totalRev  = rows.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const totalCost = rows.reduce((s,o)=>s+Number(o.total_cost||0),0);
@@ -3378,60 +3400,59 @@ async function loadOrders() {
     return;
   }
 
-  // Desktop table
+  // Desktop table — เลย์เอาต์กระชับ 6 คอลัมน์ (รวมข้อมูลซ้อนบรรทัด) พอดีจอ ไม่ต้องเลื่อนซ้าย-ขวา
   document.getElementById('ord-table').innerHTML = `
-    <table class="desktop-only" id="tbl-orders">
+    <table class="desktop-only orders-compact" id="tbl-orders">
       <thead><tr>
-        <th class="sortable" onclick="sortTable('tbl-orders',0,'str')">วันที่</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',1,'str')">เลขที่</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',2,'str')">เลขอ้างอิง Shopee</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',3,'str')">ลูกค้า</th>
+        <th>ออเดอร์</th>
+        <th>ลูกค้า / ช่องทาง</th>
         <th>รายการสินค้า</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',5,'str')">ชื่อลูกค้า(User) Shopee,Lazada</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',6,'str')">ช่องทาง</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',7,'str')">พนักงาน</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',8,'num')">ยอดขาย</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',9,'num')">ต้นทุนสินค้า</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',10,'num')" title="ค่าธรรมเนียม Shopee/Lazada 30% ของยอดขาย">ค่า GP Platform</th>
-        <th class="sortable text-right" onclick="sortTable('tbl-orders',11,'num')" title="ยอดขาย − ต้นทุนสินค้า − ค่า GP Platform">กำไร</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',12,'str')">สถานะเอกสาร</th>
-        <th class="sortable" onclick="sortTable('tbl-orders',13,'num')">จัดส่ง</th><th></th>
+        <th class="text-right">การเงิน</th>
+        <th>สถานะ</th>
+        <th></th>
       </tr></thead>
       <tbody>
-        ${rows.map(o=>`<tr>
-          <td style="white-space:nowrap">${o.order_date}</td>
-          <td class="font-mono" style="color:var(--text3);font-size:12px">${o.order_no||'-'}</td>
-          <td class="font-mono" style="color:var(--blue);font-size:12px">${o.customer_social||'-'}</td>
-          <td>${o.customer_name||'-'}</td>
-          <td style="font-size:11px;color:var(--text3);max-width:240px;line-height:1.4">${(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-'}</td>
-          <td style="color:var(--text3);font-size:12px">${o.customer_username||'-'}</td>
-          <td>${channelBadge(o.channel)}</td>
-          <td style="font-size:12px;color:var(--text2)">${o.employees?.name||'-'}</td>
-          <td class="text-right font-mono text-accent">${fmtB(o.total_amount)}</td>
-          ${(()=>{
-            const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
-            const isPlat=/shopee|lazada/i.test(o.channel||'');
-            const fee=isPlat?sale*0.30:0;
-            const profit=sale-cost-fee;
-            return '<td class="text-right font-mono" style="color:#7c3aed">'+fmtB(cost)+'</td>'+
-              (isPlat
-                ? '<td data-sort="'+fee+'" class="text-right font-mono text-red" style="font-size:12px" title="ค่าธรรมเนียม 30% ของยอดขาย">-'+fmtB(fee)+'</td>'
-                : '<td class="text-right" style="color:var(--text3);font-size:12px" title="เฉพาะช่องทาง Shopee/Lazada">–</td>')+
-              '<td data-sort="'+profit+'" class="text-right font-mono '+(profit>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(profit)+'</td>';
-          })()}
-          <td>${docStatusBadge(o.doc_status||'draft')}</td>
-          <td data-sort="${_shipRank[o.shipping_status] ?? 9}">
+        ${rows.map(o=>{
+          const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
+          const isPlat=/shopee|lazada/i.test(o.channel||'');
+          const fee=isPlat?sale*0.30:0;
+          const profit=sale-cost-fee;
+          const products=(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-';
+          return `<tr>
+          <td class="col-order">
+            <div style="font-weight:600">${o.order_date||'-'}</div>
+            <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
+            ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
+          </td>
+          <td class="col-customer">
+            <div style="font-weight:500">${o.customer_name||'-'}</div>
+            ${o.customer_username?`<div style="font-size:11px;color:var(--text3)">👤 ${o.customer_username}</div>`:''}
+            <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${o.employees.name}</span>`:''}</div>
+          </td>
+          <td class="col-products" style="font-size:11px;color:var(--text3);line-height:1.45">${products}</td>
+          <td class="col-money text-right" style="white-space:nowrap;font-size:12px;line-height:1.55">
+            <div><span style="color:var(--text3)">ขาย</span> <span class="font-mono text-accent" style="font-weight:600">${fmtB(sale)}</span></div>
+            <div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
+            ${isPlat?`<div class="text-red" title="ค่าธรรมเนียม Shopee/Lazada 30% ของยอดขาย"><span style="color:var(--text3)">GP</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
+            <div class="${profit>=0?'text-green':'text-red'}" style="font-weight:700"><span style="color:var(--text3);font-weight:400">กำไร</span> <span class="font-mono">${fmtB(profit)}</span></div>
+          </td>
+          <td class="col-status" style="white-space:nowrap">
+            <div style="margin-bottom:5px">${docStatusBadge(o.doc_status||'draft')}</div>
             <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value,this)"
               style="border:1px solid;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;font-weight:600;${shipSelStyle(o.shipping_status)}">
               ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
             </select>
           </td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-secondary btn-sm" onclick="viewOrder('${o.id}')">ดู/แก้</button>
-            <button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${o.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>
-            <button class="btn btn-secondary btn-sm" onclick="openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100">🏷️ สติกเกอร์สินค้า</button>
+          <td class="col-actions" style="white-space:nowrap">
+            <div style="display:flex;flex-direction:column;gap:4px">
+              <button class="btn btn-secondary btn-sm" onclick="viewOrder('${o.id}')">ดู/แก้</button>
+              <div style="display:flex;gap:4px">
+                <button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${o.id}')" title="ใบปะหน้าพัสดุ" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;padding:4px 9px">📦</button>
+                <button class="btn btn-secondary btn-sm" onclick="openStickerModal('${o.id}')" title="สติกเกอร์สินค้า" style="background:#fff3e0;color:#e65100;border-color:#e65100;padding:4px 9px">🏷️</button>
+              </div>
+            </div>
           </td>
-        </tr>`).join('')}
+        </tr>`;}).join('')}
       </tbody>
     </table>`;
 
