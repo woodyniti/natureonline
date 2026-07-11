@@ -1622,8 +1622,13 @@ async function dashboard() {
   }).filter(e => e.commission > 0);
   const totalEmpComm = empCommList.reduce((s,e) => s + e.commission, 0);
 
-  // ── Net Profit สุดท้าย (หลังหักคอม) ─────────────────────
-  const netProfit   = netBeforeComm - totalEmpComm;
+  // ── ค่าแรง CFO: นันทนา 20% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ ฐานเดียวกับคอมพนักงาน) ──
+  const CFO_NAME = 'นันทนา';
+  const CFO_WAGE_PCT = 20;
+  const cfoWage = commBase * CFO_WAGE_PCT / 100;   // commBase = กำไรสุทธิก่อนหัก (ขาดทุน=0)
+
+  // ── Net Profit สุดท้าย (หลังหักคอมพนักงาน + ค่าแรง CFO) ──
+  const netProfit   = netBeforeComm - totalEmpComm - cfoWage;
   const netPct      = totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : '0.0';
 
   // Sales by day of week
@@ -1844,6 +1849,7 @@ async function dashboard() {
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
             ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% ของกำไรสุทธิก่อนคอม '+fmtB(commBase) })),
+            ...(cfoWage>0 ? [{ label:'💼 ค่าแรง CFO: '+CFO_NAME+' '+CFO_WAGE_PCT+'%', val:-cfoWage, color:'#9333ea', plus:false, sub:CFO_WAGE_PCT+'% ของกำไรสุทธิก่อนหัก '+fmtB(commBase) }] : []),
             { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false, drill:'drillDashExpenses()' },
             { label:'✅ กำไรสุทธิ',         val: netProfit,        color: netProfit>=0?'var(--green)':'var(--red)', plus:netProfit>=0, isFinal:true },
           ];
@@ -1879,6 +1885,11 @@ async function dashboard() {
           <div style="font-size:11px;color:var(--text3)">ค่าคอมพนักงาน</div>
           <div style="font-size:14px;font-weight:700;color:#be185d">${fmtB(totalEmpComm)}</div>
           <div style="font-size:11px;color:var(--text3)">${empCommList.map(e=>e.name+' '+fmtB(e.commission)).join(' · ')||'-'}</div>
+        </div>
+        <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:11px;color:var(--text3)">💼 ค่าแรง CFO</div>
+          <div style="font-size:14px;font-weight:700;color:#9333ea">${fmtB(cfoWage)}</div>
+          <div style="font-size:11px;color:var(--text3)">${CFO_NAME} ${CFO_WAGE_PCT}% ของกำไรสุทธิ</div>
         </div>
         <div onclick="drillLandedCost('ค่าจัดการ')" title="คลิกดูที่มา" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer">
           <div style="font-size:11px;color:var(--text3)">🔧 ค่าจัดการ 🔍</div>
