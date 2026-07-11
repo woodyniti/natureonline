@@ -5350,8 +5350,9 @@ function renderProductTable(prods) {
           fmt(qty)+(zeroSt?' ❌':lowSt?' ⚠️':'')+'</td>' +
         '<td class="text-right font-mono text-amber">'+fmtB(stockVal)+'</td>' +
         '<td style="white-space:nowrap">' +
-          '<button class="btn btn-secondary btn-sm" onclick="editProduct(&quot;'+p.id+'&quot;)">✏️</button> ' +
-          '<button class="btn btn-danger btn-sm" onclick="archiveProduct(&quot;'+p.id+'&quot;)">ซ่อน</button>' +
+          '<button class="btn btn-secondary btn-sm" onclick="editProduct(&quot;'+p.id+'&quot;)" title="แก้ไข">✏️</button> ' +
+          '<button class="btn btn-secondary btn-sm" onclick="archiveProduct(&quot;'+p.id+'&quot;)" title="ซ่อนจากรายการ (ไม่ลบข้อมูล)">🙈</button> ' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteProduct(&quot;'+p.id+'&quot;)" title="ลบถาวร (ได้เฉพาะสินค้าที่ไม่มีเอกสาร/ธุรกรรม)">🗑️</button>' +
         '</td></tr>';
     }).join('') +
     '</tbody></table>';
@@ -5367,8 +5368,9 @@ function renderProductTable(prods) {
           <div style="font-size:11px;color:var(--text3)">${p.sku||''} ${p.supplier_sku?'<span style="color:var(--blue)">· '+p.supplier_sku+'</span>':''} ${p.part_no?'<span style="color:var(--purple,#7c3aed)">· '+p.part_no+'</span>':''} · <span class="badge badge-gray" style="font-size:10px">${p.category||'ไม่ระบุ'}</span></div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
-          <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')">✏️</button>
-          <button class="btn btn-danger btn-sm" onclick="archiveProduct('${p.id}')">ซ่อน</button>
+          <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" title="แก้ไข">✏️</button>
+          <button class="btn btn-secondary btn-sm" onclick="archiveProduct('${p.id}')" title="ซ่อนจากรายการ">🙈</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')" title="ลบถาวร">🗑️</button>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
@@ -5677,6 +5679,120 @@ async function archiveProduct(id) {
   await sb.from('products').update({ active:false }).eq('id',id);
   toast('ซ่อนสินค้าแล้ว','success');
   loadProducts();
+}
+
+// ── ลบสินค้า: ลบถาวรได้เฉพาะสินค้าที่ยังไม่เคยถูกใช้ในเอกสาร/ไม่มีการเคลื่อนไหวสต๊อก ──
+// ถ้าถูกอ้างอิงแล้ว → แสดงเอกสารที่เกี่ยวข้อง (คลิกเปิดดูได้) และไม่ลบ (กันข้อมูลเอกสารเดิมเสียหาย)
+async function deleteProduct(id) {
+  const prod  = allProducts.find(p => p.id === id);
+  const pname = prod?.name || 'สินค้านี้';
+
+  // ตรวจการอ้างอิงจากทุกตารางลูกพร้อมกัน
+  const [oi, qi, poi, gri, sm] = await Promise.all([
+    sb.from('order_items').select('order_id').eq('product_id', id),
+    sb.from('quotation_items').select('quotation_id').eq('product_id', id),
+    sb.from('purchase_order_items').select('po_id').eq('product_id', id),
+    sb.from('goods_return_items').select('gr_id').eq('product_id', id),
+    sb.from('stock_movements').select('id,move_type,qty,lot_name,note,move_date').eq('product_id', id).order('move_date',{ascending:false}),
+  ]);
+
+  const orderIds = [...new Set((oi.data ||[]).map(r=>r.order_id).filter(Boolean))];
+  const quoteIds = [...new Set((qi.data ||[]).map(r=>r.quotation_id).filter(Boolean))];
+  const poIds    = [...new Set((poi.data||[]).map(r=>r.po_id).filter(Boolean))];
+  const grIds    = [...new Set((gri.data||[]).map(r=>r.gr_id).filter(Boolean))];
+  const moves    = sm.data || [];
+  const totalRefs = orderIds.length + quoteIds.length + poIds.length + grIds.length + moves.length;
+
+  // ── ไม่มีการอ้างอิง → ลบถาวรได้อย่างปลอดภัย ──
+  if (totalRefs === 0) {
+    if (!confirm('⚠️ ลบสินค้า "'+pname+'" ถาวร?\n\nสินค้านี้ยังไม่เคยถูกใช้ในเอกสารและไม่มีการเคลื่อนไหวสต๊อก จึงลบได้อย่างปลอดภัย\n⛔ การลบถาวรย้อนกลับไม่ได้')) return;
+    const { data: del, error } = await sb.from('products').delete().eq('id', id).select();
+    if (error) {
+      const inUse = error.code === '23503' || /foreign key|violates/i.test(error.message||'');
+      toast(inUse ? 'ลบไม่ได้: สินค้านี้ถูกใช้งานอยู่ในเอกสาร' : ('ลบไม่สำเร็จ: '+error.message), 'error');
+      return;
+    }
+    if (!del || !del.length) { toast('ลบไม่สำเร็จ (สิทธิ์ไม่พอ) — ลองใช้ "ซ่อน" แทน','error'); return; }
+    toast('ลบสินค้า "'+pname+'" ถาวรแล้ว ✓','success');
+    loadProducts();
+    return;
+  }
+
+  // ── มีการอ้างอิง → ดึงรายละเอียดเอกสารแล้วแสดงให้คลิกดู ──
+  const [ordersRes, quotesRes, posRes, grsRes] = await Promise.all([
+    orderIds.length ? sb.from('orders').select('id,order_no,order_date,customer_name').in('id', orderIds) : Promise.resolve({data:[]}),
+    quoteIds.length ? sb.from('quotations').select('id,quote_no,quote_date,customer_name').in('id', quoteIds) : Promise.resolve({data:[]}),
+    poIds.length    ? sb.from('purchase_orders').select('id,po_no,po_date,supplier_name').in('id', poIds) : Promise.resolve({data:[]}),
+    grIds.length    ? sb.from('goods_returns').select('id,gr_no,gr_date').in('id', grIds) : Promise.resolve({data:[]}),
+  ]);
+
+  showProductRefsModal(id, pname, {
+    orders: ordersRes.data || [],
+    quotes: quotesRes.data || [],
+    pos:    posRes.data || [],
+    grs:    grsRes.data || [],
+    moves,
+  });
+}
+
+// modal แสดงเอกสาร/ธุรกรรมที่อ้างอิงสินค้า — คลิกที่รายการเพื่อเปิดดูเอกสารนั้น
+function showProductRefsModal(id, pname, refs) {
+  const { orders, quotes, pos, grs, moves } = refs;
+  const RID = 'modal-prod-refs';
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  // แถวเอกสาร: มี action = คลิกเปิดดูได้ (ปิด modal นี้ก่อนแล้วเปิดเอกสาร)
+  const row = (title, sub, action) =>
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:5px;background:var(--bg2)'+(action?';cursor:pointer':'')+'"'+
+      (action?' onclick="document.getElementById(\''+RID+'\').remove(); '+action+'"':'')+'>'+
+      '<div style="min-width:0"><div style="font-weight:600;font-size:13px">'+esc(title)+'</div>'+
+        (sub?'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(sub)+'</div>':'')+'</div>'+
+      (action?'<span style="color:var(--blue);font-size:12px;white-space:nowrap">เปิดดู →</span>':'')+
+    '</div>';
+
+  const section = (title, count, rowsHtml, footerBtn) =>
+    '<div style="margin-bottom:14px">'+
+      '<div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px">'+title+' <span class="badge badge-gray">'+count+'</span></div>'+
+      rowsHtml + (footerBtn||'') +
+    '</div>';
+
+  const moveLabel = t => ({in:'รับเข้า ▲', out:'ตัดออก ▼'}[t] || t);
+  const sections = [];
+
+  if (orders.length) sections.push(section('🛒 ออเดอร์', orders.length,
+    orders.map(o=>row((o.order_no||'-')+' · '+(o.order_date||''), o.customer_name||'', "viewOrder('"+o.id+"')")).join('')));
+
+  if (quotes.length) sections.push(section('📋 ใบเสนอราคา', quotes.length,
+    quotes.map(q=>row((q.quote_no||'-')+' · '+(q.quote_date||''), q.customer_name||'', "viewQuote('"+q.id+"')")).join('')));
+
+  if (pos.length) sections.push(section('🏭 ใบสั่งซื้อ (PO)', pos.length,
+    pos.map(po=>row((po.po_no||'-')+' · '+(po.po_date||''), po.supplier_name||'', "viewPO('"+po.id+"')")).join('')));
+
+  if (grs.length) sections.push(section('↩️ รับคืนสินค้า', grs.length,
+    grs.map(g=>row((g.gr_no||'-')+' · '+(g.gr_date||''), '', null)).join('')));
+
+  if (moves.length) sections.push(section('📦 การเคลื่อนไหวสต๊อก', moves.length,
+    moves.slice(0,15).map(m=>row(moveLabel(m.move_type)+' '+fmt(m.qty)+' · '+(m.move_date||''), m.lot_name||m.note||'', null)).join(''),
+    '<button class="btn btn-secondary btn-sm" style="margin-top:2px" onclick="document.getElementById(\''+RID+'\').remove(); openProductHistory(\''+id+'\')">ดูประวัติสต๊อกทั้งหมด →</button>'));
+
+  document.getElementById(RID)?.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = RID;
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.maxWidth = '560px';
+  modal.innerHTML =
+    '<div class="modal-title">🔗 สินค้านี้ถูกใช้งานอยู่ — ลบถาวรไม่ได้</div>'+
+    '<div style="font-size:13px;color:var(--text2);margin-bottom:4px">"<strong>'+esc(pname)+'</strong>" ถูกอ้างอิงในเอกสาร/ธุรกรรมด้านล่าง จึงลบถาวรไม่ได้ (กันข้อมูลเอกสารเดิมเสียหาย)</div>'+
+    '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">👉 คลิกที่รายการเพื่อเปิดดูเอกสาร หรือกด "ซ่อนสินค้า" เพื่อเอาออกจากรายการโดยไม่กระทบเอกสารเก่า</div>'+
+    '<div style="max-height:50vh;overflow:auto;margin-bottom:8px">'+sections.join('')+'</div>'+
+    '<div class="modal-footer" style="justify-content:space-between;gap:8px">'+
+      '<button class="btn btn-danger" onclick="document.getElementById(\''+RID+'\').remove(); archiveProduct(\''+id+'\')">🙈 ซ่อนสินค้าแทน</button>'+
+      '<button class="btn btn-secondary" onclick="document.getElementById(\''+RID+'\').remove()">ปิด</button>'+
+    '</div>';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
 }
 
 // ─── PAGE: STOCK ──────────────────────────────────────
