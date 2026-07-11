@@ -1608,18 +1608,22 @@ async function dashboard() {
   }, 0);
   const supplierComm = totalPurchase * SUPPLIER_COMM_PCT / 100;
 
-  // ── Employee Commission ─────────────────────────────────
+  // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
+  const grossProfit   = totalRevenue - totalCost;
+  const netBeforeComm = grossProfit - totalExpenses - shopeeComm - shopeeShip - handlingCost - shippingCostGR;
+  const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
+
+  // ── Employee Commission: commission_rate% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ) ──
   const empCommList = employees.map(e => {
     const empOrders = orders.filter(o => o.employee_id === e.id);
     const empRev    = empOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
-    const empComm   = empRev * Number(e.commission_rate||0) / 100;
+    const empComm   = commBase * Number(e.commission_rate||0) / 100;
     return { ...e, revenue: empRev, commission: empComm };
   }).filter(e => e.commission > 0);
   const totalEmpComm = empCommList.reduce((s,e) => s + e.commission, 0);
 
-  // ── Net Profit Breakdown ────────────────────────────────
-  const grossProfit = totalRevenue - totalCost;
-  const netProfit   = grossProfit - totalExpenses - shopeeComm - shopeeShip - handlingCost - shippingCostGR - totalEmpComm;
+  // ── Net Profit สุดท้าย (หลังหักคอม) ─────────────────────
+  const netProfit   = netBeforeComm - totalEmpComm;
   const netPct      = totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : '0.0';
 
   // Sales by day of week
@@ -1839,7 +1843,7 @@ async function dashboard() {
             { label:'🚚 ค่าขนส่ง Shopee '+SHOPEE_SHIP_PCT+'%', val: -shopeeShip, color:'#f97316', plus:false, sub:'จากยอด Shopee' },
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
-            ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:'จากยอด '+fmtB(e.revenue) })),
+            ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% ของกำไรสุทธิก่อนคอม '+fmtB(commBase) })),
             { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false, drill:'drillDashExpenses()' },
             { label:'✅ กำไรสุทธิ',         val: netProfit,        color: netProfit>=0?'var(--green)':'var(--red)', plus:netProfit>=0, isFinal:true },
           ];
@@ -7350,6 +7354,31 @@ async function loadEmployeeList() {
   ` : '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">ยังไม่มีพนักงาน</div></div>';
 }
 
+// คำนวณ "กำไรสุทธิก่อนหักคอมพนักงาน" ของช่วงวันที่ (สูตรเดียวกับ Dashboard ภาพรวม)
+// ใช้เป็นฐานคิดคอมมิชชั่น: commission = commission_rate% × กำไรสุทธิ
+// กำไรสุทธิ = ยอดขาย − ต้นทุนสินค้า − ค่าธรรมเนียม/ขนส่ง Shopee − ค่าจัดการ/ขนส่ง(รับเข้า) − ค่าใช้จ่ายทุกหมวด
+async function computeNetProfitBase(from, to) {
+  const [ordRes, expRes, prodRes, landedRes] = await Promise.all([
+    sb.from('orders').select('channel,total_amount,order_items(qty,cost_per_unit,product_id)').eq('shop_id', currentShop.id).gte('order_date',from).lte('order_date',to),
+    sb.from('expenses').select('amount').eq('shop_id', currentShop.id).gte('expense_date',from).lte('expense_date',to),
+    sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id),
+    sb.from('landed_costs').select('type,amount').eq('shop_id', currentShop.id).gte('move_date',from).lte('move_date',to),
+  ]);
+  const orders=ordRes.data||[], expenses=expRes.data||[], products=prodRes.data||[], landed=landedRes?.data||[];
+  const costMap={}; products.forEach(p=>{ if(p.id) costMap[p.id]=Number(p.current_cost||0); });
+  const orderCost=o=>(o.order_items||[]).reduce((s,it)=>{const c=Number(it.cost_per_unit||0);return s+Number(it.qty||0)*(c>0?c:Number(costMap[it.product_id]||0));},0);
+  const revenue = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const cost    = orders.reduce((s,o)=>s+orderCost(o),0);
+  const exp     = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const shopeeRev  = orders.filter(o=>(o.channel||'').toLowerCase().includes('shopee')).reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const shopeeComm = shopeeRev*20.6/100;   // ต้องตรงกับ SHOPEE_COMM_PCT ใน dashboard()
+  const shopeeShip = shopeeRev*3.3/100;    // ต้องตรงกับ SHOPEE_SHIP_PCT ใน dashboard()
+  const handling   = landed.filter(l=>l.type==='ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
+  const shipGR     = landed.filter(l=>l.type==='ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
+  const netBeforeComm = (revenue-cost) - exp - shopeeComm - shopeeShip - handling - shipGR;
+  return { netBeforeComm, revenue, cost, exp, shopeeComm, shopeeShip, handling, shipGR };
+}
+
 async function loadEmployeeStats() {
   const period = window._empPeriod || 'month';
   const now = new Date();
@@ -7394,16 +7423,23 @@ async function loadEmployeeStats() {
   const emps   = empRes.data || [];
   const orders = ordRes.data || [];
 
+  // ฐานคอม = กำไรสุทธิของงวด (หลังหักค่าใช้จ่ายต่างๆ) → commission_rate% ของกำไรสุทธิ
+  const { netBeforeComm } = await computeNetProfitBase(dateFrom, dateTo);
+  const commBase = Math.max(0, netBeforeComm);
+
   const empStats = emps.map(e => {
     const empOrders = orders.filter(o=>o.employee_id===e.id);
     const totalSales = empOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
     const orderCount = empOrders.length;
-    const commAmt = totalSales * Number(e.commission_rate||0) / 100;
+    const commAmt = commBase * Number(e.commission_rate||0) / 100;
     const totalPay = Number(e.base_salary||0) + commAmt;
     return { ...e, totalSales, orderCount, commAmt, totalPay };
   }).sort((a,b)=>b.totalSales-a.totalSales);
 
   document.getElementById('emp-kpi-table').innerHTML = empStats.length ? `
+    <div style="font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:12px">
+      💡 <b>ค่าคอม = commission_rate% × กำไรสุทธิ</b> (หลังหักต้นทุน + ค่าธรรมเนียม/ขนส่ง Shopee + ค่าจัดการ/ขนส่งรับเข้า + ค่าใช้จ่ายทุกหมวด) · กำไรสุทธิงวดนี้ = <b class="${commBase>=0?'text-green':'text-red'}">${fmtB(commBase)}</b>
+    </div>
     <table class="desktop-only">
       <thead><tr>
         <th>#</th><th>พนักงาน</th><th class="text-right">ออเดอร์รวม</th>
@@ -9952,10 +9988,12 @@ async function loadDashData() {
   // ── Employee KPI ────────────────────────────────────────────
   const empEl = document.getElementById('dash-emp-kpi');
   if (empEl) {
+    const { netBeforeComm: _npb } = await computeNetProfitBase(from, to);
+    const _commBase = Math.max(0, _npb);   // คอม = rate% × กำไรสุทธิ (หลังหักค่าใช้จ่าย)
     const empData = emps.map(e => {
       const eOrders = orders.filter(o=>o.employee_id===e.id);
       const eSales  = eOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
-      const eComm   = eSales*(Number(e.commission_rate||0)/100);
+      const eComm   = _commBase*(Number(e.commission_rate||0)/100);
       return {...e, eSales, eOrders:eOrders.length, eComm};
     }).sort((a,b)=>b.eSales-a.eSales);
 
