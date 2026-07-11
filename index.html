@@ -5426,6 +5426,24 @@ function selectCat(val) {
   if (!productCategories.includes(val)) productCategories.push(val);
 }
 
+// ── ตรวจรหัสซ้ำ: SKU / Supplier SKU / Part No ห้ามซ้ำกับสินค้าอื่น (เทียบทีละฟิลด์) ──
+// คืน {label,value,product} เมื่อพบซ้ำ, คืน null เมื่อไม่ซ้ำ. excludeId ใช้ตอนแก้ไขเพื่อยกเว้นตัวเอง
+function findProductDup({ sku, supplier_sku, part_no }, excludeId = null) {
+  const norm = v => (v || '').trim().toLowerCase();
+  const checks = [
+    ['SKU', 'sku', sku],
+    ['Supplier SKU', 'supplier_sku', supplier_sku],
+    ['Part No', 'part_no', part_no],
+  ];
+  for (const [label, field, raw] of checks) {
+    const v = norm(raw);
+    if (!v) continue;   // ค่าว่าง = ไม่บังคับ ข้ามไป
+    const hit = allProducts.find(p => p.id !== excludeId && norm(p[field]) === v);
+    if (hit) return { label, value: (raw || '').trim(), product: hit };
+  }
+  return null;
+}
+
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { toast('กรุณาใส่ชื่อสินค้า','error'); return; }
@@ -5433,13 +5451,15 @@ async function saveProduct() {
   const cost = Number(document.getElementById('p-cost').value)||0;
   const stockQty = Number(document.getElementById('p-stock').value)||0;
 
-  // ── ตรวจ SKU ซ้ำ → ห้ามบันทึก ──────────────────────
-  if (sku) {
-    const dupSku = allProducts.find(p => (p.sku||'').trim().toLowerCase() === sku.toLowerCase());
-    if (dupSku) {
-      toast('❌ SKU "'+sku+'" ซ้ำกับสินค้า: '+dupSku.name, 'error');
-      return; // หยุดทันที
-    }
+  // ── ตรวจรหัสซ้ำ: SKU / Supplier SKU / Part No ห้ามซ้ำ → ห้ามบันทึก ──
+  const dupHit = findProductDup({
+    sku,
+    supplier_sku: document.getElementById('p-supplier-sku').value.trim(),
+    part_no: (document.getElementById('p-part-no')?.value || '').trim()
+  });
+  if (dupHit) {
+    toast('❌ '+dupHit.label+' "'+dupHit.value+'" ซ้ำกับสินค้า: '+dupHit.product.name, 'error');
+    return; // หยุดทันที
   }
 
   // ── ตรวจชื่อซ้ำ → เตือน แต่ยังดำเนินการต่อได้ ──────
@@ -5595,13 +5615,15 @@ async function updateProduct(id) {
   if (!name) { toast('กรุณาใส่ชื่อ','error'); return; }
   const sku  = document.getElementById('ep-sku').value.trim();
 
-  // ── ตรวจ SKU ซ้ำ (ยกเว้นตัวเอง) → ห้ามบันทึก ────────
-  if (sku) {
-    const dupSku = allProducts.find(p => p.id !== id && (p.sku||'').trim().toLowerCase() === sku.toLowerCase());
-    if (dupSku) {
-      toast('❌ SKU "'+sku+'" ซ้ำกับสินค้า: '+dupSku.name, 'error');
-      return;
-    }
+  // ── ตรวจรหัสซ้ำ: SKU / Supplier SKU / Part No ห้ามซ้ำ (ยกเว้นตัวเอง) → ห้ามบันทึก ──
+  const dupHit = findProductDup({
+    sku,
+    supplier_sku: document.getElementById('ep-supplier-sku').value.trim(),
+    part_no: (document.getElementById('ep-part-no')?.value || '').trim()
+  }, id);
+  if (dupHit) {
+    toast('❌ '+dupHit.label+' "'+dupHit.value+'" ซ้ำกับสินค้า: '+dupHit.product.name, 'error');
+    return;
   }
 
   // ── ตรวจชื่อซ้ำ (ยกเว้นตัวเอง) → เตือน ───────────────
