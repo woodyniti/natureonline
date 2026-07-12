@@ -4411,12 +4411,14 @@ function renderEditItems() {
       '</select></div>';
     tr.appendChild(tdDisc);
 
-    // รวม
+    // รวม + ต้นทุน/ชิ้น (ให้เห็นว่าต้นทุนแต่ละตัวมาจากไหน)
+    const _pcRow = editProdList.find(p => p.id === it.product_id);
+    const _cpuRow = Number(it.cost_per_unit||0) || Number(_pcRow?.current_cost||0);
     const tdTotal = document.createElement('td');
-    tdTotal.style.cssText = tdStyle + ';text-align:right;font-size:12px;font-weight:600;white-space:nowrap';
-    tdTotal.className = 'font-mono text-accent';
-    tdTotal.id = 'ed-row-total-'+i;
-    tdTotal.textContent = fmtB(itemNetEdit(it));
+    tdTotal.style.cssText = tdStyle + ';text-align:right;white-space:nowrap';
+    tdTotal.innerHTML =
+      '<span id="ed-row-total-'+i+'" class="font-mono text-accent" style="font-size:12px;font-weight:600">'+fmtB(itemNetEdit(it))+'</span>'+
+      '<div style="font-size:10px;font-weight:400;color:'+(_cpuRow>0?'#7c3aed':'var(--amber)')+'" title="ต้นทุนต่อชิ้นที่ใช้คิดกำไร">'+(_cpuRow>0?'ทุน/ชิ้น '+fmtB(_cpuRow):'⚠️ ไม่มีต้นทุน')+'</div>';
     tr.appendChild(tdTotal);
 
     // ลบ
@@ -4471,6 +4473,35 @@ function updateEditTotal() {
   if (sub) sub.textContent = fmtB(subtotal);
   const bde = document.getElementById('ed-bill-disc-amt');
   if (bde) bde.textContent = bd > 0 ? '- ' + fmtB(bd) : '';
+
+  renderEditProfitBox(grand);
+}
+
+// กล่องสรุปกำไร (คิดสดจากรายการ + ช่องทาง + ต้นทุนปัจจุบัน) — ให้ตรงกับหน้ารายการออเดอร์
+function renderEditProfitBox(saleArg) {
+  const box = document.getElementById('ed-profit-box');
+  if (!box) return;
+  const effCost = it => { const c = Number(it.cost_per_unit||0); return c>0 ? c : Number((editProdList.find(p=>p.id===it.product_id)||{}).current_cost||0); };
+  let sale = saleArg;
+  if (sale == null) {
+    const subtotal = editItems.reduce((s,it)=>s+itemNetEdit(it),0);
+    const billDisc = Number(document.getElementById('ed-bill-disc')?.value||0);
+    const billDiscType = document.getElementById('ed-bill-disc-type')?.value||'amount';
+    const bd = billDiscType === 'percent' ? subtotal*billDisc/100 : billDisc;
+    sale = Math.max(0, subtotal - bd);
+  }
+  const cost = editItems.reduce((s,it)=>s+Number(it.qty||0)*effCost(it),0);
+  const ch = document.getElementById('ed-ch')?.value || '';
+  const isPlat = /shopee|lazada/i.test(ch);
+  const gpFee = isPlat ? sale*0.30 : 0;
+  const net = sale - cost - gpFee;
+  const noCost = editItems.filter(it => it.product_id && Number(it.qty||0)>0 && effCost(it)<=0);
+  box.innerHTML =
+    '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">ยอดขาย</span><span class="font-mono">'+fmtB(sale)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ต้นทุนสินค้า</span><span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span></div>'+
+    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform 30% ('+ch+')</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
+    '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:5px;font-weight:700"><span>'+(net>=0?'กำไรสุทธิ':'ขาดทุน')+'</span><span class="font-mono '+(net>=0?'text-green':'text-red')+'">'+fmtB(net)+(sale>0?' ('+(net/sale*100).toFixed(1)+'%)':'')+'</span></div>'+
+    (noCost.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ สินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (กำไรอาจสูงเกินจริง): '+[...new Set(noCost.map(it=>it.product_name))].join(', ')+'</div>' : '');
 }
 
 async function viewOrder(orderId) {
@@ -4512,7 +4543,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
-          <select id="ed-ch" style="${sStyle}">${['Facebook','Shopee','Lazada','LINE','TikTok','Offline','อื่นๆ'].map(ch=>`<option ${order.channel===ch?'selected':''}>${ch}</option>`).join('')}</select></div>
+          <select id="ed-ch" onchange="updateEditTotal()" style="${sStyle}">${['Facebook','Shopee','Lazada','LINE','TikTok','Offline','อื่นๆ'].map(ch=>`<option ${order.channel===ch?'selected':''}>${ch}</option>`).join('')}</select></div>
         <div><span style="color:var(--text3)">Tracking ${trackingLink(order.tracking_no)}</span>
           <div style="display:flex;gap:6px;align-items:center;margin-top:3px">
             <input id="ed-track" value="${(order.tracking_no||'').replace(/"/g,'&quot;')}" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box" oninput="updateTrackingLink(this.value)">
@@ -4563,13 +4594,7 @@ async function viewOrder(orderId) {
         <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid var(--border);padding-top:8px">
           <span>ยอดสุทธิ</span><span class="font-mono text-accent" id="ed-grand-total">${fmtB(order.total_amount)}</span>
         </div>
-        <div style="font-size:12px;margin-top:6px;padding:8px 10px;background:var(--bg4);border-radius:8px;line-height:1.75">
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">ยอดขาย</span><span class="font-mono">${fmtB(order.total_amount)}</span></div>
-          <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ต้นทุนสินค้า</span><span class="font-mono" style="color:#7c3aed">${fmtB(_orderCostEff)}</span></div>
-          ${_isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform 30% ('+(order.channel||'')+')</span><span class="font-mono text-red">'+fmtB(_gpFee)+'</span></div>' : ''}
-          <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:5px;font-weight:700"><span>${_netProfit>=0?'กำไรสุทธิ':'ขาดทุน'}</span><span class="font-mono ${_netProfit>=0?'text-green':'text-red'}">${fmtB(_netProfit)}${order.total_amount>0?' ('+(_netProfit/order.total_amount*100).toFixed(1)+'%)':''}</span></div>
-        </div>
-        ${_noCostItems.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ กำไรอาจสูงเกินจริง เพราะสินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (ขายก่อนรับเข้า): '+[...new Set(_noCostItems.map(it=>it.product_name))].join(', ')+'<br><span style="color:var(--text3)">แก้: ไปหน้าสินค้า ตั้งต้นทุน หรือรับสินค้าเข้าสต๊อกพร้อมต้นทุน แล้วกด "🔄 คำนวณต้นทุนย้อนหลัง"</span></div>' : ''}
+        <div id="ed-profit-box" style="font-size:12px;margin-top:6px;padding:8px 10px;background:var(--bg4);border-radius:8px;line-height:1.75"></div>
       </div>
     </div>`;
 
