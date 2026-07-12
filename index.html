@@ -3257,7 +3257,7 @@ async function orders() {
             <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
           <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-username" placeholder="@username Shopee / Lazada"></div>
-          <div class="form-group"><label>เลขอ้างอิงเอกสาร Shopee <span style="font-size:11px;color:var(--text3)">(Customer Ref)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ"></div>
+          <div class="form-group"><label>เลขอ้างอิงเอกสาร Shopee <span style="font-size:11px;color:var(--text3)">(Customer Ref · เว้นว่างได้)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ" onchange="checkDupCustomerRef(this.value,null)"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
           <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>ช่องทางชำระ</label>
@@ -3685,6 +3685,43 @@ document.addEventListener('click', e => {
   if (!e.target.closest('#ed-cust-dd') && e.target.id !== 'ed-cust') { const dd = document.getElementById('ed-cust-dd'); if (dd) dd.style.display = 'none'; }
   if (!e.target.closest('#qt-cust-dd') && e.target.id !== 'qt-cust') { const dd = document.getElementById('qt-cust-dd'); if (dd) dd.style.display = 'none'; }
 });
+
+// ── เช็คเลขอ้างอิงเอกสาร Shopee (customer_social) ซ้ำ ──
+// ว่างได้ (ไม่เช็ค) ; ถ้าซ้ำ → เด้งเตือนพร้อมเลขเอกสารในระบบ + ลิงก์กดดูได้ (ไม่บล็อกการบันทึก)
+async function checkDupCustomerRef(val, excludeOrderId) {
+  const ref = (val||'').trim();
+  if (!ref) return;   // เว้นว่างได้
+  const { data, error } = await sb.from('orders')
+    .select('id,order_no,order_date,customer_name,channel')
+    .eq('shop_id', currentShop.id).eq('customer_social', ref).limit(20);
+  if (error) return;
+  const rows = (data||[]).filter(o => o.id !== excludeOrderId);
+  if (rows.length) showDupRefModal(ref, rows);
+}
+
+function showDupRefModal(ref, rows) {
+  const RID = 'modal-dup-ref';
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  document.getElementById(RID)?.remove();
+  const rowsHtml = rows.map(o =>
+    '<div onclick="document.getElementById(\''+RID+'\').remove(); viewOrder(\''+o.id+'\')" '+
+      'style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--bg2);cursor:pointer">'+
+      '<div style="min-width:0"><div class="font-mono" style="font-weight:600;font-size:13px">'+esc(o.order_no||'-')+'</div>'+
+        '<div style="font-size:11px;color:var(--text3)">'+esc(o.order_date||'')+' · '+esc(o.customer_name||'-')+(o.channel?' · '+esc(o.channel):'')+'</div></div>'+
+      '<span style="color:var(--blue);font-size:12px;white-space:nowrap">ดูเอกสาร →</span>'+
+    '</div>').join('');
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open'; overlay.id = RID;
+  const modal = document.createElement('div');
+  modal.className = 'modal'; modal.style.maxWidth = '500px';
+  modal.innerHTML =
+    '<div class="modal-title">⚠️ เลขอ้างอิงเอกสาร Shopee ซ้ำ</div>'+
+    '<div style="font-size:13px;color:var(--text2);margin-bottom:10px">เลขอ้างอิง <b class="font-mono">'+esc(ref)+'</b> นี้มีอยู่แล้วในระบบ '+rows.length+' รายการ 👉 คลิกเพื่อเปิดดูเอกสารเดิม แล้วตรวจว่าซ้ำจริงหรือไม่ (ถ้าตั้งใจซ้ำก็บันทึกต่อได้)</div>'+
+    '<div style="max-height:50vh;overflow:auto;margin-bottom:8px">'+rowsHtml+'</div>'+
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="document.getElementById(\''+RID+'\').remove()">ปิด</button></div>';
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
 
 // คำนวณราคาสุทธิต่อรายการ (หักส่วนลด)
 function itemNet(item) {
@@ -4467,7 +4504,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
         <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}')" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
