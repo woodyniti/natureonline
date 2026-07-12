@@ -4486,7 +4486,11 @@ async function viewOrder(orderId) {
   const _pcMap = {}; editProdList.forEach(p => { _pcMap[p.id] = Number(p.current_cost||0); });
   const _effCost = (it) => { const c = Number(it.cost_per_unit||0); return c > 0 ? c : Number(_pcMap[it.product_id]||0); };
   const _orderCostEff = editItems.reduce((s,it)=>s+Number(it.qty||0)*_effCost(it),0);
-  const _orderProfitEff = Number(order.total_amount||0) - _orderCostEff;
+  const _orderProfitEff = Number(order.total_amount||0) - _orderCostEff;   // กำไรขั้นต้น (ก่อน GP Platform)
+  // ค่า GP Platform 30% (เฉพาะ Shopee/Lazada) → กำไรสุทธิให้ตรงกับหน้ารายการออเดอร์
+  const _isPlat = /shopee|lazada/i.test(order.channel||'');
+  const _gpFee = _isPlat ? Number(order.total_amount||0)*0.30 : 0;
+  const _netProfit = _orderProfitEff - _gpFee;
   // สินค้าที่ยังไม่มีต้นทุนเลย (ทั้ง snapshot และ current_cost = 0) → เป็นเหตุให้กำไรดูเป็น 100%
   const _noCostItems = editItems.filter(it => it.product_id && Number(it.qty||0) > 0 && _effCost(it) <= 0);
   const statusLabels = {pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'};
@@ -4559,7 +4563,12 @@ async function viewOrder(orderId) {
         <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid var(--border);padding-top:8px">
           <span>ยอดสุทธิ</span><span class="font-mono text-accent" id="ed-grand-total">${fmtB(order.total_amount)}</span>
         </div>
-        <div style="font-size:12px;color:var(--text3);margin-top:4px">ต้นทุน: ${fmtB(_orderCostEff)} | กำไร: <span class="${_orderProfitEff>=0?'text-green':'text-red'}">${fmtB(_orderProfitEff)}</span> ${_orderCostEff>0 && order.total_amount>0 ? '<span style="color:var(--text3)">('+(_orderProfitEff/order.total_amount*100).toFixed(1)+'%)</span>' : ''}</div>
+        <div style="font-size:12px;margin-top:6px;padding:8px 10px;background:var(--bg4);border-radius:8px;line-height:1.75">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">ยอดขาย</span><span class="font-mono">${fmtB(order.total_amount)}</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ต้นทุนสินค้า</span><span class="font-mono" style="color:#7c3aed">${fmtB(_orderCostEff)}</span></div>
+          ${_isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform 30% ('+(order.channel||'')+')</span><span class="font-mono text-red">'+fmtB(_gpFee)+'</span></div>' : ''}
+          <div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:5px;font-weight:700"><span>${_netProfit>=0?'กำไรสุทธิ':'ขาดทุน'}</span><span class="font-mono ${_netProfit>=0?'text-green':'text-red'}">${fmtB(_netProfit)}${order.total_amount>0?' ('+(_netProfit/order.total_amount*100).toFixed(1)+'%)':''}</span></div>
+        </div>
         ${_noCostItems.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ กำไรอาจสูงเกินจริง เพราะสินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (ขายก่อนรับเข้า): '+[...new Set(_noCostItems.map(it=>it.product_name))].join(', ')+'<br><span style="color:var(--text3)">แก้: ไปหน้าสินค้า ตั้งต้นทุน หรือรับสินค้าเข้าสต๊อกพร้อมต้นทุน แล้วกด "🔄 คำนวณต้นทุนย้อนหลัง"</span></div>' : ''}
       </div>
     </div>`;
