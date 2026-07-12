@@ -4504,6 +4504,19 @@ function renderEditProfitBox(saleArg) {
     (noCost.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ สินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (กำไรอาจสูงเกินจริง): '+[...new Set(noCost.map(it=>it.product_name))].join(', ')+'</div>' : '');
 }
 
+// ดึงต้นทุนล่าสุด (current_cost) ของสินค้าในระบบ มาแทนต้นทุนที่ค้างในออเดอร์
+function pullLatestCosts() {
+  let n = 0, missing = [];
+  editItems.forEach(it => {
+    if (!it.product_id) { if((it.product_name||'').trim()) missing.push(it.product_name); return; }
+    const p = editProdList.find(x => x.id === it.product_id);
+    if (p) { it.cost_per_unit = Number(p.current_cost||0); n++; }
+  });
+  renderEditItems();   // → updateEditTotal → renderEditProfitBox (อัปเดตกล่องกำไรด้วย)
+  if (n) toast('ดึงต้นทุนล่าสุด '+n+' รายการแล้ว — ตรวจสอบแล้วกด "บันทึกการแก้ไข"', 'success');
+  else toast('ไม่มีรายการที่เชื่อมกับสินค้าในระบบ (ต้นทุนดึงอัตโนมัติไม่ได้)', 'error');
+}
+
 async function viewOrder(orderId) {
   if (currentPage !== 'orders') {
     showPage('orders');
@@ -4569,7 +4582,10 @@ async function viewOrder(orderId) {
       </div>
     </div>
 
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px">รายการสินค้า <span style="font-size:11px;color:var(--text3);font-weight:400">(แก้ไขได้)</span></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+      <div style="font-size:13px;font-weight:600">รายการสินค้า <span style="font-size:11px;color:var(--text3);font-weight:400">(แก้ไขได้)</span></div>
+      <button class="btn btn-secondary btn-sm" onclick="pullLatestCosts()" title="ตั้งต้นทุนของทุกรายการ = ต้นทุนเฉลี่ยล่าสุดของสินค้าในระบบ (แก้กรณีต้นทุนในออเดอร์ค้างค่าเก่า)">🔄 ดึงต้นทุนล่าสุด</button>
+    </div>
     <div id="ed-items" style="margin-bottom:10px"></div>
     <!-- ส่วนลดทั้งบิล -->
     <div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
