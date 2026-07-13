@@ -4945,7 +4945,8 @@ async function printReceipt(orderId) {
   billParts.push('<div class="info-val">' + (order.customer_name||'-') + '</div>');
   if (order.customer_contact) billParts.push('<div class="info-sub">\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d: ' + order.customer_contact + '</div>');
   if (order.customer_phone) billParts.push('<div class="info-sub">\u0e42\u0e17\u0e23: ' + order.customer_phone + '</div>');
-  if (order.customer_address) billParts.push('<div class="info-sub" style="margin-top:4px">' + order.customer_address.split('\n').join('<br>') + '</div>');
+  const _billAddr = order.billing_address || order.customer_address;   // บิลใช้ที่อยู่ออกบิลก่อน ถ้าว่างค่อยใช้ที่อยู่จัดส่ง
+  if (_billAddr) billParts.push('<div class="info-sub" style="margin-top:4px">' + _billAddr.split('\n').join('<br>') + '</div>');
   billParts.push('</div>');
   billParts.push('<div class="info-box" style="text-align:right">');
   billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.</span>&nbsp;&nbsp;<strong>' + (order.customer_social||order.order_no||'-') + '</strong></div>');
