@@ -3276,7 +3276,16 @@ async function orders() {
             <select id="o-emp"><option value="">-- ไม่ระบุ --</option></select>
           </div>
         </div>
-        <div class="form-group"><label>ที่อยู่จัดส่ง <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><textarea id="o-address" rows="2" placeholder="ที่อยู่ / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea></div>
+        <div class="grid-2">
+          <div class="form-group"><label>ที่อยู่จัดส่ง <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><textarea id="o-address" rows="2" placeholder="ที่อยู่ / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea></div>
+          <div class="form-group">
+            <label style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <span>ที่อยู่ออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></span>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('o-address','o-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกจากที่อยู่จัดส่ง</button>
+            </label>
+            <textarea id="o-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกใบกำกับภาษี / ใบเสร็จ"></textarea>
+          </div>
+        </div>
         <div class="form-group"><label>หมายเหตุ</label><textarea id="o-note" rows="2" placeholder="หมายเหตุ..."></textarea></div>
         <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div class="card-title" style="margin:0">รายการสินค้า</div>
@@ -3598,16 +3607,22 @@ async function openNewOrder() {
 
 // โหลดรายชื่อลูกค้าจากออเดอร์เดิม (รวม field ให้ครบที่สุดต่อลูกค้า) → _orderCustomerList
 async function loadOrderCustomerList() {
-  const { data } = await sb.from('orders')
-    .select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username')
+  const baseCols = 'customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username';
+  // ลองดึงพร้อม billing_address — ถ้าคอลัมน์ยังไม่มีใน DB ให้ fallback เป็นชุดเดิม (auto-fill อื่นจะไม่พัง)
+  let res = await sb.from('orders').select(baseCols+',billing_address')
     .eq('shop_id', currentShop.id).not('customer_name','is',null)
     .order('created_at',{ascending:false}).limit(500);
+  if (res.error) {
+    res = await sb.from('orders').select(baseCols)
+      .eq('shop_id', currentShop.id).not('customer_name','is',null)
+      .order('created_at',{ascending:false}).limit(500);
+  }
   const byName = {};
-  (data || []).forEach(c => {                    // เรียงจากล่าสุดมาก่อน
+  (res.data || []).forEach(c => {                // เรียงจากล่าสุดมาก่อน
     const k = (c.customer_name||'').trim().toLowerCase();
     if (!k) return;
     if (!byName[k]) byName[k] = { ...c };
-    else ['customer_username','customer_social','customer_contact','customer_phone','customer_address']
+    else ['customer_username','customer_social','customer_contact','customer_phone','customer_address','billing_address']
       .forEach(f => { if (!byName[k][f] && c[f]) byName[k][f] = c[f]; });
   });
   _orderCustomerList = Object.values(byName);
@@ -3653,13 +3668,22 @@ function _fillCustFields(c, ids) {
   set(ids.contact, c.customer_contact);
   set(ids.phone,   c.customer_phone);
   set(ids.addr,    c.customer_address);
+  set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
+}
+
+// คัดลอกที่อยู่จัดส่ง → ที่อยู่ออกบิล (ปุ่มในฟอร์ม)
+function copyShipToBill(fromId, toId) {
+  const from = document.getElementById(fromId), to = document.getElementById(toId);
+  if (!from || !to) return;
+  to.value = from.value;
+  toast(from.value.trim() ? 'คัดลอกที่อยู่จัดส่ง → ออกบิลแล้ว' : 'ที่อยู่จัดส่งยังว่างอยู่', from.value.trim()?'success':'error');
 }
 
 // ── หน้าบันทึกออเดอร์ใหม่ ──
 function searchOrderCustomer(q) { _renderCustDropdown('o-cust-dd', 'fillCustomerFromOrder', q); }
 function fillCustomerFromOrder(idx) {
   const dd = document.getElementById('o-cust-dd');
-  _fillCustFields(dd?._matches?.[idx], {name:'o-cust',user:'o-username',ref:'o-ref',contact:'o-contact',phone:'o-phone',addr:'o-address'});
+  _fillCustFields(dd?._matches?.[idx], {name:'o-cust',user:'o-username',ref:'o-ref',contact:'o-contact',phone:'o-phone',addr:'o-address',billing:'o-billing-address'});
   if (dd) dd.style.display = 'none';
 }
 
@@ -3667,7 +3691,7 @@ function fillCustomerFromOrder(idx) {
 function searchEditCustomer(q) { _renderCustDropdown('ed-cust-dd', 'fillEditCustomer', q); }
 function fillEditCustomer(idx) {
   const dd = document.getElementById('ed-cust-dd');
-  _fillCustFields(dd?._matches?.[idx], {name:'ed-cust',user:'ed-username',ref:'ed-ref',contact:'ed-contact',phone:'ed-phone',addr:'ed-address'});
+  _fillCustFields(dd?._matches?.[idx], {name:'ed-cust',user:'ed-username',ref:'ed-ref',contact:'ed-contact',phone:'ed-phone',addr:'ed-address',billing:'ed-billing-address'});
   if (dd) dd.style.display = 'none';
 }
 
@@ -4130,7 +4154,7 @@ async function saveOrder() {
   const { subtotal, bd, grand } = getOrderSummary();
   const totalCost = orderItems.reduce((s,it) => s + Number(it.qty||1)*Number(it.cost_per_unit||0), 0);
 
-  const { data: order, error } = await sb.from('orders').insert({
+  const orderPayload = {
     shop_id: currentShop.id,
     order_no: await generateOrderNo(document.getElementById('o-date').value),
     order_date: document.getElementById('o-date').value,
@@ -4141,6 +4165,7 @@ async function saveOrder() {
     customer_contact: document.getElementById('o-contact')?.value || '',
     customer_phone:   document.getElementById('o-phone')?.value   || '',
     customer_address: document.getElementById('o-address')?.value || '',
+    billing_address:  document.getElementById('o-billing-address')?.value || '',  // ที่อยู่ออกบิล
     payment_method: document.getElementById('o-pay').value,
     tracking_no: document.getElementById('o-track').value,
     doc_status: 'confirmed',
@@ -4151,8 +4176,16 @@ async function saveOrder() {
     bill_discount_type: billDiscType,
     total_amount: grand,
     total_cost: totalCost
-  }).select().single();
-
+  };
+  // บันทึก — ถ้าคอลัมน์ billing_address ยังไม่มีใน DB ให้ตัดออกแล้วลองใหม่ (ไม่ให้ทั้งออเดอร์พัง)
+  let order, error;
+  for (let a = 0; a < 2; a++) {
+    const r = await sb.from('orders').insert(orderPayload).select().single();
+    order = r.data; error = r.error;
+    if (!error) break;
+    if (('billing_address' in orderPayload) && (error.message||'').includes('billing_address')) { delete orderPayload.billing_address; continue; }
+    break;
+  }
   if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
 
   const items = orderItems.map(item=>({
@@ -4574,8 +4607,17 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">พนักงานขาย</span>
           <select id="ed-emp" style="${sStyle}"><option value="">-- ไม่ระบุ --</option></select></div>
       </div>
-      <div style="margin-top:10px;grid-column:1/-1"><span style="color:var(--text3);font-size:13px">ที่อยู่จัดส่ง</span>
-        <textarea id="ed-address" rows="2" placeholder="ไม่บังคับ" style="${iStyle};margin-top:3px;resize:vertical">${order.customer_address||''}</textarea>
+      <div style="margin-top:10px;grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><span style="color:var(--text3);font-size:13px">ที่อยู่จัดส่ง</span>
+          <textarea id="ed-address" rows="2" placeholder="ไม่บังคับ" style="${iStyle};margin-top:3px;resize:vertical">${order.customer_address||''}</textarea>
+        </div>
+        <div>
+          <span style="color:var(--text3);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
+            <span>ที่อยู่ออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px" onclick="copyShipToBill('ed-address','ed-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอก</button>
+          </span>
+          <textarea id="ed-billing-address" rows="2" placeholder="สำหรับออกใบกำกับภาษี / ใบเสร็จ" style="${iStyle};margin-top:3px;resize:vertical">${order.billing_address||''}</textarea>
+        </div>
       </div>
       <div style="margin-top:10px"><span style="color:var(--text3);font-size:13px">หมายเหตุ</span>
         <textarea id="ed-note" rows="2" style="${iStyle};margin-top:3px;resize:vertical">${order.note||''}</textarea>
@@ -4666,7 +4708,7 @@ async function saveOrderEdit(orderId) {
 
   // อัพเดท order totals + discount
   const edEmpVal = document.getElementById('ed-emp')?.value || null;
-  const { error: updErr } = await sb.from('orders').update({
+  const editPayload = {
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
     customer_name:    document.getElementById('ed-cust').value,
     customer_username: document.getElementById('ed-username')?.value || '', // ชื่อผู้ใช้ Shopee/Lazada
@@ -4674,6 +4716,7 @@ async function saveOrderEdit(orderId) {
     customer_contact: document.getElementById('ed-contact')?.value || '',
     customer_phone:   document.getElementById('ed-phone')?.value   || '',
     customer_address: document.getElementById('ed-address')?.value || '',
+    billing_address:  document.getElementById('ed-billing-address')?.value || '',  // ที่อยู่ออกบิล
     channel: document.getElementById('ed-ch').value,
     tracking_no: document.getElementById('ed-track').value,
     payment_method: document.getElementById('ed-pay').value,
@@ -4684,7 +4727,16 @@ async function saveOrderEdit(orderId) {
     bill_discount_type: editBillDiscType,
     total_amount: editGrand,
     total_cost: editTotalCost
-  }).eq('id', orderId);
+  };
+  // ถ้าคอลัมน์ billing_address ยังไม่มีใน DB ให้ตัดออกแล้วลองใหม่
+  let updErr;
+  for (let a = 0; a < 2; a++) {
+    const r = await sb.from('orders').update(editPayload).eq('id', orderId);
+    updErr = r.error;
+    if (!updErr) break;
+    if (('billing_address' in editPayload) && (updErr.message||'').includes('billing_address')) { delete editPayload.billing_address; continue; }
+    break;
+  }
   if (updErr) { toast('แก้ไขไม่สำเร็จ','error'); return; }
 
   // save order items: delete old, insert new
