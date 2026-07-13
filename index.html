@@ -3187,7 +3187,7 @@ function drillMonthlyDay(date) {
 
 
 async function orders() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
 
   setContent(`
     <!-- Quick filter รายเดือน/รายปี -->
@@ -6527,6 +6527,120 @@ async function recomputeOrderCosts(orderIds) {
     }
   }
   return fixed;
+}
+
+// ── ตรวจ + แก้ต้นทุนผิดปกติยกล็อต ─────────────────────────────
+// เพี้ยน = ต้นทุน/ชิ้นในออเดอร์ > ต้นทุนเฉลี่ยปัจจุบันของสินค้า 1.5 เท่า (มักเกิดจากดึงยอดทั้งล็อตมาเป็นต้นทุนชิ้นเดียว)
+const COST_ANOMALY_RATIO = 1.5;
+window._costAnomalies = [];
+
+async function scanOrderCostAnomalies() {
+  const btn = document.getElementById('btn-scan-cost');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังสแกน...'; }
+  try {
+    const { data: prods } = await sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id);
+    const costMap = {};
+    (prods||[]).forEach(p => { costMap[p.id] = Number(p.current_cost||0); });
+
+    const { data: orders, error } = await sb.from('orders')
+      .select('id,order_no,order_date,total_cost,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit,discount,discount_type)')
+      .eq('shop_id', currentShop.id).limit(5000);
+    if (error) throw error;
+
+    const isBad = it => {
+      const cc = costMap[it.product_id] || 0, cpu = Number(it.cost_per_unit||0);
+      return it.product_id && cc > 0 && cpu > cc * COST_ANOMALY_RATIO;
+    };
+    const flagged = [];
+    (orders||[]).forEach(o => {
+      const badItems = (o.order_items||[]).filter(isBad).map(it => ({ ...it, current_cost: costMap[it.product_id] }));
+      if (!badItems.length) return;
+      const newTotalCost = (o.order_items||[]).reduce((s,it) => {
+        const useCost = isBad(it) ? costMap[it.product_id] : Number(it.cost_per_unit||0);
+        return s + Number(it.qty||0) * useCost;
+      }, 0);
+      flagged.push({ order:o, badItems, newTotalCost, oldTotalCost:Number(o.total_cost||0) });
+    });
+    showCostAnomalyModal(flagged);
+  } catch(e) {
+    toast('สแกนไม่สำเร็จ: '+(e.message||e),'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔎 ตรวจต้นทุนผิดปกติ'; }
+  }
+}
+
+function showCostAnomalyModal(flagged) {
+  window._costAnomalies = flagged;
+  const RID = 'modal-cost-anom';
+  const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  document.getElementById(RID)?.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open'; overlay.id = RID;
+  const modal = document.createElement('div');
+  modal.className = 'modal'; modal.style.maxWidth = '640px';
+  if (!flagged.length) {
+    modal.innerHTML =
+      '<div class="modal-title">✅ ไม่พบต้นทุนผิดปกติ</div>'+
+      '<div style="font-size:13px;color:var(--text2);margin:8px 0 4px">ทุกออเดอร์มีต้นทุน/ชิ้น ไม่เกิน '+COST_ANOMALY_RATIO+' เท่าของต้นทุนเฉลี่ยปัจจุบัน</div>'+
+      '<div class="modal-footer"><button class="btn btn-secondary" onclick="document.getElementById(\''+RID+'\').remove()">ปิด</button></div>';
+  } else {
+    const rows = flagged.map(f => {
+      const o = f.order;
+      const items = f.badItems.map(it =>
+        '<div style="font-size:11px;color:var(--text3)">• '+esc(it.product_name||'-')+' ×'+fmt(it.qty)+' — ตอนนี้ <span class="text-red">'+fmtB(it.cost_per_unit)+'</span>/ชิ้น → ควรเป็น <span class="text-green">'+fmtB(it.current_cost)+'</span></div>'
+      ).join('');
+      return '<div style="padding:9px 11px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--bg2)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:3px">'+
+          '<span class="font-mono" style="font-weight:600;font-size:13px;color:var(--blue);cursor:pointer" onclick="document.getElementById(\''+RID+'\').remove(); viewOrder(\''+o.id+'\')">'+esc(o.order_no||'-')+' ↗</span>'+
+          '<span style="font-size:12px">ต้นทุนรวม <span class="text-red font-mono">'+fmtB(f.oldTotalCost)+'</span> → <span class="text-green font-mono">'+fmtB(f.newTotalCost)+'</span></span>'+
+        '</div>'+ items +
+      '</div>';
+    }).join('');
+    modal.innerHTML =
+      '<div class="modal-title">🔎 พบต้นทุนผิดปกติ '+flagged.length+' ออเดอร์</div>'+
+      '<div style="font-size:13px;color:var(--text2);margin-bottom:8px">ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน '+COST_ANOMALY_RATIO+' เท่า (มักเกิดจากดึงยอดทั้งล็อตมาเป็นต้นทุนชิ้นเดียว) — ตรวจแล้วกด "แก้ทั้งหมด" เพื่อตั้งต้นทุนใหม่ = ต้นทุนเฉลี่ยล่าสุด · คลิกเลขที่เพื่อเปิดดูออเดอร์</div>'+
+      '<div style="max-height:50vh;overflow:auto;margin-bottom:8px">'+rows+'</div>'+
+      '<div class="modal-footer" style="justify-content:space-between;gap:8px">'+
+        '<button class="btn btn-secondary" onclick="document.getElementById(\''+RID+'\').remove()">ปิด</button>'+
+        '<button class="btn btn-primary" id="btn-fix-anom" onclick="fixAllCostAnomalies()">🔧 แก้ทั้งหมด '+flagged.length+' ออเดอร์</button>'+
+      '</div>';
+  }
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+async function fixAllCostAnomalies() {
+  const flagged = window._costAnomalies || [];
+  if (!flagged.length) return;
+  if (!confirm('แก้ต้นทุน '+flagged.length+' ออเดอร์ ให้ใช้ต้นทุนเฉลี่ยล่าสุด?\n\nเฉพาะรายการที่ต้นทุนเพี้ยนจะถูกตั้งใหม่ · รายการปกติคงเดิม')) return;
+  const btn = document.getElementById('btn-fix-anom');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังแก้...'; }
+  let ok = 0, fail = 0;
+  for (const f of flagged) {
+    const o = f.order;
+    const badIds = new Set(f.badItems.map(b => b.id));
+    const bcMap = {}; f.badItems.forEach(b => { bcMap[b.id] = b.current_cost; });
+    const oldIds = (o.order_items||[]).map(it => it.id).filter(Boolean);
+    const newItems = (o.order_items||[]).map(it => ({
+      order_id: o.id,
+      product_id: it.product_id || null,
+      product_name: it.product_name,
+      qty: it.qty,
+      sell_price: it.sell_price,
+      cost_per_unit: badIds.has(it.id) ? bcMap[it.id] : Number(it.cost_per_unit||0),
+      discount: it.discount || 0,
+      discount_type: it.discount_type || 'amount',
+    }));
+    // insert ชุดใหม่ก่อน แล้วค่อยลบชุดเก่า (กันข้อมูลหายถ้า insert ล้ม)
+    const ins = await sb.from('order_items').insert(newItems);
+    if (ins.error) { fail++; continue; }
+    if (oldIds.length) await sb.from('order_items').delete().in('id', oldIds);
+    await sb.from('orders').update({ total_cost: f.newTotalCost }).eq('id', o.id);
+    ok++;
+  }
+  document.getElementById('modal-cost-anom')?.remove();
+  toast('แก้ต้นทุนสำเร็จ '+ok+' ออเดอร์'+(fail?' · ล้มเหลว '+fail:'')+' ✓', fail?'error':'success');
+  loadOrders();
 }
 
 // ปุ่ม "คำนวณต้นทุนย้อนหลัง" — คำนวณ total_cost/กำไร ของทุกออเดอร์ใหม่ (ข้อมูลเก่าที่ขายก่อนรับเข้า)
