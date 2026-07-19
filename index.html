@@ -1770,6 +1770,7 @@ async function dashboard() {
   window._dashOrders   = orders;
   window._dashExpenses = expenses;
   window._dashProducts = products;
+  window._dashPOs      = pos;        // ใบสั่งซื้อในช่วงที่เลือก (สำหรับ drilldown ยอดซื้อ)
 
   const catColors = ['#00d4a8','#4f9cf9','#f5a623','#a78bfa','#f97316','#22c55e','#f05252','#e879f9','#06b6d4'];
 
@@ -1800,6 +1801,11 @@ async function dashboard() {
         <div class="stat-label">💰 ยอดขาย <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
         <div class="stat-value text-accent">${fmtB(totalRevenue)}</div>
         <div class="stat-sub">${orderCount} ออเดอร์</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer" onclick="drillDashPurchases()" title="คลิกดูใบสั่งซื้อ (PO) ในช่วงนี้">
+        <div class="stat-label">🛒 ยอดซื้อ <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></div>
+        <div class="stat-value" style="color:#7c3aed">${fmtB(totalPurchase)}</div>
+        <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchase/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">📈 กำไรขั้นต้น <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
@@ -2294,6 +2300,37 @@ function drillDashExpenses() {
         '<td>' + (e.description||e.category||'-') + '</td>' +
         '<td class="text-right font-mono text-red">' + fmtB(amt) + '</td>' +
         '<td class="text-right font-mono" style="color:var(--text3)">' + pct + '%</td></tr>';
+    }).join('') +
+    '</tbody></table></div>' +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+// ─── DRILL-DOWN: ยอดซื้อ (ใบสั่งซื้อในช่วงที่เลือก) ───────────
+function drillDashPurchases() {
+  const pos = (window._dashPOs || []).filter(p => p.status !== 'cancelled' && p.status !== 'draft');
+  const poVal = po => (po.purchase_order_items||[]).reduce((s,it)=> s + (it.product_id ? Number(it.qty_ordered||0)*Number(it.unit_cost||0) : 0), 0);
+  if (!pos.length) { toast('ไม่มีใบสั่งซื้อในช่วงนี้','error'); return; }
+  const total  = pos.reduce((s,p)=>s+poVal(p),0);
+  const sorted = [...pos].sort((a,b)=>(b.po_date||'').localeCompare(a.po_date||''));
+  const statusTh = { confirmed:'ยืนยันแล้ว', partial:'รับบางส่วน', received:'รับครบแล้ว', ordered:'สั่งแล้ว', done:'เสร็จสิ้น' };
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '300';
+  modal.innerHTML =
+    '<div class="modal" style="max-width:660px">' +
+    '<div class="modal-title">🛒 ยอดซื้อช่วงนี้ (' + pos.length + ' ใบสั่งซื้อ)</div>' +
+    '<div style="font-size:14px;font-weight:700;color:#7c3aed;margin-bottom:12px">รวม: ' + fmtB(total) + '</div>' +
+    '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr><th>วันที่</th><th>เลขที่ PO</th><th>ผู้ขาย</th><th>สถานะ</th><th class="text-right">ยอดซื้อ</th></tr></thead><tbody>' +
+    sorted.map(p => {
+      const v = poVal(p);
+      return '<tr style="cursor:pointer" onclick="this.closest(\'.modal-overlay\').remove(); viewPO(\''+p.id+'\')" title="คลิกดูใบสั่งซื้อ">' +
+        '<td style="font-size:12px;white-space:nowrap">' + (p.po_date||'-') + '</td>' +
+        '<td class="font-mono" style="font-size:12px;color:var(--blue)">' + (p.po_no||'-') + '</td>' +
+        '<td style="font-size:12px">' + (p.supplier_name||'-') + '</td>' +
+        '<td style="font-size:12px">' + (statusTh[p.status]||p.status||'-') + '</td>' +
+        '<td class="text-right font-mono" style="color:#7c3aed">' + fmtB(v) + '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
