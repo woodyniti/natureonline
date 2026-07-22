@@ -1319,6 +1319,7 @@ const pageTitles = {
 };
 
 function showPage(page) {
+  if (!confirmAllUnsavedForms()) return;
   // ── Permission guard ──────────────────────────────────
   if (!canSee(page)) {
     toast('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
@@ -1360,6 +1361,11 @@ function closeSidebar() {
 // ─── UTILITIES ────────────────────────────────────────
 function fmt(n) { return Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:2}); }
 function fmtB(n) { return '฿' + fmt(n); }
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[ch]);
+}
 function today() { return new Date().toISOString().slice(0,10); }
 function monthStart(y,m) { return `${y}-${String(m).padStart(2,'0')}-01`; }
 function monthEnd(y,m) { const d=new Date(y,m,0); return d.toISOString().slice(0,10); }
@@ -1461,8 +1467,66 @@ async function loadUsersForEmployeeModal() {
   if (cur) sel.value = cur;
 }
 
+const unsavedFormGuards = new Map();
+
+function registerUnsavedForm(formEl, message='มีข้อมูลที่แก้ไขแล้วยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?') {
+  if (!formEl) return;
+  unregisterUnsavedForm(formEl);
+  const markDirty = event => {
+    const changedInput = event.type === 'input' || event.type === 'change';
+    const changedItems = event.type === 'click' && event.target.closest('#order-items-container button, #ed-items button');
+    if (changedInput || changedItems) unsavedFormGuards.get(formEl).dirty = true;
+  };
+  formEl.addEventListener('input', markDirty);
+  formEl.addEventListener('change', markDirty);
+  formEl.addEventListener('click', markDirty);
+  unsavedFormGuards.set(formEl, { dirty:false, message, markDirty });
+}
+
+function markUnsavedForm(formEl) {
+  const guard = unsavedFormGuards.get(formEl);
+  if (guard) guard.dirty = true;
+}
+
+function unregisterUnsavedForm(formEl) {
+  const guard = unsavedFormGuards.get(formEl);
+  if (!guard) return;
+  formEl.removeEventListener('input', guard.markDirty);
+  formEl.removeEventListener('change', guard.markDirty);
+  formEl.removeEventListener('click', guard.markDirty);
+  unsavedFormGuards.delete(formEl);
+}
+
+function confirmUnsavedForm(formEl) {
+  const guard = unsavedFormGuards.get(formEl);
+  if (guard?.dirty && !confirm(guard.message)) return false;
+  unregisterUnsavedForm(formEl);
+  return true;
+}
+
+function confirmAllUnsavedForms() {
+  const dirtyGuard = [...unsavedFormGuards.values()].find(guard => guard.dirty);
+  if (dirtyGuard && !confirm(dirtyGuard.message)) return false;
+  [...unsavedFormGuards.keys()].forEach(formEl => {
+    unregisterUnsavedForm(formEl);
+    if (formEl.dataset.unsavedRemoveOnExit === 'true') formEl.remove();
+  });
+  return true;
+}
+
+window.addEventListener('beforeunload', event => {
+  if (![...unsavedFormGuards.values()].some(guard => guard.dirty)) return;
+  event.preventDefault();
+  event.returnValue = '';
+});
+
 function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal || !confirmUnsavedForm(modal)) return false;
+  modal.classList.remove('open');
+  return true;
+}
 
 // ── Back to top ──
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -3631,20 +3695,19 @@ async function openNewOrder() {
   ]);
   productList = prodRes.data || [];
   renderOrderItems();
-  openModal('modal-order');
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-track','o-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-billing-address','o-track','o-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
   // reset discount
-  setTimeout(() => {
-    const bd = document.getElementById('o-bill-disc');
-    const bt = document.getElementById('o-bill-disc-type');
-    if (bd) bd.value = '0';
-    if (bt) bt.value = 'amount';
-    updateOrderSummary();
-  }, 50);
+  const bd = document.getElementById('o-bill-disc');
+  const bt = document.getElementById('o-bill-disc-type');
+  if (bd) bd.value = '0';
+  if (bt) bt.value = 'amount';
+  updateOrderSummary();
+  openModal('modal-order');
+  registerUnsavedForm(document.getElementById('modal-order'));
 }
 
 // โหลดรายชื่อลูกค้าจากออเดอร์เดิม (รวม field ให้ครบที่สุดต่อลูกค้า) → _orderCustomerList
@@ -3711,6 +3774,8 @@ function _fillCustFields(c, ids) {
   set(ids.phone,   c.customer_phone);
   set(ids.addr,    c.customer_address);
   set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
+  const changedField = document.getElementById(ids.name);
+  markUnsavedForm(changedField?.closest('.modal-overlay'));
 }
 
 // คัดลอกที่อยู่จัดส่ง → ที่อยู่ออกบิล (ปุ่มในฟอร์ม)
@@ -3718,6 +3783,7 @@ function copyShipToBill(fromId, toId) {
   const from = document.getElementById(fromId), to = document.getElementById(toId);
   if (!from || !to) return;
   to.value = from.value;
+  markUnsavedForm(to.closest('.modal-overlay'));
   toast(from.value.trim() ? 'คัดลอกที่อยู่จัดส่ง → ออกบิลแล้ว' : 'ที่อยู่จัดส่งยังว่างอยู่', from.value.trim()?'success':'error');
 }
 
@@ -4047,6 +4113,7 @@ function renderOrderItems() {
 
 function addOrderItem() {
   orderItems.push({ product_id:'', product_name:'', qty:1, sell_price:0, cost_per_unit:0, discount:0, discount_type:'amount' });
+  markUnsavedForm(document.getElementById('modal-order'));
   renderOrderItems();
 }
 
@@ -4272,6 +4339,7 @@ async function saveOrder() {
     }
   }
 
+  unregisterUnsavedForm(document.getElementById('modal-order'));
   closeModal('modal-order');
   toast('บันทึกออเดอร์สำเร็จ ✓', 'success');
   loadOrders();
@@ -4723,6 +4791,7 @@ async function viewOrder(orderId) {
     `<button class="btn btn-primary" onclick="saveOrderEdit('${order.id}')">💾 บันทึกการแก้ไข</button>`;
 
   openModal('modal-order-detail');
+  registerUnsavedForm(document.getElementById('modal-order-detail'));
 }
 
 function updateTrackingLink(val) {
@@ -4828,6 +4897,7 @@ async function saveOrderEdit(orderId) {
     await recalcStockQty(productIds);
   }
 
+  unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('บันทึกการแก้ไขสำเร็จ ✓','success');
   loadOrders();
@@ -5059,6 +5129,7 @@ async function deleteOrder(orderId) {
     }
   }
   
+  unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('ลบออเดอร์แล้ว','success');
   loadOrders();
@@ -12519,11 +12590,12 @@ async function openShippingLabelModal(orderId) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '300';
+  modal.dataset.unsavedRemoveOnExit = 'true';
   
-  // Prepare Sender Address (prefill from currentShop)
+  // Sender contact is fixed for every parcel label.
   const shopName = currentShop?.name || 'Nature Online';
-  const shopPhone = currentShop?.phone || '-';
-  const shopAddr = currentShop?.address || '';
+  const shopPhone = '0652626479';
+  const shopAddr = '346/149 Building 1B, Ratchadaphisek 36, Chan Kasem, Chatuchak, Bangkok 10900';
   
   // Prepare Receiver Address (prefill from order)
   const custName = order.customer_name || '-';
@@ -12535,8 +12607,8 @@ async function openShippingLabelModal(orderId) {
       <div class="modal-title">📦 พิมพ์ใบปะหน้าพัสดุ (จัดส่ง)</div>
 
       <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px">
-        <div style="font-weight:600;margin-bottom:4px">ออเดอร์: ${order.order_no||'-'} | ช่องทาง: ${order.channel||'-'}</div>
-        <div style="color:var(--text3)">วันที่: ${order.order_date||'-'} | การชำระเงิน: ${order.payment_method||'-'}</div>
+        <div style="font-weight:600;margin-bottom:4px">ออเดอร์: ${escapeHTML(order.order_no||'-')} | ช่องทาง: ${escapeHTML(order.channel||'-')}</div>
+        <div style="color:var(--text3)">วันที่: ${escapeHTML(order.order_date||'-')} | การชำระเงิน: ${escapeHTML(order.payment_method||'-')}</div>
       </div>
 
       <!-- Sender Info (Editable) -->
@@ -12544,15 +12616,15 @@ async function openShippingLabelModal(orderId) {
         <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:var(--text)">ข้อมูลผู้ส่ง (Sender)</div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">ชื่อผู้ส่ง / ชื่อร้านค้า</label>
-          <input type="text" id="ship-sender-name" value="${shopName.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-sender-name" value="${escapeHTML(shopName)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">เบอร์โทรผู้ส่ง</label>
-          <input type="text" id="ship-sender-phone" value="${shopPhone.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-sender-phone" value="${escapeHTML(shopPhone)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group">
           <label style="font-size:11px">ที่อยู่ผู้ส่ง</label>
-          <textarea id="ship-sender-address" rows="2" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${shopAddr}</textarea>
+          <textarea id="ship-sender-address" rows="2" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${escapeHTML(shopAddr)}</textarea>
         </div>
       </div>
 
@@ -12561,15 +12633,15 @@ async function openShippingLabelModal(orderId) {
         <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:var(--text)">ข้อมูลผู้รับ (Receiver)</div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">ชื่อผู้รับ</label>
-          <input type="text" id="ship-recv-name" value="${custName.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-recv-name" value="${escapeHTML(custName)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">เบอร์โทรผู้รับ</label>
-          <input type="text" id="ship-recv-phone" value="${custPhone.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-recv-phone" value="${escapeHTML(custPhone)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group">
           <label style="font-size:11px">ที่อยู่จัดส่ง</label>
-          <textarea id="ship-recv-address" rows="3" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${custAddr}</textarea>
+          <textarea id="ship-recv-address" rows="3" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${escapeHTML(custAddr)}</textarea>
         </div>
       </div>
 
@@ -12578,8 +12650,8 @@ async function openShippingLabelModal(orderId) {
         <div class="form-group">
           <label>ขนาดกระดาษ</label>
           <select id="ship-size" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px;width:100%">
-            <option value="A6" selected>A6 (10 &times; 15 cm)</option>
-            <option value="A5">A5 (15 &times; 21 cm)</option>
+            <option value="A6">A6 (10 &times; 15 cm)</option>
+            <option value="A5" selected>A5 (15 &times; 21 cm)</option>
             <option value="A4">A4 (21 &times; 29.7 cm)</option>
           </select>
         </div>
@@ -12596,23 +12668,31 @@ async function openShippingLabelModal(orderId) {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="closeShippingLabelModal(this)">ยกเลิก</button>
         <button class="btn btn-primary" onclick="printShippingLabel('${orderId}')">🖨️ สั่งพิมพ์ใบปะหน้า</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  registerUnsavedForm(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeShippingLabelModal(modal); });
 
   // Store for print function
   window._shipOrder = order;
   window._shipItems = items;
 }
 
+function closeShippingLabelModal(source) {
+  const modal = source?.classList?.contains('modal-overlay') ? source : source?.closest?.('.modal-overlay');
+  if (!modal || !confirmUnsavedForm(modal)) return false;
+  modal.remove();
+  return true;
+}
+
 async function printShippingLabel(orderId) {
   const order = window._shipOrder || {};
   const items = window._shipItems || [];
   
-  const size = document.getElementById('ship-size')?.value || 'A6';
+  const size = document.getElementById('ship-size')?.value || 'A5';
   const showItems = document.getElementById('ship-show-items')?.checked;
   const showCod = document.getElementById('ship-show-cod')?.checked;
   
@@ -12625,15 +12705,15 @@ async function printShippingLabel(orderId) {
   const recvAddr = document.getElementById('ship-recv-address')?.value || '';
 
   // Determine page dimensions
-  let Wstr = '4in', Hstr = '6in';
-  if (size === 'A5') { Wstr = '5.8in'; Hstr = '8.3in'; }
+  let Wstr = '5.8in', Hstr = '8.3in';
+  if (size === 'A6') { Wstr = '4in'; Hstr = '6in'; }
   else if (size === 'A4') { Wstr = '8.3in'; Hstr = '11.7in'; }
 
   // COD detection
   const isCOD = order.payment_method === 'COD';
   const codText = (isCOD && showCod) 
-    ? `<div class="cod-badge">เก็บเงินปลายทาง (COD): <span class="cod-amount">฿${fmtB(order.total_amount)}</span></div>` 
-    : `<div class="cod-badge non-cod">ชำระเงินแล้ว: [ ${order.payment_method || 'โอนเงิน'} ]</div>`;
+    ? `<div class="cod-badge">เก็บเงินปลายทาง (COD): <span class="cod-amount">${fmtB(order.total_amount)}</span></div>`
+    : `<div class="cod-badge non-cod">ชำระเงินแล้ว: [ ${escapeHTML(order.payment_method || 'โอนเงิน')} ]</div>`;
 
   // Item details for packing checklist
   let itemsHtml = '';
@@ -12652,8 +12732,8 @@ async function printShippingLabel(orderId) {
           <tbody>
             ${items.map(it => `
               <tr>
-                <td>${it.product_name}</td>
-                <td style="text-align:center;font-weight:bold;font-size:14px">x ${it.qty}</td>
+                <td>${escapeHTML(it.product_name)}</td>
+                <td style="text-align:center;font-weight:bold;font-size:14px">x ${escapeHTML(it.qty)}</td>
                 <td style="text-align:center"><div class="check-box"></div></td>
               </tr>
             `).join('')}
@@ -12664,7 +12744,7 @@ async function printShippingLabel(orderId) {
   }
 
   const html = [
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบปะหน้าพัสดุ ' + (order.order_no || '') + '</title>',
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบปะหน้าพัสดุ ' + escapeHTML(order.order_no || '') + '</title>',
     '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">',
     '<style>',
     '* { box-sizing:border-box; margin:0; padding:0; }',
@@ -12705,20 +12785,20 @@ async function printShippingLabel(orderId) {
     '</style></head><body>',
     '<div class="label-page">',
     '  <div class="header-row">',
-    '    <div class="order-no">SO: ' + (order.order_no || '-') + '</div>',
-    '    <div class="carrier-info">' + (order.channel || 'Nature Online') + '</div>',
+    '    <div class="order-no">SO: ' + escapeHTML(order.order_no || '-') + '</div>',
+    '    <div class="carrier-info">' + escapeHTML(order.channel || 'Nature Online') + '</div>',
     '  </div>',
     '  <div class="address-container">',
     '    <div class="sender-box">',
     '      <div class="title">ผู้ส่ง (Sender)</div>',
-    '      <div><strong>' + senderName + '</strong> (โทร: ' + senderPhone + ')</div>',
-    '      <div style="margin-top:2px">' + senderAddr.replace(/\n/g, '<br>') + '</div>',
+    '      <div><strong>' + escapeHTML(senderName) + '</strong> (โทร: ' + escapeHTML(senderPhone) + ')</div>',
+    '      <div style="margin-top:2px">' + escapeHTML(senderAddr).replace(/\n/g, '<br>') + '</div>',
     '    </div>',
     '    <div class="receiver-box">',
     '      <div class="title recv-title">ผู้รับ (Receiver)</div>',
-    '      <div class="recv-name">' + recvName + '</div>',
-    '      <div class="recv-addr">' + recvAddr.replace(/\n/g, '<br>') + '</div>',
-    '      <div class="recv-phone">📞 โทร: ' + recvPhone + '</div>',
+    '      <div class="recv-name">' + escapeHTML(recvName) + '</div>',
+    '      <div class="recv-addr">' + escapeHTML(recvAddr).replace(/\n/g, '<br>') + '</div>',
+    '      <div class="recv-phone">📞 โทร: ' + escapeHTML(recvPhone) + '</div>',
     '    </div>',
     '  </div>',
     codText,
@@ -12727,15 +12807,13 @@ async function printShippingLabel(orderId) {
     '</body></html>'
   ].join('\n');
 
-  // Close modals
-  document.querySelectorAll('.modal-overlay').forEach(m => {
-    if (m.querySelector('#ship-size')) m.remove();
-  });
-
   const widthPx = size==='A6' ? 400 : (size==='A5' ? 580 : 800);
   const heightPx = size==='A6' ? 600 : (size==='A5' ? 830 : 1100);
   const w = window.open('', '_blank', `width=${widthPx},height=${heightPx},scrollbars=yes`);
   if (!w) { toast('กรุณาอนุญาต Pop-up', 'error'); return; }
+  const shippingModal = document.getElementById('ship-size')?.closest('.modal-overlay');
+  unregisterUnsavedForm(shippingModal);
+  shippingModal?.remove();
   w.document.write(html);
   w.document.close();
   setTimeout(()=>w.print(),500);
