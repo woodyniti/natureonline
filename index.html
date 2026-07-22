@@ -945,6 +945,17 @@ let currentUser = null;
 let currentPage = 'dashboard';
 let charts = {};
 
+const DEFAULT_SHOP_ADDRESS = '346/149 อาคาร 1B ซอยรัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร กรุงเทพมหานคร 10900';
+const LEGACY_SHOP_ADDRESSES = new Set([
+  '346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900',
+  '346/149 Building 1B, Ratchadaphisek 36, Chan Kasem, Chatuchak, Bangkok 10900',
+]);
+
+function getShopAddress(shop = currentShop) {
+  const address = String(shop?.address || '').trim();
+  return !address || LEGACY_SHOP_ADDRESSES.has(address) ? DEFAULT_SHOP_ADDRESS : address;
+}
+
 function getConfig() {
   return {
     url: localStorage.getItem(SUPABASE_URL_KEY) || 'https://omlqnxnlsxwiayryloki.supabase.co',
@@ -5194,7 +5205,7 @@ async function printReceipt(orderId, showDiscount=true) {
     let billShopName = (shop.name || 'sealthai').toUpperCase();
   if (!billShopName.endsWith('.COM')) billShopName += '.COM';
   billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
-  billParts.push('<div class="shop-info">' + (shop.address||'346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900').split('\n').join('<br>'));
+  billParts.push('<div class="shop-info">' + getShopAddress(shop).split('\n').join('<br>'));
   if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
   if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
   billParts.push('</div></div></div>');
@@ -8695,7 +8706,7 @@ async function printQuote(qtId) {
     let qtShopName = (shop.name || 'sealthai').toUpperCase();
   if (!qtShopName.endsWith('.COM')) qtShopName += '.COM';
   bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
-  bp.push('<div class="shop-info">'+(shop.address||'346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900')+'</div></div></div>');
+  bp.push('<div class="shop-info">'+getShopAddress(shop)+'</div></div></div>');
   bp.push('<div class="doc-type">ใบเสนอราคา</div></div>');
   // info
   bp.push('<div class="info-row"><div class="info-box"><div class="info-label">ลูกค้า / Customer</div><div style="font-weight:600">'+(qt.customer_name||'-')+'</div>');
@@ -9837,7 +9848,7 @@ async function printPO(poId) {
     let poShopName = (shop.name || 'sealthai').toUpperCase();
   if (!poShopName.endsWith('.COM')) poShopName += '.COM';
   bp.push('<div class="hd"><div><div class="shop-name">' + poShopName + '</div>');
-  bp.push('<div style="font-size:11px;color:#555">346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900</div></div>');
+  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(currentShop||{})+'</div></div>');
   bp.push('<div class="doc-type">ใบสั่งซื้อ / Purchase Order</div></div>');
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
@@ -11563,7 +11574,7 @@ async function settings() {
         <div class="form-group"><label>ชื่อร้าน</label>
           <input type="text" id="s-shopname" value="${currentShop?.name||''}"></div>
         <div class="form-group"><label>ที่อยู่</label>
-          <textarea id="s-address" rows="2" placeholder="ที่อยู่ร้าน">${currentShop?.address||''}</textarea></div>
+          <textarea id="s-address" rows="2" placeholder="ที่อยู่ร้าน">${getShopAddress(currentShop)}</textarea></div>
         <div class="grid-2">
           <div class="form-group"><label>เบอร์โทร</label>
             <input type="text" id="s-phone" value="${currentShop?.phone||''}" placeholder="0x-xxxx-xxxx"></div>
@@ -11579,7 +11590,7 @@ async function settings() {
         <div style="border:2px solid var(--border);border-radius:8px;padding:16px;font-size:13px;background:#fff">
           <div style="font-size:17px;font-weight:700;margin-bottom:4px">${currentShop?.name||'ชื่อร้าน'}</div>
           <div style="color:var(--text2);font-size:12px;line-height:1.7">
-            ${currentShop?.address||'ที่อยู่ร้าน'}<br>
+            ${getShopAddress(currentShop)}<br>
             โทร: ${currentShop?.phone||'-'}&nbsp;&nbsp;|&nbsp;&nbsp;เลขผู้เสียภาษี: ${currentShop?.tax_id||'-'}
           </div>
         </div>
@@ -12749,7 +12760,7 @@ async function openShippingLabelModal(orderId) {
   // Sender contact is fixed for every parcel label.
   const shopName = currentShop?.name || 'Nature Online';
   const shopPhone = '0652626479';
-  const shopAddr = '346/149 Building 1B, Ratchadaphisek 36, Chan Kasem, Chatuchak, Bangkok 10900';
+  const shopAddr = DEFAULT_SHOP_ADDRESS;
   
   // Prepare Receiver Address (prefill from order)
   const custName = order.customer_name || '-';
