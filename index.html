@@ -9335,7 +9335,7 @@ async function openNewPO() {
   const vatTypeEl = document.getElementById('po-vat-type');
   if (vatTypeEl) vatTypeEl.value = 'excluded';
 
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
   renderPOItems();
   calcPOTotal();   // sync ยอด + แสดงแถว VAT ตาม default
@@ -9380,19 +9380,9 @@ function renderPOItems() {
           d.appendChild(skuSpan);
         }
         d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
-        d.onmousedown=async e=>{e.preventDefault();
+        d.onmousedown=e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
-          let cost = Number(p.purchase_price) || Number(p.current_cost) || 0;  // ใช้ราคาซื้อก่อน
-          if (!cost && p.id) {
-            const { data: lastPOItem } = await sb.from('purchase_order_items')
-              .select('unit_cost')
-              .eq('product_id', p.id)
-              .order('id', { ascending: false })
-              .limit(1);
-            if (lastPOItem && lastPOItem.length > 0) {
-              cost = lastPOItem[0].unit_cost || 0;
-            }
-          }
+          const cost = Number(p.purchase_price) || 0;
           poItems[i]={product_id:p.id,product_name:p.name,qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:cost};
           inp.value=p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
         };
@@ -9407,7 +9397,7 @@ function renderPOItems() {
     inp.onfocus=()=>srch(inp.value);
     inp.onblur=()=>{
       poItems[i].product_name = inp.value;
-      setTimeout(async ()=>{
+      setTimeout(()=>{
         dd.style.display='none';
         if (window._poAutocompleteClicking) {
           window._poAutocompleteClicking = false;
@@ -9428,17 +9418,7 @@ function renderPOItems() {
         );
         if (matchedProd) {
           if (poItems[i].product_id !== matchedProd.id) {
-            let cost = Number(matchedProd.purchase_price) || Number(matchedProd.current_cost) || 0;  // ใช้ราคาซื้อก่อน
-            if (!cost && matchedProd.id) {
-              const { data: lastPOItem } = await sb.from('purchase_order_items')
-                .select('unit_cost')
-                .eq('product_id', matchedProd.id)
-                .order('id', { ascending: false })
-                .limit(1);
-              if (lastPOItem && lastPOItem.length > 0) {
-                cost = lastPOItem[0].unit_cost || 0;
-              }
-            }
+            const cost = Number(matchedProd.purchase_price) || 0;
             poItems[i].product_id = matchedProd.id;
             poItems[i].product_name = matchedProd.name;
             poItems[i].unit_cost = cost;
@@ -9713,7 +9693,7 @@ async function editPO(poId) {
   editingPOId = po.id;
   editingPONo = po.po_no;
   
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
 
   const titleEl = document.getElementById('po-modal-title');
