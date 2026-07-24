@@ -617,6 +617,10 @@ tbody td:first-child { color: var(--text); }
 .copy-btn { display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:none;border:none;cursor:pointer;color:var(--text3);padding:0;border-radius:3px;transition:color 0.15s;flex-shrink:0; }
 .copy-btn:hover { color:var(--text); }
 .copy-btn svg { width:11px;height:11px; }
+.po-copy-btn { display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:36px;padding:7px 10px;background:#fff;border:1px solid var(--border2);border-radius:7px;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;touch-action:manipulation; }
+.po-copy-btn:hover { background:#f0f7ff;border-color:var(--blue); }
+.po-copy-btn svg { width:14px!important;height:14px!important;flex-shrink:0; }
+@media (max-width:768px) { .po-copy-btn { min-height:42px;padding:9px 12px;font-size:12px; } }
 /* ── Owner Dashboard v2 ── */
 .period-tabs { display:flex;background:var(--bg3);border-radius:12px;padding:4px;gap:2px;margin-bottom:20px;overflow-x:auto; }
 .period-tab { flex:1;min-width:64px;padding:8px 12px;border:none;background:none;border-radius:9px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.15s;white-space:nowrap;text-align:center; }
@@ -1070,7 +1074,21 @@ function sortTable(tableId, colIdx, type='str') {
 
 // ── Clickable SKU / Order chip helpers ─────────────────────
 function copyText(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
+  const value = String(text ?? '');
+  const copyPromise = navigator.clipboard?.writeText
+    ? navigator.clipboard.writeText(value)
+    : new Promise((resolve, reject) => {
+        const input = document.createElement('textarea');
+        input.value = value;
+        input.readOnly = true;
+        input.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(input);
+        input.select();
+        try { document.execCommand('copy') ? resolve() : reject(); }
+        catch (e) { reject(e); }
+        finally { input.remove(); }
+      });
+  copyPromise.then(() => {
     const orig = btn.innerHTML;
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
     btn.style.color = 'var(--accent)';
@@ -1079,6 +1097,11 @@ function copyText(text, btn) {
 }
 
 const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+
+function poCopyButton(value, label) {
+  if (!value) return '';
+  return '<button type="button" class="po-copy-btn" data-copy="'+escapeHTML(value)+'" onclick="event.stopPropagation();copyText(this.dataset.copy,this)" title="คัดลอก '+escapeHTML(label)+'">'+COPY_ICON+' คัดลอก '+escapeHTML(label)+'</button>';
+}
 
 function skuChip(sku) {
   if (!sku || sku === '-') return '<span style="color:var(--text3)">-</span>';
@@ -9442,6 +9465,12 @@ function renderPOItems() {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
     }
     pw.appendChild(statusHelp);
+    if (selectedProduct) {
+      const copyWrap = document.createElement('div');
+      copyWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;margin-top:7px';
+      copyWrap.innerHTML = poCopyButton(selectedProduct.sku, 'SKU') + poCopyButton(selectedProduct.supplier_sku, 'Supplier SKU');
+      if (copyWrap.innerHTML) pw.appendChild(copyWrap);
+    }
 
     const del=document.createElement('button'); del.textContent='✕';
     del.style.cssText='background:rgba(220,38,38,.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;margin-top:18px;flex-shrink:0';
@@ -9639,8 +9668,8 @@ async function viewPO(poId) {
       const pending=Number(it.qty_ordered)-Number(it.qty_received||0);
       const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
       return '<tr>'+
-        '<td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(product.sku||it.product_name||'-')+'</td>'+
-        '<td>'+escapeHTML(product.supplier_sku||'-')+'</td>'+
+        '<td style="text-align:center">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||it.product_name||'-')+'</span>'+poCopyButton(product.sku||it.product_name,'SKU')+'</div></td>'+
+        '<td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.supplier_sku||'-')+'</span>'+poCopyButton(product.supplier_sku,'Supplier SKU')+'</div></td>'+
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
         '<td style="text-align:right;color:var(--accent)">'+fmt(it.qty_received||0)+'</td>'+
         '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
