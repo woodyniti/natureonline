@@ -1409,6 +1409,56 @@ function getOrderShippingFee(order) {
   const stored = Number(order?.shipping_fee) || 0;
   return stored > 0 ? stored : (match ? Number(match[1]) || 0 : stored);
 }
+
+const SHOPEE_GP_FALLBACK_PCT = 30.53;
+const LAZADA_GP_FALLBACK_PCT = 30;
+let _shopeeFeeLoadPromise = null;
+let _shopeeFeeLoadAttempted = false;
+
+function getOrderPlatformFeeInfo(order) {
+  const channel = String(order?.channel || '').toLowerCase();
+  const sale = Math.max(0, Number(order?.total_amount) || 0);
+  if (channel.includes('shopee')) {
+    const ref = String(order?.customer_social || '').trim().toLowerCase();
+    const matchedRows = ref && typeof shopeeData !== 'undefined'
+      ? shopeeData.filter(r => String(r.orderId || '').trim().toLowerCase() === ref)
+      : [];
+    const actualFee = matchedRows.reduce((sum, row) => sum + Math.abs(Number(row.totalFee) || 0), 0);
+    if (actualFee > 0) {
+      return { fee:actualFee, pct:sale > 0 ? actualFee / sale * 100 : 0, source:'actual', isPlatform:true };
+    }
+    return { fee:sale * SHOPEE_GP_FALLBACK_PCT / 100, pct:SHOPEE_GP_FALLBACK_PCT, source:'fallback', isPlatform:true };
+  }
+  if (channel.includes('lazada')) {
+    return { fee:sale * LAZADA_GP_FALLBACK_PCT / 100, pct:LAZADA_GP_FALLBACK_PCT, source:'fallback', isPlatform:true };
+  }
+  return { fee:0, pct:0, source:'none', isPlatform:false };
+}
+
+async function ensureShopeeFeeData() {
+  if (typeof shopeeData !== 'undefined' && shopeeData.length) return shopeeData;
+  if (_shopeeFeeLoadPromise) return _shopeeFeeLoadPromise;
+  if (_shopeeFeeLoadAttempted || typeof shopeeGSheetUrl === 'undefined' || !shopeeGSheetUrl) return [];
+  _shopeeFeeLoadAttempted = true;
+  const proxyUrl = 'https://script.google.com/macros/s/AKfycbw4g-CwIB9UPoQj4y7c_q8Y0XahK9YA79z2VWFZGAnFPM_RKRm9GBqZekooNJPixGUz/exec?url=' + encodeURIComponent(shopeeGSheetUrl);
+  _shopeeFeeLoadPromise = fetch(proxyUrl, { cache:'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('Shopee fee source HTTP ' + response.status);
+      return response.text();
+    })
+    .then(text => {
+      const parsed = parseShopeeCSV(text);
+      if (parsed.length) shopeeData = parsed;
+      return shopeeData;
+    })
+    .catch(error => {
+      console.warn('Load Shopee fee data failed; using fallback rate:', error);
+      return [];
+    })
+    .finally(() => { _shopeeFeeLoadPromise = null; });
+  return _shopeeFeeLoadPromise;
+}
+
 function noteWithShippingFee(note, shippingFee) {
   const clean = cleanOrderNote(note);
   const fee = Math.max(0, Number(shippingFee) || 0);
@@ -1662,7 +1712,8 @@ async function dashboard() {
     // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
     sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
     // ค่าจัดการ/ค่าขนส่ง จากการรับสินค้าจริง (ถ้าตารางยังไม่มี จะได้ error → ใช้ [] แทน)
-    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me)
+    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me),
+    ensureShopeeFeeData()
   ]);
 
   const allOrdersForRepeat = repeatRes.data || [];
@@ -1692,19 +1743,19 @@ async function dashboard() {
   const orderCount    = orders.length;
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
 
-  // ── Shopee Channel ──────────────────────────────────────
-  const SHOPEE_COMM_PCT  = 20.6;
-  const SHOPEE_SHIP_PCT  = 3.3;
+  // ── Platform fees: Shopee ใช้ค่าจริงจาก export เมื่อจับคู่เลขออเดอร์ได้ ──
   const SUPPLIER_COMM_PCT = 10.0;
 
   const shopeeOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
-  const otherOrders  = orders.filter(o => !(o.channel||'').toLowerCase().includes('shopee'));
+  const lazadaOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
 
   const shopeeRev   = shopeeOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
-  const otherRev    = otherOrders.reduce((s,o)  => s + Number(o.total_amount||0), 0);
-
-  const shopeeComm  = shopeeRev * SHOPEE_COMM_PCT  / 100;
-  const shopeeShip  = shopeeRev * SHOPEE_SHIP_PCT  / 100;
+  const lazadaRev   = lazadaOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
+  const shopeeFeeInfos = shopeeOrders.map(getOrderPlatformFeeInfo);
+  const shopeeFee   = shopeeFeeInfos.reduce((s,info) => s + info.fee, 0);
+  const lazadaFee   = lazadaOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const totalPlatformFee = shopeeFee + lazadaFee;
+  const shopeeActualCount = shopeeFeeInfos.filter(info=>info.source==='actual').length;
 
   // Calculate total purchase amount from active POs (exclude draft & cancelled)
   // only summing items with a product_id (excluding custom/other expense lines)
@@ -1722,7 +1773,8 @@ async function dashboard() {
 
   // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
   const grossProfit   = totalRevenue - totalCost;
-  const netBeforeComm = grossProfit - totalExpenses - shopeeComm - shopeeShip - handlingCost - shippingCostGR;
+  const profitAfterPlatform = grossProfit - totalPlatformFee;
+  const netBeforeComm = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR;
   const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
 
   // ── Employee Commission: commission_rate% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ) ──
@@ -1920,9 +1972,9 @@ async function dashboard() {
         <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchase/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">📈 กำไรขั้นต้น <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
-        <div class="stat-value ${grossProfit>=0?'text-green':'text-red'}">${fmtB(grossProfit)}</div>
-        <div class="stat-sub">${totalRevenue>0?(grossProfit/totalRevenue*100).toFixed(1)+'% margin · ':''}หลังหักต้นทุน</div>
+        <div class="stat-label">📈 กำไรหลัง GP Platform <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-value ${profitAfterPlatform>=0?'text-green':'text-red'}">${fmtB(profitAfterPlatform)}</div>
+        <div class="stat-sub">${totalRevenue>0?(profitAfterPlatform/totalRevenue*100).toFixed(1)+'% margin · ':''}หลังหักต้นทุนและค่าธรรมเนียม</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">✨ กำไรสุทธิ <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
@@ -1962,8 +2014,8 @@ async function dashboard() {
           const items = [
             { label:'💰 ยอดขายรวม',        val: totalRevenue,     color:'var(--accent)', plus:true, drill:'drillDashOrders()'  },
             { label:'📦 ต้นทุนสินค้า',      val: -totalCost,       color:'#7c3aed',       plus:false, drill:'drillDashOrders()' },
-            { label:'💸 ค่าคอม Shopee '+SHOPEE_COMM_PCT+'%', val: -shopeeComm, color:'var(--red)', plus:false, sub:'จากยอด Shopee '+fmtB(shopeeRev) },
-            { label:'🚚 ค่าขนส่ง Shopee '+SHOPEE_SHIP_PCT+'%', val: -shopeeShip, color:'#f97316', plus:false, sub:'จากยอด Shopee' },
+            ...(shopeeFee>0 ? [{ label:'💸 ค่าธรรมเนียม Shopee', val: -shopeeFee, color:'var(--red)', plus:false, sub:(shopeeActualCount?shopeeActualCount+' ออเดอร์ใช้ค่าจริง · ':'')+'ที่เหลือประมาณ '+SHOPEE_GP_FALLBACK_PCT+'% · ยอด Shopee '+fmtB(shopeeRev) }] : []),
+            ...(lazadaFee>0 ? [{ label:'💸 ค่า GP Lazada '+LAZADA_GP_FALLBACK_PCT+'%', val: -lazadaFee, color:'#f97316', plus:false, sub:'จากยอด Lazada '+fmtB(lazadaRev) }] : []),
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
             ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% ของกำไรสุทธิก่อนคอม '+fmtB(commBase) })),
@@ -1996,8 +2048,8 @@ async function dashboard() {
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าใช้จ่าย Shopee</div>
-          <div style="font-size:14px;font-weight:700;color:var(--red)">${fmtB(shopeeComm+shopeeShip)}</div>
-          <div style="font-size:11px;color:var(--text3)">${shopeeRev>0?((shopeeComm+shopeeShip)/shopeeRev*100).toFixed(1):0}% ของ Shopee</div>
+          <div style="font-size:14px;font-weight:700;color:var(--red)">${fmtB(shopeeFee)}</div>
+          <div style="font-size:11px;color:var(--text3)">${shopeeRev>0?(shopeeFee/shopeeRev*100).toFixed(2):0}% ของ Shopee · ค่าจริง ${shopeeActualCount}/${shopeeOrders.length} ออเดอร์</div>
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าคอมพนักงาน</div>
@@ -3515,7 +3567,8 @@ async function loadOrders() {
 
   const [ordRes, empRes] = await Promise.all([
     q,
-    sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true)
+    sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
+    ensureShopeeFeeData()
   ]);
 
   if (ordRes.error) {
@@ -3550,7 +3603,7 @@ async function loadOrders() {
   const _shipRank = { pending:0, shipped:1, delivered:2, cancelled:3 };
   const _profitOf = o => {
     const s = Number(o.total_amount||0), c = Number(o.total_cost||0);
-    return s - c - (/shopee|lazada/i.test(o.channel||'') ? s*0.30 : 0);
+    return s - c - getOrderPlatformFeeInfo(o).fee;
   };
   const _sortMode = window._ordSort || 'status';
   rows.sort((a,b) => {
@@ -3566,7 +3619,7 @@ async function loadOrders() {
 
   const totalRev  = rows.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const totalCost = rows.reduce((s,o)=>s+Number(o.total_cost||0),0);
-  const totalPlatformFee = rows.reduce((s,o)=> s + (/shopee|lazada/i.test(o.channel||'') ? Number(o.total_amount||0)*0.30 : 0), 0);
+  const totalPlatformFee = rows.reduce((s,o)=> s + getOrderPlatformFeeInfo(o).fee, 0);
   const totalProfit = totalRev - totalCost - totalPlatformFee;   // กำไรหลังหักต้นทุน + ค่า GP Platform
   const commBase    = Math.max(0, totalProfit);                  // ฐานคิดคอม (ขาดทุน = ไม่มีคอม)
   const salesComm   = commBase * 0.20;                           // Sales Commission 20% ของกำไร
@@ -3606,8 +3659,9 @@ async function loadOrders() {
       <tbody>
         ${rows.map(o=>{
           const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
-          const isPlat=/shopee|lazada/i.test(o.channel||'');
-          const fee=isPlat?sale*0.30:0;
+          const feeInfo=getOrderPlatformFeeInfo(o);
+          const isPlat=feeInfo.isPlatform;
+          const fee=feeInfo.fee;
           const profit=sale-cost-fee;
           const products=(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-';
           return `<tr>
@@ -3625,7 +3679,7 @@ async function loadOrders() {
           <td class="col-money text-right" style="white-space:nowrap;font-size:12px;line-height:1.55">
             <div><span style="color:var(--text3)">ขาย</span> <span class="font-mono text-accent" style="font-weight:600">${fmtB(sale)}</span></div>
             <div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
-            ${isPlat?`<div class="text-red" title="ค่าธรรมเนียม Shopee/Lazada 30% ของยอดขาย"><span style="color:var(--text3)">GP</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
+            ${isPlat?`<div class="text-red" title="${feeInfo.source==='actual'?'ค่าธรรมเนียมจริงจาก Shopee':'ค่าธรรมเนียมประมาณ '+feeInfo.pct.toFixed(2)+'%'}"><span style="color:var(--text3)">GP ${feeInfo.pct.toFixed(2)}%</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
             <div class="${profit>=0?'text-green':'text-red'}" style="font-weight:700"><span style="color:var(--text3);font-weight:400">กำไร</span> <span class="font-mono">${fmtB(profit)}</span></div>
           </td>
           <td class="col-status" style="white-space:nowrap">
@@ -3664,10 +3718,11 @@ async function loadOrders() {
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-'}</div>
       ${(()=>{
         const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
-        const isPlat=/shopee|lazada/i.test(o.channel||'');
-        const fee=isPlat?sale*0.30:0; const profit=sale-cost-fee;
+        const feeInfo=getOrderPlatformFeeInfo(o);
+        const isPlat=feeInfo.isPlatform;
+        const fee=feeInfo.fee; const profit=sale-cost-fee;
         return '<div style="font-size:11px;margin-bottom:8px;color:var(--text3)">ต้นทุน <span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span>'+
-          (isPlat?' · GP Platform <span class="font-mono text-red">-'+fmtB(fee)+'</span>':'')+
+          (isPlat?' · GP Platform '+feeInfo.pct.toFixed(2)+'% <span class="font-mono text-red">-'+fmtB(fee)+'</span>':'')+
           ' · กำไร <span class="font-mono '+(profit>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(profit)+'</span></div>';
       })()}
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -4770,14 +4825,20 @@ function renderEditProfitBox(saleArg) {
   }
   const cost = editItems.reduce((s,it)=>s+Number(it.qty||0)*effCost(it),0);
   const ch = document.getElementById('ed-ch')?.value || '';
-  const isPlat = /shopee|lazada/i.test(ch);
-  const gpFee = isPlat ? sale*0.30 : 0;
+  const feeInfo = getOrderPlatformFeeInfo({
+    ...(window._editingOrderForGP||{}),
+    channel: ch,
+    total_amount: sale,
+    customer_social: document.getElementById('ed-ref')?.value || window._editingOrderForGP?.customer_social || ''
+  });
+  const isPlat = feeInfo.isPlatform;
+  const gpFee = feeInfo.fee;
   const net = sale - cost - gpFee;
   const noCost = editItems.filter(it => it.product_id && Number(it.qty||0)>0 && effCost(it)<=0);
   box.innerHTML =
     '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">ยอดขาย</span><span class="font-mono">'+fmtB(sale)+'</span></div>'+
     '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ต้นทุนสินค้า</span><span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span></div>'+
-    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform 30% ('+ch+')</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
+    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform '+feeInfo.pct.toFixed(2)+'% ('+ch+(feeInfo.source==='actual'?' · ค่าจริง':' · ประมาณ')+')</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
     '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:5px;font-weight:700"><span>'+(net>=0?'กำไรสุทธิ':'ขาดทุน')+'</span><span class="font-mono '+(net>=0?'text-green':'text-red')+'">'+fmtB(net)+(sale>0?' ('+(net/sale*100).toFixed(1)+'%)':'')+'</span></div>'+
     (noCost.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ สินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (กำไรอาจสูงเกินจริง): '+[...new Set(noCost.map(it=>it.product_name))].join(', ')+'</div>' : '');
 }
@@ -4799,8 +4860,10 @@ async function viewOrder(orderId) {
   if (currentPage !== 'orders') {
     showPage('orders');
   }
+  await ensureShopeeFeeData();
   const { data: order } = await sb.from('orders').select('*,order_items(*)').eq('id',orderId).single();
   if (!order) return;
+  window._editingOrderForGP = order;
   editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount'}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
   await loadOrderCustomerList(); // โหลดรายชื่อลูกค้าสำหรับ auto-fill
@@ -4809,9 +4872,9 @@ async function viewOrder(orderId) {
   const _effCost = (it) => { const c = Number(it.cost_per_unit||0); return c > 0 ? c : Number(_pcMap[it.product_id]||0); };
   const _orderCostEff = editItems.reduce((s,it)=>s+Number(it.qty||0)*_effCost(it),0);
   const _orderProfitEff = Number(order.total_amount||0) - _orderCostEff;   // กำไรขั้นต้น (ก่อน GP Platform)
-  // ค่า GP Platform 30% (เฉพาะ Shopee/Lazada) → กำไรสุทธิให้ตรงกับหน้ารายการออเดอร์
-  const _isPlat = /shopee|lazada/i.test(order.channel||'');
-  const _gpFee = _isPlat ? Number(order.total_amount||0)*0.30 : 0;
+  // ค่า GP Platform ใช้ค่าจริงจาก Shopee เมื่อจับคู่เลขอ้างอิงได้ ไม่เช่นนั้นใช้ fallback กลาง
+  const _platformFeeInfo = getOrderPlatformFeeInfo(order);
+  const _gpFee = _platformFeeInfo.fee;
   const _netProfit = _orderProfitEff - _gpFee;
   // สินค้าที่ยังไม่มีต้นทุนเลย (ทั้ง snapshot และ current_cost = 0) → เป็นเหตุให้กำไรดูเป็น 100%
   const _noCostItems = editItems.filter(it => it.product_id && Number(it.qty||0) > 0 && _effCost(it) <= 0);
@@ -4830,7 +4893,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
         <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}')" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
@@ -7933,13 +7996,14 @@ async function loadEmployeeList() {
 
 // คำนวณ "กำไรสุทธิก่อนหักคอมพนักงาน" ของช่วงวันที่ (สูตรเดียวกับ Dashboard ภาพรวม)
 // ใช้เป็นฐานคิดคอมมิชชั่น: commission = commission_rate% × กำไรสุทธิ
-// กำไรสุทธิ = ยอดขาย − ต้นทุนสินค้า − ค่าธรรมเนียม/ขนส่ง Shopee − ค่าจัดการ/ขนส่ง(รับเข้า) − ค่าใช้จ่ายทุกหมวด
+// กำไรสุทธิ = ยอดขาย − ต้นทุนสินค้า − ค่า GP Platform − ค่าจัดการ/ขนส่ง(รับเข้า) − ค่าใช้จ่ายทุกหมวด
 async function computeNetProfitBase(from, to) {
   const [ordRes, expRes, prodRes, landedRes] = await Promise.all([
-    sb.from('orders').select('channel,total_amount,order_items(qty,cost_per_unit,product_id)').eq('shop_id', currentShop.id).gte('order_date',from).lte('order_date',to),
+    sb.from('orders').select('channel,total_amount,customer_social,order_items(qty,cost_per_unit,product_id)').eq('shop_id', currentShop.id).gte('order_date',from).lte('order_date',to),
     sb.from('expenses').select('amount').eq('shop_id', currentShop.id).gte('expense_date',from).lte('expense_date',to),
     sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id),
     sb.from('landed_costs').select('type,amount').eq('shop_id', currentShop.id).gte('move_date',from).lte('move_date',to),
+    ensureShopeeFeeData(),
   ]);
   const orders=ordRes.data||[], expenses=expRes.data||[], products=prodRes.data||[], landed=landedRes?.data||[];
   const costMap={}; products.forEach(p=>{ if(p.id) costMap[p.id]=Number(p.current_cost||0); });
@@ -7947,13 +8011,11 @@ async function computeNetProfitBase(from, to) {
   const revenue = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const cost    = orders.reduce((s,o)=>s+orderCost(o),0);
   const exp     = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-  const shopeeRev  = orders.filter(o=>(o.channel||'').toLowerCase().includes('shopee')).reduce((s,o)=>s+Number(o.total_amount||0),0);
-  const shopeeComm = shopeeRev*20.6/100;   // ต้องตรงกับ SHOPEE_COMM_PCT ใน dashboard()
-  const shopeeShip = shopeeRev*3.3/100;    // ต้องตรงกับ SHOPEE_SHIP_PCT ใน dashboard()
+  const platformFee = orders.reduce((sum,o)=>sum+getOrderPlatformFeeInfo(o).fee,0);
   const handling   = landed.filter(l=>l.type==='ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
   const shipGR     = landed.filter(l=>l.type==='ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
-  const netBeforeComm = (revenue-cost) - exp - shopeeComm - shopeeShip - handling - shipGR;
-  return { netBeforeComm, revenue, cost, exp, shopeeComm, shopeeShip, handling, shipGR };
+  const netBeforeComm = (revenue-cost) - exp - platformFee - handling - shipGR;
+  return { netBeforeComm, revenue, cost, exp, platformFee, handling, shipGR };
 }
 
 async function loadEmployeeStats() {
@@ -10665,6 +10727,8 @@ function saveShopeeURL() {
   const url = document.getElementById('settings-shopee-url')?.value?.trim() || '';
   shopeeGSheetUrl = url;
   localStorage.setItem('ns_shopee_url', url);
+  shopeeData = [];
+  _shopeeFeeLoadAttempted = false;
   toast('บันทึก Shopee URL ✓', 'success');
 }
 
@@ -10813,6 +10877,8 @@ function saveShopeeUrlAndReload() {
   if (!url) { toast('กรุณาใส่ URL', 'error'); return; }
   shopeeGSheetUrl = url;
   localStorage.setItem('ns_shopee_url', url);
+  shopeeData = [];
+  _shopeeFeeLoadAttempted = false;
   toast('บันทึก URL ✓ กำลังโหลด...', 'success');
   loadShopeeFromURL(true);
 }
@@ -10820,6 +10886,8 @@ function saveShopeeUrlAndReload() {
 function resetShopeeUrl() {
   shopeeGSheetUrl = _SHOPEE_URL;
   localStorage.setItem('ns_shopee_url', _SHOPEE_URL);
+  shopeeData = [];
+  _shopeeFeeLoadAttempted = false;
   const el = document.getElementById('shopee-url');
   if (el) el.value = _SHOPEE_URL;
   toast('รีเซ็ตเป็นชีตเริ่มต้น (gid=880541665) ✓ กำลังโหลด...', 'success');
