@@ -1459,6 +1459,21 @@ async function ensureShopeeFeeData() {
   return _shopeeFeeLoadPromise;
 }
 
+function getPOPurchaseAmounts(po) {
+  const items = po?.purchase_order_items || [];
+  const allSubtotal = items.reduce((sum,it) => sum + Number(it.qty_ordered||0) * Number(it.unit_cost||0), 0);
+  const productSubtotal = items.reduce((sum,it) => sum + (it.product_id ? Number(it.qty_ordered||0) * Number(it.unit_cost||0) : 0), 0);
+  const storedVat = Math.max(0, Number(po?.vat_amount) || 0);
+  // Dashboard นับเฉพาะรายการที่ผูกกับสินค้า จึงเฉลี่ย VAT ตามสัดส่วนเมื่อ PO มีบรรทัดค่าใช้จ่ายอื่นด้วย
+  const vat = allSubtotal > 0 ? storedVat * productSubtotal / allSubtotal : 0;
+  const vatIncluded = po?.vat_type === 'included';
+  return {
+    beforeVat: vatIncluded ? Math.max(0, productSubtotal - vat) : productSubtotal,
+    vat,
+    totalWithVat: vatIncluded ? productSubtotal : productSubtotal + vat,
+  };
+}
+
 function noteWithShippingFee(note, shippingFee) {
   const clean = cleanOrderNote(note);
   const fee = Math.max(0, Number(shippingFee) || 0);
@@ -1744,8 +1759,6 @@ async function dashboard() {
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
 
   // ── Platform fees: Shopee ใช้ค่าจริงจาก export เมื่อจับคู่เลขออเดอร์ได้ ──
-  const SUPPLIER_COMM_PCT = 10.0;
-
   const shopeeOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
   const lazadaOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
 
@@ -1760,16 +1773,16 @@ async function dashboard() {
   // Calculate total purchase amount from active POs (exclude draft & cancelled)
   // only summing items with a product_id (excluding custom/other expense lines)
   const activePOs = pos.filter(p => p.status !== 'cancelled' && p.status !== 'draft');
-  const totalPurchase = activePOs.reduce((sum, po) => {
-    const poItemsSum = (po.purchase_order_items || []).reduce((s, it) => {
-      if (it.product_id) {
-        return s + (Number(it.qty_ordered || 0) * Number(it.unit_cost || 0));
-      }
-      return s;
-    }, 0);
-    return sum + poItemsSum;
-  }, 0);
-  const supplierComm = totalPurchase * SUPPLIER_COMM_PCT / 100;
+  const purchaseTotals = activePOs.reduce((totals, po) => {
+    const amounts = getPOPurchaseAmounts(po);
+    totals.beforeVat += amounts.beforeVat;
+    totals.vat += amounts.vat;
+    totals.totalWithVat += amounts.totalWithVat;
+    return totals;
+  }, { beforeVat:0, vat:0, totalWithVat:0 });
+  const totalPurchaseBeforeVat = purchaseTotals.beforeVat;
+  const totalPurchaseVat = purchaseTotals.vat;
+  const totalPurchaseWithVat = purchaseTotals.totalWithVat;
 
   // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
   const grossProfit   = totalRevenue - totalCost;
@@ -1967,9 +1980,10 @@ async function dashboard() {
         <div class="stat-sub">${orderCount} ออเดอร์</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashPurchases()" title="คลิกดูใบสั่งซื้อ (PO) ในช่วงนี้">
-        <div class="stat-label">🛒 ยอดซื้อ <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></div>
-        <div class="stat-value" style="color:#7c3aed">${fmtB(totalPurchase)}</div>
-        <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchase/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
+        <div class="stat-label">🛒 ยอดซื้อก่อน VAT <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></div>
+        <div class="stat-value" style="color:#7c3aed">${fmtB(totalPurchaseBeforeVat)}</div>
+        <div class="stat-sub">VAT ${fmtB(totalPurchaseVat)} · <strong style="color:var(--text2)">ยอดรวม VAT ${fmtB(totalPurchaseWithVat)}</strong></div>
+        <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchaseWithVat/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">📈 กำไรหลัง GP Platform <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
@@ -2474,27 +2488,38 @@ function drillDashExpenses() {
 // ─── DRILL-DOWN: ยอดซื้อ (ใบสั่งซื้อในช่วงที่เลือก) ───────────
 function drillDashPurchases() {
   const pos = (window._dashPOs || []).filter(p => p.status !== 'cancelled' && p.status !== 'draft');
-  const poVal = po => (po.purchase_order_items||[]).reduce((s,it)=> s + (it.product_id ? Number(it.qty_ordered||0)*Number(it.unit_cost||0) : 0), 0);
   if (!pos.length) { toast('ไม่มีใบสั่งซื้อในช่วงนี้','error'); return; }
-  const total  = pos.reduce((s,p)=>s+poVal(p),0);
+  const totals = pos.reduce((sum,p) => {
+    const amounts = getPOPurchaseAmounts(p);
+    sum.beforeVat += amounts.beforeVat;
+    sum.vat += amounts.vat;
+    sum.totalWithVat += amounts.totalWithVat;
+    return sum;
+  }, { beforeVat:0, vat:0, totalWithVat:0 });
   const sorted = [...pos].sort((a,b)=>(b.po_date||'').localeCompare(a.po_date||''));
   const statusTh = { confirmed:'ยืนยันแล้ว', partial:'รับบางส่วน', received:'รับครบแล้ว', ordered:'สั่งแล้ว', done:'เสร็จสิ้น' };
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '300';
   modal.innerHTML =
-    '<div class="modal" style="max-width:660px">' +
+    '<div class="modal" style="max-width:900px">' +
     '<div class="modal-title">🛒 ยอดซื้อช่วงนี้ (' + pos.length + ' ใบสั่งซื้อ)</div>' +
-    '<div style="font-size:14px;font-weight:700;color:#7c3aed;margin-bottom:12px">รวม: ' + fmtB(total) + '</div>' +
-    '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr><th>วันที่</th><th>เลขที่ PO</th><th>ผู้ขาย</th><th>สถานะ</th><th class="text-right">ยอดซื้อ</th></tr></thead><tbody>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:var(--text3)">ก่อน VAT</div><div class="font-mono" style="font-weight:700;color:#7c3aed">' + fmtB(totals.beforeVat) + '</div></div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:var(--text3)">VAT</div><div class="font-mono text-accent" style="font-weight:700">' + fmtB(totals.vat) + '</div></div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:var(--text3)">ยอดรวม VAT</div><div class="font-mono text-amber" style="font-weight:700">' + fmtB(totals.totalWithVat) + '</div></div>' +
+    '</div>' +
+    '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr><th>วันที่</th><th>เลขที่ PO</th><th>ผู้ขาย</th><th>สถานะ</th><th class="text-right">ก่อน VAT</th><th class="text-right">VAT</th><th class="text-right">ยอดรวม VAT</th></tr></thead><tbody>' +
     sorted.map(p => {
-      const v = poVal(p);
+      const amounts = getPOPurchaseAmounts(p);
       return '<tr style="cursor:pointer" onclick="this.closest(\'.modal-overlay\').remove(); viewPO(\''+p.id+'\')" title="คลิกดูใบสั่งซื้อ">' +
         '<td style="font-size:12px;white-space:nowrap">' + (p.po_date||'-') + '</td>' +
         '<td class="font-mono" style="font-size:12px;color:var(--blue)">' + (p.po_no||'-') + '</td>' +
         '<td style="font-size:12px">' + (p.supplier_name||'-') + '</td>' +
         '<td style="font-size:12px">' + (statusTh[p.status]||p.status||'-') + '</td>' +
-        '<td class="text-right font-mono" style="color:#7c3aed">' + fmtB(v) + '</td></tr>';
+        '<td class="text-right font-mono" style="color:#7c3aed">' + fmtB(amounts.beforeVat) + '</td>' +
+        '<td class="text-right font-mono text-accent">' + fmtB(amounts.vat) + '</td>' +
+        '<td class="text-right font-mono text-amber">' + fmtB(amounts.totalWithVat) + '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
