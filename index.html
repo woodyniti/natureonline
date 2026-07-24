@@ -9221,8 +9221,8 @@ async function purchase() {
           <div class="form-group"><label>เบอร์ติดต่อ</label><input type="text" id="po-sup-phone" placeholder="เบอร์โทร"></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
-          <div style="font-weight:600;font-size:14px">รายการสินค้าที่สั่งซื้อ</div>
-          <button onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">+ เพิ่มสินค้า</button>
+          <div style="font-weight:600;font-size:14px">รายการ SKU ที่สั่งซื้อ</div>
+          <button onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">+ เพิ่ม SKU</button>
         </div>
         <div id="po-items"></div>
         <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:8px">
@@ -9349,15 +9349,16 @@ function renderPOItems() {
   if(!el) return;
   el.innerHTML='';
   poItems.forEach((it,i)=>{
+    const selectedProduct = productList.find(p=>p.id===it.product_id);
     const card=document.createElement('div');
     card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px';
     const r1=document.createElement('div'); r1.style.cssText='display:flex;gap:8px;align-items:start;margin-bottom:10px';
     const pw=document.createElement('div'); pw.style.cssText='flex:1;min-width:0';
-    const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500'; pl.textContent='สินค้า';
+    const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500'; pl.textContent='SKU';
     pw.appendChild(pl);
     const wrap=document.createElement('div'); wrap.style.position='relative';
     const inp=document.createElement('input'); inp.type='text'; inp.autocomplete='off';
-    inp.placeholder='ชื่อ / SKU / *ค้นหา*'; inp.value=it.product_name||'';
+    inp.placeholder='SKU / Supplier SKU / *ค้นหา*'; inp.value=selectedProduct?.sku||it.product_name||'';
     inp.style.cssText='width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;box-sizing:border-box';
     const dd=document.createElement('div'); dd.style.cssText='display:none;position:absolute;top:100%;left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.12)';
     function srch(q){
@@ -9368,35 +9369,32 @@ function renderPOItems() {
       res.forEach(p=>{
         const d=document.createElement('div');
         d.style.cssText='padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0';
-        const skuInfo = [p.sku, p.supplier_sku, p.part_no].filter(Boolean).join(' · ');
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = p.name;
-        nameSpan.style.fontWeight = '500';
-        d.appendChild(nameSpan);
-        if (skuInfo) {
-          const skuSpan = document.createElement('span');
-          skuSpan.textContent = ' · ' + skuInfo;
-          skuSpan.style.cssText = 'color:var(--blue);font-size:11px';
-          d.appendChild(skuSpan);
-        }
+        const skuSpan = document.createElement('span');
+        skuSpan.textContent = p.sku || p.name;
+        skuSpan.style.fontWeight = '600';
+        d.appendChild(skuSpan);
+        const supplierSkuSpan = document.createElement('span');
+        supplierSkuSpan.textContent = ' · Supplier SKU: ' + (p.supplier_sku || '-');
+        supplierSkuSpan.style.cssText = 'color:var(--blue);font-size:11px';
+        d.appendChild(supplierSkuSpan);
         d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
         d.onmousedown=e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
           const cost = Number(p.purchase_price) || 0;
           poItems[i]={product_id:p.id,product_name:p.name,qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:cost};
-          inp.value=p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
+          inp.value=p.sku||p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
         };
         dd.appendChild(d);
       });
       dd.style.display='block';
     }
     inp.oninput=()=>{
+      poItems[i].product_id = null;
       poItems[i].product_name = inp.value;
       srch(inp.value);
     };
     inp.onfocus=()=>srch(inp.value);
     inp.onblur=()=>{
-      poItems[i].product_name = inp.value;
       setTimeout(()=>{
         dd.style.display='none';
         if (window._poAutocompleteClicking) {
@@ -9417,16 +9415,18 @@ function renderPOItems() {
           (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
         );
         if (matchedProd) {
-          if (poItems[i].product_id !== matchedProd.id) {
+          const productChanged = poItems[i].product_id !== matchedProd.id;
+          if (productChanged) {
             const cost = Number(matchedProd.purchase_price) || 0;
-            poItems[i].product_id = matchedProd.id;
-            poItems[i].product_name = matchedProd.name;
             poItems[i].unit_cost = cost;
-            renderPOItems();
-            calcPOTotal();
           }
+          poItems[i].product_id = matchedProd.id;
+          poItems[i].product_name = matchedProd.name;
+          renderPOItems();
+          calcPOTotal();
         } else {
           poItems[i].product_id = null;
+          poItems[i].product_name = val;
           renderPOItems();
           calcPOTotal();
         }
@@ -9437,7 +9437,7 @@ function renderPOItems() {
     const statusHelp = document.createElement('div');
     statusHelp.style.cssText = 'font-size:11px;margin-top:3px;font-weight:500';
     if (it.product_id) {
-      statusHelp.innerHTML = '<span style="color:#10b981">✓ เชื่อมโยงคลังสินค้า (รับเข้าคลัง)</span>';
+      statusHelp.innerHTML = '<span style="color:var(--blue)">Supplier SKU: '+escapeHTML(selectedProduct?.supplier_sku||'-')+'</span> <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>';
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
     }
@@ -9465,7 +9465,7 @@ function renderPOItems() {
     tw.appendChild(tl); tw.appendChild(tv); r2.appendChild(tw);
     card.appendChild(r2); el.appendChild(card);
   });
-  const ab=document.createElement('button'); ab.textContent='+ เพิ่มสินค้า';
+  const ab=document.createElement('button'); ab.textContent='+ เพิ่ม SKU';
   ab.style.cssText='width:100%;background:#f0f9f5;border:1px solid var(--accent);border-radius:8px;padding:10px;color:var(--accent);cursor:pointer;font-size:14px;font-weight:600;margin-top:4px';
   ab.onclick=addPOItem; el.appendChild(ab);
 }
@@ -9587,6 +9587,13 @@ async function dedupePOItems(poId) {
   viewPO(poId);
 }
 
+async function loadPOSkuMap(items) {
+  const productIds = [...new Set((items||[]).map(it=>it.product_id).filter(Boolean))];
+  if (!productIds.length) return {};
+  const { data } = await sb.from('products').select('id,sku,supplier_sku').eq('shop_id',currentShop.id).in('id', productIds);
+  return Object.fromEntries((data||[]).map(p=>[p.id,p]));
+}
+
 async function viewPO(poId) {
   if (currentPage !== 'purchase') {
     showPage('purchase');
@@ -9596,6 +9603,7 @@ async function viewPO(poId) {
     sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
   ]);
   if(!po) return;
+  const skuMap = await loadPOSkuMap(items);
   const el=document.getElementById('po-detail-content');
   if(!el) return;
 
@@ -9620,17 +9628,19 @@ async function viewPO(poId) {
       '</div>'+
       '<div><span style="color:var(--text3)">วันที่สั่ง</span><div>'+po.po_date+'</div></div>'+
     '</div>'+
-    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า'+(hasDupItems?' <span style="color:var(--red);font-weight:400;font-size:11px">⚠️ พบรายการซ้ำ — กดปุ่ม "🧹 ลบรายการซ้ำ" ด้านล่าง</span>':'')+'</div>'+
+    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการ SKU'+(hasDupItems?' <span style="color:var(--red);font-weight:400;font-size:11px">⚠️ พบรายการซ้ำ — กดปุ่ม "🧹 ลบรายการซ้ำ" ด้านล่าง</span>':'')+'</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
-      '<th>#</th><th class="left">สินค้า</th>'+
+      '<th>#</th><th class="left">SKU</th><th class="left">Supplier SKU</th>'+
       '<th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>'+
-      '<th class="right">ต้นทุน/ชิ้น</th><th class="right">รวม</th>'+
+      '<th class="right">ราคาซื้อ/ชิ้น</th><th class="right">รวม</th>'+
     '</tr></thead><tbody>'+
     (items||[]).map((it,i)=>{
+      const product = skuMap[it.product_id] || {};
       const pending=Number(it.qty_ordered)-Number(it.qty_received||0);
       const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
       return '<tr>'+
-        '<td style="text-align:center">'+(i+1)+'</td><td>'+it.product_name+'</td>'+
+        '<td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(product.sku||it.product_name||'-')+'</td>'+
+        '<td>'+escapeHTML(product.supplier_sku||'-')+'</td>'+
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
         '<td style="text-align:right;color:var(--accent)">'+fmt(it.qty_received||0)+'</td>'+
         '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
@@ -9813,6 +9823,7 @@ async function printPO(poId) {
     sb.from('purchase_order_items').select('*').eq('po_id',poId),
   ]);
   if(!po) return;
+  const skuMap = await loadPOSkuMap(items);
   const total=items.reduce((s,it)=>s+Number(it.qty_ordered)*Number(it.unit_cost||0),0);
   const bp=[];
   bp.push('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
@@ -9837,13 +9848,14 @@ async function printPO(poId) {
   bp.push('<div><span style="color:#777;font-size:11px">วันที่</span>&nbsp;&nbsp;<strong>'+po.po_date+'</strong></div>');
   if(po.expected_date) bp.push('<div><span style="color:#777;font-size:11px">คาดว่าจะรับ</span>&nbsp;&nbsp;<strong>'+po.expected_date+'</strong></div>');
   bp.push('</div></div>');
-  bp.push('<table><thead><tr><th style="width:36px">#</th><th style="text-align:left">รายการสินค้า</th><th style="width:60px">จำนวน</th><th style="width:80px;text-align:right">ต้นทุน/ชิ้น</th><th style="width:80px;text-align:right">รวม</th></tr></thead><tbody>');
+  bp.push('<table><thead><tr><th style="width:36px">#</th><th style="text-align:left">SKU</th><th style="text-align:left">Supplier SKU</th><th style="width:60px">จำนวน</th><th style="width:80px;text-align:right">ราคาซื้อ/ชิ้น</th><th style="width:80px;text-align:right">รวม</th></tr></thead><tbody>');
   const MIN=10; const empties=Math.max(0,MIN-(items||[]).length);
   (items||[]).forEach((it,i)=>{
+    const product = skuMap[it.product_id] || {};
     const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
-    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+it.product_name+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
+    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(product.sku||it.product_name||'-')+'</td><td>'+escapeHTML(product.supplier_sku||'-')+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
   });
-  for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>');
+  for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
   bp.push('</tbody></table>');
   bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+fmtB(total)+'</span></div>');
   if(po.note) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+po.note+'</div>');
