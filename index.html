@@ -1739,6 +1739,12 @@ async function dashboard() {
   const pos      = poRes.data || [];
   const landed   = landedRes?.data || [];   // landed_costs (ค่าขนส่ง/ค่าจัดการ จากรับสินค้า)
   window._dashLanded = landed;
+  const landedTypeTotals = landed.reduce((totals,l) => {
+    const type = String(l.type || 'ไม่ระบุ').trim() || 'ไม่ระบุ';
+    totals[type] = (totals[type] || 0) + Number(l.amount||0);
+    return totals;
+  }, {});
+  const totalLandedCost = Object.values(landedTypeTotals).reduce((sum,amount)=>sum+amount,0);
   const handlingCost   = landed.filter(l => l.type === 'ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
   const shippingCostGR = landed.filter(l => l.type === 'ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
 
@@ -1999,6 +2005,12 @@ async function dashboard() {
         <div class="stat-label">💸 ค่าใช้จ่าย <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
         <div class="stat-value text-red">${fmtB(totalExpenses)}</div>
         <div class="stat-sub">${expenses.length} รายการ</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #0891b2" onclick="drillLandedCost()" title="คลิกดูรายการ Landed Cost ทั้งหมด">
+        <div class="stat-label">🚢 Landed Cost <span style="font-size:10px;color:#0891b2">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#0891b2">${fmtB(totalLandedCost)}</div>
+        <div class="stat-sub">${landed.length} รายการ · ${Object.keys(landedTypeTotals).length} ประเภท</div>
+        <div class="stat-sub" style="line-height:1.45">${Object.entries(landedTypeTotals).sort((a,b)=>b[1]-a[1]).map(([type,amount])=>escapeHTML(type)+' '+fmtB(amount)).join(' · ')||'ยังไม่มีรายการในช่วงนี้'}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">📦 มูลค่าสต๊อก</div>
@@ -2363,29 +2375,47 @@ function viewProductRepeatOrders(productId) {
 }
 
 // ─── DRILL-DOWN: Dashboard ──────────────────────────────
-// drill: ที่มาของค่าจัดการ/ค่าขนส่ง จากการรับสินค้า (landed_costs)
+// drill: รายการ Landed Cost ทั้งหมด หรือกรองตามประเภท
 function drillLandedCost(type) {
-  const rows = (window._dashLanded || []).filter(l => l.type === type).sort((a,b)=>(b.move_date||'').localeCompare(a.move_date||''));
+  const allRows = (window._dashLanded || []).slice().sort((a,b)=>(b.move_date||'').localeCompare(a.move_date||''));
+  const rows = type ? allRows.filter(l => l.type === type) : allRows;
   const total = rows.reduce((s,l)=>s+Number(l.amount||0),0);
-  const icon = type === 'ค่าขนส่ง' ? '🚚' : '🔧';
+  const typeTotals = rows.reduce((totals,l) => {
+    const key = String(l.type || 'ไม่ระบุ').trim() || 'ไม่ระบุ';
+    totals[key] = (totals[key] || 0) + Number(l.amount||0);
+    return totals;
+  }, {});
+  const icon = type === 'ค่าขนส่ง' ? '🚚' : type === 'ค่าจัดการ' ? '🔧' : '🚢';
+  const title = type || 'Landed Cost ทั้งหมด';
+  const typeSummary = !type && Object.keys(typeTotals).length
+    ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px">' +
+      Object.entries(typeTotals).sort((a,b)=>b[1]-a[1]).map(([name,amount]) =>
+        '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center">' +
+          '<div style="font-size:11px;color:var(--text3)">'+escapeHTML(name)+'</div>' +
+          '<div class="font-mono" style="font-weight:700;color:#0891b2">'+fmtB(amount)+'</div>' +
+        '</div>'
+      ).join('') + '</div>'
+    : '';
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '300';
   modal.innerHTML =
-    '<div class="modal" style="max-width:640px">' +
-    '<div class="modal-title">'+icon+' '+type+' — จากการรับสินค้า ('+rows.length+' รายการ)</div>' +
+    '<div class="modal" style="max-width:760px">' +
+    '<div class="modal-title">'+icon+' '+escapeHTML(title)+' — จากการรับสินค้า ('+rows.length+' รายการ)</div>' +
     '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">รวม <strong style="color:var(--amber)">'+fmtB(total)+'</strong> · ดึงจาก Landed Cost ตอนรับสินค้าเข้าสต๊อก</div>' +
+    typeSummary +
     (rows.length ?
       '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr>'+
-      '<th>วันที่</th><th>ล็อต / PO</th><th>หมายเหตุ</th><th class="text-right">จำนวนเงิน</th></tr></thead><tbody>'+
+      '<th>วันที่</th>'+(type?'':'<th>ประเภท</th>')+'<th>ล็อต / PO</th><th>หมายเหตุ</th><th class="text-right">จำนวนเงิน</th></tr></thead><tbody>'+
       rows.map(l =>
-        '<tr><td style="white-space:nowrap;font-size:12px">'+(l.move_date||'-')+'</td>'+
-        '<td style="font-size:12px">'+(l.lot_name||'-')+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+(l.note||'-')+'</td>'+
+        '<tr><td style="white-space:nowrap;font-size:12px">'+escapeHTML(l.move_date||'-')+'</td>'+
+        (type?'':'<td style="font-size:12px;font-weight:600">'+escapeHTML(l.type||'ไม่ระบุ')+'</td>')+
+        '<td style="font-size:12px">'+escapeHTML(l.lot_name||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+escapeHTML(l.note||'-')+'</td>'+
         '<td class="text-right font-mono text-amber">'+fmtB(l.amount)+'</td></tr>'
       ).join('')+
       '</tbody></table></div>'
-      : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+type+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อก โดยใส่ Landed Cost ประเภท "'+type+'"</span></div></div>') +
+      : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+escapeHTML(title)+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อกในส่วน Landed Cost</span></div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
