@@ -5354,7 +5354,7 @@ async function printReceipt(orderId, showDiscount=true) {
   const billParts = [];
   billParts.push('<!DOCTYPE html><html lang="th"><head>');
   billParts.push('<meta charset="UTF-8">');
-  billParts.push('<title>\u0e1a\u0e34\u0e25\u0e40\u0e07\u0e34\u0e19\u0e2a\u0e14 ' + (order.order_no||'') + '</title>');
+  billParts.push('<title>บิลเงินสด / Cash Sale ' + (order.order_no||'') + '</title>');
   billParts.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
   billParts.push('<' + 'style>');
   billParts.push('* { box-sizing:border-box; margin:0; padding:0; }');
@@ -5404,10 +5404,11 @@ async function printReceipt(orderId, showDiscount=true) {
   if (!billShopName.endsWith('.COM')) billShopName += '.COM';
   billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
   billParts.push('<div class="shop-info">' + getShopAddress(shop).split('\n').join('<br>'));
+  billParts.push('<br>Line OA: @sealthai');
   if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
   if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
   billParts.push('</div></div></div>');
-  billParts.push('<div class="bill-type">\u0e1a\u0e34\u0e25\u0e40\u0e07\u0e34\u0e19\u0e2a\u0e14</div>');
+  billParts.push('<div class="bill-type">บิลเงินสด / Cash Sale</div>');
   billParts.push('</div>');
 
   // Info boxes
