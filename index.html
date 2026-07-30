@@ -3730,8 +3730,8 @@ async function loadOrders() {
   const totalPlatformFee = activeRows.reduce((s,o)=> s + getOrderPlatformFeeInfo(o).fee, 0);
   const totalProfit = totalRev - totalCost - totalPlatformFee;   // กำไรหลังหักต้นทุน + ค่า GP Platform
   const commBase    = Math.max(0, totalProfit);                  // ฐานคิดคอม (ขาดทุน = ไม่มีคอม)
-  const salesComm   = commBase * 0.20;                           // Sales Commission 20% ของกำไร
-  const accountComm = commBase * 0.20;                           // Account Commission 20% ของกำไร
+  const commissionPerRole = commBase * 0.20;                    // Sales และ Account ได้ฝ่ายละ 20% เท่ากัน
+  const combinedCommission = commissionPerRole * 2;
   const distinctCustomers = new Set(
     activeRows.map(o=>(o.customer_name||'').trim().toLowerCase()).filter(k=>k && k!=='ไม่ระบุ' && k!=='-')
   ).size;
@@ -3744,8 +3744,7 @@ async function loadOrders() {
     <div class="stat-card"><div class="stat-label">📦 ต้นทุนรวม</div><div class="stat-value" style="color:#7c3aed">${fmtB(totalCost)}</div></div>
     <div class="stat-card"><div class="stat-label">💸 GP Platform ที่ถูกหัก</div><div class="stat-value text-red">${fmtB(totalPlatformFee)}</div></div>
     <div class="stat-card"><div class="stat-label">📈 กำไรรวม</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}">${fmtB(totalProfit)}</div></div>
-    <div class="stat-card"><div class="stat-label">💼 Sales Commission <span style="font-size:10px;color:var(--text3)">20% ของกำไร</span></div><div class="stat-value" style="color:#0891b2">${fmtB(salesComm)}</div></div>
-    <div class="stat-card"><div class="stat-label">🧮 Account Commission <span style="font-size:10px;color:var(--text3)">20% ของกำไร</span></div><div class="stat-value" style="color:#be185d">${fmtB(accountComm)}</div></div>
+    <div class="stat-card"><div class="stat-label">💼 Sales / Account Commission <span style="font-size:10px;color:var(--text3)">20% เท่ากัน</span></div><div class="stat-value" style="color:#0891b2">${fmtB(commissionPerRole)} <span style="font-size:12px;font-family:var(--font);font-weight:500;color:var(--text3)">ต่อฝ่าย</span></div><div class="stat-sub">Sales ${fmtB(commissionPerRole)} · Account ${fmtB(commissionPerRole)}</div><div class="stat-sub">รวมทั้งสองฝ่าย ${fmtB(combinedCommission)}</div></div>
   `;
 
   if (!rows.length) {
