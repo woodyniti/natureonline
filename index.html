@@ -5280,23 +5280,28 @@ function openReceiptOptions(orderId) {
           <input type="checkbox" id="receipt-show-discount" checked style="width:18px;height:18px;margin-top:2px">
           <span><strong>แสดงส่วนลดในบิล</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: แสดงยอดก่อนหักส่วนลด</span></span>
         </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <input type="checkbox" id="receipt-show-signature" checked style="width:18px;height:18px;margin-top:2px">
+          <span><strong>พิมพ์ลายเซ็นผู้รับเงิน</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัล · ปิด: เว้นช่องไว้สำหรับเซ็นด้วยมือ</span></span>
+        </label>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่งและหมายเหตุจะแสดงในบิลอัตโนมัติเมื่อมีข้อมูล</div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
-        <button class="btn btn-primary" onclick="printReceipt('${orderId}',document.getElementById('receipt-show-discount').checked)">🖨️ พิมพ์บิล</button>
+        <button class="btn btn-primary" onclick="printReceipt('${orderId}',document.getElementById('receipt-show-discount').checked,document.getElementById('receipt-show-signature').checked)">🖨️ พิมพ์บิล</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
 }
 
-async function printReceipt(orderId, showDiscount=true) {
+async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   const { data: order } = await sb.from('orders').select('*,order_items(*,products(name))').eq('id',orderId).single();
   if (!order) { toast('ไม่พบออเดอร์','error'); return; }
 
   const items = order.order_items || [];
   const shop  = currentShop || {};
+  const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
 
   // คำนวณส่วนลดรายรายการ
   function itemNet(it) {
@@ -5389,6 +5394,9 @@ async function printReceipt(orderId, showDiscount=true) {
   billParts.push('.note-box { border:1px solid #777; border-top:none; padding:7px 10px; font-size:12px; line-height:1.55; background:#fffdf2; }');
   billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:36px; }');
   billParts.push('.sig-box { text-align:center; width:200px; }');
+  billParts.push('.sig-image-wrap { height:48px; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; margin-bottom:2px; }');
+  billParts.push('.sig-image { display:block; max-width:170px; max-height:48px; object-fit:contain; }');
+  billParts.push('.sig-space { height:44px; }');
   billParts.push('.sig-line { border-top:1.5px solid #333; margin-bottom:6px; }');
   billParts.push('.sig-label { font-size:12px; color:#000; font-weight:600; }');
   billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
@@ -5456,7 +5464,11 @@ async function printReceipt(orderId, showDiscount=true) {
 
   // Signature
   billParts.push('<div class="sig-area"><div class="sig-box">');
-  billParts.push('<div style="height:44px"></div>');
+  if (showSignature) {
+    billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ลายเซ็นผู้รับเงิน"></div>');
+  } else {
+    billParts.push('<div class="sig-space"></div>');
+  }
   billParts.push('<div class="sig-line"></div>');
   billParts.push('<div class="sig-label">\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19 / Received By</div>');
 billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM') + '</div>');
