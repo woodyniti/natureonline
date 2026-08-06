@@ -13027,6 +13027,7 @@ async function openShippingLabelModal(orderId) {
   
   // Prepare Receiver Address (prefill from order)
   const custName = order.customer_name || '-';
+  const custContact = order.customer_contact || '';
   const custPhone = order.customer_phone || '-';
   const custAddr = order.customer_address || '';
 
@@ -13062,6 +13063,10 @@ async function openShippingLabelModal(orderId) {
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">ชื่อผู้รับ</label>
           <input type="text" id="ship-recv-name" value="${escapeHTML(custName)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label style="font-size:11px">ชื่อผู้ติดต่อ</label>
+          <input type="text" id="ship-recv-contact" value="${escapeHTML(custContact)}" placeholder="ชื่อผู้ติดต่อ" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">เบอร์โทรผู้รับ</label>
@@ -13129,8 +13134,12 @@ async function printShippingLabel(orderId) {
   const senderAddr = document.getElementById('ship-sender-address')?.value || '';
   
   const recvName = document.getElementById('ship-recv-name')?.value || '';
+  const recvContact = document.getElementById('ship-recv-contact')?.value || '';
   const recvPhone = document.getElementById('ship-recv-phone')?.value || '';
   const recvAddr = document.getElementById('ship-recv-address')?.value || '';
+  const recvContactHtml = recvContact.trim() && recvContact.trim().toLowerCase() !== recvName.trim().toLowerCase()
+    ? '<div class="recv-contact">ผู้ติดต่อ: <strong>' + escapeHTML(recvContact.trim()) + '</strong></div>'
+    : '';
 
   // Determine page dimensions
   let Wstr = '5.8in', Hstr = '8.3in';
@@ -13189,6 +13198,7 @@ async function printShippingLabel(orderId) {
     '.title { font-weight:bold; font-size:12px; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #ccc; padding-bottom:2px; display:inline-block; }',
     '.recv-title { font-size:14px; border-bottom:2px solid #000; color:#000; }',
     '.recv-name { font-size:16px; font-weight:700; margin-bottom:4px; }',
+    '.recv-contact { font-size:14px; margin-bottom:3px; }',
     '.recv-addr { font-weight:500; font-size:15px; word-break:break-word; }',
     '.recv-phone { font-size:16px; font-weight:700; margin-top:4px; border:1px solid #000; display:inline-block; padding:2px 8px; background:#fff; }',
     
@@ -13225,6 +13235,7 @@ async function printShippingLabel(orderId) {
     '    <div class="receiver-box">',
     '      <div class="title recv-title">ผู้รับ (Receiver)</div>',
     '      <div class="recv-name">' + escapeHTML(recvName) + '</div>',
+    recvContactHtml,
     '      <div class="recv-addr">' + escapeHTML(recvAddr).replace(/\n/g, '<br>') + '</div>',
     '      <div class="recv-phone">📞 โทร: ' + escapeHTML(recvPhone) + '</div>',
     '    </div>',
