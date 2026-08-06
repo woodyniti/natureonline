@@ -6527,12 +6527,17 @@ async function stock() {
     <div class="modal-overlay" id="modal-stock">
       <div class="modal" style="max-width:760px">
         <div class="modal-title">🏭 รับสินค้าเข้าสต๊อก</div>
-        <!-- เลือก PO (optional) -->
+        <!-- เลือก PO ได้หลายใบ (optional) -->
         <div class="form-group" style="margin-bottom:12px">
-          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(ไม่บังคับ — เลือกถ้ารับสินค้าตาม PO)</span></label>
-          <select id="s-po-sel" onchange="applyPOToStock()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--text)">
-            <option value="">-- ไม่เชื่อม PO --</option>
-          </select>
+          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(เลือกได้หลาย PO หรือไม่เลือกก็ได้)</span></label>
+          <div id="s-po-list" style="max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border2);border-radius:8px;padding:6px">
+            <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">กำลังโหลด PO ที่รอรับ...</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="applyPOsToStock()">📥 โหลดรายการจาก PO ที่เลือก</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearStockPOSelection()">ล้างการเลือก</button>
+          </div>
+          <div id="s-po-selection-summary" style="font-size:11px;color:var(--text3);margin-top:6px">ยังไม่ได้เลือก PO — สามารถเพิ่มสินค้าเองได้</div>
         </div>
         <div class="grid-2" style="margin-bottom:14px">
           <div class="form-group">
@@ -6683,6 +6688,11 @@ async function stock() {
   loadStockHistory();
   stockRows = [];
   addStockRow(); // start with 1 row
+  if (window._stockPOsToOpen?.length) {
+    const preselectedPOs = [...window._stockPOsToOpen];
+    window._stockPOsToOpen = null;
+    await openStockModal(preselectedPOs);
+  }
 }
 
 // ── Product search input (autocomplete) ───────────────
@@ -6736,9 +6746,14 @@ function selectStockProduct(rowIdx, productId, productName) {
 }
 
 // ── Stock rows ─────────────────────────────────────────
-function addStockRow() {
+function addStockRow(initial={}) {
   const idx = stockRows.length;
-  stockRows.push({ product_id:'', product_name:'', qty:0, cost:0, other:0 });
+  const row = {
+    product_id:'', product_name:'', qty:0, cost:0, other:0,
+    po_id:null, po_item_id:null, po_no:'', supplier_name:'', remaining:null, enabled:true,
+    ...initial,
+  };
+  stockRows.push(row);
 
   const wrap = document.getElementById('stock-rows-wrap');
   if (!wrap) return;
@@ -6746,23 +6761,29 @@ function addStockRow() {
   div.id = 'stock-row-'+idx;
   div.style.cssText = 'background:var(--bg3);border-radius:8px;padding:12px;position:relative;border:1px solid var(--border)';
   div.innerHTML = `
+    ${row.po_item_id ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap">
+      <div style="font-size:11px;color:var(--blue);font-weight:600">PO: ${escapeHTML(row.po_no||'-')} · ${escapeHTML(row.supplier_name||'-')}</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--accent)">
+        <input type="checkbox" id="sr-use-${idx}" ${row.enabled!==false?'checked':''} onchange="toggleStockPORow(${idx},this.checked)"> รับรายการนี้
+      </label>
+    </div>` : ''}
     <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap" class="stock-row-inner">
       ${makeProductSearch(idx)}
       <div style="display:flex;flex-direction:column;min-width:80px;flex:1">
-        <label style="font-size:12px;color:var(--text3);margin-bottom:4px">จำนวน</label>
-        <input type="number" value="0" min="0" step="any" id="sr-qty-${idx}"
+        <label style="font-size:12px;color:var(--text3);margin-bottom:4px">จำนวน${row.po_item_id&&row.remaining!==null?' (คงเหลือ '+fmt(row.remaining)+')':''}</label>
+        <input type="number" value="${Number(row.qty)||0}" min="0" ${row.po_item_id&&row.remaining!==null?'max="'+Number(row.remaining)+'"':''} step="any" id="sr-qty-${idx}" ${row.enabled===false?'disabled':''}
           oninput="stockRows[${idx}].qty=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
       <div style="display:flex;flex-direction:column;min-width:90px;flex:1">
         <label style="font-size:12px;color:var(--text3);margin-bottom:4px">ทุน/ชิ้น (฿)</label>
-        <input type="number" value="0" min="0" step="any" id="sr-cost-${idx}"
+        <input type="number" value="${Number(row.cost)||0}" min="0" step="any" id="sr-cost-${idx}"
           oninput="stockRows[${idx}].cost=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
       <div style="display:flex;flex-direction:column;min-width:90px;flex:1">
         <label style="font-size:12px;color:var(--text3);margin-bottom:4px">ค่าส่ง/อื่น (฿)</label>
-        <input type="number" value="0" min="0" step="any" id="sr-other-${idx}"
+        <input type="number" value="${Number(row.other)||0}" min="0" step="any" id="sr-other-${idx}"
           oninput="stockRows[${idx}].other=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
@@ -6775,6 +6796,31 @@ function addStockRow() {
       </div>
     </div>`;
   wrap.appendChild(div);
+  const nameInp = document.getElementById('sr-prod-'+idx);
+  if (nameInp) {
+    nameInp.value = row.product_name || '';
+    if (row.po_item_id) {
+      nameInp.readOnly = true;
+      nameInp.removeAttribute('oninput');
+      nameInp.removeAttribute('onfocus');
+      nameInp.style.background = '#f4f6f8';
+      nameInp.title = 'รายการจาก PO '+(row.po_no||'');
+    }
+  }
+  updateStockTotal();
+}
+
+function toggleStockPORow(idx, checked) {
+  const row = stockRows[idx];
+  if (!row) return;
+  row.enabled = checked;
+  row.qty = checked ? Number(row.remaining||0) : 0;
+  const qtyInp = document.getElementById('sr-qty-'+idx);
+  if (qtyInp) {
+    qtyInp.disabled = !checked;
+    qtyInp.value = row.qty;
+  }
+  updateStockTotal();
 }
 
 function removeStockRow(idx) {
@@ -6791,7 +6837,7 @@ function updateStockTotal() {
     const el = document.getElementById('sr-total-'+i);
     if (el) el.textContent = fmtB(total);
   });
-  const goodsTotal  = stockRows.filter(Boolean).reduce((s,r)=>s+r.qty*r.cost+r.other,0);
+  const goodsTotal  = stockRows.filter(r=>r&&r.enabled!==false).reduce((s,r)=>s+r.qty*r.cost+r.other,0);
   const landedTotal = (landedCostRows||[]).reduce((s,r)=>s+Number(r.amount||0),0);
   const vatOn   = document.getElementById('s-vat-on')?.checked || false;
   const vatType = document.getElementById('s-vat-type')?.value || 'excluded';
@@ -6863,11 +6909,23 @@ let _stockSaving = false;
 async function saveStockBatch() {
   const date = document.getElementById('s-date').value;
   const lot  = document.getElementById('s-lot').value;
-  const valid = stockRows.filter(r=>r&&r.product_id&&r.qty>0);
+  const unmappedPOItem = stockRows.find(r=>r&&r.enabled!==false&&r.po_item_id&&r.qty>0&&!r.product_id);
+  if (unmappedPOItem) {
+    toast('รายการ '+(unmappedPOItem.product_name||'-')+' ใน '+(unmappedPOItem.po_no||'PO')+' ยังไม่เชื่อมกับสินค้าในคลัง กรุณาเอาเครื่องหมายรับรายการนี้ออกก่อน','error');
+    return;
+  }
+  const valid = stockRows.filter(r=>r&&r.enabled!==false&&r.product_id&&r.qty>0);
   if (!valid.length) { toast('กรุณาเลือกสินค้าและใส่จำนวนอย่างน้อย 1 รายการ','error'); return; }
+  const overReceived = valid.find(r => r.po_item_id && r.remaining!==null && Number(r.qty) > Number(r.remaining));
+  if (overReceived) {
+    toast('จำนวนรับของ '+(overReceived.product_name||'สินค้า')+' เกินจำนวนคงเหลือใน '+(overReceived.po_no||'PO'),'error');
+    return;
+  }
   // ── ยืนยันก่อนบันทึก (กันกดผิด) ──
   const _grand = document.getElementById('s-grand-total')?.textContent || '';
-  if (!confirm('ยืนยันรับสินค้าเข้าสต๊อก ' + valid.length + ' รายการ' + (_grand?' · รวม '+_grand:'') + '?\n\nสต๊อกและต้นทุนเฉลี่ยจะถูกอัพเดต')) return;
+  const selectedPOCount = new Set(valid.map(r=>r.po_id).filter(Boolean)).size;
+  const poCountText = selectedPOCount ? ' จาก '+selectedPOCount+' PO' : '';
+  if (!confirm('ยืนยันรับสินค้าเข้าสต๊อก ' + valid.length + ' รายการ' + poCountText + (_grand?' · รวม '+_grand:'') + '?\n\nสต๊อกและต้นทุนเฉลี่ยจะถูกอัพเดต')) return;
   if (_stockSaving) return;   // กันกดซ้ำ
   _stockSaving = true;
 
@@ -6898,7 +6956,7 @@ async function saveStockBatch() {
       other_cost: Math.round(landedShare * 100) / 100,
       lot_name: lot,
       move_date: date,
-      po_id: document.getElementById('s-po-sel')?.value || null,
+      po_id: r.po_id || null,
     };
   });
 
@@ -6906,9 +6964,12 @@ async function saveStockBatch() {
   if (error) { _stockSaving=false; toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
 
   // เก็บ Landed Cost แยกตามประเภท (ค่าขนส่ง/ค่าจัดการ ฯลฯ) สำหรับ Dashboard — ถ้าตาราง landed_costs ยังไม่มี จะข้าม (ไม่ block)
-  const _poIdSave = document.getElementById('s-po-sel')?.value || null;
+  const receivedPoIds = [...new Set(valid.map(r=>r.po_id).filter(Boolean))];
+  const _poIdSave = receivedPoIds.length===1 ? receivedPoIds[0] : null;
+  const poRefs = [...new Set(valid.map(r=>r.po_no).filter(Boolean))].join(', ');
   const landedToSave = (landedCostRows||[]).filter(r => Number(r.amount) > 0).map(r => ({
-    shop_id: currentShop.id, type: r.type, amount: Number(r.amount)||0, note: r.note||'',
+    shop_id: currentShop.id, type: r.type, amount: Number(r.amount)||0,
+    note: [r.note||'', receivedPoIds.length>1&&poRefs?'หลาย PO: '+poRefs:''].filter(Boolean).join(' · '),
     lot_name: lot, move_date: date, po_id: _poIdSave
   }));
   if (landedToSave.length) {
@@ -6919,29 +6980,28 @@ async function saveStockBatch() {
   const productIds = [...new Set(valid.map(r => r.product_id))];
   await recalcStockQty(productIds);
 
-  // ── อัพเดท qty_received และ status ของ PO (ถ้าเชื่อม PO) ──
-  const selectedPoId = document.getElementById('s-po-sel')?.value || null;
-  if (selectedPoId) {
-    // อัพเดท qty_received ของแต่ละ po_item ที่มี po_item_id
-    for (const r of valid) {
-      if (!r.po_item_id) continue;
-      const { data: cur } = await sb.from('purchase_order_items')
-        .select('qty_ordered,qty_received').eq('id', r.po_item_id).single();
-      if (cur) {
-        const newReceived = Math.min(
-          Number(cur.qty_received||0) + Number(r.qty),
-          Number(cur.qty_ordered)
-        );
-        await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
-      }
-    }
-    // ตรวจว่า PO รับครบทุก item แล้วหรือยัง
+  // ── อัพเดท qty_received และ status ของทุก PO ที่รับในรอบนี้ ──
+  const affectedPoIds = new Set();
+  for (const r of valid) {
+    if (!r.po_item_id) continue;
+    const { data: cur } = await sb.from('purchase_order_items')
+      .select('po_id,qty_ordered,qty_received').eq('id', r.po_item_id).single();
+    if (!cur) continue;
+    const newReceived = Math.min(
+      Number(cur.qty_received||0) + Number(r.qty),
+      Number(cur.qty_ordered)
+    );
+    await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
+    affectedPoIds.add(r.po_id || cur.po_id);
+  }
+  for (const poId of affectedPoIds) {
+    if (!poId) continue;
     const { data: allItems } = await sb.from('purchase_order_items')
-      .select('qty_ordered,qty_received').eq('po_id', selectedPoId);
-    const allDone = allItems?.every(it => Number(it.qty_received||0) >= Number(it.qty_ordered));
+      .select('qty_ordered,qty_received').eq('po_id', poId);
+    const allDone = allItems?.length && allItems.every(it => Number(it.qty_received||0) >= Number(it.qty_ordered));
     await sb.from('purchase_orders').update({
       status: allDone ? 'received' : 'partial'
-    }).eq('id', selectedPoId);
+    }).eq('id', poId);
   }
 
   // reset landed cost rows
@@ -6949,7 +7009,7 @@ async function saveStockBatch() {
   _stockSaving = false;
 
   closeModal('modal-stock');
-  toast('บันทึกสำเร็จ '+valid.length+' รายการ' + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
+  toast('บันทึกสำเร็จ '+valid.length+' รายการ'+poCountText + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
   loadStockHistory();
 }
 
@@ -7668,65 +7728,84 @@ async function loadPODropdownForStock() {
     .eq('shop_id', currentShop.id)
     .in('status', ['draft','sent','partial'])
     .order('po_date', {ascending:false});
-  const sel = document.getElementById('s-po-sel');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">-- ไม่เชื่อม PO --</option>' +
-    (data||[]).map(po =>
-      '<option value="'+po.id+'">'+( po.po_no||'-')+' · '+po.supplier_name+'</option>'
-    ).join('');
-  sel._poData = data || [];
+  const list = document.getElementById('s-po-list');
+  if (!list) return;
+  const pendingPOs = (data||[]).map(po => {
+    const pendingItems = (po.purchase_order_items||[]).filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
+    return { ...po, pendingItems };
+  }).filter(po => po.pendingItems.length);
+  list._poData = pendingPOs;
+  if (!pendingPOs.length) {
+    list.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">ไม่มี PO ที่รอรับสินค้า</div>';
+    updateStockPOSelectionSummary();
+    return;
+  }
+  list.innerHTML = pendingPOs.map(po => {
+    const pendingQty = po.pendingItems.reduce((sum,it)=>sum+Math.max(0,Number(it.qty_ordered)-Number(it.qty_received||0)),0);
+    return '<label style="display:flex;align-items:flex-start;gap:9px;padding:8px;border-bottom:1px solid var(--border);cursor:pointer">'+
+      '<input type="checkbox" class="s-po-check" value="'+po.id+'" onchange="updateStockPOSelectionSummary()" style="width:17px;height:17px;margin-top:1px">'+
+      '<span style="min-width:0"><strong style="font-size:12px">'+escapeHTML(po.po_no||'-')+'</strong> · '+escapeHTML(po.supplier_name||'-')+
+      '<br><span style="font-size:11px;color:var(--text3)">'+po.pendingItems.length+' รายการ · คงเหลือ '+fmt(pendingQty)+' ชิ้น</span></span></label>';
+  }).join('');
+  updateStockPOSelectionSummary();
 }
 
-async function applyPOToStock() {
-  const sel = document.getElementById('s-po-sel');
-  if (!sel || !sel.value || !sel._poData) return;
-  const po = sel._poData.find(p => p.id === sel.value);
-  if (!po) return;
-  const items = po.purchase_order_items || [];
-  const pending = items.filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
-  if (!pending.length) { toast('PO นี้รับสินค้าครบแล้ว','success'); return; }
+function getSelectedStockPOIds() {
+  return [...document.querySelectorAll('.s-po-check:checked')].map(el=>el.value);
+}
+
+function updateStockPOSelectionSummary() {
+  const selected = getSelectedStockPOIds();
+  const summary = document.getElementById('s-po-selection-summary');
+  if (!summary) return;
+  summary.textContent = selected.length
+    ? 'เลือกแล้ว '+selected.length+' PO — กด “โหลดรายการจาก PO ที่เลือก”'
+    : 'ยังไม่ได้เลือก PO — สามารถเพิ่มสินค้าเองได้';
+  summary.style.color = selected.length ? 'var(--accent)' : 'var(--text3)';
+}
+
+function clearStockPOSelection() {
+  document.querySelectorAll('.s-po-check').forEach(el=>{el.checked=false;});
+  updateStockPOSelectionSummary();
+}
+
+async function applyPOsToStock() {
+  const list = document.getElementById('s-po-list');
+  const selectedIds = getSelectedStockPOIds();
+  if (!selectedIds.length) { toast('กรุณาเลือก PO อย่างน้อย 1 ใบ','error'); return; }
+  const selectedPOs = (list?._poData||[]).filter(po=>selectedIds.includes(po.id));
+  const pendingRows = [];
+  selectedPOs.forEach(po => {
+    (po.pendingItems||[]).forEach(it => {
+      const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
+      if (remaining <= 0) return;
+      pendingRows.push({
+        product_id:it.product_id||'', product_name:it.product_name||'',
+        qty:remaining, cost:Number(it.unit_cost||0), other:0,
+        po_id:po.id, po_item_id:it.id, po_no:po.po_no||'',
+        supplier_name:po.supplier_name||'', remaining, enabled:true,
+      });
+    });
+  });
+  if (!pendingRows.length) { toast('PO ที่เลือกไม่มีรายการคงเหลือให้รับ','success'); return; }
 
   // fill lot name
   const lotEl = document.getElementById('s-lot');
-  if (lotEl) lotEl.value = (po.po_no||'') + ' - ' + po.supplier_name;
+  if (lotEl) lotEl.value = selectedPOs.map(po=>po.po_no||'-').join(' + ');
 
-  // โหลด product data สำหรับ pending items
-  if (!productList.length) {
-    const { data } = await sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name');
-    productList = data || [];
-  }
-
-  // clear และสร้าง rows ใหม่จาก PO items
+  // clear และสร้าง rows ใหม่จากหลาย PO
   const wrap = document.getElementById('stock-rows-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
-  stockRows = [];   // reset ก่อนเสมอ
-  pending.forEach(it => {
-    const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
-    addStockRow();
-    const idx = stockRows.length - 1;   // ใช้ index จริงจาก stockRows
-
-    // อัพเดท stockRows data โดยตรง
-    stockRows[idx].product_id   = it.product_id || '';
-    stockRows[idx].product_name = it.product_name || '';
-    stockRows[idx].qty          = remaining;
-    stockRows[idx].cost         = Number(it.unit_cost || 0);
-    stockRows[idx].po_item_id   = it.id;  // เก็บไว้ update qty_received ทีหลัง
-
-    // อัพเดท DOM — product input id = sr-prod-{idx}
-    const nameInp = document.getElementById('sr-prod-'+idx);
-    const qtyInp  = document.getElementById('sr-qty-'+idx);
-    const costInp = document.getElementById('sr-cost-'+idx);
-    if (nameInp) nameInp.value = it.product_name || '';
-    if (qtyInp)  qtyInp.value  = remaining;
-    if (costInp) costInp.value  = Number(it.unit_cost || 0);
-  });
+  stockRows = [];
+  pendingRows.forEach(row => addStockRow(row));
   updateStockTotal();
-  toast('โหลดรายการจาก PO สำเร็จ '+pending.length+' รายการ','success');
+  toast('โหลด '+selectedPOs.length+' PO · '+pendingRows.length+' รายการสำเร็จ','success');
 }
 
-function openStockModal() {
+async function openStockModal(preselectedPOIds=[]) {
   stockRows = [];
+  landedCostRows = [];
   openModal('modal-stock');
   // reset rows wrap
   const wrap = document.getElementById('stock-rows-wrap');
@@ -7736,9 +7815,17 @@ function openStockModal() {
   // default: ติ๊ก VAT 7%
   const _sv = document.getElementById('s-vat-on');   if (_sv)  _sv.checked = true;
   const _svt = document.getElementById('s-vat-type'); if (_svt) _svt.value = 'excluded';
+  renderLandedCostRows();
   addStockRow();
   updateStockTotal();   // แสดงแถว VAT ตาม default
-  loadPODropdownForStock();
+  await loadPODropdownForStock();
+  if (preselectedPOIds.length) {
+    document.querySelectorAll('.s-po-check').forEach(el=>{
+      el.checked = preselectedPOIds.includes(el.value);
+    });
+    updateStockPOSelectionSummary();
+    if (getSelectedStockPOIds().length) await applyPOsToStock();
+  }
 }
 
 // ── Goods Return (GR) ─────────────────────────────────────────
@@ -9675,9 +9762,10 @@ function renderPOItems() {
     r2.appendChild(nf(it.qty_ordered||1,'จำนวน',v=>poItems[i].qty_ordered=v));
     r2.appendChild(nf(it.unit_cost||0,'ราคาซื้อ/ชิ้น',v=>poItems[i].unit_cost=v));
     const tw=document.createElement('div'); tw.style.cssText='text-align:right;padding-bottom:8px';
-    const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวม';
+    const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวมรายการ';
     const tv=document.createElement('div'); tv.className='font-mono text-amber'; tv.style.cssText='font-size:14px;font-weight:700';
-    tv.textContent=fmtB(Number(it.qty_ordered||1)*Number(it.unit_cost||0));
+    tv.id='po-item-total-'+i;
+    tv.textContent=fmtB(Number(it.qty_ordered??1)*Number(it.unit_cost||0));
     tw.appendChild(tl); tw.appendChild(tv); r2.appendChild(tw);
     card.appendChild(r2); el.appendChild(card);
   });
@@ -9689,7 +9777,11 @@ function renderPOItems() {
 function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:0});renderPOItems();}
 
 function calcPOTotal(){
-  const subtotal = poItems.reduce((s,it)=>s+Number(it.qty_ordered||1)*Number(it.unit_cost||0),0);
+  poItems.forEach((it,i)=>{
+    const lineEl=document.getElementById('po-item-total-'+i);
+    if(lineEl) lineEl.textContent=fmtB(Number(it.qty_ordered??1)*Number(it.unit_cost||0));
+  });
+  const subtotal = poItems.reduce((s,it)=>s+Number(it.qty_ordered??1)*Number(it.unit_cost||0),0);
   const vatOn   = document.getElementById('po-vat-on')?.checked || false;
   const vatType = document.getElementById('po-vat-type')?.value || 'excluded';
   const vatAmt  = vatOn ? (vatType==='excluded' ? subtotal*0.07 : subtotal-subtotal/1.07) : 0;
@@ -9965,52 +10057,9 @@ async function updatePOStatus(poId, status) {
 }
 
 async function openGoodsReceipt(poId) {
-  // ดึงรายการที่ยังรับไม่ครบ
-  const [{data:po},{data:items}]=await Promise.all([
-    sb.from('purchase_orders').select('*').eq('id',poId).single(),
-    sb.from('purchase_order_items').select('*').eq('po_id',poId),
-  ]);
-  const pending=items.filter(it=>Number(it.qty_ordered)>Number(it.qty_received||0));
-  if(!pending.length){toast('รับสินค้าครบแล้ว','success');return;}
-
-  // สร้าง stock_movements สำหรับแต่ละ item
-  const rows = pending.map(it=>({
-    product_id:   it.product_id,
-    lot_name:     po.po_no+' - '+po.supplier_name,
-    qty:          Number(it.qty_ordered)-Number(it.qty_received||0),
-    cost_per_unit:Number(it.unit_cost||0),
-    other_cost:   0,
-  }));
-
-  // แสดง modal confirm รับสินค้า
-  const ok=confirm('ยืนยันรับสินค้าจาก '+po.supplier_name+'\nจำนวน '+pending.length+' รายการ ?');
-  if(!ok) return;
-  if(!ok) return;
-
-  // บันทึก stock_movements
-  for(const r of rows){
-    if(!r.product_id) continue;
-    await sb.from('stock_movements').insert({
-      shop_id:currentShop.id, product_id:r.product_id,
-      lot_name:r.lot_name, move_type:'in',
-      qty:r.qty, cost_per_unit:r.cost_per_unit, other_cost:0,
-      move_date:today(), po_id:poId,
-    });
-  }
-  // recalc stock
-  await recalcStockQty(rows.filter(r=>r.product_id).map(r=>r.product_id));
-
-  // อัพเดท qty_received และ status PO
-  for(const it of pending){
-    await sb.from('purchase_order_items').update({
-      qty_received: it.qty_ordered,
-    }).eq('id',it.id);
-  }
-  await sb.from('purchase_orders').update({status:'received'}).eq('id',poId);
-
+  window._stockPOsToOpen = [poId];
   closeModal('modal-po-detail');
-  toast('รับสินค้าสำเร็จ ✓ Stock อัพเดทแล้ว','success');
-  loadPOs();
+  showPage('stock');
 }
 
 async function createAPFromPO(poId) {
