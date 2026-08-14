@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.14</div>
+            <div class="logo-sub">v1.15</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1669,27 +1669,84 @@ function changeDashYear(yr) {
 }
 
 const PROFIT_JOURNEY_MILESTONES = Object.freeze([
-  { target: 10000,    icon: '🍽️', title: 'ก้าวแรก', reward: 'มื้ออาหารฉลองร้านโปรด', budget: 'งบ ฿500–1,000' },
-  { target: 25000,    icon: '🎁', title: 'เริ่มเห็นผล', reward: 'ของที่อยากได้หรืออุปกรณ์ทำงานชิ้นเล็ก', budget: 'งบ ฿1,000–2,000' },
-  { target: 50000,    icon: '🏨', title: 'ผ่านด่านเริ่มต้น', reward: 'คาเฟ่หรือ Staycation 1 คืน', budget: 'งบ ฿2,000–4,000' },
-  { target: 75000,    icon: '🚗', title: 'ธุรกิจกำลังโต', reward: 'เที่ยวใกล้กรุงเทพฯ 1–2 วัน', budget: 'งบ ฿3,000–5,000' },
-  { target: 100000,   icon: '🏖️', title: 'กำไรแสนแรก', reward: 'พัทยา หัวหิน หรือเขาใหญ่', budget: 'งบ ฿5,000–8,000' },
-  { target: 150000,   icon: '✈️', title: 'ใกล้เป็นธุรกิจเต็มตัว', reward: 'เชียงใหม่ กระบี่ หรือภูเก็ตแบบประหยัด', budget: 'งบ ฿7,000–12,000' },
-  { target: 200000,   icon: '🧳', title: 'เตรียมเปิดบริษัท', reward: 'ทริปในประเทศและเริ่มเตรียมระบบบริษัท', budget: 'งบ ฿8,000–15,000' },
-  { target: 250000,   icon: '🏢', title: 'เปิดบริษัท', reward: 'จดทะเบียนและวางระบบบัญชี–ภาษี', budget: 'งบ ฿20,000–30,000' },
-  { target: 500000,   icon: '🌴', title: 'ธุรกิจเริ่มมั่นคง', reward: 'เชียงใหม่ ภูเก็ต หรือกระบี่ 3–4 วัน', budget: 'งบ ฿15,000–25,000' },
-  { target: 750000,   icon: '🇻🇳', title: 'ผ่านด่านแรก', reward: 'เวียดนามหรือลาว', budget: 'งบ ฿20,000–35,000' },
-  { target: 1000000,  icon: '🇸🇬', title: 'กำไรหนึ่งล้าน', reward: 'สิงคโปร์หรือมาเลเซีย', budget: 'งบ ฿30,000–50,000' },
-  { target: 1500000,  icon: '🇹🇼', title: 'โตระดับภูมิภาค', reward: 'ไต้หวันหรือฮ่องกง', budget: 'งบ ฿40,000–70,000' },
-  { target: 2000000,  icon: '🇯🇵', title: 'ระบบธุรกิจแข็งแรง', reward: 'ญี่ปุ่นหรือเกาหลี', budget: 'งบ ฿60,000–100,000' },
-  { target: 3000000,  icon: '🇹🇷', title: 'เจ้าของธุรกิจเต็มตัว', reward: 'ตุรกี จีน หรือยุโรปตะวันออก', budget: 'งบ ฿100,000–160,000' },
-  { target: 5000000,  icon: '🇦🇺', title: 'Financial Freedom ขั้นแรก', reward: 'ออสเตรเลียหรือนิวซีแลนด์', budget: 'งบ ฿150,000–250,000' },
-  { target: 7500000,  icon: '🇨🇭', title: 'ธุรกิจระดับมั่งคั่ง', reward: 'สวิตเซอร์แลนด์ อิตาลี หรือสแกนดิเนเวีย', budget: 'งบ ฿250,000–350,000' },
-  { target: 10000000, icon: '🌍', title: 'เป้าหมายใหญ่สำเร็จ', reward: 'ทริปยุโรปหลายประเทศหรือทริปรอบโลก', budget: 'งบ ฿400,000–600,000' }
+  { target: 10000, icon: '🍽️', title: 'ก้าวแรก', description: 'พิสูจน์ว่าร้านเริ่มสร้างกำไรได้จริง ควรฉลองแบบเล็กแต่มีความหมาย', budget: 'งบ ฿500–1,000', options: ['🍽️ มื้ออาหารร้านโปรด', '☕ คาเฟ่หรือขนมพิเศษ', '🧘 วันพักเต็มวัน', '🍕 เลี้ยงขนมทีม'] },
+  { target: 25000, icon: '🎁', title: 'เริ่มเห็นผล', description: 'กำไรเริ่มต่อยอดได้ เลือกรางวัลที่เพิ่มทั้งกำลังใจหรือประสิทธิภาพงาน', budget: 'งบ ฿1,000–2,000', options: ['🎁 ของที่อยากได้', '⌨️ อุปกรณ์ทำงานชิ้นเล็ก', '📚 หนังสือหรือคอร์สสั้น', '🎫 กิจกรรมพักผ่อน'] },
+  { target: 50000, icon: '🏨', title: 'ผ่านด่านเริ่มต้น', description: 'ธุรกิจผ่านช่วงทดลองและเริ่มมีฐานกำไรสำหรับรางวัลระยะสั้น', budget: 'งบ ฿2,000–4,000', options: ['🏨 Staycation 1 คืน', '📸 ถ่ายภาพสินค้าใหม่', '💻 ซื้อซอฟต์แวร์ช่วยงาน', '🍲 เลี้ยงอาหารทีม'] },
+  { target: 75000, icon: '🚗', title: 'ธุรกิจกำลังโต', description: 'ถึงเวลาพักเติมพลังหรือทดลองลงทุนก้อนเล็กเพื่อเร่งยอดขายรอบต่อไป', budget: 'งบ ฿3,000–5,000', options: ['🚗 เที่ยวใกล้กรุงเทพฯ', '📣 ทดลองแคมเปญโฆษณา', '🪑 ปรับมุมทำงาน', '💆 สุขภาพและ Wellness'] },
+  { target: 100000, icon: '🏖️', title: 'กำไรแสนแรก', description: 'หมุดหมายสำคัญที่แสดงว่ารูปแบบธุรกิจเริ่มทำซ้ำและสร้างผลลัพธ์ได้', budget: 'งบ ฿5,000–8,000', options: ['🏖️ พัทยา หัวหิน หรือเขาใหญ่', '💡 ไฟหรือกล้องถ่ายสินค้า', '🛡️ เติมเงินสำรองธุรกิจ', '🎉 โบนัสพิเศษให้ทีม'] },
+  { target: 150000, icon: '✈️', title: 'ใกล้เป็นธุรกิจเต็มตัว', description: 'ร้านเริ่มแข็งแรงพอให้รางวัลใหญ่ขึ้นหรือยกระดับแบรนด์อย่างจริงจัง', budget: 'งบ ฿7,000–12,000', options: ['✈️ เชียงใหม่ กระบี่ หรือภูเก็ต', '🎨 ปรับภาพลักษณ์แบรนด์', '🎓 คอร์สพัฒนาธุรกิจ', '🖨️ ซื้ออุปกรณ์เพิ่มกำลังผลิต'] },
+  { target: 200000, icon: '🧳', title: 'เตรียมเปิดบริษัท', description: 'เริ่มเตรียมเอกสาร ระบบบัญชี และเงินสำรองก่อนก้าวสู่รูปแบบบริษัท', budget: 'งบ ฿8,000–15,000', options: ['🧳 ทริปในประเทศ', '🧾 ปรึกษานักบัญชีและภาษี', '🗂️ เตรียมระบบเอกสารบริษัท', '🧪 ทดลองสินค้าใหม่'] },
+  { target: 250000, icon: '🏢', title: 'เปิดบริษัท', description: 'เปลี่ยนจากร้านสู่ธุรกิจที่มีโครงสร้าง พร้อมบัญชี ภาษี และการดำเนินงานที่ชัดเจน', budget: 'งบ ฿20,000–30,000', options: ['🏢 จดทะเบียนบริษัท', '🧮 วางระบบบัญชีและภาษี', '™️ จดทะเบียนเครื่องหมายการค้า', '🏕️ ทริปฉลองเปิดบริษัท'] },
+  { target: 500000, icon: '🌴', title: 'ธุรกิจเริ่มมั่นคง', description: 'กำไรสะสมรองรับการลงทุนระยะกลางและให้รางวัลทีมได้โดยไม่กระทบสภาพคล่อง', budget: 'งบ ฿15,000–25,000', options: ['🌴 เที่ยวในประเทศ 3–4 วัน', '📦 ปรับปรุงคลังสินค้า', '📈 ทำแคมเปญการตลาด', '💰 แบ่งโบนัสทีม'] },
+  { target: 750000, icon: '🇻🇳', title: 'ผ่านด่านเติบโต', description: 'ธุรกิจพร้อมมองหาโอกาสนอกพื้นที่เดิม ทั้งตลาดใหม่ สินค้าใหม่ และประสบการณ์ใหม่', budget: 'งบ ฿20,000–35,000', options: ['🇻🇳 เวียดนามหรือลาว', '🏪 เยี่ยมชมงานแสดงสินค้า', '🆕 เปิดล็อตสินค้าใหม่', '🤝 จัดกิจกรรมขอบคุณทีม'] },
+  { target: 1000000, icon: '🇸🇬', title: 'กำไรหนึ่งล้าน', description: 'ก้าวเข้าสู่ธุรกิจระดับล้าน ควรฉลองพร้อมเสริมฐานเงินสำรองและระบบการเติบโต', budget: 'งบ ฿30,000–50,000', options: ['🇸🇬 สิงคโปร์หรือมาเลเซีย', '🏦 เพิ่มกองทุนสำรองธุรกิจ', '⚙️ ซื้อเครื่องมือหรือระบบอัตโนมัติ', '🥇 Profit Sharing ให้ทีม'] },
+  { target: 1500000, icon: '🇹🇼', title: 'โตระดับภูมิภาค', description: 'มีศักยภาพขยายทีม ช่องทางขาย หรือเชื่อมต่อคู่ค้าในต่างประเทศ', budget: 'งบ ฿40,000–70,000', options: ['🇹🇼 ไต้หวันหรือฮ่องกง', '🌏 ดูงานแสดงสินค้าต่างประเทศ', '👥 จ้างทีมเพิ่ม', '🏬 ขยายพื้นที่คลัง'] },
+  { target: 2000000, icon: '🇯🇵', title: 'ระบบธุรกิจแข็งแรง', description: 'ธุรกิจควรลดการพึ่งพาเจ้าของด้วยระบบ ทีม และช่องทางรายได้ที่หลากหลายขึ้น', budget: 'งบ ฿60,000–100,000', options: ['🇯🇵 ญี่ปุ่นหรือเกาหลี', '🤖 ลงทุนระบบ Automation', '🛒 เปิดช่องทางขายใหม่', '✈️ พาทีมเที่ยวต่างประเทศ'] },
+  { target: 3000000, icon: '🇹🇷', title: 'เจ้าของธุรกิจเต็มตัว', description: 'กำไรระดับนี้เปิดทางให้สร้างสินทรัพย์ แบรนด์ และทีมบริหารที่เติบโตแทนแรงเจ้าของ', budget: 'งบ ฿100,000–160,000', options: ['🇹🇷 ตุรกี จีน หรือยุโรปตะวันออก', '🏪 เปิดโชว์รูมหรือหน้าร้าน', '🧪 พัฒนาผลิตภัณฑ์ของตัวเอง', '🧭 Leadership Retreat'] },
+  { target: 5000000, icon: '🇦🇺', title: 'Financial Freedom ขั้นแรก', description: 'ธุรกิจเริ่มสร้างอิสระทางการเงิน ควรแบ่งระหว่างความสุข การลงทุน และความมั่นคง', budget: 'งบ ฿150,000–250,000', options: ['🇦🇺 ออสเตรเลียหรือนิวซีแลนด์', '🏭 ลงทุนศูนย์กระจายสินค้า', '📊 ตั้งกองทุนลงทุนระยะยาว', '🎖️ โบนัสทีมบริหาร'] },
+  { target: 7500000, icon: '🇨🇭', title: 'ธุรกิจระดับมั่งคั่ง', description: 'พร้อมขยายกิจการอย่างเป็นระบบและสร้างผลตอบแทนระยะยาวให้ทีมและเจ้าของ', budget: 'งบ ฿250,000–350,000', options: ['🇨🇭 สวิตเซอร์แลนด์หรือสแกนดิเนเวีย', '🏢 เปิดสาขาหรือธุรกิจใหม่', '📋 วางระบบผู้บริหาร', '🤲 ตั้งกองทุนสวัสดิการทีม'] },
+  { target: 10000000, icon: '🌍', title: 'เป้าหมายใหญ่สำเร็จ', description: 'หมุดหมายสิบล้านคือจังหวะฉลองครั้งใหญ่และวางรากฐานธุรกิจสำหรับทศวรรษถัดไป', budget: 'งบ ฿400,000–600,000', options: ['🌍 ทริปรอบโลกหรือยุโรปหลายประเทศ', '🏭 ซื้อหรือสร้างสถานที่ของบริษัท', '🌱 กระจายการลงทุนสู่ธุรกิจใหม่', '🏆 แบ่งกำไรครั้งใหญ่ให้ทีม'] }
 ]);
+
+function getProfitJourneyChoices() {
+  try {
+    return JSON.parse(localStorage.getItem(`profit_journey_choices_${currentShop?.id || 'default'}`) || '{}');
+  } catch (_) {
+    return {};
+  }
+}
+
+function selectProfitMilestoneOption(target, optionIndex) {
+  const choices = getProfitJourneyChoices();
+  choices[String(target)] = Number(optionIndex);
+  localStorage.setItem(`profit_journey_choices_${currentShop?.id || 'default'}`, JSON.stringify(choices));
+  openProfitMilestone(target);
+  toast('บันทึกตัวเลือกเป้าหมายแล้ว ✓', 'success');
+}
+
+function openProfitMilestone(target) {
+  const milestone = PROFIT_JOURNEY_MILESTONES.find(m => m.target === Number(target));
+  if (!milestone) return;
+  document.getElementById('profit-milestone-modal')?.remove();
+  const profit = Number(window._profitJourneyValue || 0);
+  const unlocked = profit >= milestone.target;
+  const choices = getProfitJourneyChoices();
+  const selectedIndex = Number.isInteger(Number(choices[String(milestone.target)])) ? Number(choices[String(milestone.target)]) : -1;
+  const modal = document.createElement('div');
+  modal.id = 'profit-milestone-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9000;background:rgba(20,30,50,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `<div style="background:var(--bg2);width:100%;max-width:620px;max-height:90vh;overflow-y:auto;border-radius:16px;border:1px solid var(--border);box-shadow:0 18px 60px rgba(20,30,50,.25);padding:22px;position:relative">
+    <button onclick="this.closest('#profit-milestone-modal').remove()" aria-label="ปิด" style="position:absolute;right:14px;top:12px;border:0;background:transparent;font-size:22px;color:var(--text3);cursor:pointer">✕</button>
+    <div style="display:flex;gap:12px;align-items:flex-start;padding-right:30px">
+      <div style="font-size:34px">${unlocked ? '✅' : milestone.icon}</div>
+      <div>
+        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${unlocked ? 'var(--green)' : 'var(--accent)'}">${fmtB(milestone.target)} · ${unlocked ? 'ปลดล็อกแล้ว' : 'วางแผนล่วงหน้า'}</div>
+        <div style="font-size:20px;font-weight:700;margin-top:2px">${escapeHTML(milestone.title)}</div>
+      </div>
+    </div>
+    <div style="margin:14px 0;padding:12px 14px;background:var(--bg3);border-radius:10px;color:var(--text2);font-size:13px;line-height:1.6">${escapeHTML(milestone.description)}</div>
+    <div class="flex-between" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <div style="font-size:14px;font-weight:700">เลือก Option ที่อยากได้</div>
+      <div style="font-size:11px;color:var(--text3)">${escapeHTML(milestone.budget)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:9px">
+      ${milestone.options.map((option,index) => {
+        const selected = selectedIndex === index;
+        return `<button type="button" onclick="selectProfitMilestoneOption(${milestone.target},${index})" style="text-align:left;padding:12px;border-radius:10px;border:1px solid ${selected ? 'var(--accent)' : 'var(--border)'};background:${selected ? 'rgba(0,168,130,.09)' : '#fff'};color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>${escapeHTML(option)}</span><span style="color:${selected ? 'var(--accent)' : 'var(--text3)'}">${selected ? '✓ เลือกแล้ว' : 'เลือก'}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--text3);margin-top:14px">การเลือกนี้เป็นแผนรางวัลเท่านั้น ไม่บันทึกเป็นค่าใช้จ่าย และเปลี่ยนได้ทุกเมื่อ</div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
 
 function renderProfitJourney(cumulativeProfit) {
   const profit = Number(cumulativeProfit || 0);
+  window._profitJourneyValue = profit;
+  const choices = getProfitJourneyChoices();
   const achieved = PROFIT_JOURNEY_MILESTONES.filter(m => profit >= m.target);
   const next = PROFIT_JOURNEY_MILESTONES.find(m => profit < m.target);
   const previousTarget = achieved.length ? achieved[achieved.length - 1].target : 0;
@@ -1700,8 +1757,10 @@ function renderProfitJourney(cumulativeProfit) {
   const headline = next
     ? `${next.icon} เป้าหมายถัดไป: ${escapeHTML(next.title)}`
     : '🏆 พิชิตเส้นทางสู่ 10 ล้านแล้ว!';
+  const nextChoiceIndex = next ? Number(choices[String(next.target)]) : -1;
+  const nextChoice = next && Number.isInteger(nextChoiceIndex) ? next.options[nextChoiceIndex] : '';
   const detail = next
-    ? `${escapeHTML(next.reward)} · ${escapeHTML(next.budget)}`
+    ? `${escapeHTML(nextChoice || next.options[0])} · ${escapeHTML(next.budget)}`
     : 'ปลดล็อกทริปยุโรปหลายประเทศหรือทริปรอบโลก';
 
   return `
@@ -1735,12 +1794,15 @@ function renderProfitJourney(cumulativeProfit) {
         ${PROFIT_JOURNEY_MILESTONES.map(m => {
           const done = profit >= m.target;
           const active = next && next.target === m.target;
-          return `<div title="${escapeHTML(m.reward)} · ${escapeHTML(m.budget)}" style="flex:0 0 132px;padding:10px;border-radius:10px;border:1px solid ${active ? 'var(--accent)' : done ? 'rgba(22,163,74,.35)' : 'var(--border)'};background:${active ? 'rgba(0,168,130,.09)' : done ? 'rgba(22,163,74,.06)' : '#fff'};opacity:${done || active ? '1' : '.72'}">
+          const selectedIndex = Number(choices[String(m.target)]);
+          const selectedOption = Number.isInteger(selectedIndex) ? m.options[selectedIndex] : '';
+          return `<button type="button" onclick="openProfitMilestone(${m.target})" title="กดดูรายละเอียดและตัวเลือก" style="font-family:var(--font);color:var(--text);text-align:left;cursor:pointer;flex:0 0 158px;padding:10px;border-radius:10px;border:1px solid ${active ? 'var(--accent)' : done ? 'rgba(22,163,74,.35)' : 'var(--border)'};background:${active ? 'rgba(0,168,130,.09)' : done ? 'rgba(22,163,74,.06)' : '#fff'};opacity:${done || active ? '1' : '.72'}">
             <div style="font-size:18px;margin-bottom:4px">${done ? '✅' : m.icon}</div>
             <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--text2)'}">${fmtB(m.target)}</div>
             <div style="font-size:11px;font-weight:600;margin-top:3px;line-height:1.3">${escapeHTML(m.title)}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:3px">${done ? 'ปลดล็อกแล้ว' : active ? 'กำลังเดินทาง' : 'ยังไม่ปลดล็อก'}</div>
-          </div>`;
+            <div style="font-size:10px;color:var(--text3);margin-top:4px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${escapeHTML(selectedOption || m.description)}</div>
+            <div style="font-size:10px;color:${selectedOption ? 'var(--accent)' : 'var(--text3)'};margin-top:6px">${selectedOption ? '✓ เลือก Option แล้ว' : 'กดดูรายละเอียดและ Option'}</div>
+          </button>`;
         }).join('')}
       </div>
       <div style="font-size:10px;color:var(--text3);margin-top:3px">🛡️ ควรกันภาษี เงินสำรองธุรกิจ 6 เดือน และเงินทุนหมุนเวียนก่อนใช้งบรางวัล</div>
@@ -12061,12 +12123,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.14</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.15</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.15', type:'minor', date:'2026-08-15', title:'Profit Journey Goal Details & Options', items:['เพิ่มคำอธิบายความหมายให้ทุกเป้ากำไร','กดการ์ดเป้าหมายเพื่อดูรายละเอียดได้','แต่ละเป้ามี 4 Option ทั้งท่องเที่ยว รางวัล และลงทุนธุรกิจ','บันทึก Option ที่เลือกไว้แยกตามร้านและเปลี่ยนได้ทุกเมื่อ'] },
             { v:'1.14', type:'minor', date:'2026-08-14', title:'Profit Journey · Monthly Cost Fallback', items:['เพิ่มเส้นทางกำไรสุทธิสะสมตั้งแต่ ฿10,000 ถึง ฿10,000,000','แสดงเป้าหมายถัดไป รางวัล และความคืบหน้า','ต้นทุน/หน่วยในรายละเอียดรายเดือนใช้ต้นทุนสินค้าปัจจุบันเมื่อออเดอร์ไม่มีต้นทุน','คำนวณต้นทุนรวมใหม่จากต้นทุน/หน่วยที่แสดง'] },
             { v:'1.13', type:'minor', date:'2026-05-24', title:'Part No · Stock Movement · Dashboard Low Stock · PWA', items:['เพิ่มฟิลด์ Part No ในสินค้า (ค้นหาได้)','การเคลื่อนไหว Stock ตามหมวด 6 ระยะ (30/90/180/365/4ปี/>4ปี)','Export CSV stock movement','Shopee: แสดง Match field (SKU/Supplier/Part No)','Dashboard: สต๊อกต่ำ alert card คลิกดูรายการ','Modal แก้ไข stock เป็น dynamic','Fix modal null errors ทั้งระบบ','PWA Install — Add to Home Screen (iOS/Android)'] },
             { v:'1.12', type:'minor', date:'2026-05-24', title:'Dashboard & Shopee Drill-down + Stock Value', items:['Stat cards กดดูออเดอร์/ค่าใช้จ่าย','Shopee: กดดูออเดอร์ตาม SKU + %','เพิ่มคอลัมน์มูลค่า Stock','ชื่อสินค้า Shopee แสดงเต็ม'] },
