@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.20';
+    const CACHE = 'sealthai-v1.22';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.20</div>
+            <div class="logo-sub">v1.22</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1917,7 +1917,7 @@ async function dashboard() {
     sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,channel,employee_id,shipping_status,doc_status,order_items(product_id,product_name,qty,sell_price,cost_per_unit)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
     // ค่าจัดการ/ค่าขนส่ง จากการรับสินค้าจริง (ถ้าตารางยังไม่มี จะได้ error → ใช้ [] แทน)
     sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me),
-    sb.from('expenses').select('expense_date,amount').eq('shop_id', currentShop.id).limit(10000),
+    sb.from('expenses').select('*').eq('shop_id', currentShop.id).limit(10000),
     sb.from('landed_costs').select('move_date,type,amount').eq('shop_id', currentShop.id).limit(10000),
     ensureShopeeFeeData(),
     sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',ms).lte('income_date',me),
@@ -1957,7 +1957,7 @@ async function dashboard() {
   const totalRevenue  = orders.reduce((s,o) => s + Number(o.total_amount||0), 0);
   // ใช้ต้นทุนที่มี fallback (แทน o.total_cost ที่อาจเป็น 0 จากการขายก่อนรับเข้า)
   const totalCost     = orders.reduce((s,o) => s + orderCostWithFallback(o), 0);
-  const totalExpenses = expenses.reduce((s,e) => s + Number(e.amount||0), 0);
+  const totalExpenses = expenses.reduce((s,e) => s + expenseProfitAmount(e), 0);
   const totalOtherIncome = (otherIncomeRes?.data||[]).reduce((s,e)=>s+Number(e.realized_profit||0),0);
   const orderCount    = orders.length;
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
@@ -2018,7 +2018,7 @@ async function dashboard() {
   const lifetimeRevenue = lifetimeOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
   const lifetimeCost = lifetimeOrders.reduce((s,o) => s + orderCostWithFallback(o), 0);
   const lifetimePlatformFee = lifetimeOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
-  const lifetimeExpenses = (allExpRes?.data || []).reduce((s,e) => s + Number(e.amount||0), 0);
+  const lifetimeExpenses = (allExpRes?.data || []).reduce((s,e) => s + expenseProfitAmount(e), 0);
   const lifetimeLanded = (allLandedRes?.data || [])
     .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
     .reduce((s,l) => s + Number(l.amount||0), 0);
@@ -2042,7 +2042,7 @@ async function dashboard() {
       Number(o.total_amount || 0) - orderCostWithFallback(o) - getOrderPlatformFeeInfo(o).fee
     );
   });
-  (allExpRes?.data || []).forEach(e => addProfitEvent(e.expense_date, -Number(e.amount || 0)));
+  (allExpRes?.data || []).forEach(e => addProfitEvent(e.expense_date, -expenseProfitAmount(e)));
   (allLandedRes?.data || [])
     .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
     .forEach(l => addProfitEvent(l.move_date, -Number(l.amount || 0)));
@@ -2786,7 +2786,7 @@ function drillDashOrders() {
 function drillDashExpenses() {
   const expenses = window._dashExpenses || [];
   if (!expenses.length) return;
-  const total = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const total = expenses.reduce((s,e)=>s+expenseProfitAmount(e),0);
   const sorted = [...expenses].sort((a,b)=>(b.expense_date||'').localeCompare(a.expense_date||''));
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
@@ -2797,11 +2797,11 @@ function drillDashExpenses() {
     '<div style="font-size:14px;font-weight:700;color:var(--red);margin-bottom:12px">รวม: ' + fmtB(total) + '</div>' +
     '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="text-right">จำนวนเงิน</th><th class="text-right">%</th></tr></thead><tbody>' +
     sorted.map(e => {
-      const amt = Number(e.amount||0);
+      const amt = expenseProfitAmount(e);
       const pct = total > 0 ? (amt/total*100).toFixed(1) : '0.0';
       return '<tr><td style="font-size:12px">' + (e.expense_date||'-') + '</td>' +
-        '<td>' + (e.description||e.category||'-') + '</td>' +
-        '<td class="text-right font-mono text-red">' + fmtB(amt) + '</td>' +
+        '<td>' + escapeHTML(effectiveExpenseCategory(e)) + (e.include_in_profit===false?' <span style="font-size:10px;color:var(--text3)">(ไม่นับกำไร)</span>':'') + '</td>' +
+        '<td class="text-right font-mono text-red">' + (e.include_in_profit===false?'—':fmtB(amt)) + '</td>' +
         '<td class="text-right font-mono" style="color:var(--text3)">' + pct + '%</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
@@ -3424,7 +3424,7 @@ async function drillMonthlyExpenses() {
   const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
   if (!dateFrom) return;
   const { data: expenses, error } = await sb.from('expenses')
-    .select('expense_date,category,note,amount')
+    .select('*')
     .eq('shop_id', currentShop.id).gte('expense_date', dateFrom).lte('expense_date', dateTo)
     .order('expense_date', { ascending: false });
   if (error) {
@@ -3432,10 +3432,10 @@ async function drillMonthlyExpenses() {
     return;
   }
   const rows = expenses || [];
-  const totExp = rows.reduce((s,e) => s + Number(e.amount||0), 0);
+  const totExp = rows.reduce((s,e) => s + expenseProfitAmount(e), 0);
   // Group by category
   const catMap = {};
-  rows.forEach(e => { catMap[e.category||'ไม่ระบุ'] = (catMap[e.category||'ไม่ระบุ']||0) + Number(e.amount||0); });
+  rows.forEach(e => { const cat=effectiveExpenseCategory(e); catMap[cat] = (catMap[cat]||0) + expenseProfitAmount(e); });
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
   modal.innerHTML = `<div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
@@ -3458,9 +3458,9 @@ async function drillMonthlyExpenses() {
       </tr></thead>
       <tbody>${rows.length ? rows.map(e => `<tr style="border-bottom:1px solid var(--border)">
         <td style="padding:6px 8px;color:var(--text2)">${escapeHTML(e.expense_date||'-')}</td>
-        <td style="padding:6px 8px"><span class="badge badge-gray" style="font-size:11px">${escapeHTML(e.category||'-')}</span></td>
+        <td style="padding:6px 8px"><span class="badge badge-gray" style="font-size:11px">${escapeHTML(effectiveExpenseCategory(e))}</span></td>
         <td style="padding:6px 8px;max-width:260px;white-space:normal;word-break:break-word">${escapeHTML(e.note||'-')}</td>
-        <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--red)">${fmtB(Number(e.amount||0))}</td>
+        <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--red)">${e.include_in_profit===false?'—':fmtB(expenseProfitAmount(e))}</td>
       </tr>`).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:24px">ไม่มีรายละเอียดค่าใช้จ่ายในช่วงเวลานี้</td></tr>'}</tbody>
       <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
         <td colspan="3" style="padding:8px">รวม</td>
@@ -3475,7 +3475,7 @@ async function drillMonthlyExpenses() {
 async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   const [ordRes, expRes, incRes] = await Promise.all([
     sb.from('orders').select('order_date,total_amount,total_cost').eq('shop_id', currentShop.id).gte('order_date',dateFrom).lte('order_date',dateTo),
-    sb.from('expenses').select('expense_date,amount').eq('shop_id', currentShop.id).gte('expense_date',dateFrom).lte('expense_date',dateTo),
+    sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',dateFrom).lte('expense_date',dateTo),
     sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',dateFrom).lte('income_date',dateTo)
   ]);
   const orders   = ordRes.data || [];
@@ -3492,7 +3492,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   });
   expenses.forEach(e => {
     if (!dateMap[e.expense_date]) dateMap[e.expense_date] = {rev:0,other:0,cost:0,exp:0,cnt:0};
-    dateMap[e.expense_date].exp += Number(e.amount||0);
+    dateMap[e.expense_date].exp += expenseProfitAmount(e);
   });
   otherIncome.forEach(e=>{
     if(!dateMap[e.income_date]) dateMap[e.income_date]={rev:0,other:0,cost:0,exp:0,cnt:0};
@@ -5828,148 +5828,194 @@ async function deleteOrder(orderId) {
   loadOrders();
 }
 
-// ─── PAGE: EXPENSES ───────────────────────────────────
+// ─── PAGE: EXPENSES · v1.21 MANAGEMENT / v1.22 DASHBOARD ───────────────
+const STANDARD_EXPENSE_CATS = [
+  'การตลาดและโฆษณา','บรรจุภัณฑ์และการจัดส่ง','บุคลากรและค่าจ้าง',
+  'สถานที่และสาธารณูปโภค','เทคโนโลยีและซอฟต์แวร์','เดินทางและยานพาหนะ',
+  'บริการวิชาชีพ','ธนาคารและการเงิน','ภาษีและค่าธรรมเนียมราชการ',
+  'สำนักงานและบริหาร','ซ่อมแซมและบำรุงรักษา','ค่าใช้จ่ายดำเนินงานอื่น'
+];
+const EXPENSE_TYPES = [
+  ['operating','ค่าใช้จ่ายดำเนินงาน'],['inventory','ซื้อสินค้าเข้าสต๊อก'],
+  ['landed_cost','Landed Cost'],['asset','ซื้อทรัพย์สิน'],
+  ['owner_draw','ถอนเงินเจ้าของ'],['tax','ภาษี/เงินนำส่ง'],['refund','เงินคืนจากผู้ขาย']
+];
+const EXPENSE_TYPE_LABELS = Object.fromEntries(EXPENSE_TYPES);
+let editingExpenseId = null;
+let expenseSchemaReady = null;
+let expenseCategoryOptions = [...STANDARD_EXPENSE_CATS];
+let expenseDashboardRows = [];
+let expenseCurrentRows = [];
+let expenseCurrentBudgets = [];
+
+function expenseProfitAmount(e) {
+  if (e?.include_in_profit === false) return 0;
+  const amount = Number(e?.amount || 0);
+  return e?.expense_type === 'refund' ? -Math.abs(amount) : amount;
+}
+function effectiveExpenseCategory(e) {
+  return (e?.review_status === 'approved' && e?.standardized_category) || e?.category || 'ไม่ระบุหมวด';
+}
+function expenseTypeOptions(value='operating') {
+  return EXPENSE_TYPES.map(([v,l])=>`<option value="${v}" ${v===value?'selected':''}>${l}</option>`).join('');
+}
+function expenseCategorySelect(id, value='', extra='') {
+  const opts = [...new Set([...STANDARD_EXPENSE_CATS, ...expenseCategoryOptions, value].filter(Boolean))];
+  return `<select id="${id}" ${extra}><option value="">เลือกหมวดมาตรฐาน...</option>${opts.map(c=>`<option value="${escapeHTML(c)}" ${c===value?'selected':''}>${escapeHTML(c)}</option>`).join('')}</select>`;
+}
+function defaultExpenseProfitFlag(type) {
+  return !['inventory','landed_cost','asset','owner_draw'].includes(type);
+}
+function suggestExpenseClassification(e) {
+  const s = `${e?.category||''} ${e?.note||''}`.toLowerCase();
+  let category = 'ค่าใช้จ่ายดำเนินงานอื่น';
+  if (/facebook|google|ads|โฆษณา|การตลาด/.test(s)) category='การตลาดและโฆษณา';
+  else if (/แพค|แพ็ก|บรรจุ|จัดส่ง|ส่งของ|ขนส่ง/.test(s)) category='บรรจุภัณฑ์และการจัดส่ง';
+  else if (/server|software|hosting|domain|\bai\b|\bit\b|ระบบ/.test(s)) category='เทคโนโลยีและซอฟต์แวร์';
+  else if (/น้ำมัน|\bev\b|รถ|เดินทาง|ที่พัก/.test(s)) category='เดินทางและยานพาหนะ';
+  else if (/ค่าน้ำ|ค่าไฟ|เช่า|สำนักงาน/.test(s)) category='สถานที่และสาธารณูปโภค';
+  else if (/เงินเดือน|ค่าจ้าง|โบนัส|พนักงาน/.test(s)) category='บุคลากรและค่าจ้าง';
+  else if (/ธนาคาร|ดอกเบี้ย|ค่าธรรมเนียม/.test(s)) category='ธนาคารและการเงิน';
+  else if (/ภาษี|ราชการ|ใบอนุญาต/.test(s)) category='ภาษีและค่าธรรมเนียมราชการ';
+  else if (/กระดาษ|เอกสาร|อุปกรณ์/.test(s)) category='สำนักงานและบริหาร';
+  const duplicateRisk = /\bso[- ]?\d|จัดส่ง|ขนส่ง|แพค|แพ็ก|สินค้า|วัตถุดิบ/.test(s);
+  return { category, type:'operating', include:true, duplicateRisk,
+    reason: duplicateRisk ? 'ควรตรวจว่าไม่ซ้ำกับ SO, PO, ต้นทุนสินค้า หรือ Landed Cost' : 'จัดหมวดจากชื่อเดิมและหมายเหตุ' };
+}
+
+async function checkExpenseSchema() {
+  if (expenseSchemaReady !== null) return expenseSchemaReady;
+  const { error } = await sb.from('expenses').select('id,standardized_category,expense_type,include_in_profit').limit(1);
+  expenseSchemaReady = !error;
+  return expenseSchemaReady;
+}
+
 async function expenses() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openNewExpense()">+ บันทึกค่าใช้จ่าย</button>`;
+  const schemaOK = await checkExpenseSchema();
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="openExpenseReview()">🧹 จัดหมวดข้อมูลเก่า</button>
+    <button class="btn btn-secondary btn-sm" onclick="openExpenseBudget()">🎯 ตั้งงบ</button>
+    <button class="btn btn-secondary btn-sm" onclick="openExpenseCategories()">🗂️ หมวด</button>
+    <button class="btn btn-primary btn-sm" onclick="openNewExpense()">+ บันทึกค่าใช้จ่าย</button>`;
   const now = new Date();
   const curYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
   setContent(`
-    <div class="filter-bar">
+    ${!schemaOK?`<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:10px 12px;border-radius:9px;margin-bottom:12px;font-size:12px">⚠️ ยังไม่ได้ติดตั้งโครงสร้าง v1.21/v1.22 — ระบบยังอ่านข้อมูลเก่าได้ แต่ต้องรันไฟล์ <b>supabase_expense_migration.sql</b> ใน Supabase ก่อนใช้ช่องละเอียดและ Dashboard เต็มรูปแบบ</div>`:''}
+    <div class="filter-bar" style="gap:8px;flex-wrap:wrap">
       <select id="exp-month" onchange="loadExpenses()">${getMonthOptions(curYM)}</select>
+      <select id="exp-filter-cat" onchange="renderExpenseView()"><option value="">ทุกหมวด</option></select>
+      <select id="exp-filter-status" onchange="renderExpenseView()"><option value="">ทุกสถานะ</option><option value="unpaid">ยังไม่จ่าย</option><option value="partial">จ่ายบางส่วน</option><option value="paid">จ่ายแล้ว</option></select>
+      <select id="exp-filter-channel" onchange="renderExpenseView()"><option value="">ทุกช่องทาง</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Offline</option><option>สำนักงาน</option></select>
+      <input id="exp-search" placeholder="ค้นหาผู้ขาย/เอกสาร/หมายเหตุ" oninput="renderExpenseView()" style="min-width:210px">
     </div>
     <div class="stat-grid mb-4" id="exp-stats"></div>
+    <div id="exp-quality"></div>
+    <div class="grid-2 mb-4">
+      <div class="card"><div class="card-title">📈 แนวโน้มค่าใช้จ่าย 12 เดือน</div><div class="chart-box" style="height:240px"><canvas id="ch-exp-trend"></canvas></div></div>
+      <div class="card"><div class="card-title">🗂️ ค่าใช้จ่ายตามหมวด</div><div class="chart-box" style="height:240px"><canvas id="ch-exp-cat"></canvas></div></div>
+    </div>
+    <div class="grid-2 mb-4">
+      <div class="card"><div class="card-title">🏪 แยกตามช่องทาง/หน่วยงาน</div><div class="chart-box" style="height:220px"><canvas id="ch-exp-channel"></canvas></div></div>
+      <div class="card" id="exp-insights"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
     <div class="card">
-      <div class="card-title flex-between">
-        <span>รายการค่าใช้จ่าย</span>
-        <div class="chart-box" style="width:200px;height:100px"><canvas id="ch-exp-cat"></canvas></div>
-      </div>
+      <div class="card-title flex-between"><span>รายการค่าใช้จ่าย</span><span id="exp-result-count" style="font-size:11px;color:var(--text3)"></span></div>
       <div class="table-wrap" id="exp-table"><div class="loading"><div class="spinner"></div></div></div>
     </div>
 
     <div class="modal-overlay" id="modal-expense">
-      <div class="modal">
+      <div class="modal" style="max-width:760px">
         <div class="modal-title">💸 บันทึกค่าใช้จ่าย</div>
-        <div class="form-group"><label>วันที่</label><input type="date" id="e-date" value="${today()}"></div>
-        <div class="form-group">
-          <label>หมวดหมู่ <span style="font-size:11px;color:var(--text3)">เลือกหรือพิมพ์หมวดใหม่ได้</span></label>
-          <input type="text" id="e-cat" list="e-cat-list" placeholder="เลือกหรือพิมพ์หมวดใหม่..." autocomplete="off">
-          <datalist id="e-cat-list"></datalist>
+        <div class="grid-2">
+          <div class="form-group"><label>วันที่เกิดค่าใช้จ่าย *</label><input type="date" id="e-date" value="${today()}"></div>
+          <div class="form-group"><label>ประเภทของรายการ *</label><select id="e-type" onchange="expenseTypeChanged()">${expenseTypeOptions()}</select></div>
+          <div class="form-group"><label>หมวดมาตรฐาน *</label><div id="e-cat-wrap">${expenseCategorySelect('e-cat')}</div></div>
+          <div class="form-group"><label>หมวดย่อย</label><input id="e-subcat" placeholder="เช่น Facebook Ads"></div>
+          <div class="form-group"><label>ผู้ขาย/ผู้รับเงิน</label><input id="e-vendor" placeholder="ชื่อบริษัทหรือบุคคล"></div>
+          <div class="form-group"><label>เลขที่ใบเสร็จ/เอกสาร</label><input id="e-doc" placeholder="INV / TAX / Receipt No."></div>
+          <div class="form-group"><label>ช่องทาง/หน่วยงาน</label><select id="e-channel"><option value="">ไม่ระบุ</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Offline</option><option>สำนักงาน</option></select></div>
+          <div class="form-group"><label>โครงการ/งานที่เกี่ยวข้อง</label><input id="e-project" placeholder="เช่น เปิดตัวสินค้าใหม่"></div>
+          <div class="form-group"><label>ก่อน VAT (บาท) *</label><input type="number" id="e-base" min="0" step="0.01" oninput="recalcExpenseAmounts()" placeholder="0.00"></div>
+          <div class="form-group"><label>VAT (บาท)</label><div style="display:flex;gap:6px"><input type="number" id="e-vat" min="0" step="0.01" value="0" oninput="recalcExpenseAmounts()"><button class="btn btn-secondary btn-sm" type="button" onclick="calcExpenseVat7()">7%</button></div></div>
+          <div class="form-group"><label>ภาษีหัก ณ ที่จ่าย (บาท)</label><input type="number" id="e-wht" min="0" step="0.01" value="0" oninput="recalcExpenseAmounts()"></div>
+          <div class="form-group"><label>สถานะชำระ</label><select id="e-pay-status" onchange="expensePaymentChanged()"><option value="paid">จ่ายแล้ว</option><option value="partial">จ่ายบางส่วน</option><option value="unpaid">ยังไม่จ่าย</option></select></div>
+          <div class="form-group"><label>ยอดจ่ายแล้ว</label><input type="number" id="e-paid" min="0" step="0.01" oninput="recalcExpenseAmounts()"></div>
+          <div class="form-group"><label>ช่องทางชำระ</label><select id="e-pay-method"><option value="">ไม่ระบุ</option><option>เงินสด</option><option>โอนธนาคาร</option><option>กสิกรไทย</option><option>บัตรเครดิต</option><option>E-Wallet</option><option>หักบัญชีอัตโนมัติ</option></select></div>
+          <div class="form-group"><label>วันที่ชำระ</label><input type="date" id="e-pay-date"></div>
+          <div class="form-group"><label>วันครบกำหนด</label><input type="date" id="e-due-date"></div>
+          <div class="form-group"><label>ความถี่</label><select id="e-recur"><option value="one_time">ครั้งเดียว</option><option value="recurring">ค่าใช้จ่ายประจำ</option></select></div>
+          <div class="form-group"><label>หลักฐาน (JPG/PNG/WebP/PDF ≤ 10MB)</label><input type="file" id="e-receipt" accept="image/jpeg,image/png,image/webp,application/pdf"></div>
         </div>
-        <div class="form-group"><label>จำนวนเงิน (บาท)</label><input type="number" id="e-amt" placeholder="0.00"></div>
-        <div class="form-group"><label>หมายเหตุ</label><input type="text" id="e-note" placeholder="รายละเอียด..."></div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('modal-expense')">ยกเลิก</button>
-          <button class="btn btn-primary" onclick="saveExpense()">💾 บันทึก</button>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 10px;font-size:12px">
+          <label><input type="checkbox" id="e-vat-claim" onchange="recalcExpenseAmounts()"> VAT ขอคืนได้</label>
+          <label><input type="checkbox" id="e-profit" checked> นับในกำไรสุทธิ</label>
+          <label><input type="checkbox" id="e-dup"> เสี่ยงซ้ำกับ SO/PO/Landed Cost</label>
         </div>
+        <div id="e-calc" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:12px"></div>
+        <div class="form-group"><label>รายละเอียด/หมายเหตุ</label><textarea id="e-note" rows="3" placeholder="รายละเอียดที่ช่วยให้นักบัญชีและทีมตรวจสอบได้"></textarea></div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-expense')">ยกเลิก</button><button class="btn btn-primary" id="e-save-btn" onclick="saveExpense()">💾 บันทึก</button></div>
       </div>
     </div>
   `);
-  loadExpenses();
-  loadExpenseCatList();
+  await loadExpenseCategories();
+  await loadExpenses();
+}
+
+async function loadExpenseCategories() {
+  const usedRes = await sb.from('expenses').select(expenseSchemaReady?'category,standardized_category':'category').eq('shop_id',currentShop.id).limit(3000);
+  let custom = [];
+  if (expenseSchemaReady) {
+    const catRes = await sb.from('expense_categories').select('name').eq('shop_id',currentShop.id).eq('is_active',true).order('name');
+    custom = (catRes.data||[]).map(x=>x.name);
+  }
+  const usedStandard = (usedRes.data||[]).map(x=>x.standardized_category).filter(Boolean);
+  const usedEffective = (usedRes.data||[]).map(x=>x.standardized_category||x.category).filter(Boolean);
+  expenseCategoryOptions = [...new Set([...STANDARD_EXPENSE_CATS,...custom,...usedStandard])];
+  const filter = document.getElementById('exp-filter-cat');
+  if (filter) filter.innerHTML = '<option value="">ทุกหมวด</option>'+[...new Set([...expenseCategoryOptions,...usedEffective])].map(c=>`<option>${escapeHTML(c)}</option>`).join('');
+  const wrap = document.getElementById('e-cat-wrap');
+  if (wrap) wrap.innerHTML = expenseCategorySelect('e-cat');
 }
 
 async function loadExpenses() {
   const ym = document.getElementById('exp-month').value;
   const [y,m] = ym.split('-').map(Number);
-  const { data } = await sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',monthStart(y,m)).lte('expense_date',monthEnd(y,m)).order('expense_date',{ascending:false});
-  const rows = data || [];
-  window._activeExpenses = rows; // Cache rows for editing
-  const total = rows.reduce((s,e)=>s+Number(e.amount||0),0);
-  const catMap = {};
-  rows.forEach(e=>{ catMap[e.category] = (catMap[e.category]||0)+Number(e.amount||0); });
-
-  document.getElementById('exp-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">💸 ค่าใช้จ่ายรวม</div><div class="stat-value text-red">${fmtB(total)}</div></div>
-    <div class="stat-card"><div class="stat-label">📋 จำนวนรายการ</div><div class="stat-value">${rows.length}</div></div>
-  `;
-
-  document.getElementById('exp-table').innerHTML = rows.length ? `
-    <!-- Desktop -->
-    <table class="desktop-only">
-      <thead><tr><th>วันที่</th><th>หมวด</th><th>หมายเหตุ</th><th class="text-right">จำนวนเงิน</th><th></th></tr></thead>
-      <tbody>
-        ${rows.map(e=>`<tr>
-          <td>${e.expense_date}</td>
-          <td><span class="badge badge-amber">${e.category}</span></td>
-          <td style="color:var(--text3);font-size:13px">${e.note||'-'}</td>
-          <td class="text-right font-mono text-red">${fmtB(e.amount)}</td>
-          <td>
-            <button class="btn btn-secondary btn-sm" onclick="editExpense('${e.id}')" style="margin-right:4px">แก้ไข</button>
-            <button class="btn btn-danger btn-sm" onclick="delExpense('${e.id}')">ลบ</button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    <!-- Mobile cards -->
-    <div class="mobile-only">
-      ${rows.map(e=>`
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
-          <div style="flex:1;min-width:0">
-            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-              <span class="badge badge-amber" style="font-size:11px">${e.category}</span>
-              <span style="font-size:11px;color:var(--text3)">${e.expense_date}</span>
-            </div>
-            <div style="font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.note||'-'}</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-left:10px;flex-shrink:0">
-            <span class="font-mono text-red" style="font-size:14px;font-weight:600">${fmtB(e.amount)}</span>
-            <button class="btn btn-secondary btn-sm" onclick="editExpense('${e.id}')">แก้ไข</button>
-            <button class="btn btn-danger btn-sm" onclick="delExpense('${e.id}')">ลบ</button>
-          </div>
-        </div>`).join('')}
-    </div>
-  ` : '<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">ไม่มีค่าใช้จ่ายในเดือนนี้</div></div>';
-
-  // Chart
-  if (charts.expCat) { charts.expCat.destroy(); delete charts.expCat; }
-  const canvas = document.getElementById('ch-exp-cat');
-  if (canvas && Object.keys(catMap).length) {
-    charts.expCat = new Chart(canvas, {
-      type: 'doughnut',
-      data: { labels: Object.keys(catMap), datasets: [{ data: Object.values(catMap), backgroundColor: ['#4f9cf9','#f97316','#22c55e','#a78bfa','#f5a623','#00d4a8','#f05252','#e879f9'], borderWidth: 0 }] },
-      options: { responsive: true, plugins: { legend: { display: false } } }
-    });
-  }
-}
-
-let editingExpenseId = null;
-
-// ── หมวดค่าใช้จ่าย: default + ที่เคยใช้ (จาก DB) + ที่เพิ่มเอง (localStorage) ──
-const DEFAULT_EXPENSE_CATS = ['ค่า Ads Facebook','ค่า Ads อื่นๆ','ค่าแพคสินค้า','ค่าจัดส่ง','เอกสาร/กระดาษ','ค่าน้ำ/ไฟ','ค่าสินค้า/วัตถุดิบ','ค่าจ้าง','อื่นๆ'];
-function _expenseCustomCats() { try { return JSON.parse(localStorage.getItem('ns_expense_cats')||'[]'); } catch(e) { return []; } }
-function getExpenseCategories() {
-  return [...new Set([...DEFAULT_EXPENSE_CATS, ..._expenseCustomCats(), ...(window._expenseUsedCats||[])])].filter(Boolean);
-}
-function refreshExpenseCatList() {
-  const dl = document.getElementById('e-cat-list');
-  if (!dl) return;
-  dl.innerHTML = getExpenseCategories().map(c => '<option value="'+String(c).replace(/"/g,'&quot;')+'"></option>').join('');
-}
-function rememberExpenseCat(cat) {
-  cat = (cat||'').trim();
-  if (!cat || getExpenseCategories().includes(cat)) return;
-  const custom = _expenseCustomCats(); custom.push(cat);
-  localStorage.setItem('ns_expense_cats', JSON.stringify(custom));
-}
-// โหลดหมวดที่เคยใช้ทั้งหมด (ทุกเดือน) มาเป็นตัวเลือก
-async function loadExpenseCatList() {
-  const { data } = await sb.from('expenses').select('category').eq('shop_id', currentShop.id).limit(2000);
-  window._expenseUsedCats = [...new Set((data||[]).map(e=>e.category).filter(Boolean))];
-  refreshExpenseCatList();
+  const startDate = new Date(y,m-12,1);
+  const trendFrom = formatLocalDate(startDate);
+  const prevDate = new Date(y,m-2,1);
+  const prevFrom = formatLocalDate(prevDate), prevTo = formatLocalDate(new Date(y,m-1,0));
+  const [allRes, salesRes, prevSalesRes, budgetRes] = await Promise.all([
+    sb.from('expenses').select('*').eq('shop_id',currentShop.id).gte('expense_date',trendFrom).lte('expense_date',monthEnd(y,m)).order('expense_date',{ascending:false}),
+    sb.from('orders').select('total_amount,shipping_status,doc_status').eq('shop_id',currentShop.id).gte('order_date',monthStart(y,m)).lte('order_date',monthEnd(y,m)),
+    sb.from('orders').select('total_amount,shipping_status,doc_status').eq('shop_id',currentShop.id).gte('order_date',prevFrom).lte('order_date',prevTo),
+    expenseSchemaReady ? sb.from('expense_budgets').select('*').eq('shop_id',currentShop.id).eq('budget_month',monthStart(y,m)) : Promise.resolve({data:[]})
+  ]);
+  if (allRes.error) { toast('โหลดค่าใช้จ่ายไม่สำเร็จ: '+allRes.error.message,'error'); return; }
+  expenseDashboardRows = allRes.data||[];
+  expenseCurrentRows = expenseDashboardRows.filter(e=>e.expense_date>=monthStart(y,m)&&e.expense_date<=monthEnd(y,m));
+  expenseCurrentBudgets = budgetRes.data||[];
+  window._activeExpenses = expenseCurrentRows;
+  window._expenseSales = (salesRes.data||[]).filter(o=>!isOrderCancelled(o)).reduce((s,o)=>s+Number(o.total_amount||0),0);
+  window._expensePrevSales = (prevSalesRes.data||[]).filter(o=>!isOrderCancelled(o)).reduce((s,o)=>s+Number(o.total_amount||0),0);
+  renderExpenseView();
 }
 
 function openNewExpense() {
   editingExpenseId = null;
   const titleEl = document.querySelector('#modal-expense .modal-title');
   if (titleEl) titleEl.textContent = '💸 บันทึกค่าใช้จ่าย';
-
-  refreshExpenseCatList();
   document.getElementById('e-date').value = today();
   document.getElementById('e-cat').value = '';
-  document.getElementById('e-amt').value = '';
+  ['e-subcat','e-vendor','e-doc','e-project','e-base','e-paid','e-pay-date','e-due-date'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('e-type').value='operating';
+  document.getElementById('e-channel').value='';
+  document.getElementById('e-vat').value='0'; document.getElementById('e-wht').value='0';
+  document.getElementById('e-pay-status').value='paid'; document.getElementById('e-pay-method').value='';
+  document.getElementById('e-recur').value='one_time';
+  document.getElementById('e-vat-claim').checked=false; document.getElementById('e-profit').checked=true; document.getElementById('e-dup').checked=false;
   document.getElementById('e-note').value = '';
-
+  recalcExpenseAmounts();
   openModal('modal-expense');
 }
 
@@ -5980,50 +6026,198 @@ function editExpense(id) {
   editingExpenseId = id;
   const titleEl = document.querySelector('#modal-expense .modal-title');
   if (titleEl) titleEl.textContent = '✏️ แก้ไขค่าใช้จ่าย';
-
-  refreshExpenseCatList();
   document.getElementById('e-date').value = e.expense_date;
-  document.getElementById('e-cat').value = e.category;
-  document.getElementById('e-amt').value = e.amount;
+  document.getElementById('e-type').value = e.expense_type||'operating';
+  document.getElementById('e-cat').value = effectiveExpenseCategory(e);
+  document.getElementById('e-subcat').value=e.subcategory||'';
+  document.getElementById('e-vendor').value=e.vendor_name||'';
+  document.getElementById('e-doc').value=e.document_no||'';
+  document.getElementById('e-channel').value=e.channel||'';
+  document.getElementById('e-project').value=e.project_name||'';
+  document.getElementById('e-base').value=e.base_amount??e.amount??'';
+  document.getElementById('e-vat').value=e.vat_amount||0;
+  document.getElementById('e-wht').value=e.withholding_tax||0;
+  document.getElementById('e-pay-status').value=e.payment_status||'paid';
+  document.getElementById('e-paid').value=e.paid_amount??e.amount??0;
+  document.getElementById('e-pay-method').value=e.payment_method||'';
+  document.getElementById('e-pay-date').value=e.payment_date||'';
+  document.getElementById('e-due-date').value=e.due_date||'';
+  document.getElementById('e-recur').value=e.recurrence||'one_time';
+  document.getElementById('e-vat-claim').checked=!!e.vat_claimable;
+  document.getElementById('e-profit').checked=e.include_in_profit!==false;
+  document.getElementById('e-dup').checked=!!e.duplicate_risk;
   document.getElementById('e-note').value = e.note || '';
-
+  recalcExpenseAmounts();
   openModal('modal-expense');
 }
 
-async function saveExpense() {
-  const amt = Number(document.getElementById('e-amt').value);
-  if (!amt) { toast('กรุณาใส่จำนวนเงิน', 'error'); return; }
-  const cat = (document.getElementById('e-cat').value || '').trim();
-  if (!cat) { toast('กรุณาเลือกหรือพิมพ์หมวดหมู่', 'error'); return; }
+function expenseTypeChanged() {
+  const type=document.getElementById('e-type').value;
+  document.getElementById('e-profit').checked=defaultExpenseProfitFlag(type);
+  if (['inventory','landed_cost'].includes(type)) document.getElementById('e-dup').checked=true;
+  recalcExpenseAmounts();
+}
+function calcExpenseVat7() { document.getElementById('e-vat').value=(Number(document.getElementById('e-base').value||0)*.07).toFixed(2); recalcExpenseAmounts(); }
+function expensePaymentChanged() {
+  const st=document.getElementById('e-pay-status').value;
+  const net=Math.max(0,Number(document.getElementById('e-base').value||0)+Number(document.getElementById('e-vat').value||0)-Number(document.getElementById('e-wht').value||0));
+  if(st==='paid') document.getElementById('e-paid').value=net.toFixed(2);
+  if(st==='unpaid') document.getElementById('e-paid').value='0';
+  recalcExpenseAmounts();
+}
+function recalcExpenseAmounts() {
+  const base=Number(document.getElementById('e-base')?.value||0), vat=Number(document.getElementById('e-vat')?.value||0), wht=Number(document.getElementById('e-wht')?.value||0);
+  const claim=!!document.getElementById('e-vat-claim')?.checked;
+  const pnl=base+(claim?0:vat), payable=Math.max(0,base+vat-wht);
+  const box=document.getElementById('e-calc');
+  if(box) box.innerHTML=`ค่าใช้จ่ายใน P&amp;L <b class="text-red">${fmtB(pnl)}</b> · ยอดชำระสุทธิ <b>${fmtB(payable)}</b>${claim?' · VAT ขอคืนได้ไม่รวมเป็นค่าใช้จ่าย':''}`;
+  return {base,vat,wht,pnl,payable};
+}
 
-  const payload = {
+async function saveExpense() {
+  const calc=recalcExpenseAmounts(), cat=(document.getElementById('e-cat').value||'').trim();
+  if (!(calc.base>0)) { toast('กรุณาใส่ยอดก่อน VAT มากกว่า 0','error'); return; }
+  if (!cat) { toast('กรุณาเลือกหมวดมาตรฐาน','error'); return; }
+  const type=document.getElementById('e-type').value;
+  let payload = {
     shop_id: currentShop.id,
     expense_date: document.getElementById('e-date').value,
     category: cat,
-    amount: amt,
+    amount: calc.pnl,
     note: document.getElementById('e-note').value
   };
-
-  let res;
-  if (editingExpenseId) {
-    res = await sb.from('expenses').update(payload).eq('id', editingExpenseId);
-  } else {
-    res = await sb.from('expenses').insert(payload);
+  if (expenseSchemaReady) payload={...payload,
+    standardized_category:cat, subcategory:document.getElementById('e-subcat').value.trim()||null,
+    vendor_name:document.getElementById('e-vendor').value.trim()||null, document_no:document.getElementById('e-doc').value.trim()||null,
+    channel:document.getElementById('e-channel').value||null, project_name:document.getElementById('e-project').value.trim()||null,
+    base_amount:calc.base, vat_amount:calc.vat, vat_claimable:document.getElementById('e-vat-claim').checked,
+    withholding_tax:calc.wht, paid_amount:Number(document.getElementById('e-paid').value||0),
+    payment_status:document.getElementById('e-pay-status').value, payment_method:document.getElementById('e-pay-method').value||null,
+    payment_date:document.getElementById('e-pay-date').value||null, due_date:document.getElementById('e-due-date').value||null,
+    expense_type:type, recurrence:document.getElementById('e-recur').value,
+    include_in_profit:document.getElementById('e-profit').checked, duplicate_risk:document.getElementById('e-dup').checked,
+    review_status:'approved', created_by:currentUser?.id||null, updated_at:new Date().toISOString()
+  };
+  const btn=document.getElementById('e-save-btn'); btn.disabled=true;
+  const res = editingExpenseId
+    ? await sb.from('expenses').update(payload).eq('id',editingExpenseId).select().single()
+    : await sb.from('expenses').insert(payload).select().single();
+  btn.disabled=false;
+  if (res.error) { toast('บันทึกไม่สำเร็จ: '+res.error.message,'error'); return; }
+  const file=document.getElementById('e-receipt').files?.[0];
+  if(file && expenseSchemaReady) {
+    try { await uploadExpenseReceipt(file,res.data.id); }
+    catch(err) { toast('บันทึกรายการแล้ว แต่อัปโหลดหลักฐานไม่สำเร็จ: '+err.message,'error'); }
   }
-
-  if (res.error) { toast('บันทึกไม่สำเร็จ', 'error'); return; }
-  rememberExpenseCat(cat);   // จำหมวดใหม่ไว้เป็นตัวเลือกครั้งต่อไป
   closeModal('modal-expense');
   toast('บันทึกสำเร็จ ✓', 'success');
-  loadExpenses();
+  await loadExpenseCategories(); await loadExpenses();
+}
+
+async function uploadExpenseReceipt(file,expenseId) {
+  if(file.size>10*1024*1024) throw new Error('ไฟล์เกิน 10MB');
+  const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const path=`${currentShop.id}/${expenseId}/${Date.now()}.${ext}`;
+  const {error}=await sb.storage.from('expense-receipts').upload(path,file,{contentType:file.type,upsert:true});
+  if(error) throw error;
+  const up=await sb.from('expenses').update({receipt_path:path,updated_at:new Date().toISOString()}).eq('id',expenseId);
+  if(up.error) throw up.error;
+}
+async function viewExpenseReceipt(path) {
+  const {data,error}=await sb.storage.from('expense-receipts').createSignedUrl(path,120);
+  if(error||!data?.signedUrl){toast('เปิดหลักฐานไม่สำเร็จ','error');return;}
+  window.open(data.signedUrl,'_blank','noopener');
 }
 
 async function delExpense(id) {
   if (!confirm('ต้องการลบรายการนี้?')) return;
-  await sb.from('expenses').delete().eq('id',id);
+  const row=(window._activeExpenses||[]).find(x=>x.id===id);
+  const {error}=await sb.from('expenses').delete().eq('id',id);
+  if(error){toast('ลบไม่สำเร็จ: '+error.message,'error');return;}
+  if(row?.receipt_path) await sb.storage.from('expense-receipts').remove([row.receipt_path]);
   toast('ลบแล้ว', 'success');
   loadExpenses();
 }
+
+function filteredExpenseRows() {
+  const cat=document.getElementById('exp-filter-cat')?.value||'', st=document.getElementById('exp-filter-status')?.value||'', ch=document.getElementById('exp-filter-channel')?.value||'', q=(document.getElementById('exp-search')?.value||'').trim().toLowerCase();
+  return expenseCurrentRows.filter(e=>(!cat||effectiveExpenseCategory(e)===cat)&&(!st||(e.payment_status||'paid')===st)&&(!ch||(e.channel||'')===ch)&&(!q||`${e.vendor_name||''} ${e.document_no||''} ${e.note||''} ${e.category||''}`.toLowerCase().includes(q)));
+}
+
+function renderExpenseView() {
+  const rows=filteredExpenseRows(), total=rows.reduce((s,e)=>s+expenseProfitAmount(e),0);
+  const ym=document.getElementById('exp-month').value, [y,m]=ym.split('-').map(Number);
+  const prevFrom=formatLocalDate(new Date(y,m-2,1)), prevTo=formatLocalDate(new Date(y,m-1,0));
+  const prevTotal=expenseDashboardRows.filter(e=>e.expense_date>=prevFrom&&e.expense_date<=prevTo).reduce((s,e)=>s+expenseProfitAmount(e),0);
+  const sales=Number(window._expenseSales||0), budget=expenseCurrentBudgets.reduce((s,b)=>s+Number(b.amount||0),0);
+  const unpaid=rows.filter(e=>(e.payment_status||'paid')!=='paid').reduce((s,e)=>s+Math.max(0,Number(e.base_amount??e.amount)+Number(e.vat_amount||0)-Number(e.withholding_tax||0)-Number(e.paid_amount||0)),0);
+  const review=rows.filter(e=>(e.review_status||'needs_review')!=='approved').length;
+  const mom=prevTotal?((total-prevTotal)/prevTotal*100):null;
+  document.getElementById('exp-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-label">💸 ค่าใช้จ่ายใน P&amp;L</div><div class="stat-value text-red">${fmtB(total)}</div><div class="stat-sub">${rows.length} รายการ · ${mom===null?'ยังไม่มีฐานเทียบ':`${mom>=0?'+':''}${mom.toFixed(1)}% จากเดือนก่อน`}</div></div>
+    <div class="stat-card"><div class="stat-label">📊 ค่าใช้จ่ายต่อยอดขาย</div><div class="stat-value">${sales?(total/sales*100).toFixed(1)+'%':'-'}</div><div class="stat-sub">ยอดขาย ${fmtB(sales)}</div></div>
+    <div class="stat-card"><div class="stat-label">⏳ ยอดค้างจ่าย</div><div class="stat-value text-amber">${fmtB(unpaid)}</div><div class="stat-sub">${rows.filter(e=>(e.payment_status||'paid')!=='paid').length} รายการ</div></div>
+    <div class="stat-card"><div class="stat-label">🎯 งบประมาณ</div><div class="stat-value ${budget&&total>budget?'text-red':'text-green'}">${budget?fmtB(budget-total):'-'}</div><div class="stat-sub">${budget?`คงเหลือจาก ${fmtB(budget)}`:'ยังไม่ได้ตั้งงบ'}</div></div>`;
+  const missingReceipt=expenseSchemaReady?rows.filter(e=>!e.receipt_path).length:0;
+  const dup=rows.filter(e=>e.duplicate_risk).length;
+  document.getElementById('exp-quality').innerHTML=(review||missingReceipt||dup)?`<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:9px;padding:10px 12px;margin-bottom:14px;font-size:12px;display:flex;gap:16px;flex-wrap:wrap"><b>⚠️ คุณภาพข้อมูล</b><span>รอตรวจหมวด ${review}</span><span>ไม่มีหลักฐาน ${missingReceipt}</span><span>เสี่ยงบันทึกซ้ำ ${dup}</span>${review?'<button class="btn btn-secondary btn-sm" onclick="openExpenseReview()">ตรวจตอนนี้</button>':''}</div>`:'';
+  renderExpenseTable(rows); renderExpenseCharts(rows); renderExpenseInsights(rows,total,budget);
+}
+
+function renderExpenseTable(rows) {
+  document.getElementById('exp-result-count').textContent=`แสดง ${rows.length} รายการ`;
+  document.getElementById('exp-table').innerHTML=rows.length?`<table><thead><tr><th>วันที่</th><th>หมวด/ประเภท</th><th>ผู้ขาย/เอกสาร</th><th>สถานะ</th><th class="text-right">P&amp;L</th><th></th></tr></thead><tbody>${rows.map(e=>`<tr>
+    <td>${escapeHTML(e.expense_date||'-')}</td>
+    <td><span class="badge badge-amber">${escapeHTML(effectiveExpenseCategory(e))}</span><div style="font-size:10px;color:var(--text3);margin-top:3px">${escapeHTML(EXPENSE_TYPE_LABELS[e.expense_type||'operating']||'ค่าใช้จ่ายดำเนินงาน')}${e.include_in_profit===false?' · ไม่นับกำไร':''}${e.duplicate_risk?' · ⚠️ ตรวจซ้ำ':''}${e.legacy_category&&e.legacy_category!==effectiveExpenseCategory(e)?`<br>เดิม: ${escapeHTML(e.legacy_category)}`:''}</div></td>
+    <td><b style="font-size:12px">${escapeHTML(e.vendor_name||e.note||'-')}</b><div style="font-size:10px;color:var(--text3)">${escapeHTML(e.document_no||e.note||'-')}</div></td>
+    <td><span class="badge ${(e.payment_status||'paid')==='paid'?'badge-green':(e.payment_status==='partial'?'badge-amber':'badge-red')}">${{paid:'จ่ายแล้ว',partial:'บางส่วน',unpaid:'ยังไม่จ่าย'}[e.payment_status||'paid']}</span>${e.receipt_path?` <button class="btn btn-secondary btn-sm" onclick="viewExpenseReceipt('${String(e.receipt_path).replace(/'/g,"\\'")}')">📎</button>`:''}</td>
+    <td class="text-right font-mono ${expenseProfitAmount(e)>=0?'text-red':'text-green'}">${e.include_in_profit===false?'—':fmtB(expenseProfitAmount(e))}</td>
+    <td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="editExpense('${e.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="delExpense('${e.id}')">ลบ</button></td>
+  </tr>`).join('')}</tbody></table>`:'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">ไม่พบค่าใช้จ่ายตามตัวกรอง</div></div>';
+}
+
+function renderExpenseCharts(rows) {
+  ['expTrend','expCat','expChannel'].forEach(k=>{if(charts[k]){charts[k].destroy();delete charts[k];}});
+  const catMap={}, chMap={}; rows.forEach(e=>{const a=expenseProfitAmount(e),c=effectiveExpenseCategory(e),ch=e.channel||'ไม่ระบุ';catMap[c]=(catMap[c]||0)+a;chMap[ch]=(chMap[ch]||0)+a;});
+  const colors=['#4f9cf9','#f97316','#22c55e','#a78bfa','#f5a623','#00d4a8','#f05252','#e879f9','#64748b','#0ea5e9','#84cc16','#fb7185'];
+  const trend={}; expenseDashboardRows.forEach(e=>{const key=(e.expense_date||'').slice(0,7);trend[key]=(trend[key]||0)+expenseProfitAmount(e);});
+  const labels=[]; const ym=document.getElementById('exp-month').value,[yy,mm]=ym.split('-').map(Number); for(let i=11;i>=0;i--){const d=new Date(yy,mm-1-i,1);labels.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);}
+  const trendCanvas=document.getElementById('ch-exp-trend'); if(trendCanvas) charts.expTrend=new Chart(trendCanvas,{type:'bar',data:{labels:labels.map(x=>{const [a,b]=x.split('-');return new Date(+a,+b-1,1).toLocaleDateString('th-TH',{month:'short',year:'2-digit'});}),datasets:[{label:'ค่าใช้จ่าย',data:labels.map(x=>trend[x]||0),backgroundColor:'#f05252',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const catCanvas=document.getElementById('ch-exp-cat'); if(catCanvas) charts.expCat=new Chart(catCanvas,{type:'doughnut',data:{labels:Object.keys(catMap),datasets:[{data:Object.values(catMap),backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});
+  const chCanvas=document.getElementById('ch-exp-channel'); if(chCanvas) charts.expChannel=new Chart(chCanvas,{type:'bar',data:{labels:Object.keys(chMap),datasets:[{data:Object.values(chMap),backgroundColor:'#4f9cf9',borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+}
+
+function renderExpenseInsights(rows,total,budget) {
+  const vendor={}; rows.forEach(e=>{const v=e.vendor_name||'ไม่ระบุผู้ขาย';vendor[v]=(vendor[v]||0)+expenseProfitAmount(e);});
+  const top=Object.entries(vendor).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const due=rows.filter(e=>e.due_date&&(e.payment_status||'paid')!=='paid').sort((a,b)=>a.due_date.localeCompare(b.due_date)).slice(0,5);
+  document.getElementById('exp-insights').innerHTML=`<div class="card-title">🔎 จุดที่ควรติดตาม</div>
+    ${budget&&total>budget?`<div style="background:#fef2f2;color:#b91c1c;padding:8px;border-radius:7px;margin-bottom:8px;font-size:12px">เกินงบ ${fmtB(total-budget)}</div>`:''}
+    <div style="font-size:11px;color:var(--text3);margin-bottom:5px">ผู้ขายที่มียอดสูงสุด</div>${top.map(([v,a],i)=>`<div class="flex-between" style="font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)"><span>${i+1}. ${escapeHTML(v)}</span><b>${fmtB(a)}</b></div>`).join('')||'<div style="color:var(--text3);font-size:12px">ไม่มีข้อมูล</div>'}
+    ${due.length?`<div style="font-size:11px;color:var(--text3);margin:10px 0 5px">ใกล้ครบกำหนด/ค้างจ่าย</div>${due.map(e=>`<div class="flex-between" style="font-size:11px;padding:4px 0"><span>${escapeHTML(e.due_date)} · ${escapeHTML(e.vendor_name||effectiveExpenseCategory(e))}</span><b class="text-amber">${fmtB(Number(e.amount||0)-Number(e.paid_amount||0))}</b></div>`).join('')}`:''}`;
+}
+
+async function openExpenseReview() {
+  if(!expenseSchemaReady){toast('กรุณารัน supabase_expense_migration.sql ก่อน','error');return;}
+  const {data,error}=await sb.from('expenses').select('*').eq('shop_id',currentShop.id).eq('review_status','needs_review').order('expense_date',{ascending:false}).limit(500);
+  if(error){toast('โหลดรายการตรวจสอบไม่สำเร็จ','error');return;}
+  const rows=data||[]; window._expenseReviewRows=rows;
+  const body=rows.length?`<div style="background:#eff6ff;color:#1d4ed8;padding:9px;border-radius:8px;margin-bottom:10px;font-size:12px">หมวดเดิมจะยังถูกเก็บไว้ ระบบจะบันทึกหมวดมาตรฐานเพิ่มและไม่เปลี่ยนยอดเงิน</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><select id="review-bulk-cat"><option value="">กำหนดหมวดให้รายการที่เลือก...</option>${STANDARD_EXPENSE_CATS.map(c=>`<option>${c}</option>`).join('')}</select><select id="review-bulk-type"><option value="">กำหนดประเภท...</option>${expenseTypeOptions('')}</select><button class="btn btn-secondary btn-sm" onclick="applyExpenseReviewBulk()">ใช้กับที่เลือก</button></div>
+    <div style="max-height:52vh;overflow:auto"><table><thead><tr><th>เลือก</th><th>ข้อมูลเดิม</th><th>หมวดที่เสนอ</th><th>ประเภท</th><th>นับกำไร</th></tr></thead><tbody>${rows.map((e,i)=>{const s=suggestExpenseClassification(e);return `<tr><td><input type="checkbox" class="review-check" data-i="${i}" checked></td><td><b>${escapeHTML(e.category||'-')}</b><div style="font-size:10px;color:var(--text3)">${escapeHTML(e.expense_date)} · ${fmtB(e.amount)}<br>${escapeHTML(e.note||'-')}</div>${s.duplicateRisk?`<div style="font-size:10px;color:var(--red)">⚠️ ${s.reason}</div>`:''}</td><td>${expenseCategorySelect('review-cat-'+i,e.standardized_category||s.category)}</td><td><select id="review-type-${i}" onchange="reviewTypeChanged(${i})">${expenseTypeOptions(e.expense_type||s.type)}</select></td><td style="text-align:center"><input type="checkbox" id="review-profit-${i}" ${(e.include_in_profit!==false&&s.include)?'checked':''}></td></tr>`}).join('')}</tbody></table></div>`:'<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">ตรวจหมวดข้อมูลเก่าครบแล้ว</div></div>';
+  showDynamicModal('🧹 จัดหมวดค่าใช้จ่ายเก่า',body,rows.length?`<button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ยกเลิก</button><button class="btn btn-primary" onclick="approveExpenseReviews()">✓ อนุมัติรายการที่เลือก</button>`:'<button class="btn btn-primary" onclick="closeModal(\'modal-dynamic\')">ปิด</button>');
+}
+function reviewTypeChanged(i){const type=document.getElementById('review-type-'+i).value;document.getElementById('review-profit-'+i).checked=defaultExpenseProfitFlag(type);}
+function applyExpenseReviewBulk(){const cat=document.getElementById('review-bulk-cat').value,type=document.getElementById('review-bulk-type').value;document.querySelectorAll('.review-check:checked').forEach(cb=>{const i=cb.dataset.i;if(cat)document.getElementById('review-cat-'+i).value=cat;if(type){document.getElementById('review-type-'+i).value=type;reviewTypeChanged(i);}});}
+async function approveExpenseReviews(){const selected=[...document.querySelectorAll('.review-check:checked')];if(!selected.length){toast('กรุณาเลือกรายการ','error');return;}for(const cb of selected){const i=Number(cb.dataset.i),e=window._expenseReviewRows[i],type=document.getElementById('review-type-'+i).value,cat=document.getElementById('review-cat-'+i).value,s=suggestExpenseClassification(e);const {error}=await sb.from('expenses').update({standardized_category:cat,expense_type:type,include_in_profit:document.getElementById('review-profit-'+i).checked,duplicate_risk:s.duplicateRisk,legacy_category:e.legacy_category||e.category,review_status:'approved',updated_at:new Date().toISOString()}).eq('id',e.id);if(error){toast('ย้ายหมวดไม่สำเร็จ: '+error.message,'error');return;}}closeModal('modal-dynamic');toast('จัดหมวดและอนุมัติแล้ว '+selected.length+' รายการ','success');loadExpenseCategories();loadExpenses();}
+
+function showDynamicModal(title,body,footer='') { document.getElementById('modal-dynamic')?.remove(); document.body.insertAdjacentHTML('beforeend',`<div class="modal-overlay" id="modal-dynamic"><div class="modal" style="max-width:920px"><div class="modal-title">${title}</div>${body}<div class="modal-footer">${footer}</div></div></div>`);openModal('modal-dynamic'); }
+
+async function openExpenseCategories(){if(!expenseSchemaReady){toast('กรุณารัน supabase_expense_migration.sql ก่อน','error');return;}const {data}=await sb.from('expense_categories').select('*').eq('shop_id',currentShop.id).order('name');showDynamicModal('🗂️ ทะเบียนหมวดค่าใช้จ่าย',`<div style="font-size:12px;color:var(--text3);margin-bottom:10px">หมวดมาตรฐานมีให้แล้ว สามารถเพิ่มหมวดเฉพาะธุรกิจได้</div><div style="display:flex;gap:8px;margin-bottom:12px"><input id="new-exp-cat" placeholder="ชื่อหมวดใหม่"><button class="btn btn-primary btn-sm" onclick="addExpenseCategory()">+ เพิ่ม</button></div><div style="max-height:45vh;overflow:auto">${STANDARD_EXPENSE_CATS.map(c=>`<div style="padding:7px;border-bottom:1px solid var(--border)">✓ ${escapeHTML(c)} <span style="font-size:10px;color:var(--text3)">มาตรฐาน</span></div>`).join('')}${(data||[]).map(c=>`<div style="padding:7px;border-bottom:1px solid var(--border)">• ${escapeHTML(c.name)}</div>`).join('')}</div>`,`<button class="btn btn-primary" onclick="closeModal('modal-dynamic')">ปิด</button>`);}
+async function addExpenseCategory(){const name=(document.getElementById('new-exp-cat').value||'').trim();if(!name)return;const {error}=await sb.from('expense_categories').upsert({shop_id:currentShop.id,name,is_active:true},{onConflict:'shop_id,name'});if(error){toast('เพิ่มหมวดไม่สำเร็จ: '+error.message,'error');return;}toast('เพิ่มหมวดแล้ว','success');closeModal('modal-dynamic');await loadExpenseCategories();openExpenseCategories();}
+
+async function openExpenseBudget(){if(!expenseSchemaReady){toast('กรุณารัน supabase_expense_migration.sql ก่อน','error');return;}const ym=document.getElementById('exp-month').value,[y,m]=ym.split('-').map(Number),map=Object.fromEntries(expenseCurrentBudgets.map(b=>[b.category,Number(b.amount||0)]));showDynamicModal('🎯 งบประมาณค่าใช้จ่าย '+new Date(y,m-1,1).toLocaleDateString('th-TH',{month:'long',year:'numeric'}),`<div style="max-height:55vh;overflow:auto">${STANDARD_EXPENSE_CATS.map((c,i)=>`<div class="flex-between" style="gap:12px;padding:7px 0;border-bottom:1px solid var(--border)"><label style="font-size:12px;flex:1">${c}</label><input type="number" min="0" step="0.01" class="budget-input" data-cat="${c}" value="${map[c]||0}" style="width:150px"></div>`).join('')}</div>`,`<button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ยกเลิก</button><button class="btn btn-primary" onclick="saveExpenseBudget()">บันทึกงบ</button>`);}
+async function saveExpenseBudget(){const ym=document.getElementById('exp-month').value,[y,m]=ym.split('-').map(Number),month=monthStart(y,m),rows=[...document.querySelectorAll('.budget-input')].map(x=>({shop_id:currentShop.id,budget_month:month,category:x.dataset.cat,amount:Number(x.value||0),updated_at:new Date().toISOString()}));const {error}=await sb.from('expense_budgets').upsert(rows,{onConflict:'shop_id,budget_month,category'});if(error){toast('บันทึกงบไม่สำเร็จ: '+error.message,'error');return;}closeModal('modal-dynamic');toast('บันทึกงบแล้ว','success');loadExpenses();}
 
 // ─── PAGE: PRODUCTS ───────────────────────────────────
 let allProducts = [];
@@ -8551,7 +8745,7 @@ async function loadEmployeeList() {
 async function computeNetProfitBase(from, to) {
   const [ordRes, expRes, prodRes, landedRes] = await Promise.all([
     sb.from('orders').select('channel,total_amount,customer_social,shipping_status,doc_status,order_items(qty,cost_per_unit,product_id)').eq('shop_id', currentShop.id).gte('order_date',from).lte('order_date',to),
-    sb.from('expenses').select('amount').eq('shop_id', currentShop.id).gte('expense_date',from).lte('expense_date',to),
+    sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',from).lte('expense_date',to),
     sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id),
     sb.from('landed_costs').select('type,amount').eq('shop_id', currentShop.id).gte('move_date',from).lte('move_date',to),
     ensureShopeeFeeData(),
@@ -8561,7 +8755,7 @@ async function computeNetProfitBase(from, to) {
   const orderCost=o=>(o.order_items||[]).reduce((s,it)=>{const c=Number(it.cost_per_unit||0);return s+Number(it.qty||0)*(c>0?c:Number(costMap[it.product_id]||0));},0);
   const revenue = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const cost    = orders.reduce((s,o)=>s+orderCost(o),0);
-  const exp     = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const exp     = expenses.reduce((s,e)=>s+expenseProfitAmount(e),0);
   const platformFee = orders.reduce((sum,o)=>sum+getOrderPlatformFeeInfo(o).fee,0);
   const handling   = landed.filter(l=>l.type==='ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
   const shipGR     = landed.filter(l=>l.type==='ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
@@ -11227,7 +11421,7 @@ async function loadDashData() {
 
   const sales    = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const costSum  = orders.reduce((s,o)=>s+_orderCost(o),0);
-  const expSum   = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
+  const expSum   = expenses.reduce((s,e)=>s+expenseProfitAmount(e),0);
   const gross    = sales - costSum;
   const net      = gross - expSum;
   const grossPct = sales>0?(gross/sales*100).toFixed(1):0;
@@ -12504,12 +12698,14 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.20</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.22</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Feature Update</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.22', type:'minor', date:'2026-08-15', title:'Expense Dashboard & Budget Control', items:['เพิ่ม KPI ค่าใช้จ่ายต่อยอดขาย การเปลี่ยนแปลงจากเดือนก่อน ยอดค้างจ่าย และงบคงเหลือ','เพิ่มกราฟแนวโน้ม 12 เดือน หมวดค่าใช้จ่าย และช่องทาง/หน่วยงาน','เพิ่มงบประมาณรายเดือนแยกหมวด ผู้ขายยอดสูง และรายการใกล้ครบกำหนด','เพิ่มตัวกรอง หมวด สถานะ ช่องทาง และค้นหารายละเอียด'] },
+            { v:'1.21', type:'minor', date:'2026-08-15', title:'Expense Management & Legacy Review', items:['เพิ่มผู้ขาย เลขเอกสาร VAT ภาษีหัก ณ ที่จ่าย สถานะชำระ ช่องทาง โครงการ และหลักฐาน','แยกค่าใช้จ่ายดำเนินงาน สต๊อก Landed Cost ทรัพย์สิน เงินถอนเจ้าของ ภาษี และเงินคืน','เพิ่มเครื่องมือตรวจและย้ายหมวดข้อมูลเก่าโดยเก็บหมวดเดิมไว้','ป้องกันรายการที่ไม่ใช่ค่าใช้จ่าย P&L ถูกหักกำไรสุทธิซ้ำ'] },
             { v:'1.20', type:'minor', date:'2026-08-15', title:'Fix Product Images in Categories', items:['คืนช่องอัปโหลดรูปในหน้าต่างแก้ไขสินค้า','แก้ JavaScript error จากช่องรูปที่หายไป','หน้า Categories โหลดข้อมูลสินค้าล่าสุดทุกครั้ง','แสดงรูปสินค้าที่อัปโหลดเป็นภาพหลักของหมวดหมู่'] },
             { v:'1.19', type:'minor', date:'2026-08-15', title:'Other Income · Investment Register · Quotation Editing', items:['เพิ่มเมนูรายได้อื่นและทะเบียนเงินลงทุน','คำนวณกำไรที่ขายแล้วโดยไม่นับเงินต้นคืนเป็นรายได้','นำกำไร/รายได้ที่รับรู้แล้วไปรวมใน Dashboard และ Profit Journey','ใบเสนอราคาแก้ไขและลบได้ พร้อมรองรับรายการสินค้าที่ไม่มี Code/SKU'] },
             { v:'1.18', type:'minor', date:'2026-08-15', title:'Quotation Signature & Bank Transfer Details', items:['เพิ่มลายเซ็นดิจิทัลในช่องผู้เสนอราคาเหมือนบิลเงินสด','เพิ่มข้อมูลชำระเงินธนาคารกสิกรไทยในใบเสนอราคา','แสดงชื่อบัญชี MS. NUNTANA L และเลขที่บัญชี 128-8-23520-8','จัดกรอบ Bank Transfer ให้ชัดเจนสำหรับเอกสารพิมพ์'] },
