@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.24';
+    const CACHE = 'sealthai-v1.25';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.24</div>
+            <div class="logo-sub">v1.25</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -12713,12 +12713,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.24</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Safety Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.25</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Fix Update</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.25', type:'minor', date:'2026-08-15', title:'Category Image Priority & Upload Errors', items:['ใช้รูปหมวดที่อัปโหลดเป็นภาพหลักของการ์ด Categories','ใช้ภาพรวมสินค้าเป็นภาพสำรองเมื่อไม่มีรูปหมวดหรือรูปหมวดโหลดไม่ได้','หยุดการบันทึกและแสดงสาเหตุจริงเมื่อ Storage อัปโหลดไม่สำเร็จ','ตรวจชนิดไฟล์และจำกัดขนาดรูปไม่เกิน 5 MB'] },
             { v:'1.24', type:'minor', date:'2026-08-15', title:'Safe Legacy Expense Review', items:['ตรวจพบและนำค่าใช้จ่ายเก่า 21 รายการเข้าคิวจัดหมวด','เลือกอัตโนมัติเฉพาะรายการความมั่นใจสูง','ไม่เลือกอาหาร รายการอื่น และรายการเสี่ยงซ้ำไว้ล่วงหน้า','เพิ่มหมวดอาหาร ประชุม และสวัสดิการ พร้อมคำเตือนให้แยกเงินถอนเจ้าของ'] },
             { v:'1.23', type:'minor', date:'2026-08-15', title:'Expense Dashboard Date Hotfix', items:['ย้ายฟังก์ชันแปลงวันที่ให้ใช้งานร่วมกันได้ทุกหน้า','แก้ Dashboard ค่าใช้จ่ายค้างระหว่างโหลดข้อมูล','เพิ่มข้อความแจ้งข้อผิดพลาดในหน้าแทนการแสดงพื้นที่ว่าง'] },
             { v:'1.22', type:'minor', date:'2026-08-15', title:'Expense Dashboard & Budget Control', items:['เพิ่ม KPI ค่าใช้จ่ายต่อยอดขาย การเปลี่ยนแปลงจากเดือนก่อน ยอดค้างจ่าย และงบคงเหลือ','เพิ่มกราฟแนวโน้ม 12 เดือน หมวดค่าใช้จ่าย และช่องทาง/หน่วยงาน','เพิ่มงบประมาณรายเดือนแยกหมวด ผู้ขายยอดสูง และรายการใกล้ครบกำหนด','เพิ่มตัวกรอง หมวด สถานะ ช่องทาง และค้นหารายละเอียด'] },
@@ -14351,16 +14352,15 @@ function renderCategoriesPage() {
           ? `<div style="width:100%;height:100%;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;padding:8px;background:var(--bg3)">
               ${prodImgs.map(x => `<img src="${escapeHTML(x.url)}" alt="${escapeHTML(x.product.name||'รูปสินค้า')}" title="${escapeHTML(x.product.name||'')}" style="width:${prodImgs.length===1?'100%':'48%'};height:${prodImgs.length<=2?'100%':'48%'};min-width:0;object-fit:cover;border-radius:7px;border:1px solid var(--border)" onerror="this.style.display='none'">`).join('')}
             </div>`
-          : cat.image_url
-            ? `<img src="${escapeHTML(cat.image_url)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
-            : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
               <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;padding:8px">
                 <span style="font-size:40px">🗂️</span>
               </div>
             </div>`
         }
-        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
-        <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${prods.length} สินค้า</div>
+        ${cat.image_url ? `<img src="${escapeHTML(cat.image_url)}" alt="${escapeHTML(cat.name||'รูปหมวดหมู่')}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1" onerror="this.remove()">` : ''}
+        <div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
+        <div style="position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${cat.image_url?'🖼️ ภาพหมวด · ':''}${prods.length} สินค้า</div>
       </div>
       <!-- ข้อมูล -->
       <div style="padding:12px">
@@ -14421,7 +14421,7 @@ function openCatModal(cat) {
       <div class="modal-footer">
         ${isEdit ? `<button class="btn btn-danger btn-sm" onclick="deleteCat('${cat.id}')">🗑️ ลบ</button>` : ''}
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
-        <button class="btn btn-primary" onclick="saveCat('${cat?.id||''}')">💾 บันทึก</button>
+        <button id="cat-save-btn" class="btn btn-primary" onclick="saveCat('${cat?.id||''}')">💾 บันทึก</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -14454,17 +14454,39 @@ async function saveCat(catId) {
   const prog  = document.getElementById('cat-img-progress');
   const urlInp = document.getElementById('cat-img-url')?.value.trim();
   const file  = document.getElementById('cat-img-file')?.files[0];
+  const saveBtn = document.getElementById('cat-save-btn');
 
   let imageUrl = urlInp || null;
 
   // upload ถ้ามีไฟล์
   if (file) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      if (prog) prog.textContent = 'รองรับเฉพาะ JPG, PNG, WEBP และ GIF';
+      toast('ชนิดไฟล์รูปภาพไม่รองรับ', 'error');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      if (prog) prog.textContent = 'ไฟล์ต้องมีขนาดไม่เกิน 5 MB';
+      toast('รูปภาพมีขนาดเกิน 5 MB', 'error');
+      return;
+    }
+    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ กำลังอัพโหลด...'; }
     if (prog) prog.textContent = 'กำลังอัพโหลด...';
-    const ext = file.name.split('.').pop();
-    const path = 'categories/' + name.replace(/\s+/g,'-') + '-' + Date.now() + '.' + ext;
-    const { error: upErr } = await sb.storage.from('product-images').upload(path, file, { cacheControl:'3600', upsert:true });
+    const ext = (file.name.split('.').pop() || file.type.split('/').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const safeName = name.replace(/[^a-zA-Z0-9ก-๙_-]+/g, '-').replace(/^-+|-+$/g, '') || 'category';
+    const path = 'categories/' + currentShop.id + '/' + safeName + '-' + Date.now() + '.' + ext;
+    const { error: upErr } = await sb.storage.from('product-images').upload(path, file, {
+      cacheControl: '3600',
+      contentType: file.type,
+      upsert: false
+    });
     if (upErr) {
-      if (prog) prog.textContent = 'อัพโหลดไม่สำเร็จ';
+      const reason = upErr.message || 'ไม่ทราบสาเหตุ';
+      if (prog) prog.textContent = '❌ อัพโหลดไม่สำเร็จ: ' + reason;
+      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึก'; }
+      toast('อัพโหลดรูปไม่สำเร็จ: ' + reason, 'error');
+      return;
     } else {
       const { data: urlData } = sb.storage.from('product-images').getPublicUrl(path);
       imageUrl = urlData.publicUrl;
@@ -14481,7 +14503,11 @@ async function saveCat(catId) {
     ({ error } = await sb.from('categories').insert(payload));
   }
 
-  if (error) { toast('บันทึกไม่สำเร็จ: '+error.message, 'error'); return; }
+  if (error) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึก'; }
+    toast('บันทึกไม่สำเร็จ: '+error.message, 'error');
+    return;
+  }
 
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   toast((catId ? 'แก้ไข' : 'เพิ่ม') + 'หมวดหมู่สำเร็จ ✓', 'success');
