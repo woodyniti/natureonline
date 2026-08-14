@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.13</div>
+            <div class="logo-sub">v1.14</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1668,6 +1668,85 @@ function changeDashYear(yr) {
   dashboard();
 }
 
+const PROFIT_JOURNEY_MILESTONES = Object.freeze([
+  { target: 10000,    icon: '🍽️', title: 'ก้าวแรก', reward: 'มื้ออาหารฉลองร้านโปรด', budget: 'งบ ฿500–1,000' },
+  { target: 25000,    icon: '🎁', title: 'เริ่มเห็นผล', reward: 'ของที่อยากได้หรืออุปกรณ์ทำงานชิ้นเล็ก', budget: 'งบ ฿1,000–2,000' },
+  { target: 50000,    icon: '🏨', title: 'ผ่านด่านเริ่มต้น', reward: 'คาเฟ่หรือ Staycation 1 คืน', budget: 'งบ ฿2,000–4,000' },
+  { target: 75000,    icon: '🚗', title: 'ธุรกิจกำลังโต', reward: 'เที่ยวใกล้กรุงเทพฯ 1–2 วัน', budget: 'งบ ฿3,000–5,000' },
+  { target: 100000,   icon: '🏖️', title: 'กำไรแสนแรก', reward: 'พัทยา หัวหิน หรือเขาใหญ่', budget: 'งบ ฿5,000–8,000' },
+  { target: 150000,   icon: '✈️', title: 'ใกล้เป็นธุรกิจเต็มตัว', reward: 'เชียงใหม่ กระบี่ หรือภูเก็ตแบบประหยัด', budget: 'งบ ฿7,000–12,000' },
+  { target: 200000,   icon: '🧳', title: 'เตรียมเปิดบริษัท', reward: 'ทริปในประเทศและเริ่มเตรียมระบบบริษัท', budget: 'งบ ฿8,000–15,000' },
+  { target: 250000,   icon: '🏢', title: 'เปิดบริษัท', reward: 'จดทะเบียนและวางระบบบัญชี–ภาษี', budget: 'งบ ฿20,000–30,000' },
+  { target: 500000,   icon: '🌴', title: 'ธุรกิจเริ่มมั่นคง', reward: 'เชียงใหม่ ภูเก็ต หรือกระบี่ 3–4 วัน', budget: 'งบ ฿15,000–25,000' },
+  { target: 750000,   icon: '🇻🇳', title: 'ผ่านด่านแรก', reward: 'เวียดนามหรือลาว', budget: 'งบ ฿20,000–35,000' },
+  { target: 1000000,  icon: '🇸🇬', title: 'กำไรหนึ่งล้าน', reward: 'สิงคโปร์หรือมาเลเซีย', budget: 'งบ ฿30,000–50,000' },
+  { target: 1500000,  icon: '🇹🇼', title: 'โตระดับภูมิภาค', reward: 'ไต้หวันหรือฮ่องกง', budget: 'งบ ฿40,000–70,000' },
+  { target: 2000000,  icon: '🇯🇵', title: 'ระบบธุรกิจแข็งแรง', reward: 'ญี่ปุ่นหรือเกาหลี', budget: 'งบ ฿60,000–100,000' },
+  { target: 3000000,  icon: '🇹🇷', title: 'เจ้าของธุรกิจเต็มตัว', reward: 'ตุรกี จีน หรือยุโรปตะวันออก', budget: 'งบ ฿100,000–160,000' },
+  { target: 5000000,  icon: '🇦🇺', title: 'Financial Freedom ขั้นแรก', reward: 'ออสเตรเลียหรือนิวซีแลนด์', budget: 'งบ ฿150,000–250,000' },
+  { target: 7500000,  icon: '🇨🇭', title: 'ธุรกิจระดับมั่งคั่ง', reward: 'สวิตเซอร์แลนด์ อิตาลี หรือสแกนดิเนเวีย', budget: 'งบ ฿250,000–350,000' },
+  { target: 10000000, icon: '🌍', title: 'เป้าหมายใหญ่สำเร็จ', reward: 'ทริปยุโรปหลายประเทศหรือทริปรอบโลก', budget: 'งบ ฿400,000–600,000' }
+]);
+
+function renderProfitJourney(cumulativeProfit) {
+  const profit = Number(cumulativeProfit || 0);
+  const achieved = PROFIT_JOURNEY_MILESTONES.filter(m => profit >= m.target);
+  const next = PROFIT_JOURNEY_MILESTONES.find(m => profit < m.target);
+  const previousTarget = achieved.length ? achieved[achieved.length - 1].target : 0;
+  const progress = next
+    ? Math.max(0, Math.min(100, (profit - previousTarget) / (next.target - previousTarget) * 100))
+    : 100;
+  const remaining = next ? Math.max(0, next.target - profit) : 0;
+  const headline = next
+    ? `${next.icon} เป้าหมายถัดไป: ${escapeHTML(next.title)}`
+    : '🏆 พิชิตเส้นทางสู่ 10 ล้านแล้ว!';
+  const detail = next
+    ? `${escapeHTML(next.reward)} · ${escapeHTML(next.budget)}`
+    : 'ปลดล็อกทริปยุโรปหลายประเทศหรือทริปรอบโลก';
+
+  return `
+    <div class="card mb-4" style="padding:18px;border:1px solid rgba(0,168,130,.35);background:linear-gradient(135deg,#ffffff 0%,#effcf8 100%)">
+      <div class="flex-between" style="gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div class="card-title" style="margin:0 0 3px">🚀 เส้นทางสู่ 10 ล้าน</div>
+          <div style="font-size:12px;color:var(--text3)">คำนวณจากกำไรสุทธิสะสมตลอดอายุร้าน</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text3)">กำไรสุทธิสะสม</div>
+          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:${profit >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtB(profit)}</div>
+        </div>
+      </div>
+      <div style="padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
+        <div class="flex-between" style="gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700">${headline}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">${detail}</div>
+          </div>
+          <div style="text-align:right;font-size:12px">
+            ${next ? `<div style="color:var(--text2)">เหลืออีก <strong style="color:var(--accent)">${fmtB(remaining)}</strong></div>` : '<div style="color:var(--green);font-weight:700">ปลดล็อกครบทุกเป้าหมาย</div>'}
+            <div style="color:var(--text3)">ความคืบหน้าช่วงนี้ ${progress.toFixed(1)}%</div>
+          </div>
+        </div>
+        <div style="height:12px;background:var(--bg4);border-radius:999px;overflow:hidden">
+          <div style="width:${progress}%;height:100%;background:linear-gradient(90deg,var(--accent),#22c55e);border-radius:999px;transition:width .6s ease"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch">
+        ${PROFIT_JOURNEY_MILESTONES.map(m => {
+          const done = profit >= m.target;
+          const active = next && next.target === m.target;
+          return `<div title="${escapeHTML(m.reward)} · ${escapeHTML(m.budget)}" style="flex:0 0 132px;padding:10px;border-radius:10px;border:1px solid ${active ? 'var(--accent)' : done ? 'rgba(22,163,74,.35)' : 'var(--border)'};background:${active ? 'rgba(0,168,130,.09)' : done ? 'rgba(22,163,74,.06)' : '#fff'};opacity:${done || active ? '1' : '.72'}">
+            <div style="font-size:18px;margin-bottom:4px">${done ? '✅' : m.icon}</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--text2)'}">${fmtB(m.target)}</div>
+            <div style="font-size:11px;font-weight:600;margin-top:3px;line-height:1.3">${escapeHTML(m.title)}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">${done ? 'ปลดล็อกแล้ว' : active ? 'กำลังเดินทาง' : 'ยังไม่ปลดล็อก'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">🛡️ ควรกันภาษี เงินสำรองธุรกิจ 6 เดือน และเงินทุนหมุนเวียนก่อนใช้งบรางวัล</div>
+    </div>`;
+}
+
 async function dashboard() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth()+1;
@@ -1721,16 +1800,18 @@ async function dashboard() {
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes] = await Promise.all([
+  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me),
     // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
-    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
+    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,channel,employee_id,shipping_status,doc_status,order_items(product_id,product_name,qty,sell_price,cost_per_unit)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
     // ค่าจัดการ/ค่าขนส่ง จากการรับสินค้าจริง (ถ้าตารางยังไม่มี จะได้ error → ใช้ [] แทน)
     sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me),
+    sb.from('expenses').select('amount').eq('shop_id', currentShop.id).limit(10000),
+    sb.from('landed_costs').select('type,amount').eq('shop_id', currentShop.id).limit(10000),
     ensureShopeeFeeData()
   ]);
 
@@ -1820,6 +1901,21 @@ async function dashboard() {
   // ── Net Profit สุดท้าย (หลังหักคอมพนักงาน + ค่าแรง CFO) ──
   const netProfit   = netBeforeComm - totalEmpComm - cfoWage;
   const netPct      = totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : '0.0';
+
+  // กำไรสุทธิสะสมตลอดอายุร้าน สำหรับ Profit Journey (ไม่เปลี่ยนตามตัวกรอง Dashboard)
+  const lifetimeOrders = allOrdersForRepeat;
+  const lifetimeRevenue = lifetimeOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
+  const lifetimeCost = lifetimeOrders.reduce((s,o) => s + orderCostWithFallback(o), 0);
+  const lifetimePlatformFee = lifetimeOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const lifetimeExpenses = (allExpRes?.data || []).reduce((s,e) => s + Number(e.amount||0), 0);
+  const lifetimeLanded = (allLandedRes?.data || [])
+    .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
+    .reduce((s,l) => s + Number(l.amount||0), 0);
+  const lifetimeBeforeComm = lifetimeRevenue - lifetimeCost - lifetimePlatformFee - lifetimeExpenses - lifetimeLanded;
+  const lifetimeCommBase = Math.max(0, lifetimeBeforeComm);
+  const lifetimeEmployeeComm = employees.reduce((s,e) => s + lifetimeCommBase * Number(e.commission_rate||0) / 100, 0);
+  const lifetimeCfoWage = lifetimeCommBase * CFO_WAGE_PCT / 100;
+  const cumulativeNetProfit = lifetimeBeforeComm - lifetimeEmployeeComm - lifetimeCfoWage;
 
   // Sales by day of week
   const dow = ['อา','จ','อ','พ','พฤ','ศ','ส'];
@@ -2043,6 +2139,8 @@ async function dashboard() {
         <div class="stat-sub">เฉลี่ยยอดขายต่อวัน</div>
       </div>
     </div>
+
+    ${renderProfitJourney(cumulativeNetProfit)}
 
     <!-- ════════ PROFIT BREAKDOWN ════════ -->
     <div class="card mb-4" style="padding:16px">
@@ -3063,21 +3161,43 @@ async function drillMonthlyRevenue() {
 async function drillMonthlyCost() {
   const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
   if (!dateFrom) return;
-  const { data: orders } = await sb.from('orders')
-    .select('order_no,order_date,channel,customer_name,total_amount,total_cost,order_items(product_name,qty,cost_per_unit,sell_price)')
-    .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo)
-    .order('order_date', { ascending: false });
+  const [ordersRes, productsRes] = await Promise.all([
+    sb.from('orders')
+      .select('order_no,order_date,channel,customer_name,total_amount,total_cost,order_items(product_id,product_name,qty,cost_per_unit,sell_price)')
+      .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo)
+      .order('order_date', { ascending: false }),
+    sb.from('products')
+      .select('id,name,current_cost')
+      .eq('shop_id', currentShop.id)
+  ]);
+  const orders = ordersRes.data;
+  const products = productsRes.data || [];
   const rows = orders || [];
-  const totCost = rows.reduce((s,o) => s + Number(o.total_cost||0), 0);
+  const productCostById = {};
+  const productCostByName = {};
+  products.forEach(p => {
+    const cost = Number(p.current_cost || 0);
+    if (p.id) productCostById[p.id] = cost;
+    if (p.name) productCostByName[String(p.name).trim().toLowerCase()] = cost;
+  });
   // Flatten to items
   const items = [];
   rows.forEach(o => {
     (o.order_items||[]).forEach(it => {
+      const savedCost = Number(it.cost_per_unit || 0);
+      const currentCost = Number(
+        productCostById[it.product_id] ||
+        productCostByName[String(it.product_name || '').trim().toLowerCase()] ||
+        0
+      );
+      const effectiveCost = savedCost > 0 ? savedCost : currentCost;
       items.push({ order_no: o.order_no, order_date: o.order_date, channel: o.channel,
         product_name: it.product_name, qty: Number(it.qty||0),
-        cost_per_unit: Number(it.cost_per_unit||0), sell_price: Number(it.sell_price||0) });
+        cost_per_unit: effectiveCost, sell_price: Number(it.sell_price||0),
+        cost_source: savedCost > 0 ? 'order' : currentCost > 0 ? 'current' : 'missing' });
     });
   });
+  const totCost = items.reduce((s,it) => s + it.qty * it.cost_per_unit, 0);
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
   modal.innerHTML = `<div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:900px;position:relative">
@@ -3102,7 +3222,7 @@ async function drillMonthlyCost() {
           <td style="padding:6px 8px;font-size:12px;color:var(--text2)">${it.order_date||'-'}</td>
           <td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.product_name||'-'}</td>
           <td style="padding:6px 8px;text-align:right;font-family:var(--mono)">${it.qty}</td>
-          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:${hasCost?'var(--text)':'var(--red)'}">${hasCost?fmtB(it.cost_per_unit):'ไม่มีต้นทุน'}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:${hasCost?'var(--text)':'var(--red)'}">${hasCost?fmtB(it.cost_per_unit)+(it.cost_source==='current'?'<div style="font-family:var(--font);font-size:9px;color:var(--accent)">ต้นทุนสินค้าปัจจุบัน</div>':''):'ไม่มีต้นทุน'}</td>
           <td style="padding:6px 8px;text-align:right;font-family:var(--mono)">${fmtB(it.sell_price)}</td>
           <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:${hasCost?'var(--amber)':'var(--red)'}">${fmtB(lineCost)}</td>
         </tr>`;
@@ -11941,12 +12061,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.13</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.14</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.14', type:'minor', date:'2026-08-14', title:'Profit Journey · Monthly Cost Fallback', items:['เพิ่มเส้นทางกำไรสุทธิสะสมตั้งแต่ ฿10,000 ถึง ฿10,000,000','แสดงเป้าหมายถัดไป รางวัล และความคืบหน้า','ต้นทุน/หน่วยในรายละเอียดรายเดือนใช้ต้นทุนสินค้าปัจจุบันเมื่อออเดอร์ไม่มีต้นทุน','คำนวณต้นทุนรวมใหม่จากต้นทุน/หน่วยที่แสดง'] },
             { v:'1.13', type:'minor', date:'2026-05-24', title:'Part No · Stock Movement · Dashboard Low Stock · PWA', items:['เพิ่มฟิลด์ Part No ในสินค้า (ค้นหาได้)','การเคลื่อนไหว Stock ตามหมวด 6 ระยะ (30/90/180/365/4ปี/>4ปี)','Export CSV stock movement','Shopee: แสดง Match field (SKU/Supplier/Part No)','Dashboard: สต๊อกต่ำ alert card คลิกดูรายการ','Modal แก้ไข stock เป็น dynamic','Fix modal null errors ทั้งระบบ','PWA Install — Add to Home Screen (iOS/Android)'] },
             { v:'1.12', type:'minor', date:'2026-05-24', title:'Dashboard & Shopee Drill-down + Stock Value', items:['Stat cards กดดูออเดอร์/ค่าใช้จ่าย','Shopee: กดดูออเดอร์ตาม SKU + %','เพิ่มคอลัมน์มูลค่า Stock','ชื่อสินค้า Shopee แสดงเต็ม'] },
             { v:'1.11', type:'minor', date:'2026-05-16', title:'เพิ่มข้อมูลลูกค้าในออเดอร์', items:['เพิ่มช่องที่อยู่จัดส่ง','เพิ่มชื่อผู้ติดต่อ','เพิ่มเบอร์โทรลูกค้า','แสดงข้อมูลในบิลเงินสดด้วย'] },
