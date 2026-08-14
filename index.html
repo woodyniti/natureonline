@@ -617,6 +617,10 @@ tbody td:first-child { color: var(--text); }
 .copy-btn { display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;background:none;border:none;cursor:pointer;color:var(--text3);padding:0;border-radius:3px;transition:color 0.15s;flex-shrink:0; }
 .copy-btn:hover { color:var(--text); }
 .copy-btn svg { width:11px;height:11px; }
+.po-copy-btn { display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:36px;padding:7px 10px;background:#fff;border:1px solid var(--border2);border-radius:7px;color:var(--blue);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;touch-action:manipulation; }
+.po-copy-btn:hover { background:#f0f7ff;border-color:var(--blue); }
+.po-copy-btn svg { width:14px!important;height:14px!important;flex-shrink:0; }
+@media (max-width:768px) { .po-copy-btn { min-height:42px;padding:9px 12px;font-size:12px; } }
 /* ── Owner Dashboard v2 ── */
 .period-tabs { display:flex;background:var(--bg3);border-radius:12px;padding:4px;gap:2px;margin-bottom:20px;overflow-x:auto; }
 .period-tab { flex:1;min-width:64px;padding:8px 12px;border:none;background:none;border-radius:9px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;transition:all 0.15s;white-space:nowrap;text-align:center; }
@@ -945,6 +949,17 @@ let currentUser = null;
 let currentPage = 'dashboard';
 let charts = {};
 
+const DEFAULT_SHOP_ADDRESS = '346/149 อาคาร 1B ซอยรัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร กรุงเทพมหานคร 10900';
+const LEGACY_SHOP_ADDRESSES = new Set([
+  '346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900',
+  '346/149 Building 1B, Ratchadaphisek 36, Chan Kasem, Chatuchak, Bangkok 10900',
+]);
+
+function getShopAddress(shop = currentShop) {
+  const address = String(shop?.address || '').trim();
+  return !address || LEGACY_SHOP_ADDRESSES.has(address) ? DEFAULT_SHOP_ADDRESS : address;
+}
+
 function getConfig() {
   return {
     url: localStorage.getItem(SUPABASE_URL_KEY) || 'https://omlqnxnlsxwiayryloki.supabase.co',
@@ -1059,7 +1074,21 @@ function sortTable(tableId, colIdx, type='str') {
 
 // ── Clickable SKU / Order chip helpers ─────────────────────
 function copyText(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
+  const value = String(text ?? '');
+  const copyPromise = navigator.clipboard?.writeText
+    ? navigator.clipboard.writeText(value)
+    : new Promise((resolve, reject) => {
+        const input = document.createElement('textarea');
+        input.value = value;
+        input.readOnly = true;
+        input.style.cssText = 'position:fixed;left:-9999px;top:0';
+        document.body.appendChild(input);
+        input.select();
+        try { document.execCommand('copy') ? resolve() : reject(); }
+        catch (e) { reject(e); }
+        finally { input.remove(); }
+      });
+  copyPromise.then(() => {
     const orig = btn.innerHTML;
     btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"/></svg>';
     btn.style.color = 'var(--accent)';
@@ -1068,6 +1097,11 @@ function copyText(text, btn) {
 }
 
 const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>';
+
+function poCopyButton(value, label) {
+  if (!value) return '';
+  return '<button type="button" class="po-copy-btn" data-copy="'+escapeHTML(value)+'" onclick="event.stopPropagation();copyText(this.dataset.copy,this)" title="คัดลอก '+escapeHTML(label)+'">'+COPY_ICON+' คัดลอก '+escapeHTML(label)+'</button>';
+}
 
 function skuChip(sku) {
   if (!sku || sku === '-') return '<span style="color:var(--text3)">-</span>';
@@ -1319,6 +1353,7 @@ const pageTitles = {
 };
 
 function showPage(page) {
+  if (!confirmAllUnsavedForms()) return;
   // ── Permission guard ──────────────────────────────────
   if (!canSee(page)) {
     toast('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
@@ -1360,6 +1395,93 @@ function closeSidebar() {
 // ─── UTILITIES ────────────────────────────────────────
 function fmt(n) { return Number(n||0).toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:2}); }
 function fmtB(n) { return '฿' + fmt(n); }
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  })[ch]);
+}
+const SHIPPING_FEE_NOTE_RE = /(?:^|\n)\[\[SHIPPING_FEE:([0-9]+(?:\.[0-9]+)?)\]\](?=\n|$)/i;
+function cleanOrderNote(note) {
+  return String(note || '').replace(SHIPPING_FEE_NOTE_RE, '').trim();
+}
+function getOrderShippingFee(order) {
+  const match = String(order?.note || '').match(SHIPPING_FEE_NOTE_RE);
+  const stored = Number(order?.shipping_fee) || 0;
+  return stored > 0 ? stored : (match ? Number(match[1]) || 0 : stored);
+}
+function isOrderCancelled(order) {
+  return order?.shipping_status === 'cancelled' || order?.doc_status === 'cancelled';
+}
+
+const SHOPEE_GP_FALLBACK_PCT = 30.53;
+const LAZADA_GP_FALLBACK_PCT = 30;
+let _shopeeFeeLoadPromise = null;
+let _shopeeFeeLoadAttempted = false;
+
+function getOrderPlatformFeeInfo(order) {
+  const channel = String(order?.channel || '').toLowerCase();
+  const sale = Math.max(0, Number(order?.total_amount) || 0);
+  if (channel.includes('shopee')) {
+    const ref = String(order?.customer_social || '').trim().toLowerCase();
+    const matchedRows = ref && typeof shopeeData !== 'undefined'
+      ? shopeeData.filter(r => String(r.orderId || '').trim().toLowerCase() === ref)
+      : [];
+    const actualFee = matchedRows.reduce((sum, row) => sum + Math.abs(Number(row.totalFee) || 0), 0);
+    if (actualFee > 0) {
+      return { fee:actualFee, pct:sale > 0 ? actualFee / sale * 100 : 0, source:'actual', isPlatform:true };
+    }
+    return { fee:sale * SHOPEE_GP_FALLBACK_PCT / 100, pct:SHOPEE_GP_FALLBACK_PCT, source:'fallback', isPlatform:true };
+  }
+  if (channel.includes('lazada')) {
+    return { fee:sale * LAZADA_GP_FALLBACK_PCT / 100, pct:LAZADA_GP_FALLBACK_PCT, source:'fallback', isPlatform:true };
+  }
+  return { fee:0, pct:0, source:'none', isPlatform:false };
+}
+
+async function ensureShopeeFeeData() {
+  if (typeof shopeeData !== 'undefined' && shopeeData.length) return shopeeData;
+  if (_shopeeFeeLoadPromise) return _shopeeFeeLoadPromise;
+  if (_shopeeFeeLoadAttempted || typeof shopeeGSheetUrl === 'undefined' || !shopeeGSheetUrl) return [];
+  _shopeeFeeLoadAttempted = true;
+  const proxyUrl = 'https://script.google.com/macros/s/AKfycbw4g-CwIB9UPoQj4y7c_q8Y0XahK9YA79z2VWFZGAnFPM_RKRm9GBqZekooNJPixGUz/exec?url=' + encodeURIComponent(shopeeGSheetUrl);
+  _shopeeFeeLoadPromise = fetch(proxyUrl, { cache:'no-store' })
+    .then(response => {
+      if (!response.ok) throw new Error('Shopee fee source HTTP ' + response.status);
+      return response.text();
+    })
+    .then(text => {
+      const parsed = parseShopeeCSV(text);
+      if (parsed.length) shopeeData = parsed;
+      return shopeeData;
+    })
+    .catch(error => {
+      console.warn('Load Shopee fee data failed; using fallback rate:', error);
+      return [];
+    })
+    .finally(() => { _shopeeFeeLoadPromise = null; });
+  return _shopeeFeeLoadPromise;
+}
+
+function getPOPurchaseAmounts(po) {
+  const items = po?.purchase_order_items || [];
+  const allSubtotal = items.reduce((sum,it) => sum + Number(it.qty_ordered||0) * Number(it.unit_cost||0), 0);
+  const productSubtotal = items.reduce((sum,it) => sum + (it.product_id ? Number(it.qty_ordered||0) * Number(it.unit_cost||0) : 0), 0);
+  const storedVat = Math.max(0, Number(po?.vat_amount) || 0);
+  // Dashboard นับเฉพาะรายการที่ผูกกับสินค้า จึงเฉลี่ย VAT ตามสัดส่วนเมื่อ PO มีบรรทัดค่าใช้จ่ายอื่นด้วย
+  const vat = allSubtotal > 0 ? storedVat * productSubtotal / allSubtotal : 0;
+  const vatIncluded = po?.vat_type === 'included';
+  return {
+    beforeVat: vatIncluded ? Math.max(0, productSubtotal - vat) : productSubtotal,
+    vat,
+    totalWithVat: vatIncluded ? productSubtotal : productSubtotal + vat,
+  };
+}
+
+function noteWithShippingFee(note, shippingFee) {
+  const clean = cleanOrderNote(note);
+  const fee = Math.max(0, Number(shippingFee) || 0);
+  return fee > 0 ? [clean, `[[SHIPPING_FEE:${fee}]]`].filter(Boolean).join('\n') : clean;
+}
 function today() { return new Date().toISOString().slice(0,10); }
 function monthStart(y,m) { return `${y}-${String(m).padStart(2,'0')}-01`; }
 function monthEnd(y,m) { const d=new Date(y,m,0); return d.toISOString().slice(0,10); }
@@ -1461,8 +1583,66 @@ async function loadUsersForEmployeeModal() {
   if (cur) sel.value = cur;
 }
 
+const unsavedFormGuards = new Map();
+
+function registerUnsavedForm(formEl, message='มีข้อมูลที่แก้ไขแล้วยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่?') {
+  if (!formEl) return;
+  unregisterUnsavedForm(formEl);
+  const markDirty = event => {
+    const changedInput = event.type === 'input' || event.type === 'change';
+    const changedItems = event.type === 'click' && event.target.closest('#order-items-container button, #ed-items button');
+    if (changedInput || changedItems) unsavedFormGuards.get(formEl).dirty = true;
+  };
+  formEl.addEventListener('input', markDirty);
+  formEl.addEventListener('change', markDirty);
+  formEl.addEventListener('click', markDirty);
+  unsavedFormGuards.set(formEl, { dirty:false, message, markDirty });
+}
+
+function markUnsavedForm(formEl) {
+  const guard = unsavedFormGuards.get(formEl);
+  if (guard) guard.dirty = true;
+}
+
+function unregisterUnsavedForm(formEl) {
+  const guard = unsavedFormGuards.get(formEl);
+  if (!guard) return;
+  formEl.removeEventListener('input', guard.markDirty);
+  formEl.removeEventListener('change', guard.markDirty);
+  formEl.removeEventListener('click', guard.markDirty);
+  unsavedFormGuards.delete(formEl);
+}
+
+function confirmUnsavedForm(formEl) {
+  const guard = unsavedFormGuards.get(formEl);
+  if (guard?.dirty && !confirm(guard.message)) return false;
+  unregisterUnsavedForm(formEl);
+  return true;
+}
+
+function confirmAllUnsavedForms() {
+  const dirtyGuard = [...unsavedFormGuards.values()].find(guard => guard.dirty);
+  if (dirtyGuard && !confirm(dirtyGuard.message)) return false;
+  [...unsavedFormGuards.keys()].forEach(formEl => {
+    unregisterUnsavedForm(formEl);
+    if (formEl.dataset.unsavedRemoveOnExit === 'true') formEl.remove();
+  });
+  return true;
+}
+
+window.addEventListener('beforeunload', event => {
+  if (![...unsavedFormGuards.values()].some(guard => guard.dirty)) return;
+  event.preventDefault();
+  event.returnValue = '';
+});
+
 function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal || !confirmUnsavedForm(modal)) return false;
+  modal.classList.remove('open');
+  return true;
+}
 
 // ── Back to top ──
 function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -1486,6 +1666,85 @@ function changeDashMonth(mo) {
 function changeDashYear(yr) {
   window._dashYear = Number(yr);
   dashboard();
+}
+
+const PROFIT_JOURNEY_MILESTONES = Object.freeze([
+  { target: 10000,    icon: '🍽️', title: 'ก้าวแรก', reward: 'มื้ออาหารฉลองร้านโปรด', budget: 'งบ ฿500–1,000' },
+  { target: 25000,    icon: '🎁', title: 'เริ่มเห็นผล', reward: 'ของที่อยากได้หรืออุปกรณ์ทำงานชิ้นเล็ก', budget: 'งบ ฿1,000–2,000' },
+  { target: 50000,    icon: '🏨', title: 'ผ่านด่านเริ่มต้น', reward: 'คาเฟ่หรือ Staycation 1 คืน', budget: 'งบ ฿2,000–4,000' },
+  { target: 75000,    icon: '🚗', title: 'ธุรกิจกำลังโต', reward: 'เที่ยวใกล้กรุงเทพฯ 1–2 วัน', budget: 'งบ ฿3,000–5,000' },
+  { target: 100000,   icon: '🏖️', title: 'กำไรแสนแรก', reward: 'พัทยา หัวหิน หรือเขาใหญ่', budget: 'งบ ฿5,000–8,000' },
+  { target: 150000,   icon: '✈️', title: 'ใกล้เป็นธุรกิจเต็มตัว', reward: 'เชียงใหม่ กระบี่ หรือภูเก็ตแบบประหยัด', budget: 'งบ ฿7,000–12,000' },
+  { target: 200000,   icon: '🧳', title: 'เตรียมเปิดบริษัท', reward: 'ทริปในประเทศและเริ่มเตรียมระบบบริษัท', budget: 'งบ ฿8,000–15,000' },
+  { target: 250000,   icon: '🏢', title: 'เปิดบริษัท', reward: 'จดทะเบียนและวางระบบบัญชี–ภาษี', budget: 'งบ ฿20,000–30,000' },
+  { target: 500000,   icon: '🌴', title: 'ธุรกิจเริ่มมั่นคง', reward: 'เชียงใหม่ ภูเก็ต หรือกระบี่ 3–4 วัน', budget: 'งบ ฿15,000–25,000' },
+  { target: 750000,   icon: '🇻🇳', title: 'ผ่านด่านแรก', reward: 'เวียดนามหรือลาว', budget: 'งบ ฿20,000–35,000' },
+  { target: 1000000,  icon: '🇸🇬', title: 'กำไรหนึ่งล้าน', reward: 'สิงคโปร์หรือมาเลเซีย', budget: 'งบ ฿30,000–50,000' },
+  { target: 1500000,  icon: '🇹🇼', title: 'โตระดับภูมิภาค', reward: 'ไต้หวันหรือฮ่องกง', budget: 'งบ ฿40,000–70,000' },
+  { target: 2000000,  icon: '🇯🇵', title: 'ระบบธุรกิจแข็งแรง', reward: 'ญี่ปุ่นหรือเกาหลี', budget: 'งบ ฿60,000–100,000' },
+  { target: 3000000,  icon: '🇹🇷', title: 'เจ้าของธุรกิจเต็มตัว', reward: 'ตุรกี จีน หรือยุโรปตะวันออก', budget: 'งบ ฿100,000–160,000' },
+  { target: 5000000,  icon: '🇦🇺', title: 'Financial Freedom ขั้นแรก', reward: 'ออสเตรเลียหรือนิวซีแลนด์', budget: 'งบ ฿150,000–250,000' },
+  { target: 7500000,  icon: '🇨🇭', title: 'ธุรกิจระดับมั่งคั่ง', reward: 'สวิตเซอร์แลนด์ อิตาลี หรือสแกนดิเนเวีย', budget: 'งบ ฿250,000–350,000' },
+  { target: 10000000, icon: '🌍', title: 'เป้าหมายใหญ่สำเร็จ', reward: 'ทริปยุโรปหลายประเทศหรือทริปรอบโลก', budget: 'งบ ฿400,000–600,000' }
+]);
+
+function renderProfitJourney(cumulativeProfit) {
+  const profit = Number(cumulativeProfit || 0);
+  const achieved = PROFIT_JOURNEY_MILESTONES.filter(m => profit >= m.target);
+  const next = PROFIT_JOURNEY_MILESTONES.find(m => profit < m.target);
+  const previousTarget = achieved.length ? achieved[achieved.length - 1].target : 0;
+  const progress = next
+    ? Math.max(0, Math.min(100, (profit - previousTarget) / (next.target - previousTarget) * 100))
+    : 100;
+  const remaining = next ? Math.max(0, next.target - profit) : 0;
+  const headline = next
+    ? `${next.icon} เป้าหมายถัดไป: ${escapeHTML(next.title)}`
+    : '🏆 พิชิตเส้นทางสู่ 10 ล้านแล้ว!';
+  const detail = next
+    ? `${escapeHTML(next.reward)} · ${escapeHTML(next.budget)}`
+    : 'ปลดล็อกทริปยุโรปหลายประเทศหรือทริปรอบโลก';
+
+  return `
+    <div class="card mb-4" style="padding:18px;border:1px solid rgba(0,168,130,.35);background:linear-gradient(135deg,#ffffff 0%,#effcf8 100%)">
+      <div class="flex-between" style="gap:12px;flex-wrap:wrap;margin-bottom:12px">
+        <div>
+          <div class="card-title" style="margin:0 0 3px">🚀 เส้นทางสู่ 10 ล้าน</div>
+          <div style="font-size:12px;color:var(--text3)">คำนวณจากกำไรสุทธิสะสมตลอดอายุร้าน</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--text3)">กำไรสุทธิสะสม</div>
+          <div style="font-family:var(--mono);font-size:24px;font-weight:700;color:${profit >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtB(profit)}</div>
+        </div>
+      </div>
+      <div style="padding:12px 14px;background:#fff;border:1px solid var(--border);border-radius:10px;margin-bottom:12px">
+        <div class="flex-between" style="gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div>
+            <div style="font-size:14px;font-weight:700">${headline}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px">${detail}</div>
+          </div>
+          <div style="text-align:right;font-size:12px">
+            ${next ? `<div style="color:var(--text2)">เหลืออีก <strong style="color:var(--accent)">${fmtB(remaining)}</strong></div>` : '<div style="color:var(--green);font-weight:700">ปลดล็อกครบทุกเป้าหมาย</div>'}
+            <div style="color:var(--text3)">ความคืบหน้าช่วงนี้ ${progress.toFixed(1)}%</div>
+          </div>
+        </div>
+        <div style="height:12px;background:var(--bg4);border-radius:999px;overflow:hidden">
+          <div style="width:${progress}%;height:100%;background:linear-gradient(90deg,var(--accent),#22c55e);border-radius:999px;transition:width .6s ease"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch">
+        ${PROFIT_JOURNEY_MILESTONES.map(m => {
+          const done = profit >= m.target;
+          const active = next && next.target === m.target;
+          return `<div title="${escapeHTML(m.reward)} · ${escapeHTML(m.budget)}" style="flex:0 0 132px;padding:10px;border-radius:10px;border:1px solid ${active ? 'var(--accent)' : done ? 'rgba(22,163,74,.35)' : 'var(--border)'};background:${active ? 'rgba(0,168,130,.09)' : done ? 'rgba(22,163,74,.06)' : '#fff'};opacity:${done || active ? '1' : '.72'}">
+            <div style="font-size:18px;margin-bottom:4px">${done ? '✅' : m.icon}</div>
+            <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:${done ? 'var(--green)' : active ? 'var(--accent)' : 'var(--text2)'}">${fmtB(m.target)}</div>
+            <div style="font-size:11px;font-weight:600;margin-top:3px;line-height:1.3">${escapeHTML(m.title)}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:3px">${done ? 'ปลดล็อกแล้ว' : active ? 'กำลังเดินทาง' : 'ยังไม่ปลดล็อก'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:3px">🛡️ ควรกันภาษี เงินสำรองธุรกิจ 6 เดือน และเงินทุนหมุนเวียนก่อนใช้งบรางวัล</div>
+    </div>`;
 }
 
 async function dashboard() {
@@ -1541,26 +1800,39 @@ async function dashboard() {
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes] = await Promise.all([
+  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me),
     // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
-    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,shipping_status,doc_status,order_items(product_id,product_name,qty)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
+    sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,customer_username,total_amount,channel,employee_id,shipping_status,doc_status,order_items(product_id,product_name,qty,sell_price,cost_per_unit)').eq('shop_id', currentShop.id).order('order_date',{ascending:false}).limit(10000),
     // ค่าจัดการ/ค่าขนส่ง จากการรับสินค้าจริง (ถ้าตารางยังไม่มี จะได้ error → ใช้ [] แทน)
-    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me)
+    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me),
+    sb.from('expenses').select('amount').eq('shop_id', currentShop.id).limit(10000),
+    sb.from('landed_costs').select('type,amount').eq('shop_id', currentShop.id).limit(10000),
+    ensureShopeeFeeData()
   ]);
 
-  const allOrdersForRepeat = repeatRes.data || [];
-  const orders   = ordRes.data || [];
+  const allOrdersForRepeat = (repeatRes.data || []).filter(o => !isOrderCancelled(o));
+  const allOrders = ordRes.data || [];
+  const cancelledOrders = allOrders.filter(isOrderCancelled);
+  const orders = allOrders.filter(o => !isOrderCancelled(o));
+  const cancelledOrderTotal = cancelledOrders.reduce((sum,o)=>sum+Number(o.total_amount||0),0);
+  const cancelledOrderRate = allOrders.length ? cancelledOrders.length / allOrders.length * 100 : 0;
   const expenses = expRes.data || [];
   const products = prodRes.data || [];
   const employees = empRes.data || [];
   const pos      = poRes.data || [];
   const landed   = landedRes?.data || [];   // landed_costs (ค่าขนส่ง/ค่าจัดการ จากรับสินค้า)
   window._dashLanded = landed;
+  const landedTypeTotals = landed.reduce((totals,l) => {
+    const type = String(l.type || 'ไม่ระบุ').trim() || 'ไม่ระบุ';
+    totals[type] = (totals[type] || 0) + Number(l.amount||0);
+    return totals;
+  }, {});
+  const totalLandedCost = Object.values(landedTypeTotals).reduce((sum,amount)=>sum+amount,0);
   const handlingCost   = landed.filter(l => l.type === 'ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
   const shippingCostGR = landed.filter(l => l.type === 'ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
 
@@ -1580,37 +1852,36 @@ async function dashboard() {
   const orderCount    = orders.length;
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
 
-  // ── Shopee Channel ──────────────────────────────────────
-  const SHOPEE_COMM_PCT  = 20.6;
-  const SHOPEE_SHIP_PCT  = 3.3;
-  const SUPPLIER_COMM_PCT = 10.0;
-
+  // ── Platform fees: Shopee ใช้ค่าจริงจาก export เมื่อจับคู่เลขออเดอร์ได้ ──
   const shopeeOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
-  const otherOrders  = orders.filter(o => !(o.channel||'').toLowerCase().includes('shopee'));
+  const lazadaOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
 
   const shopeeRev   = shopeeOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
-  const otherRev    = otherOrders.reduce((s,o)  => s + Number(o.total_amount||0), 0);
-
-  const shopeeComm  = shopeeRev * SHOPEE_COMM_PCT  / 100;
-  const shopeeShip  = shopeeRev * SHOPEE_SHIP_PCT  / 100;
+  const lazadaRev   = lazadaOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
+  const shopeeFeeInfos = shopeeOrders.map(getOrderPlatformFeeInfo);
+  const shopeeFee   = shopeeFeeInfos.reduce((s,info) => s + info.fee, 0);
+  const lazadaFee   = lazadaOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const totalPlatformFee = shopeeFee + lazadaFee;
+  const shopeeActualCount = shopeeFeeInfos.filter(info=>info.source==='actual').length;
 
   // Calculate total purchase amount from active POs (exclude draft & cancelled)
   // only summing items with a product_id (excluding custom/other expense lines)
   const activePOs = pos.filter(p => p.status !== 'cancelled' && p.status !== 'draft');
-  const totalPurchase = activePOs.reduce((sum, po) => {
-    const poItemsSum = (po.purchase_order_items || []).reduce((s, it) => {
-      if (it.product_id) {
-        return s + (Number(it.qty_ordered || 0) * Number(it.unit_cost || 0));
-      }
-      return s;
-    }, 0);
-    return sum + poItemsSum;
-  }, 0);
-  const supplierComm = totalPurchase * SUPPLIER_COMM_PCT / 100;
+  const purchaseTotals = activePOs.reduce((totals, po) => {
+    const amounts = getPOPurchaseAmounts(po);
+    totals.beforeVat += amounts.beforeVat;
+    totals.vat += amounts.vat;
+    totals.totalWithVat += amounts.totalWithVat;
+    return totals;
+  }, { beforeVat:0, vat:0, totalWithVat:0 });
+  const totalPurchaseBeforeVat = purchaseTotals.beforeVat;
+  const totalPurchaseVat = purchaseTotals.vat;
+  const totalPurchaseWithVat = purchaseTotals.totalWithVat;
 
   // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
   const grossProfit   = totalRevenue - totalCost;
-  const netBeforeComm = grossProfit - totalExpenses - shopeeComm - shopeeShip - handlingCost - shippingCostGR;
+  const profitAfterPlatform = grossProfit - totalPlatformFee;
+  const netBeforeComm = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR;
   const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
 
   // ── Employee Commission: commission_rate% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ) ──
@@ -1630,6 +1901,21 @@ async function dashboard() {
   // ── Net Profit สุดท้าย (หลังหักคอมพนักงาน + ค่าแรง CFO) ──
   const netProfit   = netBeforeComm - totalEmpComm - cfoWage;
   const netPct      = totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : '0.0';
+
+  // กำไรสุทธิสะสมตลอดอายุร้าน สำหรับ Profit Journey (ไม่เปลี่ยนตามตัวกรอง Dashboard)
+  const lifetimeOrders = allOrdersForRepeat;
+  const lifetimeRevenue = lifetimeOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
+  const lifetimeCost = lifetimeOrders.reduce((s,o) => s + orderCostWithFallback(o), 0);
+  const lifetimePlatformFee = lifetimeOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const lifetimeExpenses = (allExpRes?.data || []).reduce((s,e) => s + Number(e.amount||0), 0);
+  const lifetimeLanded = (allLandedRes?.data || [])
+    .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
+    .reduce((s,l) => s + Number(l.amount||0), 0);
+  const lifetimeBeforeComm = lifetimeRevenue - lifetimeCost - lifetimePlatformFee - lifetimeExpenses - lifetimeLanded;
+  const lifetimeCommBase = Math.max(0, lifetimeBeforeComm);
+  const lifetimeEmployeeComm = employees.reduce((s,e) => s + lifetimeCommBase * Number(e.commission_rate||0) / 100, 0);
+  const lifetimeCfoWage = lifetimeCommBase * CFO_WAGE_PCT / 100;
+  const cumulativeNetProfit = lifetimeBeforeComm - lifetimeEmployeeComm - lifetimeCfoWage;
 
   // Sales by day of week
   const dow = ['อา','จ','อ','พ','พฤ','ศ','ส'];
@@ -1768,6 +2054,7 @@ async function dashboard() {
   // cache for drill-down
   dashboardData = { catSalesMap, products };
   window._dashOrders   = orders;
+  window._dashCancelledOrders = cancelledOrders;
   window._dashExpenses = expenses;
   window._dashProducts = products;
   window._dashPOs      = pos;        // ใบสั่งซื้อในช่วงที่เลือก (สำหรับ drilldown ยอดซื้อ)
@@ -1798,19 +2085,26 @@ async function dashboard() {
 
     <div class="stat-grid">
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">💰 ยอดขาย <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-label">💰 ยอดขาย (ไม่รวมยกเลิก) <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
         <div class="stat-value text-accent">${fmtB(totalRevenue)}</div>
         <div class="stat-sub">${orderCount} ออเดอร์</div>
       </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="drillCancelledOrders('dashboard')" title="คลิกดูรายการออเดอร์ยกเลิก">
+        <div class="stat-label">❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
+        <div class="stat-value text-red">${cancelledOrders.length} ใบ</div>
+        <div class="stat-sub">ยอดเงินรวม ${fmtB(cancelledOrderTotal)}</div>
+        <div class="stat-sub">${cancelledOrderRate.toFixed(1)}% ของออเดอร์ทั้งหมด</div>
+      </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashPurchases()" title="คลิกดูใบสั่งซื้อ (PO) ในช่วงนี้">
-        <div class="stat-label">🛒 ยอดซื้อ <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></div>
-        <div class="stat-value" style="color:#7c3aed">${fmtB(totalPurchase)}</div>
-        <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchase/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
+        <div class="stat-label">🛒 ยอดซื้อก่อน VAT <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></div>
+        <div class="stat-value" style="color:#7c3aed">${fmtB(totalPurchaseBeforeVat)}</div>
+        <div class="stat-sub">VAT ${fmtB(totalPurchaseVat)} · <strong style="color:var(--text2)">ยอดรวม VAT ${fmtB(totalPurchaseWithVat)}</strong></div>
+        <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchaseWithVat/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">📈 กำไรขั้นต้น <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
-        <div class="stat-value ${grossProfit>=0?'text-green':'text-red'}">${fmtB(grossProfit)}</div>
-        <div class="stat-sub">${totalRevenue>0?(grossProfit/totalRevenue*100).toFixed(1)+'% margin · ':''}หลังหักต้นทุน</div>
+        <div class="stat-label">📈 กำไรหลัง GP Platform <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-value ${profitAfterPlatform>=0?'text-green':'text-red'}">${fmtB(profitAfterPlatform)}</div>
+        <div class="stat-sub">${totalRevenue>0?(profitAfterPlatform/totalRevenue*100).toFixed(1)+'% margin · ':''}หลังหักต้นทุนและค่าธรรมเนียม</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">✨ กำไรสุทธิ <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
@@ -1821,6 +2115,12 @@ async function dashboard() {
         <div class="stat-label">💸 ค่าใช้จ่าย <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
         <div class="stat-value text-red">${fmtB(totalExpenses)}</div>
         <div class="stat-sub">${expenses.length} รายการ</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #0891b2" onclick="drillLandedCost()" title="คลิกดูรายการ Landed Cost ทั้งหมด">
+        <div class="stat-label">🚢 Landed Cost <span style="font-size:10px;color:#0891b2">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#0891b2">${fmtB(totalLandedCost)}</div>
+        <div class="stat-sub">${landed.length} รายการ · ${Object.keys(landedTypeTotals).length} ประเภท</div>
+        <div class="stat-sub" style="line-height:1.45">${Object.entries(landedTypeTotals).sort((a,b)=>b[1]-a[1]).map(([type,amount])=>escapeHTML(type)+' '+fmtB(amount)).join(' · ')||'ยังไม่มีรายการในช่วงนี้'}</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">📦 มูลค่าสต๊อก</div>
@@ -1840,6 +2140,8 @@ async function dashboard() {
       </div>
     </div>
 
+    ${renderProfitJourney(cumulativeNetProfit)}
+
     <!-- ════════ PROFIT BREAKDOWN ════════ -->
     <div class="card mb-4" style="padding:16px">
       <div class="card-title" style="margin-bottom:14px">📊 Breakdown กำไรสุทธิ ช่วงเวลา ${rangeLabel}</div>
@@ -1850,8 +2152,8 @@ async function dashboard() {
           const items = [
             { label:'💰 ยอดขายรวม',        val: totalRevenue,     color:'var(--accent)', plus:true, drill:'drillDashOrders()'  },
             { label:'📦 ต้นทุนสินค้า',      val: -totalCost,       color:'#7c3aed',       plus:false, drill:'drillDashOrders()' },
-            { label:'💸 ค่าคอม Shopee '+SHOPEE_COMM_PCT+'%', val: -shopeeComm, color:'var(--red)', plus:false, sub:'จากยอด Shopee '+fmtB(shopeeRev) },
-            { label:'🚚 ค่าขนส่ง Shopee '+SHOPEE_SHIP_PCT+'%', val: -shopeeShip, color:'#f97316', plus:false, sub:'จากยอด Shopee' },
+            ...(shopeeFee>0 ? [{ label:'💸 ค่าธรรมเนียม Shopee', val: -shopeeFee, color:'var(--red)', plus:false, sub:(shopeeActualCount?shopeeActualCount+' ออเดอร์ใช้ค่าจริง · ':'')+'ที่เหลือประมาณ '+SHOPEE_GP_FALLBACK_PCT+'% · ยอด Shopee '+fmtB(shopeeRev) }] : []),
+            ...(lazadaFee>0 ? [{ label:'💸 ค่า GP Lazada '+LAZADA_GP_FALLBACK_PCT+'%', val: -lazadaFee, color:'#f97316', plus:false, sub:'จากยอด Lazada '+fmtB(lazadaRev) }] : []),
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
             ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% ของกำไรสุทธิก่อนคอม '+fmtB(commBase) })),
@@ -1884,8 +2186,8 @@ async function dashboard() {
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าใช้จ่าย Shopee</div>
-          <div style="font-size:14px;font-weight:700;color:var(--red)">${fmtB(shopeeComm+shopeeShip)}</div>
-          <div style="font-size:11px;color:var(--text3)">${shopeeRev>0?((shopeeComm+shopeeShip)/shopeeRev*100).toFixed(1):0}% ของ Shopee</div>
+          <div style="font-size:14px;font-weight:700;color:var(--red)">${fmtB(shopeeFee)}</div>
+          <div style="font-size:11px;color:var(--text3)">${shopeeRev>0?(shopeeFee/shopeeRev*100).toFixed(2):0}% ของ Shopee · ค่าจริง ${shopeeActualCount}/${shopeeOrders.length} ออเดอร์</div>
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าคอมพนักงาน</div>
@@ -2185,29 +2487,47 @@ function viewProductRepeatOrders(productId) {
 }
 
 // ─── DRILL-DOWN: Dashboard ──────────────────────────────
-// drill: ที่มาของค่าจัดการ/ค่าขนส่ง จากการรับสินค้า (landed_costs)
+// drill: รายการ Landed Cost ทั้งหมด หรือกรองตามประเภท
 function drillLandedCost(type) {
-  const rows = (window._dashLanded || []).filter(l => l.type === type).sort((a,b)=>(b.move_date||'').localeCompare(a.move_date||''));
+  const allRows = (window._dashLanded || []).slice().sort((a,b)=>(b.move_date||'').localeCompare(a.move_date||''));
+  const rows = type ? allRows.filter(l => l.type === type) : allRows;
   const total = rows.reduce((s,l)=>s+Number(l.amount||0),0);
-  const icon = type === 'ค่าขนส่ง' ? '🚚' : '🔧';
+  const typeTotals = rows.reduce((totals,l) => {
+    const key = String(l.type || 'ไม่ระบุ').trim() || 'ไม่ระบุ';
+    totals[key] = (totals[key] || 0) + Number(l.amount||0);
+    return totals;
+  }, {});
+  const icon = type === 'ค่าขนส่ง' ? '🚚' : type === 'ค่าจัดการ' ? '🔧' : '🚢';
+  const title = type || 'Landed Cost ทั้งหมด';
+  const typeSummary = !type && Object.keys(typeTotals).length
+    ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:12px">' +
+      Object.entries(typeTotals).sort((a,b)=>b[1]-a[1]).map(([name,amount]) =>
+        '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center">' +
+          '<div style="font-size:11px;color:var(--text3)">'+escapeHTML(name)+'</div>' +
+          '<div class="font-mono" style="font-weight:700;color:#0891b2">'+fmtB(amount)+'</div>' +
+        '</div>'
+      ).join('') + '</div>'
+    : '';
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '300';
   modal.innerHTML =
-    '<div class="modal" style="max-width:640px">' +
-    '<div class="modal-title">'+icon+' '+type+' — จากการรับสินค้า ('+rows.length+' รายการ)</div>' +
+    '<div class="modal" style="max-width:760px">' +
+    '<div class="modal-title">'+icon+' '+escapeHTML(title)+' — จากการรับสินค้า ('+rows.length+' รายการ)</div>' +
     '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">รวม <strong style="color:var(--amber)">'+fmtB(total)+'</strong> · ดึงจาก Landed Cost ตอนรับสินค้าเข้าสต๊อก</div>' +
+    typeSummary +
     (rows.length ?
       '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr>'+
-      '<th>วันที่</th><th>ล็อต / PO</th><th>หมายเหตุ</th><th class="text-right">จำนวนเงิน</th></tr></thead><tbody>'+
+      '<th>วันที่</th>'+(type?'':'<th>ประเภท</th>')+'<th>ล็อต / PO</th><th>หมายเหตุ</th><th class="text-right">จำนวนเงิน</th></tr></thead><tbody>'+
       rows.map(l =>
-        '<tr><td style="white-space:nowrap;font-size:12px">'+(l.move_date||'-')+'</td>'+
-        '<td style="font-size:12px">'+(l.lot_name||'-')+'</td>'+
-        '<td style="font-size:12px;color:var(--text3)">'+(l.note||'-')+'</td>'+
+        '<tr><td style="white-space:nowrap;font-size:12px">'+escapeHTML(l.move_date||'-')+'</td>'+
+        (type?'':'<td style="font-size:12px;font-weight:600">'+escapeHTML(l.type||'ไม่ระบุ')+'</td>')+
+        '<td style="font-size:12px">'+escapeHTML(l.lot_name||'-')+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+escapeHTML(l.note||'-')+'</td>'+
         '<td class="text-right font-mono text-amber">'+fmtB(l.amount)+'</td></tr>'
       ).join('')+
       '</tbody></table></div>'
-      : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+type+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อก โดยใส่ Landed Cost ประเภท "'+type+'"</span></div></div>') +
+      : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+escapeHTML(title)+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อกในส่วน Landed Cost</span></div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -2310,29 +2630,73 @@ function drillDashExpenses() {
 // ─── DRILL-DOWN: ยอดซื้อ (ใบสั่งซื้อในช่วงที่เลือก) ───────────
 function drillDashPurchases() {
   const pos = (window._dashPOs || []).filter(p => p.status !== 'cancelled' && p.status !== 'draft');
-  const poVal = po => (po.purchase_order_items||[]).reduce((s,it)=> s + (it.product_id ? Number(it.qty_ordered||0)*Number(it.unit_cost||0) : 0), 0);
   if (!pos.length) { toast('ไม่มีใบสั่งซื้อในช่วงนี้','error'); return; }
-  const total  = pos.reduce((s,p)=>s+poVal(p),0);
+  const totals = pos.reduce((sum,p) => {
+    const amounts = getPOPurchaseAmounts(p);
+    sum.beforeVat += amounts.beforeVat;
+    sum.vat += amounts.vat;
+    sum.totalWithVat += amounts.totalWithVat;
+    return sum;
+  }, { beforeVat:0, vat:0, totalWithVat:0 });
   const sorted = [...pos].sort((a,b)=>(b.po_date||'').localeCompare(a.po_date||''));
   const statusTh = { confirmed:'ยืนยันแล้ว', partial:'รับบางส่วน', received:'รับครบแล้ว', ordered:'สั่งแล้ว', done:'เสร็จสิ้น' };
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '300';
   modal.innerHTML =
-    '<div class="modal" style="max-width:660px">' +
+    '<div class="modal" style="max-width:900px">' +
     '<div class="modal-title">🛒 ยอดซื้อช่วงนี้ (' + pos.length + ' ใบสั่งซื้อ)</div>' +
-    '<div style="font-size:14px;font-weight:700;color:#7c3aed;margin-bottom:12px">รวม: ' + fmtB(total) + '</div>' +
-    '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr><th>วันที่</th><th>เลขที่ PO</th><th>ผู้ขาย</th><th>สถานะ</th><th class="text-right">ยอดซื้อ</th></tr></thead><tbody>' +
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:var(--text3)">ก่อน VAT</div><div class="font-mono" style="font-weight:700;color:#7c3aed">' + fmtB(totals.beforeVat) + '</div></div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:var(--text3)">VAT</div><div class="font-mono text-accent" style="font-weight:700">' + fmtB(totals.vat) + '</div></div>' +
+      '<div style="background:var(--bg3);border-radius:8px;padding:9px;text-align:center"><div style="font-size:11px;color:var(--text3)">ยอดรวม VAT</div><div class="font-mono text-amber" style="font-weight:700">' + fmtB(totals.totalWithVat) + '</div></div>' +
+    '</div>' +
+    '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr><th>วันที่</th><th>เลขที่ PO</th><th>ผู้ขาย</th><th>สถานะ</th><th class="text-right">ก่อน VAT</th><th class="text-right">VAT</th><th class="text-right">ยอดรวม VAT</th></tr></thead><tbody>' +
     sorted.map(p => {
-      const v = poVal(p);
+      const amounts = getPOPurchaseAmounts(p);
       return '<tr style="cursor:pointer" onclick="this.closest(\'.modal-overlay\').remove(); viewPO(\''+p.id+'\')" title="คลิกดูใบสั่งซื้อ">' +
         '<td style="font-size:12px;white-space:nowrap">' + (p.po_date||'-') + '</td>' +
         '<td class="font-mono" style="font-size:12px;color:var(--blue)">' + (p.po_no||'-') + '</td>' +
         '<td style="font-size:12px">' + (p.supplier_name||'-') + '</td>' +
         '<td style="font-size:12px">' + (statusTh[p.status]||p.status||'-') + '</td>' +
-        '<td class="text-right font-mono" style="color:#7c3aed">' + fmtB(v) + '</td></tr>';
+        '<td class="text-right font-mono" style="color:#7c3aed">' + fmtB(amounts.beforeVat) + '</td>' +
+        '<td class="text-right font-mono text-accent">' + fmtB(amounts.vat) + '</td>' +
+        '<td class="text-right font-mono text-amber">' + fmtB(amounts.totalWithVat) + '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function drillCancelledOrders(source) {
+  const rows = (source === 'orders' ? window._orderCancelledRows : window._dashCancelledOrders) || [];
+  const sorted = rows.slice().sort((a,b)=>(b.order_date||'').localeCompare(a.order_date||'') || (b.order_no||'').localeCompare(a.order_no||''));
+  const total = sorted.reduce((sum,o)=>sum+Number(o.total_amount||0),0);
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '300';
+  modal.innerHTML =
+    '<div class="modal" style="max-width:820px">' +
+    '<div class="modal-title">❌ ออเดอร์ยกเลิก ('+sorted.length+' ใบ)</div>' +
+    '<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px 12px;background:#fef2f2;border:1px solid #fecaca;border-radius:8px">' +
+      '<span style="font-size:12px;color:var(--text3)">ยอดเงินรวมของรายการที่ยกเลิก</span>' +
+      '<strong class="font-mono text-red" style="font-size:18px">'+fmtB(total)+'</strong>' +
+      '<span style="font-size:11px;color:var(--text3)">ไม่นับรวมในยอดขาย ต้นทุน GP และกำไร</span>' +
+    '</div>' +
+    (sorted.length ?
+      '<div class="table-wrap" style="max-height:55vh;overflow-y:auto"><table><thead><tr>' +
+      '<th>วันที่</th><th>เลขออเดอร์</th><th>ลูกค้า</th><th>ช่องทาง</th><th>สถานะ</th><th class="text-right">ยอดเงิน</th></tr></thead><tbody>' +
+      sorted.map(o =>
+        '<tr style="cursor:pointer" onclick="this.closest(\'.modal-overlay\').remove();viewOrder(\''+String(o.id||'').replace(/'/g,"\\'")+'\')" title="คลิกดูออเดอร์">' +
+        '<td style="white-space:nowrap;font-size:12px">'+escapeHTML(o.order_date||'-')+'</td>' +
+        '<td class="font-mono" style="font-size:12px;color:var(--blue)">'+escapeHTML(o.order_no||'-')+'</td>' +
+        '<td style="font-size:12px">'+escapeHTML(o.customer_name||'-')+'</td>' +
+        '<td>'+channelBadge(o.channel)+'</td>' +
+        '<td style="white-space:nowrap">'+shippingBadge(o.shipping_status)+' '+docStatusBadge(o.doc_status||'draft')+'</td>' +
+        '<td class="text-right font-mono text-red">'+fmtB(o.total_amount)+'</td></tr>'
+      ).join('') + '</tbody></table></div>'
+      : '<div class="empty" style="padding:20px"><div class="empty-icon">✅</div><div>ไม่มีออเดอร์ยกเลิกในช่วงนี้</div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -2588,13 +2952,13 @@ async function drillProduct(productName) {
 
   // Fetch last 20 order_items for this product
   const { data: items } = await sb.from('order_items')
-    .select('*,orders!inner(shop_id,order_date,channel,customer_name,order_no)')
+    .select('*,orders!inner(shop_id,order_date,channel,customer_name,order_no,shipping_status,doc_status)')
     .eq('product_name', productName)
     .eq('orders.shop_id', currentShop.id)
     .order('id', { ascending: false })
     .limit(20);
 
-  const rows = items || [];
+  const rows = (items || []).filter(i=>!isOrderCancelled(i.orders));
   const totalRev = rows.reduce((s,i) => s + Number(i.qty||0)*Number(i.sell_price||0), 0);
   const totalQty = rows.reduce((s,i) => s + Number(i.qty||0), 0);
   const totalCost = rows.reduce((s,i) => s + Number(i.qty||0)*Number(i.cost_per_unit||0), 0);
@@ -2797,21 +3161,43 @@ async function drillMonthlyRevenue() {
 async function drillMonthlyCost() {
   const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
   if (!dateFrom) return;
-  const { data: orders } = await sb.from('orders')
-    .select('order_no,order_date,channel,customer_name,total_amount,total_cost,order_items(product_name,qty,cost_per_unit,sell_price)')
-    .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo)
-    .order('order_date', { ascending: false });
+  const [ordersRes, productsRes] = await Promise.all([
+    sb.from('orders')
+      .select('order_no,order_date,channel,customer_name,total_amount,total_cost,order_items(product_id,product_name,qty,cost_per_unit,sell_price)')
+      .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo)
+      .order('order_date', { ascending: false }),
+    sb.from('products')
+      .select('id,name,current_cost')
+      .eq('shop_id', currentShop.id)
+  ]);
+  const orders = ordersRes.data;
+  const products = productsRes.data || [];
   const rows = orders || [];
-  const totCost = rows.reduce((s,o) => s + Number(o.total_cost||0), 0);
+  const productCostById = {};
+  const productCostByName = {};
+  products.forEach(p => {
+    const cost = Number(p.current_cost || 0);
+    if (p.id) productCostById[p.id] = cost;
+    if (p.name) productCostByName[String(p.name).trim().toLowerCase()] = cost;
+  });
   // Flatten to items
   const items = [];
   rows.forEach(o => {
     (o.order_items||[]).forEach(it => {
+      const savedCost = Number(it.cost_per_unit || 0);
+      const currentCost = Number(
+        productCostById[it.product_id] ||
+        productCostByName[String(it.product_name || '').trim().toLowerCase()] ||
+        0
+      );
+      const effectiveCost = savedCost > 0 ? savedCost : currentCost;
       items.push({ order_no: o.order_no, order_date: o.order_date, channel: o.channel,
         product_name: it.product_name, qty: Number(it.qty||0),
-        cost_per_unit: Number(it.cost_per_unit||0), sell_price: Number(it.sell_price||0) });
+        cost_per_unit: effectiveCost, sell_price: Number(it.sell_price||0),
+        cost_source: savedCost > 0 ? 'order' : currentCost > 0 ? 'current' : 'missing' });
     });
   });
+  const totCost = items.reduce((s,it) => s + it.qty * it.cost_per_unit, 0);
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
   modal.innerHTML = `<div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:900px;position:relative">
@@ -2836,7 +3222,7 @@ async function drillMonthlyCost() {
           <td style="padding:6px 8px;font-size:12px;color:var(--text2)">${it.order_date||'-'}</td>
           <td style="padding:6px 8px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.product_name||'-'}</td>
           <td style="padding:6px 8px;text-align:right;font-family:var(--mono)">${it.qty}</td>
-          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:${hasCost?'var(--text)':'var(--red)'}">${hasCost?fmtB(it.cost_per_unit):'ไม่มีต้นทุน'}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:${hasCost?'var(--text)':'var(--red)'}">${hasCost?fmtB(it.cost_per_unit)+(it.cost_source==='current'?'<div style="font-family:var(--font);font-size:9px;color:var(--accent)">ต้นทุนสินค้าปัจจุบัน</div>':''):'ไม่มีต้นทุน'}</td>
           <td style="padding:6px 8px;text-align:right;font-family:var(--mono)">${fmtB(it.sell_price)}</td>
           <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:${hasCost?'var(--amber)':'var(--red)'}">${fmtB(lineCost)}</td>
         </tr>`;
@@ -3281,6 +3667,12 @@ async function orders() {
       <div class="modal" style="max-width:680px">
         <div class="modal-title">🛒 บันทึกออเดอร์ใหม่</div>
         <div class="grid-2">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>ดึงข้อมูลจากใบเสนอราคา <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
+            <select id="o-quote-source" onchange="importQuoteToOrder(this.value)">
+              <option value="">-- เลือกใบเสนอราคาเพื่อลดการกรอกข้อมูลซ้ำ --</option>
+            </select>
+          </div>
           <div class="form-group"><label>วันที่</label><input type="date" id="o-date" value="${today()}"></div>
           <div class="form-group"><label>ช่องทาง</label>
             <select id="o-channel">
@@ -3332,7 +3724,8 @@ async function orders() {
 
         <!-- ส่วนลดทั้งบิล -->
         <div style="margin-top:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:13px;color:var(--text2);min-width:90px">ส่วนลดทั้งบิล</span>
             <input type="number" id="o-bill-disc" value="0" min="0" step="any"
               oninput="updateOrderSummary()"
@@ -3342,6 +3735,13 @@ async function orders() {
               <option value="amount">บาท (฿)</option>
               <option value="percent">เปอร์เซ็นต์ (%)</option>
             </select>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
+              <span>ค่าขนส่ง</span>
+              <input type="number" id="o-shipping-fee" value="0" min="0" step="any" oninput="updateOrderSummary()"
+                style="width:100px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--blue);font-size:14px;text-align:right">
+              <span>บาท</span>
+            </label>
           </div>
           <div id="o-summary" style="padding-top:4px"></div>
         </div>
@@ -3389,7 +3789,8 @@ async function loadOrders() {
 
   const [ordRes, empRes] = await Promise.all([
     q,
-    sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true)
+    sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
+    ensureShopeeFeeData()
   ]);
 
   if (ordRes.error) {
@@ -3423,8 +3824,9 @@ async function loadOrders() {
   // เรียงตามตัวเลือกในดรอปดาวน์ "เรียงตาม" (ค่าเริ่มต้น: รอจัดส่งขึ้นก่อน → วันที่ล่าสุด → เลขที่ล่าสุด)
   const _shipRank = { pending:0, shipped:1, delivered:2, cancelled:3 };
   const _profitOf = o => {
+    if (isOrderCancelled(o)) return 0;
     const s = Number(o.total_amount||0), c = Number(o.total_cost||0);
-    return s - c - (/shopee|lazada/i.test(o.channel||'') ? s*0.30 : 0);
+    return s - c - getOrderPlatformFeeInfo(o).fee;
   };
   const _sortMode = window._ordSort || 'status';
   rows.sort((a,b) => {
@@ -3438,26 +3840,31 @@ async function loadOrders() {
            (b.order_no||'').localeCompare(a.order_no||'');
   });
 
-  const totalRev  = rows.reduce((s,o)=>s+Number(o.total_amount||0),0);
-  const totalCost = rows.reduce((s,o)=>s+Number(o.total_cost||0),0);
-  const totalPlatformFee = rows.reduce((s,o)=> s + (/shopee|lazada/i.test(o.channel||'') ? Number(o.total_amount||0)*0.30 : 0), 0);
+  const cancelledRows = rows.filter(isOrderCancelled);
+  const activeRows = rows.filter(o => !isOrderCancelled(o));
+  const cancelledTotal = cancelledRows.reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const cancelledRate = rows.length ? cancelledRows.length / rows.length * 100 : 0;
+  window._orderCancelledRows = cancelledRows;
+  const totalRev  = activeRows.reduce((s,o)=>s+Number(o.total_amount||0),0);
+  const totalCost = activeRows.reduce((s,o)=>s+Number(o.total_cost||0),0);
+  const totalPlatformFee = activeRows.reduce((s,o)=> s + getOrderPlatformFeeInfo(o).fee, 0);
   const totalProfit = totalRev - totalCost - totalPlatformFee;   // กำไรหลังหักต้นทุน + ค่า GP Platform
   const commBase    = Math.max(0, totalProfit);                  // ฐานคิดคอม (ขาดทุน = ไม่มีคอม)
-  const salesComm   = commBase * 0.20;                           // Sales Commission 20% ของกำไร
-  const accountComm = commBase * 0.20;                           // Account Commission 20% ของกำไร
+  const commissionPerRole = commBase * 0.20;                    // Sales และ Account ได้ฝ่ายละ 20% เท่ากัน
+  const combinedCommission = commissionPerRole * 2;
   const distinctCustomers = new Set(
-    rows.map(o=>(o.customer_name||'').trim().toLowerCase()).filter(k=>k && k!=='ไม่ระบุ' && k!=='-')
+    activeRows.map(o=>(o.customer_name||'').trim().toLowerCase()).filter(k=>k && k!=='ไม่ระบุ' && k!=='-')
   ).size;
 
   document.getElementById('ord-stats').innerHTML = `
-    <div class="stat-card"><div class="stat-label">🛒 จำนวนออเดอร์</div><div class="stat-value">${rows.length}</div></div>
+    <div class="stat-card"><div class="stat-label">🛒 จำนวนออเดอร์ทั้งหมด</div><div class="stat-value">${rows.length}</div><div class="stat-sub">ใช้งาน ${activeRows.length} · ยกเลิก ${cancelledRows.length}</div></div>
+    <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="drillCancelledOrders('orders')" title="คลิกดูรายการออเดอร์ยกเลิก"><div class="stat-label">❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div><div class="stat-value text-red">${cancelledRows.length} ใบ</div><div class="stat-sub">ยอดเงินรวม ${fmtB(cancelledTotal)}</div><div class="stat-sub">${cancelledRate.toFixed(1)}% ของออเดอร์ทั้งหมด</div></div>
     <div class="stat-card"><div class="stat-label">👥 จำนวนลูกค้า</div><div class="stat-value text-blue">${distinctCustomers} ราย</div></div>
-    <div class="stat-card"><div class="stat-label">💰 ยอดขายรวม</div><div class="stat-value text-accent">${fmtB(totalRev)}</div></div>
+    <div class="stat-card"><div class="stat-label">💰 ยอดขายรวม <span style="font-size:10px;color:var(--text3)">(ไม่รวมยกเลิก)</span></div><div class="stat-value text-accent">${fmtB(totalRev)}</div></div>
     <div class="stat-card"><div class="stat-label">📦 ต้นทุนรวม</div><div class="stat-value" style="color:#7c3aed">${fmtB(totalCost)}</div></div>
     <div class="stat-card"><div class="stat-label">💸 GP Platform ที่ถูกหัก</div><div class="stat-value text-red">${fmtB(totalPlatformFee)}</div></div>
     <div class="stat-card"><div class="stat-label">📈 กำไรรวม</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}">${fmtB(totalProfit)}</div></div>
-    <div class="stat-card"><div class="stat-label">💼 Sales Commission <span style="font-size:10px;color:var(--text3)">20% ของกำไร</span></div><div class="stat-value" style="color:#0891b2">${fmtB(salesComm)}</div></div>
-    <div class="stat-card"><div class="stat-label">🧮 Account Commission <span style="font-size:10px;color:var(--text3)">20% ของกำไร</span></div><div class="stat-value" style="color:#be185d">${fmtB(accountComm)}</div></div>
+    <div class="stat-card"><div class="stat-label">💼 Sales / Account Commission <span style="font-size:10px;color:var(--text3)">20% เท่ากัน</span></div><div class="stat-value" style="color:#0891b2">${fmtB(commissionPerRole)} <span style="font-size:12px;font-family:var(--font);font-weight:500;color:var(--text3)">ต่อฝ่าย</span></div><div class="stat-sub">Sales ${fmtB(commissionPerRole)} · Account ${fmtB(commissionPerRole)}</div><div class="stat-sub">รวมทั้งสองฝ่าย ${fmtB(combinedCommission)}</div></div>
   `;
 
   if (!rows.length) {
@@ -3480,9 +3887,11 @@ async function loadOrders() {
       <tbody>
         ${rows.map(o=>{
           const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
-          const isPlat=/shopee|lazada/i.test(o.channel||'');
-          const fee=isPlat?sale*0.30:0;
-          const profit=sale-cost-fee;
+          const cancelled=isOrderCancelled(o);
+          const feeInfo=getOrderPlatformFeeInfo(o);
+          const isPlat=feeInfo.isPlatform;
+          const fee=cancelled?0:feeInfo.fee;
+          const profit=cancelled?0:sale-cost-fee;
           const products=(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-';
           return `<tr>
           <td class="col-order">
@@ -3498,9 +3907,11 @@ async function loadOrders() {
           <td class="col-products" style="font-size:11px;color:var(--text3);line-height:1.45">${products}</td>
           <td class="col-money text-right" style="white-space:nowrap;font-size:12px;line-height:1.55">
             <div><span style="color:var(--text3)">ขาย</span> <span class="font-mono text-accent" style="font-weight:600">${fmtB(sale)}</span></div>
-            <div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
-            ${isPlat?`<div class="text-red" title="ค่าธรรมเนียม Shopee/Lazada 30% ของยอดขาย"><span style="color:var(--text3)">GP</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
-            <div class="${profit>=0?'text-green':'text-red'}" style="font-weight:700"><span style="color:var(--text3);font-weight:400">กำไร</span> <span class="font-mono">${fmtB(profit)}</span></div>
+            ${cancelled
+              ? '<div class="text-red" style="font-weight:600">ไม่นับในยอดขาย/กำไร</div>'
+              : `<div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
+                 ${isPlat?`<div class="text-red" title="${feeInfo.source==='actual'?'ค่าธรรมเนียมจริงจาก Shopee':'ค่าธรรมเนียมประมาณ '+feeInfo.pct.toFixed(2)+'%'}"><span style="color:var(--text3)">GP ${feeInfo.pct.toFixed(2)}%</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
+                 <div class="${profit>=0?'text-green':'text-red'}" style="font-weight:700"><span style="color:var(--text3);font-weight:400">กำไร</span> <span class="font-mono">${fmtB(profit)}</span></div>`}
           </td>
           <td class="col-status" style="white-space:nowrap">
             <div style="margin-bottom:5px">${docStatusBadge(o.doc_status||'draft')}</div>
@@ -3538,10 +3949,12 @@ async function loadOrders() {
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-'}</div>
       ${(()=>{
         const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
-        const isPlat=/shopee|lazada/i.test(o.channel||'');
-        const fee=isPlat?sale*0.30:0; const profit=sale-cost-fee;
+        if (isOrderCancelled(o)) return '<div style="font-size:11px;margin-bottom:8px;font-weight:600" class="text-red">ไม่นับในยอดขาย ต้นทุน GP และกำไร</div>';
+        const feeInfo=getOrderPlatformFeeInfo(o);
+        const isPlat=feeInfo.isPlatform;
+        const fee=feeInfo.fee; const profit=sale-cost-fee;
         return '<div style="font-size:11px;margin-bottom:8px;color:var(--text3)">ต้นทุน <span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span>'+
-          (isPlat?' · GP Platform <span class="font-mono text-red">-'+fmtB(fee)+'</span>':'')+
+          (isPlat?' · GP Platform '+feeInfo.pct.toFixed(2)+'% <span class="font-mono text-red">-'+fmtB(fee)+'</span>':'')+
           ' · กำไร <span class="font-mono '+(profit>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(profit)+'</span></div>';
       })()}
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -3623,6 +4036,7 @@ let editingPOId = null;
 let editingPONo = null;
 
 let _orderCustomerList = [];
+let orderSourceQuoteId = null;
 async function openNewOrder() {
   orderItems = [];
   const [prodRes] = await Promise.all([
@@ -3630,21 +4044,76 @@ async function openNewOrder() {
     loadOrderCustomerList()
   ]);
   productList = prodRes.data || [];
+  orderSourceQuoteId = null;
   renderOrderItems();
-  openModal('modal-order');
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-track','o-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-billing-address','o-track','o-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
   // reset discount
-  setTimeout(() => {
-    const bd = document.getElementById('o-bill-disc');
-    const bt = document.getElementById('o-bill-disc-type');
-    if (bd) bd.value = '0';
-    if (bt) bt.value = 'amount';
-    updateOrderSummary();
-  }, 50);
+  const bd = document.getElementById('o-bill-disc');
+  const bt = document.getElementById('o-bill-disc-type');
+  const sf = document.getElementById('o-shipping-fee');
+  if (bd) bd.value = '0';
+  if (bt) bt.value = 'amount';
+  if (sf) sf.value = '0';
+  updateOrderSummary();
+  openModal('modal-order');
+  registerUnsavedForm(document.getElementById('modal-order'));
+  loadOrderQuoteOptions();
+}
+
+async function loadOrderQuoteOptions() {
+  const sel = document.getElementById('o-quote-source');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">กำลังโหลดใบเสนอราคา...</option>';
+  const { data, error } = await sb.from('quotations')
+    .select('id,quote_no,quote_date,customer_name,total_amount,status')
+    .eq('shop_id', currentShop.id).order('quote_date',{ascending:false}).limit(100);
+  if (error) {
+    sel.innerHTML = '<option value="">-- โหลดใบเสนอราคาไม่สำเร็จ --</option>';
+    return;
+  }
+  const rows = (data||[]).filter(q => !['converted','rejected'].includes(q.status));
+  sel.innerHTML = '<option value="">-- เลือกใบเสนอราคาเพื่อลดการกรอกข้อมูลซ้ำ --</option>' +
+    rows.map(q => `<option value="${escapeHTML(q.id)}">${escapeHTML(q.quote_no||'-')} · ${escapeHTML(q.customer_name||'-')} · ${fmtB(q.total_amount)}</option>`).join('');
+}
+
+async function importQuoteToOrder(qtId) {
+  if (!qtId) {
+    orderSourceQuoteId = null;
+    return;
+  }
+  const [{data:qt,error:qErr},{data:items,error:iErr}] = await Promise.all([
+    sb.from('quotations').select('*').eq('id',qtId).single(),
+    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id'),
+  ]);
+  if (qErr || iErr || !qt) { toast('ดึงใบเสนอราคาไม่สำเร็จ','error'); return; }
+  const set = (id,value) => { const el=document.getElementById(id); if(el) el.value=value||''; };
+  set('o-cust', qt.customer_name);
+  set('o-ref', qt.customer_social);
+  set('o-contact', qt.customer_contact);
+  set('o-phone', qt.customer_phone);
+  set('o-address', qt.customer_address);
+  set('o-note', [cleanOrderNote(qt.note), 'ดึงจากใบเสนอราคา '+(qt.quote_no||'')].filter(Boolean).join('\n'));
+  if (qt.employee_id) set('o-emp', qt.employee_id);
+  orderItems = (items||[]).map(it => {
+    const product = productList.find(p => p.id === it.product_id);
+    return {
+      product_id: it.product_id || '__custom__', product_name: it.product_name || product?.name || '',
+      qty: Number(it.qty)||1, sell_price: Number(it.sell_price)||0,
+      cost_per_unit: Number(product?.current_cost)||0,
+      discount: Number(it.discount)||0, discount_type: it.discount_type||'amount'
+    };
+  });
+  const bd = document.getElementById('o-bill-disc'); if (bd) bd.value='0';
+  const bt = document.getElementById('o-bill-disc-type'); if (bt) bt.value='amount';
+  const sf = document.getElementById('o-shipping-fee'); if (sf) sf.value='0';
+  orderSourceQuoteId = qt.id;
+  renderOrderItems();
+  markUnsavedForm(document.getElementById('modal-order'));
+  toast('ดึงข้อมูลจาก '+(qt.quote_no||'ใบเสนอราคา')+' แล้ว ✓','success');
 }
 
 // โหลดรายชื่อลูกค้าจากออเดอร์เดิม (รวม field ให้ครบที่สุดต่อลูกค้า) → _orderCustomerList
@@ -3711,6 +4180,8 @@ function _fillCustFields(c, ids) {
   set(ids.phone,   c.customer_phone);
   set(ids.addr,    c.customer_address);
   set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
+  const changedField = document.getElementById(ids.name);
+  markUnsavedForm(changedField?.closest('.modal-overlay'));
 }
 
 // คัดลอกที่อยู่จัดส่ง → ที่อยู่ออกบิล (ปุ่มในฟอร์ม)
@@ -3718,6 +4189,7 @@ function copyShipToBill(fromId, toId) {
   const from = document.getElementById(fromId), to = document.getElementById(toId);
   if (!from || !to) return;
   to.value = from.value;
+  markUnsavedForm(to.closest('.modal-overlay'));
   toast(from.value.trim() ? 'คัดลอกที่อยู่จัดส่ง → ออกบิลแล้ว' : 'ที่อยู่จัดส่งยังว่างอยู่', from.value.trim()?'success':'error');
 }
 
@@ -3807,10 +4279,11 @@ function orderGrandTotal(items, billDisc, billDiscType) {
 function getOrderSummary() {
   const billDisc = Number(document.getElementById('o-bill-disc')?.value||0);
   const billDiscType = document.getElementById('o-bill-disc-type')?.value || 'amount';
+  const shippingFee = Math.max(0, Number(document.getElementById('o-shipping-fee')?.value||0));
   const subtotal = orderItems.reduce((s,it) => s + itemNet(it), 0);
   const bd = billDiscType === 'percent' ? subtotal * billDisc / 100 : billDisc;
-  const grand = Math.max(0, subtotal - bd);
-  return { subtotal, bd, grand, billDisc, billDiscType };
+  const grand = Math.max(0, subtotal - bd) + shippingFee;
+  return { subtotal, bd, shippingFee, grand, billDisc, billDiscType };
 }
 
 function updateOrderSummary() {
@@ -3823,6 +4296,7 @@ function updateOrderSummary() {
       <span class="font-mono">${fmtB(s.subtotal)}</span>
     </div>
     ${s.bd > 0 ? '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:var(--red)">ส่วนลดทั้งบิล</span><span class="font-mono text-red">- '+fmtB(s.bd)+'</span></div>' : ''}
+    ${s.shippingFee > 0 ? '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:var(--blue)">ค่าขนส่ง</span><span class="font-mono" style="color:var(--blue)">+ '+fmtB(s.shippingFee)+'</span></div>' : ''}
     <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1px solid var(--border);padding-top:8px;margin-top:4px">
       <span>ยอดสุทธิ</span>
       <span class="font-mono text-accent">${fmtB(s.grand)}</span>
@@ -4047,6 +4521,7 @@ function renderOrderItems() {
 
 function addOrderItem() {
   orderItems.push({ product_id:'', product_name:'', qty:1, sell_price:0, cost_per_unit:0, discount:0, discount_type:'amount' });
+  markUnsavedForm(document.getElementById('modal-order'));
   renderOrderItems();
 }
 
@@ -4193,7 +4668,7 @@ async function saveOrder() {
   const empId = selEmpId || (await getEmployeeIdFromUser(currentUser?.id)) || null;
   const billDisc = Number(document.getElementById('o-bill-disc')?.value||0);
   const billDiscType = document.getElementById('o-bill-disc-type')?.value || 'amount';
-  const { subtotal, bd, grand } = getOrderSummary();
+  const { subtotal, bd, shippingFee, grand } = getOrderSummary();
   const totalCost = orderItems.reduce((s,it) => s + Number(it.qty||1)*Number(it.cost_per_unit||0), 0);
 
   const orderPayload = {
@@ -4216,16 +4691,22 @@ async function saveOrder() {
     employee_id: empId,
     bill_discount: billDisc,
     bill_discount_type: billDiscType,
+    shipping_fee: shippingFee,
     total_amount: grand,
     total_cost: totalCost
   };
-  // บันทึก — ถ้าคอลัมน์ billing_address ยังไม่มีใน DB ให้ตัดออกแล้วลองใหม่ (ไม่ให้ทั้งออเดอร์พัง)
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี billing_address / shipping_fee
   let order, error;
-  for (let a = 0; a < 2; a++) {
+  for (let a = 0; a < 4; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
     if (('billing_address' in orderPayload) && (error.message||'').includes('billing_address')) { delete orderPayload.billing_address; continue; }
+    if (('shipping_fee' in orderPayload) && (error.message||'').includes('shipping_fee')) {
+      orderPayload.note = noteWithShippingFee(orderPayload.note, shippingFee);
+      delete orderPayload.shipping_fee;
+      continue;
+    }
     break;
   }
   if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
@@ -4242,6 +4723,10 @@ async function saveOrder() {
   }));
 
   await sb.from('order_items').insert(items);
+
+  if (orderSourceQuoteId) {
+    await sb.from('quotations').update({status:'converted',converted_order_id:order.id}).eq('id',orderSourceQuoteId);
+  }
 
   // deduct stock — บันทึก movement + อัพเดท stock_qty โดยตรง (ไม่รอ trigger)
   const orderDate = document.getElementById('o-date').value;
@@ -4272,6 +4757,7 @@ async function saveOrder() {
     }
   }
 
+  unregisterUnsavedForm(document.getElementById('modal-order'));
   closeModal('modal-order');
   toast('บันทึกออเดอร์สำเร็จ ✓', 'success');
   loadOrders();
@@ -4539,8 +5025,9 @@ function updateEditTotal() {
   const subtotal = editItems.reduce((s,it)=>s+itemNetEdit(it),0);
   const billDisc = Number(document.getElementById('ed-bill-disc')?.value||0);
   const billDiscType = document.getElementById('ed-bill-disc-type')?.value||'amount';
+  const shippingFee = Math.max(0, Number(document.getElementById('ed-shipping-fee')?.value||0));
   const bd = billDiscType === 'percent' ? subtotal * billDisc / 100 : billDisc;
-  const grand = Math.max(0, subtotal - bd);
+  const grand = Math.max(0, subtotal - bd) + shippingFee;
 
   const tel = document.getElementById('ed-grand-total');
   if (tel) tel.textContent = fmtB(grand);
@@ -4548,6 +5035,8 @@ function updateEditTotal() {
   if (sub) sub.textContent = fmtB(subtotal);
   const bde = document.getElementById('ed-bill-disc-amt');
   if (bde) bde.textContent = bd > 0 ? '- ' + fmtB(bd) : '';
+  const sfe = document.getElementById('ed-shipping-fee-amt');
+  if (sfe) sfe.textContent = shippingFee > 0 ? '+ ' + fmtB(shippingFee) : '';
 
   renderEditProfitBox(grand);
 }
@@ -4562,19 +5051,26 @@ function renderEditProfitBox(saleArg) {
     const subtotal = editItems.reduce((s,it)=>s+itemNetEdit(it),0);
     const billDisc = Number(document.getElementById('ed-bill-disc')?.value||0);
     const billDiscType = document.getElementById('ed-bill-disc-type')?.value||'amount';
+    const shippingFee = Math.max(0, Number(document.getElementById('ed-shipping-fee')?.value||0));
     const bd = billDiscType === 'percent' ? subtotal*billDisc/100 : billDisc;
-    sale = Math.max(0, subtotal - bd);
+    sale = Math.max(0, subtotal - bd) + shippingFee;
   }
   const cost = editItems.reduce((s,it)=>s+Number(it.qty||0)*effCost(it),0);
   const ch = document.getElementById('ed-ch')?.value || '';
-  const isPlat = /shopee|lazada/i.test(ch);
-  const gpFee = isPlat ? sale*0.30 : 0;
+  const feeInfo = getOrderPlatformFeeInfo({
+    ...(window._editingOrderForGP||{}),
+    channel: ch,
+    total_amount: sale,
+    customer_social: document.getElementById('ed-ref')?.value || window._editingOrderForGP?.customer_social || ''
+  });
+  const isPlat = feeInfo.isPlatform;
+  const gpFee = feeInfo.fee;
   const net = sale - cost - gpFee;
   const noCost = editItems.filter(it => it.product_id && Number(it.qty||0)>0 && effCost(it)<=0);
   box.innerHTML =
     '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">ยอดขาย</span><span class="font-mono">'+fmtB(sale)+'</span></div>'+
     '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ต้นทุนสินค้า</span><span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span></div>'+
-    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform 30% ('+ch+')</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
+    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform '+feeInfo.pct.toFixed(2)+'% ('+ch+(feeInfo.source==='actual'?' · ค่าจริง':' · ประมาณ')+')</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
     '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:5px;font-weight:700"><span>'+(net>=0?'กำไรสุทธิ':'ขาดทุน')+'</span><span class="font-mono '+(net>=0?'text-green':'text-red')+'">'+fmtB(net)+(sale>0?' ('+(net/sale*100).toFixed(1)+'%)':'')+'</span></div>'+
     (noCost.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ สินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (กำไรอาจสูงเกินจริง): '+[...new Set(noCost.map(it=>it.product_name))].join(', ')+'</div>' : '');
 }
@@ -4596,8 +5092,10 @@ async function viewOrder(orderId) {
   if (currentPage !== 'orders') {
     showPage('orders');
   }
+  await ensureShopeeFeeData();
   const { data: order } = await sb.from('orders').select('*,order_items(*)').eq('id',orderId).single();
   if (!order) return;
+  window._editingOrderForGP = order;
   editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount'}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
   await loadOrderCustomerList(); // โหลดรายชื่อลูกค้าสำหรับ auto-fill
@@ -4606,9 +5104,9 @@ async function viewOrder(orderId) {
   const _effCost = (it) => { const c = Number(it.cost_per_unit||0); return c > 0 ? c : Number(_pcMap[it.product_id]||0); };
   const _orderCostEff = editItems.reduce((s,it)=>s+Number(it.qty||0)*_effCost(it),0);
   const _orderProfitEff = Number(order.total_amount||0) - _orderCostEff;   // กำไรขั้นต้น (ก่อน GP Platform)
-  // ค่า GP Platform 30% (เฉพาะ Shopee/Lazada) → กำไรสุทธิให้ตรงกับหน้ารายการออเดอร์
-  const _isPlat = /shopee|lazada/i.test(order.channel||'');
-  const _gpFee = _isPlat ? Number(order.total_amount||0)*0.30 : 0;
+  // ค่า GP Platform ใช้ค่าจริงจาก Shopee เมื่อจับคู่เลขอ้างอิงได้ ไม่เช่นนั้นใช้ fallback กลาง
+  const _platformFeeInfo = getOrderPlatformFeeInfo(order);
+  const _gpFee = _platformFeeInfo.fee;
   const _netProfit = _orderProfitEff - _gpFee;
   // สินค้าที่ยังไม่มีต้นทุนเลย (ทั้ง snapshot และ current_cost = 0) → เป็นเหตุให้กำไรดูเป็น 100%
   const _noCostItems = editItems.filter(it => it.product_id && Number(it.qty||0) > 0 && _effCost(it) <= 0);
@@ -4627,7 +5125,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
         <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}')" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
@@ -4662,7 +5160,7 @@ async function viewOrder(orderId) {
         </div>
       </div>
       <div style="margin-top:10px"><span style="color:var(--text3);font-size:13px">หมายเหตุ</span>
-        <textarea id="ed-note" rows="2" style="${iStyle};margin-top:3px;resize:vertical">${order.note||''}</textarea>
+        <textarea id="ed-note" rows="2" style="${iStyle};margin-top:3px;resize:vertical">${escapeHTML(cleanOrderNote(order.note))}</textarea>
       </div>
     </div>
 
@@ -4673,7 +5171,8 @@ async function viewOrder(orderId) {
     <div id="ed-items" style="margin-bottom:10px"></div>
     <!-- ส่วนลดทั้งบิล -->
     <div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px">
         <span style="font-size:13px;color:var(--text2);min-width:90px">ส่วนลดทั้งบิล</span>
         <input type="number" id="ed-bill-disc" value="${order.bill_discount||0}" min="0" step="any"
           oninput="updateEditTotal()"
@@ -4683,6 +5182,13 @@ async function viewOrder(orderId) {
           <option value="amount" ${(order.bill_discount_type||'amount')==='amount'?'selected':''}>บาท (฿)</option>
           <option value="percent" ${order.bill_discount_type==='percent'?'selected':''}>เปอร์เซ็นต์ (%)</option>
         </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
+          <span>ค่าขนส่ง</span>
+          <input type="number" id="ed-shipping-fee" value="${getOrderShippingFee(order)}" min="0" step="any" oninput="updateEditTotal()"
+            style="width:100px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--blue);font-size:14px;text-align:right">
+          <span>บาท</span>
+        </label>
       </div>
       <div style="font-size:13px">
         <div style="display:flex;justify-content:space-between;color:var(--text2);margin-bottom:4px">
@@ -4690,6 +5196,9 @@ async function viewOrder(orderId) {
         </div>
         <div style="display:flex;justify-content:space-between;color:var(--red);margin-bottom:4px" id="ed-bill-disc-row">
           <span>ส่วนลดทั้งบิล</span><span class="font-mono" id="ed-bill-disc-amt"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;color:var(--blue);margin-bottom:4px" id="ed-shipping-fee-row">
+          <span>ค่าขนส่ง</span><span class="font-mono" id="ed-shipping-fee-amt"></span>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid var(--border);padding-top:8px">
           <span>ยอดสุทธิ</span><span class="font-mono text-accent" id="ed-grand-total">${fmtB(order.total_amount)}</span>
@@ -4716,13 +5225,14 @@ async function viewOrder(orderId) {
   document.getElementById('order-detail-footer').innerHTML =
     `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">ปิด</button>` +
     `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>` +
-    `<button class="btn btn-secondary btn-sm" onclick="printReceipt('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700">🖨️ พิมพ์บิล</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700">🖨️ พิมพ์บิล</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openStickerModal('${order.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100">🏷️ สติกเกอร์สินค้า</button>` +
     `<button class="btn btn-primary" onclick="saveOrderEdit('${order.id}')">💾 บันทึกการแก้ไข</button>`;
 
   openModal('modal-order-detail');
+  registerUnsavedForm(document.getElementById('modal-order-detail'));
 }
 
 function updateTrackingLink(val) {
@@ -4745,7 +5255,8 @@ async function saveOrderEdit(orderId) {
   const editBillDiscType = document.getElementById('ed-bill-disc-type')?.value||'amount';
   const editSubtotal = editItems.reduce((s,it)=>s+itemNetEdit(it),0);
   const editBd = editBillDiscType==='percent' ? editSubtotal*editBillDisc/100 : editBillDisc;
-  const editGrand = Math.max(0, editSubtotal - editBd);
+  const editShippingFee = Math.max(0, Number(document.getElementById('ed-shipping-fee')?.value||0));
+  const editGrand = Math.max(0, editSubtotal - editBd) + editShippingFee;
   const editTotalCost = editItems.reduce((s,it)=>s+Number(it.qty||1)*Number(it.cost_per_unit||0),0);
 
   // อัพเดท order totals + discount
@@ -4767,16 +5278,22 @@ async function saveOrderEdit(orderId) {
     employee_id: edEmpVal || null,
     bill_discount: editBillDisc,
     bill_discount_type: editBillDiscType,
+    shipping_fee: editShippingFee,
     total_amount: editGrand,
     total_cost: editTotalCost
   };
-  // ถ้าคอลัมน์ billing_address ยังไม่มีใน DB ให้ตัดออกแล้วลองใหม่
+  // รองรับฐานข้อมูลเดิมที่ยังไม่มี billing_address / shipping_fee
   let updErr;
-  for (let a = 0; a < 2; a++) {
+  for (let a = 0; a < 4; a++) {
     const r = await sb.from('orders').update(editPayload).eq('id', orderId);
     updErr = r.error;
     if (!updErr) break;
     if (('billing_address' in editPayload) && (updErr.message||'').includes('billing_address')) { delete editPayload.billing_address; continue; }
+    if (('shipping_fee' in editPayload) && (updErr.message||'').includes('shipping_fee')) {
+      editPayload.note = noteWithShippingFee(editPayload.note, editShippingFee);
+      delete editPayload.shipping_fee;
+      continue;
+    }
     break;
   }
   if (updErr) { toast('แก้ไขไม่สำเร็จ','error'); return; }
@@ -4828,6 +5345,7 @@ async function saveOrderEdit(orderId) {
     await recalcStockQty(productIds);
   }
 
+  unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('บันทึกการแก้ไขสำเร็จ ✓','success');
   loadOrders();
@@ -4868,12 +5386,42 @@ function bahtText(amount) {
 }
 
 // ─── PRINT RECEIPT ────────────────────────────────────
-async function printReceipt(orderId) {
+function openReceiptOptions(orderId) {
+  document.getElementById('receipt-options-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'receipt-options-modal';
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '320';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:440px">
+      <div class="modal-title">🖨️ ตัวเลือกการพิมพ์บิล</div>
+      <div style="padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:14px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+          <input type="checkbox" id="receipt-show-discount" checked style="width:18px;height:18px;margin-top:2px">
+          <span><strong>แสดงส่วนลดในบิล</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: แสดงยอดก่อนหักส่วนลด</span></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <input type="checkbox" id="receipt-show-signature" checked style="width:18px;height:18px;margin-top:2px">
+          <span><strong>พิมพ์ลายเซ็นผู้รับเงิน</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัล · ปิด: เว้นช่องไว้สำหรับเซ็นด้วยมือ</span></span>
+        </label>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่งและหมายเหตุจะแสดงในบิลอัตโนมัติเมื่อมีข้อมูล</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="printReceipt('${orderId}',document.getElementById('receipt-show-discount').checked,document.getElementById('receipt-show-signature').checked)">🖨️ พิมพ์บิล</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
+}
+
+async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   const { data: order } = await sb.from('orders').select('*,order_items(*,products(name))').eq('id',orderId).single();
   if (!order) { toast('ไม่พบออเดอร์','error'); return; }
 
   const items = order.order_items || [];
   const shop  = currentShop || {};
+  const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
 
   // คำนวณส่วนลดรายรายการ
   function itemNet(it) {
@@ -4884,11 +5432,15 @@ async function printReceipt(orderId) {
       : Math.max(0, gross - disc);
   }
 
-  const subtotal     = items.reduce((s,it) => s + itemNet(it), 0);
+  const grossSubtotal = items.reduce((s,it) => s + Number(it.qty||1)*Number(it.sell_price||0), 0);
+  const discountedSubtotal = items.reduce((s,it) => s + itemNet(it), 0);
   const billDisc     = Number(order.bill_discount||0);
   const billDiscType = order.bill_discount_type || 'amount';
-  const billDiscAmt  = billDiscType==='percent' ? subtotal*billDisc/100 : billDisc;
-  const grandTotal   = Number(order.total_amount) || Math.max(0, subtotal - billDiscAmt);
+  const billDiscAmt  = showDiscount ? (billDiscType==='percent' ? discountedSubtotal*billDisc/100 : billDisc) : 0;
+  const subtotal     = showDiscount ? discountedSubtotal : grossSubtotal;
+  const shippingFee  = getOrderShippingFee(order);
+  const grandTotal   = Math.max(0, subtotal - billDiscAmt) + shippingFee;
+  const displayNote  = cleanOrderNote(order.note);
 
   // วันที่ไทย พ.ศ.
   const d      = new Date(order.order_date+'T00:00:00');
@@ -4898,7 +5450,7 @@ async function printReceipt(orderId) {
   const MIN_ROWS = 10;
   const itemRows = items.map((it,i) => {
     const gross    = Number(it.qty||1) * Number(it.sell_price||0);
-    const net      = itemNet(it);
+    const net      = showDiscount ? itemNet(it) : gross;
     const discAmt  = gross - net;
     const discCell = it.discount > 0
       ? (it.discount_type==='percent'
@@ -4907,17 +5459,19 @@ async function printReceipt(orderId) {
       : '-';
     return '<tr>' +
       '<td style="text-align:center">'+(i+1)+'</td>' +
-      '<td>'+((it.products&&it.products.name)||it.product_name||'-')+'</td>' +
+      '<td>'+escapeHTML((it.products&&it.products.name)||it.product_name||'-')+'</td>' +
       '<td style="text-align:center">'+fmt(it.qty)+'</td>' +
       '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
-      '<td style="text-align:right;color:#c00">'+discCell+'</td>' +
+      (showDiscount ? '<td style="text-align:right;color:#c00">'+discCell+'</td>' : '') +
       '<td style="text-align:right;font-weight:600">'+fmt(net)+'</td>' +
       '</tr>';
   });
 
   const emptyCount = Math.max(0, MIN_ROWS - items.length);
   const emptyRows  = Array(emptyCount).fill(
-    '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
+    showDiscount
+      ? '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
+      : '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>'
   ).join('');
 
   // ──────── HTML บิล ────────
@@ -4925,7 +5479,7 @@ async function printReceipt(orderId) {
   const billParts = [];
   billParts.push('<!DOCTYPE html><html lang="th"><head>');
   billParts.push('<meta charset="UTF-8">');
-  billParts.push('<title>\u0e1a\u0e34\u0e25\u0e40\u0e07\u0e34\u0e19\u0e2a\u0e14 ' + (order.order_no||'') + '</title>');
+  billParts.push('<title>บิลเงินสด / Cash Sale ' + (order.order_no||'') + '</title>');
   billParts.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
   billParts.push('<' + 'style>');
   billParts.push('* { box-sizing:border-box; margin:0; padding:0; }');
@@ -4957,8 +5511,12 @@ async function printReceipt(orderId) {
   billParts.push('.total-row.disc { color:#cc0000; }');
   billParts.push('.total-row.grand { background:#e8f5f0; font-size:15px; font-weight:700; border-top:2.5px solid #00a882; }');
   billParts.push('.baht-text { background:#eef0f2; border:1px solid #555; border-top:none; padding:6px 10px; font-size:12px; color:#000; }');
+  billParts.push('.note-box { border:1px solid #777; border-top:none; padding:7px 10px; font-size:12px; line-height:1.55; background:#fffdf2; }');
   billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:36px; }');
   billParts.push('.sig-box { text-align:center; width:200px; }');
+  billParts.push('.sig-image-wrap { height:48px; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; margin-bottom:2px; }');
+  billParts.push('.sig-image { display:block; max-width:170px; max-height:48px; object-fit:contain; }');
+  billParts.push('.sig-space { height:44px; }');
   billParts.push('.sig-line { border-top:1.5px solid #333; margin-bottom:6px; }');
   billParts.push('.sig-label { font-size:12px; color:#000; font-weight:600; }');
   billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
@@ -4973,11 +5531,12 @@ async function printReceipt(orderId) {
     let billShopName = (shop.name || 'sealthai').toUpperCase();
   if (!billShopName.endsWith('.COM')) billShopName += '.COM';
   billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
-  billParts.push('<div class="shop-info">' + (shop.address||'346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900').split('\n').join('<br>'));
+  billParts.push('<div class="shop-info">' + getShopAddress(shop).split('\n').join('<br>'));
+  billParts.push('<br>Line OA: @sealthai');
   if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
   if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
   billParts.push('</div></div></div>');
-  billParts.push('<div class="bill-type">\u0e1a\u0e34\u0e25\u0e40\u0e07\u0e34\u0e19\u0e2a\u0e14</div>');
+  billParts.push('<div class="bill-type">บิลเงินสด / Cash Sale</div>');
   billParts.push('</div>');
 
   // Info boxes
@@ -5004,7 +5563,7 @@ async function printReceipt(orderId) {
   billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>Descriptions</small></th>');
   billParts.push('<th style="width:50px">\u0e08\u0e33\u0e19\u0e27\u0e19<br><small>Qty</small></th>');
   billParts.push('<th class="right" style="width:68px">\u0e23\u0e32\u0e04\u0e32/\u0e0a\u0e34\u0e49\u0e19<br><small>Unit Price</small></th>');
-  billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
+  if (showDiscount) billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
   billParts.push('<th class="right" style="width:85px">\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19<br><small>Amount</small></th>');
   billParts.push('</tr></thead><tbody>');
   billParts.push(itemRows.join(''));
@@ -5013,17 +5572,23 @@ async function printReceipt(orderId) {
 
   // Totals
   billParts.push('<div class="total-wrap">');
-  if (billDiscAmt > 0) {
-    billParts.push('<div class="total-row"><span>\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21 / Subtotal</span><span>' + fmt(subtotal) + '</span></div>');
+  billParts.push('<div class="total-row"><span>\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21 / Subtotal</span><span>' + fmt(subtotal) + '</span></div>');
+  if (showDiscount && billDiscAmt > 0) {
     billParts.push('<div class="total-row disc"><span>\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14 / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
   }
+  if (shippingFee > 0) billParts.push('<div class="total-row"><span>ค่าขนส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
   billParts.push('<div class="total-row grand"><span>\u0e23\u0e27\u0e21\u0e40\u0e07\u0e34\u0e19 / Total</span><span>' + fmt(grandTotal) + '</span></div>');
   billParts.push('</div>');
   billParts.push('<div class="baht-text">\u0e15\u0e31\u0e27\u0e2d\u0e31\u0e01\u0e29\u0e23 / In Words &nbsp; <strong>( ' + bahtText(grandTotal) + ' )</strong></div>');
+  if (displayNote) billParts.push('<div class="note-box"><strong>หมายเหตุ / Note:</strong><br>' + escapeHTML(displayNote).replace(/\n/g,'<br>') + '</div>');
 
   // Signature
   billParts.push('<div class="sig-area"><div class="sig-box">');
-  billParts.push('<div style="height:44px"></div>');
+  if (showSignature) {
+    billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ลายเซ็นผู้รับเงิน"></div>');
+  } else {
+    billParts.push('<div class="sig-space"></div>');
+  }
   billParts.push('<div class="sig-line"></div>');
   billParts.push('<div class="sig-label">\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19 / Received By</div>');
 billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM') + '</div>');
@@ -5035,6 +5600,7 @@ billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระ
 
   const w = window.open('','_blank','width=900,height=1100,scrollbars=yes');
   if (!w) { toast('\u0e01\u0e23\u0e38\u0e13\u0e32\u0e2d\u0e19\u0e38\u0e0d\u0e32\u0e15 Pop-up \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e1e\u0e34\u0e21\u0e1e\u0e4c\u0e1a\u0e34\u0e25','error'); return; }
+  document.getElementById('receipt-options-modal')?.remove();
   w.document.write(html);
   w.document.close();
 }
@@ -5059,6 +5625,7 @@ async function deleteOrder(orderId) {
     }
   }
   
+  unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('ลบออเดอร์แล้ว','success');
   loadOrders();
@@ -6080,12 +6647,17 @@ async function stock() {
     <div class="modal-overlay" id="modal-stock">
       <div class="modal" style="max-width:760px">
         <div class="modal-title">🏭 รับสินค้าเข้าสต๊อก</div>
-        <!-- เลือก PO (optional) -->
+        <!-- เลือก PO ได้หลายใบ (optional) -->
         <div class="form-group" style="margin-bottom:12px">
-          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(ไม่บังคับ — เลือกถ้ารับสินค้าตาม PO)</span></label>
-          <select id="s-po-sel" onchange="applyPOToStock()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:14px;color:var(--text)">
-            <option value="">-- ไม่เชื่อม PO --</option>
-          </select>
+          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(เลือกได้หลาย PO หรือไม่เลือกก็ได้)</span></label>
+          <div id="s-po-list" style="max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border2);border-radius:8px;padding:6px">
+            <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">กำลังโหลด PO ที่รอรับ...</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="applyPOsToStock()">📥 โหลดรายการจาก PO ที่เลือก</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearStockPOSelection()">ล้างการเลือก</button>
+          </div>
+          <div id="s-po-selection-summary" style="font-size:11px;color:var(--text3);margin-top:6px">ยังไม่ได้เลือก PO — สามารถเพิ่มสินค้าเองได้</div>
         </div>
         <div class="grid-2" style="margin-bottom:14px">
           <div class="form-group">
@@ -6236,6 +6808,11 @@ async function stock() {
   loadStockHistory();
   stockRows = [];
   addStockRow(); // start with 1 row
+  if (window._stockPOsToOpen?.length) {
+    const preselectedPOs = [...window._stockPOsToOpen];
+    window._stockPOsToOpen = null;
+    await openStockModal(preselectedPOs);
+  }
 }
 
 // ── Product search input (autocomplete) ───────────────
@@ -6289,9 +6866,14 @@ function selectStockProduct(rowIdx, productId, productName) {
 }
 
 // ── Stock rows ─────────────────────────────────────────
-function addStockRow() {
+function addStockRow(initial={}) {
   const idx = stockRows.length;
-  stockRows.push({ product_id:'', product_name:'', qty:0, cost:0, other:0 });
+  const row = {
+    product_id:'', product_name:'', qty:0, cost:0, other:0,
+    po_id:null, po_item_id:null, po_no:'', supplier_name:'', remaining:null, enabled:true,
+    ...initial,
+  };
+  stockRows.push(row);
 
   const wrap = document.getElementById('stock-rows-wrap');
   if (!wrap) return;
@@ -6299,23 +6881,29 @@ function addStockRow() {
   div.id = 'stock-row-'+idx;
   div.style.cssText = 'background:var(--bg3);border-radius:8px;padding:12px;position:relative;border:1px solid var(--border)';
   div.innerHTML = `
+    ${row.po_item_id ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap">
+      <div style="font-size:11px;color:var(--blue);font-weight:600">PO: ${escapeHTML(row.po_no||'-')} · ${escapeHTML(row.supplier_name||'-')}</div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--accent)">
+        <input type="checkbox" id="sr-use-${idx}" ${row.enabled!==false?'checked':''} onchange="toggleStockPORow(${idx},this.checked)"> รับรายการนี้
+      </label>
+    </div>` : ''}
     <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap" class="stock-row-inner">
       ${makeProductSearch(idx)}
       <div style="display:flex;flex-direction:column;min-width:80px;flex:1">
-        <label style="font-size:12px;color:var(--text3);margin-bottom:4px">จำนวน</label>
-        <input type="number" value="0" min="0" step="any" id="sr-qty-${idx}"
+        <label style="font-size:12px;color:var(--text3);margin-bottom:4px">จำนวน${row.po_item_id&&row.remaining!==null?' (คงเหลือ '+fmt(row.remaining)+')':''}</label>
+        <input type="number" value="${Number(row.qty)||0}" min="0" ${row.po_item_id&&row.remaining!==null?'max="'+Number(row.remaining)+'"':''} step="any" id="sr-qty-${idx}" ${row.enabled===false?'disabled':''}
           oninput="stockRows[${idx}].qty=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
       <div style="display:flex;flex-direction:column;min-width:90px;flex:1">
         <label style="font-size:12px;color:var(--text3);margin-bottom:4px">ทุน/ชิ้น (฿)</label>
-        <input type="number" value="0" min="0" step="any" id="sr-cost-${idx}"
+        <input type="number" value="${Number(row.cost)||0}" min="0" step="any" id="sr-cost-${idx}"
           oninput="stockRows[${idx}].cost=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
       <div style="display:flex;flex-direction:column;min-width:90px;flex:1">
         <label style="font-size:12px;color:var(--text3);margin-bottom:4px">ค่าส่ง/อื่น (฿)</label>
-        <input type="number" value="0" min="0" step="any" id="sr-other-${idx}"
+        <input type="number" value="${Number(row.other)||0}" min="0" step="any" id="sr-other-${idx}"
           oninput="stockRows[${idx}].other=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
@@ -6328,6 +6916,31 @@ function addStockRow() {
       </div>
     </div>`;
   wrap.appendChild(div);
+  const nameInp = document.getElementById('sr-prod-'+idx);
+  if (nameInp) {
+    nameInp.value = row.product_name || '';
+    if (row.po_item_id) {
+      nameInp.readOnly = true;
+      nameInp.removeAttribute('oninput');
+      nameInp.removeAttribute('onfocus');
+      nameInp.style.background = '#f4f6f8';
+      nameInp.title = 'รายการจาก PO '+(row.po_no||'');
+    }
+  }
+  updateStockTotal();
+}
+
+function toggleStockPORow(idx, checked) {
+  const row = stockRows[idx];
+  if (!row) return;
+  row.enabled = checked;
+  row.qty = checked ? Number(row.remaining||0) : 0;
+  const qtyInp = document.getElementById('sr-qty-'+idx);
+  if (qtyInp) {
+    qtyInp.disabled = !checked;
+    qtyInp.value = row.qty;
+  }
+  updateStockTotal();
 }
 
 function removeStockRow(idx) {
@@ -6344,7 +6957,7 @@ function updateStockTotal() {
     const el = document.getElementById('sr-total-'+i);
     if (el) el.textContent = fmtB(total);
   });
-  const goodsTotal  = stockRows.filter(Boolean).reduce((s,r)=>s+r.qty*r.cost+r.other,0);
+  const goodsTotal  = stockRows.filter(r=>r&&r.enabled!==false).reduce((s,r)=>s+r.qty*r.cost+r.other,0);
   const landedTotal = (landedCostRows||[]).reduce((s,r)=>s+Number(r.amount||0),0);
   const vatOn   = document.getElementById('s-vat-on')?.checked || false;
   const vatType = document.getElementById('s-vat-type')?.value || 'excluded';
@@ -6416,11 +7029,23 @@ let _stockSaving = false;
 async function saveStockBatch() {
   const date = document.getElementById('s-date').value;
   const lot  = document.getElementById('s-lot').value;
-  const valid = stockRows.filter(r=>r&&r.product_id&&r.qty>0);
+  const unmappedPOItem = stockRows.find(r=>r&&r.enabled!==false&&r.po_item_id&&r.qty>0&&!r.product_id);
+  if (unmappedPOItem) {
+    toast('รายการ '+(unmappedPOItem.product_name||'-')+' ใน '+(unmappedPOItem.po_no||'PO')+' ยังไม่เชื่อมกับสินค้าในคลัง กรุณาเอาเครื่องหมายรับรายการนี้ออกก่อน','error');
+    return;
+  }
+  const valid = stockRows.filter(r=>r&&r.enabled!==false&&r.product_id&&r.qty>0);
   if (!valid.length) { toast('กรุณาเลือกสินค้าและใส่จำนวนอย่างน้อย 1 รายการ','error'); return; }
+  const overReceived = valid.find(r => r.po_item_id && r.remaining!==null && Number(r.qty) > Number(r.remaining));
+  if (overReceived) {
+    toast('จำนวนรับของ '+(overReceived.product_name||'สินค้า')+' เกินจำนวนคงเหลือใน '+(overReceived.po_no||'PO'),'error');
+    return;
+  }
   // ── ยืนยันก่อนบันทึก (กันกดผิด) ──
   const _grand = document.getElementById('s-grand-total')?.textContent || '';
-  if (!confirm('ยืนยันรับสินค้าเข้าสต๊อก ' + valid.length + ' รายการ' + (_grand?' · รวม '+_grand:'') + '?\n\nสต๊อกและต้นทุนเฉลี่ยจะถูกอัพเดต')) return;
+  const selectedPOCount = new Set(valid.map(r=>r.po_id).filter(Boolean)).size;
+  const poCountText = selectedPOCount ? ' จาก '+selectedPOCount+' PO' : '';
+  if (!confirm('ยืนยันรับสินค้าเข้าสต๊อก ' + valid.length + ' รายการ' + poCountText + (_grand?' · รวม '+_grand:'') + '?\n\nสต๊อกและต้นทุนเฉลี่ยจะถูกอัพเดต')) return;
   if (_stockSaving) return;   // กันกดซ้ำ
   _stockSaving = true;
 
@@ -6451,7 +7076,7 @@ async function saveStockBatch() {
       other_cost: Math.round(landedShare * 100) / 100,
       lot_name: lot,
       move_date: date,
-      po_id: document.getElementById('s-po-sel')?.value || null,
+      po_id: r.po_id || null,
     };
   });
 
@@ -6459,9 +7084,12 @@ async function saveStockBatch() {
   if (error) { _stockSaving=false; toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
 
   // เก็บ Landed Cost แยกตามประเภท (ค่าขนส่ง/ค่าจัดการ ฯลฯ) สำหรับ Dashboard — ถ้าตาราง landed_costs ยังไม่มี จะข้าม (ไม่ block)
-  const _poIdSave = document.getElementById('s-po-sel')?.value || null;
+  const receivedPoIds = [...new Set(valid.map(r=>r.po_id).filter(Boolean))];
+  const _poIdSave = receivedPoIds.length===1 ? receivedPoIds[0] : null;
+  const poRefs = [...new Set(valid.map(r=>r.po_no).filter(Boolean))].join(', ');
   const landedToSave = (landedCostRows||[]).filter(r => Number(r.amount) > 0).map(r => ({
-    shop_id: currentShop.id, type: r.type, amount: Number(r.amount)||0, note: r.note||'',
+    shop_id: currentShop.id, type: r.type, amount: Number(r.amount)||0,
+    note: [r.note||'', receivedPoIds.length>1&&poRefs?'หลาย PO: '+poRefs:''].filter(Boolean).join(' · '),
     lot_name: lot, move_date: date, po_id: _poIdSave
   }));
   if (landedToSave.length) {
@@ -6472,29 +7100,28 @@ async function saveStockBatch() {
   const productIds = [...new Set(valid.map(r => r.product_id))];
   await recalcStockQty(productIds);
 
-  // ── อัพเดท qty_received และ status ของ PO (ถ้าเชื่อม PO) ──
-  const selectedPoId = document.getElementById('s-po-sel')?.value || null;
-  if (selectedPoId) {
-    // อัพเดท qty_received ของแต่ละ po_item ที่มี po_item_id
-    for (const r of valid) {
-      if (!r.po_item_id) continue;
-      const { data: cur } = await sb.from('purchase_order_items')
-        .select('qty_ordered,qty_received').eq('id', r.po_item_id).single();
-      if (cur) {
-        const newReceived = Math.min(
-          Number(cur.qty_received||0) + Number(r.qty),
-          Number(cur.qty_ordered)
-        );
-        await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
-      }
-    }
-    // ตรวจว่า PO รับครบทุก item แล้วหรือยัง
+  // ── อัพเดท qty_received และ status ของทุก PO ที่รับในรอบนี้ ──
+  const affectedPoIds = new Set();
+  for (const r of valid) {
+    if (!r.po_item_id) continue;
+    const { data: cur } = await sb.from('purchase_order_items')
+      .select('po_id,qty_ordered,qty_received').eq('id', r.po_item_id).single();
+    if (!cur) continue;
+    const newReceived = Math.min(
+      Number(cur.qty_received||0) + Number(r.qty),
+      Number(cur.qty_ordered)
+    );
+    await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
+    affectedPoIds.add(r.po_id || cur.po_id);
+  }
+  for (const poId of affectedPoIds) {
+    if (!poId) continue;
     const { data: allItems } = await sb.from('purchase_order_items')
-      .select('qty_ordered,qty_received').eq('po_id', selectedPoId);
-    const allDone = allItems?.every(it => Number(it.qty_received||0) >= Number(it.qty_ordered));
+      .select('qty_ordered,qty_received').eq('po_id', poId);
+    const allDone = allItems?.length && allItems.every(it => Number(it.qty_received||0) >= Number(it.qty_ordered));
     await sb.from('purchase_orders').update({
       status: allDone ? 'received' : 'partial'
-    }).eq('id', selectedPoId);
+    }).eq('id', poId);
   }
 
   // reset landed cost rows
@@ -6502,7 +7129,7 @@ async function saveStockBatch() {
   _stockSaving = false;
 
   closeModal('modal-stock');
-  toast('บันทึกสำเร็จ '+valid.length+' รายการ' + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
+  toast('บันทึกสำเร็จ '+valid.length+' รายการ'+poCountText + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
   loadStockHistory();
 }
 
@@ -7221,65 +7848,84 @@ async function loadPODropdownForStock() {
     .eq('shop_id', currentShop.id)
     .in('status', ['draft','sent','partial'])
     .order('po_date', {ascending:false});
-  const sel = document.getElementById('s-po-sel');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">-- ไม่เชื่อม PO --</option>' +
-    (data||[]).map(po =>
-      '<option value="'+po.id+'">'+( po.po_no||'-')+' · '+po.supplier_name+'</option>'
-    ).join('');
-  sel._poData = data || [];
+  const list = document.getElementById('s-po-list');
+  if (!list) return;
+  const pendingPOs = (data||[]).map(po => {
+    const pendingItems = (po.purchase_order_items||[]).filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
+    return { ...po, pendingItems };
+  }).filter(po => po.pendingItems.length);
+  list._poData = pendingPOs;
+  if (!pendingPOs.length) {
+    list.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">ไม่มี PO ที่รอรับสินค้า</div>';
+    updateStockPOSelectionSummary();
+    return;
+  }
+  list.innerHTML = pendingPOs.map(po => {
+    const pendingQty = po.pendingItems.reduce((sum,it)=>sum+Math.max(0,Number(it.qty_ordered)-Number(it.qty_received||0)),0);
+    return '<label style="display:flex;align-items:flex-start;gap:9px;padding:8px;border-bottom:1px solid var(--border);cursor:pointer">'+
+      '<input type="checkbox" class="s-po-check" value="'+po.id+'" onchange="updateStockPOSelectionSummary()" style="width:17px;height:17px;margin-top:1px">'+
+      '<span style="min-width:0"><strong style="font-size:12px">'+escapeHTML(po.po_no||'-')+'</strong> · '+escapeHTML(po.supplier_name||'-')+
+      '<br><span style="font-size:11px;color:var(--text3)">'+po.pendingItems.length+' รายการ · คงเหลือ '+fmt(pendingQty)+' ชิ้น</span></span></label>';
+  }).join('');
+  updateStockPOSelectionSummary();
 }
 
-async function applyPOToStock() {
-  const sel = document.getElementById('s-po-sel');
-  if (!sel || !sel.value || !sel._poData) return;
-  const po = sel._poData.find(p => p.id === sel.value);
-  if (!po) return;
-  const items = po.purchase_order_items || [];
-  const pending = items.filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
-  if (!pending.length) { toast('PO นี้รับสินค้าครบแล้ว','success'); return; }
+function getSelectedStockPOIds() {
+  return [...document.querySelectorAll('.s-po-check:checked')].map(el=>el.value);
+}
+
+function updateStockPOSelectionSummary() {
+  const selected = getSelectedStockPOIds();
+  const summary = document.getElementById('s-po-selection-summary');
+  if (!summary) return;
+  summary.textContent = selected.length
+    ? 'เลือกแล้ว '+selected.length+' PO — กด “โหลดรายการจาก PO ที่เลือก”'
+    : 'ยังไม่ได้เลือก PO — สามารถเพิ่มสินค้าเองได้';
+  summary.style.color = selected.length ? 'var(--accent)' : 'var(--text3)';
+}
+
+function clearStockPOSelection() {
+  document.querySelectorAll('.s-po-check').forEach(el=>{el.checked=false;});
+  updateStockPOSelectionSummary();
+}
+
+async function applyPOsToStock() {
+  const list = document.getElementById('s-po-list');
+  const selectedIds = getSelectedStockPOIds();
+  if (!selectedIds.length) { toast('กรุณาเลือก PO อย่างน้อย 1 ใบ','error'); return; }
+  const selectedPOs = (list?._poData||[]).filter(po=>selectedIds.includes(po.id));
+  const pendingRows = [];
+  selectedPOs.forEach(po => {
+    (po.pendingItems||[]).forEach(it => {
+      const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
+      if (remaining <= 0) return;
+      pendingRows.push({
+        product_id:it.product_id||'', product_name:it.product_name||'',
+        qty:remaining, cost:Number(it.unit_cost||0), other:0,
+        po_id:po.id, po_item_id:it.id, po_no:po.po_no||'',
+        supplier_name:po.supplier_name||'', remaining, enabled:true,
+      });
+    });
+  });
+  if (!pendingRows.length) { toast('PO ที่เลือกไม่มีรายการคงเหลือให้รับ','success'); return; }
 
   // fill lot name
   const lotEl = document.getElementById('s-lot');
-  if (lotEl) lotEl.value = (po.po_no||'') + ' - ' + po.supplier_name;
+  if (lotEl) lotEl.value = selectedPOs.map(po=>po.po_no||'-').join(' + ');
 
-  // โหลด product data สำหรับ pending items
-  if (!productList.length) {
-    const { data } = await sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name');
-    productList = data || [];
-  }
-
-  // clear และสร้าง rows ใหม่จาก PO items
+  // clear และสร้าง rows ใหม่จากหลาย PO
   const wrap = document.getElementById('stock-rows-wrap');
   if (!wrap) return;
   wrap.innerHTML = '';
-  stockRows = [];   // reset ก่อนเสมอ
-  pending.forEach(it => {
-    const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
-    addStockRow();
-    const idx = stockRows.length - 1;   // ใช้ index จริงจาก stockRows
-
-    // อัพเดท stockRows data โดยตรง
-    stockRows[idx].product_id   = it.product_id || '';
-    stockRows[idx].product_name = it.product_name || '';
-    stockRows[idx].qty          = remaining;
-    stockRows[idx].cost         = Number(it.unit_cost || 0);
-    stockRows[idx].po_item_id   = it.id;  // เก็บไว้ update qty_received ทีหลัง
-
-    // อัพเดท DOM — product input id = sr-prod-{idx}
-    const nameInp = document.getElementById('sr-prod-'+idx);
-    const qtyInp  = document.getElementById('sr-qty-'+idx);
-    const costInp = document.getElementById('sr-cost-'+idx);
-    if (nameInp) nameInp.value = it.product_name || '';
-    if (qtyInp)  qtyInp.value  = remaining;
-    if (costInp) costInp.value  = Number(it.unit_cost || 0);
-  });
+  stockRows = [];
+  pendingRows.forEach(row => addStockRow(row));
   updateStockTotal();
-  toast('โหลดรายการจาก PO สำเร็จ '+pending.length+' รายการ','success');
+  toast('โหลด '+selectedPOs.length+' PO · '+pendingRows.length+' รายการสำเร็จ','success');
 }
 
-function openStockModal() {
+async function openStockModal(preselectedPOIds=[]) {
   stockRows = [];
+  landedCostRows = [];
   openModal('modal-stock');
   // reset rows wrap
   const wrap = document.getElementById('stock-rows-wrap');
@@ -7289,9 +7935,17 @@ function openStockModal() {
   // default: ติ๊ก VAT 7%
   const _sv = document.getElementById('s-vat-on');   if (_sv)  _sv.checked = true;
   const _svt = document.getElementById('s-vat-type'); if (_svt) _svt.value = 'excluded';
+  renderLandedCostRows();
   addStockRow();
   updateStockTotal();   // แสดงแถว VAT ตาม default
-  loadPODropdownForStock();
+  await loadPODropdownForStock();
+  if (preselectedPOIds.length) {
+    document.querySelectorAll('.s-po-check').forEach(el=>{
+      el.checked = preselectedPOIds.includes(el.value);
+    });
+    updateStockPOSelectionSummary();
+    if (getSelectedStockPOIds().length) await applyPOsToStock();
+  }
 }
 
 // ── Goods Return (GR) ─────────────────────────────────────────
@@ -7674,27 +8328,26 @@ async function loadEmployeeList() {
 
 // คำนวณ "กำไรสุทธิก่อนหักคอมพนักงาน" ของช่วงวันที่ (สูตรเดียวกับ Dashboard ภาพรวม)
 // ใช้เป็นฐานคิดคอมมิชชั่น: commission = commission_rate% × กำไรสุทธิ
-// กำไรสุทธิ = ยอดขาย − ต้นทุนสินค้า − ค่าธรรมเนียม/ขนส่ง Shopee − ค่าจัดการ/ขนส่ง(รับเข้า) − ค่าใช้จ่ายทุกหมวด
+// กำไรสุทธิ = ยอดขาย − ต้นทุนสินค้า − ค่า GP Platform − ค่าจัดการ/ขนส่ง(รับเข้า) − ค่าใช้จ่ายทุกหมวด
 async function computeNetProfitBase(from, to) {
   const [ordRes, expRes, prodRes, landedRes] = await Promise.all([
-    sb.from('orders').select('channel,total_amount,order_items(qty,cost_per_unit,product_id)').eq('shop_id', currentShop.id).gte('order_date',from).lte('order_date',to),
+    sb.from('orders').select('channel,total_amount,customer_social,shipping_status,doc_status,order_items(qty,cost_per_unit,product_id)').eq('shop_id', currentShop.id).gte('order_date',from).lte('order_date',to),
     sb.from('expenses').select('amount').eq('shop_id', currentShop.id).gte('expense_date',from).lte('expense_date',to),
     sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id),
     sb.from('landed_costs').select('type,amount').eq('shop_id', currentShop.id).gte('move_date',from).lte('move_date',to),
+    ensureShopeeFeeData(),
   ]);
-  const orders=ordRes.data||[], expenses=expRes.data||[], products=prodRes.data||[], landed=landedRes?.data||[];
+  const orders=(ordRes.data||[]).filter(o=>!isOrderCancelled(o)), expenses=expRes.data||[], products=prodRes.data||[], landed=landedRes?.data||[];
   const costMap={}; products.forEach(p=>{ if(p.id) costMap[p.id]=Number(p.current_cost||0); });
   const orderCost=o=>(o.order_items||[]).reduce((s,it)=>{const c=Number(it.cost_per_unit||0);return s+Number(it.qty||0)*(c>0?c:Number(costMap[it.product_id]||0));},0);
   const revenue = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
   const cost    = orders.reduce((s,o)=>s+orderCost(o),0);
   const exp     = expenses.reduce((s,e)=>s+Number(e.amount||0),0);
-  const shopeeRev  = orders.filter(o=>(o.channel||'').toLowerCase().includes('shopee')).reduce((s,o)=>s+Number(o.total_amount||0),0);
-  const shopeeComm = shopeeRev*20.6/100;   // ต้องตรงกับ SHOPEE_COMM_PCT ใน dashboard()
-  const shopeeShip = shopeeRev*3.3/100;    // ต้องตรงกับ SHOPEE_SHIP_PCT ใน dashboard()
+  const platformFee = orders.reduce((sum,o)=>sum+getOrderPlatformFeeInfo(o).fee,0);
   const handling   = landed.filter(l=>l.type==='ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
   const shipGR     = landed.filter(l=>l.type==='ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
-  const netBeforeComm = (revenue-cost) - exp - shopeeComm - shopeeShip - handling - shipGR;
-  return { netBeforeComm, revenue, cost, exp, shopeeComm, shopeeShip, handling, shipGR };
+  const netBeforeComm = (revenue-cost) - exp - platformFee - handling - shipGR;
+  return { netBeforeComm, revenue, cost, exp, platformFee, handling, shipGR };
 }
 
 async function loadEmployeeStats() {
@@ -7733,13 +8386,13 @@ async function loadEmployeeStats() {
 
   const [empRes, ordRes] = await Promise.all([
     sb.from('employees').select('*').eq('shop_id', currentShop.id).eq('active',true),
-    sb.from('orders').select('employee_id,total_amount,order_date')
+    sb.from('orders').select('employee_id,total_amount,order_date,shipping_status,doc_status')
       .eq('shop_id', currentShop.id)
       .gte('order_date',dateFrom).lte('order_date',dateTo)
   ]);
 
   const emps   = empRes.data || [];
-  const orders = ordRes.data || [];
+  const orders = (ordRes.data || []).filter(o=>!isOrderCancelled(o));
 
   // ฐานคอม = กำไรสุทธิของงวด (หลังหักค่าใช้จ่ายต่างๆ) → commission_rate% ของกำไรสุทธิ
   const { netBeforeComm } = await computeNetProfitBase(dateFrom, dateTo);
@@ -8470,7 +9123,7 @@ async function printQuote(qtId) {
     let qtShopName = (shop.name || 'sealthai').toUpperCase();
   if (!qtShopName.endsWith('.COM')) qtShopName += '.COM';
   bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
-  bp.push('<div class="shop-info">'+(shop.address||'346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900')+'</div></div></div>');
+  bp.push('<div class="shop-info">'+getShopAddress(shop)+'</div></div></div>');
   bp.push('<div class="doc-type">ใบเสนอราคา</div></div>');
   // info
   bp.push('<div class="info-row"><div class="info-box"><div class="info-label">ลูกค้า / Customer</div><div style="font-weight:600">'+(qt.customer_name||'-')+'</div>');
@@ -8985,8 +9638,8 @@ async function purchase() {
           <div class="form-group"><label>เบอร์ติดต่อ</label><input type="text" id="po-sup-phone" placeholder="เบอร์โทร"></div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
-          <div style="font-weight:600;font-size:14px">รายการสินค้าที่สั่งซื้อ</div>
-          <button onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">+ เพิ่มสินค้า</button>
+          <div style="font-weight:600;font-size:14px">รายการ SKU ที่สั่งซื้อ</div>
+          <button onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">+ เพิ่ม SKU</button>
         </div>
         <div id="po-items"></div>
         <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:8px">
@@ -9099,7 +9752,7 @@ async function openNewPO() {
   const vatTypeEl = document.getElementById('po-vat-type');
   if (vatTypeEl) vatTypeEl.value = 'excluded';
 
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
   renderPOItems();
   calcPOTotal();   // sync ยอด + แสดงแถว VAT ตาม default
@@ -9113,15 +9766,16 @@ function renderPOItems() {
   if(!el) return;
   el.innerHTML='';
   poItems.forEach((it,i)=>{
+    const selectedProduct = productList.find(p=>p.id===it.product_id);
     const card=document.createElement('div');
     card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px';
     const r1=document.createElement('div'); r1.style.cssText='display:flex;gap:8px;align-items:start;margin-bottom:10px';
     const pw=document.createElement('div'); pw.style.cssText='flex:1;min-width:0';
-    const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500'; pl.textContent='สินค้า';
+    const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500'; pl.textContent='SKU';
     pw.appendChild(pl);
     const wrap=document.createElement('div'); wrap.style.position='relative';
     const inp=document.createElement('input'); inp.type='text'; inp.autocomplete='off';
-    inp.placeholder='ชื่อ / SKU / *ค้นหา*'; inp.value=it.product_name||'';
+    inp.placeholder='SKU / Supplier SKU / *ค้นหา*'; inp.value=selectedProduct?.sku||it.product_name||'';
     inp.style.cssText='width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;box-sizing:border-box';
     const dd=document.createElement('div'); dd.style.cssText='display:none;position:absolute;top:100%;left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.12)';
     function srch(q){
@@ -9132,46 +9786,33 @@ function renderPOItems() {
       res.forEach(p=>{
         const d=document.createElement('div');
         d.style.cssText='padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0';
-        const skuInfo = [p.sku, p.supplier_sku, p.part_no].filter(Boolean).join(' · ');
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = p.name;
-        nameSpan.style.fontWeight = '500';
-        d.appendChild(nameSpan);
-        if (skuInfo) {
-          const skuSpan = document.createElement('span');
-          skuSpan.textContent = ' · ' + skuInfo;
-          skuSpan.style.cssText = 'color:var(--blue);font-size:11px';
-          d.appendChild(skuSpan);
-        }
+        const skuSpan = document.createElement('span');
+        skuSpan.textContent = p.sku || p.name;
+        skuSpan.style.fontWeight = '600';
+        d.appendChild(skuSpan);
+        const supplierSkuSpan = document.createElement('span');
+        supplierSkuSpan.textContent = ' · Supplier SKU: ' + (p.supplier_sku || '-');
+        supplierSkuSpan.style.cssText = 'color:var(--blue);font-size:11px';
+        d.appendChild(supplierSkuSpan);
         d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
-        d.onmousedown=async e=>{e.preventDefault();
+        d.onmousedown=e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
-          let cost = Number(p.purchase_price) || Number(p.current_cost) || 0;  // ใช้ราคาซื้อก่อน
-          if (!cost && p.id) {
-            const { data: lastPOItem } = await sb.from('purchase_order_items')
-              .select('unit_cost')
-              .eq('product_id', p.id)
-              .order('id', { ascending: false })
-              .limit(1);
-            if (lastPOItem && lastPOItem.length > 0) {
-              cost = lastPOItem[0].unit_cost || 0;
-            }
-          }
+          const cost = Number(p.purchase_price) || 0;
           poItems[i]={product_id:p.id,product_name:p.name,qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:cost};
-          inp.value=p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
+          inp.value=p.sku||p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
         };
         dd.appendChild(d);
       });
       dd.style.display='block';
     }
     inp.oninput=()=>{
+      poItems[i].product_id = null;
       poItems[i].product_name = inp.value;
       srch(inp.value);
     };
     inp.onfocus=()=>srch(inp.value);
     inp.onblur=()=>{
-      poItems[i].product_name = inp.value;
-      setTimeout(async ()=>{
+      setTimeout(()=>{
         dd.style.display='none';
         if (window._poAutocompleteClicking) {
           window._poAutocompleteClicking = false;
@@ -9191,26 +9832,18 @@ function renderPOItems() {
           (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
         );
         if (matchedProd) {
-          if (poItems[i].product_id !== matchedProd.id) {
-            let cost = Number(matchedProd.purchase_price) || Number(matchedProd.current_cost) || 0;  // ใช้ราคาซื้อก่อน
-            if (!cost && matchedProd.id) {
-              const { data: lastPOItem } = await sb.from('purchase_order_items')
-                .select('unit_cost')
-                .eq('product_id', matchedProd.id)
-                .order('id', { ascending: false })
-                .limit(1);
-              if (lastPOItem && lastPOItem.length > 0) {
-                cost = lastPOItem[0].unit_cost || 0;
-              }
-            }
-            poItems[i].product_id = matchedProd.id;
-            poItems[i].product_name = matchedProd.name;
+          const productChanged = poItems[i].product_id !== matchedProd.id;
+          if (productChanged) {
+            const cost = Number(matchedProd.purchase_price) || 0;
             poItems[i].unit_cost = cost;
-            renderPOItems();
-            calcPOTotal();
           }
+          poItems[i].product_id = matchedProd.id;
+          poItems[i].product_name = matchedProd.name;
+          renderPOItems();
+          calcPOTotal();
         } else {
           poItems[i].product_id = null;
+          poItems[i].product_name = val;
           renderPOItems();
           calcPOTotal();
         }
@@ -9221,11 +9854,17 @@ function renderPOItems() {
     const statusHelp = document.createElement('div');
     statusHelp.style.cssText = 'font-size:11px;margin-top:3px;font-weight:500';
     if (it.product_id) {
-      statusHelp.innerHTML = '<span style="color:#10b981">✓ เชื่อมโยงคลังสินค้า (รับเข้าคลัง)</span>';
+      statusHelp.innerHTML = '<span style="color:var(--blue)">Supplier SKU: '+escapeHTML(selectedProduct?.supplier_sku||'-')+'</span> <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>';
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
     }
     pw.appendChild(statusHelp);
+    if (selectedProduct) {
+      const copyWrap = document.createElement('div');
+      copyWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;margin-top:7px';
+      copyWrap.innerHTML = poCopyButton(selectedProduct.sku, 'SKU') + poCopyButton(selectedProduct.supplier_sku, 'Supplier SKU');
+      if (copyWrap.innerHTML) pw.appendChild(copyWrap);
+    }
 
     const del=document.createElement('button'); del.textContent='✕';
     del.style.cssText='background:rgba(220,38,38,.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;margin-top:18px;flex-shrink:0';
@@ -9243,13 +9882,14 @@ function renderPOItems() {
     r2.appendChild(nf(it.qty_ordered||1,'จำนวน',v=>poItems[i].qty_ordered=v));
     r2.appendChild(nf(it.unit_cost||0,'ราคาซื้อ/ชิ้น',v=>poItems[i].unit_cost=v));
     const tw=document.createElement('div'); tw.style.cssText='text-align:right;padding-bottom:8px';
-    const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวม';
+    const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวมรายการ';
     const tv=document.createElement('div'); tv.className='font-mono text-amber'; tv.style.cssText='font-size:14px;font-weight:700';
-    tv.textContent=fmtB(Number(it.qty_ordered||1)*Number(it.unit_cost||0));
+    tv.id='po-item-total-'+i;
+    tv.textContent=fmtB(Number(it.qty_ordered??1)*Number(it.unit_cost||0));
     tw.appendChild(tl); tw.appendChild(tv); r2.appendChild(tw);
     card.appendChild(r2); el.appendChild(card);
   });
-  const ab=document.createElement('button'); ab.textContent='+ เพิ่มสินค้า';
+  const ab=document.createElement('button'); ab.textContent='+ เพิ่ม SKU';
   ab.style.cssText='width:100%;background:#f0f9f5;border:1px solid var(--accent);border-radius:8px;padding:10px;color:var(--accent);cursor:pointer;font-size:14px;font-weight:600;margin-top:4px';
   ab.onclick=addPOItem; el.appendChild(ab);
 }
@@ -9257,7 +9897,11 @@ function renderPOItems() {
 function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:0});renderPOItems();}
 
 function calcPOTotal(){
-  const subtotal = poItems.reduce((s,it)=>s+Number(it.qty_ordered||1)*Number(it.unit_cost||0),0);
+  poItems.forEach((it,i)=>{
+    const lineEl=document.getElementById('po-item-total-'+i);
+    if(lineEl) lineEl.textContent=fmtB(Number(it.qty_ordered??1)*Number(it.unit_cost||0));
+  });
+  const subtotal = poItems.reduce((s,it)=>s+Number(it.qty_ordered??1)*Number(it.unit_cost||0),0);
   const vatOn   = document.getElementById('po-vat-on')?.checked || false;
   const vatType = document.getElementById('po-vat-type')?.value || 'excluded';
   const vatAmt  = vatOn ? (vatType==='excluded' ? subtotal*0.07 : subtotal-subtotal/1.07) : 0;
@@ -9371,6 +10015,13 @@ async function dedupePOItems(poId) {
   viewPO(poId);
 }
 
+async function loadPOSkuMap(items) {
+  const productIds = [...new Set((items||[]).map(it=>it.product_id).filter(Boolean))];
+  if (!productIds.length) return {};
+  const { data } = await sb.from('products').select('id,sku,supplier_sku').eq('shop_id',currentShop.id).in('id', productIds);
+  return Object.fromEntries((data||[]).map(p=>[p.id,p]));
+}
+
 async function viewPO(poId) {
   if (currentPage !== 'purchase') {
     showPage('purchase');
@@ -9380,6 +10031,7 @@ async function viewPO(poId) {
     sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
   ]);
   if(!po) return;
+  const skuMap = await loadPOSkuMap(items);
   const el=document.getElementById('po-detail-content');
   if(!el) return;
 
@@ -9404,17 +10056,19 @@ async function viewPO(poId) {
       '</div>'+
       '<div><span style="color:var(--text3)">วันที่สั่ง</span><div>'+po.po_date+'</div></div>'+
     '</div>'+
-    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า'+(hasDupItems?' <span style="color:var(--red);font-weight:400;font-size:11px">⚠️ พบรายการซ้ำ — กดปุ่ม "🧹 ลบรายการซ้ำ" ด้านล่าง</span>':'')+'</div>'+
+    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการ SKU'+(hasDupItems?' <span style="color:var(--red);font-weight:400;font-size:11px">⚠️ พบรายการซ้ำ — กดปุ่ม "🧹 ลบรายการซ้ำ" ด้านล่าง</span>':'')+'</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
-      '<th>#</th><th class="left">สินค้า</th>'+
+      '<th>#</th><th class="left">SKU</th><th class="left">Supplier SKU</th>'+
       '<th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>'+
-      '<th class="right">ต้นทุน/ชิ้น</th><th class="right">รวม</th>'+
+      '<th class="right">ราคาซื้อ/ชิ้น</th><th class="right">รวม</th>'+
     '</tr></thead><tbody>'+
     (items||[]).map((it,i)=>{
+      const product = skuMap[it.product_id] || {};
       const pending=Number(it.qty_ordered)-Number(it.qty_received||0);
       const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
       return '<tr>'+
-        '<td style="text-align:center">'+(i+1)+'</td><td>'+it.product_name+'</td>'+
+        '<td style="text-align:center">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||it.product_name||'-')+'</span>'+poCopyButton(product.sku||it.product_name,'SKU')+'</div></td>'+
+        '<td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.supplier_sku||'-')+'</span>'+poCopyButton(product.supplier_sku,'Supplier SKU')+'</div></td>'+
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
         '<td style="text-align:right;color:var(--accent)">'+fmt(it.qty_received||0)+'</td>'+
         '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
@@ -9477,7 +10131,7 @@ async function editPO(poId) {
   editingPOId = po.id;
   editingPONo = po.po_no;
   
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,current_cost,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
 
   const titleEl = document.getElementById('po-modal-title');
@@ -9523,52 +10177,9 @@ async function updatePOStatus(poId, status) {
 }
 
 async function openGoodsReceipt(poId) {
-  // ดึงรายการที่ยังรับไม่ครบ
-  const [{data:po},{data:items}]=await Promise.all([
-    sb.from('purchase_orders').select('*').eq('id',poId).single(),
-    sb.from('purchase_order_items').select('*').eq('po_id',poId),
-  ]);
-  const pending=items.filter(it=>Number(it.qty_ordered)>Number(it.qty_received||0));
-  if(!pending.length){toast('รับสินค้าครบแล้ว','success');return;}
-
-  // สร้าง stock_movements สำหรับแต่ละ item
-  const rows = pending.map(it=>({
-    product_id:   it.product_id,
-    lot_name:     po.po_no+' - '+po.supplier_name,
-    qty:          Number(it.qty_ordered)-Number(it.qty_received||0),
-    cost_per_unit:Number(it.unit_cost||0),
-    other_cost:   0,
-  }));
-
-  // แสดง modal confirm รับสินค้า
-  const ok=confirm('ยืนยันรับสินค้าจาก '+po.supplier_name+'\nจำนวน '+pending.length+' รายการ ?');
-  if(!ok) return;
-  if(!ok) return;
-
-  // บันทึก stock_movements
-  for(const r of rows){
-    if(!r.product_id) continue;
-    await sb.from('stock_movements').insert({
-      shop_id:currentShop.id, product_id:r.product_id,
-      lot_name:r.lot_name, move_type:'in',
-      qty:r.qty, cost_per_unit:r.cost_per_unit, other_cost:0,
-      move_date:today(), po_id:poId,
-    });
-  }
-  // recalc stock
-  await recalcStockQty(rows.filter(r=>r.product_id).map(r=>r.product_id));
-
-  // อัพเดท qty_received และ status PO
-  for(const it of pending){
-    await sb.from('purchase_order_items').update({
-      qty_received: it.qty_ordered,
-    }).eq('id',it.id);
-  }
-  await sb.from('purchase_orders').update({status:'received'}).eq('id',poId);
-
+  window._stockPOsToOpen = [poId];
   closeModal('modal-po-detail');
-  toast('รับสินค้าสำเร็จ ✓ Stock อัพเดทแล้ว','success');
-  loadPOs();
+  showPage('stock');
 }
 
 async function createAPFromPO(poId) {
@@ -9597,6 +10208,7 @@ async function printPO(poId) {
     sb.from('purchase_order_items').select('*').eq('po_id',poId),
   ]);
   if(!po) return;
+  const skuMap = await loadPOSkuMap(items);
   const total=items.reduce((s,it)=>s+Number(it.qty_ordered)*Number(it.unit_cost||0),0);
   const bp=[];
   bp.push('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
@@ -9612,7 +10224,7 @@ async function printPO(poId) {
     let poShopName = (shop.name || 'sealthai').toUpperCase();
   if (!poShopName.endsWith('.COM')) poShopName += '.COM';
   bp.push('<div class="hd"><div><div class="shop-name">' + poShopName + '</div>');
-  bp.push('<div style="font-size:11px;color:#555">346 อาคาร 1B รัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร จังหวัดกรุงเทพมหานคร 10900</div></div>');
+  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(currentShop||{})+'</div></div>');
   bp.push('<div class="doc-type">ใบสั่งซื้อ / Purchase Order</div></div>');
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
@@ -9621,13 +10233,14 @@ async function printPO(poId) {
   bp.push('<div><span style="color:#777;font-size:11px">วันที่</span>&nbsp;&nbsp;<strong>'+po.po_date+'</strong></div>');
   if(po.expected_date) bp.push('<div><span style="color:#777;font-size:11px">คาดว่าจะรับ</span>&nbsp;&nbsp;<strong>'+po.expected_date+'</strong></div>');
   bp.push('</div></div>');
-  bp.push('<table><thead><tr><th style="width:36px">#</th><th style="text-align:left">รายการสินค้า</th><th style="width:60px">จำนวน</th><th style="width:80px;text-align:right">ต้นทุน/ชิ้น</th><th style="width:80px;text-align:right">รวม</th></tr></thead><tbody>');
+  bp.push('<table><thead><tr><th style="width:36px">#</th><th style="text-align:left">SKU</th><th style="text-align:left">Supplier SKU</th><th style="width:60px">จำนวน</th><th style="width:80px;text-align:right">ราคาซื้อ/ชิ้น</th><th style="width:80px;text-align:right">รวม</th></tr></thead><tbody>');
   const MIN=10; const empties=Math.max(0,MIN-(items||[]).length);
   (items||[]).forEach((it,i)=>{
+    const product = skuMap[it.product_id] || {};
     const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
-    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+it.product_name+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
+    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(product.sku||it.product_name||'-')+'</td><td>'+escapeHTML(product.supplier_sku||'-')+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
   });
-  for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>');
+  for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
   bp.push('</tbody></table>');
   bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+fmtB(total)+'</span></div>');
   if(po.note) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+po.note+'</div>');
@@ -10408,6 +11021,8 @@ function saveShopeeURL() {
   const url = document.getElementById('settings-shopee-url')?.value?.trim() || '';
   shopeeGSheetUrl = url;
   localStorage.setItem('ns_shopee_url', url);
+  shopeeData = [];
+  _shopeeFeeLoadAttempted = false;
   toast('บันทึก Shopee URL ✓', 'success');
 }
 
@@ -10556,6 +11171,8 @@ function saveShopeeUrlAndReload() {
   if (!url) { toast('กรุณาใส่ URL', 'error'); return; }
   shopeeGSheetUrl = url;
   localStorage.setItem('ns_shopee_url', url);
+  shopeeData = [];
+  _shopeeFeeLoadAttempted = false;
   toast('บันทึก URL ✓ กำลังโหลด...', 'success');
   loadShopeeFromURL(true);
 }
@@ -10563,6 +11180,8 @@ function saveShopeeUrlAndReload() {
 function resetShopeeUrl() {
   shopeeGSheetUrl = _SHOPEE_URL;
   localStorage.setItem('ns_shopee_url', _SHOPEE_URL);
+  shopeeData = [];
+  _shopeeFeeLoadAttempted = false;
   const el = document.getElementById('shopee-url');
   if (el) el.value = _SHOPEE_URL;
   toast('รีเซ็ตเป็นชีตเริ่มต้น (gid=880541665) ✓ กำลังโหลด...', 'success');
@@ -11338,7 +11957,7 @@ async function settings() {
         <div class="form-group"><label>ชื่อร้าน</label>
           <input type="text" id="s-shopname" value="${currentShop?.name||''}"></div>
         <div class="form-group"><label>ที่อยู่</label>
-          <textarea id="s-address" rows="2" placeholder="ที่อยู่ร้าน">${currentShop?.address||''}</textarea></div>
+          <textarea id="s-address" rows="2" placeholder="ที่อยู่ร้าน">${getShopAddress(currentShop)}</textarea></div>
         <div class="grid-2">
           <div class="form-group"><label>เบอร์โทร</label>
             <input type="text" id="s-phone" value="${currentShop?.phone||''}" placeholder="0x-xxxx-xxxx"></div>
@@ -11354,7 +11973,7 @@ async function settings() {
         <div style="border:2px solid var(--border);border-radius:8px;padding:16px;font-size:13px;background:#fff">
           <div style="font-size:17px;font-weight:700;margin-bottom:4px">${currentShop?.name||'ชื่อร้าน'}</div>
           <div style="color:var(--text2);font-size:12px;line-height:1.7">
-            ${currentShop?.address||'ที่อยู่ร้าน'}<br>
+            ${getShopAddress(currentShop)}<br>
             โทร: ${currentShop?.phone||'-'}&nbsp;&nbsp;|&nbsp;&nbsp;เลขผู้เสียภาษี: ${currentShop?.tax_id||'-'}
           </div>
         </div>
@@ -12519,14 +13138,16 @@ async function openShippingLabelModal(orderId) {
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '300';
+  modal.dataset.unsavedRemoveOnExit = 'true';
   
-  // Prepare Sender Address (prefill from currentShop)
+  // Sender contact is fixed for every parcel label.
   const shopName = currentShop?.name || 'Nature Online';
-  const shopPhone = currentShop?.phone || '-';
-  const shopAddr = currentShop?.address || '';
+  const shopPhone = '0652626479';
+  const shopAddr = DEFAULT_SHOP_ADDRESS;
   
   // Prepare Receiver Address (prefill from order)
   const custName = order.customer_name || '-';
+  const custContact = order.customer_contact || '';
   const custPhone = order.customer_phone || '-';
   const custAddr = order.customer_address || '';
 
@@ -12535,8 +13156,8 @@ async function openShippingLabelModal(orderId) {
       <div class="modal-title">📦 พิมพ์ใบปะหน้าพัสดุ (จัดส่ง)</div>
 
       <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px">
-        <div style="font-weight:600;margin-bottom:4px">ออเดอร์: ${order.order_no||'-'} | ช่องทาง: ${order.channel||'-'}</div>
-        <div style="color:var(--text3)">วันที่: ${order.order_date||'-'} | การชำระเงิน: ${order.payment_method||'-'}</div>
+        <div style="font-weight:600;margin-bottom:4px">ออเดอร์: ${escapeHTML(order.order_no||'-')} | ช่องทาง: ${escapeHTML(order.channel||'-')}</div>
+        <div style="color:var(--text3)">วันที่: ${escapeHTML(order.order_date||'-')} | การชำระเงิน: ${escapeHTML(order.payment_method||'-')}</div>
       </div>
 
       <!-- Sender Info (Editable) -->
@@ -12544,15 +13165,15 @@ async function openShippingLabelModal(orderId) {
         <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:var(--text)">ข้อมูลผู้ส่ง (Sender)</div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">ชื่อผู้ส่ง / ชื่อร้านค้า</label>
-          <input type="text" id="ship-sender-name" value="${shopName.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-sender-name" value="${escapeHTML(shopName)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">เบอร์โทรผู้ส่ง</label>
-          <input type="text" id="ship-sender-phone" value="${shopPhone.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-sender-phone" value="${escapeHTML(shopPhone)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group">
           <label style="font-size:11px">ที่อยู่ผู้ส่ง</label>
-          <textarea id="ship-sender-address" rows="2" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${shopAddr}</textarea>
+          <textarea id="ship-sender-address" rows="2" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${escapeHTML(shopAddr)}</textarea>
         </div>
       </div>
 
@@ -12561,15 +13182,19 @@ async function openShippingLabelModal(orderId) {
         <div style="font-weight:600;font-size:13px;margin-bottom:8px;color:var(--text)">ข้อมูลผู้รับ (Receiver)</div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">ชื่อผู้รับ</label>
-          <input type="text" id="ship-recv-name" value="${custName.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-recv-name" value="${escapeHTML(custName)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+        </div>
+        <div class="form-group" style="margin-bottom:8px">
+          <label style="font-size:11px">ชื่อผู้ติดต่อ</label>
+          <input type="text" id="ship-recv-contact" value="${escapeHTML(custContact)}" placeholder="ชื่อผู้ติดต่อ" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group" style="margin-bottom:8px">
           <label style="font-size:11px">เบอร์โทรผู้รับ</label>
-          <input type="text" id="ship-recv-phone" value="${custPhone.replace(/"/g,'&quot;')}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
+          <input type="text" id="ship-recv-phone" value="${escapeHTML(custPhone)}" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px">
         </div>
         <div class="form-group">
           <label style="font-size:11px">ที่อยู่จัดส่ง</label>
-          <textarea id="ship-recv-address" rows="3" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${custAddr}</textarea>
+          <textarea id="ship-recv-address" rows="3" style="width:100%;border:1px solid var(--border2);border-radius:6px;padding:6px;font-size:13px;resize:vertical">${escapeHTML(custAddr)}</textarea>
         </div>
       </div>
 
@@ -12578,8 +13203,8 @@ async function openShippingLabelModal(orderId) {
         <div class="form-group">
           <label>ขนาดกระดาษ</label>
           <select id="ship-size" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px;width:100%">
-            <option value="A6" selected>A6 (10 &times; 15 cm)</option>
-            <option value="A5">A5 (15 &times; 21 cm)</option>
+            <option value="A6">A6 (10 &times; 15 cm)</option>
+            <option value="A5" selected>A5 (15 &times; 21 cm)</option>
             <option value="A4">A4 (21 &times; 29.7 cm)</option>
           </select>
         </div>
@@ -12596,23 +13221,31 @@ async function openShippingLabelModal(orderId) {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="closeShippingLabelModal(this)">ยกเลิก</button>
         <button class="btn btn-primary" onclick="printShippingLabel('${orderId}')">🖨️ สั่งพิมพ์ใบปะหน้า</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  registerUnsavedForm(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeShippingLabelModal(modal); });
 
   // Store for print function
   window._shipOrder = order;
   window._shipItems = items;
 }
 
+function closeShippingLabelModal(source) {
+  const modal = source?.classList?.contains('modal-overlay') ? source : source?.closest?.('.modal-overlay');
+  if (!modal || !confirmUnsavedForm(modal)) return false;
+  modal.remove();
+  return true;
+}
+
 async function printShippingLabel(orderId) {
   const order = window._shipOrder || {};
   const items = window._shipItems || [];
   
-  const size = document.getElementById('ship-size')?.value || 'A6';
+  const size = document.getElementById('ship-size')?.value || 'A5';
   const showItems = document.getElementById('ship-show-items')?.checked;
   const showCod = document.getElementById('ship-show-cod')?.checked;
   
@@ -12621,19 +13254,23 @@ async function printShippingLabel(orderId) {
   const senderAddr = document.getElementById('ship-sender-address')?.value || '';
   
   const recvName = document.getElementById('ship-recv-name')?.value || '';
+  const recvContact = document.getElementById('ship-recv-contact')?.value || '';
   const recvPhone = document.getElementById('ship-recv-phone')?.value || '';
   const recvAddr = document.getElementById('ship-recv-address')?.value || '';
+  const recvContactHtml = recvContact.trim() && recvContact.trim().toLowerCase() !== recvName.trim().toLowerCase()
+    ? '<div class="recv-contact">ผู้ติดต่อ: <strong>' + escapeHTML(recvContact.trim()) + '</strong></div>'
+    : '';
 
   // Determine page dimensions
-  let Wstr = '4in', Hstr = '6in';
-  if (size === 'A5') { Wstr = '5.8in'; Hstr = '8.3in'; }
+  let Wstr = '5.8in', Hstr = '8.3in';
+  if (size === 'A6') { Wstr = '4in'; Hstr = '6in'; }
   else if (size === 'A4') { Wstr = '8.3in'; Hstr = '11.7in'; }
 
   // COD detection
   const isCOD = order.payment_method === 'COD';
   const codText = (isCOD && showCod) 
-    ? `<div class="cod-badge">เก็บเงินปลายทาง (COD): <span class="cod-amount">฿${fmtB(order.total_amount)}</span></div>` 
-    : `<div class="cod-badge non-cod">ชำระเงินแล้ว: [ ${order.payment_method || 'โอนเงิน'} ]</div>`;
+    ? `<div class="cod-badge">เก็บเงินปลายทาง (COD): <span class="cod-amount">${fmtB(order.total_amount)}</span></div>`
+    : `<div class="cod-badge non-cod">ชำระเงินแล้ว: [ ${escapeHTML(order.payment_method || 'โอนเงิน')} ]</div>`;
 
   // Item details for packing checklist
   let itemsHtml = '';
@@ -12652,8 +13289,8 @@ async function printShippingLabel(orderId) {
           <tbody>
             ${items.map(it => `
               <tr>
-                <td>${it.product_name}</td>
-                <td style="text-align:center;font-weight:bold;font-size:14px">x ${it.qty}</td>
+                <td>${escapeHTML(it.product_name)}</td>
+                <td style="text-align:center;font-weight:bold;font-size:14px">x ${escapeHTML(it.qty)}</td>
                 <td style="text-align:center"><div class="check-box"></div></td>
               </tr>
             `).join('')}
@@ -12664,7 +13301,7 @@ async function printShippingLabel(orderId) {
   }
 
   const html = [
-    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบปะหน้าพัสดุ ' + (order.order_no || '') + '</title>',
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ใบปะหน้าพัสดุ ' + escapeHTML(order.order_no || '') + '</title>',
     '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">',
     '<style>',
     '* { box-sizing:border-box; margin:0; padding:0; }',
@@ -12681,6 +13318,7 @@ async function printShippingLabel(orderId) {
     '.title { font-weight:bold; font-size:12px; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #ccc; padding-bottom:2px; display:inline-block; }',
     '.recv-title { font-size:14px; border-bottom:2px solid #000; color:#000; }',
     '.recv-name { font-size:16px; font-weight:700; margin-bottom:4px; }',
+    '.recv-contact { font-size:14px; margin-bottom:3px; }',
     '.recv-addr { font-weight:500; font-size:15px; word-break:break-word; }',
     '.recv-phone { font-size:16px; font-weight:700; margin-top:4px; border:1px solid #000; display:inline-block; padding:2px 8px; background:#fff; }',
     
@@ -12705,20 +13343,21 @@ async function printShippingLabel(orderId) {
     '</style></head><body>',
     '<div class="label-page">',
     '  <div class="header-row">',
-    '    <div class="order-no">SO: ' + (order.order_no || '-') + '</div>',
-    '    <div class="carrier-info">' + (order.channel || 'Nature Online') + '</div>',
+    '    <div class="order-no">SO: ' + escapeHTML(order.order_no || '-') + '</div>',
+    '    <div class="carrier-info">' + escapeHTML(order.channel || 'Nature Online') + '</div>',
     '  </div>',
     '  <div class="address-container">',
     '    <div class="sender-box">',
     '      <div class="title">ผู้ส่ง (Sender)</div>',
-    '      <div><strong>' + senderName + '</strong> (โทร: ' + senderPhone + ')</div>',
-    '      <div style="margin-top:2px">' + senderAddr.replace(/\n/g, '<br>') + '</div>',
+    '      <div><strong>' + escapeHTML(senderName) + '</strong> (โทร: ' + escapeHTML(senderPhone) + ')</div>',
+    '      <div style="margin-top:2px">' + escapeHTML(senderAddr).replace(/\n/g, '<br>') + '</div>',
     '    </div>',
     '    <div class="receiver-box">',
     '      <div class="title recv-title">ผู้รับ (Receiver)</div>',
-    '      <div class="recv-name">' + recvName + '</div>',
-    '      <div class="recv-addr">' + recvAddr.replace(/\n/g, '<br>') + '</div>',
-    '      <div class="recv-phone">📞 โทร: ' + recvPhone + '</div>',
+    '      <div class="recv-name">' + escapeHTML(recvName) + '</div>',
+    recvContactHtml,
+    '      <div class="recv-addr">' + escapeHTML(recvAddr).replace(/\n/g, '<br>') + '</div>',
+    '      <div class="recv-phone">📞 โทร: ' + escapeHTML(recvPhone) + '</div>',
     '    </div>',
     '  </div>',
     codText,
@@ -12727,15 +13366,13 @@ async function printShippingLabel(orderId) {
     '</body></html>'
   ].join('\n');
 
-  // Close modals
-  document.querySelectorAll('.modal-overlay').forEach(m => {
-    if (m.querySelector('#ship-size')) m.remove();
-  });
-
   const widthPx = size==='A6' ? 400 : (size==='A5' ? 580 : 800);
   const heightPx = size==='A6' ? 600 : (size==='A5' ? 830 : 1100);
   const w = window.open('', '_blank', `width=${widthPx},height=${heightPx},scrollbars=yes`);
   if (!w) { toast('กรุณาอนุญาต Pop-up', 'error'); return; }
+  const shippingModal = document.getElementById('ship-size')?.closest('.modal-overlay');
+  unregisterUnsavedForm(shippingModal);
+  shippingModal?.remove();
   w.document.write(html);
   w.document.close();
   setTimeout(()=>w.print(),500);
