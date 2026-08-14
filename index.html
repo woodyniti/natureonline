@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.25';
+    const CACHE = 'sealthai-v1.26';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.25</div>
+            <div class="logo-sub">v1.26</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -8959,6 +8959,15 @@ const INVESTMENT_TYPES = {
   deposit:'เงินฝาก/ดอกเบี้ย', bond:'ตราสารหนี้', fund:'กองทุน', stock:'หุ้น',
   private_business:'ลงทุนในกิจการ', crypto:'สินทรัพย์ดิจิทัล', other:'อื่น ๆ'
 };
+const INVESTMENT_TYPE_EXAMPLES = {
+  deposit:'เช่น ฝากประจำ บัญชีออมทรัพย์ดอกเบี้ยสูง หรือเงินฝากสกุลต่างประเทศ',
+  bond:'เช่น พันธบัตรรัฐบาล หุ้นกู้บริษัท หรือตั๋วเงินคลัง',
+  fund:'เช่น กองทุนรวมตลาดเงิน กองทุนดัชนี SSF หรือ RMF',
+  stock:'เช่น ซื้อหุ้นในตลาด SET, mai, Nasdaq หรือหุ้นต่างประเทศ',
+  private_business:'เช่น ลงเงินเป็นหุ้นส่วน ร่วมทุนร้านค้า หรือถือหุ้นบริษัทนอกตลาด',
+  crypto:'เช่น Bitcoin (BTC), Ethereum (ETH) หรือ Stablecoin',
+  other:'เช่น ทองคำ อสังหาริมทรัพย์ หรือสินทรัพย์ลงทุนที่ไม่อยู่ในรายการข้างต้น'
+};
 const OTHER_INCOME_TYPES = {
   interest:'ดอกเบี้ย', dividend:'เงินปันผล/ส่วนแบ่งกำไร', investment_sale:'ขาย/ไถ่ถอนเงินลงทุน',
   fx_gain:'กำไรอัตราแลกเปลี่ยน', rent:'ค่าเช่า', commission:'ค่านายหน้า/Affiliate',
@@ -8997,7 +9006,7 @@ async function finance() {
       <div class="modal-title" id="inv-modal-title">📈 เพิ่มเงินลงทุน</div>
       <div class="grid-2">
         <div class="form-group"><label>วันที่ลงทุน *</label><input type="date" id="inv-date"></div>
-        <div class="form-group"><label>ประเภท *</label><select id="inv-type">${financeTypeOptions(INVESTMENT_TYPES)}</select></div>
+        <div class="form-group"><label>ประเภท *</label><select id="inv-type" onchange="updateInvestmentTypeExample()">${financeTypeOptions(INVESTMENT_TYPES)}</select><div id="inv-type-example" style="font-size:11px;color:var(--text3);line-height:1.5;margin-top:5px"></div></div>
         <div class="form-group"><label>ชื่อการลงทุน *</label><input id="inv-name" placeholder="เช่น กองทุน ABC"></div>
         <div class="form-group"><label>ผู้ให้บริการ/แพลตฟอร์ม</label><input id="inv-provider" placeholder="เช่น ธนาคาร/โบรกเกอร์"></div>
         <div class="form-group"><label>เงินต้น (บาท) *</label><input type="number" min="0" step="any" id="inv-principal" value="0"></div>
@@ -9078,11 +9087,18 @@ function renderOtherIncomeList() {
   el.innerHTML='<div class="table-wrap"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="text-right">ยอดรับ</th><th class="text-right">เงินต้นคืน</th><th class="text-right">กำไรรับรู้</th><th class="text-right">เงินเข้าสุทธิ</th><th></th></tr></thead><tbody>'+financeIncomeRows.map(r=>`<tr><td>${r.income_date||'-'}</td><td><div style="font-weight:600">${escapeHTML(r.description||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(OTHER_INCOME_TYPES[r.income_type]||r.income_type||'')}${r.investment_id?' · '+escapeHTML(invMap[r.investment_id]||'เงินลงทุน'):''}</div></td><td class="text-right font-mono">${fmtB(r.gross_amount)}</td><td class="text-right font-mono">${fmtB(r.principal_return)}</td><td class="text-right font-mono ${Number(r.realized_profit)>=0?'text-green':'text-red'}">${fmtB(r.realized_profit)}</td><td class="text-right font-mono text-accent">${fmtB(r.net_cash)}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openIncomeModal('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteOtherIncome('${r.id}')">ลบ</button></td></tr>`).join('')+'</tbody></table></div>';
 }
 
+function updateInvestmentTypeExample() {
+  const type = document.getElementById('inv-type')?.value || 'fund';
+  const el = document.getElementById('inv-type-example');
+  if (el) el.innerHTML = '💡 ' + escapeHTML(INVESTMENT_TYPE_EXAMPLES[type] || 'เลือกประเภทที่ใกล้เคียงที่สุดกับสินทรัพย์ที่บริษัทนำเงินไปลงทุน');
+}
+
 function openInvestmentModal(id=null) {
   editingInvestmentId=id; const r=financeInvestments.find(x=>x.id===id)||{};
   const set=(k,v)=>{const e=document.getElementById(k);if(e)e.value=v??'';};
   document.getElementById('inv-modal-title').textContent=id?'✏️ แก้ไขเงินลงทุน':'📈 เพิ่มเงินลงทุน';
   set('inv-date',r.investment_date||today());set('inv-type',r.investment_type||'fund');set('inv-name',r.name||'');set('inv-provider',r.provider||'');set('inv-principal',r.principal||0);set('inv-fees',r.fees||0);set('inv-status',r.status||'active');set('inv-note',r.note||'');
+  updateInvestmentTypeExample();
   openModal('modal-investment');
 }
 async function saveInvestment() {
@@ -12713,12 +12729,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.25</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Fix Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.26</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Finance UX</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.26', type:'minor', date:'2026-08-15', title:'Investment Type Examples', items:['เพิ่มตัวอย่างที่เข้าใจง่ายให้ประเภทเงินลงทุนทุกประเภท','เปลี่ยนคำแนะนำอัตโนมัติตามประเภทที่เลือก','ครอบคลุมเงินฝาก ตราสารหนี้ กองทุน หุ้น กิจการ สินทรัพย์ดิจิทัล และสินทรัพย์อื่น'] },
             { v:'1.25', type:'minor', date:'2026-08-15', title:'Category Image Priority & Upload Errors', items:['ใช้รูปหมวดที่อัปโหลดเป็นภาพหลักของการ์ด Categories','ใช้ภาพรวมสินค้าเป็นภาพสำรองเมื่อไม่มีรูปหมวดหรือรูปหมวดโหลดไม่ได้','หยุดการบันทึกและแสดงสาเหตุจริงเมื่อ Storage อัปโหลดไม่สำเร็จ','ตรวจชนิดไฟล์และจำกัดขนาดรูปไม่เกิน 5 MB'] },
             { v:'1.24', type:'minor', date:'2026-08-15', title:'Safe Legacy Expense Review', items:['ตรวจพบและนำค่าใช้จ่ายเก่า 21 รายการเข้าคิวจัดหมวด','เลือกอัตโนมัติเฉพาะรายการความมั่นใจสูง','ไม่เลือกอาหาร รายการอื่น และรายการเสี่ยงซ้ำไว้ล่วงหน้า','เพิ่มหมวดอาหาร ประชุม และสวัสดิการ พร้อมคำเตือนให้แยกเงินถอนเจ้าของ'] },
             { v:'1.23', type:'minor', date:'2026-08-15', title:'Expense Dashboard Date Hotfix', items:['ย้ายฟังก์ชันแปลงวันที่ให้ใช้งานร่วมกันได้ทุกหน้า','แก้ Dashboard ค่าใช้จ่ายค้างระหว่างโหลดข้อมูล','เพิ่มข้อความแจ้งข้อผิดพลาดในหน้าแทนการแสดงพื้นที่ว่าง'] },
