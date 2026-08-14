@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1';
+    const CACHE = 'sealthai-v1.19';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.18</div>
+            <div class="logo-sub">v1.19</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -898,6 +898,7 @@ function renderSidebar() {
     {page:'arinvoice',   icon:'💰', label: 'AR Invoice'},
     {page:'goodsreturn', icon:'🔄', label: 'รับคืนสินค้า'},
     {page:'expenses',    icon:'💸', label: t('nav.expenses')},
+    {page:'finance',     icon:'📈', label: 'รายได้อื่น & เงินลงทุน'},
 
     {section: '🛒 งานซื้อ', accent: true},
     {page:'suppliers',  icon:'🏢', label: t('nav.suppliers')},
@@ -1343,6 +1344,7 @@ const pageTitles = {
   monthly: 'สรุปยอดขายรายเดือน',
   orders: 'บันทึกออเดอร์',
   expenses: 'ค่าใช้จ่าย',
+  finance: 'รายได้อื่น & เงินลงทุน',
   products: 'สินค้า',
   stock: 'รับสินค้าเข้าสต๊อก',
   employees: 'พนักงาน + KPI',
@@ -1379,7 +1381,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, products, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
+  const pages = { ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
   if (pages[page]) pages[page]();
 }
 
@@ -1905,7 +1907,7 @@ async function dashboard() {
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes] = await Promise.all([
+  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes, _shopeeReady, otherIncomeRes, allOtherIncomeRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
@@ -1917,7 +1919,9 @@ async function dashboard() {
     sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date',ms).lte('move_date',me),
     sb.from('expenses').select('expense_date,amount').eq('shop_id', currentShop.id).limit(10000),
     sb.from('landed_costs').select('move_date,type,amount').eq('shop_id', currentShop.id).limit(10000),
-    ensureShopeeFeeData()
+    ensureShopeeFeeData(),
+    sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',ms).lte('income_date',me),
+    sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).limit(10000)
   ]);
 
   const allOrdersForRepeat = (repeatRes.data || []).filter(o => !isOrderCancelled(o));
@@ -1954,6 +1958,7 @@ async function dashboard() {
   // ใช้ต้นทุนที่มี fallback (แทน o.total_cost ที่อาจเป็น 0 จากการขายก่อนรับเข้า)
   const totalCost     = orders.reduce((s,o) => s + orderCostWithFallback(o), 0);
   const totalExpenses = expenses.reduce((s,e) => s + Number(e.amount||0), 0);
+  const totalOtherIncome = (otherIncomeRes?.data||[]).reduce((s,e)=>s+Number(e.realized_profit||0),0);
   const orderCount    = orders.length;
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
 
@@ -2004,8 +2009,9 @@ async function dashboard() {
   const cfoWage = commBase * CFO_WAGE_PCT / 100;   // commBase = กำไรสุทธิก่อนหัก (ขาดทุน=0)
 
   // ── Net Profit สุดท้าย (หลังหักคอมพนักงาน + ค่าแรง CFO) ──
-  const netProfit   = netBeforeComm - totalEmpComm - cfoWage;
-  const netPct      = totalRevenue > 0 ? (netProfit/totalRevenue*100).toFixed(1) : '0.0';
+  const netProfit   = netBeforeComm - totalEmpComm - cfoWage + totalOtherIncome;
+  const totalIncome = totalRevenue + totalOtherIncome;
+  const netPct      = totalIncome > 0 ? (netProfit/totalIncome*100).toFixed(1) : '0.0';
 
   // กำไรสุทธิสะสมตลอดอายุร้าน สำหรับ Profit Journey (ไม่เปลี่ยนตามตัวกรอง Dashboard)
   const lifetimeOrders = allOrdersForRepeat;
@@ -2016,14 +2022,16 @@ async function dashboard() {
   const lifetimeLanded = (allLandedRes?.data || [])
     .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
     .reduce((s,l) => s + Number(l.amount||0), 0);
+  const lifetimeOtherIncome = (allOtherIncomeRes?.data||[]).reduce((s,e)=>s+Number(e.realized_profit||0),0);
   const lifetimeBeforeComm = lifetimeRevenue - lifetimeCost - lifetimePlatformFee - lifetimeExpenses - lifetimeLanded;
   const lifetimeCommBase = Math.max(0, lifetimeBeforeComm);
   const lifetimeEmployeeComm = employees.reduce((s,e) => s + lifetimeCommBase * Number(e.commission_rate||0) / 100, 0);
   const lifetimeCfoWage = lifetimeCommBase * CFO_WAGE_PCT / 100;
-  const cumulativeNetProfit = lifetimeBeforeComm - lifetimeEmployeeComm - lifetimeCfoWage;
+  const cumulativeNetProfit = lifetimeBeforeComm - lifetimeEmployeeComm - lifetimeCfoWage + lifetimeOtherIncome;
 
   // Timeline กำไรสุทธิสะสม: ใช้หาวันที่แตะเป้าครั้งแรกและประมาณเวลาไปยังเป้าถัดไป
   const profitByDate = {};
+  const otherIncomeByDate = {};
   const addProfitEvent = (date, amount) => {
     const key = String(date || '').slice(0, 10);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return;
@@ -2038,17 +2046,23 @@ async function dashboard() {
   (allLandedRes?.data || [])
     .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
     .forEach(l => addProfitEvent(l.move_date, -Number(l.amount || 0)));
+  (allOtherIncomeRes?.data || []).forEach(e => {
+    const key=String(e.income_date||'').slice(0,10);
+    if(/^\d{4}-\d{2}-\d{2}$/.test(key)) otherIncomeByDate[key]=(otherIncomeByDate[key]||0)+Number(e.realized_profit||0);
+  });
 
-  const profitDates = Object.keys(profitByDate).sort();
+  const profitDates = [...new Set([...Object.keys(profitByDate),...Object.keys(otherIncomeByDate)])].sort();
   const journeyStartDate = profitDates[0] || null;
   const dayMs = 86400000;
   const inclusiveDays = (from, to) => Math.max(1, Math.floor((new Date(to+'T00:00:00') - new Date(from+'T00:00:00')) / dayMs) + 1);
   const totalProfitShareRate = employees.reduce((sum,e) => sum + Number(e.commission_rate || 0) / 100, 0) + CFO_WAGE_PCT / 100;
   const reachedMilestones = {};
   let runningBeforeShare = 0;
+  let runningOtherIncome = 0;
   profitDates.forEach(date => {
-    runningBeforeShare += profitByDate[date];
-    const runningNet = runningBeforeShare - Math.max(0, runningBeforeShare) * totalProfitShareRate;
+    runningBeforeShare += Number(profitByDate[date]||0);
+    runningOtherIncome += Number(otherIncomeByDate[date]||0);
+    const runningNet = runningBeforeShare - Math.max(0, runningBeforeShare) * totalProfitShareRate + runningOtherIncome;
     PROFIT_JOURNEY_MILESTONES.forEach(milestone => {
       if (!reachedMilestones[milestone.target] && runningNet >= milestone.target) {
         reachedMilestones[milestone.target] = {
@@ -2252,6 +2266,11 @@ async function dashboard() {
         <div class="stat-value text-accent">${fmtB(totalRevenue)}</div>
         <div class="stat-sub">${orderCount} ออเดอร์</div>
       </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--green)" onclick="showPage('finance')" title="คลิกดูรายได้อื่นและเงินลงทุน">
+        <div class="stat-label">📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></div>
+        <div class="stat-value ${totalOtherIncome>=0?'text-green':'text-red'}">${fmtB(totalOtherIncome)}</div>
+        <div class="stat-sub">รับรู้จริง · ไม่รวมเงินต้นคืน</div>
+      </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="drillCancelledOrders('dashboard')" title="คลิกดูรายการออเดอร์ยกเลิก">
         <div class="stat-label">❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
         <div class="stat-value text-red">${cancelledOrders.length} ใบ</div>
@@ -2272,7 +2291,7 @@ async function dashboard() {
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">✨ กำไรสุทธิ <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
         <div class="stat-value ${netProfit>=0?'text-green':'text-red'}">${fmtB(netProfit)}</div>
-        <div class="stat-sub">${totalRevenue>0?(netProfit/totalRevenue*100).toFixed(1)+'% · ':''}หลังหักค่าใช้จ่าย</div>
+        <div class="stat-sub">${totalIncome>0?(netProfit/totalIncome*100).toFixed(1)+'% · ':''}รวมรายได้อื่นที่รับรู้แล้ว</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashExpenses()" title="คลิกดูรายการค่าใช้จ่าย">
         <div class="stat-label">💸 ค่าใช้จ่าย <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
@@ -2314,6 +2333,7 @@ async function dashboard() {
         ${(()=>{
           const items = [
             { label:'💰 ยอดขายรวม',        val: totalRevenue,     color:'var(--accent)', plus:true, drill:'drillDashOrders()'  },
+            ...(totalOtherIncome!==0 ? [{ label:'📈 รายได้อื่น/กำไรลงทุน', val:totalOtherIncome, color:'var(--green)', plus:totalOtherIncome>=0, sub:'ไม่รวมเงินต้นคืน', drill:'showPage(&quot;finance&quot;)' }] : []),
             { label:'📦 ต้นทุนสินค้า',      val: -totalCost,       color:'#7c3aed',       plus:false, drill:'drillDashOrders()' },
             ...(shopeeFee>0 ? [{ label:'💸 ค่าธรรมเนียม Shopee', val: -shopeeFee, color:'var(--red)', plus:false, sub:(shopeeActualCount?shopeeActualCount+' ออเดอร์ใช้ค่าจริง · ':'')+'ที่เหลือประมาณ '+SHOPEE_GP_FALLBACK_PCT+'% · ยอด Shopee '+fmtB(shopeeRev) }] : []),
             ...(lazadaFee>0 ? [{ label:'💸 ค่า GP Lazada '+LAZADA_GP_FALLBACK_PCT+'%', val: -lazadaFee, color:'#f97316', plus:false, sub:'จากยอด Lazada '+fmtB(lazadaRev) }] : []),
@@ -3453,28 +3473,34 @@ async function drillMonthlyExpenses() {
 }
 
 async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
-  const [ordRes, expRes] = await Promise.all([
+  const [ordRes, expRes, incRes] = await Promise.all([
     sb.from('orders').select('order_date,total_amount,total_cost').eq('shop_id', currentShop.id).gte('order_date',dateFrom).lte('order_date',dateTo),
-    sb.from('expenses').select('expense_date,amount').eq('shop_id', currentShop.id).gte('expense_date',dateFrom).lte('expense_date',dateTo)
+    sb.from('expenses').select('expense_date,amount').eq('shop_id', currentShop.id).gte('expense_date',dateFrom).lte('expense_date',dateTo),
+    sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',dateFrom).lte('income_date',dateTo)
   ]);
   const orders   = ordRes.data || [];
   const expenses = expRes.data || [];
+  const otherIncome = incRes.data || [];
 
   // Group by date
   const dateMap = {};
   orders.forEach(o => {
-    if (!dateMap[o.order_date]) dateMap[o.order_date] = {rev:0,cost:0,exp:0,cnt:0};
+    if (!dateMap[o.order_date]) dateMap[o.order_date] = {rev:0,other:0,cost:0,exp:0,cnt:0};
     dateMap[o.order_date].rev  += Number(o.total_amount||0);
     dateMap[o.order_date].cost += Number(o.total_cost||0);
     dateMap[o.order_date].cnt++;
   });
   expenses.forEach(e => {
-    if (!dateMap[e.expense_date]) dateMap[e.expense_date] = {rev:0,cost:0,exp:0,cnt:0};
+    if (!dateMap[e.expense_date]) dateMap[e.expense_date] = {rev:0,other:0,cost:0,exp:0,cnt:0};
     dateMap[e.expense_date].exp += Number(e.amount||0);
+  });
+  otherIncome.forEach(e=>{
+    if(!dateMap[e.income_date]) dateMap[e.income_date]={rev:0,other:0,cost:0,exp:0,cnt:0};
+    dateMap[e.income_date].other+=Number(e.realized_profit||0);
   });
 
   const days = Object.keys(dateMap).sort();
-  let totRev=0, totCost=0, totExp=0;
+  let totRev=0, totOther=0, totCost=0, totExp=0;
   let cum=0;
   const rows=[]; const chartLabels=[]; const chartCum=[];
   const chartRev=[]; const chartCost=[]; const chartNet=[];
@@ -3502,8 +3528,8 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
 
   days.forEach(d => {
     const dd = dateMap[d];
-    const profit = dd.rev - dd.cost - dd.exp;
-    totRev+=dd.rev; totCost+=dd.cost; totExp+=dd.exp; cum+=profit;
+    const profit = dd.rev + dd.other - dd.cost - dd.exp;
+    totRev+=dd.rev; totOther+=dd.other; totCost+=dd.cost; totExp+=dd.exp; cum+=profit;
     rows.push({d, ...dd, profit, cum});
     chartCum.push(cum);
 
@@ -3521,7 +3547,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     chartCost.push(chartGroupMap[k].cost);
     chartNet.push(chartGroupMap[k].net);
   });
-  const netProfit = totRev - totCost - totExp;
+  const netProfit = totRev + totOther - totCost - totExp;
 
   window._monthlyDates = { dateFrom, dateTo, periodLabel };
   const el = document.getElementById('monthly-content');
@@ -3535,6 +3561,11 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyCost()" title="คลิกดูต้นทุนรายออเดอร์">
         <div class="stat-label">📦 ต้นทุนรวม <span style="font-size:10px;color:var(--amber)">→ ดูรายการ</span></div>
         <div class="stat-value text-amber">${fmtB(totCost)}</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer" onclick="showPage('finance')" title="คลิกดูรายได้อื่นและเงินลงทุน">
+        <div class="stat-label">📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></div>
+        <div class="stat-value ${totOther>=0?'text-green':'text-red'}">${fmtB(totOther)}</div>
+        <div class="stat-sub">ไม่รวมเงินต้นคืน</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyExpenses()" title="คลิกดูค่าใช้จ่าย">
         <div class="stat-label">💸 ค่าใช้จ่ายรวม <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
@@ -3558,7 +3589,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
         <table>
           <thead><tr>
             <th>วันที่</th><th class="text-right">ยอดขาย</th>
-            <th class="text-right">ค่าใช้จ่าย</th><th class="text-right">ออเดอร์</th>
+            <th class="text-right">รายได้อื่น</th><th class="text-right">ค่าใช้จ่าย</th><th class="text-right">ออเดอร์</th>
             <th class="text-right">ต้นทุน</th><th class="text-right">กำไรสุทธิ</th>
             <th class="text-right">กำไรสะสม</th>
           </tr></thead>
@@ -3566,6 +3597,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
             ${rows.map(r=>`<tr>
               <td>${r.cnt > 0 ? `<a href="javascript:void(0)" onclick="drillMonthlyDay('${r.d}')" style="color:var(--accent);font-weight:600;text-decoration:underline">${r.d}</a>` : r.d}</td>
               <td class="text-right font-mono text-accent">${fmtB(r.rev)}</td>
+              <td class="text-right font-mono ${r.other>=0?'text-green':'text-red'}">${fmtB(r.other)}</td>
               <td class="text-right font-mono text-red">${fmtB(r.exp)}</td>
               <td class="text-right">${r.cnt}</td>
               <td class="text-right font-mono">${fmtB(r.cost)}</td>
@@ -3581,7 +3613,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
           <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;${r.cnt > 0 ? 'cursor:pointer' : ''}" ${r.cnt > 0 ? `onclick="drillMonthlyDay('${r.d}')"` : ''}>
             <div>
               <div style="font-size:13px;font-weight:600">${r.d}</div>
-              <div style="font-size:11px;color:var(--text3)">${r.cnt} ออเดอร์ · ค่าใช้จ่าย ${fmtB(r.exp)}</div>
+              <div style="font-size:11px;color:var(--text3)">${r.cnt} ออเดอร์ · รายได้อื่น ${fmtB(r.other)} · ค่าใช้จ่าย ${fmtB(r.exp)}</div>
             </div>
             <div style="text-align:right">
               <div class="font-mono text-accent" style="font-size:14px;font-weight:600">${fmtB(r.rev)}</div>
@@ -8684,6 +8716,193 @@ async function saveEmployee() {
   loadEmployeeStats();
 }
 
+// ══════════════════════════════════════════════════════════
+// OTHER INCOME & INVESTMENTS
+// ══════════════════════════════════════════════════════════
+let financeInvestments = [];
+let financeIncomeRows = [];
+let editingInvestmentId = null;
+let editingIncomeId = null;
+
+const INVESTMENT_TYPES = {
+  deposit:'เงินฝาก/ดอกเบี้ย', bond:'ตราสารหนี้', fund:'กองทุน', stock:'หุ้น',
+  private_business:'ลงทุนในกิจการ', crypto:'สินทรัพย์ดิจิทัล', other:'อื่น ๆ'
+};
+const OTHER_INCOME_TYPES = {
+  interest:'ดอกเบี้ย', dividend:'เงินปันผล/ส่วนแบ่งกำไร', investment_sale:'ขาย/ไถ่ถอนเงินลงทุน',
+  fx_gain:'กำไรอัตราแลกเปลี่ยน', rent:'ค่าเช่า', commission:'ค่านายหน้า/Affiliate',
+  rebate:'Cashback/Rebate', grant:'เงินสนับสนุน', asset_sale:'กำไรขายทรัพย์สิน', other:'รายได้อื่น'
+};
+function financeTypeOptions(map, selected='') {
+  return Object.entries(map).map(([k,v])=>`<option value="${k}" ${k===selected?'selected':''}>${v}</option>`).join('');
+}
+function financeSetupError(error) {
+  const msg=String(error?.message||'').toLowerCase();
+  return msg.includes('relation') || msg.includes('schema cache') || msg.includes('could not find');
+}
+
+async function finance() {
+  document.getElementById('topbar-actions').innerHTML =
+    '<button class="btn btn-secondary btn-sm" onclick="openInvestmentModal()">+ เงินลงทุน</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="openIncomeModal()">+ รายได้อื่น/ผลตอบแทน</button>';
+  setContent(`
+    <div id="finance-setup"></div>
+    <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+      <input type="month" id="fin-month" value="${today().slice(0,7)}" onchange="loadFinanceData()">
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fin-month').value='';loadFinanceData()">ดูทั้งหมด</button>
+      <span style="font-size:11px;color:var(--text3)">กำไรรับรู้ = รายรับจากการขายลงทุน − เงินต้นคืน − ค่าธรรมเนียม</span>
+    </div>
+    <div class="stat-grid mb-4" id="finance-stats"></div>
+    <div class="card mb-4">
+      <div class="card-header"><div><div class="card-title">📈 ทะเบียนเงินลงทุน</div><div class="card-subtitle">เงินต้นเป็นสินทรัพย์ ไม่ใช่ค่าใช้จ่าย</div></div><button class="btn btn-secondary btn-sm" onclick="openInvestmentModal()">+ เพิ่มเงินลงทุน</button></div>
+      <div id="investment-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div><div class="card-title">💰 รายได้อื่นและผลตอบแทน</div><div class="card-subtitle">รวมเฉพาะกำไร/รายได้ที่เกิดขึ้นจริง ไม่รวมเงินต้นคืน</div></div><button class="btn btn-primary btn-sm" onclick="openIncomeModal()">+ บันทึกรายได้</button></div>
+      <div id="income-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
+    <div class="modal-overlay" id="modal-investment"><div class="modal" style="max-width:620px">
+      <div class="modal-title" id="inv-modal-title">📈 เพิ่มเงินลงทุน</div>
+      <div class="grid-2">
+        <div class="form-group"><label>วันที่ลงทุน *</label><input type="date" id="inv-date"></div>
+        <div class="form-group"><label>ประเภท *</label><select id="inv-type">${financeTypeOptions(INVESTMENT_TYPES)}</select></div>
+        <div class="form-group"><label>ชื่อการลงทุน *</label><input id="inv-name" placeholder="เช่น กองทุน ABC"></div>
+        <div class="form-group"><label>ผู้ให้บริการ/แพลตฟอร์ม</label><input id="inv-provider" placeholder="เช่น ธนาคาร/โบรกเกอร์"></div>
+        <div class="form-group"><label>เงินต้น (บาท) *</label><input type="number" min="0" step="any" id="inv-principal" value="0"></div>
+        <div class="form-group"><label>ค่าธรรมเนียมตอนลงทุน</label><input type="number" min="0" step="any" id="inv-fees" value="0"></div>
+        <div class="form-group"><label>สถานะ</label><select id="inv-status"><option value="active">ถืออยู่</option><option value="closed">ปิดการลงทุนแล้ว</option><option value="written_off">ตัดขาดทุน</option></select></div>
+      </div>
+      <div class="form-group"><label>หมายเหตุ</label><textarea id="inv-note" rows="2"></textarea></div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-investment')">ยกเลิก</button><button class="btn btn-primary" onclick="saveInvestment()">💾 บันทึก</button></div>
+    </div></div>
+
+    <div class="modal-overlay" id="modal-income"><div class="modal" style="max-width:680px">
+      <div class="modal-title" id="income-modal-title">💰 บันทึกรายได้อื่น/ผลตอบแทน</div>
+      <div class="grid-2">
+        <div class="form-group"><label>วันที่รับรายได้ *</label><input type="date" id="inc-date"></div>
+        <div class="form-group"><label>ประเภทรายได้ *</label><select id="inc-type" onchange="calcFinanceIncome()">${financeTypeOptions(OTHER_INCOME_TYPES)}</select></div>
+        <div class="form-group"><label>เชื่อมกับเงินลงทุน</label><select id="inc-investment" onchange="calcFinanceIncome()"><option value="">-- ไม่เกี่ยวกับเงินลงทุน --</option></select></div>
+        <div class="form-group"><label>รายละเอียด *</label><input id="inc-desc" placeholder="ที่มาของรายได้"></div>
+        <div class="form-group"><label>ยอดรับก่อนหัก/ราคาขาย (บาท) *</label><input type="number" min="0" step="any" id="inc-gross" value="0" oninput="calcFinanceIncome()"></div>
+        <div class="form-group"><label>ส่วนที่เป็นเงินต้นคืน</label><input type="number" min="0" step="any" id="inc-principal" value="0" oninput="calcFinanceIncome()"><div style="font-size:10px;color:var(--text3);margin-top:3px">กรอกเมื่อขาย/ไถ่ถอน เพื่อไม่ให้นับเงินต้นเป็นรายได้</div></div>
+        <div class="form-group"><label>ค่าธรรมเนียม</label><input type="number" min="0" step="any" id="inc-fees" value="0" oninput="calcFinanceIncome()"></div>
+        <div class="form-group"><label>ภาษีหัก ณ ที่จ่าย</label><input type="number" min="0" step="any" id="inc-wht" value="0" oninput="calcFinanceIncome()"></div>
+        <div class="form-group"><label>บัญชีที่รับเงิน</label><input id="inc-account" placeholder="เช่น กสิกรไทย"></div>
+        <div class="form-group"><label>เลขอ้างอิง</label><input id="inc-ref"></div>
+      </div>
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:10px"><input type="checkbox" id="inc-recurring"> เป็นรายได้ประจำ</label>
+      <div id="inc-calc" style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:10px"></div>
+      <div class="form-group"><label>หมายเหตุ</label><textarea id="inc-note" rows="2"></textarea></div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal('modal-income')">ยกเลิก</button><button class="btn btn-primary" onclick="saveOtherIncome()">💾 บันทึก</button></div>
+    </div></div>
+  `);
+  await loadFinanceData();
+}
+
+async function loadFinanceData() {
+  const month=document.getElementById('fin-month')?.value||'';
+  let iq=sb.from('other_income').select('*').eq('shop_id',currentShop.id).order('income_date',{ascending:false});
+  if(month){ const [y,m]=month.split('-').map(Number); iq=iq.gte('income_date',monthStart(y,m)).lte('income_date',monthEnd(y,m)); }
+  const [invRes,incRes,allIncRes]=await Promise.all([
+    sb.from('investments').select('*').eq('shop_id',currentShop.id).order('investment_date',{ascending:false}),
+    iq,
+    sb.from('other_income').select('investment_id,principal_return').eq('shop_id',currentShop.id)
+  ]);
+  const setup=document.getElementById('finance-setup');
+  if(invRes.error||incRes.error){
+    if(setup && (financeSetupError(invRes.error)||financeSetupError(incRes.error))) setup.innerHTML=`<div class="card" style="border-left:4px solid var(--amber);margin-bottom:14px"><div style="font-weight:700;color:var(--amber)">⚠️ ต้องติดตั้งตารางการเงินครั้งแรก</div><div style="font-size:12px;color:var(--text2);margin-top:4px">เปิด Supabase → SQL Editor แล้วรันไฟล์ <code>supabase_finance_migration.sql</code> จาก GitHub หนึ่งครั้ง จากนั้นกดรีเฟรชหน้านี้</div></div>`;
+    else if(setup) setup.innerHTML=`<div class="card" style="border-left:4px solid var(--red);margin-bottom:14px;color:var(--red)">โหลดข้อมูลไม่สำเร็จ: ${escapeHTML(invRes.error?.message||incRes.error?.message||'')}</div>`;
+  } else if(setup) setup.innerHTML='';
+  financeInvestments=invRes.data||[]; financeIncomeRows=incRes.data||[];
+  const allReturns={}; (allIncRes.data||[]).forEach(r=>{if(r.investment_id)allReturns[r.investment_id]=(allReturns[r.investment_id]||0)+Number(r.principal_return||0);});
+  const invested=financeInvestments.reduce((s,r)=>s+Number(r.principal||0),0);
+  const returned=Object.values(allReturns).reduce((s,v)=>s+v,0);
+  const remaining=Math.max(0,invested-returned);
+  const recognized=financeIncomeRows.reduce((s,r)=>s+Number(r.realized_profit||0),0);
+  const netCash=financeIncomeRows.reduce((s,r)=>s+Number(r.net_cash||0),0);
+  const wht=financeIncomeRows.reduce((s,r)=>s+Number(r.withholding_tax||0),0);
+  const stats=document.getElementById('finance-stats'); if(stats) stats.innerHTML=`
+    <div class="stat-card"><div class="stat-label">💼 เงินต้นลงทุนทั้งหมด</div><div class="stat-value text-blue">${fmtB(invested)}</div></div>
+    <div class="stat-card"><div class="stat-label">📊 เงินต้นคงเหลือ</div><div class="stat-value">${fmtB(remaining)}</div><div class="stat-sub">คืนแล้ว ${fmtB(returned)}</div></div>
+    <div class="stat-card"><div class="stat-label">✅ กำไร/รายได้ที่รับรู้</div><div class="stat-value ${recognized>=0?'text-green':'text-red'}">${fmtB(recognized)}</div><div class="stat-sub">ไม่รวมเงินต้นคืน</div></div>
+    <div class="stat-card"><div class="stat-label">🏦 เงินเข้าสุทธิ</div><div class="stat-value text-accent">${fmtB(netCash)}</div><div class="stat-sub">ภาษีหัก ณ ที่จ่าย ${fmtB(wht)}</div></div>`;
+  renderInvestmentList(allReturns); renderOtherIncomeList();
+}
+
+function renderInvestmentList(allReturns={}) {
+  const el=document.getElementById('investment-list'); if(!el)return;
+  if(!financeInvestments.length){el.innerHTML='<div class="empty"><div class="empty-icon">📈</div><div class="empty-text">ยังไม่มีเงินลงทุน</div></div>';return;}
+  const status={active:'ถืออยู่',closed:'ปิดแล้ว',written_off:'ตัดขาดทุน'};
+  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ชื่อ/ประเภท</th><th class="text-right">เงินต้น</th><th class="text-right">คืนแล้ว</th><th class="text-right">คงเหลือ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+financeInvestments.map(r=>{
+    const ret=Number(allReturns[r.id]||0), remain=Math.max(0,Number(r.principal||0)-ret);
+    return `<tr><td>${r.investment_date||'-'}</td><td><div style="font-weight:600">${escapeHTML(r.name||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(INVESTMENT_TYPES[r.investment_type]||r.investment_type||'')} ${r.provider?'· '+escapeHTML(r.provider):''}</div></td><td class="text-right font-mono">${fmtB(r.principal)}</td><td class="text-right font-mono">${fmtB(ret)}</td><td class="text-right font-mono text-blue">${fmtB(remain)}</td><td>${status[r.status]||r.status}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openInvestmentModal('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteInvestment('${r.id}')">ลบ</button></td></tr>`;
+  }).join('')+'</tbody></table></div>';
+}
+
+function renderOtherIncomeList() {
+  const el=document.getElementById('income-list'); if(!el)return;
+  if(!financeIncomeRows.length){el.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-text">ยังไม่มีรายได้อื่นในช่วงนี้</div></div>';return;}
+  const invMap={};financeInvestments.forEach(x=>invMap[x.id]=x.name);
+  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="text-right">ยอดรับ</th><th class="text-right">เงินต้นคืน</th><th class="text-right">กำไรรับรู้</th><th class="text-right">เงินเข้าสุทธิ</th><th></th></tr></thead><tbody>'+financeIncomeRows.map(r=>`<tr><td>${r.income_date||'-'}</td><td><div style="font-weight:600">${escapeHTML(r.description||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(OTHER_INCOME_TYPES[r.income_type]||r.income_type||'')}${r.investment_id?' · '+escapeHTML(invMap[r.investment_id]||'เงินลงทุน'):''}</div></td><td class="text-right font-mono">${fmtB(r.gross_amount)}</td><td class="text-right font-mono">${fmtB(r.principal_return)}</td><td class="text-right font-mono ${Number(r.realized_profit)>=0?'text-green':'text-red'}">${fmtB(r.realized_profit)}</td><td class="text-right font-mono text-accent">${fmtB(r.net_cash)}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openIncomeModal('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteOtherIncome('${r.id}')">ลบ</button></td></tr>`).join('')+'</tbody></table></div>';
+}
+
+function openInvestmentModal(id=null) {
+  editingInvestmentId=id; const r=financeInvestments.find(x=>x.id===id)||{};
+  const set=(k,v)=>{const e=document.getElementById(k);if(e)e.value=v??'';};
+  document.getElementById('inv-modal-title').textContent=id?'✏️ แก้ไขเงินลงทุน':'📈 เพิ่มเงินลงทุน';
+  set('inv-date',r.investment_date||today());set('inv-type',r.investment_type||'fund');set('inv-name',r.name||'');set('inv-provider',r.provider||'');set('inv-principal',r.principal||0);set('inv-fees',r.fees||0);set('inv-status',r.status||'active');set('inv-note',r.note||'');
+  openModal('modal-investment');
+}
+async function saveInvestment() {
+  const name=document.getElementById('inv-name').value.trim(), date=document.getElementById('inv-date').value;
+  if(!name||!date){toast('กรุณากรอกวันที่และชื่อการลงทุน','error');return;}
+  const payload={shop_id:currentShop.id,investment_date:date,investment_type:document.getElementById('inv-type').value,name,provider:document.getElementById('inv-provider').value.trim(),principal:Number(document.getElementById('inv-principal').value||0),fees:Number(document.getElementById('inv-fees').value||0),status:document.getElementById('inv-status').value,note:document.getElementById('inv-note').value.trim(),updated_at:new Date().toISOString()};
+  const res=editingInvestmentId?await sb.from('investments').update(payload).eq('id',editingInvestmentId):await sb.from('investments').insert(payload);
+  if(res.error){toast('บันทึกไม่สำเร็จ: '+res.error.message,'error');return;} closeModal('modal-investment');toast('บันทึกเงินลงทุนแล้ว ✓','success');await loadFinanceData();
+}
+async function deleteInvestment(id) {
+  const {data:linkedRows,error:linkErr}=await sb.from('other_income').select('id').eq('investment_id',id).limit(1);
+  if(linkErr){toast('ตรวจสอบรายการที่เชื่อมไม่สำเร็จ: '+linkErr.message,'error');return;}
+  if(linkedRows?.length){toast('ลบไม่ได้ เพราะมีรายได้/ผลตอบแทนเชื่อมอยู่ กรุณาลบรายการที่เชื่อมก่อน','error');return;}
+  if(!confirm('ยืนยันลบรายการเงินลงทุนนี้?'))return; const {error}=await sb.from('investments').delete().eq('id',id);if(error){toast('ลบไม่สำเร็จ: '+error.message,'error');return;}toast('ลบเงินลงทุนแล้ว','success');await loadFinanceData();
+}
+
+function openIncomeModal(id=null) {
+  editingIncomeId=id; const r=financeIncomeRows.find(x=>x.id===id)||{};
+  document.getElementById('income-modal-title').textContent=id?'✏️ แก้ไขรายได้อื่น/ผลตอบแทน':'💰 บันทึกรายได้อื่น/ผลตอบแทน';
+  const sel=document.getElementById('inc-investment');sel.innerHTML='<option value="">-- ไม่เกี่ยวกับเงินลงทุน --</option>'+financeInvestments.map(x=>`<option value="${x.id}">${escapeHTML(x.name)}</option>`).join('');
+  const set=(k,v)=>{const e=document.getElementById(k);if(e)e.value=v??'';};
+  set('inc-date',r.income_date||today());set('inc-type',r.income_type||'other');set('inc-investment',r.investment_id||'');set('inc-desc',r.description||'');set('inc-gross',r.gross_amount||0);set('inc-principal',r.principal_return||0);set('inc-fees',r.fees||0);set('inc-wht',r.withholding_tax||0);set('inc-account',r.account_name||'');set('inc-ref',r.reference_no||'');set('inc-note',r.note||'');document.getElementById('inc-recurring').checked=!!r.recurring;
+  calcFinanceIncome();openModal('modal-income');
+}
+function calcFinanceIncome() {
+  const type=document.getElementById('inc-type')?.value||'other',gross=Number(document.getElementById('inc-gross')?.value||0),principal=Number(document.getElementById('inc-principal')?.value||0),fees=Number(document.getElementById('inc-fees')?.value||0),wht=Number(document.getElementById('inc-wht')?.value||0);
+  const investmentEvent=type==='investment_sale';
+  const inv=financeInvestments.find(x=>x.id===document.getElementById('inc-investment')?.value);
+  const acquisitionFee=investmentEvent&&inv&&Number(inv.principal||0)>0 ? Number(inv.fees||0)*(principal/Number(inv.principal)) : 0;
+  const realized=gross-(investmentEvent?principal+acquisitionFee:0)-fees; const netCash=gross-fees-wht;
+  const el=document.getElementById('inc-calc');if(el)el.innerHTML=`<div style="display:flex;justify-content:space-between;font-size:13px"><span>กำไร/รายได้ที่รับรู้</span><strong class="font-mono" style="color:${realized>=0?'var(--green)':'var(--red)'}">${fmtB(realized)}</strong></div>${acquisitionFee>0?`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:4px"><span>รวมค่าธรรมเนียมตอนลงทุนที่จัดสรร</span><span class="font-mono">-${fmtB(acquisitionFee)}</span></div>`:''}<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:5px"><span>เงินเข้าสุทธิหลังค่าธรรมเนียมและภาษี</span><strong class="font-mono">${fmtB(netCash)}</strong></div>${!investmentEvent&&principal>0?'<div style="font-size:11px;color:var(--amber);margin-top:6px">⚠️ เงินต้นคืนจะหักจากกำไรเฉพาะประเภท “ขาย/ไถ่ถอนเงินลงทุน”</div>':''}`;
+  return {realized,netCash};
+}
+async function saveOtherIncome() {
+  const date=document.getElementById('inc-date').value,desc=document.getElementById('inc-desc').value.trim();if(!date||!desc){toast('กรุณากรอกวันที่และรายละเอียด','error');return;}
+  const calc=calcFinanceIncome(),type=document.getElementById('inc-type').value,principal=Number(document.getElementById('inc-principal').value||0),investmentId=document.getElementById('inc-investment').value||null;
+  if(type==='investment_sale'&&!investmentId){toast('กรุณาเลือกเงินลงทุนสำหรับรายการขาย/ไถ่ถอน','error');return;}
+  if(type==='investment_sale'&&principal<=0){toast('กรุณากรอกส่วนที่เป็นเงินต้นคืน เพื่อไม่ให้นับเงินต้นเป็นรายได้','error');return;}
+  if(type==='investment_sale'){
+    let rq=sb.from('other_income').select('principal_return').eq('investment_id',investmentId);
+    if(editingIncomeId)rq=rq.neq('id',editingIncomeId);
+    const {data:returns,error:rErr}=await rq;
+    if(rErr){toast('ตรวจสอบเงินต้นคงเหลือไม่สำเร็จ: '+rErr.message,'error');return;}
+    const inv=financeInvestments.find(x=>x.id===investmentId),used=(returns||[]).reduce((s,x)=>s+Number(x.principal_return||0),0),remaining=Math.max(0,Number(inv?.principal||0)-used);
+    if(principal>remaining+0.001){toast('เงินต้นคืนเกินยอดคงเหลือ '+fmtB(remaining),'error');return;}
+  }
+  const payload={shop_id:currentShop.id,investment_id:investmentId,income_date:date,income_type:type,description:desc,gross_amount:Number(document.getElementById('inc-gross').value||0),principal_return:principal,fees:Number(document.getElementById('inc-fees').value||0),withholding_tax:Number(document.getElementById('inc-wht').value||0),net_cash:calc.netCash,realized_profit:calc.realized,account_name:document.getElementById('inc-account').value.trim(),reference_no:document.getElementById('inc-ref').value.trim(),recurring:document.getElementById('inc-recurring').checked,note:document.getElementById('inc-note').value.trim(),updated_at:new Date().toISOString()};
+  const res=editingIncomeId?await sb.from('other_income').update(payload).eq('id',editingIncomeId):await sb.from('other_income').insert(payload);if(res.error){toast('บันทึกไม่สำเร็จ: '+res.error.message,'error');return;}closeModal('modal-income');toast('บันทึกรายได้แล้ว ✓','success');await loadFinanceData();
+}
+async function deleteOtherIncome(id) {if(!confirm('ยืนยันลบรายการรายได้นี้?'))return;const {error}=await sb.from('other_income').delete().eq('id',id);if(error){toast('ลบไม่สำเร็จ: '+error.message,'error');return;}toast('ลบรายการแล้ว','success');await loadFinanceData();}
+
 // ─── PAGE: SETTINGS ───────────────────────────────────
 // ══════════════════════════════════════════════════════════
 // QUOTATIONS PAGE
@@ -8733,7 +8952,7 @@ async function quotations() {
 
         <!-- รายการสินค้า -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px">
-          <div style="font-weight:600;font-size:14px">รายการสินค้า</div>
+          <div><div style="font-weight:600;font-size:14px">รายการสินค้า</div><div style="font-size:11px;color:var(--text3);margin-top:2px">เลือกจากระบบหรือพิมพ์ชื่อรายการเองได้ แม้ไม่มี Code/SKU</div></div>
           <button onclick="addQuoteItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">+ เพิ่มสินค้า</button>
         </div>
         <div id="qt-items"></div>
@@ -8974,7 +9193,13 @@ function renderQuoteItems() {
       }
       dd.style.display = dd.children.length ? 'block' : 'none';
     }
-    inp.oninput=()=>doSearch(inp.value);
+    inp.oninput=()=>{
+      // เก็บชื่อที่พิมพ์ทันที เพื่อให้กดบันทึกได้แม้ไม่เลือกรายการจาก dropdown และไม่มี Code/SKU
+      quoteItems[i].product_name=inp.value;
+      quoteItems[i].product_id=null;
+      quoteItems[i].is_custom=true;
+      doSearch(inp.value);
+    };
     inp.onfocus=()=>doSearch(inp.value);
     inp.onblur=()=>setTimeout(()=>{
       dd.style.display='none';
@@ -9079,7 +9304,8 @@ async function saveQuote(status) {
   if (editingQuoteId) {
     const { error } = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
     if(error){toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
-    await sb.from('quotation_items').delete().eq('quotation_id', editingQuoteId);
+    const {error:delErr}=await sb.from('quotation_items').delete().eq('quotation_id', editingQuoteId);
+    if(delErr){toast('อัพเดตรายการสินค้าไม่สำเร็จ: '+delErr.message,'error');return;}
     const items = itemsFor(editingQuoteId);
     if(items.length){
       const { error: iErr } = await sb.from('quotation_items').insert(items);
@@ -9099,7 +9325,10 @@ async function saveQuote(status) {
     .select().single();
   if(error){toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
   const items = itemsFor(qt.id);
-  if(items.length) await sb.from('quotation_items').insert(items);
+  if(items.length){
+    const {error:iErr}=await sb.from('quotation_items').insert(items);
+    if(iErr){toast('สร้างใบเสนอราคาแล้ว แต่บันทึกรายการสินค้าไม่สำเร็จ: '+iErr.message,'error');return;}
+  }
   closeModal('modal-quote');
   toast('บันทึกใบเสนอราคา '+quoteNo+' ✓','success');
   loadQuotes();
@@ -9165,6 +9394,7 @@ async function viewQuote(qtId) {
     let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-quote-detail&quot;)">ปิด</button>';
     btns+='<button class="btn btn-secondary btn-sm" onclick="printQuote(&quot;'+qtId+'&quot;)">🖨 พิมพ์</button>';
     if(qt.status!=='converted') btns+='<button class="btn btn-secondary btn-sm" onclick="openEditQuote(&quot;'+qtId+'&quot;)">✏️ แก้ไข</button>';
+    if(qt.status!=='converted') btns+='<button class="btn btn-danger btn-sm" onclick="deleteQuote(&quot;'+qtId+'&quot;)">🗑 ลบ</button>';
     if(qt.status==='draft') btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;sent&quot;)">📤 ส่งลูกค้า</button>';
     if(qt.status==='sent')  btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;accepted&quot;)">✓ อนุมัติ</button>';
     if(['draft','sent','accepted'].includes(qt.status) && !qt.converted_order_id)
@@ -9174,6 +9404,23 @@ async function viewQuote(qtId) {
     footer.innerHTML=btns;
   }
   openModal('modal-quote-detail');
+}
+
+async function deleteQuote(qtId) {
+  const {data:qt,error:qErr}=await sb.from('quotations').select('quote_no,status').eq('id',qtId).single();
+  if(qErr||!qt){toast('ไม่พบใบเสนอราคา','error');return;}
+  if(qt.status==='converted'){toast('ลบไม่ได้ เพราะใบเสนอราคานี้แปลงเป็นออเดอร์แล้ว','error');return;}
+  if(!confirm('ยืนยันลบใบเสนอราคา '+(qt.quote_no||'')+'?\nการลบนี้ไม่สามารถย้อนกลับได้'))return;
+  // ลองลบหัวเอกสารก่อน (ฐานข้อมูลที่ตั้ง ON DELETE CASCADE จะลบรายการสินค้าให้อัตโนมัติ)
+  let {data:deleted,error}=await sb.from('quotations').delete().eq('id',qtId).select('id');
+  // ถ้า FK ไม่ได้ตั้ง cascade ค่อยลบรายการสินค้า แล้วลองลบหัวเอกสารอีกครั้ง
+  if(error?.code==='23503') {
+    const {error:itemErr}=await sb.from('quotation_items').delete().eq('quotation_id',qtId);
+    if(itemErr){toast('ลบรายการสินค้าไม่สำเร็จ: '+itemErr.message,'error');return;}
+    ({data:deleted,error}=await sb.from('quotations').delete().eq('id',qtId).select('id'));
+  }
+  if(error||!deleted?.length){toast('ลบใบเสนอราคาไม่สำเร็จ'+(error?': '+error.message:' (สิทธิ์ฐานข้อมูลไม่อนุญาต)'),'error');return;}
+  closeModal('modal-quote-detail');toast('ลบใบเสนอราคา '+(qt.quote_no||'')+' แล้ว','success');loadQuotes();
 }
 
 async function updateQuoteStatus(qtId, status) {
@@ -10578,6 +10825,7 @@ function renderMemberList() {
     {key:'quotations', label:'ใบเสนอราคา'},
     {key:'monthly',    label:'สรุปยอดขาย'},
     {key:'expenses',   label:'ค่าใช้จ่าย'},
+    {key:'finance',    label:'รายได้อื่น/ลงทุน'},
     {key:'products',   label:'สินค้า'},
     {key:'stock',      label:'รับสินค้าเข้า'},
     {key:'employees',  label:'พนักงาน'},
@@ -10702,7 +10950,7 @@ async function createMemberSimple() {
       const defaultPerms = {
         dashboard:true, orders:true,
         quotations:role==='admin', monthly:role==='admin',
-        expenses:role==='admin', products:role==='admin',
+        expenses:role==='admin', finance:role==='admin', products:role==='admin',
         stock:role==='admin', employees:false,
         suppliers:role==='admin', purchase:role==='admin',
         apinvoice:role==='admin', settings:false
@@ -10765,9 +11013,9 @@ async function togglePerm(memberId, page, checked) {
 
 async function setPrefset(memberId, preset) {
   const PRESETS = {
-    sales:    {dashboard:true,orders:true,quotations:true,monthly:true,expenses:false,products:true,stock:false,employees:false,suppliers:false,purchase:false,apinvoice:false,settings:false},
-    purchase: {dashboard:true,orders:false,quotations:false,monthly:false,expenses:true,products:true,stock:true,employees:false,suppliers:true,purchase:true,apinvoice:true,settings:false},
-    all:      {dashboard:true,orders:true,quotations:true,monthly:true,expenses:true,products:true,stock:true,employees:true,suppliers:true,purchase:true,apinvoice:true,settings:false},
+    sales:    {dashboard:true,orders:true,quotations:true,monthly:true,expenses:false,finance:false,products:true,stock:false,employees:false,suppliers:false,purchase:false,apinvoice:false,settings:false},
+    purchase: {dashboard:true,orders:false,quotations:false,monthly:false,expenses:true,finance:false,products:true,stock:true,employees:false,suppliers:true,purchase:true,apinvoice:true,settings:false},
+    all:      {dashboard:true,orders:true,quotations:true,monthly:true,expenses:true,finance:true,products:true,stock:true,employees:true,suppliers:true,purchase:true,apinvoice:true,settings:false},
   };
   const perms = PRESETS[preset];
   if (!perms) return;
@@ -12002,6 +12250,7 @@ async function loadMembersToPage() {
     {key:'quotations', label:'ใบเสนอราคา'},
     {key:'monthly',    label:'สรุปยอด'},
     {key:'expenses',   label:'ค่าใช้จ่าย'},
+    {key:'finance',    label:'รายได้อื่น/ลงทุน'},
     {key:'products',   label:'สินค้า'},
     {key:'stock',      label:'รับสินค้า'},
     {key:'employees',  label:'พนักงาน'},
@@ -12090,7 +12339,7 @@ async function createUserFromPage() {
       if (userId) {
         const defaultPerms = {
           dashboard:true, orders:true,
-          quotations:role==='admin', monthly:role==='admin', expenses:role==='admin',
+          quotations:role==='admin', monthly:role==='admin', expenses:role==='admin', finance:role==='admin',
           products:role==='admin', stock:role==='admin', employees:false,
           suppliers:role==='admin', purchase:role==='admin', apinvoice:role==='admin', settings:false
         };
@@ -12233,12 +12482,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.18</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.19</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.19', type:'minor', date:'2026-08-15', title:'Other Income · Investment Register · Quotation Editing', items:['เพิ่มเมนูรายได้อื่นและทะเบียนเงินลงทุน','คำนวณกำไรที่ขายแล้วโดยไม่นับเงินต้นคืนเป็นรายได้','นำกำไร/รายได้ที่รับรู้แล้วไปรวมใน Dashboard และ Profit Journey','ใบเสนอราคาแก้ไขและลบได้ พร้อมรองรับรายการสินค้าที่ไม่มี Code/SKU'] },
             { v:'1.18', type:'minor', date:'2026-08-15', title:'Quotation Signature & Bank Transfer Details', items:['เพิ่มลายเซ็นดิจิทัลในช่องผู้เสนอราคาเหมือนบิลเงินสด','เพิ่มข้อมูลชำระเงินธนาคารกสิกรไทยในใบเสนอราคา','แสดงชื่อบัญชี MS. NUNTANA L และเลขที่บัญชี 128-8-23520-8','จัดกรอบ Bank Transfer ให้ชัดเจนสำหรับเอกสารพิมพ์'] },
             { v:'1.17', type:'minor', date:'2026-08-15', title:'Profit Journey Timing & Forecast', items:['แสดงเวลาที่ใช้จริงตั้งแต่เริ่มร้านจนแตะเป้าแต่ละระดับครั้งแรก','แสดงวันที่แตะเป้าที่ผ่านมา','คาดการณ์เวลาถึงเป้าถัดไปจากกำไรสุทธิเฉลี่ยต่อวัน','แยกเวลาจริงและค่าคาดการณ์ให้ชัดเจนในหน้า Dashboard และรายละเอียดเป้า'] },
             { v:'1.16', type:'minor', date:'2026-08-15', title:'Fix Monthly Expense Details', items:['แก้รายละเอียดค่าใช้จ่ายรายเดือนให้ดึงคอลัมน์ note ที่บันทึกจริง','นำคอลัมน์ช่องทางชำระที่ไม่มีในตารางออก','แสดงข้อความ error เมื่อ Supabase โหลดข้อมูลไม่สำเร็จ','รองรับหมายเหตุหลายบรรทัดและป้องกัน HTML แทรกในข้อมูล'] },
