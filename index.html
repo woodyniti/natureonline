@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.22';
+    const CACHE = 'sealthai-v1.23';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.22</div>
+            <div class="logo-sub">v1.23</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1485,6 +1485,9 @@ function noteWithShippingFee(note, shippingFee) {
   return fee > 0 ? [clean, `[[SHIPPING_FEE:${fee}]]`].filter(Boolean).join('\n') : clean;
 }
 function today() { return new Date().toISOString().slice(0,10); }
+function localDateString(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function monthStart(y,m) { return `${y}-${String(m).padStart(2,'0')}-01`; }
 function monthEnd(y,m) { const d=new Date(y,m,0); return d.toISOString().slice(0,10); }
 
@@ -5958,8 +5961,15 @@ async function expenses() {
       </div>
     </div>
   `);
-  await loadExpenseCategories();
-  await loadExpenses();
+  try {
+    await loadExpenseCategories();
+    await loadExpenses();
+  } catch (error) {
+    console.error('Expense page load failed:', error);
+    const table = document.getElementById('exp-table');
+    if (table) table.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">โหลดข้อมูลค่าใช้จ่ายไม่สำเร็จ<br><span style="font-size:11px">${escapeHTML(error?.message||String(error))}</span></div></div>`;
+    toast('โหลดหน้าค่าใช้จ่ายไม่สำเร็จ: '+(error?.message||error),'error');
+  }
 }
 
 async function loadExpenseCategories() {
@@ -5982,9 +5992,9 @@ async function loadExpenses() {
   const ym = document.getElementById('exp-month').value;
   const [y,m] = ym.split('-').map(Number);
   const startDate = new Date(y,m-12,1);
-  const trendFrom = formatLocalDate(startDate);
+  const trendFrom = localDateString(startDate);
   const prevDate = new Date(y,m-2,1);
-  const prevFrom = formatLocalDate(prevDate), prevTo = formatLocalDate(new Date(y,m-1,0));
+  const prevFrom = localDateString(prevDate), prevTo = localDateString(new Date(y,m-1,0));
   const [allRes, salesRes, prevSalesRes, budgetRes] = await Promise.all([
     sb.from('expenses').select('*').eq('shop_id',currentShop.id).gte('expense_date',trendFrom).lte('expense_date',monthEnd(y,m)).order('expense_date',{ascending:false}),
     sb.from('orders').select('total_amount,shipping_status,doc_status').eq('shop_id',currentShop.id).gte('order_date',monthStart(y,m)).lte('order_date',monthEnd(y,m)),
@@ -6147,7 +6157,7 @@ function filteredExpenseRows() {
 function renderExpenseView() {
   const rows=filteredExpenseRows(), total=rows.reduce((s,e)=>s+expenseProfitAmount(e),0);
   const ym=document.getElementById('exp-month').value, [y,m]=ym.split('-').map(Number);
-  const prevFrom=formatLocalDate(new Date(y,m-2,1)), prevTo=formatLocalDate(new Date(y,m-1,0));
+  const prevFrom=localDateString(new Date(y,m-2,1)), prevTo=localDateString(new Date(y,m-1,0));
   const prevTotal=expenseDashboardRows.filter(e=>e.expense_date>=prevFrom&&e.expense_date<=prevTo).reduce((s,e)=>s+expenseProfitAmount(e),0);
   const sales=Number(window._expenseSales||0), budget=expenseCurrentBudgets.reduce((s,b)=>s+Number(b.amount||0),0);
   const unpaid=rows.filter(e=>(e.payment_status||'paid')!=='paid').reduce((s,e)=>s+Math.max(0,Number(e.base_amount??e.amount)+Number(e.vat_amount||0)-Number(e.withholding_tax||0)-Number(e.paid_amount||0)),0);
@@ -12698,12 +12708,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.22</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Feature Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.23</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Hotfix</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.23', type:'minor', date:'2026-08-15', title:'Expense Dashboard Date Hotfix', items:['ย้ายฟังก์ชันแปลงวันที่ให้ใช้งานร่วมกันได้ทุกหน้า','แก้ Dashboard ค่าใช้จ่ายค้างระหว่างโหลดข้อมูล','เพิ่มข้อความแจ้งข้อผิดพลาดในหน้าแทนการแสดงพื้นที่ว่าง'] },
             { v:'1.22', type:'minor', date:'2026-08-15', title:'Expense Dashboard & Budget Control', items:['เพิ่ม KPI ค่าใช้จ่ายต่อยอดขาย การเปลี่ยนแปลงจากเดือนก่อน ยอดค้างจ่าย และงบคงเหลือ','เพิ่มกราฟแนวโน้ม 12 เดือน หมวดค่าใช้จ่าย และช่องทาง/หน่วยงาน','เพิ่มงบประมาณรายเดือนแยกหมวด ผู้ขายยอดสูง และรายการใกล้ครบกำหนด','เพิ่มตัวกรอง หมวด สถานะ ช่องทาง และค้นหารายละเอียด'] },
             { v:'1.21', type:'minor', date:'2026-08-15', title:'Expense Management & Legacy Review', items:['เพิ่มผู้ขาย เลขเอกสาร VAT ภาษีหัก ณ ที่จ่าย สถานะชำระ ช่องทาง โครงการ และหลักฐาน','แยกค่าใช้จ่ายดำเนินงาน สต๊อก Landed Cost ทรัพย์สิน เงินถอนเจ้าของ ภาษี และเงินคืน','เพิ่มเครื่องมือตรวจและย้ายหมวดข้อมูลเก่าโดยเก็บหมวดเดิมไว้','ป้องกันรายการที่ไม่ใช่ค่าใช้จ่าย P&L ถูกหักกำไรสุทธิซ้ำ'] },
             { v:'1.20', type:'minor', date:'2026-08-15', title:'Fix Product Images in Categories', items:['คืนช่องอัปโหลดรูปในหน้าต่างแก้ไขสินค้า','แก้ JavaScript error จากช่องรูปที่หายไป','หน้า Categories โหลดข้อมูลสินค้าล่าสุดทุกครั้ง','แสดงรูปสินค้าที่อัปโหลดเป็นภาพหลักของหมวดหมู่'] },
