@@ -151,14 +151,16 @@ create policy "expense_receipts_delete" on storage.objects
 update public.expenses
 set standardized_category = case
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(facebook|google|ads|โฆษณา|การตลาด)' then 'การตลาดและโฆษณา'
+  when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(line[[:space:]]*oa)' then 'การตลาดและโฆษณา'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(แพค|แพ็ก|บรรจุ|จัดส่ง|ขนส่ง.*ลูกค้า)' then 'บรรจุภัณฑ์และการจัดส่ง'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(server|software|ai|it|ระบบ|hosting|domain)' then 'เทคโนโลยีและซอฟต์แวร์'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(น้ำมัน|ev|รถ|เดินทาง|ที่พัก)' then 'เดินทางและยานพาหนะ'
+  when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(อาหาร|เครื่องดื่ม|ตี๋น้อย|เฝอ|restaurant|cafe|coffee|burger)' then 'อาหาร ประชุม และสวัสดิการ'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(น้ำ|ไฟ|เช่า|สำนักงาน)' then 'สถานที่และสาธารณูปโภค'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(เงินเดือน|ค่าจ้าง|โบนัส|พนักงาน)' then 'บุคลากรและค่าจ้าง'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(ธนาคาร|ดอกเบี้ย|ค่าธรรมเนียม)' then 'ธนาคารและการเงิน'
   when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(ภาษี|ราชการ|ใบอนุญาต)' then 'ภาษีและค่าธรรมเนียมราชการ'
-  when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(กระดาษ|เอกสาร|อุปกรณ์)' then 'สำนักงานและบริหาร'
+  when lower(coalesce(category,'') || ' ' || coalesce(note,'')) ~ '(กระดาษ|เอกสาร|อุปกรณ์|ชั้นวาง)' then 'สำนักงานและบริหาร'
   else 'ค่าใช้จ่ายดำเนินงานอื่น'
 end
 where standardized_category is null;
