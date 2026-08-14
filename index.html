@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.19';
+    const CACHE = 'sealthai-v1.20';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -792,7 +792,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.19</div>
+            <div class="logo-sub">v1.20</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -6167,13 +6167,13 @@ async function loadProducts() {
         '<div style="font-size:18px;font-weight:700;color:' + color + ';font-family:var(--mono);margin-bottom:4px">' + fmtB(d.value) + '</div>' +
         '<div style="font-size:11px;color:var(--text3)">' + d.count + ' รายการ · มูลค่าสต๊อก</div>';
       // เพิ่มรูปถ้ามี
-      const catProds = allProducts.filter(p => p.category === cat && p.image_url);
+      const catProds = allProducts.filter(p => p.category === cat && getProductImageUrl(p));
       if (catProds.length) {
         const imgStrip = document.createElement('div');
         imgStrip.style.cssText = 'display:flex;gap:4px;padding:6px 10px 8px;flex-wrap:wrap';
         catProds.slice(0,3).forEach(p => {
           const img = document.createElement('img');
-          img.src = p.image_url;
+          img.src = getProductImageUrl(p);
           img.style.cssText = 'width:40px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border)';
           img.onerror = function(){ this.style.display='none'; };
           imgStrip.appendChild(img);
@@ -6308,7 +6308,7 @@ function renderProductTable(prods) {
       const rowNum = sorted.indexOf(p) + 1;
       return '<tr style="'+(zeroSt?'background:rgba(220,38,38,0.04)':'')+'">' +
         '<td style="width:32px;text-align:center;font-size:12px;color:var(--text3);font-family:var(--mono)">'+rowNum+'</td>'+
-        '<td style="width:44px;padding:4px;text-align:center">'+(p.image_url?'<img src="'+p.image_url+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px" onerror="this.style.display=\'none\'">':(cat0?.image_url?'<img src="'+cat0.image_url+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;opacity:0.35" onerror="this.style.display=\'none\'">':''))+'</td>'+
+        '<td style="width:44px;padding:4px;text-align:center">'+(getProductImageUrl(p)?'<img src="'+escapeHTML(getProductImageUrl(p))+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px" onerror="this.style.display=\'none\'">':(cat0?.image_url?'<img src="'+escapeHTML(cat0.image_url)+'" style="width:40px;height:40px;object-fit:cover;border-radius:6px;opacity:0.35" onerror="this.style.display=\'none\'">':''))+'</td>'+
         '<td class="font-mono" style="font-size:12px"><a href="javascript:void(0)" onclick="openProductHistory(&quot;'+p.id+'&quot;)" style="color:var(--blue);text-decoration:underline;font-weight:600">'+(p.sku||'-')+'</a></td>' +
         '<td class="font-mono" style="color:var(--blue);font-size:12px">'+(p.supplier_sku||'-')+'</td>' +
         '<td class="font-mono" style="color:var(--purple,#7c3aed);font-size:12px">'+(p.part_no||'-')+'</td>' +
@@ -6524,6 +6524,20 @@ async function editProduct(id) {
     </div>
     <div class="form-group"><label>ต้นทุนเฉลี่ยปัจจุบัน <span style="font-size:11px;color:var(--text3)">(อ่านอย่างเดียว · แปรผันตามการรับเข้า)</span></label>
       <input type="number" id="ep-cost" disabled style="opacity:0.5"></div>
+    <div class="form-group">
+      <label>🖼️ รูปสินค้า</label>
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div id="ep-img-preview" style="width:100px;height:100px;border:2px dashed var(--border2);border-radius:9px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg3);flex-shrink:0">
+          <span style="font-size:34px">📦</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <input type="file" id="ep-img-file" accept="image/jpeg,image/png,image/webp,image/gif" style="display:none" onchange="previewProductImage()">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('ep-img-file').click()" style="width:100%;margin-bottom:7px">📁 เลือกรูปสินค้า</button>
+          <input type="url" id="ep-img-url" placeholder="หรือวาง URL รูปภาพ" oninput="previewProductImageUrl(this.value)" style="width:100%">
+          <div id="ep-img-progress" style="font-size:11px;color:var(--text3);margin-top:5px">รองรับ JPG, PNG, WebP, GIF</div>
+        </div>
+      </div>
+    </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="document.getElementById('modal-edit-prod').remove()">ยกเลิก</button>
       <button class="btn btn-primary" id="ep-save-btn">💾 บันทึก</button>
@@ -6544,9 +6558,11 @@ async function editProduct(id) {
   document.getElementById('ep-save-btn').onclick   = () => updateProduct(id);
   // ใส่รูปเดิม
   const existImg = p.image_url || '';
-  document.getElementById('ep-img-url').value = existImg;
+  const epImgUrl = document.getElementById('ep-img-url');
+  if (epImgUrl) epImgUrl.value = existImg;
   if (existImg) {
-    document.getElementById('ep-img-preview').innerHTML = '<img src="'+existImg+'" style="width:100%;height:100%;object-fit:cover">';
+    const epImgPreview = document.getElementById('ep-img-preview');
+    if (epImgPreview) epImgPreview.innerHTML = '<img src="'+escapeHTML(existImg)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML=\'<span style=&quot;font-size:34px&quot;>⚠️</span>\'">';
   }
 }
 function openCatDropdown2() {
@@ -6584,7 +6600,13 @@ async function _checkPartNoCol() {
 
 async function updateProduct(id) {
   // upload image ก่อน (ถ้ามี)
-  const imageUrl = await uploadProductImage(id);
+  let imageUrl;
+  try {
+    imageUrl = await uploadProductImage(id);
+  } catch (err) {
+    toast(err.message || 'อัพโหลดรูปสินค้าไม่สำเร็จ', 'error');
+    return;
+  }
   const name = document.getElementById('ep-name').value.trim();
   if (!name) { toast('กรุณาใส่ชื่อ','error'); return; }
   const sku  = document.getElementById('ep-sku').value.trim();
@@ -12482,12 +12504,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.19</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
+          <div>🚀 <strong>SEALTHAI v1.20</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Minor Update</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.20', type:'minor', date:'2026-08-15', title:'Fix Product Images in Categories', items:['คืนช่องอัปโหลดรูปในหน้าต่างแก้ไขสินค้า','แก้ JavaScript error จากช่องรูปที่หายไป','หน้า Categories โหลดข้อมูลสินค้าล่าสุดทุกครั้ง','แสดงรูปสินค้าที่อัปโหลดเป็นภาพหลักของหมวดหมู่'] },
             { v:'1.19', type:'minor', date:'2026-08-15', title:'Other Income · Investment Register · Quotation Editing', items:['เพิ่มเมนูรายได้อื่นและทะเบียนเงินลงทุน','คำนวณกำไรที่ขายแล้วโดยไม่นับเงินต้นคืนเป็นรายได้','นำกำไร/รายได้ที่รับรู้แล้วไปรวมใน Dashboard และ Profit Journey','ใบเสนอราคาแก้ไขและลบได้ พร้อมรองรับรายการสินค้าที่ไม่มี Code/SKU'] },
             { v:'1.18', type:'minor', date:'2026-08-15', title:'Quotation Signature & Bank Transfer Details', items:['เพิ่มลายเซ็นดิจิทัลในช่องผู้เสนอราคาเหมือนบิลเงินสด','เพิ่มข้อมูลชำระเงินธนาคารกสิกรไทยในใบเสนอราคา','แสดงชื่อบัญชี MS. NUNTANA L และเลขที่บัญชี 128-8-23520-8','จัดกรอบ Bank Transfer ให้ชัดเจนสำหรับเอกสารพิมพ์'] },
             { v:'1.17', type:'minor', date:'2026-08-15', title:'Profit Journey Timing & Forecast', items:['แสดงเวลาที่ใช้จริงตั้งแต่เริ่มร้านจนแตะเป้าแต่ละระดับครั้งแรก','แสดงวันที่แตะเป้าที่ผ่านมา','คาดการณ์เวลาถึงเป้าถัดไปจากกำไรสุทธิเฉลี่ยต่อวัน','แยกเวลาจริงและค่าคาดการณ์ให้ชัดเจนในหน้า Dashboard และรายละเอียดเป้า'] },
@@ -14003,6 +14026,15 @@ function previewProductImage() {
   reader.readAsDataURL(file);
 }
 
+function previewProductImageUrl(value) {
+  const prev = document.getElementById('ep-img-preview');
+  const url = String(value || '').trim();
+  if (!prev) return;
+  prev.innerHTML = url
+    ? '<img src="'+escapeHTML(url)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'"><span style="display:none;font-size:30px">⚠️</span>'
+    : '<span style="font-size:34px">📦</span>';
+}
+
 async function uploadProductImage(productId) {
   const file = document.getElementById('ep-img-file')?.files[0];
   const urlInput = document.getElementById('ep-img-url')?.value.trim();
@@ -14010,18 +14042,19 @@ async function uploadProductImage(productId) {
 
   // ถ้าไม่มีไฟล์ใหม่ ใช้ URL เดิม
   if (!file) return urlInput || null;
+  if (file.size > 5 * 1024 * 1024) throw new Error('รูปสินค้าต้องมีขนาดไม่เกิน 5 MB');
 
   if (prog) prog.textContent = 'กำลังอัพโหลด...';
-  const ext = file.name.split('.').pop();
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
   const path = `products/${productId}-${Date.now()}.${ext}`;
 
   const { data, error } = await sb.storage.from('product-images').upload(path, file, {
-    cacheControl: '3600', upsert: true
+    cacheControl: '3600', upsert: true, contentType: file.type || undefined
   });
 
   if (error) {
     if (prog) prog.textContent = 'อัพโหลดไม่สำเร็จ: ' + error.message;
-    return urlInput || null;
+    throw new Error('อัพโหลดรูปสินค้าไม่สำเร็จ: ' + error.message);
   }
 
   const { data: urlData } = sb.storage.from('product-images').getPublicUrl(path);
@@ -14045,17 +14078,17 @@ async function categories() {
 }
 
 async function loadCategories() {
-  const { data } = await sb.from('categories')
-    .select('*').eq('shop_id', currentShop.id).order('sort_order').order('name');
-  allCategories = data || [];
-
-  // โหลด products data ตรงๆ ถ้ายังไม่มี (ไม่ render UI)
-  if (!allProducts.length) {
-    const { data: prods } = await sb.from('products')
-      .select('*').eq('shop_id', currentShop.id).eq('active', true).order('name');
-    allProducts = prods || [];
-    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
+  // โหลดใหม่ทุกครั้ง เพื่อให้รูปที่เพิ่งอัปโหลดในหน้าสินค้าแสดงทันที ไม่ใช้ cache เก่าใน allProducts
+  const [catRes, prodRes] = await Promise.all([
+    sb.from('categories').select('*').eq('shop_id', currentShop.id).order('sort_order').order('name'),
+    sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true).order('name')
+  ]);
+  if (catRes.error || prodRes.error) {
+    toast('โหลดหมวดหมู่/รูปสินค้าไม่สำเร็จ: '+(catRes.error?.message||prodRes.error?.message||''), 'error');
   }
+  allCategories = catRes.data || [];
+  allProducts = prodRes.data || [];
+  productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
 
   // sync: หา categories จาก products ที่ยังไม่มีใน table
   const existNames = new Set(allCategories.map(c => c.name));
@@ -14068,6 +14101,10 @@ async function loadCategories() {
   }
 
   renderCategoriesPage();
+}
+
+function getProductImageUrl(product) {
+  return String(product?.image_url || product?.imageUrl || product?.photo_url || '').trim();
 }
 
 function renderCategoriesPage() {
@@ -14089,26 +14126,26 @@ function renderCategoriesPage() {
   }
 
   grid.innerHTML = allCategories.map(cat => {
-    const prods = allProducts.filter(p => p.category === cat.name);
-    const prodImgs = prods.filter(p => p.image_url).slice(0, 4);
+    const catKey = String(cat.name||'').trim().toLocaleLowerCase('th-TH');
+    const prods = allProducts.filter(p => String(p.category||'').trim().toLocaleLowerCase('th-TH') === catKey);
+    const prodImgs = prods.map(p=>({product:p,url:getProductImageUrl(p)})).filter(x=>x.url).slice(0, 4);
     const stockVal = prods.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
 
     return `<div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="editCatModal('${cat.id}')">
       <!-- รูปหมวดหมู่ -->
       <div style="height:120px;background:var(--bg3);position:relative;overflow:hidden">
-        ${cat.image_url
-          ? `<img src="${cat.image_url}" style="width:100%;height:100%;object-fit:cover">`
-          : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
+        ${prodImgs.length
+          ? `<div style="width:100%;height:100%;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;padding:8px;background:var(--bg3)">
+              ${prodImgs.map(x => `<img src="${escapeHTML(x.url)}" alt="${escapeHTML(x.product.name||'รูปสินค้า')}" title="${escapeHTML(x.product.name||'')}" style="width:${prodImgs.length===1?'100%':'48%'};height:${prodImgs.length<=2?'100%':'48%'};min-width:0;object-fit:cover;border-radius:7px;border:1px solid var(--border)" onerror="this.style.display='none'">`).join('')}
+            </div>`
+          : cat.image_url
+            ? `<img src="${escapeHTML(cat.image_url)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`
+            : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">
               <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;padding:8px">
-                ${prodImgs.length
-                  ? prodImgs.map(p => `<img src="${p.image_url}" style="width:44px;height:44px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'">`).join('')
-                  : '<span style="font-size:40px">🗂️</span>'
-                }
+                <span style="font-size:40px">🗂️</span>
               </div>
             </div>`
         }
-        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
-        <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
         <div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
         <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${prods.length} สินค้า</div>
       </div>
