@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.26';
+    const CACHE = 'sealthai-v1.27';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -219,6 +219,12 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 }
 .topbar-title { font-size: 16px; font-weight: 700; }
 .topbar-actions { display: flex; align-items: center; gap: 8px; }
+.expense-desktop-actions { display: flex; align-items: center; gap: 8px; }
+.expense-mobile-toolbar { display: none; }
+.expense-mobile-primary,
+.expense-mobile-tool {
+  font-family: var(--font); cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
 .page-content { padding: 24px; flex: 1; min-width: 0; }
 
 /* ── Cards / Stat Cards ── */
@@ -464,6 +470,42 @@ tbody td:first-child { color: var(--text); }
   .btn-sm { padding: 6px 10px; font-size: 12px; }
   .topbar-actions .btn { padding: 7px 12px; font-size: 12px; }
   .topbar-actions { gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 55vw; }
+  .expense-desktop-actions { display: none !important; }
+  .expense-mobile-toolbar {
+    display: block !important;
+    margin-bottom: 14px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: linear-gradient(145deg, #ffffff 0%, #f5fbf9 100%);
+    box-shadow: 0 4px 16px rgba(35, 63, 84, 0.08);
+  }
+  .expense-mobile-primary {
+    width: 100%; min-height: 58px; border: 0; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center; gap: 11px;
+    padding: 10px 16px; color: #fff;
+    background: linear-gradient(135deg, var(--accent), #087f6a);
+    box-shadow: 0 5px 12px rgba(0, 168, 130, 0.24);
+  }
+  .expense-mobile-primary:active { transform: scale(0.985); }
+  .expense-mobile-primary .expense-action-icon {
+    width: 34px; height: 34px; border-radius: 10px; display: flex;
+    align-items: center; justify-content: center; font-size: 24px;
+    background: rgba(255,255,255,0.18);
+  }
+  .expense-mobile-primary .expense-action-copy { text-align: left; line-height: 1.2; }
+  .expense-mobile-primary strong { display: block; font-size: 15px; }
+  .expense-mobile-primary small { display: block; margin-top: 3px; font-size: 11px; font-weight: 400; opacity: 0.86; }
+  .expense-mobile-tools { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 7px; margin-top: 8px; }
+  .expense-mobile-tool {
+    min-width: 0; min-height: 68px; border: 1px solid var(--border);
+    border-radius: 12px; padding: 8px 3px; color: var(--text2); background: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; font-size: 11px; font-weight: 600; line-height: 1.18; text-align: center;
+    box-shadow: 0 1px 3px rgba(35,63,84,0.05);
+  }
+  .expense-mobile-tool:active { background: var(--bg3); transform: scale(0.97); }
+  .expense-mobile-tool .expense-action-icon { font-size: 21px; line-height: 1; }
   .page-content { padding: 10px 10px 70px; }
 
   /* ── Auth card ── */
@@ -792,7 +834,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.26</div>
+            <div class="logo-sub">v1.27</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -5900,14 +5942,27 @@ async function checkExpenseSchema() {
 async function expenses() {
   const schemaOK = await checkExpenseSchema();
   document.getElementById('topbar-actions').innerHTML = `
-    <button class="btn btn-secondary btn-sm" onclick="openExpenseReview()">🧹 จัดหมวดข้อมูลเก่า</button>
-    <button class="btn btn-secondary btn-sm" onclick="openExpenseBudget()">🎯 ตั้งงบ</button>
-    <button class="btn btn-secondary btn-sm" onclick="openExpenseCategories()">🗂️ หมวด</button>
-    <button class="btn btn-primary btn-sm" onclick="openNewExpense()">+ บันทึกค่าใช้จ่าย</button>`;
+    <div class="expense-desktop-actions">
+      <button class="btn btn-secondary btn-sm" onclick="openExpenseReview()">🧹 จัดหมวดข้อมูลเก่า</button>
+      <button class="btn btn-secondary btn-sm" onclick="openExpenseBudget()">🎯 ตั้งงบ</button>
+      <button class="btn btn-secondary btn-sm" onclick="openExpenseCategories()">🗂️ หมวด</button>
+      <button class="btn btn-primary btn-sm" onclick="openNewExpense()">+ บันทึกค่าใช้จ่าย</button>
+    </div>`;
   const now = new Date();
   const curYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
   setContent(`
+    <div class="expense-mobile-toolbar mobile-only">
+      <button type="button" class="expense-mobile-primary" onclick="openNewExpense()">
+        <span class="expense-action-icon">＋</span>
+        <span class="expense-action-copy"><strong>บันทึกค่าใช้จ่าย</strong><small>เพิ่มรายการและแนบหลักฐาน</small></span>
+      </button>
+      <div class="expense-mobile-tools">
+        <button type="button" class="expense-mobile-tool" onclick="openExpenseReview()"><span class="expense-action-icon">🧹</span><span>จัดหมวด<br>ข้อมูลเก่า</span></button>
+        <button type="button" class="expense-mobile-tool" onclick="openExpenseBudget()"><span class="expense-action-icon">🎯</span><span>ตั้งงบ<br>ประมาณ</span></button>
+        <button type="button" class="expense-mobile-tool" onclick="openExpenseCategories()"><span class="expense-action-icon">🗂️</span><span>จัดการ<br>หมวด</span></button>
+      </div>
+    </div>
     ${!schemaOK?`<div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:10px 12px;border-radius:9px;margin-bottom:12px;font-size:12px">⚠️ ยังไม่ได้ติดตั้งโครงสร้าง v1.21/v1.22 — ระบบยังอ่านข้อมูลเก่าได้ แต่ต้องรันไฟล์ <b>supabase_expense_migration.sql</b> ใน Supabase ก่อนใช้ช่องละเอียดและ Dashboard เต็มรูปแบบ</div>`:''}
     <div class="filter-bar" style="gap:8px;flex-wrap:wrap">
       <select id="exp-month" onchange="loadExpenses()">${getMonthOptions(curYM)}</select>
@@ -12729,12 +12784,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.26</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Finance UX</span></div>
+          <div>🚀 <strong>SEALTHAI v1.27</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Mobile UX</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.27', type:'minor', date:'2026-08-15', title:'Expense Mobile Toolbar', items:['ออกแบบปุ่มบันทึกค่าใช้จ่ายบนมือถือใหม่ให้เด่นและกดง่าย','จัดเครื่องมือข้อมูลเก่า งบประมาณ และหมวดเป็นตาราง 3 ช่องพอดีหน้าจอ','ซ่อนชุดปุ่ม Desktop ที่เบียดพื้นที่บนมือถือ','รองรับหน้าจอขนาดเล็กโดยไม่ต้องเลื่อนแนวนอน'] },
             { v:'1.26', type:'minor', date:'2026-08-15', title:'Investment Type Examples', items:['เพิ่มตัวอย่างที่เข้าใจง่ายให้ประเภทเงินลงทุนทุกประเภท','เปลี่ยนคำแนะนำอัตโนมัติตามประเภทที่เลือก','ครอบคลุมเงินฝาก ตราสารหนี้ กองทุน หุ้น กิจการ สินทรัพย์ดิจิทัล และสินทรัพย์อื่น'] },
             { v:'1.25', type:'minor', date:'2026-08-15', title:'Category Image Priority & Upload Errors', items:['ใช้รูปหมวดที่อัปโหลดเป็นภาพหลักของการ์ด Categories','ใช้ภาพรวมสินค้าเป็นภาพสำรองเมื่อไม่มีรูปหมวดหรือรูปหมวดโหลดไม่ได้','หยุดการบันทึกและแสดงสาเหตุจริงเมื่อ Storage อัปโหลดไม่สำเร็จ','ตรวจชนิดไฟล์และจำกัดขนาดรูปไม่เกิน 5 MB'] },
             { v:'1.24', type:'minor', date:'2026-08-15', title:'Safe Legacy Expense Review', items:['ตรวจพบและนำค่าใช้จ่ายเก่า 21 รายการเข้าคิวจัดหมวด','เลือกอัตโนมัติเฉพาะรายการความมั่นใจสูง','ไม่เลือกอาหาร รายการอื่น และรายการเสี่ยงซ้ำไว้ล่วงหน้า','เพิ่มหมวดอาหาร ประชุม และสวัสดิการ พร้อมคำเตือนให้แยกเงินถอนเจ้าของ'] },
