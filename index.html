@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.30';
+    const CACHE = 'sealthai-v1.31';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -246,6 +246,10 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
   box-shadow: 0 1px 4px rgba(99,115,150,0.08);
 }
 .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.card-header { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;min-width:0; }
+.card-header > * { min-width:0; }
+.card-header .card-title { margin-bottom:0; }
+.card-subtitle { margin-top:4px;font-size:12px;line-height:1.5;color:var(--text3); }
 
 /* ── Grid layouts ── */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -259,7 +263,9 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .gap-3 { gap: 12px; }
 
 /* ── Table ── */
-.table-wrap { overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+.table-wrap { overflow-x: auto; width:100%; max-width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width:thin; }
+.table-wrap:focus-visible { outline:2px solid rgba(0,168,130,0.35);outline-offset:2px; }
+.auto-table-wrap { border:1px solid var(--border);border-radius:10px;background:var(--bg2); }
 table { width: 100%; border-collapse: collapse; font-size: 13px; }
 /* ── ตารางออเดอร์แบบกระชับ 6 คอลัมน์: พอดีจอ ไม่ต้องเลื่อนซ้าย-ขวา ── */
 .orders-compact { table-layout: fixed; width: 100%; min-width: 0; }
@@ -435,8 +441,31 @@ tbody td:first-child { color: var(--text); }
   .main { margin-left: 0; }
   .hamburger { display: block; }
   .topbar { padding: 0 14px; height: 52px; }
-  .topbar-title { font-size: 15px; }
+  .topbar > .flex-center { min-width:0;flex:1; }
+  .topbar-title { min-width:0;max-width:42vw;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
   .page-content { padding: 12px; }
+
+  /* ── Responsive foundation: ทุกหน้า ── */
+  .page-content > *, .page-content .card > *, .page-content [class*="grid-"] > *,
+  .page-content .flex > *, .page-content .flex-between > * { min-width:0; }
+  .page-content img, .page-content svg, .page-content canvas { max-width:100%; }
+  .page-content input, .page-content select, .page-content textarea { max-width:100%;box-sizing:border-box; }
+  .page-content .flex-between { flex-wrap:wrap;gap:10px;align-items:flex-start; }
+  .page-content .card > [style*="display:flex"][style*="justify-content:space-between"] { flex-wrap:wrap;gap:10px; }
+  .card-header { flex-direction:column;align-items:stretch;gap:9px;margin-bottom:12px; }
+  .card-header > .btn, .card-header > div + .btn { width:100%;min-height:42px;justify-content:center; }
+  .card-title { line-height:1.4;overflow-wrap:anywhere; }
+  .card-subtitle { line-height:1.45;overflow-wrap:anywhere; }
+  .tabs, .period-tabs { width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none; }
+  .tabs::-webkit-scrollbar, .period-tabs::-webkit-scrollbar { display:none; }
+  .tabs .tab { flex:0 0 auto;min-width:92px;white-space:nowrap; }
+  .table-wrap { position:relative;border-radius:9px;overscroll-behavior-x:contain; }
+  .table-wrap table { min-width:max-content; }
+  .table-wrap th, .table-wrap td { padding:9px 10px; }
+  .auto-table-wrap::before { content:'↔ เลื่อนเพื่อดูข้อมูลเพิ่มเติม';display:block;position:sticky;left:0;width:max-content;padding:6px 9px;font-size:10px;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border); }
+  .loading { padding:36px 12px; }
+  .empty { padding:34px 12px; }
+  .empty-icon { font-size:32px; }
 
   /* ── Grids ── */
   .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
@@ -489,8 +518,8 @@ tbody td:first-child { color: var(--text); }
     -webkit-overflow-scrolling: touch;
   }
   .modal-title { font-size: 16px; }
-  .modal-footer { flex-wrap: wrap; gap: 8px; }
-  .modal-footer .btn { flex: 1; min-width: 0; justify-content: center; font-size: 13px; }
+  .modal-footer { position:sticky;bottom:-20px;z-index:2;flex-wrap:wrap;gap:8px;margin:18px -16px -20px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,0.96);border-top:1px solid var(--border);backdrop-filter:blur(10px); }
+  .modal-footer .btn { flex:1 1 120px;min-width:0;min-height:44px;justify-content:center;font-size:13px; }
 
   /* ── Forms inside modals ── */
   .form-group input, .form-group select, .form-group textarea {
@@ -502,6 +531,7 @@ tbody td:first-child { color: var(--text); }
   /* ── Filter bar ── */
   .filter-bar { gap: 8px; margin-bottom: 14px; }
   .filter-bar input, .filter-bar select { font-size: 14px; flex: 1; min-width: 120px; }
+  .filter-bar .btn { min-height:40px;justify-content:center; }
 
   /* ── Tables → hide on mobile (use cards instead) ── */
   .table-desktop { display: none !important; }
@@ -510,7 +540,10 @@ tbody td:first-child { color: var(--text); }
   .btn { padding: 9px 14px; font-size: 13px; }
   .btn-sm { padding: 6px 10px; font-size: 12px; }
   .topbar-actions .btn { padding: 7px 12px; font-size: 12px; }
-  .topbar-actions { gap: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: 55vw; }
+  .topbar-actions { gap:6px;flex-wrap:nowrap;overflow-x:auto;max-width:48vw;scrollbar-width:none; }
+  .topbar-actions::-webkit-scrollbar { display:none; }
+  #pwa-install-btn { flex:0 0 36px;width:36px;max-width:36px;overflow:hidden;padding:7px;font-size:0;justify-content:center;white-space:nowrap; }
+  #pwa-install-btn::before { content:'📲';font-size:16px; }
   .expense-desktop-actions { display: none !important; }
   .expense-mobile-toolbar {
     display: block !important;
@@ -668,6 +701,11 @@ tbody td:first-child { color: var(--text); }
   .modal { padding: 16px 14px; }
   #finance-page .finance-money-grid { grid-template-columns:1fr 1fr; }
   #finance-page .finance-money-cell:last-child:nth-child(odd) { grid-column:1 / -1; }
+  .topbar { padding:0 10px;gap:6px; }
+  .topbar-title { max-width:34vw;font-size:14px; }
+  .topbar-actions { max-width:43vw; }
+  .stat-card { padding:11px 10px; }
+  .filter-bar > .btn { flex:1 1 auto; }
 }
 
 /* ── Tablet (769px–1024px) ── */
@@ -684,6 +722,21 @@ tbody td:first-child { color: var(--text); }
   .mobile-only  { display: none  !important; }
   .desktop-only { display: block !important; }
   .hamburger    { display: none  !important; }
+}
+
+@media (min-width: 1280px) {
+  .page-content { width:100%;max-width:1680px;margin:0 auto;padding:28px 32px; }
+  .card { padding:22px; }
+}
+
+@media (hover:none) and (pointer:coarse) {
+  .btn, .nav-item, .m-card, .stat-card { -webkit-tap-highlight-color:transparent; }
+  .btn:active { transform:scale(0.985); }
+  tbody tr:hover { background:transparent; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  *, *::before, *::after { scroll-behavior:auto !important;animation-duration:0.01ms !important;transition-duration:0.01ms !important; }
 }
 
 /* ── Chart containers ── */
@@ -877,7 +930,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.30</div>
+            <div class="logo-sub">v1.31</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1448,6 +1501,7 @@ function showPage(page) {
   }
   // ────────────────────────────────────────────────────────
   currentPage = page;
+  document.getElementById('page-content').dataset.page = page;
   document.getElementById('page-title').textContent = pageTitles[page] || page;
   document.getElementById('topbar-actions').innerHTML = '';
   // Destroy old charts
@@ -1598,8 +1652,38 @@ function toast(msg, type='success') {
 }
 
 function setContent(html) {
-  document.getElementById('page-content').innerHTML = html;
+  const root = document.getElementById('page-content');
+  root.innerHTML = html;
+  root.dataset.page = currentPage || '';
+  scheduleResponsiveEnhance();
 }
+
+let responsiveEnhanceQueued = false;
+function enhanceResponsivePage() {
+  responsiveEnhanceQueued = false;
+  const root = document.getElementById('page-content');
+  if (!root) return;
+  root.querySelectorAll('table').forEach(table => {
+    if (!table.closest('.table-wrap')) {
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap auto-table-wrap';
+      table.parentNode.insertBefore(wrap, table);
+      wrap.appendChild(table);
+    }
+  });
+  root.querySelectorAll('.table-wrap').forEach(wrap => {
+    wrap.setAttribute('role', 'region');
+    wrap.setAttribute('aria-label', 'ตารางข้อมูล เลื่อนซ้ายขวาเพื่อดูเพิ่มเติม');
+    wrap.tabIndex = 0;
+  });
+}
+function scheduleResponsiveEnhance() {
+  if (responsiveEnhanceQueued) return;
+  responsiveEnhanceQueued = true;
+  requestAnimationFrame(enhanceResponsivePage);
+}
+const responsivePageObserver = new MutationObserver(scheduleResponsiveEnhance);
+responsivePageObserver.observe(document.getElementById('page-content'), { childList:true, subtree:true });
 
 // ── Doc status helpers ──────────────────────────────────
 const DOC_STATUSES = [
@@ -12841,12 +12925,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.30</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Mobile Finance</span></div>
+          <div>🚀 <strong>SEALTHAI v1.31</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Responsive System</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.31', type:'minor', date:'2026-08-15', title:'Responsive Design System — All Pages', items:['ปรับมาตรฐานทุกหน้าให้รองรับมือถือ แท็บเล็ต และ PC','จัด card header, toolbar, filter, tabs, form และ modal ให้ปรับตามขนาดจอ','ครอบตารางที่กว้างอัตโนมัติและให้เลื่อนภายในโดยไม่ทำให้ทั้งหน้าล้น','เพิ่มพื้นที่กดบนมือถือและจำกัดความกว้างเนื้อหาบนจอ PC ขนาดใหญ่'] },
             { v:'1.30', type:'minor', date:'2026-08-15', title:'Mobile Other Income & Investments', items:['ออกแบบหน้ารายได้อื่นและเงินลงทุนบนมือถือใหม่','เปลี่ยนตารางกว้างเป็นการ์ดที่อ่านง่ายและไม่เลื่อนแนวนอน','เพิ่มปุ่มลัดบันทึกเงินลงทุนและรายได้ที่กดง่าย','ปรับ KPI ตัวกรอง และปุ่มแก้ไข/ลบให้พอดีหน้าจอขนาดเล็ก'] },
             { v:'1.29', type:'minor', date:'2026-08-15', title:'Secure Product Image Storage Policies', items:['ติดตั้ง Storage RLS สำหรับ bucket product-images','จัดเก็บรูปสินค้าและรูปหมวดหมู่แยกตามร้าน','อนุญาตการเขียนไฟล์เฉพาะเจ้าของร้าน แอดมิน หรือผู้มีสิทธิ์สินค้า','คงการแสดงรูปผ่าน Public URL เพื่อให้รูปเดิมและรูปใหม่ใช้งานต่อได้'] },
             { v:'1.28', type:'minor', date:'2026-08-15', title:'Category Storage RLS Fix', items:['แก้เส้นทางอัปโหลดรูปหมวดหมู่ให้ผ่านนโยบาย Storage เดียวกับรูปสินค้า','ไม่ต้องเปิดสิทธิ์ bucket แบบสาธารณะสำหรับการเขียนไฟล์','ยังคงสร้างชื่อไฟล์ไม่ซ้ำเพื่อป้องกันรูปเก่าค้างในแคช','แสดงรูปหมวดหมู่เป็นภาพหลักทันทีหลังบันทึกสำเร็จ'] },
