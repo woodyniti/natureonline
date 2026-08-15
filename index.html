@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.28';
+    const CACHE = 'sealthai-v1.29';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -834,7 +834,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.28</div>
+            <div class="logo-sub">v1.29</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -12784,12 +12784,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.28</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Storage Fix</span></div>
+          <div>🚀 <strong>SEALTHAI v1.29</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Storage RLS</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.29', type:'minor', date:'2026-08-15', title:'Secure Product Image Storage Policies', items:['ติดตั้ง Storage RLS สำหรับ bucket product-images','จัดเก็บรูปสินค้าและรูปหมวดหมู่แยกตามร้าน','อนุญาตการเขียนไฟล์เฉพาะเจ้าของร้าน แอดมิน หรือผู้มีสิทธิ์สินค้า','คงการแสดงรูปผ่าน Public URL เพื่อให้รูปเดิมและรูปใหม่ใช้งานต่อได้'] },
             { v:'1.28', type:'minor', date:'2026-08-15', title:'Category Storage RLS Fix', items:['แก้เส้นทางอัปโหลดรูปหมวดหมู่ให้ผ่านนโยบาย Storage เดียวกับรูปสินค้า','ไม่ต้องเปิดสิทธิ์ bucket แบบสาธารณะสำหรับการเขียนไฟล์','ยังคงสร้างชื่อไฟล์ไม่ซ้ำเพื่อป้องกันรูปเก่าค้างในแคช','แสดงรูปหมวดหมู่เป็นภาพหลักทันทีหลังบันทึกสำเร็จ'] },
             { v:'1.27', type:'minor', date:'2026-08-15', title:'Expense Mobile Toolbar', items:['ออกแบบปุ่มบันทึกค่าใช้จ่ายบนมือถือใหม่ให้เด่นและกดง่าย','จัดเครื่องมือข้อมูลเก่า งบประมาณ และหมวดเป็นตาราง 3 ช่องพอดีหน้าจอ','ซ่อนชุดปุ่ม Desktop ที่เบียดพื้นที่บนมือถือ','รองรับหน้าจอขนาดเล็กโดยไม่ต้องเลื่อนแนวนอน'] },
             { v:'1.26', type:'minor', date:'2026-08-15', title:'Investment Type Examples', items:['เพิ่มตัวอย่างที่เข้าใจง่ายให้ประเภทเงินลงทุนทุกประเภท','เปลี่ยนคำแนะนำอัตโนมัติตามประเภทที่เลือก','ครอบคลุมเงินฝาก ตราสารหนี้ กองทุน หุ้น กิจการ สินทรัพย์ดิจิทัล และสินทรัพย์อื่น'] },
@@ -14334,7 +14335,7 @@ async function uploadProductImage(productId) {
 
   if (prog) prog.textContent = 'กำลังอัพโหลด...';
   const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
-  const path = `products/${productId}-${Date.now()}.${ext}`;
+  const path = `${currentShop.id}/products/${productId}-${Date.now()}.${ext}`;
 
   const { data, error } = await sb.storage.from('product-images').upload(path, file, {
     cacheControl: '3600', upsert: true, contentType: file.type || undefined
@@ -14549,9 +14550,8 @@ async function saveCat(catId) {
     if (prog) prog.textContent = 'กำลังอัพโหลด...';
     const ext = (file.name.split('.').pop() || file.type.split('/').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
     const safeName = name.replace(/[^a-zA-Z0-9ก-๙_-]+/g, '-').replace(/^-+|-+$/g, '') || 'category';
-    // ใช้ prefix products/ เดียวกับรูปสินค้า ซึ่งผ่าน Storage RLS ของ bucket นี้อยู่แล้ว
-    const categoryRef = catId || (currentShop.id + '-' + safeName);
-    const path = 'products/category-' + categoryRef + '-' + Date.now() + '.' + ext;
+    const categoryRef = catId || safeName;
+    const path = currentShop.id + '/categories/' + categoryRef + '-' + Date.now() + '.' + ext;
     const { error: upErr } = await sb.storage.from('product-images').upload(path, file, {
       cacheControl: '3600',
       contentType: file.type,
