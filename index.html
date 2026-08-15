@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.32';
+    const CACHE = 'sealthai-v1.33';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -930,7 +930,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.32</div>
+            <div class="logo-sub">v1.33</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -12925,12 +12925,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.32</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Sales Order → AR &amp; CN</span></div>
+          <div>🚀 <strong>SEALTHAI v1.33</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Product Image RLS Fix</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.33', type:'patch', date:'2026-08-15', title:'Product & Category Image Storage RLS Fix', items:['แก้สิทธิ์อัปโหลดรูปสำหรับสมาชิก role owner ที่ policy เดิมไม่รองรับ','ใช้ฟังก์ชัน SECURITY DEFINER ตรวจสิทธิ์ร้านโดยไม่ถูก RLS ซ้อนบล็อก','รองรับ owner, admin และสมาชิกที่ได้รับสิทธิ์จัดการสินค้า','เพิ่มข้อความแนะนำที่ชัดเจนเมื่อ Supabase ยังไม่ได้ติดตั้ง policy v1.33'] },
             { v:'1.32', type:'minor', date:'2026-08-15', title:'Sales Order → AR Invoice & Credit Note', items:['ดึง Sales Order จากหน้า AR Invoice เพื่อ Copy เป็น Invoice ได้','เพิ่มปุ่ม Copy to Invoice ในรายละเอียด Sales Order และป้องกันการสร้างซ้ำ','เปิด Invoice ที่สร้างแล้วเพื่อรับเงินได้ทันที พร้อมแสดงรายการสินค้าต้นทาง','ยกเลิก Invoice ด้วย Credit Note และกลับรายการรับเงินโดยไม่ลบประวัติ'] },
             { v:'1.31', type:'minor', date:'2026-08-15', title:'Responsive Design System — All Pages', items:['ปรับมาตรฐานทุกหน้าให้รองรับมือถือ แท็บเล็ต และ PC','จัด card header, toolbar, filter, tabs, form และ modal ให้ปรับตามขนาดจอ','ครอบตารางที่กว้างอัตโนมัติและให้เลื่อนภายในโดยไม่ทำให้ทั้งหน้าล้น','เพิ่มพื้นที่กดบนมือถือและจำกัดความกว้างเนื้อหาบนจอ PC ขนาดใหญ่'] },
             { v:'1.30', type:'minor', date:'2026-08-15', title:'Mobile Other Income & Investments', items:['ออกแบบหน้ารายได้อื่นและเงินลงทุนบนมือถือใหม่','เปลี่ยนตารางกว้างเป็นการ์ดที่อ่านง่ายและไม่เลื่อนแนวนอน','เพิ่มปุ่มลัดบันทึกเงินลงทุนและรายได้ที่กดง่าย','ปรับ KPI ตัวกรอง และปุ่มแก้ไข/ลบให้พอดีหน้าจอขนาดเล็ก'] },
@@ -14627,6 +14628,17 @@ function previewProductImageUrl(value) {
     : '<span style="font-size:34px">📦</span>';
 }
 
+function productImageUploadError(error) {
+  const reason = String(error?.message || error || 'ไม่ทราบสาเหตุ');
+  if (/row-level security|rls|unauthorized/i.test(reason)) {
+    return 'Supabase Storage ยังไม่อนุญาตบัญชีนี้ — กรุณารันไฟล์ supabase_product_images_migration.sql เวอร์ชัน v1.33 ใน Supabase SQL Editor แล้วออกจากระบบและเข้าใหม่';
+  }
+  if (/bucket.*not found/i.test(reason)) {
+    return 'ไม่พบ Storage bucket product-images — กรุณารันไฟล์ supabase_product_images_migration.sql เวอร์ชัน v1.33 ใน Supabase SQL Editor';
+  }
+  return reason;
+}
+
 async function uploadProductImage(productId) {
   const file = document.getElementById('ep-img-file')?.files[0];
   const urlInput = document.getElementById('ep-img-url')?.value.trim();
@@ -14645,8 +14657,9 @@ async function uploadProductImage(productId) {
   });
 
   if (error) {
-    if (prog) prog.textContent = 'อัพโหลดไม่สำเร็จ: ' + error.message;
-    throw new Error('อัพโหลดรูปสินค้าไม่สำเร็จ: ' + error.message);
+    const reason = productImageUploadError(error);
+    if (prog) prog.textContent = 'อัพโหลดไม่สำเร็จ: ' + reason;
+    throw new Error('อัพโหลดรูปสินค้าไม่สำเร็จ: ' + reason);
   }
 
   const { data: urlData } = sb.storage.from('product-images').getPublicUrl(path);
@@ -14861,7 +14874,7 @@ async function saveCat(catId) {
       upsert: false
     });
     if (upErr) {
-      const reason = upErr.message || 'ไม่ทราบสาเหตุ';
+      const reason = productImageUploadError(upErr);
       if (prog) prog.textContent = '❌ อัพโหลดไม่สำเร็จ: ' + reason;
       if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึก'; }
       toast('อัพโหลดรูปไม่สำเร็จ: ' + reason, 'error');
