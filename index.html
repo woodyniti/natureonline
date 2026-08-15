@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.29';
+    const CACHE = 'sealthai-v1.30';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -384,6 +384,28 @@ tbody td:first-child { color: var(--text); }
 .mobile-only  { display: none !important; }
 .desktop-only { display: block !important; }
 
+/* ── Finance: other income & investments ── */
+.finance-actions-mobile { gap: 8px; margin-bottom: 12px; }
+.finance-mobile-list { display: none; }
+.finance-mobile-item {
+  border: 1px solid var(--border); border-radius: 12px; padding: 12px;
+  background: var(--bg2); box-shadow: 0 1px 4px rgba(99,115,150,0.06);
+}
+.finance-mobile-item + .finance-mobile-item { margin-top: 10px; }
+.finance-mobile-head { display:flex;justify-content:space-between;align-items:flex-start;gap:10px; }
+.finance-mobile-title { min-width:0;font-size:14px;font-weight:700;color:var(--text1);overflow-wrap:anywhere; }
+.finance-mobile-sub { margin-top:3px;font-size:11px;line-height:1.45;color:var(--text3); }
+.finance-pill { display:inline-flex;align-items:center;flex-shrink:0;padding:3px 8px;border-radius:999px;background:var(--bg3);color:var(--text2);font-size:10px;font-weight:600; }
+.finance-pill.active { background:#e8f5f0;color:#087f63; }
+.finance-pill.closed { background:#eef2f7;color:#536174; }
+.finance-pill.written_off { background:#fcebeb;color:#a32d2d; }
+.finance-money-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:11px; }
+.finance-money-cell { min-width:0;padding:8px;border-radius:8px;background:var(--bg3); }
+.finance-money-label { font-size:10px;color:var(--text3);white-space:nowrap; }
+.finance-money-value { margin-top:3px;font-family:var(--mono);font-size:12px;font-weight:700;overflow-wrap:anywhere; }
+.finance-item-actions { display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px; }
+.finance-item-actions .btn { width:100%;min-height:38px;justify-content:center; }
+
 /* ── Back to top ── */
 #back-to-top {
   position: fixed; bottom: 24px; right: 24px;
@@ -424,6 +446,25 @@ tbody td:first-child { color: var(--text); }
   html, body { overflow-x: hidden; max-width: 100vw; }
   .page-content, .main { overflow-x: hidden; }
   .card, .stat-card, .dash-card { max-width: 100%; box-sizing: border-box; }
+
+  /* ── รายได้อื่น & เงินลงทุน ── */
+  #finance-page .finance-filter { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:10px; }
+  #finance-page .finance-filter input[type=month] { width:100%;min-width:0;box-sizing:border-box; }
+  #finance-page .finance-filter-note { grid-column:1 / -1;padding:8px 10px;border-radius:8px;background:var(--bg3);line-height:1.45; }
+  #finance-page .finance-actions-mobile.mobile-only { display:grid !important;grid-template-columns:1fr 1fr; }
+  #finance-page .finance-actions-mobile .btn { min-width:0;min-height:44px;padding:8px 6px;white-space:normal;line-height:1.25; }
+  #finance-page .finance-stats { margin-bottom:12px !important; }
+  #finance-page .finance-stats .stat-card { padding:11px 10px;min-width:0; }
+  #finance-page .finance-stats .stat-label { min-height:28px;line-height:1.3; }
+  #finance-page .finance-stats .stat-value { font-size:16px;overflow-wrap:anywhere; }
+  #finance-page .finance-card { padding:12px;margin-bottom:12px !important; }
+  #finance-page .finance-card .card-header { align-items:flex-start;margin-bottom:10px; }
+  #finance-page .finance-card .card-title { font-size:14px; }
+  #finance-page .finance-card .card-subtitle { font-size:11px;line-height:1.4;margin-top:3px; }
+  #finance-page .finance-card-action { display:none; }
+  #finance-page .finance-desktop-table { display:none; }
+  #finance-page .finance-mobile-list { display:block; }
+  #finance-page .empty { padding:22px 8px; }
 
   /* ── Profit breakdown (waterfall) ให้พอดีจอมือถือ ── */
   .wf-label { flex: 0 0 42% !important; font-size: 11px !important; }
@@ -625,6 +666,8 @@ tbody td:first-child { color: var(--text); }
   .page-content { padding: 10px; }
   .card { padding: 12px; }
   .modal { padding: 16px 14px; }
+  #finance-page .finance-money-grid { grid-template-columns:1fr 1fr; }
+  #finance-page .finance-money-cell:last-child:nth-child(odd) { grid-column:1 / -1; }
 }
 
 /* ── Tablet (769px–1024px) ── */
@@ -834,7 +877,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.29</div>
+            <div class="logo-sub">v1.30</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -9041,20 +9084,27 @@ async function finance() {
     '<button class="btn btn-secondary btn-sm" onclick="openInvestmentModal()">+ เงินลงทุน</button>'+
     '<button class="btn btn-primary btn-sm" onclick="openIncomeModal()">+ รายได้อื่น/ผลตอบแทน</button>';
   setContent(`
+    <div id="finance-page">
     <div id="finance-setup"></div>
-    <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+    <div class="filter-bar finance-filter">
       <input type="month" id="fin-month" value="${today().slice(0,7)}" onchange="loadFinanceData()">
       <button class="btn btn-secondary btn-sm" onclick="document.getElementById('fin-month').value='';loadFinanceData()">ดูทั้งหมด</button>
-      <span style="font-size:11px;color:var(--text3)">กำไรรับรู้ = รายรับจากการขายลงทุน − เงินต้นคืน − ค่าธรรมเนียม</span>
+      <span class="finance-filter-note" style="font-size:11px;color:var(--text3)">กำไรรับรู้ = รายรับจากการขายลงทุน − เงินต้นคืน − ค่าธรรมเนียม</span>
     </div>
-    <div class="stat-grid mb-4" id="finance-stats"></div>
-    <div class="card mb-4">
-      <div class="card-header"><div><div class="card-title">📈 ทะเบียนเงินลงทุน</div><div class="card-subtitle">เงินต้นเป็นสินทรัพย์ ไม่ใช่ค่าใช้จ่าย</div></div><button class="btn btn-secondary btn-sm" onclick="openInvestmentModal()">+ เพิ่มเงินลงทุน</button></div>
+    <div class="finance-actions-mobile mobile-only">
+      <button class="btn btn-secondary" onclick="openInvestmentModal()">📈 เพิ่มเงินลงทุน</button>
+      <button class="btn btn-primary" onclick="openIncomeModal()">💰 บันทึกรายได้</button>
+    </div>
+    <div class="stat-grid mb-4 finance-stats" id="finance-stats"></div>
+    <div class="card mb-4 finance-card">
+      <div class="card-header"><div><div class="card-title">📈 ทะเบียนเงินลงทุน</div><div class="card-subtitle">เงินต้นเป็นสินทรัพย์ ไม่ใช่ค่าใช้จ่าย</div></div><button class="btn btn-secondary btn-sm finance-card-action" onclick="openInvestmentModal()">+ เพิ่มเงินลงทุน</button></div>
       <div id="investment-list"><div class="loading"><div class="spinner"></div></div></div>
     </div>
-    <div class="card">
-      <div class="card-header"><div><div class="card-title">💰 รายได้อื่นและผลตอบแทน</div><div class="card-subtitle">รวมเฉพาะกำไร/รายได้ที่เกิดขึ้นจริง ไม่รวมเงินต้นคืน</div></div><button class="btn btn-primary btn-sm" onclick="openIncomeModal()">+ บันทึกรายได้</button></div>
+    <div class="card finance-card">
+      <div class="card-header"><div><div class="card-title">💰 รายได้อื่นและผลตอบแทน</div><div class="card-subtitle">รวมเฉพาะกำไร/รายได้ที่เกิดขึ้นจริง ไม่รวมเงินต้นคืน</div></div><button class="btn btn-primary btn-sm finance-card-action" onclick="openIncomeModal()">+ บันทึกรายได้</button></div>
       <div id="income-list"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+
     </div>
 
     <div class="modal-overlay" id="modal-investment"><div class="modal" style="max-width:620px">
@@ -9129,17 +9179,24 @@ function renderInvestmentList(allReturns={}) {
   const el=document.getElementById('investment-list'); if(!el)return;
   if(!financeInvestments.length){el.innerHTML='<div class="empty"><div class="empty-icon">📈</div><div class="empty-text">ยังไม่มีเงินลงทุน</div></div>';return;}
   const status={active:'ถืออยู่',closed:'ปิดแล้ว',written_off:'ตัดขาดทุน'};
-  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>วันที่</th><th>ชื่อ/ประเภท</th><th class="text-right">เงินต้น</th><th class="text-right">คืนแล้ว</th><th class="text-right">คงเหลือ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+financeInvestments.map(r=>{
+  const desktop='<div class="table-wrap finance-desktop-table"><table><thead><tr><th>วันที่</th><th>ชื่อ/ประเภท</th><th class="text-right">เงินต้น</th><th class="text-right">คืนแล้ว</th><th class="text-right">คงเหลือ</th><th>สถานะ</th><th></th></tr></thead><tbody>'+financeInvestments.map(r=>{
     const ret=Number(allReturns[r.id]||0), remain=Math.max(0,Number(r.principal||0)-ret);
     return `<tr><td>${r.investment_date||'-'}</td><td><div style="font-weight:600">${escapeHTML(r.name||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(INVESTMENT_TYPES[r.investment_type]||r.investment_type||'')} ${r.provider?'· '+escapeHTML(r.provider):''}</div></td><td class="text-right font-mono">${fmtB(r.principal)}</td><td class="text-right font-mono">${fmtB(ret)}</td><td class="text-right font-mono text-blue">${fmtB(remain)}</td><td>${status[r.status]||r.status}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openInvestmentModal('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteInvestment('${r.id}')">ลบ</button></td></tr>`;
   }).join('')+'</tbody></table></div>';
+  const mobile='<div class="finance-mobile-list">'+financeInvestments.map(r=>{
+    const ret=Number(allReturns[r.id]||0), remain=Math.max(0,Number(r.principal||0)-ret), state=r.status||'active';
+    return `<div class="finance-mobile-item"><div class="finance-mobile-head"><div style="min-width:0"><div class="finance-mobile-title">${escapeHTML(r.name||'-')}</div><div class="finance-mobile-sub">${escapeHTML(INVESTMENT_TYPES[r.investment_type]||r.investment_type||'')}${r.provider?' · '+escapeHTML(r.provider):''}<br>วันที่ลงทุน ${r.investment_date||'-'}</div></div><span class="finance-pill ${state}">${escapeHTML(status[state]||state)}</span></div><div class="finance-money-grid"><div class="finance-money-cell"><div class="finance-money-label">เงินต้น</div><div class="finance-money-value">${fmtB(r.principal)}</div></div><div class="finance-money-cell"><div class="finance-money-label">คืนแล้ว</div><div class="finance-money-value text-green">${fmtB(ret)}</div></div><div class="finance-money-cell"><div class="finance-money-label">คงเหลือ</div><div class="finance-money-value text-blue">${fmtB(remain)}</div></div></div><div class="finance-item-actions"><button class="btn btn-secondary btn-sm" onclick="openInvestmentModal('${r.id}')">✏️ แก้ไข</button><button class="btn btn-danger btn-sm" onclick="deleteInvestment('${r.id}')">🗑️ ลบ</button></div></div>`;
+  }).join('')+'</div>';
+  el.innerHTML=desktop+mobile;
 }
 
 function renderOtherIncomeList() {
   const el=document.getElementById('income-list'); if(!el)return;
   if(!financeIncomeRows.length){el.innerHTML='<div class="empty"><div class="empty-icon">💰</div><div class="empty-text">ยังไม่มีรายได้อื่นในช่วงนี้</div></div>';return;}
   const invMap={};financeInvestments.forEach(x=>invMap[x.id]=x.name);
-  el.innerHTML='<div class="table-wrap"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="text-right">ยอดรับ</th><th class="text-right">เงินต้นคืน</th><th class="text-right">กำไรรับรู้</th><th class="text-right">เงินเข้าสุทธิ</th><th></th></tr></thead><tbody>'+financeIncomeRows.map(r=>`<tr><td>${r.income_date||'-'}</td><td><div style="font-weight:600">${escapeHTML(r.description||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(OTHER_INCOME_TYPES[r.income_type]||r.income_type||'')}${r.investment_id?' · '+escapeHTML(invMap[r.investment_id]||'เงินลงทุน'):''}</div></td><td class="text-right font-mono">${fmtB(r.gross_amount)}</td><td class="text-right font-mono">${fmtB(r.principal_return)}</td><td class="text-right font-mono ${Number(r.realized_profit)>=0?'text-green':'text-red'}">${fmtB(r.realized_profit)}</td><td class="text-right font-mono text-accent">${fmtB(r.net_cash)}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openIncomeModal('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteOtherIncome('${r.id}')">ลบ</button></td></tr>`).join('')+'</tbody></table></div>';
+  const desktop='<div class="table-wrap finance-desktop-table"><table><thead><tr><th>วันที่</th><th>รายการ</th><th class="text-right">ยอดรับ</th><th class="text-right">เงินต้นคืน</th><th class="text-right">กำไรรับรู้</th><th class="text-right">เงินเข้าสุทธิ</th><th></th></tr></thead><tbody>'+financeIncomeRows.map(r=>`<tr><td>${r.income_date||'-'}</td><td><div style="font-weight:600">${escapeHTML(r.description||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(OTHER_INCOME_TYPES[r.income_type]||r.income_type||'')}${r.investment_id?' · '+escapeHTML(invMap[r.investment_id]||'เงินลงทุน'):''}</div></td><td class="text-right font-mono">${fmtB(r.gross_amount)}</td><td class="text-right font-mono">${fmtB(r.principal_return)}</td><td class="text-right font-mono ${Number(r.realized_profit)>=0?'text-green':'text-red'}">${fmtB(r.realized_profit)}</td><td class="text-right font-mono text-accent">${fmtB(r.net_cash)}</td><td style="white-space:nowrap"><button class="btn btn-secondary btn-sm" onclick="openIncomeModal('${r.id}')">แก้ไข</button> <button class="btn btn-danger btn-sm" onclick="deleteOtherIncome('${r.id}')">ลบ</button></td></tr>`).join('')+'</tbody></table></div>';
+  const mobile='<div class="finance-mobile-list">'+financeIncomeRows.map(r=>`<div class="finance-mobile-item"><div class="finance-mobile-head"><div style="min-width:0"><div class="finance-mobile-title">${escapeHTML(r.description||'-')}</div><div class="finance-mobile-sub">${escapeHTML(OTHER_INCOME_TYPES[r.income_type]||r.income_type||'')}${r.investment_id?' · '+escapeHTML(invMap[r.investment_id]||'เงินลงทุน'):''}<br>${r.income_date||'-'}</div></div><span class="finance-pill">${r.recurring?'รายได้ประจำ':'รายได้อื่น'}</span></div><div class="finance-money-grid"><div class="finance-money-cell"><div class="finance-money-label">ยอดรับ</div><div class="finance-money-value">${fmtB(r.gross_amount)}</div></div><div class="finance-money-cell"><div class="finance-money-label">กำไรรับรู้</div><div class="finance-money-value ${Number(r.realized_profit)>=0?'text-green':'text-red'}">${fmtB(r.realized_profit)}</div></div><div class="finance-money-cell"><div class="finance-money-label">เงินเข้าสุทธิ</div><div class="finance-money-value text-accent">${fmtB(r.net_cash)}</div></div></div>${Number(r.principal_return)>0?`<div class="finance-mobile-sub" style="margin-top:8px">เงินต้นคืน ${fmtB(r.principal_return)}</div>`:''}<div class="finance-item-actions"><button class="btn btn-secondary btn-sm" onclick="openIncomeModal('${r.id}')">✏️ แก้ไข</button><button class="btn btn-danger btn-sm" onclick="deleteOtherIncome('${r.id}')">🗑️ ลบ</button></div></div>`).join('')+'</div>';
+  el.innerHTML=desktop+mobile;
 }
 
 function updateInvestmentTypeExample() {
@@ -12784,12 +12841,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.29</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Storage RLS</span></div>
+          <div>🚀 <strong>SEALTHAI v1.30</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Mobile Finance</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.30', type:'minor', date:'2026-08-15', title:'Mobile Other Income & Investments', items:['ออกแบบหน้ารายได้อื่นและเงินลงทุนบนมือถือใหม่','เปลี่ยนตารางกว้างเป็นการ์ดที่อ่านง่ายและไม่เลื่อนแนวนอน','เพิ่มปุ่มลัดบันทึกเงินลงทุนและรายได้ที่กดง่าย','ปรับ KPI ตัวกรอง และปุ่มแก้ไข/ลบให้พอดีหน้าจอขนาดเล็ก'] },
             { v:'1.29', type:'minor', date:'2026-08-15', title:'Secure Product Image Storage Policies', items:['ติดตั้ง Storage RLS สำหรับ bucket product-images','จัดเก็บรูปสินค้าและรูปหมวดหมู่แยกตามร้าน','อนุญาตการเขียนไฟล์เฉพาะเจ้าของร้าน แอดมิน หรือผู้มีสิทธิ์สินค้า','คงการแสดงรูปผ่าน Public URL เพื่อให้รูปเดิมและรูปใหม่ใช้งานต่อได้'] },
             { v:'1.28', type:'minor', date:'2026-08-15', title:'Category Storage RLS Fix', items:['แก้เส้นทางอัปโหลดรูปหมวดหมู่ให้ผ่านนโยบาย Storage เดียวกับรูปสินค้า','ไม่ต้องเปิดสิทธิ์ bucket แบบสาธารณะสำหรับการเขียนไฟล์','ยังคงสร้างชื่อไฟล์ไม่ซ้ำเพื่อป้องกันรูปเก่าค้างในแคช','แสดงรูปหมวดหมู่เป็นภาพหลักทันทีหลังบันทึกสำเร็จ'] },
             { v:'1.27', type:'minor', date:'2026-08-15', title:'Expense Mobile Toolbar', items:['ออกแบบปุ่มบันทึกค่าใช้จ่ายบนมือถือใหม่ให้เด่นและกดง่าย','จัดเครื่องมือข้อมูลเก่า งบประมาณ และหมวดเป็นตาราง 3 ช่องพอดีหน้าจอ','ซ่อนชุดปุ่ม Desktop ที่เบียดพื้นที่บนมือถือ','รองรับหน้าจอขนาดเล็กโดยไม่ต้องเลื่อนแนวนอน'] },
