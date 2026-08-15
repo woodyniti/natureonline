@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.31';
+    const CACHE = 'sealthai-v1.32';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -930,7 +930,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.31</div>
+            <div class="logo-sub">v1.32</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -5589,7 +5589,7 @@ async function viewOrder(orderId) {
   const hasAR = existAR && existAR.length > 0;
   const arBtn = hasAR
     ? `<button class="btn btn-secondary btn-sm" disabled style="opacity:.6;cursor:not-allowed" title="AR: ${existAR[0].ar_no}">✅ AR: ${existAR[0].ar_no}</button>`
-    : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}')">📄 สร้าง AR Invoice</button>`;
+    : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}',true)">📄 Copy to Invoice</button>`;
 
   document.getElementById('order-detail-footer').innerHTML =
     `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">ปิด</button>` +
@@ -12925,12 +12925,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.31</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Responsive System</span></div>
+          <div>🚀 <strong>SEALTHAI v1.32</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Sales Order → AR &amp; CN</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.32', type:'minor', date:'2026-08-15', title:'Sales Order → AR Invoice & Credit Note', items:['ดึง Sales Order จากหน้า AR Invoice เพื่อ Copy เป็น Invoice ได้','เพิ่มปุ่ม Copy to Invoice ในรายละเอียด Sales Order และป้องกันการสร้างซ้ำ','เปิด Invoice ที่สร้างแล้วเพื่อรับเงินได้ทันที พร้อมแสดงรายการสินค้าต้นทาง','ยกเลิก Invoice ด้วย Credit Note และกลับรายการรับเงินโดยไม่ลบประวัติ'] },
             { v:'1.31', type:'minor', date:'2026-08-15', title:'Responsive Design System — All Pages', items:['ปรับมาตรฐานทุกหน้าให้รองรับมือถือ แท็บเล็ต และ PC','จัด card header, toolbar, filter, tabs, form และ modal ให้ปรับตามขนาดจอ','ครอบตารางที่กว้างอัตโนมัติและให้เลื่อนภายในโดยไม่ทำให้ทั้งหน้าล้น','เพิ่มพื้นที่กดบนมือถือและจำกัดความกว้างเนื้อหาบนจอ PC ขนาดใหญ่'] },
             { v:'1.30', type:'minor', date:'2026-08-15', title:'Mobile Other Income & Investments', items:['ออกแบบหน้ารายได้อื่นและเงินลงทุนบนมือถือใหม่','เปลี่ยนตารางกว้างเป็นการ์ดที่อ่านง่ายและไม่เลื่อนแนวนอน','เพิ่มปุ่มลัดบันทึกเงินลงทุนและรายได้ที่กดง่าย','ปรับ KPI ตัวกรอง และปุ่มแก้ไข/ลบให้พอดีหน้าจอขนาดเล็ก'] },
             { v:'1.29', type:'minor', date:'2026-08-15', title:'Secure Product Image Storage Policies', items:['ติดตั้ง Storage RLS สำหรับ bucket product-images','จัดเก็บรูปสินค้าและรูปหมวดหมู่แยกตามร้าน','อนุญาตการเขียนไฟล์เฉพาะเจ้าของร้าน แอดมิน หรือผู้มีสิทธิ์สินค้า','คงการแสดงรูปผ่าน Public URL เพื่อให้รูปเดิมและรูปใหม่ใช้งานต่อได้'] },
@@ -13228,6 +13229,7 @@ function drillBuyer(buyer) {
 // ══════════════════════════════════════════════════════════
 async function arinvoice() {
   document.getElementById('topbar-actions').innerHTML =
+    '<button class="btn btn-secondary btn-sm" onclick="openSalesOrderPicker()">📋 ดึงจาก Sales Order</button> ' +
     '<button class="btn btn-primary btn-sm" onclick="openNewAR()">+ AR Invoice ใหม่</button>';
 
   setContent(`
@@ -13240,6 +13242,7 @@ async function arinvoice() {
         <option value="unpaid">ค้างชำระ</option>
         <option value="partial">ชำระบางส่วน</option>
         <option value="paid">ชำระแล้ว</option>
+        <option value="cancelled">ยกเลิก / CN</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="loadAR()">🔍 ค้นหา</button>
     </div>
@@ -13266,20 +13269,23 @@ async function loadAR() {
   const { data: rows } = await q;
   if (!rows) return;
 
-  const totalAmt  = rows.reduce((s,r) => s + Number(r.total_amount||0), 0);
-  const totalPaid = rows.reduce((s,r) => s + Number(r.paid_amount||0), 0);
+  const activeRows = rows.filter(r => r.status !== 'cancelled');
+  const totalAmt  = activeRows.reduce((s,r) => s + Number(r.total_amount||0), 0);
+  const totalPaid = activeRows.reduce((s,r) => s + Number(r.paid_amount||0), 0);
   const totalUnpaid = totalAmt - totalPaid;
-  const unpaidCount = rows.filter(r => r.status !== 'paid').length;
+  const unpaidCount = activeRows.filter(r => r.status !== 'paid').length;
+  const cancelledCount = rows.filter(r => r.status === 'cancelled').length;
 
   const statsEl = document.getElementById('ar-stats');
   if (statsEl) statsEl.innerHTML =
-    '<div class="stat-card" style="padding:12px"><div class="stat-label">📄 ทั้งหมด</div><div class="stat-value text-accent" style="font-size:20px">'+fmtB(totalAmt)+'</div><div class="stat-sub">'+rows.length+' รายการ</div></div>' +
+    '<div class="stat-card" style="padding:12px"><div class="stat-label">📄 Invoice ที่ใช้งาน</div><div class="stat-value text-accent" style="font-size:20px">'+fmtB(totalAmt)+'</div><div class="stat-sub">'+activeRows.length+' ใบ · ยกเลิก '+cancelledCount+' ใบ</div></div>' +
     '<div class="stat-card" style="padding:12px"><div class="stat-label">💰 รับแล้ว</div><div class="stat-value text-green" style="font-size:20px">'+fmtB(totalPaid)+'</div></div>' +
     '<div class="stat-card" style="padding:12px"><div class="stat-label">⏳ ค้างรับ</div><div class="stat-value text-red" style="font-size:20px">'+fmtB(totalUnpaid)+'</div><div class="stat-sub">'+unpaidCount+' รายการ</div></div>';
 
   const statusBadge = s => {
     if (s==='paid')    return '<span class="badge badge-green">ชำระแล้ว</span>';
     if (s==='partial') return '<span class="badge badge-amber">บางส่วน</span>';
+    if (s==='cancelled') return '<span class="badge badge-red">ยกเลิก / CN</span>';
     return '<span class="badge badge-red">ค้างชำระ</span>';
   };
 
@@ -13290,8 +13296,8 @@ async function loadAR() {
       tbl.innerHTML =
         '<table class="desktop-only"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th class="text-right">ยอดรวม</th><th class="text-right">รับแล้ว</th><th class="text-right">ค้างรับ</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>' +
         rows.map(r => {
-          const remain = Number(r.total_amount||0) - Number(r.paid_amount||0);
-          const overdue = r.due_date && r.status!=='paid' && r.due_date < today();
+          const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
+          const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
           return '<tr>' +
             '<td class="font-mono" style="color:var(--blue)">' + (r.ar_no||'-') + '</td>' +
             '<td>' + (r.ar_date||'-') + '</td>' +
@@ -13306,8 +13312,8 @@ async function loadAR() {
         }).join('') + '</tbody></table>' +
         '<div class="mobile-only">' +
         rows.map(r => {
-          const remain = Number(r.total_amount||0) - Number(r.paid_amount||0);
-          const overdue = r.due_date && r.status!=='paid' && r.due_date < today();
+          const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
+          const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
           return '<div class="m-card" onclick="openARDetail(\"'+r.id+'\")">' +
             '<div class="m-card-row"><div><div class="m-card-title">'+statusBadge(r.status)+' '+(r.customer_name||'-')+'</div><div class="m-card-sub">'+(r.ar_no||'-')+' · '+(r.ar_date||'-')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div><div style="font-size:11px;color:var(--red)">ค้าง '+fmtB(remain)+'</div></div></div>' +
             '<div class="m-card-meta"><span>'+(overdue?'⚠️ เกิน due date':'📅 ครบ '+(r.due_date||'-'))+'</span><span style="color:var(--green)">รับแล้ว '+fmtB(r.paid_amount||0)+'</span></div>' +
@@ -13315,6 +13321,68 @@ async function loadAR() {
         }).join('') + '</div>';
     }
   }
+}
+
+let arSalesOrderOptions = [];
+
+async function openSalesOrderPicker() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '300';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:820px">
+      <div class="modal-title">📋 Copy Sales Order → AR Invoice</div>
+      <div style="font-size:12px;color:var(--text2);margin:-6px 0 12px">เลือก Sales Order เพื่อสร้าง Invoice โดยคัดลอกลูกค้า ยอดเงิน และรายการสินค้า จากนั้นเปิดรับเงินได้ทันที</div>
+      <div class="filter-bar" style="margin-bottom:12px">
+        <input id="ar-so-search" type="text" placeholder="ค้นหาเลขที่ SO / ลูกค้า / ช่องทาง..." oninput="renderSalesOrderPicker(this.value)" style="flex:1;min-width:200px">
+      </div>
+      <div id="ar-so-list"><div class="loading"><div class="spinner"></div></div></div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  const [{ data: orders, error: orderError }, { data: linkedAR }] = await Promise.all([
+    sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).order('order_date', {ascending:false}).limit(200),
+    sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
+  ]);
+  const list = document.getElementById('ar-so-list');
+  if (orderError) {
+    if (list) list.innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">โหลด Sales Order ไม่สำเร็จ: '+escapeHTML(orderError.message)+'</div></div>';
+    return;
+  }
+  const arByOrder = {};
+  (linkedAR||[]).forEach(ar => { arByOrder[ar.order_id] = ar; });
+  arSalesOrderOptions = (orders||[])
+    .filter(o => o.doc_status !== 'cancelled' && o.shipping_status !== 'cancelled' && Number(o.total_amount||0) > 0)
+    .map(o => ({...o, linked_ar: arByOrder[o.id] || null}));
+  renderSalesOrderPicker('');
+}
+
+function renderSalesOrderPicker(searchText) {
+  const el = document.getElementById('ar-so-list');
+  if (!el) return;
+  const q = (searchText||'').trim().toLowerCase();
+  const rows = arSalesOrderOptions.filter(o => !q || `${o.order_no||''} ${o.customer_name||''} ${o.channel||''} ${o.customer_social||''}`.toLowerCase().includes(q));
+  if (!rows.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่พบ Sales Order ที่พร้อมสร้าง Invoice</div></div>';
+    return;
+  }
+  el.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Sales Order</th><th>ลูกค้า</th><th>สินค้า</th><th class="text-right">ยอดสุทธิ</th><th>Invoice</th><th></th></tr></thead><tbody>' +
+    rows.map(o => {
+      const items = (o.order_items||[]).map(it => (Number(it.qty||0)>1?it.qty+'× ':'')+(it.product_name||'-')).join(', ') || '-';
+      const linked = o.linked_ar;
+      return `<tr>
+        <td><div class="font-mono" style="color:var(--blue);font-weight:600">${escapeHTML(o.order_no||'-')}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(o.order_date||'-')} · ${escapeHTML(o.channel||'-')}</div></td>
+        <td>${escapeHTML(o.customer_name||'-')}</td>
+        <td style="max-width:240px;font-size:11px;color:var(--text2)">${escapeHTML(items)}</td>
+        <td class="text-right font-mono text-accent" style="font-weight:700">${fmtB(o.total_amount||0)}</td>
+        <td>${linked ? '<span class="badge '+(linked.status==='cancelled'?'badge-red':'badge-green')+'">'+escapeHTML(linked.ar_no||'มี Invoice แล้ว')+'</span>' : '<span class="badge badge-amber">ยังไม่สร้าง</span>'}</td>
+        <td style="white-space:nowrap">${linked
+          ? `<button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.modal-overlay').forEach(m=>m.remove());showPage('arinvoice');setTimeout(()=>openARDetail('${linked.id}'),250)">เปิด Invoice</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="convertSOtoAR('${o.id}',true)">สร้าง + รับเงิน</button>`}</td>
+      </tr>`;
+    }).join('') + '</tbody></table></div>';
 }
 
 function openNewAR() {
@@ -13370,10 +13438,34 @@ async function openARDetail(arId) {
     sb.from('ar_payments').select('*').eq('ar_id', arId).order('pay_date'),
   ]);
   if (!ar) return;
-  const remain = Number(ar.total_amount||0) - Number(ar.paid_amount||0);
+  let sourceOrder = null;
+  if (ar.order_id) {
+    const { data } = await sb.from('orders').select('id,order_no,order_date,channel,total_amount,order_items(*)').eq('id', ar.order_id).single();
+    sourceOrder = data || null;
+  }
+  const isCancelled = ar.status === 'cancelled';
+  const remain = isCancelled ? 0 : Number(ar.total_amount||0) - Number(ar.paid_amount||0);
+  const cnMatch = String(ar.note||'').match(/\[CN:([^\]]+)\]/);
+  const cnNo = cnMatch?.[1] || '';
   const payRows = (payments||[]).map(p =>
-    '<tr><td>'+(p.pay_date||'-')+'</td><td class="text-right font-mono text-green">'+fmtB(p.amount)+'</td><td>'+(p.method||'-')+'</td><td>'+(p.ref||'-')+'</td><td>'+(p.note||'-')+'</td></tr>'
+    '<tr><td>'+escapeHTML(p.pay_date||'-')+'</td><td class="text-right font-mono '+(Number(p.amount)<0?'text-red':'text-green')+'">'+fmtB(p.amount)+'</td><td>'+escapeHTML(p.method||'-')+'</td><td>'+escapeHTML(p.ref||'-')+'</td><td>'+escapeHTML(p.note||'-')+'</td></tr>'
   ).join('');
+  const sourceItems = sourceOrder?.order_items || [];
+  const sourceBox = sourceOrder ? `
+    <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <div><strong>Sales Order ต้นทาง:</strong> <span class="font-mono" style="color:var(--blue)">${escapeHTML(sourceOrder.order_no||'-')}</span></div>
+        <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.modal-overlay').forEach(m=>m.remove());viewOrder('${sourceOrder.id}')">เปิด Sales Order</button>
+      </div>
+      <div class="table-wrap"><table><thead><tr><th>สินค้า</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th></tr></thead><tbody>
+        ${sourceItems.map(it => {
+          const qty=Number(it.qty||0), price=Number(it.sell_price ?? it.unit_price ?? 0);
+          const gross=qty*price;
+          const disc=it.discount_type==='percent' ? gross*Number(it.discount||0)/100 : Number(it.discount||0);
+          return `<tr><td>${escapeHTML(it.product_name||'-')}</td><td class="text-right">${fmt(qty)}</td><td class="text-right font-mono">${fmtB(price)}</td><td class="text-right font-mono">${fmtB(Math.max(0,gross-disc))}</td></tr>`;
+        }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3)">ไม่มีรายการสินค้า</td></tr>'}
+      </tbody></table></div>
+    </div>` : '';
 
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
@@ -13383,17 +13475,19 @@ async function openARDetail(arId) {
       <div class="modal-title">📄 ${ar.ar_no||'-'} — ${ar.customer_name||'-'}</div>
       <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
         <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">ยอดรวม</div><div class="stat-value text-accent" style="font-size:18px">${fmtB(ar.total_amount)}</div></div>
-        <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">รับแล้ว</div><div class="stat-value text-green" style="font-size:18px">${fmtB(ar.paid_amount)}</div></div>
+        <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">รับแล้ว</div><div class="stat-value ${isCancelled?'text-red':'text-green'}" style="font-size:18px">${fmtB(ar.paid_amount)}</div></div>
         <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">ค้างรับ</div><div class="stat-value text-red" style="font-size:18px">${fmtB(remain)}</div></div>
       </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">ครบกำหนด: <strong>${ar.due_date||'-'}</strong> | สถานะ: <strong>${ar.status}</strong> | หมายเหตุ: ${ar.note||'-'}</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">ครบกำหนด: <strong>${escapeHTML(ar.due_date||'-')}</strong> | สถานะ: <strong>${isCancelled?'ยกเลิก / CN':escapeHTML(ar.status||'-')}</strong> | หมายเหตุ: ${escapeHTML(ar.note||'-')}</div>
+      ${isCancelled ? `<div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:10px;padding:12px;margin-bottom:14px"><strong>ยกเลิก Invoice แล้ว</strong>${cnNo?' · Credit Note '+escapeHTML(cnNo):''}<br><span style="font-size:12px">ยอดรับเงินของ Invoice นี้ถูกกลับรายการแล้ว และไม่นับรวมในลูกหนี้/ยอดรับ</span></div>` : ''}
+      ${sourceBox}
 
       <div style="font-weight:600;font-size:13px;margin-bottom:8px">ประวัติรับเงิน</div>
       <div class="table-wrap" style="margin-bottom:14px">
         ${payments?.length ? '<table><thead><tr><th>วันที่</th><th class="text-right">จำนวน</th><th>วิธีชำระ</th><th>Ref</th><th>หมายเหตุ</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div style="color:var(--text3);font-size:13px;padding:8px">ยังไม่มีการรับเงิน</div>'}
       </div>
 
-      ${remain > 0 ? `
+      ${!isCancelled && remain > 0 ? `
       <div style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border)">
         <div style="font-weight:600;font-size:13px;margin-bottom:10px">💰 บันทึกรับเงิน</div>
         <div class="grid-2" style="gap:10px">
@@ -13406,9 +13500,12 @@ async function openARDetail(arId) {
         </div>
         <div class="form-group"><label>หมายเหตุ</label><input type="text" id="pay-note" placeholder="หมายเหตุ"></div>
         <button class="btn btn-primary" style="width:100%" onclick="saveARPayment('${arId}', ${ar.total_amount})">✅ บันทึกรับเงิน</button>
-      </div>` : '<div style="background:#e8fdf0;border-radius:10px;padding:12px;text-align:center;color:var(--green);font-weight:600">✅ ชำระครบแล้ว</div>'}
+      </div>` : (!isCancelled ? '<div style="background:#e8fdf0;border-radius:10px;padding:12px;text-align:center;color:var(--green);font-weight:600">✅ ชำระครบแล้ว</div>' : '')}
 
-      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        ${!isCancelled ? `<button class="btn btn-danger" onclick="cancelARInvoice('${arId}')">ยกเลิก Invoice + ออก CN</button>` : ''}
+      </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
@@ -13422,6 +13519,12 @@ async function saveARPayment(arId, totalAmt) {
   const note     = document.getElementById('pay-note')?.value.trim();
   if (!amount || amount <= 0) { toast('กรุณาระบุจำนวนเงิน','error'); return; }
 
+  const { data: latestAR, error: arError } = await sb.from('ar_invoices').select('total_amount,paid_amount,status').eq('id', arId).single();
+  if (arError || !latestAR) { toast('ตรวจสอบ Invoice ไม่สำเร็จ','error'); return; }
+  if (latestAR.status === 'cancelled') { toast('Invoice นี้ถูกยกเลิกแล้ว ไม่สามารถรับเงินเพิ่มได้','error'); return; }
+  const remaining = Math.max(0, Number(latestAR.total_amount||totalAmt) - Number(latestAR.paid_amount||0));
+  if (amount > remaining + 0.001) { toast('ยอดรับเกินยอดค้าง '+fmtB(remaining),'error'); return; }
+
   const { error: pe } = await sb.from('ar_payments').insert({
     ar_id: arId, shop_id: currentShop.id, pay_date, amount, method, ref, note
   });
@@ -13431,10 +13534,53 @@ async function saveARPayment(arId, totalAmt) {
   const { data: allPay } = await sb.from('ar_payments').select('amount').eq('ar_id', arId);
   const totalPaid = (allPay||[]).reduce((s,p) => s + Number(p.amount||0), 0);
   const newStatus = totalPaid >= Number(totalAmt) ? 'paid' : 'partial';
-  await sb.from('ar_invoices').update({ paid_amount: totalPaid, status: newStatus }).eq('id', arId);
+  const { error: updateError } = await sb.from('ar_invoices').update({ paid_amount: totalPaid, status: newStatus }).eq('id', arId);
+  if (updateError) { toast('ปรับยอด Invoice ไม่สำเร็จ: '+updateError.message,'error'); return; }
 
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   toast('บันทึกรับเงิน ✓','success');
+  loadAR();
+}
+
+async function cancelARInvoice(arId) {
+  const ok = confirm('ยืนยันยกเลิก Invoice นี้?\n\nระบบจะออกเลข Credit Note (CN) และกลับรายการรับเงินทั้งหมด โดยยังเก็บประวัติเดิมไว้ตรวจสอบ');
+  if (!ok) return;
+
+  const [{ data: ar, error: arError }, { data: payments, error: payError }] = await Promise.all([
+    sb.from('ar_invoices').select('*').eq('id', arId).single(),
+    sb.from('ar_payments').select('amount').eq('ar_id', arId),
+  ]);
+  if (arError || payError || !ar) { toast('โหลดข้อมูลเพื่อยกเลิกไม่สำเร็จ','error'); return; }
+  if (ar.status === 'cancelled') { toast('Invoice นี้ถูกยกเลิกแล้ว','error'); return; }
+
+  const received = Math.max(0, (payments||[]).reduce((s,p) => s + Number(p.amount||0), 0));
+  const cnNo = 'CN-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+  const oldNote = ar.note || '';
+  const cancelNote = `[CN:${cnNo}] ${oldNote}`.trim();
+  const { error: cancelError } = await sb.from('ar_invoices').update({
+    status: 'cancelled', paid_amount: 0, note: cancelNote
+  }).eq('id', arId);
+  if (cancelError) { toast('ยกเลิก Invoice ไม่สำเร็จ: '+cancelError.message,'error'); return; }
+
+  if (received > 0) {
+    const { error: reverseError } = await sb.from('ar_payments').insert({
+      ar_id: arId,
+      shop_id: currentShop.id,
+      pay_date: today(),
+      amount: -received,
+      method: 'Credit Note',
+      ref: cnNo,
+      note: 'กลับรายการรับเงินจากการยกเลิก '+(ar.ar_no||'Invoice')
+    });
+    if (reverseError) {
+      await sb.from('ar_invoices').update({status: ar.status, paid_amount: ar.paid_amount, note: oldNote}).eq('id', arId);
+      toast('ออก CN ไม่สำเร็จ ระบบคืนสถานะ Invoice เดิมแล้ว: '+reverseError.message,'error');
+      return;
+    }
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  toast('ยกเลิก Invoice และออก '+cnNo+' ✓','success');
   loadAR();
 }
 
@@ -13658,38 +13804,52 @@ async function openGRDetail(grId) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
-async function convertSOtoAR(orderId) {
-  const { data: order } = await sb.from('orders').select('*,order_items(*)').eq('id', orderId).single();
-  if (!order) return;
+async function convertSOtoAR(orderId, openAfterCreate=false) {
+  const [{ data: order, error: orderError }, { data: existing }] = await Promise.all([
+    sb.from('orders').select('*,order_items(*)').eq('id', orderId).single(),
+    sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', orderId).limit(1),
+  ]);
+  if (orderError || !order) { toast('โหลด Sales Order ไม่สำเร็จ','error'); return; }
+  if (existing?.length) {
+    toast('Sales Order นี้มี Invoice '+(existing[0].ar_no||'')+' แล้ว','error');
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+    showPage('arinvoice');
+    setTimeout(() => openARDetail(existing[0].id), 250);
+    return;
+  }
+  if (order.doc_status === 'cancelled' || order.shipping_status === 'cancelled') {
+    toast('ไม่สามารถสร้าง Invoice จาก Sales Order ที่ยกเลิกแล้ว','error');
+    return;
+  }
 
-  const total = (order.order_items||[]).reduce((s,it) => {
-    const disc = it.discount_type === 'percent'
-      ? (it.unit_price * it.qty * (it.discount||0) / 100)
-      : (it.discount||0);
-    return s + (it.unit_price * it.qty - disc);
-  }, 0);
-
+  // ใช้ยอดสุทธิจาก Sales Order โดยตรง เพื่อรวมส่วนลดทั้งบิลและค่าขนส่งครบถ้วน
+  const total = Number(order.total_amount||0);
+  if (!(total > 0)) { toast('Sales Order นี้ไม่มียอดสุทธิสำหรับออก Invoice','error'); return; }
   const ar_no = 'AR-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+  const due = new Date();
+  due.setDate(due.getDate()+30);
+  const dueDate = due.toISOString().slice(0,10);
 
   const { data: ar, error } = await sb.from('ar_invoices').insert({
     shop_id: currentShop.id,
     ar_no,
     ar_date: today(),
-    due_date: null,
+    due_date: dueDate,
     order_id: orderId,
     customer_name: order.customer_name || '',
     customer_phone: order.customer_phone || '',
     total_amount: Math.round(total * 100) / 100,
     paid_amount: 0,
     status: 'unpaid',
-    note: 'จาก SO ' + (order.order_no || orderId),
+    note: 'Copy from Sales Order ' + (order.order_no || orderId),
   }).select().single();
 
   if (error) { toast('สร้าง AR ไม่สำเร็จ: ' + error.message, 'error'); return; }
 
-  closeModal('modal-order-detail');
-  toast('สร้าง AR Invoice ' + ar_no + ' ✓', 'success');
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  toast('Copy Sales Order เป็น AR Invoice ' + ar_no + ' ✓', 'success');
   showPage('arinvoice');
+  if (openAfterCreate && ar?.id) setTimeout(() => openARDetail(ar.id), 300);
 }
 
 // ══════════════════════════════════════════════════════════
