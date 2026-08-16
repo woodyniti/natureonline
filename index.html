@@ -1066,15 +1066,16 @@ function canSee(page) {
   if (role === 'owner') return true;
   // admin เห็นทุกหน้ายกเว้น settings
   if (role === 'admin') return page !== 'settings';
+  const perms = currentUser?._perms || {};
+  if (page === 'aiIntelligence') return true;
   if (page === 'stockPlanning' && perms?.products) return true;
   if (page === 'chinaImport' && perms?.purchase) return true;
   if (page === 'marketplace' && (perms?.orders || perms?.sales)) return true;
   if (page === 'customers' && (perms?.customers || perms?.orders || perms?.sales)) return true;
   // staff: ตรวจ permissions object
-  const perms = currentUser?._perms;
   if (perms && typeof perms === 'object') return !!perms[page];
-  // staff fallback: เห็นแค่ dashboard + orders
-  return ['dashboard','orders'].includes(page);
+  // staff fallback: เห็นแค่ dashboard + orders + aiIntelligence
+  return ['dashboard','orders','aiIntelligence'].includes(page);
 }
 
 function renderSidebar() {
@@ -1083,6 +1084,7 @@ function renderSidebar() {
   // กรอง menu ตาม permission
   const allMenus = [
     {section: t('nav.overview')},
+    {page:'aiIntelligence', icon:'🤖', label: 'AI วิเคราะห์ธุรกิจ (AI Advisor)'},
     {page:'ownerDashboard', icon:'🏠', label: t('nav.owner')},
     {page:'dashboard',      icon:'📊', label: t('nav.dashboard')},
     {page:'monthly',        icon:'📅', label: t('nav.monthly')},
