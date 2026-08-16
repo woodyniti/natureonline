@@ -39,7 +39,7 @@
 // ── Cache Cleaner & Service Worker ────────────────────
 if ('caches' in window) {
   caches.keys().then(keys => {
-    keys.forEach(k => { if (k !== 'sealthai-v1.35') caches.delete(k); });
+    keys.forEach(k => { if (k !== 'sealthai-v1.36') caches.delete(k); });
   }).catch(()=>{});
 }
 
@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.35';
+    const CACHE = 'sealthai-v1.36';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -984,7 +984,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.35</div>
+            <div class="logo-sub">v1.36</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1068,6 +1068,7 @@ function canSee(page) {
   if (role === 'admin') return page !== 'settings';
   if (page === 'stockPlanning' && perms?.products) return true;
   if (page === 'chinaImport' && perms?.purchase) return true;
+  if (page === 'marketplace' && (perms?.orders || perms?.sales)) return true;
   // staff: ตรวจ permissions object
   const perms = currentUser?._perms;
   if (perms && typeof perms === 'object') return !!perms[page];
@@ -1090,6 +1091,7 @@ function renderSidebar() {
     {page:'quotations',  icon:'📋', label: 'ใบเสนอราคา (QT)'},
     {page:'orders',      icon:'🛒', label: 'ออเดอร์ (SO)'},
     {page:'arinvoice',   icon:'💰', label: 'AR Invoice'},
+    {page:'marketplace', icon:'🛍️', label: 'มาร์เก็ตเพลส (Marketplace Hub)'},
     {page:'goodsreturn', icon:'🔄', label: 'รับคืนสินค้า'},
     {page:'expenses',    icon:'💸', label: t('nav.expenses')},
     {page:'finance',     icon:'📈', label: 'รายได้อื่น & เงินลงทุน'},
@@ -1579,7 +1581,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
+  const pages = { marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
   if (pages[page]) pages[page]();
 }
 
@@ -14906,12 +14908,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.35</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">China Import & Landed Cost Tracking</span></div>
+          <div>🚀 <strong>SEALTHAI v1.36</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Multi-Marketplace Sync Hub</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.36', type:'minor', date:'2026-08-16', title:'Multi-Marketplace Sync Hub (Shopee / Lazada / TikTok / LINE)', items:['ศูนย์รวมคำสั่งซื้อ Marketplace: นำเข้าไฟล์ Excel/CSV จาก Shopee, Lazada, TikTok Shop, LINE Shopping','ระบบ Auto-Detect Parser และตรวจจับคำสั่งซื้อซ้ำซ้อน (Deduplication Engine)','ระบบจับคู่ SKU Marketplace (SKU Mapping) พร้อมตัดสต๊อกกลางอัตโนมัติ (Central Inventory Deduction)','ระบบรวมศูนย์แพ็กของ & พิมพ์ใบปะหน้าพัสดุเป็นชุด (Batch Labels Printing 100x150 mm / A4)','รายงานวิเคราะห์ยอดขาย กำไรสุทธิ และค่าธรรมเนียมแพลตฟอร์มรายช่องทาง'] },
             { v:'1.35', type:'minor', date:'2026-08-16', title:'China Import & Landed Cost Tracking', items:['ระบบทะเบียนชิปเมนต์นำเข้า (China Import Register) บันทึก PI, B/L, Tracking, และสถานะการขนส่ง','คำนวณอัตราแลกเปลี่ยนเงินตราต่างประเทศ (CNY/USD) และจัดการงวดชำระมัดจำ/ยอดคงเหลือ','บันทึกสิทธิพิเศษ Form E / RCEP, พิกัด HS Code, และแยกแจงค่าใช้จ่ายนำเข้า 8 หมวดหมู่อย่างละเอียด','Landed Cost Allocation Engine: ปันส่วนค่าใช้จ่ายเข้าต้นทุนจริงต่อหน่วย (ตามมูลค่า, น้ำหนัก, CBM, หรือจำนวน)','คลิกเดียวบันทึกรับเข้าคลังพร้อมอัปเดตต้นทุนเฉลี่ยจริงของสต๊อกสินค้าทันที'] },
             { v:'1.34', type:'minor', date:'2026-08-16', title:'Product Master & Stock Planning Intelligence', items:['ระบบวางแผนสต๊อกอัจฉริยะ: คำนวณ ROP, Lead Time, MOQ, Safety Stock, และ In-Transit','วิเคราะห์ยอดขาย 30/90/180 วัน พร้อมจำแนกกลุ่มสินค้า ABC และเตือน Dead Stock','ระบบเสนอจำนวนสั่งซื้ออัตโนมัติ (Auto Replenishment) และคลิกเดียวสร้าง PO ได้ทันที','Product Master ซีลละเอียด: ขนาด IDxODxW, วัสดุ NBR/FKM/PU, ปากซีล TC/TB/SC, ขีดจำกัดทางวิศวกรรม','ระบบค้นหาขนาดซีลและ Cross-Reference เทียบเบอร์/OEM หลายยี่ห้อ'] },
             { v:'1.33', type:'patch', date:'2026-08-15', title:'Product & Category Image Storage RLS Fix', items:['แก้สิทธิ์อัปโหลดรูปสำหรับสมาชิก role owner ที่ policy เดิมไม่รองรับ','ใช้ฟังก์ชัน SECURITY DEFINER ตรวจสิทธิ์ร้านโดยไม่ถูก RLS ซ้อนบล็อก','รองรับ owner, admin และสมาชิกที่ได้รับสิทธิ์จัดการสินค้า','เพิ่มข้อความแนะนำที่ชัดเจนเมื่อ Supabase ยังไม่ได้ติดตั้ง policy v1.33'] },
@@ -16576,7 +16579,8 @@ async function printStickers(orderId) {
     '  .sticker-page { border:1px solid #ccc !important; -webkit-print-color-adjust:exact; }',
     '  @page { size:'+Wstr+'in '+Hstr+'in; margin:0; }',
     '}',
-        '</style></head><body>',
+        '</style></head><body>',
+
     pages.join('\n'),
     '</body></html>'
   ].join('\n');
@@ -16927,6 +16931,1069 @@ function setOrdYear(year) {
   event?.target?.classList?.replace('btn-secondary','btn-primary');
   loadOrders();
 }
+
+// ══════════════════════════════════════════════════════════════
+// ── SEALTHAI v1.36: Multi-Marketplace Sync Hub (Shopee/Lazada/TikTok/LINE) ──
+// ══════════════════════════════════════════════════════════════
+
+let _marketplaceTab = 'overview';
+let _marketplaceOrders = [];
+let _marketplaceMappings = [];
+let _parsedImportOrders = [];
+let _selectedToShipOrderIds = new Set();
+
+async function marketplace() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="loadMarketplaceData(true)">🔄 รีเฟรช</button>
+      <button class="btn btn-primary btn-sm" onclick="switchMarketplaceTab('import')">📥 นำเข้าออเดอร์ Marketplace</button>
+    </div>
+  `;
+
+  setContent(`
+    <!-- Tabs Header -->
+    <div class="tab-btn-row" id="marketplace-tabs">
+      <button class="tab-btn active" id="tab-mp-overview" onclick="switchMarketplaceTab('overview')">📊 ภาพรวม & วิเคราะห์ยอดขาย</button>
+      <button class="tab-btn" id="tab-mp-import" onclick="switchMarketplaceTab('import')">📥 นำเข้าออเดอร์ (Import & Auto-Stock)</button>
+      <button class="tab-btn" id="tab-mp-toship" onclick="switchMarketplaceTab('toship')">🚚 จัดการแพ็ก & พิมพ์ใบปะหน้า (<span id="mp-toship-count">0</span>)</button>
+      <button class="tab-btn" id="tab-mp-mappings" onclick="switchMarketplaceTab('mappings')">🔗 ผูก SKU มาร์เก็ตเพลส (<span id="mp-mapping-count">0</span>)</button>
+    </div>
+
+    <!-- PANE 1: Overview & Analytics -->
+    <div id="pane-mp-overview" class="mp-pane">
+      <div class="filter-bar mb-4" style="flex-wrap:wrap;gap:8px">
+        <input type="date" id="mp-from" value="${today().slice(0,7)+'-01'}">
+        <span style="color:var(--text3);align-self:center">ถึง</span>
+        <input type="date" id="mp-to" value="${today()}">
+        <select id="mp-channel-filter" onchange="renderMarketplaceOverview()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+          <option value="all">ทุกช่องทาง (All Channels)</option>
+          <option value="Shopee">Shopee 🟠</option>
+          <option value="Lazada">Lazada 🔵</option>
+          <option value="TikTok">TikTok Shop ⚫</option>
+          <option value="LINE">LINE Shopping 🟢</option>
+          <option value="Facebook">Facebook 🔵</option>
+          <option value="Offline">หน้าร้าน / Direct 🏬</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadMarketplaceData(true)">🔍 กรองข้อมูล</button>
+      </div>
+
+      <div class="stat-grid mb-4" id="mp-stats-cards">
+        <div class="stat-card"><div class="stat-label">กำลังโหลดข้อมูลมาร์เก็ตเพลส...</div></div>
+      </div>
+
+      <!-- Comparison Chart & Table -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px;margin-bottom:20px">
+        <div class="card">
+          <div class="card-title">📈 สัดส่วนยอดขายแยกตามแพลตฟอร์ม</div>
+          <div style="height:260px;position:relative;display:flex;align-items:center;justify-content:center">
+            <canvas id="mp-channel-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">💰 ตารางเปรียบเทียบกำไร & ค่าธรรมเนียมแต่ละช่องทาง</div>
+          <div class="table-wrap">
+            <table id="mp-channel-table">
+              <thead>
+                <tr>
+                  <th>ช่องทาง</th>
+                  <th class="text-right">ออเดอร์</th>
+                  <th class="text-right">ยอดขายรวม</th>
+                  <th class="text-right">ค่าธรรมเนียม</th>
+                  <th class="text-right">กำไรสุทธิ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td colspan="5" style="text-align:center;color:var(--text3)">กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 2: Import & Auto Stock Deduction -->
+    <div id="pane-mp-import" class="mp-pane" style="display:none">
+      <div class="card mb-4" style="background:var(--bg2);border:2px dashed var(--accent);padding:24px;text-align:center">
+        <div style="font-size:36px;margin-bottom:8px">📥</div>
+        <h3 style="margin-bottom:6px;font-size:16px;color:var(--text)">อัปโหลดไฟล์คำสั่งซื้อจาก Shopee / Lazada / TikTok / LINE</h3>
+        <p style="color:var(--text3);font-size:13px;margin-bottom:16px">รองรับไฟล์ <b>.xlsx</b> หรือ <b>.csv</b> ที่ดาวน์โหลดจากระบบ Seller Center โดยตรง ระบบจะตรวจสอบรูปแบบและตัดสต๊อกให้อัตโนมัติ</p>
+        
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <label class="btn btn-primary" style="cursor:pointer;padding:8px 20px;font-size:14px">
+            📁 เลือกไฟล์ Excel / CSV
+            <input type="file" id="mp-file-input" accept=".xlsx,.csv" style="display:none" onchange="handleMarketplaceFileUpload(this)">
+          </label>
+        </div>
+      </div>
+
+      <!-- Preview Parsed Orders Container -->
+      <div id="mp-import-preview" style="display:none"></div>
+    </div>
+
+    <!-- PANE 3: Packing & Batch Label Printing -->
+    <div id="pane-mp-toship" class="mp-pane" style="display:none">
+      <div class="card mb-4">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="card-title">📦 ออเดอร์รอจัดส่ง (To Ship)</div>
+            <div class="card-subtitle">เลือกออเดอร์ที่ต้องการเพื่อสั่งพิมพ์ใบปะหน้าพัสดุและ Checklist สินค้าพร้อมกันเป็นชุด</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary btn-sm" onclick="printSelectedMarketplaceLabels('100x150')">🖨️ พิมพ์ใบปะหน้า 100x150 mm (<span id="mp-sel-print-count">0</span>)</button>
+            <button class="btn btn-secondary btn-sm" onclick="printSelectedMarketplaceLabels('A4')">📄 พิมพ์ A4</button>
+            <button class="btn btn-secondary btn-sm" onclick="markSelectedMarketplaceShipped()" style="color:var(--green)">✅ เปลี่ยนสถานะเป็น "จัดส่งแล้ว"</button>
+          </div>
+        </div>
+
+        <div class="filter-bar" style="border:none;padding:0 0 12px 0">
+          <select id="mp-toship-channel" onchange="renderMarketplaceToShip()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="all">ทุกช่องทางที่รอส่ง</option>
+            <option value="Shopee">Shopee 🟠</option>
+            <option value="Lazada">Lazada 🔵</option>
+            <option value="TikTok">TikTok Shop ⚫</option>
+            <option value="LINE">LINE 🟢</option>
+            <option value="Facebook">Facebook 🔵</option>
+            <option value="Offline">หน้าร้าน 🏬</option>
+          </select>
+          <input type="text" id="mp-toship-search" placeholder="🔍 ค้นหาเลขออเดอร์ / ผู้รับ / Tracking..." oninput="renderMarketplaceToShip()" style="flex:1;min-width:200px">
+        </div>
+
+        <div class="table-wrap" id="mp-toship-table-wrap">
+          <div class="loading"><div class="spinner"></div> กำลังโหลดออเดอร์รอจัดส่ง...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 4: SKU Mappings -->
+    <div id="pane-mp-mappings" class="mp-pane" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔗 ตารางผูกรหัสสินค้า (Marketplace SKU Mapping)</div>
+            <div class="card-subtitle">ผูก Seller SKU หรือชื่อสินค้าบนแพลตฟอร์มกับ SKU คลังสินค้ากลางของ SEALTHAI เพื่อให้ตัดสต๊อกได้ถูกต้อง</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openNewSKUMappingModal()">+ ผูก SKU ใหม่</button>
+        </div>
+
+        <div class="filter-bar" style="border:none;padding:0 0 12px 0">
+          <select id="mp-map-filter-ch" onchange="renderMarketplaceMappings()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="all">ทุกช่องทาง</option>
+            <option value="Shopee">Shopee</option>
+            <option value="Lazada">Lazada</option>
+            <option value="TikTok">TikTok Shop</option>
+            <option value="LINE">LINE Shopping</option>
+          </select>
+          <input type="text" id="mp-map-search" placeholder="🔍 ค้นหา Platform SKU / ชื่อสินค้า / SKU ในระบบ..." oninput="renderMarketplaceMappings()" style="flex:1;min-width:200px">
+        </div>
+
+        <div class="table-wrap" id="mp-mappings-table-wrap">
+          <div class="loading"><div class="spinner"></div> กำลังโหลดรายการจับคู่ SKU...</div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  await loadMarketplaceData();
+}
+
+function switchMarketplaceTab(tab) {
+  _marketplaceTab = tab;
+  ['overview', 'import', 'toship', 'mappings'].forEach(t => {
+    const btn = document.getElementById('tab-mp-' + t);
+    const pane = document.getElementById('pane-mp-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (pane) pane.style.display = (t === tab) ? 'block' : 'none';
+  });
+
+  if (tab === 'overview') renderMarketplaceOverview();
+  if (tab === 'toship') renderMarketplaceToShip();
+  if (tab === 'mappings') renderMarketplaceMappings();
+}
+
+async function loadMarketplaceData(forceReload = false) {
+  if (!currentShop?.id) return;
+
+  const fromDate = document.getElementById('mp-from')?.value || (today().slice(0,7)+'-01');
+  const toDate = document.getElementById('mp-to')?.value || today();
+
+  try {
+    const [ordersRes, mappingsRes, prodsRes] = await Promise.all([
+      sb.from('orders')
+        .select('*, order_items(*)')
+        .eq('shop_id', currentShop.id)
+        .gte('order_date', fromDate)
+        .lte('order_date', toDate)
+        .order('order_date', { ascending: false }),
+      sb.from('marketplace_sku_mappings')
+        .select('*, products(id, name, sku, stock_qty, current_cost, sale_price)')
+        .eq('shop_id', currentShop.id),
+      sb.from('products')
+        .select('id, name, sku, supplier_sku, part_no, stock_qty, current_cost, sale_price')
+        .eq('shop_id', currentShop.id)
+        .eq('active', true)
+    ]);
+
+    _marketplaceOrders = ordersRes.data || [];
+    _marketplaceMappings = mappingsRes.data || [];
+    allProducts = prodsRes.data || [];
+
+    const toShipCount = _marketplaceOrders.filter(o => o.status === 'pending' || o.status === 'to_ship').length;
+    const toShipBadge = document.getElementById('mp-toship-count');
+    if (toShipBadge) toShipBadge.textContent = toShipCount;
+
+    const mapBadge = document.getElementById('mp-mapping-count');
+    if (mapBadge) mapBadge.textContent = _marketplaceMappings.length;
+
+    renderMarketplaceOverview();
+    renderMarketplaceToShip();
+    renderMarketplaceMappings();
+  } catch(e) {
+    console.error('Error loading marketplace data:', e);
+    toast('โหลดข้อมูล Marketplace ไม่สำเร็จ: ' + e.message, 'error');
+  }
+}
+
+function renderMarketplaceOverview() {
+  const chFilter = document.getElementById('mp-channel-filter')?.value || 'all';
+  let filtered = _marketplaceOrders;
+  if (chFilter !== 'all') {
+    filtered = filtered.filter(o => (o.channel || '').toLowerCase() === chFilter.toLowerCase());
+  }
+
+  // Summary Metrics
+  const totalOrders = filtered.length;
+  const totalSales = filtered.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
+  const totalProfit = filtered.reduce((s, o) => s + (Number(o.profit) || 0), 0);
+  const totalFees = filtered.reduce((s, o) => s + (Number(o.platform_fee) || 0), 0);
+  const aov = totalOrders > 0 ? (totalSales / totalOrders) : 0;
+
+  const statsGrid = document.getElementById('mp-stats-cards');
+  if (statsGrid) {
+    statsGrid.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid var(--blue)">
+        <div class="stat-label">🛒 คำสั่งซื้อรวม (Orders)</div>
+        <div class="stat-value text-blue">${fmt(totalOrders)} <span style="font-size:13px;font-weight:400;color:var(--text3)">ออเดอร์</span></div>
+        <div class="stat-sub">เฉลี่ยต่อบิล (AOV): ${fmtB(aov)}</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--accent)">
+        <div class="stat-label">💰 ยอดขายรวม (Gross Sales)</div>
+        <div class="stat-value text-accent">${fmtB(totalSales)}</div>
+        <div class="stat-sub">ทุกช่องทางในรอบที่เลือก</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--green)">
+        <div class="stat-label">📈 กำไรสุทธิ (Net Profit)</div>
+        <div class="stat-value text-green">${fmtB(totalProfit)}</div>
+        <div class="stat-sub">Margin: ${totalSales > 0 ? ((totalProfit/totalSales)*100).toFixed(1)+'%' : '0%'}</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--red)">
+        <div class="stat-label">💸 ค่าธรรมเนียมแพลตฟอร์ม (Fees)</div>
+        <div class="stat-value text-red">${fmtB(totalFees)}</div>
+        <div class="stat-sub">สัดส่วน Fee: ${totalSales > 0 ? ((totalFees/totalSales)*100).toFixed(1)+'%' : '0%'}</div>
+      </div>
+    `;
+  }
+
+  // Channels grouping
+  const channels = ['Shopee', 'Lazada', 'TikTok', 'LINE', 'Facebook', 'Offline'];
+  const channelData = {};
+  channels.forEach(c => { channelData[c] = { orders:0, sales:0, fees:0, profit:0 }; });
+
+  _marketplaceOrders.forEach(o => {
+    let ch = o.channel || 'Offline';
+    const match = channels.find(c => c.toLowerCase() === ch.toLowerCase());
+    if (match) ch = match;
+    else ch = 'Offline';
+
+    channelData[ch].orders++;
+    channelData[ch].sales += (Number(o.total_amount) || 0);
+    channelData[ch].fees += (Number(o.platform_fee) || 0);
+    channelData[ch].profit += (Number(o.profit) || 0);
+  });
+
+  // Render Table
+  const tableBody = document.querySelector('#mp-channel-table tbody');
+  if (tableBody) {
+    tableBody.innerHTML = channels.map(ch => {
+      const d = channelData[ch];
+      const chBadge = ch === 'Shopee' ? '🟠 Shopee' : (ch === 'Lazada' ? '🔵 Lazada' : (ch === 'TikTok' ? '⚫ TikTok' : (ch === 'LINE' ? '🟢 LINE' : (ch === 'Facebook' ? '🔵 FB' : '🏬 หน้าร้าน'))));
+      return `
+        <tr>
+          <td style="font-weight:600">${chBadge}</td>
+          <td class="text-right font-mono">${fmt(d.orders)}</td>
+          <td class="text-right font-mono" style="font-weight:700">${fmtB(d.sales)}</td>
+          <td class="text-right font-mono text-red">${fmtB(d.fees)}</td>
+          <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(d.profit)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Render Chart
+  renderMarketplaceChart(channels, channelData);
+}
+
+function renderMarketplaceChart(channels, data) {
+  const ctx = document.getElementById('mp-channel-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (charts.mpChannel) charts.mpChannel.destroy();
+
+  const labels = channels.map(c => c);
+  const sales = channels.map(c => data[c].sales);
+  const colors = ['#ee4d2d', '#0f146d', '#000000', '#00c300', '#1877f2', '#6b7280'];
+
+  charts.mpChannel = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data: sales,
+        backgroundColor: colors,
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { boxWidth: 12, font: { family: 'Sarabun', size: 11 } } }
+      }
+    }
+  });
+}
+
+// ── File Upload & Order Parser ──────────────────────────────
+async function handleMarketplaceFileUpload(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  const ext = file.name.split('.').pop().toLowerCase();
+  toast('กำลังอ่านไฟล์ ' + file.name + '...', 'info');
+
+  try {
+    if (ext === 'xlsx' || ext === 'xls') {
+      if (typeof XLSX === 'undefined') {
+        await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+      }
+      const data = await file.arrayBuffer();
+      const wb = XLSX.read(data, { type: 'array' });
+      const firstSheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+      processMarketplaceRawRows(rows, file.name);
+    } else if (ext === 'csv') {
+      const text = await file.text();
+      const rows = parseCSVText(text);
+      processMarketplaceRawRows(rows, file.name);
+    } else {
+      toast('กรุณาอัปโหลดไฟล์ .xlsx หรือ .csv เท่านั้น', 'error');
+    }
+  } catch(e) {
+    console.error('Error parsing file:', e);
+    toast('อ่านไฟล์ไม่สำเร็จ: ' + e.message, 'error');
+  }
+  input.value = '';
+}
+
+function parseCSVText(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+  if (!lines.length) return [];
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^["']|["']$/g, ''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    // Simple CSV parser supporting quotes
+    const values = [];
+    let cur = '', inQuote = false;
+    for (let c of lines[i]) {
+      if (c === '"' || c === "'") inQuote = !inQuote;
+      else if (c === ',' && !inQuote) { values.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    values.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h] = (values[idx] || '').replace(/^["']|["']$/g, ''); });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function processMarketplaceRawRows(rows, fileName) {
+  if (!rows || !rows.length) {
+    toast('ไม่พบข้อมูลคำสั่งซื้อในไฟล์', 'error');
+    return;
+  }
+
+  // Detect platform format by inspecting headers
+  const sample = rows[0];
+  const keys = Object.keys(sample).map(k => k.trim());
+  let channel = 'Shopee';
+
+  if (keys.some(k => k.includes('หมายเลขคำสั่งซื้อ') || k.includes('Order ID') && keys.some(k => k.includes('หมายเลขอ้างอิง SKU') || k.includes('SKU Reference')))) {
+    channel = 'Shopee';
+  } else if (keys.some(k => k.includes('Order Number') || k.includes('Seller SKU') && keys.some(k => k.includes('Paid Price')))) {
+    channel = 'Lazada';
+  } else if (keys.some(k => k.includes('Order ID') && keys.some(k => k.includes('Buyer Username') || k.includes('SKU ID')))) {
+    channel = 'TikTok';
+  } else {
+    channel = 'Shopee'; // default fallback
+  }
+
+  // Group raw rows into unified Order structures
+  const orderMap = {};
+  rows.forEach(r => {
+    let orderId = '', orderDate = today(), buyerName = '', buyerPhone = '', address = '', tracking = '', carrier = '', fee = 0;
+    let sku = '', prodName = '', qty = 1, price = 0;
+
+    if (channel === 'Shopee') {
+      orderId = r['หมายเลขคำสั่งซื้อ'] || r['Order ID'] || r['Order No.'] || '';
+      orderDate = (r['วันที่ทำการสั่งซื้อ'] || r['Order Creation Date'] || today()).slice(0, 10);
+      buyerName = r['ชื่อผู้รับ'] || r['Recipient Name'] || r['ชื่อผู้ซื้อ'] || r['Buyer Name'] || '-';
+      buyerPhone = r['เบอร์โทรศัพท์'] || r['Phone Number'] || '';
+      address = r['ที่อยู่จัดส่ง'] || r['Delivery Address'] || '';
+      tracking = r['หมายเลขติดตามพัสดุ'] || r['Tracking Number'] || '';
+      carrier = r['ตัวเลือกการจัดส่ง'] || r['Shipping Provider'] || '';
+      fee = Number(r['ค่าคอมมิชชั่น'] || r['Commission Fee'] || 0) + Number(r['ค่าธรรมเนียมการทำธุรกรรม'] || r['Transaction Fee'] || 0) + Number(r['ค่าบริการ'] || r['Service Fee'] || 0);
+
+      sku = r['หมายเลขอ้างอิง SKU'] || r['SKU Reference No.'] || r['Parent SKU'] || '';
+      prodName = r['ชื่อสินค้า'] || r['Product Name'] || '-';
+      qty = Number(r['จำนวน'] || r['Quantity'] || 1) || 1;
+      price = Number(r['ราคาขาย'] || r['Deal Price'] || r['Original Price'] || 0) || 0;
+    } else if (channel === 'Lazada') {
+      orderId = r['Order Number'] || r['orderNumber'] || '';
+      orderDate = (r['createTime'] || r['Created at'] || today()).slice(0, 10);
+      buyerName = r['customerName'] || r['Customer Name'] || r['shippingName'] || '-';
+      buyerPhone = r['shippingPhone'] || '';
+      address = r['shippingAddress'] || r['shippingAddress1'] || '';
+      tracking = r['trackingCode'] || r['Tracking Code'] || '';
+      carrier = r['shippingProvider'] || '';
+      fee = Number(r['commission'] || 0) + Number(r['paymentFee'] || 0);
+
+      sku = r['sellerSku'] || r['Seller SKU'] || '';
+      prodName = r['itemName'] || r['Item Name'] || '-';
+      qty = Number(r['quantity'] || 1) || 1;
+      price = Number(r['paidPrice'] || r['unitPrice'] || 0) || 0;
+    } else if (channel === 'TikTok') {
+      orderId = r['Order ID'] || r['Order Id'] || '';
+      orderDate = (r['Created Time'] || today()).slice(0, 10);
+      buyerName = r['Recipient Name'] || r['Buyer Username'] || '-';
+      buyerPhone = r['Phone Number'] || '';
+      address = r['Shipping Address'] || '';
+      tracking = r['Tracking ID'] || '';
+      carrier = r['Shipping Provider Name'] || '';
+      fee = Number(r['Platform Discount'] || 0) + Number(r['Commission'] || 0);
+
+      sku = r['Seller SKU'] || r['SKU ID'] || '';
+      prodName = r['Product Name'] || '-';
+      qty = Number(r['Quantity'] || 1) || 1;
+      price = Number(r['SKU Unit Original Price'] || r['SKU Subtotal After Discount'] || 0) || 0;
+    }
+
+    if (!orderId) return;
+
+    if (!orderMap[orderId]) {
+      orderMap[orderId] = {
+        platformOrderId: orderId,
+        channel,
+        orderDate,
+        buyerName,
+        buyerPhone,
+        address,
+        tracking,
+        carrier,
+        fee,
+        items: []
+      };
+    }
+
+    orderMap[orderId].items.push({
+      platformSku: sku,
+      prodName,
+      qty,
+      price
+    });
+  });
+
+  _parsedImportOrders = Object.values(orderMap);
+  renderMarketplaceImportPreview(channel, fileName);
+}
+
+function renderMarketplaceImportPreview(channel, fileName) {
+  const container = document.getElementById('mp-import-preview');
+  if (!container) return;
+  container.style.display = 'block';
+
+  // Map each item to Product Master
+  let matchedCount = 0;
+  let missingCount = 0;
+  let totalGross = 0;
+
+  _parsedImportOrders.forEach(ord => {
+    ord.items.forEach(it => {
+      // Find mapping in _marketplaceMappings first
+      const map = _marketplaceMappings.find(m => m.channel.toLowerCase() === ord.channel.toLowerCase() && m.platform_sku.toLowerCase() === it.platformSku.toLowerCase());
+      if (map && map.products) {
+        it.matchedProduct = map.products;
+        it.multiplier = map.multiplier || 1;
+      } else {
+        // Try direct match in allProducts by sku or supplier_sku
+        const direct = allProducts.find(p => (p.sku && p.sku.toLowerCase() === it.platformSku.toLowerCase()) || (p.supplier_sku && p.supplier_sku.toLowerCase() === it.platformSku.toLowerCase()) || (p.part_no && p.part_no.toLowerCase() === it.platformSku.toLowerCase()));
+        if (direct) {
+          it.matchedProduct = direct;
+          it.multiplier = 1;
+        } else {
+          it.matchedProduct = null;
+        }
+      }
+
+      if (it.matchedProduct) matchedCount++;
+      else missingCount++;
+      totalGross += (it.price * it.qty);
+    });
+  });
+
+  container.innerHTML = `
+    <div class="card">
+      <div class="card-header" style="flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="card-title">📦 ตัวอย่างคำสั่งซื้อที่จะนำเข้า (${_parsedImportOrders.length} ออเดอร์ · ${_parsedImportOrders.reduce((s,o)=>s+o.items.length,0)} รายการ)</div>
+          <div class="card-subtitle">ไฟล์: <b>${escapeHTML(fileName)}</b> | ตรวจพบช่องทาง: <span class="seal-badge-abc-a">${channel}</span> | ยอดขายรวม: <b style="color:var(--accent)">${fmtB(totalGross)}</b></div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('mp-import-preview').style.display='none'">ยกเลิก</button>
+          <button class="btn btn-primary" id="btn-do-mp-import" onclick="executeMarketplaceImport()">⚡ ยืนยันนำเข้า & ตัดสต๊อกอัตโนมัติ</button>
+        </div>
+      </div>
+
+      ${missingCount > 0 ? `
+        <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>⚠️ มี <b>${missingCount} รายการ</b> ที่ยังไม่พบรหัส SKU ในระบบ (ระบบจะบันทึกเป็นชื่อสินค้าเดิมให้ แต่จะไม่ตัดสต๊อกอัตโนมัติ)</div>
+          <button class="btn btn-secondary btn-sm" onclick="switchMarketplaceTab('mappings')">🔗 ไปหน้าผูก SKU</button>
+        </div>
+      ` : ''}
+
+      <div class="table-wrap" style="max-height:450px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:120px">Order ID</th>
+              <th style="width:90px">วันที่</th>
+              <th>ลูกค้า / ผู้รับ</th>
+              <th>รายการสินค้า (Platform SKU)</th>
+              <th style="width:180px">ผูกกับสินค้าในระบบ (Stock Master)</th>
+              <th class="text-right" style="width:70px">จำนวน</th>
+              <th class="text-right" style="width:90px">ราคา</th>
+              <th class="text-right" style="width:100px">ยอดรวม</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${_parsedImportOrders.map(o => {
+              return o.items.map((it, idx) => `
+                <tr>
+                  ${idx === 0 ? `<td rowspan="${o.items.length}" style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);vertical-align:top">${escapeHTML(o.platformOrderId)}</td>` : ''}
+                  ${idx === 0 ? `<td rowspan="${o.items.length}" style="font-size:12px;vertical-align:top">${o.orderDate}</td>` : ''}
+                  ${idx === 0 ? `<td rowspan="${o.items.length}" style="vertical-align:top"><div style="font-weight:600;font-size:13px">${escapeHTML(o.buyerName)}</div><div style="font-size:11px;color:var(--text3)">${escapeHTML(o.carrier || '')} ${escapeHTML(o.tracking || '')}</div></td>` : ''}
+                  <td>
+                    <div style="font-weight:500;font-size:12px">${escapeHTML(it.prodName)}</div>
+                    <div style="font-family:var(--mono);font-size:11px;color:var(--purple)">SKU: ${escapeHTML(it.platformSku || '-')}</div>
+                  </td>
+                  <td>
+                    ${it.matchedProduct ? `
+                      <div style="font-size:12px;font-weight:600;color:var(--green)">✓ ${escapeHTML(it.matchedProduct.name)}</div>
+                      <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">สต๊อกเหลือ: ${fmt(it.matchedProduct.stock_qty)} ชิ้น</div>
+                    ` : `
+                      <span style="font-size:11px;color:var(--red);background:#fee2e2;padding:2px 6px;border-radius:4px;font-weight:600">❌ ยังไม่ผูก SKU</span>
+                    `}
+                  </td>
+                  <td class="text-right font-mono" style="font-weight:700">x ${fmt(it.qty)}</td>
+                  <td class="text-right font-mono">${fmtB(it.price)}</td>
+                  <td class="text-right font-mono" style="font-weight:700">${fmtB(it.price * it.qty)}</td>
+                </tr>
+              `).join('');
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ── Execute Import & Auto Stock Deduction ──────────────────
+async function executeMarketplaceImport() {
+  if (!_parsedImportOrders.length) {
+    toast('ไม่มีข้อมูลคำสั่งซื้อที่จะนำเข้า', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-do-mp-import');
+  if (btn) { btn.disabled = true; btn.innerHTML = '⏳ กำลังบันทึกออเดอร์ & ตัดสต๊อก...'; }
+
+  let successOrders = 0;
+  let skippedOrders = 0;
+  let deductedStockCount = 0;
+
+  try {
+    for (const ord of _parsedImportOrders) {
+      // 1. Check duplicate order
+      const { data: exist } = await sb.from('orders')
+        .select('id')
+        .eq('shop_id', currentShop.id)
+        .eq('customer_ref', ord.platformOrderId)
+        .limit(1);
+
+      if (exist && exist.length > 0) {
+        skippedOrders++;
+        continue;
+      }
+
+      // 2. Calculate Total & Profit
+      let totalAmount = 0;
+      let totalCost = 0;
+      ord.items.forEach(it => {
+        const itemTotal = it.price * it.qty;
+        totalAmount += itemTotal;
+        const itemCost = it.matchedProduct ? (Number(it.matchedProduct.current_cost) || 0) * it.qty : 0;
+        totalCost += itemCost;
+      });
+
+      const profit = totalAmount - totalCost - (Number(ord.fee) || 0);
+
+      // 3. Create Order
+      const orderPayload = {
+        shop_id: currentShop.id,
+        order_date: ord.orderDate,
+        channel: ord.channel,
+        customer_name: ord.buyerName,
+        customer_phone: ord.buyerPhone || null,
+        address: ord.address || null,
+        customer_ref: ord.platformOrderId,
+        total_amount: totalAmount,
+        cost: totalCost,
+        profit: profit,
+        status: 'pending',
+        payment_method: 'โอนเงิน',
+        tracking_no: ord.tracking || null
+      };
+
+      const { data: newOrder, error: ordErr } = await sb.from('orders').insert(orderPayload).select().single();
+      if (ordErr || !newOrder) {
+        console.error('Failed to create order:', ordErr);
+        continue;
+      }
+
+      // 4. Create Order Items & Deduct Stock
+      for (const it of ord.items) {
+        const itemCost = it.matchedProduct ? (Number(it.matchedProduct.current_cost) || 0) : 0;
+        const itemPayload = {
+          order_id: newOrder.id,
+          product_id: it.matchedProduct ? it.matchedProduct.id : null,
+          product_name: it.matchedProduct ? it.matchedProduct.name : it.prodName,
+          qty: it.qty,
+          sell_price: it.price,
+          cost_per_unit: itemCost
+        };
+        await sb.from('order_items').insert(itemPayload);
+
+        // Auto Stock Deduction
+        if (it.matchedProduct) {
+          const deductQty = it.qty * (it.multiplier || 1);
+          // Insert stock movement
+          await sb.from('stock_movements').insert({
+            shop_id: currentShop.id,
+            product_id: it.matchedProduct.id,
+            movement_type: 'sale',
+            qty: -deductQty,
+            note: `${ord.channel} Order #${ord.platformOrderId}`,
+            reference_id: newOrder.id
+          });
+
+          // Update product stock_qty
+          const newQty = Math.max(0, (Number(it.matchedProduct.stock_qty) || 0) - deductQty);
+          await sb.from('products').update({ stock_qty: newQty }).eq('id', it.matchedProduct.id);
+          deductedStockCount++;
+        }
+      }
+
+      successOrders++;
+    }
+
+    toast(`นำเข้าสำเร็จ ${successOrders} ออเดอร์ (ข้ามรายการซ้ำ ${skippedOrders}) และตัดสต๊อก ${deductedStockCount} รายการ ✓`, 'success');
+    document.getElementById('mp-import-preview').style.display = 'none';
+    _parsedImportOrders = [];
+    await loadMarketplaceData(true);
+    switchMarketplaceTab('toship');
+  } catch(err) {
+    console.error('Import error:', err);
+    toast('เกิดข้อผิดพลาดในการนำเข้า: ' + err.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '⚡ ยืนยันนำเข้า & ตัดสต๊อกอัตโนมัติ'; }
+  }
+}
+
+// ── To Ship & Batch Label Printing ──────────────────────────
+function renderMarketplaceToShip() {
+  const chFilter = document.getElementById('mp-toship-channel')?.value || 'all';
+  const q = (document.getElementById('mp-toship-search')?.value || '').trim().toLowerCase();
+
+  let toShip = _marketplaceOrders.filter(o => o.status === 'pending' || o.status === 'to_ship');
+  if (chFilter !== 'all') toShip = toShip.filter(o => (o.channel || '').toLowerCase() === chFilter.toLowerCase());
+  if (q) toShip = toShip.filter(o => `${o.customer_ref||''} ${o.customer_name||''} ${o.tracking_no||''}`.toLowerCase().includes(q));
+
+  const countBadge = document.getElementById('mp-toship-count');
+  if (countBadge) countBadge.textContent = toShip.length;
+
+  const wrap = document.getElementById('mp-toship-table-wrap');
+  if (!wrap) return;
+
+  if (!toShip.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🚚</div><div class="empty-text">ไม่มีออเดอร์ค้างส่งในขณะนี้</div></div>';
+    updateMarketplacePrintCount();
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th style="width:36px;text-align:center"><input type="checkbox" id="mp-select-all-toship" onchange="toggleSelectAllMarketplaceToShip(this.checked)"></th>
+          <th>ช่องทาง / Ref</th>
+          <th>ผู้รับ / ที่อยู่จัดส่ง</th>
+          <th>รายการสินค้าในกล่อง</th>
+          <th class="text-right">ยอดเงิน</th>
+          <th>Tracking No.</th>
+          <th style="text-align:center;width:90px">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${toShip.map(o => {
+          const isSelected = _selectedToShipOrderIds.has(o.id);
+          const chBadge = o.channel === 'Shopee' ? '<span class="ch-shopee" style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600">Shopee 🟠</span>' : (o.channel === 'Lazada' ? '<span class="ch-lazada" style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600">Lazada 🔵</span>' : (o.channel === 'TikTok' ? '<span class="ch-tiktok" style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600">TikTok ⚫</span>' : `<span class="ch-other" style="padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600">${escapeHTML(o.channel||'Offline')}</span>`));
+
+          return `
+            <tr>
+              <td style="text-align:center">
+                <input type="checkbox" class="mp-toship-chk" data-id="${o.id}" ${isSelected ? 'checked' : ''} onchange="toggleMarketplaceToShipSelect('${o.id}', this.checked)">
+              </td>
+              <td>
+                ${chBadge}
+                <div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);margin-top:2px">${escapeHTML(o.customer_ref || o.order_no || '-')}</div>
+                <div style="font-size:11px;color:var(--text3)">${o.order_date || ''}</div>
+              </td>
+              <td>
+                <div style="font-weight:600;font-size:13px">${escapeHTML(o.customer_name || '-')}</div>
+                <div style="font-size:12px;color:var(--text2);max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${escapeHTML(o.address||'')}">${escapeHTML(o.address || '-')}</div>
+                ${o.customer_phone ? `<div style="font-size:11px;color:var(--text3)">📞 ${escapeHTML(o.customer_phone)}</div>` : ''}
+              </td>
+              <td>
+                ${(o.order_items || []).map(it => `
+                  <div style="font-size:12px;line-height:1.4">
+                    <span style="font-weight:600;color:var(--accent)">${fmt(it.qty)}x</span> ${escapeHTML(it.product_name)}
+                  </div>
+                `).join('')}
+              </td>
+              <td class="text-right font-mono" style="font-weight:700">${fmtB(o.total_amount)}</td>
+              <td>
+                <input type="text" value="${escapeHTML(o.tracking_no || '')}" placeholder="ใส่ Tracking..." 
+                  onchange="updateMarketplaceTracking('${o.id}', this.value)"
+                  style="font-family:var(--mono);font-size:12px;padding:3px 6px;border:1px solid var(--border2);border-radius:4px;width:140px">
+              </td>
+              <td style="text-align:center;white-space:nowrap">
+                <button class="btn btn-secondary btn-sm" onclick="printPackStickers('${o.id}')" title="พิมพ์ใบปะหน้าเดี่ยว">🖨️</button>
+                <button class="btn btn-primary btn-sm" onclick="markSingleMarketplaceShipped('${o.id}')" title="ส่งแล้ว">✓</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  updateMarketplacePrintCount();
+}
+
+function toggleMarketplaceToShipSelect(id, checked) {
+  if (checked) _selectedToShipOrderIds.add(id);
+  else _selectedToShipOrderIds.delete(id);
+  updateMarketplacePrintCount();
+}
+
+function toggleSelectAllMarketplaceToShip(checked) {
+  document.querySelectorAll('.mp-toship-chk').forEach(cb => {
+    cb.checked = checked;
+    const id = cb.dataset.id;
+    if (checked) _selectedToShipOrderIds.add(id);
+    else _selectedToShipOrderIds.delete(id);
+  });
+  updateMarketplacePrintCount();
+}
+
+function updateMarketplacePrintCount() {
+  const badge = document.getElementById('mp-sel-print-count');
+  if (badge) badge.textContent = _selectedToShipOrderIds.size;
+}
+
+async function updateMarketplaceTracking(id, track) {
+  try {
+    await sb.from('orders').update({ tracking_no: track.trim() || null }).eq('id', id);
+    const ord = _marketplaceOrders.find(o => o.id === id);
+    if (ord) ord.tracking_no = track.trim();
+    toast('บันทึก Tracking เรียบร้อย ✓', 'success');
+  } catch(e) { toast('บันทึก Tracking ไม่สำเร็จ', 'error'); }
+}
+
+async function markSingleMarketplaceShipped(id) {
+  try {
+    await sb.from('orders').update({ status: 'shipped' }).eq('id', id);
+    _selectedToShipOrderIds.delete(id);
+    toast('เปลี่ยนสถานะเป็นจัดส่งแล้ว ✓', 'success');
+    await loadMarketplaceData(true);
+  } catch(e) { toast('อัปเดตสถานะไม่สำเร็จ', 'error'); }
+}
+
+async function markSelectedMarketplaceShipped() {
+  if (!_selectedToShipOrderIds.size) {
+    toast('กรุณาเลือกออเดอร์ที่ต้องการเปลี่ยนสถานะอย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+  if (!confirm(`ยืนยันเปลี่ยนสถานะ ${_selectedToShipOrderIds.size} ออเดอร์เป็น "จัดส่งแล้ว"?`)) return;
+
+  try {
+    const ids = Array.from(_selectedToShipOrderIds);
+    await sb.from('orders').update({ status: 'shipped' }).in('id', ids);
+    _selectedToShipOrderIds.clear();
+    toast(`อัปเดต ${ids.length} ออเดอร์เป็นจัดส่งแล้วเรียบร้อย ✓`, 'success');
+    await loadMarketplaceData(true);
+  } catch(e) { toast('อัปเดตสถานะไม่สำเร็จ', 'error'); }
+}
+
+// ── Batch Label Printing ────────────────────────────────────
+function printSelectedMarketplaceLabels(size = '100x150') {
+  const selectedIds = Array.from(_selectedToShipOrderIds);
+  if (!selectedIds.length) {
+    toast('กรุณาเลือกออเดอร์ที่ต้องการพิมพ์ใบปะหน้าอย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+
+  const selectedOrders = _marketplaceOrders.filter(o => selectedIds.includes(o.id));
+  const senderName = currentShop?.name || 'SEALTHAI';
+  const senderPhone = currentShop?.phone || '-';
+  const senderAddr = getShopAddress();
+
+  const isThermal = size === '100x150';
+  const pageCss = isThermal 
+    ? '@page { size: 100mm 150mm; margin: 0; } .label-page { width: 100mm; height: 148mm; padding: 6mm; page-break-after: always; box-sizing: border-box; }'
+    : '@page { size: A4; margin: 8mm; } .label-page { width: 100%; min-height: 130mm; padding: 8mm; border: 1.5px dashed #000; margin-bottom: 8mm; page-break-inside: avoid; box-sizing: border-box; }';
+
+  const pagesHtml = selectedOrders.map(ord => {
+    return `
+      <div class="label-page" style="display:flex;flex-direction:column;font-family:'Sarabun',sans-serif;background:#fff;color:#000;">
+        <div style="display:flex;justify-content:space-between;border-bottom:2px solid #000;padding-bottom:4px;margin-bottom:6px">
+          <div style="font-size:16px;font-weight:bold">${escapeHTML(ord.channel || 'Marketplace')}</div>
+          <div style="font-size:13px;font-weight:bold;font-family:monospace">REF: ${escapeHTML(ord.customer_ref || ord.order_no || '-')}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1.2fr;gap:8px;border:1px solid #000;padding:6px;margin-bottom:6px;border-radius:4px;font-size:11px">
+          <div>
+            <div style="font-weight:bold;border-bottom:1px solid #000;margin-bottom:2px">ผู้ส่ง (Sender):</div>
+            <div style="font-weight:bold">${escapeHTML(senderName)}</div>
+            <div>${escapeHTML(senderAddr)}</div>
+            <div>โทร: ${escapeHTML(senderPhone)}</div>
+          </div>
+          <div>
+            <div style="font-weight:bold;border-bottom:1px solid #000;margin-bottom:2px">ผู้รับ (Receiver):</div>
+            <div style="font-weight:bold;font-size:13px">${escapeHTML(ord.customer_name || '-')}</div>
+            <div style="font-size:12px">${escapeHTML(ord.address || '-')}</div>
+            <div style="font-weight:bold;margin-top:2px">📞 ${escapeHTML(ord.customer_phone || '-')}</div>
+          </div>
+        </div>
+
+        ${ord.tracking_no ? `
+          <div style="text-align:center;border:1.5px solid #000;padding:6px;margin-bottom:6px;border-radius:4px">
+            <div style="font-size:10px;color:#555">TRACKING NUMBER</div>
+            <div style="font-size:18px;font-weight:bold;font-family:monospace;letter-spacing:1px">${escapeHTML(ord.tracking_no)}</div>
+          </div>
+        ` : ''}
+
+        <div style="margin-top:auto;border-top:1.5px solid #000;padding-top:4px">
+          <div style="font-size:11px;font-weight:bold;margin-bottom:3px">📦 รายการสินค้าในกล่อง (Checklist):</div>
+          <table style="width:100%;border-collapse:collapse;font-size:11px">
+            <thead>
+              <tr style="background:#eee">
+                <th style="border:1px solid #000;padding:2px 4px;text-align:left">สินค้า</th>
+                <th style="border:1px solid #000;padding:2px 4px;text-align:center;width:45px">จำนวน</th>
+                <th style="border:1px solid #000;padding:2px 4px;text-align:center;width:35px">ตรวจ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(ord.order_items || []).map(it => `
+                <tr>
+                  <td style="border:1px solid #000;padding:3px 4px">${escapeHTML(it.product_name)}</td>
+                  <td style="border:1px solid #000;padding:3px 4px;text-align:center;font-weight:bold">x${it.qty}</td>
+                  <td style="border:1px solid #000;padding:3px 4px;text-align:center"><div style="width:12px;height:12px;border:1px solid #000;margin:0 auto"></div></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) { toast('กรุณาอนุญาต Pop-up', 'error'); return; }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Batch Labels (${selectedOrders.length} Orders)</title>
+        <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: 'Sarabun', sans-serif; background: #fff; }
+          ${pageCss}
+        </style>
+      </head>
+      <body>
+        ${pagesHtml}
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  setTimeout(() => printWindow.print(), 500);
+}
+
+// ── SKU Mappings Table & Modal ──────────────────────────────
+function renderMarketplaceMappings() {
+  const chFilter = document.getElementById('mp-map-filter-ch')?.value || 'all';
+  const q = (document.getElementById('mp-map-search')?.value || '').trim().toLowerCase();
+
+  let filtered = _marketplaceMappings;
+  if (chFilter !== 'all') filtered = filtered.filter(m => m.channel.toLowerCase() === chFilter.toLowerCase());
+  if (q) filtered = filtered.filter(m => `${m.channel} ${m.platform_sku} ${m.platform_item_name||''} ${m.products?.name||''} ${m.products?.sku||''}`.toLowerCase().includes(q));
+
+  const wrap = document.getElementById('mp-mappings-table-wrap');
+  if (!wrap) return;
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🔗</div><div class="empty-text">ยังไม่มีรายการจับคู่ SKU หรือไม่พบข้อมูลที่ตรงกับเงื่อนไข</div></div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>ช่องทาง</th>
+          <th>Platform SKU</th>
+          <th>ชื่อสินค้าบนแพลตฟอร์ม</th>
+          <th>สินค้าในระบบ SEALTHAI</th>
+          <th class="text-right">ตัวคูณ</th>
+          <th class="text-right">สต๊อกปัจจุบัน</th>
+          <th style="width:70px;text-align:center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(m => `
+          <tr>
+            <td><span class="seal-badge-mat">${escapeHTML(m.channel)}</span></td>
+            <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${escapeHTML(m.platform_sku)}</td>
+            <td style="font-size:12px;max-width:240px">${escapeHTML(m.platform_item_name || '-')}</td>
+            <td>
+              <div style="font-weight:600;font-size:13px">${escapeHTML(m.products?.name || '-')}</div>
+              <div style="font-family:var(--mono);font-size:11px;color:var(--text3)">SKU: ${escapeHTML(m.products?.sku || '-')}</div>
+            </td>
+            <td class="text-right font-mono" style="font-weight:600">${m.multiplier || 1}x</td>
+            <td class="text-right font-mono" style="font-weight:700;color:var(--accent)">${fmt(m.products?.stock_qty)}</td>
+            <td style="text-align:center">
+              <button class="btn btn-secondary btn-sm" onclick="deleteMarketplaceMapping('${m.id}')" title="ลบการจับคู่นี้">🗑️</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function openNewSKUMappingModal() {
+  showDynamicModal('🔗 ผูก SKU มาร์เก็ตเพลสใหม่', `
+    <div class="form-group">
+      <label>ช่องทาง (Channel)</label>
+      <select id="new-map-channel">
+        <option value="Shopee">Shopee 🟠</option>
+        <option value="Lazada">Lazada 🔵</option>
+        <option value="TikTok">TikTok Shop ⚫</option>
+        <option value="LINE">LINE Shopping 🟢</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Platform SKU (Seller SKU จากมาร์เก็ตเพลส)</label>
+      <input type="text" id="new-map-platform-sku" placeholder="เช่น TC-25-35-7-NBR">
+    </div>
+    <div class="form-group">
+      <label>ชื่อสินค้าบนแพลตฟอร์ม (ไม่บังคับ)</label>
+      <input type="text" id="new-map-platform-name" placeholder="ชื่อสินค้าที่ตั้งบน Shopee / Lazada">
+    </div>
+    <div class="form-group">
+      <label>เลือกสินค้าในระบบ SEALTHAI ที่ตรงกัน</label>
+      <select id="new-map-prod-id" style="width:100%">
+        ${allProducts.map(p => `<option value="${p.id}">${escapeHTML(p.name)} (${p.sku || '-'}) — สต๊อก: ${p.stock_qty||0}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>ตัวคูณจำนวนตัดสต๊อกต่อ 1 หน่วย (Multiplier)</label>
+      <input type="number" id="new-map-multiplier" value="1" min="1" step="1" style="width:100px">
+      <div style="font-size:11px;color:var(--text3);margin-top:3px">เช่น ถ้าขายเป็นแพ็ก 10 ชิ้น ให้ใส่ 10</div>
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ยกเลิก</button>
+    <button class="btn btn-primary" onclick="saveNewMarketplaceMapping()">💾 บันทึกการจับคู่</button>
+  `);
+}
+
+async function saveNewMarketplaceMapping() {
+  const channel = document.getElementById('new-map-channel')?.value;
+  const platform_sku = (document.getElementById('new-map-platform-sku')?.value || '').trim();
+  const platform_item_name = (document.getElementById('new-map-platform-name')?.value || '').trim();
+  const product_id = document.getElementById('new-map-prod-id')?.value;
+  const multiplier = Number(document.getElementById('new-map-multiplier')?.value || 1) || 1;
+
+  if (!platform_sku || !product_id) {
+    toast('กรุณากรอก Platform SKU และเลือกสินค้าในระบบ', 'error');
+    return;
+  }
+
+  try {
+    const payload = {
+      shop_id: currentShop.id,
+      channel,
+      platform_sku,
+      platform_item_name: platform_item_name || null,
+      product_id,
+      multiplier,
+      updated_at: new Date().toISOString()
+    };
+
+    const { error } = await sb.from('marketplace_sku_mappings').upsert(payload, { onConflict: 'shop_id,channel,platform_sku' });
+    if (error) throw error;
+
+    toast('บันทึกการจับคู่ SKU เรียบร้อย ✓', 'success');
+    closeModal('modal-dynamic');
+    await loadMarketplaceData(true);
+    switchMarketplaceTab('mappings');
+  } catch(e) {
+    toast('บันทึกไม่สำเร็จ: ' + e.message, 'error');
+  }
+}
+
+async function deleteMarketplaceMapping(id) {
+  if (!confirm('ต้องการลบการผูก SKU นี้?')) return;
+  try {
+    await sb.from('marketplace_sku_mappings').delete().eq('id', id);
+    toast('ลบเรียบร้อย', 'success');
+    await loadMarketplaceData(true);
+  } catch(e) { toast('ลบไม่สำเร็จ: ' + e.message, 'error'); }
+}
+
 </script>
 
 <!-- Mobile Bottom Nav -->
