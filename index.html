@@ -7335,7 +7335,7 @@ async function editProduct(id) {
   if (epImgUrl) epImgUrl.value = existImg;
   if (existImg) {
     const epImgPreview = document.getElementById('ep-img-preview');
-    if (epImgPreview) epImgPreview.innerHTML = '<img src="'+escapeHTML(existImg)+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=&quot;font-size:34px&quot;>⚠️</span>'">';
+    if (epImgPreview) epImgPreview.innerHTML = `<img src="${escapeHTML(existImg)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">`;
   }
 }
 
