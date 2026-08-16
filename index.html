@@ -857,51 +857,6 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
 .ch-offline { background: rgba(217,119,6,0.1); color: #b45309; }
 .ch-other { background: var(--bg3); color: var(--text2); }
 
-/* ── SEALTHAI v1.34: Seal Master & Stock Planning Styles ── */
-.seal-badge-dim {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
-  padding: 2px 7px; border-radius: 6px; font-family: var(--mono); font-size: 11px; font-weight: 600;
-}
-.seal-badge-mat {
-  display: inline-flex; align-items: center;
-  background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;
-  padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 600;
-}
-.seal-badge-type {
-  display: inline-flex; align-items: center;
-  background: #fdf4ff; color: #86198f; border: 1px solid #f5d0fe;
-  padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 600;
-}
-.seal-badge-abc-a {
-  background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
-  padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 11px;
-}
-.seal-badge-abc-b {
-  background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
-  padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 11px;
-}
-.seal-badge-abc-c {
-  background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
-  padding: 2px 6px; border-radius: 6px; font-weight: 600; font-size: 11px;
-}
-.tab-btn-row {
-  display: flex; gap: 6px; border-bottom: 2px solid var(--border);
-  margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;
-}
-.tab-btn {
-  background: transparent; border: none; border-bottom: 2px solid transparent;
-  padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text3);
-  cursor: pointer; transition: all 0.15s; margin-bottom: -2px; white-space: nowrap;
-}
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-.planning-tag-urgent { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-.planning-tag-reorder { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-.planning-tag-healthy { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-.planning-tag-dead { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-
-
 /* ── SEALTHAI v1.34 & v1.35: Seal Master & Stock Planning Styles ── */
 .seal-badge-dim {
   display: inline-flex; align-items: center; gap: 4px;
@@ -945,7 +900,6 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
 .planning-tag-reorder { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
 .planning-tag-healthy { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
 .planning-tag-dead { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-
 </style>
   <link rel="icon" type="image/png" href="assets/logo.png">
 </head>
@@ -16501,52 +16455,7 @@ async function printStickers(orderId) {
     '  .sticker-page { border:1px solid #ccc !important; -webkit-print-color-adjust:exact; }',
     '  @page { size:'+Wstr+'in '+Hstr+'in; margin:0; }',
     '}',
-    '
-/* ── SEALTHAI v1.34: Seal Master & Stock Planning Styles ── */
-.seal-badge-dim {
-  display: inline-flex; align-items: center; gap: 4px;
-  background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
-  padding: 2px 7px; border-radius: 6px; font-family: var(--mono); font-size: 11px; font-weight: 600;
-}
-.seal-badge-mat {
-  display: inline-flex; align-items: center;
-  background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe;
-  padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 600;
-}
-.seal-badge-type {
-  display: inline-flex; align-items: center;
-  background: #fdf4ff; color: #86198f; border: 1px solid #f5d0fe;
-  padding: 2px 6px; border-radius: 6px; font-size: 10px; font-weight: 600;
-}
-.seal-badge-abc-a {
-  background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;
-  padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 11px;
-}
-.seal-badge-abc-b {
-  background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
-  padding: 2px 6px; border-radius: 6px; font-weight: 700; font-size: 11px;
-}
-.seal-badge-abc-c {
-  background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
-  padding: 2px 6px; border-radius: 6px; font-weight: 600; font-size: 11px;
-}
-.tab-btn-row {
-  display: flex; gap: 6px; border-bottom: 2px solid var(--border);
-  margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch;
-}
-.tab-btn {
-  background: transparent; border: none; border-bottom: 2px solid transparent;
-  padding: 8px 16px; font-size: 13px; font-weight: 600; color: var(--text3);
-  cursor: pointer; transition: all 0.15s; margin-bottom: -2px; white-space: nowrap;
-}
-.tab-btn:hover { color: var(--text); }
-.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
-.planning-tag-urgent { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-.planning-tag-reorder { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-.planning-tag-healthy { background: #dcfce7; color: #16a34a; border: 1px solid #86efac; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-.planning-tag-dead { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-weight: 600; padding: 2px 6px; border-radius: 6px; font-size: 11px; }
-
-</style></head><body>',
+    </style></head><body>',
     pages.join('\n'),
     '</body></html>'
   ].join('\n');
