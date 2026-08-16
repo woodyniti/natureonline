@@ -15266,7 +15266,8 @@ function drillBuyer(buyer) {
 // ══════════════════════════════════════════════════════════
 async function arinvoice() {
   document.getElementById('topbar-actions').innerHTML =
-    '<button class="btn btn-primary btn-sm" id="btn-batch-pay-ar" onclick="openBatchARPaymentModal()" title="เลือกหลาย Invoice แล้วบันทึกรับชำระเงินพร้อมกัน">💵 รับชำระเงินเป็นชุด (<span id="ar-sel-count">0</span>)</button> ' +
+    '<button class="btn btn-primary btn-sm" id="btn-batch-pay-ar" onclick="openBatchARPaymentModal()" title="เลือกหลาย Invoice ที่ค้างชำระเพื่อบันทึกรับเงินพร้อมกัน">💵 รับชำระเงินเป็นชุด (<span id="ar-sel-count">0</span>)</button> ' +
+    '<button class="btn btn-secondary btn-sm" id="btn-batch-edit-paydate" onclick="openBatchEditPaymentDateModal()" title="เลือกหลาย Invoice ที่รับเงินแล้วเพื่อเปลี่ยนวันที่รับเงินพร้อมกัน" style="background:#fffbeb;color:#b45309;border-color:#f59e0b;font-weight:600">✏️ แก้วันที่รับเงินเป็นชุด (<span id="ar-paid-sel-count">0</span>)</button> ' +
     '<button class="btn btn-secondary btn-sm" onclick="openSalesOrderPicker()">📋 ดึงจาก Sales Order</button> ' +
     '<button class="btn btn-secondary btn-sm" onclick="openNewAR()">+ AR Invoice ใหม่</button>';
 
@@ -15361,11 +15362,13 @@ async function loadAR() {
           const pays = paymentMap[r.id] || [];
           const latestPayDate = pays.length ? pays[0].pay_date : null;
 
+          const hasPayments = pays.length > 0;
+          const canSelect = r.status !== 'cancelled';
           return '<tr>' +
             '<td style="text-align:center" onclick="event.stopPropagation()">' +
-              (isPayable
-                ? '<input type="checkbox" class="chk-ar-select" data-id="' + r.id + '" data-remain="' + remain + '" data-total="' + (r.total_amount||0) + '" data-name="' + escapeHTML(r.customer_name||'') + '" data-no="' + escapeHTML(r.ar_no||'') + '" onchange="updateARSelectCount()">'
-                : '<span style="color:var(--green);font-size:12px;font-weight:700" title="ชำระครบแล้ว">✓</span>'
+              (canSelect
+                ? '<input type="checkbox" class="chk-ar-select" data-id="' + r.id + '" data-remain="' + remain + '" data-total="' + (r.total_amount||0) + '" data-paid="' + (r.paid_amount||0) + '" data-status="' + r.status + '" data-haspay="' + (hasPayments ? '1' : '0') + '" data-paydate="' + (latestPayDate||'') + '" data-name="' + escapeHTML(r.customer_name||'') + '" data-no="' + escapeHTML(r.ar_no||'') + '" onchange="updateARSelectCount()">'
+                : '<span style="color:var(--red);font-size:12px;font-weight:700" title="ยกเลิกแล้ว">✕</span>'
               ) +
             '</td>' +
             '<td>' +
@@ -19703,17 +19706,125 @@ function toggleSelectAllAR(checked) {
 
 function updateARSelectCount() {
   _selectedARMap.clear();
+  let unpaidCount = 0;
+  let paidCount = 0;
+
   document.querySelectorAll('.chk-ar-select:checked').forEach(cb => {
+    const remain = Number(cb.dataset.remain || 0);
+    const hasPay = cb.dataset.haspay === '1';
+    const status = cb.dataset.status;
+
     _selectedARMap.set(cb.dataset.id, {
       id: cb.dataset.id,
       arNo: cb.dataset.no,
       customerName: cb.dataset.name,
-      remain: Number(cb.dataset.remain || 0),
-      total: Number(cb.dataset.total || 0)
+      remain,
+      total: Number(cb.dataset.total || 0),
+      paid: Number(cb.dataset.paid || 0),
+      status,
+      hasPay,
+      payDate: cb.dataset.paydate
     });
+
+    if (remain > 0 && status !== 'paid' && status !== 'cancelled') unpaidCount++;
+    if (hasPay) paidCount++;
   });
-  const cnt = document.getElementById('ar-sel-count');
-  if (cnt) cnt.textContent = _selectedARMap.size;
+
+  const cntUnpaid = document.getElementById('ar-sel-count');
+  if (cntUnpaid) cntUnpaid.textContent = unpaidCount;
+
+  const cntPaid = document.getElementById('ar-paid-sel-count');
+  if (cntPaid) cntPaid.textContent = paidCount;
+}
+
+function openBatchEditPaymentDateModal() {
+  updateARSelectCount();
+  const allSelected = Array.from(_selectedARMap.values());
+  const paidItems = allSelected.filter(it => it.hasPay || it.paid > 0);
+
+  if (!paidItems.length) {
+    toast('กรุณาเลือก Invoice ที่มีการรับเงินแล้วอย่างน้อย 1 รายการเพื่อเปลี่ยนวันที่', 'error');
+    return;
+  }
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '360';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:640px">
+      <div class="modal-title">✏️ เปลี่ยนวันที่รับเงินเป็นชุด (${paidItems.length} ใบแจ้งหนี้)</div>
+      
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="font-size:13px;color:#92400e">
+          💡 ระบบจะเปลี่ยนวันที่รับเงิน (Payment Date) ของทุกรายการที่เลือกเป็นวันที่ใหม่พร้อมกัน เพื่อให้รายงานและ Dashboard สรุปยอดได้ถูกต้องตรงรอบ
+        </div>
+      </div>
+
+      <div class="form-group mb-4">
+        <label style="font-weight:700;font-size:14px;color:var(--text)">📅 วันที่รับเงินใหม่ที่ต้องการตั้ง (New Payment Date)</label>
+        <input type="date" id="batch-new-paydate" value="${today()}" style="font-size:15px;padding:8px 12px">
+      </div>
+
+      <div class="table-wrap" style="max-height:220px;overflow-y:auto;margin-bottom:14px">
+        <table>
+          <thead>
+            <tr>
+              <th>เลขที่ AR</th>
+              <th>ลูกค้า</th>
+              <th class="text-right">ยอดรับแล้ว</th>
+              <th>วันที่รับเดิม</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${paidItems.map(it => `
+              <tr>
+                <td class="font-mono" style="color:var(--blue);font-weight:600">${escapeHTML(it.arNo)}</td>
+                <td>${escapeHTML(it.customerName)}</td>
+                <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(it.paid)}</td>
+                <td style="color:var(--text2)">${it.payDate || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-primary" id="btn-confirm-batch-date" onclick="saveBatchEditPaymentDate()">💾 บันทึกเปลี่ยนวันที่รับเงินทั้งหมด (${paidItems.length} ใบ)</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function saveBatchEditPaymentDate() {
+  const allSelected = Array.from(_selectedARMap.values());
+  const paidItems = allSelected.filter(it => it.hasPay || it.paid > 0);
+  if (!paidItems.length) return;
+
+  const newDate = document.getElementById('batch-new-paydate')?.value;
+  if (!newDate) { toast('กรุณาระบุวันที่รับเงินใหม่', 'error'); return; }
+
+  const btn = document.getElementById('btn-confirm-batch-date');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึกวันที่...'; }
+
+  const arIds = paidItems.map(it => it.id);
+
+  try {
+    const { error } = await sb.from('ar_payments').update({
+      pay_date: newDate
+    }).in('ar_id', arIds);
+
+    if (error) throw error;
+
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+    toast(`เปลี่ยนวันที่รับเงินเป็น ${newDate} สำเร็จ ${paidItems.length} ใบเรียบร้อย ✓`, 'success');
+    _selectedARMap.clear();
+    loadAR();
+  } catch(e) {
+    toast('เปลี่ยนวันที่รับเงินไม่สำเร็จ: ' + e.message, 'error');
+  }
 }
 
 function openBatchARPaymentModal() {
