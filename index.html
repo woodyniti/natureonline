@@ -15325,7 +15325,10 @@ async function loadAR() {
           const isPayable = !['paid','cancelled'].includes(r.status) && remain > 0;
           return '<tr>' +
             '<td style="text-align:center" onclick="event.stopPropagation()">' +
-              '<input type="checkbox" class="chk-ar-select" data-id="' + r.id + '" data-remain="' + remain + '" data-total="' + (r.total_amount||0) + '" data-name="' + escapeHTML(r.customer_name||'') + '" data-no="' + escapeHTML(r.ar_no||'') + '" ' + (!isPayable ? 'disabled style="opacity:0.3"' : '') + ' onchange="updateARSelectCount()">' +
+              (isPayable
+                ? '<input type="checkbox" class="chk-ar-select" data-id="' + r.id + '" data-remain="' + remain + '" data-total="' + (r.total_amount||0) + '" data-name="' + escapeHTML(r.customer_name||'') + '" data-no="' + escapeHTML(r.ar_no||'') + '" onchange="updateARSelectCount()">'
+                : '<span style="color:var(--green);font-size:12px;font-weight:700" title="ชำระครบแล้ว">✓</span>'
+              ) +
             '</td>' +
             '<td class="font-mono" style="color:var(--blue)">' + (r.ar_no||'-') + '</td>' +
             '<td>' + (r.ar_date||'-') + '</td>' +
@@ -15549,8 +15552,16 @@ async function saveARPayment(arId, totalAmt) {
 
   const { data: latestAR, error: arError } = await sb.from('ar_invoices').select('total_amount,paid_amount,status').eq('id', arId).single();
   if (arError || !latestAR) { toast('ตรวจสอบ Invoice ไม่สำเร็จ','error'); return; }
-  if (latestAR.status === 'cancelled') { toast('Invoice นี้ถูกยกเลิกแล้ว ไม่สามารถรับเงินเพิ่มได้','error'); return; }
+  if (latestAR.status === 'paid' || Number(latestAR.paid_amount || 0) >= Number(latestAR.total_amount || 0)) {
+    toast('❌ Invoice นี้ชำระครบถ้วนแล้ว ห้ามรับเงินซ้ำ', 'error');
+    return;
+  }
+  if (latestAR.status === 'cancelled') { toast('❌ Invoice นี้ถูกยกเลิกแล้ว ไม่สามารถรับเงินได้','error'); return; }
   const remaining = Math.max(0, Number(latestAR.total_amount||totalAmt) - Number(latestAR.paid_amount||0));
+  if (remaining <= 0) {
+    toast('❌ Invoice นี้ไม่มียอดค้างชำระ ห้ามรับเงินซ้ำ', 'error');
+    return;
+  }
   if (amount > remaining + 0.001) { toast('ยอดรับเกินยอดค้าง '+fmtB(remaining),'error'); return; }
 
   const { error: pe } = await sb.from('ar_payments').insert({
@@ -19740,7 +19751,7 @@ async function saveBatchARPayment() {
   try {
     for (const it of items) {
       const { data: latestAR } = await sb.from('ar_invoices').select('total_amount, paid_amount, status').eq('id', it.id).single();
-      if (!latestAR || latestAR.status === 'cancelled') continue;
+      if (!latestAR || latestAR.status === 'cancelled' || latestAR.status === 'paid') continue;
 
       const remaining = Math.max(0, Number(latestAR.total_amount || 0) - Number(latestAR.paid_amount || 0));
       if (remaining <= 0) continue;
