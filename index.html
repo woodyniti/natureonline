@@ -4044,7 +4044,7 @@ function drillMonthlyDay(date) {
 
 
 async function orders() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" id="btn-batch-ar" onclick="batchConvertSOtoAR()" title="เลือกหลายออเดอร์แล้วออกบิล AR Invoice พร้อมกัน">📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
 
   setContent(`
     <!-- Quick filter รายเดือน/รายปี -->
@@ -4307,10 +4307,11 @@ async function loadOrders() {
     return;
   }
 
-  // Desktop table — เลย์เอาต์กระชับ 6 คอลัมน์ (รวมข้อมูลซ้อนบรรทัด) พอดีจอ ไม่ต้องเลื่อนซ้าย-ขวา
+  // Desktop table — เลย์เอาต์กระชับ 7 คอลัมน์
   document.getElementById('ord-table').innerHTML = `
     <table class="desktop-only orders-compact" id="tbl-orders">
       <thead><tr>
+        <th style="width:36px;text-align:center"><input type="checkbox" id="so-select-all" onchange="toggleSelectAllSO(this.checked)" title="เลือกทั้งหมด"></th>
         <th>ออเดอร์</th>
         <th>ลูกค้า / ช่องทาง</th>
         <th>รายการสินค้า</th>
@@ -4328,6 +4329,9 @@ async function loadOrders() {
           const profit=cancelled?0:sale-cost-fee;
           const products=(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-';
           return `<tr>
+          <td style="text-align:center" onclick="event.stopPropagation()">
+            <input type="checkbox" class="chk-so-select" data-id="${o.id}" onchange="updateSOSelectCount()">
+          </td>
           <td class="col-order">
             <div style="font-weight:600">${o.order_date||'-'}</div>
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
@@ -15843,6 +15847,92 @@ async function convertSOtoAR(orderId, openAfterCreate=false) {
   toast('Copy Sales Order เป็น AR Invoice ' + ar_no + ' ✓', 'success');
   showPage('arinvoice');
   if (openAfterCreate && ar?.id) setTimeout(() => openARDetail(ar.id), 300);
+}
+
+// ── Batch Copy Sales Orders to AR Invoices ──────────────────
+let _selectedSOIds = new Set();
+
+function toggleSelectAllSO(checked) {
+  document.querySelectorAll('.chk-so-select').forEach(cb => {
+    cb.checked = checked;
+    const id = cb.dataset.id;
+    if (checked) _selectedSOIds.add(id);
+    else _selectedSOIds.delete(id);
+  });
+  updateSOSelectCount();
+}
+
+function updateSOSelectCount() {
+  _selectedSOIds.clear();
+  document.querySelectorAll('.chk-so-select:checked').forEach(cb => {
+    if (cb.dataset.id) _selectedSOIds.add(cb.dataset.id);
+  });
+  const cnt = document.getElementById('so-sel-count');
+  if (cnt) cnt.textContent = _selectedSOIds.size;
+}
+
+async function batchConvertSOtoAR() {
+  updateSOSelectCount();
+  if (!_selectedSOIds.size) {
+    toast('กรุณาเลือก Sales Order ที่ต้องการสร้าง AR อย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+
+  const ids = Array.from(_selectedSOIds);
+  const btn = document.getElementById('btn-batch-ar');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังสร้าง AR...'; }
+
+  let successCount = 0;
+  let skipCount = 0;
+
+  try {
+    for (let i = 0; i < ids.length; i++) {
+      const orderId = ids[i];
+      const [{ data: order }, { data: existing }] = await Promise.all([
+        sb.from('orders').select('*,order_items(*)').eq('id', orderId).single(),
+        sb.from('ar_invoices').select('id').eq('order_id', orderId).limit(1)
+      ]);
+
+      if (!order || existing?.length || order.doc_status === 'cancelled' || order.shipping_status === 'cancelled') {
+        skipCount++;
+        continue;
+      }
+
+      const total = Number(order.total_amount || 0);
+      if (!(total > 0)) { skipCount++; continue; }
+
+      const ar_no = 'AR-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4) + (i > 0 ? ('-' + (i + 1)) : '');
+      const due = new Date();
+      due.setDate(due.getDate() + 30);
+      const dueDate = due.toISOString().slice(0,10);
+
+      const { error } = await sb.from('ar_invoices').insert({
+        shop_id: currentShop.id,
+        ar_no,
+        ar_date: today(),
+        due_date: dueDate,
+        order_id: orderId,
+        customer_name: order.customer_name || '',
+        customer_phone: order.customer_phone || '',
+        total_amount: Math.round(total * 100) / 100,
+        paid_amount: 0,
+        status: 'unpaid',
+        note: 'Copy from Sales Order ' + (order.order_no || orderId),
+      });
+
+      if (!error) successCount++;
+      else skipCount++;
+    }
+
+    toast(`สร้าง AR Invoice สำเร็จ ${successCount} ใบ (ข้ามรายการที่มีอยู่แล้ว ${skipCount} ใบ) ✓`, 'success');
+    _selectedSOIds.clear();
+    updateSOSelectCount();
+    showPage('arinvoice');
+  } catch(e) {
+    toast('เกิดข้อผิดพลาดในการสร้าง AR: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)'; }
+  }
 }
 
 // ══════════════════════════════════════════════════════════
