@@ -19141,11 +19141,12 @@ async function loadAIIntelligenceData(force = false) {
   const d180Str = d180.toISOString().slice(0, 10);
 
   try {
-    const [ordersRes, custRes, prodsRes, arRes, apRes, importRes, expRes] = await Promise.all([
+    const [ordersRes, custRes, prodsRes, arRes, arPayRes, apRes, importRes, expRes] = await Promise.all([
       sb.from('orders').select('id, order_no, order_date, customer_name, customer_id, total_amount, profit, doc_status, shipping_status, payment_method, channel, order_items(product_id, product_name, qty, sell_price, cost_per_unit)').eq('shop_id', currentShop.id).order('order_date', {ascending:false}).limit(2000),
       sb.from('customers').select('*').eq('shop_id', currentShop.id),
       sb.from('products').select('id, name, sku, stock_qty, current_cost, sale_price, category').eq('shop_id', currentShop.id).eq('active', true),
       sb.from('ar_invoices').select('*').eq('shop_id', currentShop.id).neq('status', 'cancelled'),
+      sb.from('ar_payments').select('id, ar_id, pay_date, amount, method').eq('shop_id', currentShop.id).order('pay_date', {ascending:false}),
       sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id).in('status', ['unpaid', 'partial', 'pending']),
       sb.from('import_shipments').select('*').eq('shop_id', currentShop.id).neq('status', 'completed'),
       sb.from('expenses').select('*').eq('shop_id', currentShop.id).order('expense_date', {ascending:false}).limit(1000)
@@ -19155,6 +19156,7 @@ async function loadAIIntelligenceData(force = false) {
     _allCustomers = custRes.data || [];
     allProducts = prodsRes.data || [];
     const arInvoices = arRes.data || [];
+    const arPayments = arPayRes.data || [];
     const apInvoices = apRes.data || [];
     const importShipments = importRes.data || [];
     const expenses = expRes.data || [];
@@ -19163,7 +19165,7 @@ async function loadAIIntelligenceData(force = false) {
     computeCustomerChurn(allOrders);
 
     // 2. Process Cash Flow Model (30/60/90 days)
-    computeCashFlowModel(allOrders, arInvoices, apInvoices, importShipments, expenses);
+    computeCashFlowModel(allOrders, arInvoices, arPayments, apInvoices, importShipments, expenses);
 
     // 3. Process Market Basket Cross-Sell Pairs
     computeMarketBasketPairs(allOrders);
@@ -19271,7 +19273,87 @@ function computeCustomerChurn(orders) {
 }
 
 // ── 2. Cash Flow Forecasting Model ──────────────────────────
-function computeCashFlowModel(orders, arInvoices, apInvoices, importShipments, expenses) {
+function computeCashFlowModel(orders, arInvoices, arPayments, apInvoices, importShipments, expenses) {
+  const now = new Date();
+  const validOrders = (orders || []).filter(o => !isOrderCancelled(o));
+  const totalSalesAll = validOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
+
+  // คำนวณยอดเงินที่เก็บได้จริงในอดีต (Historical Cash Collections จาก ar_payments)
+  const d30Past = new Date(); d30Past.setDate(d30Past.getDate() - 30); const d30Str = d30Past.toISOString().slice(0, 10);
+  const d60Past = new Date(); d60Past.setDate(d60Past.getDate() - 60); const d60Str = d60Past.toISOString().slice(0, 10);
+  
+  const validPayments = (arPayments || []).filter(p => Number(p.amount) > 0);
+  const totalPastPaidAll = validPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const past30dPaid = validPayments.filter(p => p.pay_date >= d30Str).reduce((s, p) => s + Number(p.amount || 0), 0);
+  const past60dPaid = validPayments.filter(p => p.pay_date >= d60Str).reduce((s, p) => s + Number(p.amount || 0), 0);
+
+  // คำนวณ Daily Run Rate จากยอดขายจริงของร้าน
+  let dailyRunRate = 0;
+  if (validOrders.length > 0) {
+    const dates = validOrders.map(o => o.order_date).filter(Boolean).sort();
+    let days = 60;
+    if (dates.length > 1) {
+      const dStart = new Date(dates[0]);
+      const dEnd = new Date(dates[dates.length - 1]);
+      days = Math.max(15, Math.min(180, Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24))));
+    }
+    dailyRunRate = totalSalesAll / Math.max(15, days);
+  }
+  if (dailyRunRate <= 0 && totalSalesAll > 0) dailyRunRate = totalSalesAll / 30;
+
+  // คำนวณยอดลูกหนี้การค้าค้างชำระ (AR Outstanding)
+  const pendingARs = (arInvoices || []).filter(a => a.status !== 'paid' && a.status !== 'cancelled');
+  const totalAROutstanding = pendingARs.reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
+
+  // ประมาณการรายรับ (Inflows)
+  const salesInflow30 = dailyRunRate * 30;
+  const arInflow30 = totalAROutstanding * 0.6;
+  const inflow30 = salesInflow30 + arInflow30;
+
+  const salesInflow60 = dailyRunRate * 60;
+  const arInflow60 = totalAROutstanding * 0.85;
+  const inflow60 = salesInflow60 + arInflow60;
+
+  const salesInflow90 = dailyRunRate * 90;
+  const arInflow90 = totalAROutstanding;
+  const inflow90 = salesInflow90 + arInflow90;
+
+  // ประมาณการรายจ่าย (Outflows)
+  const validExpenses = (expenses || []);
+  const totalExp = validExpenses.reduce((s, e) => s + (Number(e.amount) || Number(e.base_amount) || 0), 0);
+  const monthlyExpenses = validExpenses.length > 0 ? (totalExp / Math.max(1, Math.min(6, Math.round(validExpenses.length / 10)))) : 30000;
+
+  const totalAP = (apInvoices || []).reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
+  const totalImportPending = (importShipments || []).reduce((s, i) => s + (Number(i.pending_payment_thb) || 0), 0);
+
+  const ap30 = totalAP * 0.6;
+  const import30 = totalImportPending * 0.7;
+  const outflow30 = ap30 + import30 + monthlyExpenses;
+  const net30 = inflow30 - outflow30;
+
+  const ap60 = totalAP;
+  const import60 = totalImportPending;
+  const outflow60 = ap60 + import60 + (monthlyExpenses * 2);
+  const net60 = inflow60 - outflow60;
+
+  const ap90 = totalAP;
+  const import90 = totalImportPending;
+  const outflow90 = ap90 + import90 + (monthlyExpenses * 3);
+  const net90 = inflow90 - outflow90;
+
+  _aiCashFlow = {
+    dailyRunRate,
+    totalAROutstanding,
+    totalPastPaidAll,
+    past30dPaid,
+    monthlyExpenses,
+    totalAP,
+    totalImportPending,
+    days30: { salesInflow: salesInflow30, arInflow: arInflow30, inflow: inflow30, ap: ap30, import: import30, exp: monthlyExpenses, outflow: outflow30, net: net30 },
+    days60: { salesInflow: salesInflow60, arInflow: arInflow60, inflow: inflow60, ap: ap60, import: import60, exp: monthlyExpenses * 2, outflow: outflow60, net: net60 },
+    days90: { salesInflow: salesInflow90, arInflow: arInflow90, inflow: inflow90, ap: ap90, import: import90, exp: monthlyExpenses * 3, outflow: outflow90, net: net90 }
+  };
+}
   const now = new Date();
   const validOrders = (orders || []).filter(o => !isOrderCancelled(o));
   const totalSalesAll = validOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
@@ -19585,10 +19667,15 @@ function renderCashFlowForecast() {
   const statsEl = document.getElementById('ai-cashflow-stats');
   if (statsEl) {
     statsEl.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid var(--green)">
+        <div class="stat-label">💵 เงินสดรับจริง 30 วันที่ผ่านมา</div>
+        <div class="stat-value text-green">${fmtB(_aiCashFlow.past30dPaid)}</div>
+        <div class="stat-sub">ยอดรับชำระจากลูกหนี้จริง (สะสม ${fmtB(_aiCashFlow.totalPastPaidAll)})</div>
+      </div>
       <div class="stat-card" style="border-left:4px solid var(--blue)">
-        <div class="stat-label">💵 ประมาณการเงินสดสุทธิ 30 วัน</div>
+        <div class="stat-label">💵 ประมาณการเงินสดสุทธิ 30 วันข้างหน้า</div>
         <div class="stat-value ${_aiCashFlow.days30.net >= 0 ? 'text-blue' : 'text-red'}">${fmtB(_aiCashFlow.days30.net)}</div>
-        <div class="stat-sub">รับ ${fmtB(_aiCashFlow.days30.inflow)} | จ่าย ${fmtB(_aiCashFlow.days30.outflow)}</div>
+        <div class="stat-sub">คาดรับ ${fmtB(_aiCashFlow.days30.inflow)} | คาดจ่าย ${fmtB(_aiCashFlow.days30.outflow)}</div>
       </div>
       <div class="stat-card" style="border-left:4px solid var(--accent)">
         <div class="stat-label">💵 ประมาณการเงินสดสุทธิ 60 วัน</div>
