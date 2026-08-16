@@ -15252,8 +15252,9 @@ function drillBuyer(buyer) {
 // ══════════════════════════════════════════════════════════
 async function arinvoice() {
   document.getElementById('topbar-actions').innerHTML =
+    '<button class="btn btn-primary btn-sm" id="btn-batch-pay-ar" onclick="openBatchARPaymentModal()" title="เลือกหลาย Invoice แล้วบันทึกรับชำระเงินพร้อมกัน">💵 รับชำระเงินเป็นชุด (<span id="ar-sel-count">0</span>)</button> ' +
     '<button class="btn btn-secondary btn-sm" onclick="openSalesOrderPicker()">📋 ดึงจาก Sales Order</button> ' +
-    '<button class="btn btn-primary btn-sm" onclick="openNewAR()">+ AR Invoice ใหม่</button>';
+    '<button class="btn btn-secondary btn-sm" onclick="openNewAR()">+ AR Invoice ใหม่</button>';
 
   setContent(`
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
@@ -15317,11 +15318,15 @@ async function loadAR() {
     if (!rows.length) { tbl.innerHTML = '<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">ไม่มีข้อมูล</div></div>'; }
     else {
       tbl.innerHTML =
-        '<table class="desktop-only"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th class="text-right">ยอดรวม</th><th class="text-right">รับแล้ว</th><th class="text-right">ค้างรับ</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>' +
+        '<table class="desktop-only"><thead><tr><th style="width:36px;text-align:center"><input type="checkbox" id="ar-select-all" onchange="toggleSelectAllAR(this.checked)" title="เลือกทั้งหมด"></th><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th class="text-right">ยอดรวม</th><th class="text-right">รับแล้ว</th><th class="text-right">ค้างรับ</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>' +
         rows.map(r => {
           const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
           const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
+          const isPayable = !['paid','cancelled'].includes(r.status) && remain > 0;
           return '<tr>' +
+            '<td style="text-align:center" onclick="event.stopPropagation()">' +
+              '<input type="checkbox" class="chk-ar-select" data-id="' + r.id + '" data-remain="' + remain + '" data-total="' + (r.total_amount||0) + '" data-name="' + escapeHTML(r.customer_name||'') + '" data-no="' + escapeHTML(r.ar_no||'') + '" ' + (!isPayable ? 'disabled style="opacity:0.3"' : '') + ' onchange="updateARSelectCount()">' +
+            '</td>' +
             '<td class="font-mono" style="color:var(--blue)">' + (r.ar_no||'-') + '</td>' +
             '<td>' + (r.ar_date||'-') + '</td>' +
             '<td>' + (r.customer_name||'-') + '</td>' +
@@ -19605,6 +19610,172 @@ function renderCrossSellTable() {
 function runMarketBasketAnalysis() {
   toast('ประมวลผลการสั่งซื้อคู่กันจากฐานข้อมูลเรียบร้อย ✓', 'success');
   loadAIIntelligenceData(true);
+}
+
+
+// ── Batch AR Payment (รับชำระเงินหลายใบพร้อมกัน) ─────────────
+let _selectedARMap = new Map();
+
+function toggleSelectAllAR(checked) {
+  _selectedARMap.clear();
+  document.querySelectorAll('.chk-ar-select:not([disabled])').forEach(cb => {
+    cb.checked = checked;
+    if (checked) {
+      _selectedARMap.set(cb.dataset.id, {
+        id: cb.dataset.id,
+        arNo: cb.dataset.no,
+        customerName: cb.dataset.name,
+        remain: Number(cb.dataset.remain || 0),
+        total: Number(cb.dataset.total || 0)
+      });
+    }
+  });
+  updateARSelectCount();
+}
+
+function updateARSelectCount() {
+  _selectedARMap.clear();
+  document.querySelectorAll('.chk-ar-select:checked').forEach(cb => {
+    _selectedARMap.set(cb.dataset.id, {
+      id: cb.dataset.id,
+      arNo: cb.dataset.no,
+      customerName: cb.dataset.name,
+      remain: Number(cb.dataset.remain || 0),
+      total: Number(cb.dataset.total || 0)
+    });
+  });
+  const cnt = document.getElementById('ar-sel-count');
+  if (cnt) cnt.textContent = _selectedARMap.size;
+}
+
+function openBatchARPaymentModal() {
+  updateARSelectCount();
+  if (!_selectedARMap.size) {
+    toast('กรุณาเลือก Invoice ที่มียอดค้างชำระอย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+
+  const items = Array.from(_selectedARMap.values());
+  const totalRemain = items.reduce((s, it) => s + it.remain, 0);
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '350';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:680px">
+      <div class="modal-title">💵 รับชำระเงินเป็นชุด (${items.length} ใบแจ้งหนี้)</div>
+      
+      <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><b>จำนวนที่เลือก:</b> ${items.length} รายการ</div>
+          <div><b>ยอดเงินรวมที่ต้องรับ:</b> <span class="font-mono text-accent" style="font-size:18px;font-weight:700">${fmtB(totalRemain)}</span></div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="max-height:220px;overflow-y:auto;margin-bottom:14px">
+        <table>
+          <thead>
+            <tr>
+              <th>เลขที่ AR</th>
+              <th>ลูกค้า</th>
+              <th class="text-right">ยอดรวม</th>
+              <th class="text-right">ยอดค้างรับที่จะตัด</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(it => `
+              <tr>
+                <td class="font-mono" style="color:var(--blue)">${escapeHTML(it.arNo)}</td>
+                <td>${escapeHTML(it.customerName)}</td>
+                <td class="text-right font-mono">${fmtB(it.total)}</td>
+                <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(it.remain)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border)">
+        <div style="font-weight:600;font-size:13px;margin-bottom:10px">📝 ข้อมูลการรับเงิน (ใช้ร่วมกันทุกใบ)</div>
+        <div class="grid-2" style="gap:10px">
+          <div class="form-group"><label>วันที่รับเงิน</label><input type="date" id="batch-pay-date" value="${today()}"></div>
+          <div class="form-group"><label>วิธีชำระ</label>
+            <select id="batch-pay-method">
+              <option value="โอนเงิน">โอนเงินเข้าบัญชี</option>
+              <option value="เงินสด">เงินสด</option>
+              <option value="เช็ค">เช็คธนาคาร</option>
+              <option value="บัตรเครดิต">บัตรเครดิต</option>
+            </select>
+          </div>
+          <div class="form-group"><label>เลขที่อ้างอิง / สลิปโอนเงิน</label><input type="text" id="batch-pay-ref" placeholder="เช่น เลขที่สลิป / เลขที่เช็ค"></div>
+          <div class="form-group"><label>หมายเหตุ</label><input type="text" id="batch-pay-note" placeholder="เช่น ชำระรวบยอดบิลเดือนนี้"></div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-primary" id="btn-confirm-batch-pay" onclick="saveBatchARPayment()">✅ ยืนยันบันทึกรับเงิน (${fmtB(totalRemain)})</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function saveBatchARPayment() {
+  const items = Array.from(_selectedARMap.values());
+  if (!items.length) return;
+
+  const pay_date = document.getElementById('batch-pay-date')?.value || today();
+  const method   = document.getElementById('batch-pay-method')?.value || 'โอนเงิน';
+  const ref      = document.getElementById('batch-pay-ref')?.value.trim() || '';
+  const note     = document.getElementById('batch-pay-note')?.value.trim() || '';
+
+  const btn = document.getElementById('btn-confirm-batch-pay');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึกรับเงิน...'; }
+
+  let successCount = 0;
+  let totalPaidSum = 0;
+
+  try {
+    for (const it of items) {
+      const { data: latestAR } = await sb.from('ar_invoices').select('total_amount, paid_amount, status').eq('id', it.id).single();
+      if (!latestAR || latestAR.status === 'cancelled') continue;
+
+      const remaining = Math.max(0, Number(latestAR.total_amount || 0) - Number(latestAR.paid_amount || 0));
+      if (remaining <= 0) continue;
+
+      // 1. Insert payment record
+      const { error: pe } = await sb.from('ar_payments').insert({
+        ar_id: it.id,
+        shop_id: currentShop.id,
+        pay_date,
+        amount: remaining,
+        method,
+        ref,
+        note: note ? `${note} (Batch Pay)` : 'Batch Pay'
+      });
+
+      if (!pe) {
+        // 2. Update AR Invoice to paid
+        const newTotalPaid = Number(latestAR.paid_amount || 0) + remaining;
+        await sb.from('ar_invoices').update({
+          paid_amount: newTotalPaid,
+          status: 'paid'
+        }).eq('id', it.id);
+
+        successCount++;
+        totalPaidSum += remaining;
+      }
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+    toast(`บันทึกรับชำระเงินสำเร็จ ${successCount} ใบ รวม ${fmtB(totalPaidSum)} ✓`, 'success');
+    _selectedARMap.clear();
+    loadAR();
+  } catch(e) {
+    toast('เกิดข้อผิดพลาดในการรับชำระเงิน: ' + e.message, 'error');
+  }
 }
 
 </script>
