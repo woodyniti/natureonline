@@ -15349,14 +15349,14 @@ async function loadAR() {
             '<td class="text-right font-mono text-red">' + fmtB(remain) + '</td>' +
             '<td>' + statusBadge(r.status) + '</td>' +
             '<td style="color:' + (overdue?'var(--red)':'var(--text2)') + '">' + (r.due_date||'-') + (overdue?' ⚠️':'') + '</td>' +
-            '<td><button class="btn btn-secondary btn-sm" onclick="openARDetail(\"'+r.id+'\")">รายละเอียด</button></td>' +
+            '<td><button class="btn btn-secondary btn-sm" onclick="openARDetail(\'' + r.id + '\')">รายละเอียด</button></td>' +
             '</tr>';
         }).join('') + '</tbody></table>' +
         '<div class="mobile-only">' +
         rows.map(r => {
           const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
           const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
-          return '<div class="m-card" onclick="openARDetail(\"'+r.id+'\")">' +
+          return '<div class="m-card" onclick="openARDetail(\'' + r.id + '\')">' +
             '<div class="m-card-row"><div><div class="m-card-title">'+statusBadge(r.status)+' '+(r.customer_name||'-')+'</div><div class="m-card-sub">'+(r.ar_no||'-')+' · '+(r.ar_date||'-')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div><div style="font-size:11px;color:var(--red)">ค้าง '+fmtB(remain)+'</div></div></div>' +
             '<div class="m-card-meta"><span>'+(overdue?'⚠️ เกิน due date':'📅 ครบ '+(r.due_date||'-'))+'</span><span style="color:var(--green)">รับแล้ว '+fmtB(r.paid_amount||0)+'</span></div>' +
             '</div>';
@@ -15490,7 +15490,16 @@ async function openARDetail(arId) {
   const cnMatch = String(ar.note||'').match(/\[CN:([^\]]+)\]/);
   const cnNo = cnMatch?.[1] || '';
   const payRows = (payments||[]).map(p =>
-    '<tr><td>'+escapeHTML(p.pay_date||'-')+'</td><td class="text-right font-mono '+(Number(p.amount)<0?'text-red':'text-green')+'">'+fmtB(p.amount)+'</td><td>'+escapeHTML(p.method||'-')+'</td><td>'+escapeHTML(p.ref||'-')+'</td><td>'+escapeHTML(p.note||'-')+'</td></tr>'
+    '<tr>' +
+      '<td><b>' + escapeHTML(p.pay_date||'-') + '</b></td>' +
+      '<td class="text-right font-mono ' + (Number(p.amount)<0?'text-red':'text-green') + '">' + fmtB(p.amount) + '</td>' +
+      '<td>' + escapeHTML(p.method||'-') + '</td>' +
+      '<td>' + escapeHTML(p.ref||'-') + '</td>' +
+      '<td>' + escapeHTML(p.note||'-') + '</td>' +
+      '<td style="text-align:center;white-space:nowrap">' +
+        (!isCancelled ? '<button class="btn btn-secondary btn-sm" style="padding:2px 6px;font-size:11px" onclick="openEditARPaymentModal(\'' + p.id + '\', \'' + arId + '\', \'' + (p.pay_date||'') + '\', \'' + (p.method||'โอนเงิน') + '\', \'' + escapeHTML(p.ref||'') + '\', \'' + escapeHTML(p.note||'') + '\')">✏️ แก้ไขวันที่</button>' : '-') +
+      '</td>' +
+    '</tr>'
   ).join('');
   const sourceItems = sourceOrder?.order_items || [];
   const sourceBox = sourceOrder ? `
@@ -15526,7 +15535,7 @@ async function openARDetail(arId) {
 
       <div style="font-weight:600;font-size:13px;margin-bottom:8px">ประวัติรับเงิน</div>
       <div class="table-wrap" style="margin-bottom:14px">
-        ${payments?.length ? '<table><thead><tr><th>วันที่</th><th class="text-right">จำนวน</th><th>วิธีชำระ</th><th>Ref</th><th>หมายเหตุ</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div style="color:var(--text3);font-size:13px;padding:8px">ยังไม่มีการรับเงิน</div>'}
+        ${payments?.length ? '<table><thead><tr><th>วันที่รับ</th><th class="text-right">จำนวน</th><th>วิธีชำระ</th><th>Ref</th><th>หมายเหตุ</th><th style="text-align:center">แก้ไข</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div style="color:var(--text3);font-size:13px;padding:8px">ยังไม่มีการรับเงิน</div>'}
       </div>
 
       ${!isCancelled && remain > 0 ? `
@@ -15546,7 +15555,7 @@ async function openARDetail(arId) {
 
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
-        ${!isCancelled ? `<button class="btn btn-danger" onclick="cancelARInvoice('${arId}')">ยกเลิก Invoice + ออก CN</button>` : ''}
+        ${!isCancelled ? `<button class="btn btn-danger" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">🧾 ออกใบลดหนี้ (CN) / ยกเลิก</button>` : ''}
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -19798,6 +19807,165 @@ async function saveBatchARPayment() {
   } catch(e) {
     toast('เกิดข้อผิดพลาดในการรับชำระเงิน: ' + e.message, 'error');
   }
+}
+
+
+// ── AR Invoice: Edit Payment Date / Method ──────────────────
+function openEditARPaymentModal(payId, arId, payDate, method, ref, note) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '400';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:440px">
+      <div class="modal-title">✏️ แก้ไขข้อมูลการรับเงิน</div>
+      <div class="form-group">
+        <label>วันที่รับเงิน (Payment Date)</label>
+        <input type="date" id="edit-pay-date" value="${payDate || today()}">
+      </div>
+      <div class="form-group">
+        <label>วิธีชำระ (Payment Method)</label>
+        <select id="edit-pay-method">
+          <option value="โอนเงิน" ${method==='โอนเงิน'?'selected':''}>โอนเงิน</option>
+          <option value="เงินสด" ${method==='เงินสด'?'selected':''}>เงินสด</option>
+          <option value="เช็ค" ${method==='เช็ค'?'selected':''}>เช็ค</option>
+          <option value="บัตรเครดิต" ${method==='บัตรเครดิต'?'selected':''}>บัตรเครดิต</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>เลขที่อ้างอิง / สลิป (Ref)</label>
+        <input type="text" id="edit-pay-ref" value="${ref || ''}" placeholder="เลขที่อ้างอิง">
+      </div>
+      <div class="form-group">
+        <label>หมายเหตุ</label>
+        <input type="text" id="edit-pay-note" value="${note || ''}" placeholder="หมายเหตุ">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="saveEditARPayment('${payId}', '${arId}')">💾 บันทึกการแก้ไข</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function saveEditARPayment(payId, arId) {
+  const pay_date = document.getElementById('edit-pay-date')?.value || today();
+  const method   = document.getElementById('edit-pay-method')?.value || 'โอนเงิน';
+  const ref      = document.getElementById('edit-pay-ref')?.value.trim() || '';
+  const note     = document.getElementById('edit-pay-note')?.value.trim() || '';
+
+  const { error } = await sb.from('ar_payments').update({
+    pay_date,
+    method,
+    ref,
+    note
+  }).eq('id', payId);
+
+  if (error) {
+    toast('แก้ไขข้อมูลรับเงินไม่สำเร็จ: ' + error.message, 'error');
+    return;
+  }
+
+  document.querySelectorAll('.modal-overlay[style*="z-index: 400"], .modal-overlay[style*="z-index:400"]').forEach(m => m.remove());
+  toast('แก้ไขวันที่รับเงินเรียบร้อย ✓', 'success');
+  openARDetail(arId);
+  loadAR();
+}
+
+// ── AR Invoice: Credit Note (CN) Modal ──────────────────────
+function openCreditNoteModal(arId, arNo, totalAmount, paidAmount) {
+  const defaultCnNo = 'CN-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '400';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:500px">
+      <div class="modal-title">🧾 ออกใบลดหนี้ / Credit Note (CN)</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
+        อ้างถึง Invoice: <b class="font-mono" style="color:var(--blue)">${escapeHTML(arNo)}</b> (ยอดรวม ${fmtB(totalAmount)} | รับแล้ว ${fmtB(paidAmount)})
+      </div>
+
+      <div class="form-group">
+        <label>เลขที่ใบลดหนี้ (CN No.)</label>
+        <input type="text" id="cn-no" class="font-mono" value="${defaultCnNo}">
+      </div>
+      <div class="form-group">
+        <label>วันที่ออกใบลดหนี้</label>
+        <input type="date" id="cn-date" value="${today()}">
+      </div>
+      <div class="form-group">
+        <label>สาเหตุการออกใบลดหนี้ (CN Reason)</label>
+        <select id="cn-reason">
+          <option value="รับคืนสินค้า (สินค้าไม่ตรงสเปก / ส่งผิด)">🔄 รับคืนสินค้า (สินค้าไม่ตรงสเปก / ส่งผิด)</option>
+          <option value="สินค้าชำรุด / เสียหาย">⚠️ สินค้าชำรุด / เสียหาย</option>
+          <option value="ปรับลดราคาพิเศษ / ส่วนลดการค้า">💰 ปรับลดราคาพิเศษ / ส่วนลดการค้า</option>
+          <option value="ยกเลิกบิลเนื่องจากออกผิด">❌ ยกเลิกบิลเนื่องจากออกผิด</option>
+          <option value="อื่นๆ">อื่นๆ</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>หมายเหตุเพิ่มเติม</label>
+        <textarea id="cn-notes" rows="2" placeholder="รายละเอียดเหตุผลการออกใบลดหนี้..."></textarea>
+      </div>
+
+      <div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:8px;padding:10px;font-size:12px;margin-bottom:12px">
+        ⚠️ <b>ผลกระทบ:</b> การออก CN จะเปลี่ยนสถานะ Invoice เป็น <b>ยกเลิก / CN</b> และกลับรายการยอดรับเงินออกจากลูกหนี้คงค้างทันที
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <button class="btn btn-danger" onclick="confirmSaveCreditNote('${arId}')">🧾 ยืนยันออกใบลดหนี้ (CN)</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function confirmSaveCreditNote(arId) {
+  const cnNo    = document.getElementById('cn-no')?.value.trim();
+  const cnDate  = document.getElementById('cn-date')?.value || today();
+  const reason  = document.getElementById('cn-reason')?.value || '';
+  const notes   = document.getElementById('cn-notes')?.value.trim() || '';
+
+  if (!cnNo) { toast('กรุณาระบุเลขที่ใบลดหนี้ CN', 'error'); return; }
+
+  const [{ data: ar, error: arError }, { data: payments, error: payError }] = await Promise.all([
+    sb.from('ar_invoices').select('*').eq('id', arId).single(),
+    sb.from('ar_payments').select('amount').eq('ar_id', arId),
+  ]);
+
+  if (arError || payError || !ar) { toast('โหลดข้อมูล Invoice ไม่สำเร็จ', 'error'); return; }
+  if (ar.status === 'cancelled') { toast('Invoice นี้ถูกยกเลิกแล้ว', 'error'); return; }
+
+  const received = Math.max(0, (payments||[]).reduce((s,p) => s + Number(p.amount||0), 0));
+  const oldNote = ar.note || '';
+  const cancelNote = `[CN:${cnNo}] ${reason} ${notes} ${oldNote}`.trim();
+
+  const { error: cancelError } = await sb.from('ar_invoices').update({
+    status: 'cancelled',
+    paid_amount: 0,
+    note: cancelNote
+  }).eq('id', arId);
+
+  if (cancelError) { toast('ออกใบลดหนี้ไม่สำเร็จ: ' + cancelError.message, 'error'); return; }
+
+  if (received > 0) {
+    await sb.from('ar_payments').insert({
+      ar_id: arId,
+      shop_id: currentShop.id,
+      pay_date: cnDate,
+      amount: -received,
+      method: 'Credit Note',
+      ref: cnNo,
+      note: 'กลับรายการรับเงินทั้งหมดจากการออก CN (' + reason + ')'
+    });
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+  toast('ออกใบลดหนี้ ' + cnNo + ' เรียบร้อย ✓', 'success');
+  loadAR();
 }
 
 </script>
