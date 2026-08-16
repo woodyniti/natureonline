@@ -19141,18 +19141,20 @@ async function loadAIIntelligenceData(force = false) {
   const d180Str = d180.toISOString().slice(0, 10);
 
   try {
-    const [ordersRes, custRes, prodsRes, apRes, importRes, expRes] = await Promise.all([
-      sb.from('orders').select('id, order_no, order_date, customer_name, customer_id, total_amount, profit, status, payment_method, order_items(product_id, product_name, qty, sell_price, cost_per_unit)').eq('shop_id', currentShop.id).gte('order_date', d180Str),
+    const [ordersRes, custRes, prodsRes, arRes, apRes, importRes, expRes] = await Promise.all([
+      sb.from('orders').select('id, order_no, order_date, customer_name, customer_id, total_amount, profit, doc_status, shipping_status, payment_method, channel, order_items(product_id, product_name, qty, sell_price, cost_per_unit)').eq('shop_id', currentShop.id).order('order_date', {ascending:false}).limit(2000),
       sb.from('customers').select('*').eq('shop_id', currentShop.id),
       sb.from('products').select('id, name, sku, stock_qty, current_cost, sale_price, category').eq('shop_id', currentShop.id).eq('active', true),
+      sb.from('ar_invoices').select('*').eq('shop_id', currentShop.id).neq('status', 'cancelled'),
       sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id).in('status', ['unpaid', 'partial', 'pending']),
       sb.from('import_shipments').select('*').eq('shop_id', currentShop.id).neq('status', 'completed'),
-      sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date', d180Str)
+      sb.from('expenses').select('*').eq('shop_id', currentShop.id).order('expense_date', {ascending:false}).limit(1000)
     ]);
 
     const allOrders = ordersRes.data || [];
     _allCustomers = custRes.data || [];
     allProducts = prodsRes.data || [];
+    const arInvoices = arRes.data || [];
     const apInvoices = apRes.data || [];
     const importShipments = importRes.data || [];
     const expenses = expRes.data || [];
@@ -19161,7 +19163,7 @@ async function loadAIIntelligenceData(force = false) {
     computeCustomerChurn(allOrders);
 
     // 2. Process Cash Flow Model (30/60/90 days)
-    computeCashFlowModel(allOrders, apInvoices, importShipments, expenses);
+    computeCashFlowModel(allOrders, arInvoices, apInvoices, importShipments, expenses);
 
     // 3. Process Market Basket Cross-Sell Pairs
     computeMarketBasketPairs(allOrders);
@@ -19269,43 +19271,74 @@ function computeCustomerChurn(orders) {
 }
 
 // ── 2. Cash Flow Forecasting Model ──────────────────────────
-function computeCashFlowModel(orders, apInvoices, importShipments, expenses) {
+function computeCashFlowModel(orders, arInvoices, apInvoices, importShipments, expenses) {
   const now = new Date();
-  
-  // Calculate average daily cash sales (from last 60 days)
-  const cashOrders = orders.filter(o => o.payment_method === 'โอนเงิน' || o.payment_method === 'เงินสด' || !o.payment_method);
-  const totalCashSales60 = cashOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
-  const dailyCashRunRate = totalCashSales60 / 60;
+  const validOrders = (orders || []).filter(o => !isOrderCancelled(o));
+  const totalSalesAll = validOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
 
-  // Monthly recurring expenses average
-  const totalExp60 = expenses.reduce((s, e) => s + (Number(e.amount) || Number(e.base_amount) || 0), 0);
-  const monthlyExpenses = (totalExp60 / 2) || 30000;
+  // คำนวณ Daily Run Rate จากยอดขายจริงของร้าน
+  let dailyRunRate = 0;
+  if (validOrders.length > 0) {
+    const dates = validOrders.map(o => o.order_date).filter(Boolean).sort();
+    let days = 60;
+    if (dates.length > 1) {
+      const dStart = new Date(dates[0]);
+      const dEnd = new Date(dates[dates.length - 1]);
+      days = Math.max(15, Math.min(180, Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24))));
+    }
+    dailyRunRate = totalSalesAll / Math.max(15, days);
+  }
+  if (dailyRunRate <= 0 && totalSalesAll > 0) dailyRunRate = totalSalesAll / 30;
 
-  // 30 Days Forecast
-  const inflow30 = (dailyCashRunRate * 30);
-  const ap30 = apInvoices.reduce((s, a) => s + (Number(a.total_amount) || 0), 0) * 0.6;
-  const import30 = importShipments.reduce((s, i) => s + (Number(i.pending_payment_thb) || 0), 0) * 0.7;
+  // คำนวณยอดลูกหนี้การค้าค้างชำระ (AR Outstanding)
+  const pendingARs = (arInvoices || []).filter(a => a.status !== 'paid' && a.status !== 'cancelled');
+  const totalAROutstanding = pendingARs.reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
+
+  // ประมาณการรายรับ (Inflows)
+  const salesInflow30 = dailyRunRate * 30;
+  const arInflow30 = totalAROutstanding * 0.6;
+  const inflow30 = salesInflow30 + arInflow30;
+
+  const salesInflow60 = dailyRunRate * 60;
+  const arInflow60 = totalAROutstanding * 0.85;
+  const inflow60 = salesInflow60 + arInflow60;
+
+  const salesInflow90 = dailyRunRate * 90;
+  const arInflow90 = totalAROutstanding;
+  const inflow90 = salesInflow90 + arInflow90;
+
+  // ประมาณการรายจ่าย (Outflows)
+  const validExpenses = (expenses || []);
+  const totalExp = validExpenses.reduce((s, e) => s + (Number(e.amount) || Number(e.base_amount) || 0), 0);
+  const monthlyExpenses = validExpenses.length > 0 ? (totalExp / Math.max(1, Math.min(6, Math.round(validExpenses.length / 10)))) : 30000;
+
+  const totalAP = (apInvoices || []).reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
+  const totalImportPending = (importShipments || []).reduce((s, i) => s + (Number(i.pending_payment_thb) || 0), 0);
+
+  const ap30 = totalAP * 0.6;
+  const import30 = totalImportPending * 0.7;
   const outflow30 = ap30 + import30 + monthlyExpenses;
   const net30 = inflow30 - outflow30;
 
-  // 60 Days Forecast
-  const inflow60 = (dailyCashRunRate * 60);
-  const ap60 = apInvoices.reduce((s, a) => s + (Number(a.total_amount) || 0), 0);
-  const import60 = importShipments.reduce((s, i) => s + (Number(i.pending_payment_thb) || 0), 0);
+  const ap60 = totalAP;
+  const import60 = totalImportPending;
   const outflow60 = ap60 + import60 + (monthlyExpenses * 2);
   const net60 = inflow60 - outflow60;
 
-  // 90 Days Forecast
-  const inflow90 = (dailyCashRunRate * 90);
-  const outflow90 = ap60 + import60 + (monthlyExpenses * 3);
+  const ap90 = totalAP;
+  const import90 = totalImportPending;
+  const outflow90 = ap90 + import90 + (monthlyExpenses * 3);
   const net90 = inflow90 - outflow90;
 
   _aiCashFlow = {
-    dailyCashRunRate,
+    dailyRunRate,
+    totalAROutstanding,
     monthlyExpenses,
-    days30: { inflow: inflow30, outflow: outflow30, net: net30 },
-    days60: { inflow: inflow60, outflow: outflow60, net: net60 },
-    days90: { inflow: inflow90, outflow: outflow90, net: net90 }
+    totalAP,
+    totalImportPending,
+    days30: { salesInflow: salesInflow30, arInflow: arInflow30, inflow: inflow30, ap: ap30, import: import30, exp: monthlyExpenses, outflow: outflow30, net: net30 },
+    days60: { salesInflow: salesInflow60, arInflow: arInflow60, inflow: inflow60, ap: ap60, import: import60, exp: monthlyExpenses * 2, outflow: outflow60, net: net60 },
+    days90: { salesInflow: salesInflow90, arInflow: arInflow90, inflow: inflow90, ap: ap90, import: import90, exp: monthlyExpenses * 3, outflow: outflow90, net: net90 }
   };
 }
 
@@ -19600,33 +19633,41 @@ function renderCashFlowForecast() {
         <thead>
           <tr>
             <th>ระยะเวลา</th>
-            <th class="text-right">รายรับคาดการณ์ (ลูกหนี้ + ขายสด)</th>
-            <th class="text-right">รายจ่ายคาดการณ์ (เจ้าหนี้ + นำเข้า + งบประจำ)</th>
-            <th class="text-right">กระแสเงินสดสุทธิ (Net Cash Flow)</th>
+            <th class="text-right">🛒 ยอดขายสด/ออนไลน์ (Daily Run Rate)</th>
+            <th class="text-right">📄 ลูกหนี้เก็บได้ (AR Inflow)</th>
+            <th class="text-right">💰 รวมรายรับคาดการณ์</th>
+            <th class="text-right">📉 รวมรายจ่ายคาดการณ์</th>
+            <th class="text-right">💵 กระแสเงินสดสุทธิ (Net Flow)</th>
             <th>สถานะประเมิน</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td style="font-weight:700">🗓️ 30 วันข้างหน้า</td>
-            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days30.inflow)}</td>
+            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days30.salesInflow)} <div style="font-size:10px;color:var(--text3);font-weight:400">เฉลี่ย ${fmtB(_aiCashFlow.dailyRunRate)}/วัน</div></td>
+            <td class="text-right font-mono text-blue">${fmtB(_aiCashFlow.days30.arInflow)}</td>
+            <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(_aiCashFlow.days30.inflow)}</td>
             <td class="text-right font-mono text-red">${fmtB(_aiCashFlow.days30.outflow)}</td>
-            <td class="text-right font-mono" style="font-weight:700;color:${_aiCashFlow.days30.net >= 0 ? 'var(--blue)' : 'var(--red)'}">${fmtB(_aiCashFlow.days30.net)}</td>
-            <td><span class="planning-tag-healthy">🟢 เงินสดคล่องตัว</span></td>
+            <td class="text-right font-mono" style="font-weight:700;font-size:14px;color:${_aiCashFlow.days30.net >= 0 ? 'var(--blue)' : 'var(--red)'}">${fmtB(_aiCashFlow.days30.net)}</td>
+            <td><span class="${_aiCashFlow.days30.net >= 0 ? 'planning-tag-healthy' : 'planning-tag-urgent'}">${_aiCashFlow.days30.net >= 0 ? '🟢 คล่องตัว' : '🔴 เงินสดตึงตัว'}</span></td>
           </tr>
           <tr>
             <td style="font-weight:700">🗓️ 60 วันข้างหน้า</td>
-            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days60.inflow)}</td>
+            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days60.salesInflow)} <div style="font-size:10px;color:var(--text3);font-weight:400">เฉลี่ย ${fmtB(_aiCashFlow.dailyRunRate)}/วัน</div></td>
+            <td class="text-right font-mono text-blue">${fmtB(_aiCashFlow.days60.arInflow)}</td>
+            <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(_aiCashFlow.days60.inflow)}</td>
             <td class="text-right font-mono text-red">${fmtB(_aiCashFlow.days60.outflow)}</td>
-            <td class="text-right font-mono" style="font-weight:700;color:${_aiCashFlow.days60.net >= 0 ? 'var(--accent)' : 'var(--red)'}">${fmtB(_aiCashFlow.days60.net)}</td>
-            <td><span class="planning-tag-healthy">🟢 เงินสดคล่องตัว</span></td>
+            <td class="text-right font-mono" style="font-weight:700;font-size:14px;color:${_aiCashFlow.days60.net >= 0 ? 'var(--accent)' : 'var(--red)'}">${fmtB(_aiCashFlow.days60.net)}</td>
+            <td><span class="${_aiCashFlow.days60.net >= 0 ? 'planning-tag-healthy' : 'planning-tag-urgent'}">${_aiCashFlow.days60.net >= 0 ? '🟢 คล่องตัว' : '🔴 เงินสดตึงตัว'}</span></td>
           </tr>
           <tr>
             <td style="font-weight:700">🗓️ 90 วันข้างหน้า</td>
-            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days90.inflow)}</td>
+            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days90.salesInflow)} <div style="font-size:10px;color:var(--text3);font-weight:400">เฉลี่ย ${fmtB(_aiCashFlow.dailyRunRate)}/วัน</div></td>
+            <td class="text-right font-mono text-blue">${fmtB(_aiCashFlow.days90.arInflow)}</td>
+            <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(_aiCashFlow.days90.inflow)}</td>
             <td class="text-right font-mono text-red">${fmtB(_aiCashFlow.days90.outflow)}</td>
-            <td class="text-right font-mono" style="font-weight:700;color:${_aiCashFlow.days90.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtB(_aiCashFlow.days90.net)}</td>
-            <td><span class="planning-tag-healthy">🟢 เงินสดคล่องตัว</span></td>
+            <td class="text-right font-mono" style="font-weight:700;font-size:14px;color:${_aiCashFlow.days90.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtB(_aiCashFlow.days90.net)}</td>
+            <td><span class="${_aiCashFlow.days90.net >= 0 ? 'planning-tag-healthy' : 'planning-tag-urgent'}">${_aiCashFlow.days90.net >= 0 ? '🟢 คล่องตัว' : '🔴 เงินสดตึงตัว'}</span></td>
           </tr>
         </tbody>
       </table>
