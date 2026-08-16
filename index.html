@@ -11008,19 +11008,28 @@ async function loadStockPlanningData() {
   const d30 = new Date(); d30.setDate(d30.getDate() - 30);
   const d90 = new Date(); d90.setDate(d90.getDate() - 90);
 
-  const salesMap = {}; // { prod_id: { qty30, qty90, qty180, rev180, lastDate } }
+  const salesMap = {}; // { prod_id: { qty30, qty90, qty180, rev180, lastDate, orderCount30, orderCount90 } }
   (ordersRes.data || []).forEach(o => {
     const oDate = new Date(o.order_date);
+    // Track which products appear in this order (for frequency counting)
+    const seenInOrder30 = new Set();
+    const seenInOrder90 = new Set();
     (o.order_items || []).forEach(it => {
       const pid = it.product_id;
       if (!pid) return;
-      if (!salesMap[pid]) salesMap[pid] = { qty30:0, qty90:0, qty180:0, rev180:0, lastDate: null };
+      if (!salesMap[pid]) salesMap[pid] = { qty30:0, qty90:0, qty180:0, rev180:0, lastDate: null, orderCount30:0, orderCount90:0 };
       const q = Number(it.qty) || 0;
       const rev = q * (Number(it.sell_price) || 0);
       salesMap[pid].qty180 += q;
       salesMap[pid].rev180 += rev;
-      if (oDate >= d90) salesMap[pid].qty90 += q;
-      if (oDate >= d30) salesMap[pid].qty30 += q;
+      if (oDate >= d90) {
+        salesMap[pid].qty90 += q;
+        if (!seenInOrder90.has(pid)) { salesMap[pid].orderCount90++; seenInOrder90.add(pid); }
+      }
+      if (oDate >= d30) {
+        salesMap[pid].qty30 += q;
+        if (!seenInOrder30.has(pid)) { salesMap[pid].orderCount30++; seenInOrder30.add(pid); }
+      }
       if (!salesMap[pid].lastDate || o.order_date > salesMap[pid].lastDate) {
         salesMap[pid].lastDate = o.order_date;
       }
@@ -11133,6 +11142,8 @@ async function loadStockPlanningData() {
       sales180: sm.qty180,
       rev180: sm.rev180,
       lastSoldDate: sm.lastDate,
+      orderCount30: sm.orderCount30 || 0,
+      orderCount90: sm.orderCount90 || 0,
       ads30,
       adsWeighted,
       inTransit,
@@ -11200,12 +11211,20 @@ function renderHotSellingOOSCards() {
   const container = document.getElementById('hot-selling-oos-cards');
   if (!container) return;
 
-  // Filter for OOS and sales90 > 0
+  // Filter: สต๊อกหมด + เคยขายได้ใน 90 วัน
   let hotOOS = planningProducts.filter(p => Number(p.stock_qty || 0) <= 0 && Number(p.sales90 || 0) > 0);
-  
-  // Sort by sales30 desc
-  hotOOS.sort((a, b) => Number(b.sales30 || 0) - Number(a.sales30 || 0));
-  
+
+  // Composite Score = ความถี่ซื้อซ้ำ (60%) + ปริมาณขาย (40%)
+  // Normalize แต่ละมิติเป็น 0-1 แล้วรวมน้ำหนัก
+  const maxOrdCnt = Math.max(1, ...hotOOS.map(p => p.orderCount90));
+  const maxQty = Math.max(1, ...hotOOS.map(p => p.sales90));
+  hotOOS.forEach(p => {
+    const freqScore = p.orderCount90 / maxOrdCnt;  // ซื้อซ้ำบ่อยแค่ไหน
+    const volScore = p.sales90 / maxQty;            // ปริมาณขายมากแค่ไหน
+    p._hotScore = (freqScore * 0.6) + (volScore * 0.4);
+  });
+  hotOOS.sort((a, b) => b._hotScore - a._hotScore);
+
   // Top 20
   hotOOS = hotOOS.slice(0, 20);
 
@@ -11221,18 +11240,27 @@ function renderHotSellingOOSCards() {
     const estVal = Number(p.suggestedQty || 0) * Number(p.buyPrice || 0);
     totalEstVal += estVal;
     return `
-      <div style="flex:0 0 220px; background:#fff; border:1px solid var(--border2); border-left:4px solid var(--red); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
-        <div style="font-family:var(--mono); color:var(--blue); font-size:12px; font-weight:600;">${escapeHTML(p.sku || '-')}</div>
+      <div style="flex:0 0 230px; background:#fff; border:1px solid var(--border2); border-left:4px solid var(--red); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:6px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-family:var(--mono); color:var(--blue); font-size:12px; font-weight:600;">${escapeHTML(p.sku || '-')}</div>
+          <div style="font-size:10px; font-weight:700; color:#fff; background:var(--red); padding:1px 6px; border-radius:4px;">${p.orderCount90} ออเดอร์</div>
+        </div>
         <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</div>
-        <div style="font-size:12px; color:var(--text2); background:var(--bg3); padding:4px 6px; border-radius:4px;">
-          🔥 ขาย 30 วัน: ${fmt(p.sales30)} ชิ้น<br>
-          <span style="color:var(--text3); font-size:11px;">(90 วัน: ${fmt(p.sales90)} ชิ้น)</span>
+        <div style="font-size:12px; color:var(--text2); background:var(--bg3); padding:5px 6px; border-radius:4px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span>🔥 ขาย 30 วัน</span>
+            <span style="font-weight:600;">${fmt(p.sales30)} ชิ้น <span style="color:var(--text3); font-size:10px;">(${p.orderCount30} ครั้ง)</span></span>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:2px; font-size:11px; color:var(--text3);">
+            <span>90 วัน</span>
+            <span>${fmt(p.sales90)} ชิ้น (${p.orderCount90} ครั้ง)</span>
+          </div>
         </div>
         <div style="font-size:12px; font-weight:600; color:var(--text);">
-          แนะนำสั่ง: ${fmt(p.suggestedQty)} ชิ้น
+          📦 แนะนำสั่ง: <span style="color:var(--accent);">${fmt(p.suggestedQty)}</span> ชิ้น
         </div>
         <div style="font-size:12px; color:var(--text2);">
-          💰 มูลค่า: ${fmtB(estVal)}
+          💰 มูลค่า: <span style="font-weight:600;">${fmtB(estVal)}</span>
         </div>
         <button class="btn btn-sm" style="margin-top:auto; background:var(--bg3); color:var(--accent); border:1px solid var(--accent); font-size:12px; padding:4px; border-radius:4px; cursor:pointer;" onclick="addOOSToPO('${p.id}')">
           🛒 เพิ่มใน PO
@@ -11246,9 +11274,10 @@ function renderHotSellingOOSCards() {
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
         <h3 style="margin:0; font-size:15px; color:var(--text); display:flex; align-items:center; gap:6px;">
           🔥 สินค้าขายดีแต่หมดสต๊อก — ต้องสั่งด่วน!
+          <span style="font-size:11px; font-weight:400; color:var(--text3);">(เรียงตามความถี่ซื้อซ้ำ + ปริมาณขาย)</span>
         </h3>
         <div style="font-size:13px; color:var(--text2); font-weight:500;">
-          ${hotOOS.length} รายการ | รวมมูลค่าที่ต้องสั่ง: <span style="color:var(--red);">${fmtB(totalEstVal)}</span>
+          ${hotOOS.length} รายการ | รวมมูลค่าที่ต้องสั่ง: <span style="color:var(--red); font-weight:700;">${fmtB(totalEstVal)}</span>
         </div>
       </div>
       <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
