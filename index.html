@@ -15304,8 +15304,28 @@ async function loadAR() {
   if (to)   q = q.lte('ar_date', to);
   if (st)   q = q.eq('status', st);
 
-  const { data: rows } = await q;
+  const [{ data: rows }, { data: allOrders }, { data: allPayments }] = await Promise.all([
+    q,
+    sb.from('orders').select('id, order_no, customer_social, platform_order_id, channel').eq('shop_id', currentShop.id),
+    sb.from('ar_payments').select('id, ar_id, pay_date, amount').eq('shop_id', currentShop.id).order('pay_date', {ascending:false})
+  ]);
+
   if (!rows) return;
+
+  const orderMap = {};
+  (allOrders || []).forEach(o => {
+    orderMap[o.id] = {
+      orderNo: o.order_no || '-',
+      ref: o.customer_social || o.platform_order_id || '',
+      channel: o.channel || ''
+    };
+  });
+
+  const paymentMap = {};
+  (allPayments || []).forEach(p => {
+    if (!paymentMap[p.ar_id]) paymentMap[p.ar_id] = [];
+    paymentMap[p.ar_id].push(p);
+  });
 
   const activeRows = rows.filter(r => r.status !== 'cancelled');
   const totalAmt  = activeRows.reduce((s,r) => s + Number(r.total_amount||0), 0);
@@ -15332,11 +15352,15 @@ async function loadAR() {
     if (!rows.length) { tbl.innerHTML = '<div class="empty"><div class="empty-icon">📄</div><div class="empty-text">ไม่มีข้อมูล</div></div>'; }
     else {
       tbl.innerHTML =
-        '<table class="desktop-only"><thead><tr><th style="width:36px;text-align:center"><input type="checkbox" id="ar-select-all" onchange="toggleSelectAllAR(this.checked)" title="เลือกทั้งหมด"></th><th>เลขที่</th><th>วันที่</th><th>ลูกค้า</th><th class="text-right">ยอดรวม</th><th class="text-right">รับแล้ว</th><th class="text-right">ค้างรับ</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>' +
+        '<table class="desktop-only"><thead><tr><th style="width:36px;text-align:center"><input type="checkbox" id="ar-select-all" onchange="toggleSelectAllAR(this.checked)" title="เลือกทั้งหมด"></th><th>เลขที่ AR / อ้างอิง SO & Shopee</th><th>วันที่เปิดบิล / วันที่รับเงิน</th><th>ลูกค้า</th><th class="text-right">ยอดรวม</th><th class="text-right">รับแล้ว</th><th class="text-right">ค้างรับ</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>' +
         rows.map(r => {
           const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
           const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
           const isPayable = !['paid','cancelled'].includes(r.status) && remain > 0;
+          const ord = r.order_id ? orderMap[r.order_id] : null;
+          const pays = paymentMap[r.id] || [];
+          const latestPayDate = pays.length ? pays[0].pay_date : null;
+
           return '<tr>' +
             '<td style="text-align:center" onclick="event.stopPropagation()">' +
               (isPayable
@@ -15344,8 +15368,14 @@ async function loadAR() {
                 : '<span style="color:var(--green);font-size:12px;font-weight:700" title="ชำระครบแล้ว">✓</span>'
               ) +
             '</td>' +
-            '<td class="font-mono" style="color:var(--blue)">' + (r.ar_no||'-') + '</td>' +
-            '<td>' + (r.ar_date||'-') + '</td>' +
+            '<td>' +
+              '<div class="font-mono" style="color:var(--blue);font-weight:700">' + escapeHTML(r.ar_no||'-') + '</div>' +
+              (ord ? '<div style="font-size:11px;color:var(--text2);margin-top:2px">🛒 SO: <b class="font-mono">' + escapeHTML(ord.orderNo) + '</b>' + (ord.ref ? ' · <span style="color:var(--accent)">📄 ' + escapeHTML(ord.ref) + '</span>' : '') + '</div>' : '') +
+            '</td>' +
+            '<td>' +
+              '<div>📅 เปิด: ' + (r.ar_date||'-') + '</div>' +
+              (latestPayDate ? '<div style="font-size:11px;color:var(--green);font-weight:600;margin-top:2px">💵 รับ: ' + latestPayDate + (pays.length > 1 ? ' (' + pays.length + ' งวด)' : '') + '</div>' : '<div style="font-size:11px;color:var(--text3);margin-top:2px">ยังไม่ได้รับเงิน</div>') +
+            '</td>' +
             '<td>' + (r.customer_name||'-') + '</td>' +
             '<td class="text-right font-mono">' + fmtB(r.total_amount||0) + '</td>' +
             '<td class="text-right font-mono text-green">' + fmtB(r.paid_amount||0) + '</td>' +
@@ -15359,9 +15389,13 @@ async function loadAR() {
         rows.map(r => {
           const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
           const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
+          const ordM = r.order_id ? orderMap[r.order_id] : null;
+          const paysM = paymentMap[r.id] || [];
+          const latestPayDateM = paysM.length ? paysM[0].pay_date : null;
+
           return '<div class="m-card" onclick="openARDetail(\'' + r.id + '\')">' +
-            '<div class="m-card-row"><div><div class="m-card-title">'+statusBadge(r.status)+' '+(r.customer_name||'-')+'</div><div class="m-card-sub">'+(r.ar_no||'-')+' · '+(r.ar_date||'-')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div><div style="font-size:11px;color:var(--red)">ค้าง '+fmtB(remain)+'</div></div></div>' +
-            '<div class="m-card-meta"><span>'+(overdue?'⚠️ เกิน due date':'📅 ครบ '+(r.due_date||'-'))+'</span><span style="color:var(--green)">รับแล้ว '+fmtB(r.paid_amount||0)+'</span></div>' +
+            '<div class="m-card-row"><div><div class="m-card-title">'+statusBadge(r.status)+' '+(r.customer_name||'-')+'</div><div class="m-card-sub">'+(r.ar_no||'-')+' · เปิด '+(r.ar_date||'-')+(ordM ? '<br>🛒 '+escapeHTML(ordM.orderNo)+(ordM.ref?' · 📄 '+escapeHTML(ordM.ref):''):'')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div><div style="font-size:11px;color:var(--red)">ค้าง '+fmtB(remain)+'</div></div></div>' +
+            '<div class="m-card-meta"><span>'+(overdue?'⚠️ เกิน due date':'📅 ครบ '+(r.due_date||'-'))+'</span><span style="color:var(--green)">'+(latestPayDateM ? '💵 รับ ' + latestPayDateM + ' ('+fmtB(r.paid_amount||0)+')' : 'ยังไม่ได้รับเงิน')+'</span></div>' +
             '</div>';
         }).join('') + '</div>';
     }
