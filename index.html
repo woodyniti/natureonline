@@ -19142,13 +19142,13 @@ async function loadAIIntelligenceData(force = false) {
 
   try {
     const [ordersRes, custRes, prodsRes, arRes, arPayRes, apRes, importRes, expRes] = await Promise.all([
-      sb.from('orders').select('id, order_no, order_date, customer_name, customer_id, total_amount, profit, doc_status, shipping_status, payment_method, channel, order_items(product_id, product_name, qty, sell_price, cost_per_unit)').eq('shop_id', currentShop.id).order('order_date', {ascending:false}).limit(2000),
+      sb.from('orders').select('id, order_no, order_date, customer_name, customer_social, customer_username, total_amount, total_cost, channel, shipping_status, doc_status, order_items(product_id, product_name, qty, sell_price, cost_per_unit)').eq('shop_id', currentShop.id).order('order_date', {ascending:false}).limit(3000),
       sb.from('customers').select('*').eq('shop_id', currentShop.id),
       sb.from('products').select('id, name, sku, stock_qty, current_cost, sale_price, category').eq('shop_id', currentShop.id).eq('active', true),
       sb.from('ar_invoices').select('*').eq('shop_id', currentShop.id).neq('status', 'cancelled'),
       sb.from('ar_payments').select('id, ar_id, pay_date, amount, method').eq('shop_id', currentShop.id).order('pay_date', {ascending:false}),
-      sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id).in('status', ['unpaid', 'partial', 'pending']),
-      sb.from('import_shipments').select('*').eq('shop_id', currentShop.id).neq('status', 'completed'),
+      sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id),
+      sb.from('import_shipments').select('*').eq('shop_id', currentShop.id),
       sb.from('expenses').select('*').eq('shop_id', currentShop.id).order('expense_date', {ascending:false}).limit(1000)
     ]);
 
@@ -19157,8 +19157,8 @@ async function loadAIIntelligenceData(force = false) {
     allProducts = prodsRes.data || [];
     const arInvoices = arRes.data || [];
     const arPayments = arPayRes.data || [];
-    const apInvoices = apRes.data || [];
-    const importShipments = importRes.data || [];
+    const apInvoices = (apRes.data || []).filter(a => ['unpaid', 'partial', 'pending'].includes(a.status));
+    const importShipments = (importRes.data || []).filter(i => i.status !== 'completed');
     const expenses = expRes.data || [];
 
     // 1. Process Lost Customers Churn
@@ -19186,13 +19186,14 @@ function computeCustomerChurn(orders) {
 
   // Group orders by customer
   orders.forEach(o => {
-    const custKey = o.customer_id || (o.customer_name ? o.customer_name.trim().toLowerCase() : null);
-    if (!custKey) return;
+    const cName = (o.customer_name || o.customer_social || o.customer_username || '').trim();
+    if (!cName) return;
+    const custKey = cName.toLowerCase();
 
     if (!customerMap[custKey]) {
       customerMap[custKey] = {
-        name: o.customer_name || 'ลูกค้า',
-        customerId: o.customer_id || null,
+        name: cName,
+        customerId: null,
         orders: [],
         totalSpend: 0,
         itemsPurchased: {}
