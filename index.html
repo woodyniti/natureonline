@@ -11214,14 +11214,14 @@ function renderHotSellingOOSCards() {
   // Filter: สต๊อกหมด + เคยขายได้ใน 90 วัน
   let hotOOS = planningProducts.filter(p => Number(p.stock_qty || 0) <= 0 && Number(p.sales90 || 0) > 0);
 
-  // Composite Score = ความถี่ซื้อซ้ำ (60%) + ปริมาณขาย (40%)
+  // Composite Score = ความถี่ซื้อซ้ำ (80%) + ปริมาณขาย (20%)
   // Normalize แต่ละมิติเป็น 0-1 แล้วรวมน้ำหนัก
   const maxOrdCnt = Math.max(1, ...hotOOS.map(p => p.orderCount90));
   const maxQty = Math.max(1, ...hotOOS.map(p => p.sales90));
   hotOOS.forEach(p => {
-    const freqScore = p.orderCount90 / maxOrdCnt;  // ซื้อซ้ำบ่อยแค่ไหน
-    const volScore = p.sales90 / maxQty;            // ปริมาณขายมากแค่ไหน
-    p._hotScore = (freqScore * 0.6) + (volScore * 0.4);
+    const freqScore = p.orderCount90 / maxOrdCnt;  // ซื้อซ้ำบ่อยแค่ไหน (80%)
+    const volScore = p.sales90 / maxQty;            // ปริมาณขายมากแค่ไหน (20%)
+    p._hotScore = (freqScore * 0.8) + (volScore * 0.2);
   });
   hotOOS.sort((a, b) => b._hotScore - a._hotScore);
 
@@ -11274,7 +11274,7 @@ function renderHotSellingOOSCards() {
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
         <h3 style="margin:0; font-size:15px; color:var(--text); display:flex; align-items:center; gap:6px;">
           🔥 สินค้าขายดีแต่หมดสต๊อก — ต้องสั่งด่วน!
-          <span style="font-size:11px; font-weight:400; color:var(--text3);">(เรียงตามความถี่ซื้อซ้ำ + ปริมาณขาย)</span>
+          <span style="font-size:11px; font-weight:400; color:var(--text3);">(เรียงตามความถี่ซื้อซ้ำ 80% + ปริมาณขาย 20%)</span>
         </h3>
         <div style="font-size:13px; color:var(--text2); font-weight:500;">
           ${hotOOS.length} รายการ | รวมมูลค่าที่ต้องสั่ง: <span style="color:var(--red); font-weight:700;">${fmtB(totalEstVal)}</span>
