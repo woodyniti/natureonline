@@ -4247,10 +4247,11 @@ async function loadOrders() {
   const ds = document.getElementById('ord-doc-status')?.value || '';
   if (ds)   q = q.eq('doc_status', ds);
 
-  const [ordRes, empRes] = await Promise.all([
+  const [ordRes, empRes, _shopee, arRes] = await Promise.all([
     q,
     sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
-    ensureShopeeFeeData()
+    ensureShopeeFeeData(),
+    sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null)
   ]);
 
   if (ordRes.error) {
@@ -4262,6 +4263,10 @@ async function loadOrders() {
   // สร้าง map employee_id → name
   const empMap = {};
   (empRes.data||[]).forEach(e => empMap[e.id] = e.name);
+  const arByOrderId = {};
+  (arRes?.data||[]).forEach(ar => {
+    if (ar.status !== 'cancelled') arByOrderId[ar.order_id] = ar;
+  });
 
   // merge ข้อมูลพนักงานเข้าไป
   let rows = (ordRes.data||[]).map(o => ({
@@ -4354,14 +4359,20 @@ async function loadOrders() {
           const fee=cancelled?0:feeInfo.fee;
           const profit=cancelled?0:sale-cost-fee;
           const products=(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-';
+          const linkedAR = arByOrderId[o.id];
+          const hasAR = !!linkedAR;
           return `<tr>
           <td style="text-align:center" onclick="event.stopPropagation()">
-            <input type="checkbox" class="chk-so-select" data-id="${o.id}" onchange="updateSOSelectCount()">
+            ${hasAR
+              ? `<span style="color:var(--blue);font-size:11px;font-weight:700" title="ออก AR Invoice แล้ว: ${escapeHTML(linkedAR.ar_no)}">📄</span>`
+              : `<input type="checkbox" class="chk-so-select" data-id="${o.id}" onchange="updateSOSelectCount()">`
+            }
           </td>
           <td class="col-order">
             <div style="font-weight:600">${o.order_date||'-'}</div>
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
+            ${hasAR?`<div style="margin-top:3px"><span class="badge badge-blue" style="font-size:10px;cursor:pointer" onclick="showPage('arinvoice');setTimeout(()=>openARDetail('${linkedAR.id}'),250)" title="คลิกดู AR Invoice ${escapeHTML(linkedAR.ar_no)}">📄 ${escapeHTML(linkedAR.ar_no)}</span></div>`:''}
           </td>
           <td class="col-customer">
             <div style="font-weight:500">${o.customer_name||'-'}</div>
@@ -5680,10 +5691,10 @@ async function viewOrder(orderId) {
   });
 
   // เช็ค AR Invoice ที่ผูกกับ order นี้
-  const { data: existAR } = await sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', order.id).limit(1);
+  const { data: existAR } = await sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', order.id).neq('status','cancelled').limit(1);
   const hasAR = existAR && existAR.length > 0;
   const arBtn = hasAR
-    ? `<button class="btn btn-secondary btn-sm" disabled style="opacity:.6;cursor:not-allowed" title="AR: ${existAR[0].ar_no}">✅ AR: ${existAR[0].ar_no}</button>`
+    ? `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="closeModal('modal-order-detail');showPage('arinvoice');setTimeout(()=>openARDetail('${existAR[0].id}'),250)" title="เปิดดู AR Invoice ${existAR[0].ar_no}">📄 ดู AR Invoice (${existAR[0].ar_no})</button>`
     : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}',true)">📄 Copy to Invoice</button>`;
 
   document.getElementById('order-detail-footer').innerHTML =
@@ -15846,11 +15857,11 @@ async function openGRDetail(grId) {
 async function convertSOtoAR(orderId, openAfterCreate=false) {
   const [{ data: order, error: orderError }, { data: existing }] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('id', orderId).single(),
-    sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', orderId).limit(1),
+    sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', orderId).neq('status', 'cancelled').limit(1),
   ]);
   if (orderError || !order) { toast('โหลด Sales Order ไม่สำเร็จ','error'); return; }
   if (existing?.length) {
-    toast('Sales Order นี้มี Invoice '+(existing[0].ar_no||'')+' แล้ว','error');
+    toast('❌ Sales Order นี้มี AR Invoice ('+(existing[0].ar_no||'')+') อยู่แล้ว ห้ามเปิดซ้ำ','error');
     document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
     showPage('arinvoice');
     setTimeout(() => openARDetail(existing[0].id), 250);
@@ -15932,7 +15943,7 @@ async function batchConvertSOtoAR() {
       const orderId = ids[i];
       const [{ data: order }, { data: existing }] = await Promise.all([
         sb.from('orders').select('*,order_items(*)').eq('id', orderId).single(),
-        sb.from('ar_invoices').select('id').eq('order_id', orderId).limit(1)
+        sb.from('ar_invoices').select('id,status').eq('order_id', orderId).neq('status', 'cancelled').limit(1)
       ]);
 
       if (!order || existing?.length || order.doc_status === 'cancelled' || order.shipping_status === 'cancelled') {
