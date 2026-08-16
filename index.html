@@ -36,8 +36,18 @@
   document.getElementById('apple-touch-icon').href = 'data:image/svg+xml,' + encodeURIComponent(svgIcon);
 })();
 
-// ── Service Worker (offline cache) ────────────────────
+// ── Cache Cleaner & Service Worker ────────────────────
+if ('caches' in window) {
+  caches.keys().then(keys => {
+    keys.forEach(k => { if (k !== 'sealthai-v1.35') caches.delete(k); });
+  }).catch(()=>{});
+}
+
 if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    for (let reg of regs) reg.update().catch(()=>{});
+  }).catch(()=>{});
+
   const swCode = `
     const CACHE = 'sealthai-v1.35';
     const OFFLINE_URLS = [location.href];
