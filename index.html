@@ -15272,17 +15272,20 @@ async function arinvoice() {
     '<button class="btn btn-secondary btn-sm" onclick="openNewAR()">+ AR Invoice ใหม่</button>';
 
   setContent(`
-    <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
-      <input type="date" id="ar-from" value="${today().slice(0,7)+'-01'}">
+    <div class="filter-bar" style="flex-wrap:wrap;gap:8px;align-items:center">
+      <input type="date" id="ar-from" value="${today().slice(0,7)+'-01'}" onchange="loadAR()">
       <span style="color:var(--text3)">ถึง</span>
-      <input type="date" id="ar-to" value="${today()}">
-      <select id="ar-status-filter" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px">
-        <option value="">ทุกสถานะ</option>
-        <option value="unpaid">ค้างชำระ</option>
-        <option value="partial">ชำระบางส่วน</option>
-        <option value="paid">ชำระแล้ว</option>
-        <option value="cancelled">ยกเลิก / CN</option>
+      <input type="date" id="ar-to" value="${today()}" onchange="loadAR()">
+      <select id="ar-status-filter" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px;font-weight:600" onchange="loadAR()">
+        <option value="">📋 ทุกสถานะ</option>
+        <option value="outstanding">⏳ ค้างจ่าย/ค้างรับ (มียอดค้างทั้งหมด)</option>
+        <option value="overdue">⚠️ เกินกำหนดชำระ (Overdue)</option>
+        <option value="unpaid">🔴 ค้างชำระเต็มจำนวน (Unpaid)</option>
+        <option value="partial">🟡 ชำระแล้วบางส่วน (Partial)</option>
+        <option value="paid">🟢 ชำระครบแล้ว (Paid)</option>
+        <option value="cancelled">❌ ยกเลิก / CN</option>
       </select>
+      <input type="text" id="ar-search" placeholder="🔍 ค้นหา ลูกค้า / เลขที่ AR / SO / Shopee..." style="min-width:240px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px" oninput="loadAR()">
       <button class="btn btn-secondary btn-sm" onclick="loadAR()">🔍 ค้นหา</button>
     </div>
     <div class="stat-grid mb-4" id="ar-stats"></div>
@@ -15303,17 +15306,45 @@ async function loadAR() {
   let q = sb.from('ar_invoices').select('*').eq('shop_id', currentShop.id).order('ar_date', {ascending:false});
   if (from) q = q.gte('ar_date', from);
   if (to)   q = q.lte('ar_date', to);
-  if (st)   q = q.eq('status', st);
+  if (st && !['outstanding', 'overdue'].includes(st)) q = q.eq('status', st);
 
-  const [{ data: rows }, { data: allOrders }, { data: allPayments }] = await Promise.all([
+  const [{ data: rawRows }, { data: allOrders }, { data: allPayments }] = await Promise.all([
     q,
     sb.from('orders').select('id, order_no, customer_social, platform_order_id, channel').eq('shop_id', currentShop.id),
     sb.from('ar_payments').select('id, ar_id, pay_date, amount').eq('shop_id', currentShop.id).order('pay_date', {ascending:false})
   ]);
 
-  if (!rows) return;
+  if (!rawRows) return;
 
   const orderMap = {};
+  (allOrders || []).forEach(o => {
+    orderMap[o.id] = {
+      orderNo: o.order_no || '-',
+      ref: o.customer_social || o.platform_order_id || '',
+      channel: o.channel || ''
+    };
+  });
+
+  const searchTxt = (document.getElementById('ar-search')?.value || '').trim().toLowerCase();
+
+  let rows = rawRows.filter(r => {
+    const remain = r.status === 'cancelled' ? 0 : Number(r.total_amount || 0) - Number(r.paid_amount || 0);
+    const overdue = r.due_date && !['paid', 'cancelled'].includes(r.status) && r.due_date < today();
+
+    if (st === 'outstanding') {
+      if (r.status === 'cancelled' || r.status === 'paid' || remain <= 0) return false;
+    } else if (st === 'overdue') {
+      if (!overdue) return false;
+    }
+
+    if (searchTxt) {
+      const ord = r.order_id ? orderMap[r.order_id] : null;
+      const haystack = `${r.ar_no || ''} ${r.customer_name || ''} ${r.note || ''} ${ord?.orderNo || ''} ${ord?.ref || ''}`.toLowerCase();
+      if (!haystack.includes(searchTxt)) return false;
+    }
+
+    return true;
+  });
   (allOrders || []).forEach(o => {
     orderMap[o.id] = {
       orderNo: o.order_no || '-',
