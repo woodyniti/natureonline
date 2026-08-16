@@ -2144,7 +2144,7 @@ async function dashboard() {
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes, _shopeeReady, otherIncomeRes, allOtherIncomeRes, arRes] = await Promise.all([
+  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes, _shopeeReady, otherIncomeRes, allOtherIncomeRes, arRes, arPayRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
@@ -2159,7 +2159,8 @@ async function dashboard() {
     ensureShopeeFeeData(),
     sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',ms).lte('income_date',me),
     sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).limit(10000),
-    sb.from('ar_invoices').select('id, ar_no, total_amount, paid_amount, status, ar_date').eq('shop_id', currentShop.id)
+    sb.from('ar_invoices').select('id, ar_no, total_amount, paid_amount, status, ar_date').eq('shop_id', currentShop.id),
+    sb.from('ar_payments').select('id, amount, pay_date, ar_id').eq('shop_id', currentShop.id).gte('pay_date', ms).lte('pay_date', me)
   ]);
 
   const allOrdersForRepeat = (repeatRes.data || []).filter(o => !isOrderCancelled(o));
@@ -2167,7 +2168,9 @@ async function dashboard() {
   const cancelledOrders = allOrders.filter(isOrderCancelled);
   const orders = allOrders.filter(o => !isOrderCancelled(o));
   const allARInvoices = arRes?.data || [];
-  const totalARPaid = allARInvoices.reduce((s, a) => s + Number(a.paid_amount || 0), 0);
+  const periodPayments = arPayRes?.data || [];
+  const totalARPaidPeriod = periodPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const periodPayCount = periodPayments.filter(p => Number(p.amount) > 0).length;
   const pendingARs = allARInvoices.filter(a => a.status !== 'paid' && a.status !== 'cancelled');
   const totalAROutstanding = pendingARs.reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
   const arPendingCount = pendingARs.length;
@@ -2514,10 +2517,10 @@ async function dashboard() {
         <div class="stat-value ${totalOtherIncome>=0?'text-green':'text-red'}">${fmtB(totalOtherIncome)}</div>
         <div class="stat-sub">รับรู้จริง · ไม่รวมเงินต้นคืน</div>
       </div>
-      <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--green)" onclick="showPage('arinvoice')" title="คลิกดูรายการ AR Invoice ที่รับชำระแล้ว">
-        <div class="stat-label">💵 รับเงินแล้ว (Collected) <span style="font-size:10px;color:var(--green)">→ ดู AR</span></div>
-        <div class="stat-value text-green">${fmtB(totalARPaid)}</div>
-        <div class="stat-sub">รับชำระจากลูกหนี้แล้ว</div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--green)" onclick="showPage('arinvoice')" title="คลิกดูรายการ AR Invoice">
+        <div class="stat-label">💵 รับเงินแล้ว (ช่วงนี้) <span style="font-size:10px;color:var(--green)">→ ดู AR</span></div>
+        <div class="stat-value text-green">${fmtB(totalARPaidPeriod)}</div>
+        <div class="stat-sub">${periodPayCount} รายการรับเงินตามวันที่รับจริง</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--amber)" onclick="showPage('arinvoice')" title="คลิกดูรายการลูกหนี้ค้างชำระ">
         <div class="stat-label">⏳ ยอดค้างรับ (Outstanding AR) <span style="font-size:10px;color:var(--amber)">→ ดู AR</span></div>
@@ -2616,9 +2619,9 @@ async function dashboard() {
       <!-- Summary row -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;border-top:2px solid var(--border);padding-top:12px">
         <div onclick="showPage('arinvoice')" title="คลิกดู AR ที่รับชำระแล้ว" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer;border-left:3px solid var(--green)">
-          <div style="font-size:11px;color:var(--text3)">💵 รับเงินแล้ว (Collected) 🔍</div>
-          <div style="font-size:14px;font-weight:700;color:var(--green)">${fmtB(totalARPaid)}</div>
-          <div style="font-size:11px;color:var(--text3)">รับชำระจากลูกหนี้แล้ว</div>
+          <div style="font-size:11px;color:var(--text3)">💵 รับเงินแล้ว (ช่วงนี้) 🔍</div>
+          <div style="font-size:14px;font-weight:700;color:var(--green)">${fmtB(totalARPaidPeriod)}</div>
+          <div style="font-size:11px;color:var(--text3)">${periodPayCount} รายการตามวันที่รับเงิน</div>
         </div>
         <div onclick="showPage('arinvoice')" title="คลิกดูรายการลูกหนี้ค้างชำระ" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer;border-left:3px solid var(--amber)">
           <div style="font-size:11px;color:var(--text3)">⏳ ยอดค้างรับ (Outstanding) 🔍</div>
