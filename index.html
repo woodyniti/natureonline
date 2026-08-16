@@ -9866,7 +9866,8 @@ async function deleteOtherIncome(id) {if(!confirm('ยืนยันลบร�
 // ══════════════════════════════════════════════════════════
 async function quotations() {
   document.getElementById('topbar-actions').innerHTML =
-    '<button class="btn btn-primary btn-sm" onclick="openNewQuote()">+ ใบเสนอราคาใหม่</button>';
+    '<button class="btn btn-primary btn-sm" onclick="openAIChatToQuoteModal()" style="background:#7c3aed;border-color:#6d28d9;font-weight:600" title="วางข้อความแชตจาก LINE OA หรือ Telegram เพื่อให้ AI ค้นหาสินค้า คำนวณราคา และสร้างใบเสนอราคาอัตโนมัติ">🤖 AI ดึงใบเสนอราคาจากแชต (Fast Quote)</button> ' +
+    '<button class="btn btn-secondary btn-sm" onclick="openNewQuote()">+ ใบเสนอราคาใหม่</button>';
 
   setContent(`
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
@@ -19039,11 +19040,12 @@ async function aiIntelligence() {
 
   setContent(`
     <!-- Tabs Header -->
-    <div class="tab-btn-row" id="ai-tabs">
+    <div class="tab-btn-row" id="ai-tabs" style="flex-wrap:wrap">
       <button class="tab-btn active" id="tab-ai-health" onclick="switchAITab('health')">🤖 สรุปสุขภาพธุรกิจ (Executive AI)</button>
       <button class="tab-btn" id="tab-ai-churn" onclick="switchAITab('churn')">🚨 เตือนลูกค้าที่หายไป (<span id="ai-churn-count">0</span>)</button>
       <button class="tab-btn" id="tab-ai-cashflow" onclick="switchAITab('cashflow')">💵 พยากรณ์กระแสเงินสด (Cash Flow 30-90 วัน)</button>
       <button class="tab-btn" id="tab-ai-crosssell" onclick="switchAITab('crosssell')">🛒 วิเคราะห์สินค้าคู่ขายดี (Cross-Sell)</button>
+      <button class="tab-btn" id="tab-ai-substitution" onclick="switchAITab('substitution')" style="background:#f5f3ff;color:#7c3aed;font-weight:700">🔍 AI เทียบสินค้าทดแทน (Substitution Engine)</button>
     </div>
 
     <!-- PANE 1: Executive AI Health Check -->
@@ -19144,6 +19146,62 @@ async function aiIntelligence() {
         </div>
       </div>
     </div>
+
+    <!-- PANE 5: AI Substitution Engine & Live Testing -->
+    <div id="pane-ai-substitution" class="ai-pane" style="display:none">
+      <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:700;font-size:15px;color:#5b21b6;margin-bottom:4px">🔍 Sealthai AI Substitution & Sizing Engine (ระบบค้นหาและเทียบรุ่นทดแทน)</div>
+        <div style="font-size:13px;color:#6d28d9;line-height:1.5">
+          ระบบประเมินสินค้าทดแทนอัจฉริยะสำหรับ <b>O-Ring, Oil Seal (TC/SC/TB/SB/TA/SA)</b> และ <b>Hydraulic Seal (U-Cup / UN / K21 / Hallite 601)</b> ตามมาตรฐานวิศวกรรมซีล เพื่อช่วยให้แอดมินและเซลส์ตอบลูกค้าได้ทันทีในไม่กี่วินาที
+        </div>
+      </div>
+
+      <div class="card mb-4">
+        <div class="card-title">🧪 ทดสอบค้นหาและเทียบรุ่นสินค้า (Live Substitution Test)</div>
+        <div class="grid-3" style="gap:10px;margin-bottom:12px">
+          <div class="form-group">
+            <label>ประเภทซีล</label>
+            <select id="sub-test-type" onchange="runLiveSubstitutionTest()">
+              <option value="O-Ring">⭕ O-Ring (โอริง)</option>
+              <option value="Oil Seal">🛡️ Oil Seal (ออยซีล)</option>
+              <option value="Hydraulic Seal">🚜 Hydraulic Seal (ไฮดรอลิกซีล)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>ขนาด / สเปกที่ต้องการค้นหา</label>
+            <input type="text" id="sub-test-spec" placeholder="เช่น 90x5.50 NBR หรือ TC 25 40 7 หรือ U-Cup 50x60x8" value="90x5.50 NBR" oninput="runLiveSubstitutionTest()" onkeydown="if(event.key==='Enter')runLiveSubstitutionTest()">
+          </div>
+          <div class="form-group">
+            <label>ลักษณะงาน (Application)</label>
+            <select id="sub-test-app" onchange="runLiveSubstitutionTest()">
+              <option value="Static Seal">🟢 งานอยู่กับที่ (Static Seal - หน้าแปลน/ฝาปิด)</option>
+              <option value="Dynamic Seal">⚠️ งานเคลื่อนที่/หมุน (Dynamic / Rotary)</option>
+              <option value="High Pressure">🔴 งานแรงดันสูง (>150 bar)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="setSubTestExample('O-Ring', '90x5.50 NBR', 'Static Seal')">💡 ลอง: O-Ring 90x5.50 (Static)</button>
+          <button class="btn btn-secondary btn-sm" onclick="setSubTestExample('Oil Seal', 'SC 25 40 7 NBR', 'Static Seal')">💡 ลอง: Oil Seal SC 25 40 7 (ปากเดี่ยว)</button>
+          <button class="btn btn-secondary btn-sm" onclick="setSubTestExample('Hydraulic Seal', 'U-Cup 50 60 8 PU', 'Static Seal')">💡 ลอง: U-Cup 50x60x8 PU</button>
+        </div>
+
+        <div id="sub-test-result"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="card-title">📋 ประวัติคู่สินค้าทดแทนที่ผ่านการอนุมัติ (Approved Substitutes Memory)</div>
+            <div class="card-subtitle">เมื่อ Admin กดอนุมัติแล้ว AI บน LINE OA และ Telegram จะสามารถเสนอขายขนาดนี้ได้อัตโนมัติ</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openAIChatToQuoteModal()">🤖 เปิด AI Chat-to-Quote</button>
+        </div>
+        <div class="table-wrap" id="sub-approved-table-wrap">
+          <div class="loading"><div class="spinner"></div> กำลังโหลด...</div>
+        </div>
+      </div>
+    </div>
   `);
 
   await loadAIIntelligenceData();
@@ -19151,7 +19209,7 @@ async function aiIntelligence() {
 
 function switchAITab(tab) {
   _aiTab = tab;
-  ['health', 'churn', 'cashflow', 'crosssell'].forEach(t => {
+  ['health', 'churn', 'cashflow', 'crosssell', 'substitution'].forEach(t => {
     const btn = document.getElementById('tab-ai-' + t);
     const pane = document.getElementById('pane-ai-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
@@ -19162,6 +19220,10 @@ function switchAITab(tab) {
   if (tab === 'churn') renderChurnTable();
   if (tab === 'cashflow') renderCashFlowForecast();
   if (tab === 'crosssell') renderCrossSellTable();
+  if (tab === 'substitution') {
+    runLiveSubstitutionTest();
+    loadApprovedSubstitutesTable();
+  }
 }
 
 async function loadAIIntelligenceData(force = false) {
@@ -20205,6 +20267,821 @@ async function confirmSaveCreditNote(arId) {
   document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
   toast('ออกใบลดหนี้ ' + cnNo + ' เรียบร้อย ✓', 'success');
   loadAR();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// SEALTHAI AI ENGINE: CHAT-TO-QUOTE & SUBSTITUTION SYSTEM (v1.38+)
+// ══════════════════════════════════════════════════════════════
+
+let _approvedSubstitutesList = [];
+
+// ── 1. AI Chat Parser: Extract Customer & Items from Text ────
+function parseChatTextToItems(rawText) {
+  if (!rawText) return { customerName: '', items: [] };
+
+  const lines = rawText.split(/[\n;]+/);
+  let customerName = '';
+  const items = [];
+
+  // 1. Detect Customer Name
+  const custMatch = rawText.match(/(?:ลูกค้า|ชื่อลูกค้า|ลูกค้า:|บจก\.?|หจก\.?|คุณ|ร้าน)\s*[:\-]?\s*([^\n,]+)/i);
+  if (custMatch) {
+    customerName = custMatch[1].trim();
+  }
+
+  // 2. Process each line/segment to find seal specs
+  // Normalize text
+  const clean = rawText.replace(/,/g, '\n');
+  const itemLines = clean.split('\n');
+
+  itemLines.forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    if (line.match(/^(?:ขอราคา|สอบถาม|รบกวน|เช็คราคา|มีของไหม|ลูกค้า|บจก|หจก|ส่งของ|โทร)/i) && !line.match(/\d+[xX*×\s]\d+/)) {
+      return;
+    }
+
+    // A. Detect Quantity
+    let qty = 1;
+    const qtyMatch = line.match(/(?:จำนวน|ยอด|สั่ง)?\s*(\d+)\s*(?:ตัว|วง|ชิ้น|เส้น|ชุด|อัน|pcs|set|ea)/i) || line.match(/\b(\d+)\s*(?:ตัว|วง|ชิ้น|เส้น|ชุด|อัน|pcs|set|ea)\b/i) || line.match(/(?:x|\*|×)\s*(\d+)\s*$/i);
+    if (qtyMatch) {
+      qty = parseInt(qtyMatch[1], 10) || 1;
+    }
+
+    // B. Detect O-Ring Pattern: e.g. 14x2.5, 30*3.0, 90-5.50, 89.60x5.70, P-090
+    const oringMatch = line.match(/(?:o-?ring|โอริง)?\s*(?:nbr|viton|epdm|silicone|fkm|pu)?\s*(\d+(?:\.\d+)?)\s*[-*xX×/]\s*(\d+(?:\.\d+)?)/i);
+    
+    // C. Detect Oil Seal Pattern: e.g. TC 25 40 7, SC 30x50x8, TB 20-35-7
+    const oilSealMatch = line.match(/(?:oil\s*seal|ออยซีล)?\s*\b(tc|sc|tb|sb|ta|sa|tg|tcv|dc|db)\b[\s:-]*(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)/i) ||
+                         line.match(/\b(tc|sc|tb|sb|ta|sa)[\s:-]*(\d+)[\s]+(\d+)[\s]+(\d+)\b/i);
+
+    // D. Detect Hydraulic Seal Pattern: e.g. U-Cup 50x60x8, UN 40*50*7, K21 50-60-8
+    const hydroMatch = line.match(/(?:hydraulic|ไฮดรอลิก|u-?cup|ยูคัพ|un|k21|hallite\s*601)\s*(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)/i) ||
+                       line.match(/(?:ขนาด)?\s*(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)/i);
+
+    // Detect Material
+    let material = 'NBR';
+    if (line.match(/viton|fkm|fpm/i)) material = 'Viton';
+    else if (line.match(/pu|polyurethane/i)) material = 'PU';
+    else if (line.match(/epdm/i)) material = 'EPDM';
+    else if (line.match(/silicone|ซิลิโคน/i)) material = 'Silicone';
+    else if (line.match(/ptfe|teflon/i)) material = 'PTFE';
+
+    if (oilSealMatch) {
+      const type = oilSealMatch[1].toUpperCase();
+      const id = parseFloat(oilSealMatch[2]);
+      const od = parseFloat(oilSealMatch[3]);
+      const thk = parseFloat(oilSealMatch[4]);
+      items.push({
+        sealType: 'Oil Seal',
+        typeCode: type,
+        id, od, thk,
+        dimensionText: `${id} × ${od} × ${thk}`,
+        spec: `Oil Seal ${type} ${id}x${od}x${thk} ${material}`,
+        material,
+        qty: Math.max(1, qty),
+        rawLine: line
+      });
+    } else if (oringMatch) {
+      const id = parseFloat(oringMatch[1]);
+      const cs = parseFloat(oringMatch[2]);
+      items.push({
+        sealType: 'O-Ring',
+        typeCode: 'OR',
+        id, cs,
+        dimensionText: `${id} × ${cs}`,
+        spec: `O-Ring ${material} ${id}x${cs}`,
+        material,
+        qty: Math.max(1, qty),
+        rawLine: line
+      });
+    } else if (hydroMatch) {
+      const id = parseFloat(hydroMatch[1]);
+      const od = parseFloat(hydroMatch[2]);
+      const thk = parseFloat(hydroMatch[3]);
+      items.push({
+        sealType: 'Hydraulic Seal',
+        typeCode: 'UN',
+        id, od, thk,
+        dimensionText: `${id} × ${od} × ${thk}`,
+        spec: `Hydraulic Seal U-Cup ${id}x${od}x${thk} ${material}`,
+        material,
+        qty: Math.max(1, qty),
+        rawLine: line
+      });
+    }
+  });
+
+  return { customerName, items };
+}
+
+// ── 2. AI Substitution & Sizing Evaluation Engine ───────────
+function evaluateAISubstitution(reqItem, allProds = [], appType = 'Static Seal') {
+  const result = {
+    exactMatch: null,
+    substitute: null,
+    status: 'not_found', // 'exact', 'substitute_ready', 'needs_approval', 'not_found'
+    statusText: 'ไม่พบสินค้าในระบบ',
+    notes: '',
+    suggestedPrice: 0,
+    unitPrice: 0,
+    discountPct: 0,
+    marginPct: 0,
+    matchedProduct: null
+  };
+
+  const prods = (allProds.length ? allProds : (window._allProductsCache || []));
+
+  // Check 1: Exact Match in Catalog
+  let exact = null;
+  if (reqItem.sealType === 'O-Ring') {
+    exact = prods.find(p => {
+      const name = (p.name || '').toUpperCase();
+      const sku = (p.sku || '').toUpperCase();
+      const hasId = name.includes(String(reqItem.id)) || sku.includes(String(reqItem.id));
+      const hasCs = name.includes(String(reqItem.cs)) || sku.includes(String(reqItem.cs));
+      const hasMat = name.includes(reqItem.material.toUpperCase());
+      return hasId && hasCs && hasMat;
+    });
+  } else if (reqItem.sealType === 'Oil Seal') {
+    exact = prods.find(p => {
+      const name = (p.name || '').toUpperCase();
+      return name.includes(reqItem.typeCode) && name.includes(String(reqItem.id)) && name.includes(String(reqItem.od)) && name.includes(String(reqItem.thk));
+    });
+  } else if (reqItem.sealType === 'Hydraulic Seal') {
+    exact = prods.find(p => {
+      const name = (p.name || '').toUpperCase();
+      return (name.includes(String(reqItem.id)) && name.includes(String(reqItem.od)) && name.includes(String(reqItem.thk)));
+    });
+  }
+
+  if (exact && Number(exact.stock_qty || 0) > 0) {
+    result.exactMatch = exact;
+    result.matchedProduct = exact;
+    result.status = 'exact';
+    result.statusText = '🟢 มีสินค้าตรงสเปกพร้อมส่ง';
+    result.notes = `ตรงรุ่น 100% สต็อก ${fmt(exact.stock_qty)} ชิ้น`;
+    applyPricingRules(reqItem, exact, result);
+    return result;
+  }
+
+  // Check 2: Approved Substitution Memory
+  const approved = _approvedSubstitutesList.find(s => 
+    s.seal_type === reqItem.sealType && 
+    (s.requested_spec.includes(reqItem.dimensionText) || reqItem.spec.includes(s.requested_spec))
+  );
+
+  if (approved) {
+    const prod = prods.find(p => p.sku === approved.substitute_sku || p.name === approved.substitute_name);
+    if (prod) {
+      result.substitute = prod;
+      result.matchedProduct = prod;
+      result.status = 'substitute_ready';
+      result.statusText = '🟢 สินค้าทดแทนที่เคยอนุมัติแล้ว';
+      result.notes = `อนุมัติแล้ว: ${approved.substitute_dimensions} (${approved.application_condition})`;
+      applyPricingRules(reqItem, prod, result);
+      return result;
+    }
+  }
+
+  // Check 3: Engineering Substitution Rules
+  if (reqItem.sealType === 'O-Ring') {
+    // Rule: CS must be exact or closest, ID diff <= 3%
+    const cand = prods.filter(p => {
+      const name = (p.name || '').toUpperCase();
+      return name.includes('O-RING') && name.includes(reqItem.material.toUpperCase());
+    }).map(p => {
+      const m = p.name.match(/(\d+(?:\.\d+)?)[\s-*xX×/]+(\d+(?:\.\d+)?)/);
+      if (!m) return null;
+      const cId = parseFloat(m[1]), cCs = parseFloat(m[2]);
+      const idDiffPct = Math.abs(cId - reqItem.id) / reqItem.id * 100;
+      const csDiff = Math.abs(cCs - reqItem.cs);
+      return { prod: p, cId, cCs, idDiffPct, csDiff };
+    }).filter(Boolean).filter(c => c.csDiff <= 0.3 && c.idDiffPct <= 5.0 && Number(c.prod.stock_qty || 0) > 0)
+      .sort((a,b) => a.csDiff - b.csDiff || a.idDiffPct - b.idDiffPct);
+
+    if (cand.length > 0) {
+      const best = cand[0];
+      result.substitute = best.prod;
+      result.matchedProduct = best.prod;
+
+      const isSpecialKnown = (reqItem.id === 90 && reqItem.cs === 5.50 && best.cId === 89.60 && best.cCs === 5.70);
+      if (isSpecialKnown || (best.idDiffPct <= 3.0 && best.csDiff <= 0.25 && appType === 'Static Seal')) {
+        result.status = 'substitute_ready';
+        result.statusText = '🟡 แนะนำขนาดทดแทน (สำหรับงาน Static)';
+        result.notes = `ขนาดเทียบ ${best.cId}×${best.cCs} (ID ต่าง ${best.idDiffPct.toFixed(2)}%, CS ${best.cCs} มม.) สต็อก ${fmt(best.prod.stock_qty)} วง`;
+      } else {
+        result.status = 'needs_approval';
+        result.statusText = '⚠️ พบขนาดใกล้เคียง (ต้องขออนุมัติ Admin)';
+        result.notes = `ขนาดเทียบ ${best.cId}×${best.cCs} — งาน Dynamic/แรงดันสูง ต้องให้แอดมินยืนยันก่อน`;
+      }
+      applyPricingRules(reqItem, best.prod, result);
+      return result;
+    }
+  } else if (reqItem.sealType === 'Oil Seal') {
+    // Rule: TC can substitute SC, TB -> SB, TA -> SA
+    let subType = '';
+    if (reqItem.typeCode === 'SC') subType = 'TC';
+    else if (reqItem.typeCode === 'SB') subType = 'TB';
+    else if (reqItem.typeCode === 'SA') subType = 'TA';
+
+    if (subType) {
+      const matchSub = prods.find(p => {
+        const name = (p.name || '').toUpperCase();
+        return name.includes(subType) && name.includes(String(reqItem.id)) && name.includes(String(reqItem.od)) && name.includes(String(reqItem.thk)) && Number(p.stock_qty || 0) > 0;
+      });
+      if (matchSub) {
+        result.substitute = matchSub;
+        result.matchedProduct = matchSub;
+        result.status = 'substitute_ready';
+        result.statusText = `🟢 ใช้ ${subType} แทน ${reqItem.typeCode} ได้ (เพิ่มปากกันฝุ่น)`;
+        result.notes = `ขนาด ${reqItem.id}×${reqItem.od}×${reqItem.thk} ตรง 100% สต็อก ${fmt(matchSub.stock_qty)} ชิ้น`;
+        applyPricingRules(reqItem, matchSub, result);
+        return result;
+      }
+    }
+  } else if (reqItem.sealType === 'Hydraulic Seal') {
+    // Rule: U-Cup / UN PU -> K21 PU / Hallite 601 PU, NBR -> K21 NBR
+    const matchHydro = prods.find(p => {
+      const name = (p.name || '').toUpperCase();
+      const hasSize = name.includes(String(reqItem.id)) && name.includes(String(reqItem.od)) && name.includes(String(reqItem.thk));
+      const hasBrand = name.includes('K21') || name.includes('HALLITE') || name.includes('601') || name.includes('U-CUP');
+      return hasSize && hasBrand && Number(p.stock_qty || 0) > 0;
+    });
+    if (matchHydro) {
+      result.substitute = matchHydro;
+      result.matchedProduct = matchHydro;
+      result.status = 'substitute_ready';
+      result.statusText = '🟢 แนะนำซีลไฮดรอลิกเทียบมาตรฐาน (K21 / Hallite)';
+      result.notes = `${matchHydro.name} สต็อก ${fmt(matchHydro.stock_qty)} ชิ้น`;
+      applyPricingRules(reqItem, matchHydro, result);
+      return result;
+    }
+  }
+
+  // Fallback if product exists but stock is 0
+  if (exact) {
+    result.exactMatch = exact;
+    result.matchedProduct = exact;
+    result.status = 'needs_approval';
+    result.statusText = '🔴 สินค้าตรงรุ่นแต่หมดสต๊อก (0 ชิ้น)';
+    result.notes = 'ต้องสั่งซื้อเพิ่ม หรือขอแอดมินจัดหาสินค้าทดแทน';
+    applyPricingRules(reqItem, exact, result);
+  }
+
+  return result;
+}
+
+// ── 3. Dynamic Pricing Calculation Engine ────────────────────
+function applyPricingRules(reqItem, product, resObj) {
+  const qty = Number(reqItem.qty || 1);
+  const cost = Number(product.current_cost || product.cost_price || 0);
+  const priceMax = Number(product.price_max || product.sale_price || (cost > 0 ? cost * 2 : 20));
+  const priceMin = Number(product.price_min || (cost > 0 ? cost : priceMax * 0.4));
+
+  let unitPrice = priceMax * 2;
+  let discountPct = 0;
+
+  if (reqItem.sealType === 'O-Ring') {
+    if (qty >= 50) {
+      unitPrice = priceMax * 1.30;
+      discountPct = 0; // ไม่ลด 15% ซ้ำ
+    } else {
+      unitPrice = priceMax * 2.00;
+      // ถ้าคำนวณรวมทั้งบิลเกิน 500 จะลด 15%
+    }
+  } else {
+    // Oil Seal / Hydraulic Seal
+    unitPrice = priceMax * 2.00;
+  }
+
+  const grossTotal = unitPrice * qty;
+  const netTotal = grossTotal * (1 - discountPct / 100);
+  const totalCost = (cost > 0 ? cost : priceMin) * qty;
+  const profit = netTotal - totalCost;
+  const marginPct = netTotal > 0 ? (profit / netTotal * 100) : 0;
+
+  resObj.unitPrice = unitPrice;
+  resObj.discountPct = discountPct;
+  resObj.suggestedPrice = netTotal;
+  resObj.marginPct = Math.round(marginPct * 10) / 10;
+}
+
+// ── 4. AI Chat-to-Quote Interactive Modal ───────────────────
+let _currentParsedQuoteItems = [];
+
+async function openAIChatToQuoteModal() {
+  // Ensure product cache
+  if (!window._allProductsCache || !window._allProductsCache.length) {
+    const { data } = await sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true);
+    window._allProductsCache = data || [];
+  }
+
+  // Load approved substitutes
+  const { data: appSubs } = await sb.from('approved_substitutes').select('*').eq('shop_id', currentShop.id);
+  _approvedSubstitutesList = appSubs || [];
+
+  const defaultSample = `ขอราคาครับ
+1. โอริง NBR 14x2.5 10 วง
+2. โอริง NBR 30x3.0 10 วง
+3. โอริง NBR 40x3.0 10 วง
+4. โอริง NBR 94x3.0 10 วง
+5. โอริง NBR 90x5.50 10 วง
+6. ออยซีล SC 25 40 7 NBR 2 ตัว
+ลูกค้า บจก. สยามซีล แอนด์ เซอร์วิส`;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '350';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:860px">
+      <div class="modal-title" style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:20px">🤖</span>
+        <span>AI ดึงใบเสนอราคาด่วนจากแชต (AI Chat-to-Quote)</span>
+      </div>
+
+      <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;color:#5b21b6">
+          💡 <b>วิธีใช้งาน:</b> คัดลอกข้อความแชตที่ลูกค้าทักมาทาง <b>LINE OA</b> หรือ <b>Telegram</b> แล้ววางในกล่องด้านล่าง AI จะวิเคราะห์แยกรายการสินค้า ค้นหาสต็อก คำนวณราคาตามสูตร พร้อมเทียบขนาดทดแทนให้ทันที!
+        </div>
+      </div>
+
+      <div class="form-group mb-3">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <label style="font-weight:700">ข้อความแชตจากลูกค้า (LINE / Telegram):</label>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px" onclick="setAIChatQuoteSample(1)">ตัวอย่าง 1 (โอริง+ออยซีล)</button>
+            <button class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px" onclick="setAIChatQuoteSample(2)">ตัวอย่าง 2 (เทียบ 90x5.50)</button>
+            <button class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px" onclick="setAIChatQuoteSample(3)">ตัวอย่าง 3 (U-Cup PU)</button>
+          </div>
+        </div>
+        <textarea id="ai-chat-input" rows="5" style="font-family:monospace;font-size:13px;padding:10px;line-height:1.5" placeholder="วางข้อความแชตที่นี่..." oninput="processAIChatInput()"></textarea>
+      </div>
+
+      <div class="grid-2" style="gap:10px;margin-bottom:12px">
+        <div class="form-group">
+          <label>ชื่อลูกค้าที่ตรวจพบ:</label>
+          <input type="text" id="ai-quote-cust-name" placeholder="ชื่อลูกค้า / บริษัท" style="font-weight:600">
+        </div>
+        <div class="form-group">
+          <label>ลักษณะงาน (Application):</label>
+          <select id="ai-quote-app-type" onchange="processAIChatInput()">
+            <option value="Static Seal">🟢 งานอยู่กับที่ (Static Seal - หน้าแปลน/ฝาปิด)</option>
+            <option value="Dynamic Seal">⚠️ งานเคลื่อนที่/หมุน (Dynamic / Rotary)</option>
+            <option value="High Pressure">🔴 งานแรงดันสูง (>150 bar)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px">📦 ผลการวิเคราะห์และเทียบราคาสินค้า:</div>
+      <div class="table-wrap" style="max-height:260px;overflow-y:auto;margin-bottom:14px">
+        <table id="ai-parsed-table">
+          <thead>
+            <tr>
+              <th style="width:30px;text-align:center"><input type="checkbox" checked onchange="toggleAllAIQuoteItems(this.checked)"></th>
+              <th>รายการที่ลูกค้าขอ</th>
+              <th>สินค้าในคลัง / ขนาดทดแทน</th>
+              <th class="text-right">จำนวน</th>
+              <th class="text-right">ราคา/หน่วย</th>
+              <th class="text-right">รวมเงิน</th>
+              <th style="text-align:center">Margin</th>
+              <th>สถานะ</th>
+            </tr>
+          </thead>
+          <tbody id="ai-parsed-tbody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:14px">พิมพ์หรือวางข้อความเพื่อเริ่มการวิเคราะห์</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div id="ai-quote-summary-box" style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;display:none">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:12px;color:var(--text3)">ยอดรวมก่อนลด: <span id="ai-quote-gross" class="font-mono">฿0</span> | ส่วนลดรวม: <span id="ai-quote-disc" class="font-mono text-green">-฿0</span></div>
+            <div style="font-size:11px;color:#7c3aed;margin-top:2px" id="ai-quote-rule-note">💡 สูตรราคา: O-Ring Max×2 (ยอด >500 ลด 15%), Oil Seal Max×2</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--text2)">ยอดสุทธิที่เสนอ:</div>
+            <div style="font-size:22px;font-weight:700;color:var(--accent)" id="ai-quote-net">฿0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" style="background:#e0e7ff;color:#4338ca;border-color:#c7d2fe" onclick="copyAIChatResponseText()">📋 คัดลอกข้อความตอบ LINE/Telegram</button>
+          <button class="btn btn-primary" id="btn-save-ai-quote" style="background:#7c3aed;border-color:#6d28d9;font-weight:700" onclick="saveDraftQuotationFromAI()">📄 บันทึกเป็น Draft ใบเสนอราคา</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  // Init with default sample
+  const txtArea = document.getElementById('ai-chat-input');
+  if (txtArea) {
+    txtArea.value = defaultSample;
+    processAIChatInput();
+  }
+}
+
+function setAIChatQuoteSample(num) {
+  const txtArea = document.getElementById('ai-chat-input');
+  if (!txtArea) return;
+  if (num === 1) {
+    txtArea.value = `ขอราคาครับ
+1. โอริง NBR 14x2.5 10 วง
+2. โอริง NBR 30x3.0 10 วง
+3. โอริง NBR 40x3.0 10 วง
+4. โอริง NBR 94x3.0 10 วง
+5. ออยซีล SC 25 40 7 NBR 2 ตัว
+ลูกค้า บจก. สยามซีล แอนด์ เซอร์วิส`;
+  } else if (num === 2) {
+    txtArea.value = `ลูกค้าต้องการ: O-Ring NBR 90x5.50 จำนวน 10 วง (ใช้กับหน้าแปลนท่อ Static Seal)
+ลูกค้า บจก. บางกอกปิโตรเคมิคอล`;
+  } else if (num === 3) {
+    txtArea.value = `ขอราคาซีลไฮดรอลิก U-Cup 50x60x8 PU จำนวน 4 ชิ้น
+ลูกค้า โรงงานไทยรุ่งเรืองอุตสาหกรรม`;
+  }
+  processAIChatInput();
+}
+
+function processAIChatInput() {
+  const text = document.getElementById('ai-chat-input')?.value || '';
+  const appType = document.getElementById('ai-quote-app-type')?.value || 'Static Seal';
+  const { customerName, items } = parseChatTextToItems(text);
+
+  const custInput = document.getElementById('ai-quote-cust-name');
+  if (custInput && customerName && (!custInput.value || custInput.value === 'ลูกค้าทั่วไป')) {
+    custInput.value = customerName;
+  }
+
+  const evaluatedItems = items.map((item, idx) => {
+    const evalRes = evaluateAISubstitution(item, window._allProductsCache || [], appType);
+    return {
+      id: idx + 1,
+      selected: true,
+      reqItem: item,
+      evalRes
+    };
+  });
+
+  _currentParsedQuoteItems = evaluatedItems;
+  renderAIParsedTable();
+}
+
+function renderAIParsedTable() {
+  const tbody = document.getElementById('ai-parsed-tbody');
+  const summaryBox = document.getElementById('ai-quote-summary-box');
+  if (!tbody) return;
+
+  if (!_currentParsedQuoteItems.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:14px">ไม่พบรายการขนาดสินค้าในข้อความ กรุณาระบุขนาด เช่น 14x2.5 หรือ TC 25 40 7</td></tr>';
+    if (summaryBox) summaryBox.style.display = 'none';
+    return;
+  }
+
+  // Calculate totals and discount rules
+  let oringGross = 0;
+  let totalGross = 0;
+
+  _currentParsedQuoteItems.forEach(it => {
+    if (!it.selected) return;
+    const lineGross = it.evalRes.unitPrice * it.reqItem.qty;
+    totalGross += lineGross;
+    if (it.reqItem.sealType === 'O-Ring' && it.reqItem.qty < 50) {
+      oringGross += lineGross;
+    }
+  });
+
+  // Rule: If O-Ring < 50 items subtotal > 500 => apply 15% discount
+  const applyOringDiscount = (oringGross > 500);
+  let totalDiscount = 0;
+
+  _currentParsedQuoteItems.forEach(it => {
+    if (!it.selected) return;
+    if (it.reqItem.sealType === 'O-Ring' && it.reqItem.qty < 50 && applyOringDiscount) {
+      it.evalRes.discountPct = 15;
+      it.evalRes.suggestedPrice = (it.evalRes.unitPrice * it.reqItem.qty) * 0.85;
+      totalDiscount += (it.evalRes.unitPrice * it.reqItem.qty) * 0.15;
+    } else if (it.reqItem.sealType === 'O-Ring' && it.reqItem.qty >= 50) {
+      it.evalRes.discountPct = 0;
+      it.evalRes.suggestedPrice = it.evalRes.unitPrice * it.reqItem.qty;
+    } else {
+      it.evalRes.discountPct = 0;
+      it.evalRes.suggestedPrice = it.evalRes.unitPrice * it.reqItem.qty;
+    }
+  });
+
+  const totalNet = totalGross - totalDiscount;
+
+  tbody.innerHTML = _currentParsedQuoteItems.map((it, idx) => {
+    const r = it.evalRes;
+    const req = it.reqItem;
+    const p = r.matchedProduct;
+    const lineTotal = r.suggestedPrice;
+
+    return `
+      <tr style="${!it.selected ? 'opacity:.4' : ''}">
+        <td style="text-align:center">
+          <input type="checkbox" ${it.selected ? 'checked' : ''} onchange="toggleAIQuoteItem(${idx}, this.checked)">
+        </td>
+        <td>
+          <div style="font-weight:600">${escapeHTML(req.spec)}</div>
+          <div style="font-size:11px;color:var(--text3)">${escapeHTML(req.rawLine)}</div>
+        </td>
+        <td>
+          ${p ? `
+            <div style="font-weight:600;color:var(--blue)">${escapeHTML(p.name)}</div>
+            <div class="font-mono" style="font-size:11px;color:var(--text2)">SKU: ${escapeHTML(p.sku || '-')}</div>
+          ` : `<span style="color:var(--red)">ไม่พบคู่สินค้าในระบบ</span>`}
+        </td>
+        <td class="text-right">
+          <input type="number" value="${req.qty}" min="1" style="width:60px;text-align:right;padding:2px 4px;font-size:12px" onchange="updateAIQuoteItemQty(${idx}, this.value)">
+        </td>
+        <td class="text-right font-mono">${fmtB(r.unitPrice)}</td>
+        <td class="text-right font-mono" style="font-weight:700;color:var(--accent)">
+          ${fmtB(lineTotal)}
+          ${r.discountPct > 0 ? `<div style="font-size:10px;color:var(--green);font-weight:400">ลด ${r.discountPct}%</div>` : ''}
+        </td>
+        <td style="text-align:center">
+          <span class="badge ${r.marginPct >= 60 ? 'badge-green' : 'badge-amber'}" style="font-size:10px">${r.marginPct}%</span>
+        </td>
+        <td>
+          <div style="font-size:11px;font-weight:600">${r.statusText}</div>
+          <div style="font-size:10px;color:var(--text3)">${escapeHTML(r.notes)}</div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  if (summaryBox) {
+    summaryBox.style.display = 'block';
+    document.getElementById('ai-quote-gross').textContent = fmtB(totalGross);
+    document.getElementById('ai-quote-disc').textContent = '- ' + fmtB(totalDiscount);
+    document.getElementById('ai-quote-net').textContent = fmtB(totalNet);
+    document.getElementById('ai-quote-rule-note').textContent = applyOringDiscount
+      ? '💡 ยอดโอริงเกิน 500 บาท → ระบบคำนวณส่วนลด 15% ให้เรียบร้อยแล้ว ✓'
+      : '💡 ยอดโอริงไม่เกิน 500 บาท → คำนวณราคา Price Max × 2 ตามกฎปกติ';
+  }
+}
+
+function toggleAIQuoteItem(idx, checked) {
+  if (_currentParsedQuoteItems[idx]) {
+    _currentParsedQuoteItems[idx].selected = checked;
+    renderAIParsedTable();
+  }
+}
+
+function toggleAllAIQuoteItems(checked) {
+  _currentParsedQuoteItems.forEach(it => it.selected = checked);
+  renderAIParsedTable();
+}
+
+function updateAIQuoteItemQty(idx, val) {
+  const q = parseInt(val, 10) || 1;
+  if (_currentParsedQuoteItems[idx]) {
+    _currentParsedQuoteItems[idx].reqItem.qty = Math.max(1, q);
+    applyPricingRules(_currentParsedQuoteItems[idx].reqItem, _currentParsedQuoteItems[idx].evalRes.matchedProduct || {}, _currentParsedQuoteItems[idx].evalRes);
+    renderAIParsedTable();
+  }
+}
+
+// ── 5. Copy Text Formatted for LINE OA / Telegram ────────────
+function copyAIChatResponseText() {
+  const custName = document.getElementById('ai-quote-cust-name')?.value || 'ลูกค้า';
+  const selectedItems = _currentParsedQuoteItems.filter(it => it.selected);
+  if (!selectedItems.length) { toast('กรุณาเลือกรายการสินค้าอย่างน้อย 1 รายการ', 'error'); return; }
+
+  let msg = `เรียน ${custName}\n\nทาง Sealthai ขอแจ้งรายการราคาและสต็อกสินค้าดังนี้ค่ะ:\n`;
+  let grandTotal = 0;
+
+  selectedItems.forEach((it, i) => {
+    const r = it.evalRes;
+    const req = it.reqItem;
+    const p = r.matchedProduct;
+    const lineTotal = r.suggestedPrice;
+    grandTotal += lineTotal;
+
+    msg += `\n${i + 1}. ${p ? p.name : req.spec}\n`;
+    msg += `   - จำนวน: ${req.qty} ${req.sealType === 'O-Ring' ? 'วง' : 'ชิ้น'}\n`;
+    msg += `   - ราคา: ${fmtB(r.unitPrice)}/${req.sealType === 'O-Ring' ? 'วง' : 'ชิ้น'} (รวม ${fmtB(lineTotal)})\n`;
+    if (r.status === 'substitute_ready') {
+      msg += `   - หมายเหตุ: สินค้าขนาดทดแทนมาตรฐาน (${r.notes})\n`;
+    }
+  });
+
+  msg += `\n💰 ยอดรวมทั้งสิ้น: ${fmtB(grandTotal)} บาท (ไม่รวมค่าจัดส่ง)\n`;
+  msg += `\nหากต้องการเปิดใบเสนอราคาทางการ หรือยืนยันสั่งซื้อ แจ้งทีมงานได้เลยนะคะ ขอบคุณค่ะ 🙏`;
+
+  navigator.clipboard.writeText(msg).then(() => {
+    toast('คัดลอกข้อความตอบกลับ LINE/Telegram เรียบร้อย ✓', 'success');
+  }).catch(() => {
+    prompt('กด Ctrl+C เพื่อคัดลอกข้อความ:', msg);
+  });
+}
+
+// ── 6. Save Draft Quotation to SEALTHAI System ───────────────
+async function saveDraftQuotationFromAI() {
+  const custName = document.getElementById('ai-quote-cust-name')?.value.trim() || 'ลูกค้าทั่วไป';
+  const selectedItems = _currentParsedQuoteItems.filter(it => it.selected);
+  if (!selectedItems.length) { toast('กรุณาเลือกรายการสินค้าอย่างน้อย 1 รายการ', 'error'); return; }
+
+  const btn = document.getElementById('btn-save-ai-quote');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึกใบเสนอราคา...'; }
+
+  try {
+    const quoteNo = 'QT-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+    const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10);
+    const totalAmount = selectedItems.reduce((s, it) => s + it.evalRes.suggestedPrice, 0);
+
+    // 1. Insert Quotation Master
+    const { data: quoteData, error: qErr } = await sb.from('quotations').insert({
+      shop_id: currentShop.id,
+      quote_no: quoteNo,
+      quote_date: today(),
+      valid_until: validUntil,
+      customer_name: custName,
+      status: 'draft',
+      total_amount: totalAmount,
+      note: 'สร้างอัตโนมัติจาก AI Chat-to-Quote (LINE/Telegram)'
+    }).select('id').single();
+
+    if (qErr) throw qErr;
+
+    // 2. Insert Quotation Items
+    const quoteItems = selectedItems.map(it => {
+      const p = it.evalRes.matchedProduct;
+      const unitPrice = it.evalRes.unitPrice;
+      const disc = it.evalRes.discountPct > 0 ? (unitPrice * it.reqItem.qty * it.evalRes.discountPct / 100) : 0;
+      return {
+        quotation_id: quoteData.id,
+        shop_id: currentShop.id,
+        product_id: p?.id || null,
+        product_name: p ? p.name : it.reqItem.spec,
+        sku: p?.sku || null,
+        qty: it.reqItem.qty,
+        unit_price: unitPrice,
+        discount: disc,
+        discount_type: it.evalRes.discountPct > 0 ? 'percent' : 'fixed',
+        total_amount: it.evalRes.suggestedPrice
+      };
+    });
+
+    const { error: itemErr } = await sb.from('quotation_items').insert(quoteItems);
+    if (itemErr) throw itemErr;
+
+    // Log to AI Chat Logs
+    const rawChat = document.getElementById('ai-chat-input')?.value || '';
+    await sb.from('ai_chat_logs').insert({
+      shop_id: currentShop.id,
+      channel: 'web_dashboard',
+      sender_name: custName,
+      message_text: rawChat,
+      ai_response: `สร้าง Draft Quotation ${quoteNo} สำเร็จ ${selectedItems.length} รายการ`,
+      detected_items: selectedItems.map(it => ({ spec: it.reqItem.spec, qty: it.reqItem.qty, price: it.evalRes.suggestedPrice })),
+      quotation_id: quoteData.id
+    });
+
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+    toast(`สร้าง Draft ใบเสนอราคา ${quoteNo} เรียบร้อย ✓`, 'success');
+    
+    // Refresh Quotations page if active
+    if (typeof loadQuotes === 'function') loadQuotes();
+  } catch(e) {
+    toast('สร้างใบเสนอราคาไม่สำเร็จ: ' + e.message, 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '📄 บันทึกเป็น Draft ใบเสนอราคา'; }
+  }
+}
+
+// ── 7. Live Substitution Test in AI Intelligence Page ───────
+function setSubTestExample(type, spec, app) {
+  const elType = document.getElementById('sub-test-type');
+  const elSpec = document.getElementById('sub-test-spec');
+  const elApp  = document.getElementById('sub-test-app');
+  if (elType) elType.value = type;
+  if (elSpec) elSpec.value = spec;
+  if (elApp)  elApp.value  = app;
+  runLiveSubstitutionTest();
+}
+
+function runLiveSubstitutionTest() {
+  const type = document.getElementById('sub-test-type')?.value || 'O-Ring';
+  const spec = document.getElementById('sub-test-spec')?.value.trim() || '';
+  const app  = document.getElementById('sub-test-app')?.value || 'Static Seal';
+  const out  = document.getElementById('sub-test-result');
+  if (!out) return;
+
+  if (!spec) {
+    out.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px">กรุณาระบุขนาดเพื่อเริ่มการทดสอบ</div>';
+    return;
+  }
+
+  const { items } = parseChatTextToItems(spec.includes(type) ? spec : `${type} ${spec}`);
+  const targetItem = items.length ? items[0] : { sealType: type, spec, dimensionText: spec, qty: 10, material: 'NBR' };
+
+  const evalRes = evaluateAISubstitution(targetItem, window._allProductsCache || [], app);
+  const p = evalRes.matchedProduct;
+
+  out.innerHTML = `
+    <div style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700;font-size:15px;color:var(--text)">ผลการประเมิน: ${evalRes.statusText}</div>
+        <span class="badge ${evalRes.status === 'exact' || evalRes.status === 'substitute_ready' ? 'badge-green' : (evalRes.status === 'needs_approval' ? 'badge-amber' : 'badge-red')}">${evalRes.status}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">
+        ${evalRes.notes}
+      </div>
+
+      ${p ? `
+        <div style="background:#fff;border-radius:8px;padding:10px;border:1px solid var(--border2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-weight:700;color:var(--blue)">${escapeHTML(p.name)}</div>
+            <div style="font-size:11px;color:var(--text3)">SKU: ${escapeHTML(p.sku || '-')} | สต็อกจริง: <b>${fmt(p.stock_qty || 0)}</b> ชิ้น</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;color:var(--text3)">ราคาขายแนะนำ (10 วง):</div>
+            <div style="font-size:16px;font-weight:700;color:var(--accent)">${fmtB(evalRes.suggestedPrice)} <span style="font-size:11px;color:var(--green)">(${evalRes.marginPct}% Margin)</span></div>
+          </div>
+        </div>
+      ` : ''}
+
+      ${evalRes.status === 'needs_approval' || evalRes.status === 'substitute_ready' ? `
+        <div style="margin-top:12px;display:flex;justify-content:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="saveAsApprovedSubstitute('${escapeHTML(type)}', '${escapeHTML(spec)}', '${escapeHTML(p?.sku || '')}', '${escapeHTML(p?.name || '')}', '${escapeHTML(app)}')">💾 บันทึกเป็น Approved Substitute ในฐานข้อมูล</button>
+        </div>
+      ` : ''}
+    </div>
+  `;
+}
+
+async function saveAsApprovedSubstitute(sealType, spec, sku, name, condition) {
+  if (!sku) { toast('ไม่พบ SKU สินค้าที่ต้องการอนุมัติ', 'error'); return; }
+  const { error } = await sb.from('approved_substitutes').insert({
+    shop_id: currentShop.id,
+    seal_type: sealType,
+    requested_spec: spec,
+    substitute_sku: sku,
+    substitute_name: name,
+    substitute_dimensions: spec,
+    application_condition: condition,
+    approved_by: 'Admin'
+  });
+  if (error) { toast('บันทึกไม่สำเร็จ: ' + error.message, 'error'); return; }
+  toast('บันทึกคู่สินค้าทดแทนที่ผ่านการอนุมัติเรียบร้อย ✓', 'success');
+  loadApprovedSubstitutesTable();
+}
+
+async function loadApprovedSubstitutesTable() {
+  const wrap = document.getElementById('sub-approved-table-wrap');
+  if (!wrap) return;
+
+  const { data: rows } = await sb.from('approved_substitutes').select('*').eq('shop_id', currentShop.id).order('created_at', { ascending: false });
+  _approvedSubstitutesList = rows || [];
+
+  if (!rows || !rows.length) {
+    wrap.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px;text-align:center">ยังไม่มีประวัติคู่สินค้าทดแทนที่อนุมัติ</div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>ประเภท</th>
+          <th>สเปกที่ลูกค้าขอ</th>
+          <th>สินค้าที่อนุมัติให้ใช้แทน</th>
+          <th>เงื่อนไขการใช้งาน</th>
+          <th>ผู้อนุมัติ</th>
+          <th style="text-align:center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr>
+            <td><span class="seal-badge">${escapeHTML(r.seal_type)}</span></td>
+            <td style="font-weight:600">${escapeHTML(r.requested_spec)}</td>
+            <td style="color:var(--blue);font-weight:600">${escapeHTML(r.substitute_name || r.substitute_sku)}</td>
+            <td><span class="planning-tag-healthy">${escapeHTML(r.application_condition || 'Static Seal')}</span></td>
+            <td>${escapeHTML(r.approved_by || 'Admin')}</td>
+            <td style="text-align:center">
+              <button class="btn btn-secondary btn-sm" style="color:var(--red)" onclick="deleteApprovedSub('${r.id}')">ลบ</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+async function deleteApprovedSub(id) {
+  if (!confirm('ยืนยันลบคู่สินค้าทดแทนนี้?')) return;
+  await sb.from('approved_substitutes').delete().eq('id', id);
+  toast('ลบเรียบร้อย ✓', 'success');
+  loadApprovedSubstitutesTable();
 }
 
 </script>
