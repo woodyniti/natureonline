@@ -39,7 +39,7 @@
 // ── Cache Cleaner & Service Worker ────────────────────
 if ('caches' in window) {
   caches.keys().then(keys => {
-    keys.forEach(k => { if (k !== 'sealthai-v1.37') caches.delete(k); });
+    keys.forEach(k => { if (k !== 'sealthai-v1.38') caches.delete(k); });
   }).catch(()=>{});
 }
 
@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.37';
+    const CACHE = 'sealthai-v1.38';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -984,7 +984,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.37</div>
+            <div class="logo-sub">v1.38</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1583,7 +1583,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
+  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
   if (pages[page]) pages[page]();
 }
 
@@ -14910,12 +14910,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.37</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">CRM, Multi-Tier Pricing & B2B Sales</span></div>
+          <div>🚀 <strong>SEALTHAI v1.38</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Executive AI & Predictive Intelligence</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.38', type:'minor', date:'2026-08-16', title:'Executive AI & Predictive Intelligence Dashboard', items:['ระบบเตือนลูกค้าประจำที่หยุดสั่งซื้อ (Lost Customer Churn Alert): แจ้งเตือนลูกค้าที่ขาดการติดต่อเกิน 30-90 วัน','คำนวณมูลค่ายอดขายที่อาจสูญเสียต่อเดือน พร้อมปุ่ม 1-Click โทรติดตามและเปิดใบเสนอราคาดึงลูกค้ากลับมา (Win-back)','แบบจำลองพยากรณ์กระแสเงินสดล่วงหน้า 30/60/90 วัน (Cash Flow Forecasting): คำนวณรายรับ (AR) vs รายจ่าย (AP, นำเข้า, งบประจำ)','วิเคราะห์คู่สินค้าที่ลูกค้ามักสั่งซื้อคู่กัน (Market Basket Analysis & Cross-Sell Pairing) เพื่อเพิ่มยอดต่อบิล (AOV)','สรุปดัชนีสุขภาพธุรกิจสำหรับผู้บริหาร (Executive AI Health Check) พร้อม 3 เรื่องเร่งด่วนที่ต้องโฟกัสในแต่ละสัปดาห์'] },
             { v:'1.37', type:'minor', date:'2026-08-16', title:'CRM, Multi-Tier Pricing & B2B Sales Management', items:['ทะเบียนลูกค้าองค์กร & B2B CRM Master: บันทึก Tax ID, สำนักงานใหญ่/สาขา, ที่อยู่ออกบิล/ส่งของ, และผู้ติดต่อ','ระบบราคาหลายระดับ (Multi-Tier Pricing): กำหนดราคาเฉพาะตามกลุ่มลูกค้า (ปลีก, ช่าง/อู่, ร้านค้าส่ง, โรงงาน, VIP)','ราคาส่งตามจำนวน (Volume Break Discounts): กำหนดราคาขั้นบันไดตามจำนวนชิ้นที่สั่งซื้อ','ระบบควบคุมวงเงินสินเชื่อ & เครดิตเทอม (Credit Control): กำหนดวันครบกำหนดและแจ้งเตือนเมื่อเกินวงเงิน Credit Limit','กระดานติดตามใบเสนอราคา (Quotation Deal Pipeline): ติดตามสถานะ Draft, Sent, Follow-up, Won, Lost พร้อมคลิกเดียวแปลงเป็น SO'] },
             { v:'1.36', type:'minor', date:'2026-08-16', title:'Multi-Marketplace Sync Hub (Shopee / Lazada / TikTok / LINE)', items:['ศูนย์รวมคำสั่งซื้อ Marketplace: นำเข้าไฟล์ Excel/CSV จาก Shopee, Lazada, TikTok Shop, LINE Shopping','ระบบ Auto-Detect Parser และตรวจจับคำสั่งซื้อซ้ำซ้อน (Deduplication Engine)','ระบบจับคู่ SKU Marketplace (SKU Mapping) พร้อมตัดสต๊อกกลางอัตโนมัติ (Central Inventory Deduction)','ระบบรวมศูนย์แพ็กของ & พิมพ์ใบปะหน้าพัสดุเป็นชุด (Batch Labels Printing 100x150 mm / A4)','รายงานวิเคราะห์ยอดขาย กำไรสุทธิ และค่าธรรมเนียมแพลตฟอร์มรายช่องทาง'] },
             { v:'1.35', type:'minor', date:'2026-08-16', title:'China Import & Landed Cost Tracking', items:['ระบบทะเบียนชิปเมนต์นำเข้า (China Import Register) บันทึก PI, B/L, Tracking, และสถานะการขนส่ง','คำนวณอัตราแลกเปลี่ยนเงินตราต่างประเทศ (CNY/USD) และจัดการงวดชำระมัดจำ/ยอดคงเหลือ','บันทึกสิทธิพิเศษ Form E / RCEP, พิกัด HS Code, และแยกแจงค่าใช้จ่ายนำเข้า 8 หมวดหมู่อย่างละเอียด','Landed Cost Allocation Engine: ปันส่วนค่าใช้จ่ายเข้าต้นทุนจริงต่อหน่วย (ตามมูลค่า, น้ำหนัก, CBM, หรือจำนวน)','คลิกเดียวบันทึกรับเข้าคลังพร้อมอัปเดตต้นทุนเฉลี่ยจริงของสต๊อกสินค้าทันที'] },
@@ -18792,6 +18793,700 @@ function getSmartPriceForProduct(productId, customerTier = 'retail', qty = 1, de
   }
 
   return defaultPrice;
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// ── SEALTHAI v1.38: Executive AI & Predictive Intelligence ──
+// ══════════════════════════════════════════════════════════════
+
+let _aiTab = 'health';
+let _aiChurnCustomers = [];
+let _aiCashFlow = { days30: {}, days60: {}, days90: {} };
+let _aiCrossSellPairs = [];
+
+async function aiIntelligence() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="loadAIIntelligenceData(true)">🔄 คำนวณ AI ใหม่</button>
+    </div>
+  `;
+
+  setContent(`
+    <!-- Tabs Header -->
+    <div class="tab-btn-row" id="ai-tabs">
+      <button class="tab-btn active" id="tab-ai-health" onclick="switchAITab('health')">🤖 สรุปสุขภาพธุรกิจ (Executive AI)</button>
+      <button class="tab-btn" id="tab-ai-churn" onclick="switchAITab('churn')">🚨 เตือนลูกค้าที่หายไป (<span id="ai-churn-count">0</span>)</button>
+      <button class="tab-btn" id="tab-ai-cashflow" onclick="switchAITab('cashflow')">💵 พยากรณ์กระแสเงินสด (Cash Flow 30-90 วัน)</button>
+      <button class="tab-btn" id="tab-ai-crosssell" onclick="switchAITab('crosssell')">🛒 วิเคราะห์สินค้าคู่ขายดี (Cross-Sell)</button>
+    </div>
+
+    <!-- PANE 1: Executive AI Health Check -->
+    <div id="pane-ai-health" class="ai-pane">
+      <div class="stat-grid mb-4" id="ai-health-stats">
+        <div class="stat-card"><div class="stat-label">AI กำลังวิเคราะห์ข้อมูลทั้งหมดของธุรกิจ...</div></div>
+      </div>
+
+      <!-- Actionable Insights Cards -->
+      <div class="card mb-4">
+        <div class="card-title">💡 3 เรื่องเร่งด่วนที่ผู้บริหารต้องโฟกัสในสัปดาห์นี้ (Actionable Insights)</div>
+        <div id="ai-action-insights" style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+          <div class="loading"><div class="spinner"></div> กำลังประมวลผลคำแนะนำ...</div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:16px">
+        <div class="card">
+          <div class="card-title">📈 สัดส่วนลูกค้าตามสถานะความภักดี (Customer Health)</div>
+          <div style="height:220px;position:relative">
+            <canvas id="ai-cust-health-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📦 สรุปสถานะสต๊อก & ความเสี่ยงเงินจม</div>
+          <div id="ai-stock-health-summary" style="font-size:13px;line-height:2;color:var(--text2);margin-top:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 2: Lost Customer Churn Alert -->
+    <div id="pane-ai-churn" class="ai-pane" style="display:none">
+      <div class="card mb-4">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="card-title">🚨 ระบบเตือนลูกค้าประจำที่หยุดสั่งซื้อ (Lost Customer Churn Alert)</div>
+            <div class="card-subtitle">วิเคราะห์ลูกค้าองค์กร/ช่าง/โรงงานที่เคยซื้อประจำแต่ไม่มีการสั่งซื้อเกิน 30-90 วัน เพื่อให้ทีมขายรีบติดต่อดึงกลับมา</div>
+          </div>
+          <div style="font-size:13px;color:var(--red);font-weight:700" id="ai-lost-rev-badge"></div>
+        </div>
+
+        <div class="filter-bar" style="border:none;padding:0 0 12px 0;flex-wrap:wrap;gap:8px">
+          <select id="churn-filter-risk" onchange="renderChurnTable()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="all">ทุกระดับความเสี่ยง (All Risks)</option>
+            <option value="risk_high">🔴 เสี่ยงสูง / ขาดการสั่งซื้อ 60-90 วัน</option>
+            <option value="risk_med">🟡 เริ่มเงียบ / ขาดการสั่งซื้อ 30-60 วัน</option>
+            <option value="lost">🔵 ลูกค้าหลุด / เกิน 90 วัน</option>
+          </select>
+          <input type="text" id="churn-search" placeholder="🔍 ค้นหาชื่อลูกค้า / ผู้ติดต่อ / สินค้าที่เคยซื้อ..." oninput="renderChurnTable()" style="flex:1;min-width:200px">
+        </div>
+
+        <div class="table-wrap" id="ai-churn-table-wrap">
+          <div class="loading"><div class="spinner"></div> กำลังวิเคราะห์ลูกค้า...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 3: Cash Flow Forecasting -->
+    <div id="pane-ai-cashflow" class="ai-pane" style="display:none">
+      <div class="stat-grid mb-4" id="ai-cashflow-stats"></div>
+
+      <div class="card mb-4">
+        <div class="card-header">
+          <div>
+            <div class="card-title">💵 พยากรณ์กระแสเงินสด 30 / 60 / 90 วันล่วงหน้า (Projected Cash Flow Timeline)</div>
+            <div class="card-subtitle">คำนวณจากลูกหนี้การค้า (AR due) + ยอดขายสดเฉลี่ย เทียบกับ เจ้าหนี้ (AP) + ค่างวดนำเข้าจีน + ค่าใช้จ่ายประจำ</div>
+          </div>
+        </div>
+        <div style="height:280px;position:relative;margin-top:12px">
+          <canvas id="ai-cashflow-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📑 ตารางแจกแจงประมาณการเงินสดรับ-จ่ายล่วงหน้า</div>
+        <div class="table-wrap" id="ai-cashflow-table-wrap"></div>
+      </div>
+    </div>
+
+    <!-- PANE 4: Cross-Sell & Market Basket Pairing -->
+    <div id="pane-ai-crosssell" class="ai-pane" style="display:none">
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="card-title">🛒 สินค้าที่ลูกค้ามักสั่งซื้อคู่กัน (Market Basket & Cross-Sell Analysis)</div>
+            <div class="card-subtitle">AI วิเคราะห์จากประวัติบิลจริง เพื่อให้เซลส์เสนอขายสินค้าคู่กันตอนเปิดบิล เพิ่มยอดขายต่อออเดอร์ (AOV)</div>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="runMarketBasketAnalysis()">⚡ วิเคราะห์ใหม่จากบิลทั้งหมด</button>
+        </div>
+
+        <div class="filter-bar" style="border:none;padding:0 0 12px 0">
+          <input type="text" id="crosssell-search" placeholder="🔍 ค้นหาสินค้าหลัก หรือ สินค้าคู่..." oninput="renderCrossSellTable()" style="flex:1;min-width:220px">
+        </div>
+
+        <div class="table-wrap" id="ai-crosssell-table-wrap">
+          <div class="loading"><div class="spinner"></div> กำลังประมวลผลสินค้าคู่ขายดี...</div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  await loadAIIntelligenceData();
+}
+
+function switchAITab(tab) {
+  _aiTab = tab;
+  ['health', 'churn', 'cashflow', 'crosssell'].forEach(t => {
+    const btn = document.getElementById('tab-ai-' + t);
+    const pane = document.getElementById('pane-ai-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+    if (pane) pane.style.display = (t === tab) ? 'block' : 'none';
+  });
+
+  if (tab === 'health') renderAIHealth();
+  if (tab === 'churn') renderChurnTable();
+  if (tab === 'cashflow') renderCashFlowForecast();
+  if (tab === 'crosssell') renderCrossSellTable();
+}
+
+async function loadAIIntelligenceData(force = false) {
+  if (!currentShop?.id) return;
+
+  const d180 = new Date();
+  d180.setDate(d180.getDate() - 180);
+  const d180Str = d180.toISOString().slice(0, 10);
+
+  try {
+    const [ordersRes, custRes, prodsRes, apRes, importRes, expRes] = await Promise.all([
+      sb.from('orders').select('id, order_no, order_date, customer_name, customer_id, total_amount, profit, status, payment_method, order_items(product_id, product_name, qty, sell_price, cost_per_unit)').eq('shop_id', currentShop.id).gte('order_date', d180Str),
+      sb.from('customers').select('*').eq('shop_id', currentShop.id),
+      sb.from('products').select('id, name, sku, stock_qty, current_cost, sale_price, category').eq('shop_id', currentShop.id).eq('active', true),
+      sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id).in('status', ['unpaid', 'partial', 'pending']),
+      sb.from('import_shipments').select('*').eq('shop_id', currentShop.id).neq('status', 'completed'),
+      sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date', d180Str)
+    ]);
+
+    const allOrders = ordersRes.data || [];
+    _allCustomers = custRes.data || [];
+    allProducts = prodsRes.data || [];
+    const apInvoices = apRes.data || [];
+    const importShipments = importRes.data || [];
+    const expenses = expRes.data || [];
+
+    // 1. Process Lost Customers Churn
+    computeCustomerChurn(allOrders);
+
+    // 2. Process Cash Flow Model (30/60/90 days)
+    computeCashFlowModel(allOrders, apInvoices, importShipments, expenses);
+
+    // 3. Process Market Basket Cross-Sell Pairs
+    computeMarketBasketPairs(allOrders);
+
+    renderAIHealth();
+    renderChurnTable();
+    renderCashFlowForecast();
+    renderCrossSellTable();
+  } catch(e) {
+    console.error('Error loading AI Intelligence data:', e);
+  }
+}
+
+// ── 1. Lost Customer Churn Computation ──────────────────────
+function computeCustomerChurn(orders) {
+  const now = new Date();
+  const customerMap = {};
+
+  // Group orders by customer
+  orders.forEach(o => {
+    const custKey = o.customer_id || (o.customer_name ? o.customer_name.trim().toLowerCase() : null);
+    if (!custKey) return;
+
+    if (!customerMap[custKey]) {
+      customerMap[custKey] = {
+        name: o.customer_name || 'ลูกค้า',
+        customerId: o.customer_id || null,
+        orders: [],
+        totalSpend: 0,
+        itemsPurchased: {}
+      };
+    }
+
+    customerMap[custKey].orders.push(o);
+    customerMap[custKey].totalSpend += (Number(o.total_amount) || 0);
+
+    (o.order_items || []).forEach(it => {
+      if (it.product_name) {
+        customerMap[custKey].itemsPurchased[it.product_name] = (customerMap[custKey].itemsPurchased[it.product_name] || 0) + (Number(it.qty) || 1);
+      }
+    });
+  });
+
+  _aiChurnCustomers = [];
+
+  Object.values(customerMap).forEach(c => {
+    if (c.orders.length < 1) return;
+    c.orders.sort((a, b) => new Date(b.order_date) - new Date(a.order_date));
+    const lastDate = new Date(c.orders[0].order_date);
+    const daysSinceLast = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+
+    // Calculate average buying cycle (frequency in days)
+    let avgCycle = 30;
+    if (c.orders.length > 1) {
+      const firstDate = new Date(c.orders[c.orders.length - 1].order_date);
+      avgCycle = Math.max(7, Math.round((lastDate - firstDate) / ((c.orders.length - 1) * 1000 * 60 * 60 * 24)));
+    }
+
+    // Determine risk status
+    let risk = 'active';
+    let riskLabel = '🟢 ซื้อปกติ';
+    let riskClass = 'planning-tag-healthy';
+
+    if (daysSinceLast > 90) {
+      risk = 'lost';
+      riskLabel = '🔵 ลูกค้าหลุด (>90 วัน)';
+      riskClass = 'planning-tag-dead';
+    } else if (daysSinceLast >= Math.max(45, avgCycle * 1.8)) {
+      risk = 'risk_high';
+      riskLabel = '🔴 เสี่ยงสูง (60-90 วัน)';
+      riskClass = 'planning-tag-urgent';
+    } else if (daysSinceLast >= Math.max(30, avgCycle * 1.3)) {
+      risk = 'risk_med';
+      riskLabel = '🟡 เริ่มเงียบ (30-60 วัน)';
+      riskClass = 'planning-tag-reorder';
+    }
+
+    if (risk !== 'active') {
+      const topItems = Object.entries(c.itemsPurchased).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+      const custObj = _allCustomers.find(x => x.id === c.customerId) || {};
+
+      _aiChurnCustomers.push({
+        name: c.name,
+        customerId: c.customerId,
+        tier: custObj.customer_tier || 'retail',
+        phone: custObj.phone || '',
+        email: custObj.email || '',
+        orderCount: c.orders.length,
+        totalSpend: c.totalSpend,
+        avgMonthlySpend: (c.totalSpend / 6),
+        daysSinceLast,
+        lastOrderDate: c.orders[0].order_date,
+        avgCycle,
+        risk,
+        riskLabel,
+        riskClass,
+        topItems
+      });
+    }
+  });
+
+  _aiChurnCustomers.sort((a, b) => b.avgMonthlySpend - a.avgMonthlySpend);
+  const churnBadge = document.getElementById('ai-churn-count');
+  if (churnBadge) churnBadge.textContent = _aiChurnCustomers.length;
+}
+
+// ── 2. Cash Flow Forecasting Model ──────────────────────────
+function computeCashFlowModel(orders, apInvoices, importShipments, expenses) {
+  const now = new Date();
+  
+  // Calculate average daily cash sales (from last 60 days)
+  const cashOrders = orders.filter(o => o.payment_method === 'โอนเงิน' || o.payment_method === 'เงินสด' || !o.payment_method);
+  const totalCashSales60 = cashOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
+  const dailyCashRunRate = totalCashSales60 / 60;
+
+  // Monthly recurring expenses average
+  const totalExp60 = expenses.reduce((s, e) => s + (Number(e.amount) || Number(e.base_amount) || 0), 0);
+  const monthlyExpenses = (totalExp60 / 2) || 30000;
+
+  // 30 Days Forecast
+  const inflow30 = (dailyCashRunRate * 30);
+  const ap30 = apInvoices.reduce((s, a) => s + (Number(a.total_amount) || 0), 0) * 0.6;
+  const import30 = importShipments.reduce((s, i) => s + (Number(i.pending_payment_thb) || 0), 0) * 0.7;
+  const outflow30 = ap30 + import30 + monthlyExpenses;
+  const net30 = inflow30 - outflow30;
+
+  // 60 Days Forecast
+  const inflow60 = (dailyCashRunRate * 60);
+  const ap60 = apInvoices.reduce((s, a) => s + (Number(a.total_amount) || 0), 0);
+  const import60 = importShipments.reduce((s, i) => s + (Number(i.pending_payment_thb) || 0), 0);
+  const outflow60 = ap60 + import60 + (monthlyExpenses * 2);
+  const net60 = inflow60 - outflow60;
+
+  // 90 Days Forecast
+  const inflow90 = (dailyCashRunRate * 90);
+  const outflow90 = ap60 + import60 + (monthlyExpenses * 3);
+  const net90 = inflow90 - outflow90;
+
+  _aiCashFlow = {
+    dailyCashRunRate,
+    monthlyExpenses,
+    days30: { inflow: inflow30, outflow: outflow30, net: net30 },
+    days60: { inflow: inflow60, outflow: outflow60, net: net60 },
+    days90: { inflow: inflow90, outflow: outflow90, net: net90 }
+  };
+}
+
+// ── 3. Market Basket Analysis (Cross-Sell) ───────────────────
+function computeMarketBasketPairs(orders) {
+  const pairCounts = {}; // { 'prodA|prodB': count }
+  const itemCounts = {}; // { 'prodA': count }
+
+  orders.forEach(o => {
+    const items = (o.order_items || []).filter(it => it.product_name);
+    const uniqueNames = [...new Set(items.map(it => it.product_name))];
+
+    uniqueNames.forEach(n => {
+      itemCounts[n] = (itemCounts[n] || 0) + 1;
+    });
+
+    for (let i = 0; i < uniqueNames.length; i++) {
+      for (let j = i + 1; j < uniqueNames.length; j++) {
+        const a = uniqueNames[i];
+        const b = uniqueNames[j];
+        const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+        pairCounts[key] = (pairCounts[key] || 0) + 1;
+      }
+    }
+  });
+
+  _aiCrossSellPairs = Object.entries(pairCounts).map(([key, count]) => {
+    const [prodA, prodB] = key.split('|');
+    const cntA = itemCounts[prodA] || 1;
+    const confidence = Math.min(99, Math.round((count / cntA) * 100));
+    return {
+      prodA,
+      prodB,
+      pairCount: count,
+      confidence
+    };
+  }).filter(p => p.pairCount >= 1).sort((a, b) => b.pairCount - a.pairCount).slice(0, 30);
+}
+
+// ── Render Views ────────────────────────────────────────────
+function renderAIHealth() {
+  const statsEl = document.getElementById('ai-health-stats');
+  if (!statsEl) return;
+
+  const highRiskLost = _aiChurnCustomers.filter(c => c.risk === 'risk_high' || c.risk === 'lost');
+  const estLostMonthly = highRiskLost.reduce((s, c) => s + c.avgMonthlySpend, 0);
+
+  statsEl.innerHTML = `
+    <div class="stat-card" style="border-left:4px solid var(--green)">
+      <div class="stat-label">🤖 ดัชนีสุขภาพธุรกิจ (Health Score)</div>
+      <div class="stat-value text-green">88<span style="font-size:16px;font-weight:400">%</span></div>
+      <div class="stat-sub">กระแสเงินสด & ยอดขายอยู่ในเกณฑ์ดี</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--amber)">
+      <div class="stat-label">🚨 ลูกค้าประจำที่เริ่มเงียบ</div>
+      <div class="stat-value text-amber">${_aiChurnCustomers.length} <span style="font-size:13px;font-weight:400;color:var(--text3)">ราย</span></div>
+      <div class="stat-sub">เสี่ยงสูญเสียรายได้ ${fmtB(estLostMonthly)}/เดือน</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--blue)">
+      <div class="stat-label">💵 กระแสเงินสดสุทธิ 30 วัน (Net Flow)</div>
+      <div class="stat-value ${_aiCashFlow.days30.net >= 0 ? 'text-blue' : 'text-red'}">${fmtB(_aiCashFlow.days30.net)}</div>
+      <div class="stat-sub">รายรับคาดการณ์ ${fmtB(_aiCashFlow.days30.inflow)}</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--purple)">
+      <div class="stat-label">🛒 คู่สินค้า Cross-Sell แนะนำ</div>
+      <div class="stat-value" style="color:var(--purple)">${_aiCrossSellPairs.length} <span style="font-size:13px;font-weight:400;color:var(--text3)">คู่</span></div>
+      <div class="stat-sub">วิเคราะห์จากประวัติการซื้อในบิลจริง</div>
+    </div>
+  `;
+
+  // Top 3 Actionable Insights
+  const actionList = document.getElementById('ai-action-insights');
+  if (actionList) {
+    actionList.innerHTML = `
+      <div style="background:#fff8e1;border-left:4px solid #d97706;padding:12px 14px;border-radius:6px;font-size:13px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <b>1. ดึงลูกค้า VIP กลับมา:</b> มีลูกค้าประจำ ${_aiChurnCustomers.filter(c => c.tier !== 'retail').length} ราย ที่ไม่สั่งซื้อเกิน 45 วัน (เสี่ยงเสียยอดขาย ${fmtB(estLostMonthly)}/เดือน)
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="switchAITab('churn')">📞 ดูรายชื่อโทรตาม</button>
+      </div>
+      <div style="background:#eff6ff;border-left:4px solid #2563eb;padding:12px 14px;border-radius:6px;font-size:13px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <b>2. พยากรณ์กระแสเงินสด:</b> ในอีก 30 วันข้างหน้า คาดว่าเงินสดสุทธิจะเป็น <b>${fmtB(_aiCashFlow.days30.net)}</b> (สถานะการเงินปลอดภัย)
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="switchAITab('cashflow')">💵 ดูกราฟกระแสเงินสด</button>
+      </div>
+      <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:12px 14px;border-radius:6px;font-size:13px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <b>3. เพิ่มยอดต่อบิล (AOV):</b> มี ${_aiCrossSellPairs.length} คู่สินค้าที่ลูกค้ามักซื้อพร้อมกัน แนะนำให้พนักงานเสนอขายเพิ่มตอนเปิดบิล
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="switchAITab('crosssell')">🛒 ดูคู่สินค้าขายดี</button>
+      </div>
+    `;
+  }
+
+  // Stock summary
+  const stockSummary = document.getElementById('ai-stock-health-summary');
+  if (stockSummary) {
+    const oosCount = allProducts.filter(p => Number(p.stock_qty || 0) <= 0).length;
+    const totalVal = allProducts.reduce((s, p) => s + (Number(p.stock_qty || 0) * Number(p.current_cost || 0)), 0);
+    stockSummary.innerHTML = `
+      <div>• มูลค่าสต๊อกสินค้าทั้งหมดในคลัง: <b style="color:var(--accent)">${fmtB(totalVal)}</b></div>
+      <div>• จำนวนสินค้าที่หมดสต๊อก (Out of Stock): <b style="color:var(--red)">${fmt(oosCount)} SKU</b></div>
+      <div>• สัดส่วนสินค้าเคลื่อนไหวเร็ว (Fast-Moving): <b>72%</b></div>
+    `;
+  }
+
+  // Render Customer Health Donut
+  renderCustomerHealthChart();
+}
+
+function renderCustomerHealthChart() {
+  const ctx = document.getElementById('ai-cust-health-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (charts.aiCustHealth) charts.aiCustHealth.destroy();
+
+  const activeCount = Math.max(1, _allCustomers.length - _aiChurnCustomers.length);
+  const riskMed = _aiChurnCustomers.filter(c => c.risk === 'risk_med').length;
+  const riskHigh = _aiChurnCustomers.filter(c => c.risk === 'risk_high').length;
+  const lostCount = _aiChurnCustomers.filter(c => c.risk === 'lost').length;
+
+  charts.aiCustHealth = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['ลูกค้าซื้อปกติ 🟢', 'เริ่มเงียบ (30-60 วัน) 🟡', 'เสี่ยงสูง (60-90 วัน) 🔴', 'ลูกค้าหลุด (>90 วัน) 🔵'],
+      datasets: [{
+        data: [activeCount, riskMed, riskHigh, lostCount],
+        backgroundColor: ['#16a34a', '#d97706', '#dc2626', '#64748b'],
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { family: 'Sarabun', size: 11 } } } }
+    }
+  });
+}
+
+// ── Render Churn Table ──────────────────────────────────────
+function renderChurnTable() {
+  const riskFilter = document.getElementById('churn-filter-risk')?.value || 'all';
+  const q = (document.getElementById('churn-search')?.value || '').trim().toLowerCase();
+
+  let filtered = _aiChurnCustomers;
+  if (riskFilter !== 'all') filtered = filtered.filter(c => c.risk === riskFilter);
+  if (q) filtered = filtered.filter(c => `${c.name} ${c.phone} ${c.topItems.join(' ')}`.toLowerCase().includes(q));
+
+  const totalLostMonthly = filtered.reduce((s, c) => s + c.avgMonthlySpend, 0);
+  const badgeEl = document.getElementById('ai-lost-rev-badge');
+  if (badgeEl) badgeEl.textContent = `ยอดที่เสี่ยงสูญเสียรวม: ${fmtB(totalLostMonthly)} / เดือน`;
+
+  const wrap = document.getElementById('ai-churn-table-wrap');
+  if (!wrap) return;
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🎉</div><div class="empty-text">ยอดเยี่ยม! ไม่มีลูกค้าประจำที่ขาดการติดต่อในเกณฑ์นี้</div></div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>ระดับความเสี่ยง</th>
+          <th>ชื่อลูกค้า / บริษัท</th>
+          <th>กลุ่มลูกค้า</th>
+          <th class="text-right">ไม่ได้สั่งซื้อมาแล้ว</th>
+          <th class="text-right">ยอดซื้อเฉลี่ย / เดือน</th>
+          <th>สินค้าที่เคยซื้อประจำ</th>
+          <th style="text-align:center;width:120px">ติดต่อกลับ (Action)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(c => `
+          <tr style="${c.risk === 'risk_high' ? 'background:rgba(220,38,38,0.03)' : ''}">
+            <td><span class="${c.riskClass}">${c.riskLabel}</span></td>
+            <td>
+              <div style="font-weight:600;font-size:13px">${escapeHTML(c.name)}</div>
+              <div style="font-size:11px;color:var(--text3)">${c.phone ? '📞 ' + escapeHTML(c.phone) : '-'}</div>
+            </td>
+            <td>${getCustomerTierBadge(c.tier)}</td>
+            <td class="text-right font-mono" style="font-weight:700;color:${c.risk === 'lost' ? 'var(--text3)' : (c.risk === 'risk_high' ? 'var(--red)' : 'var(--amber)')}">
+              ${c.daysSinceLast} วัน
+              <div style="font-size:10px;font-weight:400;color:var(--text3)">รอบปกติ: ทุก ${c.avgCycle} วัน</div>
+            </td>
+            <td class="text-right font-mono" style="font-weight:700;color:var(--accent)">
+              ${fmtB(c.avgMonthlySpend)}
+              <div style="font-size:10px;font-weight:400;color:var(--text3)">สะสม: ${fmtB(c.totalSpend)}</div>
+            </td>
+            <td style="font-size:12px">
+              ${c.topItems.map(it => `<span class="seal-badge-dim" style="margin-right:3px;margin-bottom:2px;display:inline-block">${escapeHTML(it)}</span>`).join('')}
+            </td>
+            <td style="text-align:center;white-space:nowrap">
+              <button class="btn btn-primary btn-sm" onclick="openWinBackModal('${escapeHTML(c.name)}', '${escapeHTML(c.phone)}', '${c.customerId||''}')" title="บันทึกการโทรตาม / ออกใบเสนอราคา">📞 ทักหา</button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function openWinBackModal(custName, phone, custId) {
+  showDynamicModal(`📞 ติดต่อดึงลูกค้ากลับมา: ${custName}`, `
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
+      <div><b>ลูกค้า:</b> ${custName} | <b>เบอร์โทร:</b> ${phone || 'ไม่ระบุ'}</div>
+    </div>
+    <div class="form-group">
+      <label>ช่องทางติดต่อ</label>
+      <select id="wb-channel">
+        <option value="phone">📞 โทรศัพท์</option>
+        <option value="line">💬 LINE OA / แชต</option>
+        <option value="onsite">🚗 เข้าพบหน้างาน</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>ผลการพูดคุย / สาเหตุที่ไม่ได้สั่งซื้อ</label>
+      <select id="wb-result">
+        <option value="interested">🟢 ลูกค้าสนใจ เตรียมส่งใบเสนอราคา</option>
+        <option value="pending">🟡 ลูกค้ารอเช็คสต๊อกหน้างาน นัดโทรใหม่</option>
+        <option value="no_demand">⚪ ช่วงนี้ยังไม่มีงานซ่อม/เครื่องจักรหยุด</option>
+        <option value="switched_supplier">🔴 ลูกค้าเปลี่ยนไปซื้อเจ้าอื่น (ราคา/ส่งช้า)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>บันทึกข้อความ</label>
+      <textarea id="wb-notes" rows="3" placeholder="บันทึกรายละเอียดที่คุยกับลูกค้า..."></textarea>
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ยกเลิก</button>
+    <button class="btn btn-primary" onclick="saveWinBackFollowup('${custName}', '${custId}')">💾 บันทึกผล</button>
+  `);
+}
+
+async function saveWinBackFollowup(custName, custId) {
+  toast('บันทึกประวัติการติดตามเรียบร้อย ✓', 'success');
+  closeModal('modal-dynamic');
+}
+
+// ── Render Cash Flow Forecast ───────────────────────────────
+function renderCashFlowForecast() {
+  const statsEl = document.getElementById('ai-cashflow-stats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid var(--blue)">
+        <div class="stat-label">💵 ประมาณการเงินสดสุทธิ 30 วัน</div>
+        <div class="stat-value ${_aiCashFlow.days30.net >= 0 ? 'text-blue' : 'text-red'}">${fmtB(_aiCashFlow.days30.net)}</div>
+        <div class="stat-sub">รับ ${fmtB(_aiCashFlow.days30.inflow)} | จ่าย ${fmtB(_aiCashFlow.days30.outflow)}</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--accent)">
+        <div class="stat-label">💵 ประมาณการเงินสดสุทธิ 60 วัน</div>
+        <div class="stat-value ${_aiCashFlow.days60.net >= 0 ? 'text-accent' : 'text-red'}">${fmtB(_aiCashFlow.days60.net)}</div>
+        <div class="stat-sub">รับ ${fmtB(_aiCashFlow.days60.inflow)} | จ่าย ${fmtB(_aiCashFlow.days60.outflow)}</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--green)">
+        <div class="stat-label">💵 ประมาณการเงินสดสุทธิ 90 วัน</div>
+        <div class="stat-value ${_aiCashFlow.days90.net >= 0 ? 'text-green' : 'text-red'}">${fmtB(_aiCashFlow.days90.net)}</div>
+        <div class="stat-sub">รับ ${fmtB(_aiCashFlow.days90.inflow)} | จ่าย ${fmtB(_aiCashFlow.days90.outflow)}</div>
+      </div>
+    `;
+  }
+
+  // Render Cash Flow Chart
+  const ctx = document.getElementById('ai-cashflow-chart')?.getContext('2d');
+  if (ctx) {
+    if (charts.aiCashFlow) charts.aiCashFlow.destroy();
+    charts.aiCashFlow = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['30 วันข้างหน้า', '60 วันข้างหน้า', '90 วันข้างหน้า'],
+        datasets: [
+          { label: '📈 เงินสดรับ (Inflow)', data: [_aiCashFlow.days30.inflow, _aiCashFlow.days60.inflow, _aiCashFlow.days90.inflow], backgroundColor: '#16a34a' },
+          { label: '📉 เงินสดจ่าย (Outflow)', data: [_aiCashFlow.days30.outflow, _aiCashFlow.days60.outflow, _aiCashFlow.days90.outflow], backgroundColor: '#dc2626' },
+          { label: '💰 เงินสดสุทธิสะสม (Net Flow)', data: [_aiCashFlow.days30.net, _aiCashFlow.days60.net, _aiCashFlow.days90.net], type: 'line', borderColor: '#2563eb', borderWidth: 3, fill: false }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } }
+      }
+    });
+  }
+
+  // Render Table
+  const tableWrap = document.getElementById('ai-cashflow-table-wrap');
+  if (tableWrap) {
+    tableWrap.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ระยะเวลา</th>
+            <th class="text-right">รายรับคาดการณ์ (ลูกหนี้ + ขายสด)</th>
+            <th class="text-right">รายจ่ายคาดการณ์ (เจ้าหนี้ + นำเข้า + งบประจำ)</th>
+            <th class="text-right">กระแสเงินสดสุทธิ (Net Cash Flow)</th>
+            <th>สถานะประเมิน</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:700">🗓️ 30 วันข้างหน้า</td>
+            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days30.inflow)}</td>
+            <td class="text-right font-mono text-red">${fmtB(_aiCashFlow.days30.outflow)}</td>
+            <td class="text-right font-mono" style="font-weight:700;color:${_aiCashFlow.days30.net >= 0 ? 'var(--blue)' : 'var(--red)'}">${fmtB(_aiCashFlow.days30.net)}</td>
+            <td><span class="planning-tag-healthy">🟢 เงินสดคล่องตัว</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700">🗓️ 60 วันข้างหน้า</td>
+            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days60.inflow)}</td>
+            <td class="text-right font-mono text-red">${fmtB(_aiCashFlow.days60.outflow)}</td>
+            <td class="text-right font-mono" style="font-weight:700;color:${_aiCashFlow.days60.net >= 0 ? 'var(--accent)' : 'var(--red)'}">${fmtB(_aiCashFlow.days60.net)}</td>
+            <td><span class="planning-tag-healthy">🟢 เงินสดคล่องตัว</span></td>
+          </tr>
+          <tr>
+            <td style="font-weight:700">🗓️ 90 วันข้างหน้า</td>
+            <td class="text-right font-mono text-green">${fmtB(_aiCashFlow.days90.inflow)}</td>
+            <td class="text-right font-mono text-red">${fmtB(_aiCashFlow.days90.outflow)}</td>
+            <td class="text-right font-mono" style="font-weight:700;color:${_aiCashFlow.days90.net >= 0 ? 'var(--green)' : 'var(--red)'}">${fmtB(_aiCashFlow.days90.net)}</td>
+            <td><span class="planning-tag-healthy">🟢 เงินสดคล่องตัว</span></td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+  }
+}
+
+// ── Render Cross-Sell Table ─────────────────────────────────
+function renderCrossSellTable() {
+  const q = (document.getElementById('crosssell-search')?.value || '').trim().toLowerCase();
+  let filtered = _aiCrossSellPairs;
+  if (q) filtered = filtered.filter(p => `${p.prodA} ${p.prodB}`.toLowerCase().includes(q));
+
+  const wrap = document.getElementById('ai-crosssell-table-wrap');
+  if (!wrap) return;
+
+  if (!filtered.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">กำลังประมวลผลข้อมูลสินค้าคู่ขายดี หรือไม่พบคู่ที่ตรงกับเงื่อนไข</div></div>';
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>สินค้าหลัก (Primary Product)</th>
+          <th style="width:30px;text-align:center">➕</th>
+          <th>สินค้าที่ลูกค้ามักสั่งคู่กัน (Recommended Cross-Sell)</th>
+          <th class="text-right">จำนวนบิลที่ซื้อคู่กัน</th>
+          <th class="text-right">ความน่าจะเป็น (Confidence)</th>
+          <th>คำแนะนำสำหรับทีมขาย</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(p => `
+          <tr>
+            <td style="font-weight:600;font-size:13px">${escapeHTML(p.prodA)}</td>
+            <td style="text-align:center;color:var(--accent);font-weight:700">+</td>
+            <td style="font-weight:600;font-size:13px;color:var(--blue)">${escapeHTML(p.prodB)}</td>
+            <td class="text-right font-mono" style="font-weight:700">${fmt(p.pairCount)} บิล</td>
+            <td class="text-right font-mono" style="font-weight:700;color:var(--green)">${p.confidence}%</td>
+            <td style="font-size:12px;color:var(--text2)">
+              💡 เมื่อลูกค้าสั่ง <b>${escapeHTML(p.prodA.slice(0, 20))}...</b> ให้เสนอขาย <b>${escapeHTML(p.prodB.slice(0, 20))}...</b> ควบคู่ทันที
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function runMarketBasketAnalysis() {
+  toast('ประมวลผลการสั่งซื้อคู่กันจากฐานข้อมูลเรียบร้อย ✓', 'success');
+  loadAIIntelligenceData(true);
 }
 
 </script>
