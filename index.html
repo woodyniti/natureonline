@@ -6370,18 +6370,38 @@ async function saveExpense() {
 }
 
 async function uploadExpenseReceipt(file,expenseId) {
-  if(file.size>10*1024*1024) throw new Error('ไฟล์เกิน 10MB');
-  const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');
-  const path=`${currentShop.id}/${expenseId}/${Date.now()}.${ext}`;
-  const {error}=await sb.storage.from('expense-receipts').upload(path,file,{contentType:file.type,upsert:true});
-  if(error) throw error;
-  const up=await sb.from('expenses').update({receipt_path:path,updated_at:new Date().toISOString()}).eq('id',expenseId);
+  if(!file) return;
+  if(file.size > 10*1024*1024) throw new Error('ไฟล์มีขนาดเกิน 10MB');
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g,'');
+  const mime = file.type || (ext === 'pdf' ? 'application/pdf' : 'image/jpeg');
+  const path = `${currentShop.id}/${expenseId}/${Date.now()}.${ext}`;
+  const { error } = await sb.storage.from('expense-receipts').upload(path, file, {
+    contentType: mime,
+    upsert: true
+  });
+  if(error) {
+    if(error.message && (error.message.includes('Bucket not found') || error.message.includes('row-level security') || error.message.includes('policy'))) {
+      throw new Error('กรุณารันไฟล์ supabase_expense_storage_fix.sql ใน Supabase SQL Editor เพื่อเปิดสิทธิ์ Storage สำหรับสลิปค่าใช้จ่าย');
+    }
+    throw error;
+  }
+  const up = await sb.from('expenses').update({ receipt_path: path, updated_at: new Date().toISOString() }).eq('id', expenseId);
   if(up.error) throw up.error;
 }
+
 async function viewExpenseReceipt(path) {
-  const {data,error}=await sb.storage.from('expense-receipts').createSignedUrl(path,120);
-  if(error||!data?.signedUrl){toast('เปิดหลักฐานไม่สำเร็จ','error');return;}
-  window.open(data.signedUrl,'_blank','noopener');
+  if(!path) return;
+  let { data, error } = await sb.storage.from('expense-receipts').createSignedUrl(path, 3600);
+  if(!error && data?.signedUrl) {
+    window.open(data.signedUrl, '_blank', 'noopener');
+    return;
+  }
+  const { data: pubData } = sb.storage.from('expense-receipts').getPublicUrl(path);
+  if(pubData?.publicUrl) {
+    window.open(pubData.publicUrl, '_blank', 'noopener');
+    return;
+  }
+  toast('เปิดหลักฐานไม่สำเร็จ: ' + (error?.message || 'ไม่พบไฟล์'), 'error');
 }
 
 async function delExpense(id) {
