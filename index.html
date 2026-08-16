@@ -39,7 +39,7 @@
 // ── Service Worker (offline cache) ────────────────────
 if ('serviceWorker' in navigator) {
   const swCode = `
-    const CACHE = 'sealthai-v1.34';
+    const CACHE = 'sealthai-v1.35';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -975,7 +975,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.34</div>
+            <div class="logo-sub">v1.35</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1031,7 +1031,7 @@ const I18N = {
     'nav.dashboard':'ภาพรวม','nav.monthly':'สรุปรายเดือน','nav.quotations':'ใบเสนอราคา',
     'nav.orders':'ออเดอร์','nav.expenses':'ค่าใช้จ่าย','nav.products':'สินค้า',
     'nav.stock':'รับสินค้าเข้า','nav.employees':'พนักงาน','nav.settings_p':'ตั้งค่า',
-    'nav.stock_planning':'วางแผนสต๊อก','nav.purchase':'จัดซื้อ','nav.suppliers':'Supplier','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'รับคืนสินค้า',
+    'nav.stock_planning':'วางแผนสต๊อก','nav.import':'นำเข้าสินค้า (China Import)','nav.purchase':'จัดซื้อ','nav.suppliers':'Supplier','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'รับคืนสินค้า',
     'lang.toggle':'TH',
   },
   en: {
@@ -1040,7 +1040,7 @@ const I18N = {
     'nav.dashboard':'Dashboard','nav.monthly':'Monthly Summary','nav.quotations':'Quotations',
     'nav.orders':'Orders','nav.expenses':'Expenses','nav.products':'Products',
     'nav.stock':'Goods Receipt','nav.employees':'Employees','nav.settings_p':'Settings',
-    'nav.stock_planning':'Stock Planning','nav.purchase':'Purchase','nav.suppliers':'Suppliers','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'Goods Return',
+    'nav.stock_planning':'Stock Planning','nav.import':'China Import','nav.purchase':'Purchase','nav.suppliers':'Suppliers','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'Goods Return',
     'lang.toggle':'EN',
   }
 };
@@ -1058,6 +1058,7 @@ function canSee(page) {
   // admin เห็นทุกหน้ายกเว้น settings
   if (role === 'admin') return page !== 'settings';
   if (page === 'stockPlanning' && perms?.products) return true;
+  if (page === 'chinaImport' && perms?.purchase) return true;
   // staff: ตรวจ permissions object
   const perms = currentUser?._perms;
   if (perms && typeof perms === 'object') return !!perms[page];
@@ -1086,6 +1087,7 @@ function renderSidebar() {
 
     {section: '🛒 งานซื้อ', accent: true},
     {page:'suppliers',  icon:'🏢', label: t('nav.suppliers')},
+    {page:'chinaImport', icon:'🚢', label: 'นำเข้าสินค้า (China Import)'},
     {page:'purchase',   icon:'📝', label: 'Purchase Order (PO)'},
     {page:'apinvoice',  icon:'📄', label: 'AP Invoice'},
 
@@ -1568,7 +1570,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
+  const pages = { ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
   if (pages[page]) pages[page]();
 }
 
@@ -11414,6 +11416,881 @@ function exportStockPlanningCSV() {
   URL.revokeObjectURL(url);
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+// SEALTHAI v1.35: CHINA IMPORT & LANDED COST TRACKING
+// ═══════════════════════════════════════════════════════════════
+let allShipments = [];
+let editingShipment = null;
+let shipmentModalItems = [];
+
+const IMPORT_STATUSES = [
+  { key: 'draft', th: '📝 แบบร่าง / ขอราคา (RFQ)', cls: 'badge-gray' },
+  { key: 'production', th: '🏭 สั่งผลิต (Production)', cls: 'badge-amber' },
+  { key: 'departed', th: '🚢 ออกเดินทาง / ลอยเรือ (In-Transit)', cls: 'badge-blue' },
+  { key: 'customs', th: '🛃 ผ่านพิธีการศุลกากร (Customs)', cls: 'badge-purple' },
+  { key: 'arrived', th: '📦 สินค้าถึงไทย / รอตรวจรับ (Arrived)', cls: 'badge-green' },
+  { key: 'completed', th: '✅ รับเข้าสต๊อกแล้ว (Delivered)', cls: 'badge-green' },
+  { key: 'cancelled', th: '❌ ยกเลิก (Cancelled)', cls: 'badge-red' }
+];
+
+function importStatusBadge(st) {
+  const s = IMPORT_STATUSES.find(x => x.key === st) || { th: st, cls: 'badge-gray' };
+  return `<span class="badge ${s.cls}">${s.th}</span>`;
+}
+
+async function chinaImport() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="openNewShipmentModal()">+ สร้าง Shipment นำเข้า</button>
+      <button class="btn btn-secondary btn-sm" onclick="loadChinaShipments()">🔄 รีเฟรช</button>
+    </div>
+  `;
+
+  setContent(`
+    <div class="stat-grid mb-4" id="import-stats">
+      <div class="stat-card"><div class="stat-label">กำลังโหลดข้อมูลชิปเมนต์นำเข้า...</div></div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar mb-4" style="flex-wrap:wrap;gap:8px">
+      <input type="text" id="sh-search-inp" placeholder="🔍 ค้นหา เลขชิปเมนต์ / PI / B/L / Supplier / Tracking" oninput="filterChinaShipments()" style="flex:1;min-width:180px">
+      <select id="sh-status-filter" onchange="filterChinaShipments()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+        <option value="">ทุกสถานะชิปเมนต์</option>
+        ${IMPORT_STATUSES.map(s=>`<option value="${s.key}">${s.th}</option>`).join('')}
+      </select>
+      <select id="sh-curr-filter" onchange="filterChinaShipments()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+        <option value="">ทุกสกุลเงิน</option>
+        <option value="CNY">หยวนจีน (CNY ¥)</option>
+        <option value="USD">ดอลลาร์สหรัฐ (USD $)</option>
+        <option value="THB">บาทไทย (THB ฿)</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">🚢 ทะเบียนการนำเข้าสินค้า & ต้นทุนจริง (China Import & Landed Cost)</div>
+          <div class="card-subtitle">จัดการตู้/รอบนำเข้า, อัตราแลกเปลี่ยน, สิทธิ Form E, ค่าชิปปิ้ง, และการกระจายต้นทุนจริง (Landed Cost) เข้าสต๊อก</div>
+        </div>
+        <div id="sh-count-label" style="font-size:12px;color:var(--text3);font-family:var(--mono)"></div>
+      </div>
+      <div class="table-wrap" id="shipment-table-wrap">
+        <div class="loading"><div class="spinner"></div> กำลังโหลด...</div>
+      </div>
+    </div>
+  `);
+
+  await loadChinaShipments();
+}
+
+async function loadChinaShipments() {
+  try {
+    const [sRes, supRes, poRes] = await Promise.all([
+      sb.from('import_shipments').select('*, import_shipment_items(*)').eq('shop_id', currentShop.id).order('created_at', { ascending: false }),
+      allSuppliers.length ? Promise.resolve({ data: allSuppliers }) : sb.from('suppliers').select('*').eq('shop_id', currentShop.id).order('name'),
+      sb.from('purchase_orders').select('id,po_no,supplier_id,supplier_name,total_amount,status').eq('shop_id', currentShop.id).order('created_at', { ascending: false })
+    ]);
+
+    allShipments = sRes.data || [];
+    if (supRes?.data) allSuppliers = supRes.data;
+
+    renderChinaImportKPIs();
+    filterChinaShipments();
+  } catch(err) {
+    const wrap = document.getElementById('shipment-table-wrap');
+    if (wrap) wrap.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-text">ยังไม่ได้รัน SQL Migration สำหรับ v1.35<br><span style="font-size:12px;color:var(--text3)">กรุณานำไฟล์ supabase_china_import_v135_migration.sql ไปรันใน Supabase SQL Editor</span></div></div>`;
+  }
+}
+
+function renderChinaImportKPIs() {
+  const statsEl = document.getElementById('import-stats');
+  if (!statsEl) return;
+
+  const inTransit = allShipments.filter(s => ['production', 'departed', 'customs', 'arrived'].includes(s.status));
+  const totalInTransitVal = inTransit.reduce((s, x) => s + Number(x.total_product_thb || 0) + Number(x.freight_intl_thb || 0), 0);
+  const pendingDeposits = allShipments.filter(s => s.payment_status !== 'fully_paid');
+  const depositVal = pendingDeposits.reduce((s, x) => s + Number(x.deposit_amount_foreign || 0) * Number(x.exchange_rate || 5.15), 0);
+
+  // คำนวณ Average Overhead %
+  const completedShipments = allShipments.filter(s => Number(s.total_product_thb || 0) > 0 && Number(s.total_landed_cost_thb || 0) > 0);
+  let avgOverheadPct = 0;
+  if (completedShipments.length) {
+    const totalProd = completedShipments.reduce((s, x) => s + Number(x.total_product_thb || 0), 0);
+    const totalLanded = completedShipments.reduce((s, x) => s + Number(x.total_landed_cost_thb || 0), 0);
+    if (totalProd > 0) avgOverheadPct = ((totalLanded - totalProd) / totalProd) * 100;
+  }
+
+  statsEl.innerHTML = `
+    <div class="stat-card" style="border-left:4px solid var(--blue)">
+      <div class="stat-label">🚢 กำลังขนส่ง & ผ่านพิธีการ</div>
+      <div class="stat-value text-blue">${inTransit.length} <span style="font-size:14px;font-weight:400;color:var(--text3)">ชิปเมนต์</span></div>
+      <div class="stat-sub">มูลค่ารวม: ${fmtB(totalInTransitVal)}</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--amber)">
+      <div class="stat-label">⏳ ยอดชำระต่างประเทศรอจ่าย</div>
+      <div class="stat-value text-amber">${fmtB(depositVal)}</div>
+      <div class="stat-sub">${pendingDeposits.length} รอบชำระมัดจำ/ยอดคงเหลือ</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--accent)">
+      <div class="stat-label">📊 Landed Cost Overhead เฉลี่ย</div>
+      <div class="stat-value text-accent">+${avgOverheadPct.toFixed(1)}%</div>
+      <div class="stat-sub">สัดส่วนค่าส่ง+ภาษี+ชิปปิ้งจากราคาโรงงาน</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--green)">
+      <div class="stat-label">✅ สินค้าเข้าคลังเสร็จสิ้น</div>
+      <div class="stat-value text-green">${allShipments.filter(s=>s.status==='completed').length} <span style="font-size:14px;font-weight:400;color:var(--text3)">ชิปเมนต์</span></div>
+      <div class="stat-sub">นำเข้าและกระจายต้นทุนจริงเข้าสต๊อกแล้ว</div>
+    </div>
+  `;
+}
+
+function filterChinaShipments() {
+  const q = (document.getElementById('sh-search-inp')?.value || '').trim().toLowerCase();
+  const st = document.getElementById('sh-status-filter')?.value || '';
+  const curr = document.getElementById('sh-curr-filter')?.value || '';
+
+  let filtered = allShipments;
+  if (st) filtered = filtered.filter(s => s.status === st);
+  if (curr) filtered = filtered.filter(s => s.currency === curr);
+  if (q) {
+    filtered = filtered.filter(s => {
+      const matchText = `${s.shipment_no} ${s.pi_no} ${s.bl_no} ${s.tracking_no} ${s.supplier_name} ${s.form_e_no}`.toLowerCase();
+      const hasItem = (s.import_shipment_items || []).some(it => `${it.sku} ${it.part_no} ${it.product_name}`.toLowerCase().includes(q));
+      return matchText.includes(q) || hasItem;
+    });
+  }
+
+  renderChinaShipmentsTable(filtered);
+}
+
+function renderChinaShipmentsTable(shipments) {
+  const countEl = document.getElementById('sh-count-label');
+  if (countEl) countEl.textContent = `แสดง ${shipments.length} ชิปเมนต์`;
+
+  const wrap = document.getElementById('shipment-table-wrap');
+  if (!wrap) return;
+
+  if (!shipments.length) {
+    wrap.innerHTML = `<div class="empty"><div class="empty-icon">🚢</div><div class="empty-text">ยังไม่มีรายการชิปเมนต์นำเข้า<br><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="openNewShipmentModal()">+ สร้าง Shipment ใหม่</button></div></div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>เลขชิปเมนต์ / PI</th>
+          <th>Supplier / ขนส่ง</th>
+          <th>Incoterm / สิทธิพิเศษ</th>
+          <th class="text-right">ค่าสินค้าต่างประเทศ</th>
+          <th class="text-right">เรทแลกเปลี่ยน</th>
+          <th class="text-right">ต้นทุนจริงรวม (THB)</th>
+          <th>สถานะ</th>
+          <th>ETA ถึงไทย</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${shipments.map(s => {
+          const currSymbol = s.currency === 'CNY' ? '¥' : (s.currency === 'USD' ? '$' : '฿');
+          const isCompleted = s.status === 'completed';
+          const itemsCount = (s.import_shipment_items || []).length;
+
+          return `
+            <tr style="cursor:pointer" onclick="viewShipmentDetail('${s.id}')">
+              <td>
+                <div class="font-mono" style="font-weight:700;color:var(--blue)">${escapeHTML(s.shipment_no)}</div>
+                <div style="font-size:11px;color:var(--text3)">PI: ${escapeHTML(s.pi_no || '-')} ${s.bl_no ? '· B/L: '+escapeHTML(s.bl_no) : ''}</div>
+              </td>
+              <td>
+                <div style="font-weight:600">${escapeHTML(s.supplier_name || 'ไม่ระบุ')}</div>
+                <div style="font-size:11px;color:var(--text3)">โหมด: ${s.transport_mode === 'sea' ? '🚢 ทางเรือ' : (s.transport_mode === 'air' ? '✈️ ทางอากาศ' : '🚛 ทางรถ')} · ${escapeHTML(s.origin_port || 'จีน')} ➔ ${escapeHTML(s.dest_port || 'ไทย')}</div>
+              </td>
+              <td>
+                <span class="badge badge-gray" style="font-weight:700">${s.incoterm || 'FOB'}</span>
+                ${s.has_form_e ? '<span class="badge badge-green" style="font-size:10px;margin-left:4px" title="ลดหย่อนภาษี Form E">Form E ✓</span>' : ''}
+              </td>
+              <td class="text-right font-mono" style="font-weight:600">
+                ${currSymbol}${fmt(s.total_product_foreign)}
+                <div style="font-size:11px;color:var(--text3)">${fmtB(s.total_product_thb)}</div>
+              </td>
+              <td class="text-right font-mono" style="color:var(--purple,#7c3aed);font-weight:600">
+                ${s.exchange_rate ? Number(s.exchange_rate).toFixed(4) : '-'}
+              </td>
+              <td class="text-right font-mono text-amber" style="font-weight:700;font-size:14px">
+                ${fmtB(s.total_landed_cost_thb || s.total_product_thb)}
+                <div style="font-size:10px;color:var(--text3)">${itemsCount} รายการ SKU</div>
+              </td>
+              <td>${importStatusBadge(s.status)}</td>
+              <td style="font-size:12px">
+                <div>${s.eta || '-'}</div>
+                ${s.etd ? `<div style="font-size:10px;color:var(--text3)">ETD: ${s.etd}</div>` : ''}
+              </td>
+              <td style="white-space:nowrap;text-align:right" onclick="event.stopPropagation()">
+                <button class="btn btn-secondary btn-sm" onclick="viewShipmentDetail('${s.id}')" title="ดูรายละเอียดและคำนวณต้นทุน">📋 เปิดดู</button>
+                ${!isCompleted ? `<button class="btn btn-danger btn-sm" onclick="deleteShipment('${s.id}')" title="ลบ">🗑️</button>` : ''}
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── Open Shipment Detail & Landed Cost Calculator Modal ────────────────────
+async function viewShipmentDetail(id) {
+  let s = allShipments.find(x => x.id === id);
+  if (!s) return;
+
+  editingShipment = s;
+  shipmentModalItems = (s.import_shipment_items || []).map(x => ({ ...x }));
+
+  renderShipmentWorkspaceModal();
+}
+
+async function openNewShipmentModal() {
+  const d = new Date();
+  const nextNo = 'SH-' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + '-' + String(Math.floor(100 + Math.random()*900));
+
+  editingShipment = {
+    id: null,
+    shipment_no: nextNo,
+    supplier_id: '',
+    supplier_name: '',
+    po_id: '',
+    pi_no: '',
+    bl_no: '',
+    tracking_no: '',
+    currency: 'CNY',
+    exchange_rate: 5.1500,
+    incoterm: 'FOB',
+    has_form_e: false,
+    form_e_no: '',
+    transport_mode: 'sea',
+    origin_port: 'Ningbo, China',
+    dest_port: 'Bangkok, Thailand',
+    etd: today(),
+    eta: today(),
+    status: 'draft',
+    allocation_method: 'value',
+    freight_china_thb: 0,
+    freight_intl_thb: 0,
+    insurance_thb: 0,
+    customs_duty_thb: 0,
+    import_vat_thb: 0,
+    customs_clearance_thb: 0,
+    local_transport_thb: 0,
+    other_expenses_thb: 0,
+    deposit_amount_foreign: 0,
+    balance_amount_foreign: 0,
+    payment_status: 'unpaid',
+    note: ''
+  };
+  shipmentModalItems = [];
+
+  renderShipmentWorkspaceModal();
+}
+
+function renderShipmentWorkspaceModal() {
+  document.getElementById('modal-shipment-workspace')?.remove();
+
+  const s = editingShipment;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-shipment-workspace';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.maxWidth = '900px';
+  modal.style.maxHeight = '90vh';
+  modal.style.overflowY = 'auto';
+
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px">
+      <div>
+        <div style="font-size:18px;font-weight:700">🚢 ${s.id ? 'จัดการชิปเมนต์: ' + s.shipment_no : 'สร้างชิปเมนต์นำเข้าใหม่'}</div>
+        <div style="font-size:12px;color:var(--text3)">คำนวณอัตราแลกเปลี่ยน, ค่าใช้จ่ายนำเข้า, Form E และต้นทุนจริงต่อหน่วย (Landed Cost)</div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-shipment-workspace').remove()">✕ ปิด</button>
+    </div>
+
+    <!-- 1. Header Information -->
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+      <div class="grid-3" style="margin-bottom:10px">
+        <div class="form-group"><label>เลขที่ชิปเมนต์ (Shipment No.)</label><input type="text" id="ws-ship-no" value="${s.shipment_no || ''}"></div>
+        <div class="form-group">
+          <label>Supplier จีน / โรงงาน</label>
+          <select id="ws-supplier-sel" onchange="onShipmentSupplierChange()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px">
+            <option value="">-- เลือก Supplier --</option>
+            ${allSuppliers.map(sup => `<option value="${sup.id}" ${sup.id === s.supplier_id ? 'selected' : ''}>${escapeHTML(sup.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>สถานะชิปเมนต์</label>
+          <select id="ws-status" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px;font-weight:600">
+            ${IMPORT_STATUSES.map(st => `<option value="${st.key}" ${st.key === s.status ? 'selected' : ''}>${st.th}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:10px">
+        <div class="form-group">
+          <label>สกุลเงิน (Currency)</label>
+          <select id="ws-currency" onchange="calcShipmentLandedCost()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px">
+            <option value="CNY" ${s.currency === 'CNY' ? 'selected' : ''}>หยวนจีน (CNY ¥)</option>
+            <option value="USD" ${s.currency === 'USD' ? 'selected' : ''}>ดอลลาร์สหรัฐ (USD $)</option>
+            <option value="THB" ${s.currency === 'THB' ? 'selected' : ''}>บาทไทย (THB ฿)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>อัตราแลกเปลี่ยน (THB Rate)</label>
+          <input type="number" step="0.0001" id="ws-fx-rate" value="${s.exchange_rate || 5.15}" oninput="calcShipmentLandedCost()">
+        </div>
+        <div class="form-group">
+          <label>Incoterms</label>
+          <select id="ws-incoterm" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px">
+            <option value="FOB" ${s.incoterm === 'FOB' ? 'selected' : ''}>FOB (Free On Board)</option>
+            <option value="EXW" ${s.incoterm === 'EXW' ? 'selected' : ''}>EXW (Ex Works โรงงาน)</option>
+            <option value="CIF" ${s.incoterm === 'CIF' ? 'selected' : ''}>CIF (Cost, Insurance & Freight)</option>
+            <option value="DDP" ${s.incoterm === 'DDP' ? 'selected' : ''}>DDP (Delivered Duty Paid)</option>
+            <option value="CFR" ${s.incoterm === 'CFR' ? 'selected' : ''}>CFR (Cost & Freight)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3">
+        <div class="form-group"><label>Proforma Invoice (PI No.)</label><input type="text" id="ws-pi-no" value="${s.pi_no || ''}"></div>
+        <div class="form-group"><label>B/L หรือ AWB No.</label><input type="text" id="ws-bl-no" value="${s.bl_no || ''}"></div>
+        <div class="form-group"><label>Tracking ชิปปิ้ง</label><input type="text" id="ws-tracking-no" value="${s.tracking_no || ''}"></div>
+      </div>
+
+      <div class="grid-3" style="margin-top:10px">
+        <div class="form-group"><label>วันส่งออกจากจีน (ETD)</label><input type="date" id="ws-etd" value="${s.etd || today()}"></div>
+        <div class="form-group"><label>คาดว่าจะถึงไทย (ETA)</label><input type="date" id="ws-eta" value="${s.eta || today()}"></div>
+        <div class="form-group">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="ws-has-form-e" ${s.has_form_e ? 'checked' : ''} onchange="calcShipmentLandedCost()"> มีหนังสือรับรอง Form E / RCEP
+          </label>
+          <input type="text" id="ws-form-e-no" placeholder="เลขที่ Form E" value="${s.form_e_no || ''}" style="margin-top:4px">
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Product Items Section -->
+    <div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:700;font-size:14px">📦 รายการสินค้าในตู้ / ชิปเมนต์</div>
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openImportPOSelector()">📥 ดึงรายการจาก PO</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="addShipmentItemRow()">+ เพิ่มสินค้า</button>
+        </div>
+      </div>
+      
+      <div class="table-wrap auto-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:25%">สินค้า / SKU</th>
+              <th style="width:12%">HS Code</th>
+              <th class="text-right" style="width:10%">จำนวน (ชิ้น)</th>
+              <th class="text-right" style="width:15%">ราคาโรงงาน (<span id="ws-item-curr-lbl">CNY</span>)</th>
+              <th class="text-right" style="width:12%">รวมเงินบาท</th>
+              <th class="text-right" style="width:15%;color:var(--accent)">ต้นทุนจริง/ชิ้น (THB)</th>
+              <th style="width:5%"></th>
+            </tr>
+          </thead>
+          <tbody id="ws-items-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. Import Cost Breakdown (Landed Cost Section) -->
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-weight:700;font-size:14px">🚚 แจกแจงค่าใช้จ่ายนำเข้า (Import Cost Breakdown in THB)</div>
+        <div style="display:flex;gap:8px;align-items:center;font-size:12px">
+          <span>วิธีกระจายต้นทุน:</span>
+          <select id="ws-alloc-method" onchange="calcShipmentLandedCost()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
+            <option value="value" ${s.allocation_method === 'value' ? 'selected' : ''}>ตามมูลค่าสินค้า (By Value %)</option>
+            <option value="qty" ${s.allocation_method === 'qty' ? 'selected' : ''}>ตามจำนวนชิ้น (By Quantity)</option>
+            <option value="weight" ${s.allocation_method === 'weight' ? 'selected' : ''}>ตามน้ำหนัก (By Weight kg)</option>
+            <option value="cbm" ${s.allocation_method === 'cbm' ? 'selected' : ''}>ตามปริมาตร (By Volume CBM)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3" style="gap:10px">
+        <div class="form-group"><label>ค่าขนส่งในจีน (Freight in China)</label><input type="number" id="ws-cost-china" value="${s.freight_china_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>ค่าขนส่งระหว่างประเทศ (Intl Freight)</label><input type="number" id="ws-cost-intl" value="${s.freight_intl_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>ค่าประกันภัยสินค้า (Insurance)</label><input type="number" id="ws-cost-ins" value="${s.insurance_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>อากรนำเข้า (Customs Duty)</label><input type="number" id="ws-cost-duty" value="${s.customs_duty_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>VAT นำเข้า 7% (Import VAT)</label><input type="number" id="ws-cost-vat" value="${s.import_vat_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>ค่าชิปปิ้ง & พิธีการศุลกากร (Clearance/DO)</label><input type="number" id="ws-cost-clear" value="${s.customs_clearance_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>ค่าขนส่งในไทย (Local Transport)</label><input type="number" id="ws-cost-local" value="${s.local_transport_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+        <div class="form-group"><label>ค่าใช้จ่ายอื่นๆ (Other Expenses)</label><input type="number" id="ws-cost-other" value="${s.other_expenses_thb || 0}" oninput="calcShipmentLandedCost()"></div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:14px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span>รวมค่าสินค้าต้นทาง (THB):</span>
+          <span class="font-mono font-bold" id="ws-sum-product-thb">฿0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span>รวมค่าใช้จ่ายนำเข้าเพิ่มเติม (Overhead THB):</span>
+          <span class="font-mono text-purple" id="ws-sum-overhead-thb">฿0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:700;border-top:1.5px solid var(--border);padding-top:8px;margin-top:6px">
+          <span>ต้นทุนรวมทั้งหมดของชิปเมนต์ (Total Landed Cost):</span>
+          <span class="font-mono text-amber" id="ws-sum-total-landed" style="font-size:18px">฿0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Footer Actions -->
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:14px">
+      <div style="display:flex;gap:8px">
+        ${s.id && s.status !== 'completed' ? `
+          <button type="button" class="btn btn-primary btn-sm" onclick="receiveShipmentToStock('${s.id}')" style="background:#16a34a;border-color:#16a34a">
+            📥 บันทึกรับสินค้าเข้าคลังจริง (ด้วยต้นทุน Landed Cost)
+          </button>
+        ` : ''}
+        ${s.status === 'completed' ? `
+          <span class="badge badge-green" style="font-size:13px">✅ รับสินค้าเข้าคลังและปรับต้นทุนสต๊อกเรียบร้อยแล้ว</span>
+        ` : ''}
+      </div>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-shipment-workspace').remove()">ยกเลิก</button>
+        <button type="button" class="btn btn-primary" onclick="saveShipmentWorkspace()">💾 บันทึกชิปเมนต์</button>
+      </div>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  renderShipmentItemsRows();
+  calcShipmentLandedCost();
+}
+
+function onShipmentSupplierChange() {
+  const sel = document.getElementById('ws-supplier-sel');
+  if (!sel) return;
+  const sup = allSuppliers.find(s => s.id === sel.value);
+  if (sup && editingShipment) {
+    editingShipment.supplier_id = sup.id;
+    editingShipment.supplier_name = sup.name;
+  }
+}
+
+function addShipmentItemRow(prefill = null) {
+  const item = prefill || {
+    id: null,
+    product_id: '',
+    sku: '',
+    part_no: '',
+    product_name: '',
+    hs_code: '',
+    qty: 100,
+    unit_price_foreign: 0,
+    total_price_foreign: 0,
+    duty_rate_pct: 5,
+    form_e_duty_rate_pct: 0,
+    weight_kg: 0,
+    cbm: 0,
+    allocated_overhead_thb: 0,
+    final_total_cost_thb: 0,
+    final_cost_per_unit_thb: 0
+  };
+  shipmentModalItems.push(item);
+  renderShipmentItemsRows();
+  calcShipmentLandedCost();
+}
+
+function removeShipmentItemRow(idx) {
+  shipmentModalItems.splice(idx, 1);
+  renderShipmentItemsRows();
+  calcShipmentLandedCost();
+}
+
+function renderShipmentItemsRows() {
+  const tbody = document.getElementById('ws-items-tbody');
+  if (!tbody) return;
+
+  if (!shipmentModalItems.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:16px;color:var(--text3)">ยังไม่มีรายการสินค้า — กดปุ่ม "+ เพิ่มสินค้า" หรือ "ดึงจาก PO"</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = shipmentModalItems.map((it, idx) => `
+    <tr>
+      <td>
+        <input type="text" id="ws-it-name-${idx}" value="${escapeHTML(it.product_name || '')}" placeholder="ชื่อสินค้า/รุ่น" oninput="updateShipmentItemField(${idx}, 'product_name', this.value)" style="width:100%;margin-bottom:4px;font-weight:600">
+        <div style="display:flex;gap:4px">
+          <input type="text" id="ws-it-sku-${idx}" value="${escapeHTML(it.sku || '')}" placeholder="SKU" oninput="updateShipmentItemField(${idx}, 'sku', this.value)" style="width:50%;font-size:11px;font-family:var(--mono)">
+          <input type="text" id="ws-it-part-${idx}" value="${escapeHTML(it.part_no || '')}" placeholder="Part No" oninput="updateShipmentItemField(${idx}, 'part_no', this.value)" style="width:50%;font-size:11px;font-family:var(--mono)">
+        </div>
+      </td>
+      <td>
+        <input type="text" id="ws-it-hs-${idx}" value="${escapeHTML(it.hs_code || '')}" placeholder="HS Code" oninput="updateShipmentItemField(${idx}, 'hs_code', this.value)" style="width:100%;font-size:12px;font-family:var(--mono)">
+      </td>
+      <td class="text-right">
+        <input type="number" id="ws-it-qty-${idx}" value="${it.qty || 1}" min="1" oninput="updateShipmentItemField(${idx}, 'qty', this.value)" style="width:75px;text-align:right;font-weight:700">
+      </td>
+      <td class="text-right">
+        <input type="number" step="0.0001" id="ws-it-price-${idx}" value="${it.unit_price_foreign || 0}" oninput="updateShipmentItemField(${idx}, 'unit_price_foreign', this.value)" style="width:90px;text-align:right;font-weight:600">
+      </td>
+      <td class="text-right font-mono" id="ws-it-thb-${idx}" style="font-weight:600">
+        ฿${fmt(Number(it.qty||0) * Number(it.unit_price_foreign||0) * Number(document.getElementById('ws-fx-rate')?.value||5.15))}
+      </td>
+      <td class="text-right font-mono text-accent" id="ws-it-landed-${idx}" style="font-weight:700;font-size:14px">
+        ฿${fmt(it.final_cost_per_unit_thb || 0)}
+      </td>
+      <td style="text-align:center">
+        <button type="button" class="btn btn-danger btn-sm" onclick="removeShipmentItemRow(${idx})" style="padding:2px 6px">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function updateShipmentItemField(idx, field, val) {
+  if (!shipmentModalItems[idx]) return;
+  if (['qty', 'unit_price_foreign', 'weight_kg', 'cbm', 'duty_rate_pct'].includes(field)) {
+    shipmentModalItems[idx][field] = Number(val) || 0;
+  } else {
+    shipmentModalItems[idx][field] = val;
+  }
+  calcShipmentLandedCost();
+}
+
+function calcShipmentLandedCost() {
+  const fxRate = Number(document.getElementById('ws-fx-rate')?.value) || 5.15;
+  const allocMethod = document.getElementById('ws-alloc-method')?.value || 'value';
+  const curr = document.getElementById('ws-currency')?.value || 'CNY';
+
+  const currLbl = document.getElementById('ws-item-curr-lbl');
+  if (currLbl) currLbl.textContent = curr;
+
+  // รวมค่าสินค้า
+  let totalProductForeign = 0;
+  shipmentModalItems.forEach(it => {
+    const q = Number(it.qty) || 0;
+    const p = Number(it.unit_price_foreign) || 0;
+    it.total_price_foreign = q * p;
+    totalProductForeign += it.total_price_foreign;
+  });
+
+  const totalProductTHB = totalProductForeign * fxRate;
+
+  // รวมค่าใช้จ่าย Overhead
+  const cChina = Number(document.getElementById('ws-cost-china')?.value) || 0;
+  const cIntl = Number(document.getElementById('ws-cost-intl')?.value) || 0;
+  const cIns = Number(document.getElementById('ws-cost-ins')?.value) || 0;
+  const cDuty = Number(document.getElementById('ws-cost-duty')?.value) || 0;
+  const cVat = Number(document.getElementById('ws-cost-vat')?.value) || 0;
+  const cClear = Number(document.getElementById('ws-cost-clear')?.value) || 0;
+  const cLocal = Number(document.getElementById('ws-cost-local')?.value) || 0;
+  const cOther = Number(document.getElementById('ws-cost-other')?.value) || 0;
+
+  const totalOverheadTHB = cChina + cIntl + cIns + cDuty + cVat + cClear + cLocal + cOther;
+  const totalLandedCostTHB = totalProductTHB + totalOverheadTHB;
+
+  // กระจาย Overhead ให้แต่ละ SKU
+  const totalWeight = shipmentModalItems.reduce((s, x) => s + (Number(x.weight_kg) || 0), 0);
+  const totalCBM = shipmentModalItems.reduce((s, x) => s + (Number(x.cbm) || 0), 0);
+  const totalQty = shipmentModalItems.reduce((s, x) => s + (Number(x.qty) || 0), 0);
+
+  shipmentModalItems.forEach((it, idx) => {
+    let ratio = 0;
+    if (allocMethod === 'value' && totalProductTHB > 0) {
+      ratio = (it.total_price_foreign * fxRate) / totalProductTHB;
+    } else if (allocMethod === 'qty' && totalQty > 0) {
+      ratio = (Number(it.qty) || 0) / totalQty;
+    } else if (allocMethod === 'weight' && totalWeight > 0) {
+      ratio = (Number(it.weight_kg) || 0) / totalWeight;
+    } else if (allocMethod === 'cbm' && totalCBM > 0) {
+      ratio = (Number(it.cbm) || 0) / totalCBM;
+    } else if (shipmentModalItems.length > 0) {
+      ratio = 1 / shipmentModalItems.length;
+    }
+
+    it.allocated_overhead_thb = totalOverheadTHB * ratio;
+    it.final_total_cost_thb = (it.total_price_foreign * fxRate) + it.allocated_overhead_thb;
+    it.final_cost_per_unit_thb = (Number(it.qty) > 0) ? (it.final_total_cost_thb / Number(it.qty)) : 0;
+
+    const landedCell = document.getElementById(`ws-it-landed-${idx}`);
+    if (landedCell) landedCell.textContent = `฿${fmt(it.final_cost_per_unit_thb)}`;
+    const thbCell = document.getElementById(`ws-it-thb-${idx}`);
+    if (thbCell) thbCell.textContent = `฿${fmt(it.total_price_foreign * fxRate)}`;
+  });
+
+  // อัปเดต Summary Cards
+  const pSumEl = document.getElementById('ws-sum-product-thb');
+  if (pSumEl) pSumEl.textContent = fmtB(totalProductTHB);
+  const oSumEl = document.getElementById('ws-sum-overhead-thb');
+  if (oSumEl) oSumEl.textContent = fmtB(totalOverheadTHB);
+  const lSumEl = document.getElementById('ws-sum-total-landed');
+  if (lSumEl) lSumEl.textContent = fmtB(totalLandedCostTHB);
+}
+
+// ── Pull PO Items into Shipment ────────────────────────────────────────────
+async function openImportPOSelector() {
+  const { data: pos } = await sb.from('purchase_orders')
+    .select('*, purchase_order_items(*)').eq('shop_id', currentShop.id)
+    .in('status', ['draft', 'sent', 'partial']).order('po_date', { ascending: false });
+
+  if (!pos || !pos.length) {
+    toast('ไม่พบ Purchase Order ที่เปิดอยู่', 'error');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-po-select-import';
+  overlay.style.zIndex = '1000';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.maxWidth = '550px';
+  modal.innerHTML = `
+    <div class="modal-title">📥 เลือก Purchase Order เพื่อดึงรายการ</div>
+    <div style="max-height:300px;overflow-y:auto;margin:14px 0">
+      ${pos.map(po => `
+        <div style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;cursor:pointer;background:#fff;display:flex;justify-content:space-between;align-items:center"
+          onclick="applyPOToShipment('${po.id}')">
+          <div>
+            <div style="font-weight:700;color:var(--blue)">${escapeHTML(po.po_no || 'PO')}</div>
+            <div style="font-size:12px;color:var(--text2)">${escapeHTML(po.supplier_name || 'Supplier')} · ${po.po_date}</div>
+            <div style="font-size:11px;color:var(--text3)">${(po.purchase_order_items||[]).length} รายการสินค้า</div>
+          </div>
+          <button class="btn btn-secondary btn-sm">เลือก</button>
+        </div>
+      `).join('')}
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal-po-select-import').remove()">ปิด</button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
+async function applyPOToShipment(poId) {
+  const { data: po } = await sb.from('purchase_orders')
+    .select('*, purchase_order_items(*)').eq('id', poId).single();
+
+  if (!po) return;
+
+  if (po.supplier_id) {
+    const sel = document.getElementById('ws-supplier-sel');
+    if (sel) sel.value = po.supplier_id;
+    if (editingShipment) {
+      editingShipment.supplier_id = po.supplier_id;
+      editingShipment.supplier_name = po.supplier_name;
+    }
+  }
+
+  if (po.purchase_order_items && po.purchase_order_items.length) {
+    shipmentModalItems = po.purchase_order_items.map(it => {
+      const prod = allProducts.find(p => p.id === it.product_id);
+      return {
+        id: null,
+        product_id: it.product_id,
+        sku: it.sku || prod?.sku || '',
+        part_no: prod?.part_no || '',
+        product_name: it.product_name || prod?.name || '',
+        hs_code: prod?.hs_code || '',
+        qty: Number(it.qty) || 1,
+        unit_price_foreign: Number(it.buy_price) || 0,
+        total_price_foreign: (Number(it.qty) || 1) * (Number(it.buy_price) || 0),
+        duty_rate_pct: 5,
+        form_e_duty_rate_pct: 0,
+        weight_kg: 0,
+        cbm: 0,
+        allocated_overhead_thb: 0,
+        final_total_cost_thb: 0,
+        final_cost_per_unit_thb: 0
+      };
+    });
+  }
+
+  document.getElementById('modal-po-select-import')?.remove();
+  renderShipmentItemsRows();
+  calcShipmentLandedCost();
+  toast(`ดึงรายการจาก ${po.po_no} สำเร็จ ✓`, 'success');
+}
+
+// ── Save Shipment Workspace ────────────────────────────────────────────────
+async function saveShipmentWorkspace() {
+  const shipNo = document.getElementById('ws-ship-no')?.value.trim();
+  if (!shipNo) { toast('กรุณาระบุเลขที่ชิปเมนต์', 'error'); return; }
+
+  calcShipmentLandedCost();
+
+  const fxRate = Number(document.getElementById('ws-fx-rate')?.value) || 5.15;
+  const currency = document.getElementById('ws-currency')?.value || 'CNY';
+  const totalProductForeign = shipmentModalItems.reduce((s, x) => s + (Number(x.total_price_foreign) || 0), 0);
+  const totalProductTHB = totalProductForeign * fxRate;
+
+  const cChina = Number(document.getElementById('ws-cost-china')?.value) || 0;
+  const cIntl = Number(document.getElementById('ws-cost-intl')?.value) || 0;
+  const cIns = Number(document.getElementById('ws-cost-ins')?.value) || 0;
+  const cDuty = Number(document.getElementById('ws-cost-duty')?.value) || 0;
+  const cVat = Number(document.getElementById('ws-cost-vat')?.value) || 0;
+  const cClear = Number(document.getElementById('ws-cost-clear')?.value) || 0;
+  const cLocal = Number(document.getElementById('ws-cost-local')?.value) || 0;
+  const cOther = Number(document.getElementById('ws-cost-other')?.value) || 0;
+  const totalLandedTHB = totalProductTHB + cChina + cIntl + cIns + cDuty + cVat + cClear + cLocal + cOther;
+
+  const payload = {
+    shop_id: currentShop.id,
+    shipment_no: shipNo,
+    supplier_id: document.getElementById('ws-supplier-sel')?.value || null,
+    supplier_name: allSuppliers.find(s => s.id === document.getElementById('ws-supplier-sel')?.value)?.name || '',
+    status: document.getElementById('ws-status')?.value || 'draft',
+    currency,
+    exchange_rate: fxRate,
+    incoterm: document.getElementById('ws-incoterm')?.value || 'FOB',
+    pi_no: document.getElementById('ws-pi-no')?.value.trim() || null,
+    bl_no: document.getElementById('ws-bl-no')?.value.trim() || null,
+    tracking_no: document.getElementById('ws-tracking-no')?.value.trim() || null,
+    etd: document.getElementById('ws-etd')?.value || null,
+    eta: document.getElementById('ws-eta')?.value || null,
+    has_form_e: document.getElementById('ws-has-form-e')?.checked || false,
+    form_e_no: document.getElementById('ws-form-e-no')?.value.trim() || null,
+    allocation_method: document.getElementById('ws-alloc-method')?.value || 'value',
+    total_product_foreign: totalProductForeign,
+    total_product_thb: totalProductTHB,
+    freight_china_thb: cChina,
+    freight_intl_thb: cIntl,
+    insurance_thb: cIns,
+    customs_duty_thb: cDuty,
+    import_vat_thb: cVat,
+    customs_clearance_thb: cClear,
+    local_transport_thb: cLocal,
+    other_expenses_thb: cOther,
+    total_landed_cost_thb: totalLandedTHB,
+    updated_at: new Date().toISOString()
+  };
+
+  let shipId = editingShipment?.id;
+  if (shipId) {
+    const { error } = await sb.from('import_shipments').update(payload).eq('id', shipId);
+    if (error) { toast('บันทึกชิปเมนต์ไม่สำเร็จ: ' + error.message, 'error'); return; }
+  } else {
+    const { data, error } = await sb.from('import_shipments').insert(payload).select().single();
+    if (error) { toast('สร้างชิปเมนต์ไม่สำเร็จ: ' + error.message, 'error'); return; }
+    shipId = data.id;
+  }
+
+  // บันทึกรายการสินค้า
+  try {
+    await sb.from('import_shipment_items').delete().eq('shipment_id', shipId);
+    if (shipmentModalItems.length) {
+      const inserts = shipmentModalItems.map(it => {
+        // หา product_id ถ้ามี SKU ตรงกัน
+        let pid = it.product_id;
+        if (!pid && it.sku) {
+          const match = allProducts.find(p => p.sku === it.sku || p.supplier_sku === it.sku);
+          if (match) pid = match.id;
+        }
+
+        return {
+          shipment_id: shipId,
+          product_id: pid || null,
+          sku: it.sku || null,
+          part_no: it.part_no || null,
+          product_name: it.product_name,
+          hs_code: it.hs_code || null,
+          qty: Number(it.qty) || 1,
+          unit_price_foreign: Number(it.unit_price_foreign) || 0,
+          total_price_foreign: Number(it.total_price_foreign) || 0,
+          duty_rate_pct: Number(it.duty_rate_pct) || 0,
+          form_e_duty_rate_pct: Number(it.form_e_duty_rate_pct) || 0,
+          weight_kg: Number(it.weight_kg) || 0,
+          cbm: Number(it.cbm) || 0,
+          allocated_overhead_thb: Number(it.allocated_overhead_thb) || 0,
+          final_total_cost_thb: Number(it.final_total_cost_thb) || 0,
+          final_cost_per_unit_thb: Number(it.final_cost_per_unit_thb) || 0
+        };
+      });
+      await sb.from('import_shipment_items').insert(inserts);
+    }
+  } catch(e){}
+
+  document.getElementById('modal-shipment-workspace')?.remove();
+  toast('บันทึกข้อมูลชิปเมนต์เรียบร้อย ✓', 'success');
+  loadChinaShipments();
+}
+
+// ── Receive Shipment to Stock with True Landed Cost ────────────────────────
+async function receiveShipmentToStock(shipmentId) {
+  const s = allShipments.find(x => x.id === shipmentId);
+  if (!s) return;
+
+  const items = s.import_shipment_items || [];
+  if (!items.length) {
+    toast('ชิปเมนต์นี้ยังไม่มีรายการสินค้า', 'error');
+    return;
+  }
+
+  const ok = confirm(`ยืนยันการรับสินค้าเข้าสต๊อกสำหรับชิปเมนต์ ${s.shipment_no}?
+
+- สินค้า ${items.length} รายการ จะถูกรับเข้าคลัง
+- ต้นทุนเฉลี่ยของสินค้าจะถูกอัปเดตด้วยต้นทุนจริง Landed Cost (รวมค่าขนส่ง/ภาษี/ชิปปิ้ง)`);
+  if (!ok) return;
+
+  const mvs = [];
+  for (const it of items) {
+    let pid = it.product_id;
+    if (!pid && it.sku) {
+      const match = allProducts.find(p => p.sku === it.sku || p.supplier_sku === it.sku);
+      if (match) pid = match.id;
+    }
+    if (pid) {
+      mvs.push({
+        shop_id: currentShop.id,
+        product_id: pid,
+        move_type: 'in',
+        qty: Number(it.qty) || 1,
+        cost_per_unit: Number(it.final_cost_per_unit_thb) || 0,
+        other_cost: Number(it.allocated_overhead_thb) || 0,
+        lot_name: `นำเข้า ${s.shipment_no}`,
+        move_date: today(),
+        note: `รับเข้าจากชิปเมนต์นำเข้าจีน ${s.shipment_no} (PI: ${s.pi_no||'-'})`
+      });
+    }
+  }
+
+  if (mvs.length) {
+    const { error: mvErr } = await sb.from('stock_movements').insert(mvs);
+    if (mvErr) { toast('บันทึกรับเข้าสต๊อกไม่สำเร็จ: ' + mvErr.message, 'error'); return; }
+  }
+
+  // อัปเดตสถานะชิปเมนต์เป็น completed
+  await sb.from('import_shipments').update({
+    status: 'completed',
+    actual_arrival_date: today(),
+    updated_at: new Date().toISOString()
+  }).eq('id', shipmentId);
+
+  document.getElementById('modal-shipment-workspace')?.remove();
+  toast(`🎉 รับสินค้า ${items.length} รายการเข้าสต๊อกด้วยต้นทุนจริง Landed Cost สำเร็จ!`, 'success');
+  loadChinaShipments();
+  loadProducts();
+}
+
+async function deleteShipment(id) {
+  const ok = confirm('ต้องการลบชิปเมนต์นี้หรือไม่?');
+  if (!ok) return;
+  const { error } = await sb.from('import_shipments').delete().eq('id', id);
+  if (error) { toast('ลบไม่สำเร็จ: ' + error.message, 'error'); return; }
+  toast('ลบชิปเมนต์เรียบร้อย', 'success');
+  loadChinaShipments();
+}
+
 async function purchase() {
   document.getElementById('topbar-actions').innerHTML =
     '<button class="btn btn-primary btn-sm" onclick="openNewPO()">+ Purchase Order</button>';
@@ -13899,12 +14776,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.34</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Product Master & Stock Planning Intelligence</span></div>
+          <div>🚀 <strong>SEALTHAI v1.35</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">China Import & Landed Cost Tracking</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.35', type:'minor', date:'2026-08-16', title:'China Import & Landed Cost Tracking', items:['ระบบทะเบียนชิปเมนต์นำเข้า (China Import Register) บันทึก PI, B/L, Tracking, และสถานะการขนส่ง','คำนวณอัตราแลกเปลี่ยนเงินตราต่างประเทศ (CNY/USD) และจัดการงวดชำระมัดจำ/ยอดคงเหลือ','บันทึกสิทธิพิเศษ Form E / RCEP, พิกัด HS Code, และแยกแจงค่าใช้จ่ายนำเข้า 8 หมวดหมู่อย่างละเอียด','Landed Cost Allocation Engine: ปันส่วนค่าใช้จ่ายเข้าต้นทุนจริงต่อหน่วย (ตามมูลค่า, น้ำหนัก, CBM, หรือจำนวน)','คลิกเดียวบันทึกรับเข้าคลังพร้อมอัปเดตต้นทุนเฉลี่ยจริงของสต๊อกสินค้าทันที'] },
             { v:'1.34', type:'minor', date:'2026-08-16', title:'Product Master & Stock Planning Intelligence', items:['ระบบวางแผนสต๊อกอัจฉริยะ: คำนวณ ROP, Lead Time, MOQ, Safety Stock, และ In-Transit','วิเคราะห์ยอดขาย 30/90/180 วัน พร้อมจำแนกกลุ่มสินค้า ABC และเตือน Dead Stock','ระบบเสนอจำนวนสั่งซื้ออัตโนมัติ (Auto Replenishment) และคลิกเดียวสร้าง PO ได้ทันที','Product Master ซีลละเอียด: ขนาด IDxODxW, วัสดุ NBR/FKM/PU, ปากซีล TC/TB/SC, ขีดจำกัดทางวิศวกรรม','ระบบค้นหาขนาดซีลและ Cross-Reference เทียบเบอร์/OEM หลายยี่ห้อ'] },
             { v:'1.33', type:'patch', date:'2026-08-15', title:'Product & Category Image Storage RLS Fix', items:['แก้สิทธิ์อัปโหลดรูปสำหรับสมาชิก role owner ที่ policy เดิมไม่รองรับ','ใช้ฟังก์ชัน SECURITY DEFINER ตรวจสิทธิ์ร้านโดยไม่ถูก RLS ซ้อนบล็อก','รองรับ owner, admin และสมาชิกที่ได้รับสิทธิ์จัดการสินค้า','เพิ่มข้อความแนะนำที่ชัดเจนเมื่อ Supabase ยังไม่ได้ติดตั้ง policy v1.33'] },
             { v:'1.32', type:'minor', date:'2026-08-15', title:'Sales Order → AR Invoice & Credit Note', items:['ดึง Sales Order จากหน้า AR Invoice เพื่อ Copy เป็น Invoice ได้','เพิ่มปุ่ม Copy to Invoice ในรายละเอียด Sales Order และป้องกันการสร้างซ้ำ','เปิด Invoice ที่สร้างแล้วเพื่อรับเงินได้ทันที พร้อมแสดงรายการสินค้าต้นทาง','ยกเลิก Invoice ด้วย Credit Note และกลับรายการรับเงินโดยไม่ลบประวัติ'] },
