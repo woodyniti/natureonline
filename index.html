@@ -10931,6 +10931,8 @@ async function stockPlanning() {
       <div class="stat-card"><div class="stat-label">กำลังโหลดข้อมูลการวางแผนสต๊อก...</div></div>
     </div>
 
+    <div id="hot-selling-oos-cards"></div>
+
     <!-- Filter & Toolbar -->
     <div class="filter-bar mb-4" style="flex-wrap:wrap;gap:8px">
       <input type="text" id="pl-search" placeholder="🔍 ค้นหา SKU / ชื่อ / เบอร์ซีล / ขนาด IDxODxW" oninput="filterStockPlanning()" style="flex:1;min-width:180px">
@@ -11153,6 +11155,7 @@ async function loadStockPlanningData() {
   });
 
   renderStockPlanningKPIs();
+  renderHotSellingOOSCards();
   filterStockPlanning();
 }
 
@@ -11191,6 +11194,75 @@ function renderStockPlanningKPIs() {
       <div class="stat-sub">${fmtB(totalInTransitVal)} อยู่ใน PO รอรับเข้า</div>
     </div>
   `;
+}
+
+function renderHotSellingOOSCards() {
+  const container = document.getElementById('hot-selling-oos-cards');
+  if (!container) return;
+
+  // Filter for OOS and sales90 > 0
+  let hotOOS = planningProducts.filter(p => Number(p.stock_qty || 0) <= 0 && Number(p.sales90 || 0) > 0);
+  
+  // Sort by sales30 desc
+  hotOOS.sort((a, b) => Number(b.sales30 || 0) - Number(a.sales30 || 0));
+  
+  // Top 20
+  hotOOS = hotOOS.slice(0, 20);
+
+  if (hotOOS.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+
+  let totalEstVal = 0;
+  const cardsHtml = hotOOS.map(p => {
+    const estVal = Number(p.suggestedQty || 0) * Number(p.buyPrice || 0);
+    totalEstVal += estVal;
+    return `
+      <div style="flex:0 0 220px; background:#fff; border:1px solid var(--border2); border-left:4px solid var(--red); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:8px; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+        <div style="font-family:var(--mono); color:var(--blue); font-size:12px; font-weight:600;">${escapeHTML(p.sku || '-')}</div>
+        <div style="font-size:13px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</div>
+        <div style="font-size:12px; color:var(--text2); background:var(--bg3); padding:4px 6px; border-radius:4px;">
+          🔥 ขาย 30 วัน: ${fmt(p.sales30)} ชิ้น<br>
+          <span style="color:var(--text3); font-size:11px;">(90 วัน: ${fmt(p.sales90)} ชิ้น)</span>
+        </div>
+        <div style="font-size:12px; font-weight:600; color:var(--text);">
+          แนะนำสั่ง: ${fmt(p.suggestedQty)} ชิ้น
+        </div>
+        <div style="font-size:12px; color:var(--text2);">
+          💰 มูลค่า: ${fmtB(estVal)}
+        </div>
+        <button class="btn btn-sm" style="margin-top:auto; background:var(--bg3); color:var(--accent); border:1px solid var(--accent); font-size:12px; padding:4px; border-radius:4px; cursor:pointer;" onclick="addOOSToPO('${p.id}')">
+          🛒 เพิ่มใน PO
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <div class="mb-4" style="background:var(--bg2); padding:16px; border-radius:8px; border:1px solid var(--border2);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
+        <h3 style="margin:0; font-size:15px; color:var(--text); display:flex; align-items:center; gap:6px;">
+          🔥 สินค้าขายดีแต่หมดสต๊อก — ต้องสั่งด่วน!
+        </h3>
+        <div style="font-size:13px; color:var(--text2); font-weight:500;">
+          ${hotOOS.length} รายการ | รวมมูลค่าที่ต้องสั่ง: <span style="color:var(--red);">${fmtB(totalEstVal)}</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; overflow-x:auto; padding-bottom:8px;">
+        ${cardsHtml}
+      </div>
+    </div>
+  `;
+}
+
+function addOOSToPO(id) {
+  togglePlanningItemSelect(id, true);
+  const cb = document.querySelector(`.pl-chk[data-id="${id}"]`);
+  if (cb) cb.checked = true;
+  toast('เพิ่มสินค้าในรายการ PO เรียบร้อย ✓', 'success');
 }
 
 function setPlanningStatusFilter(st) {
