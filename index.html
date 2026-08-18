@@ -4787,7 +4787,10 @@ function newOrderProdSearch(rowIdx) {
   inp.type = 'text'; inp.autocomplete = 'off';
   inp.placeholder = 'ชื่อ / SKU / *wildcard*';
   inp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;box-sizing:border-box';
-  inp.value = orderItems[rowIdx]?.product_name || '';
+  
+  const it = orderItems[rowIdx];
+  const linkedProd = it?.product_id && it.product_id !== '__custom__' ? productList.find(p => p.id === it.product_id) : null;
+  inp.value = linkedProd?.name || it?.product_name || '';
 
   const dd = document.createElement('div');
   dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:200px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.12)';
@@ -5321,17 +5324,19 @@ function renderEditProdSearch(rowIdx) {
   const isLinked = (it && it.product_id) ? true : false;
   const statusColor = isLinked ? '#10b981' : '#f59e0b';
   const statusText = isLinked ? '✓ เชื่อมโยงคลัง (ตัดสต๊อกจริง)' : '⚠️ ไม่เชื่อมโยง (ไม่ตัดสต๊อก)';
+  const linkedProd = isLinked ? editProdList.find(p => p.id === it.product_id) : null;
+  const stockProdName = (linkedProd?.name || (it && !isLinked ? it.product_name : '') || '').replace(/"/g, '&quot;');
   const customVal = (it?.product_name || '').replace(/"/g, '&quot;');
   
   return '<div style="position:relative;min-width:140px;flex:2">' +
-    '<input id="'+inpId+'" type="text" autocomplete="off" placeholder="ชื่อ / SKU / รหัสซัพพลายเออร์..."' +
+    '<input id="'+inpId+'" type="text" autocomplete="off" value="'+stockProdName+'" placeholder="ชื่อ / SKU / รหัสซัพพลายเออร์..."' +
     ' style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:5px;padding:4px 7px;color:var(--text);font-size:12px;box-sizing:border-box"' +
     ' oninput="searchEditProd('+rowIdx+',this.value)" onfocus="searchEditProd('+rowIdx+',this.value)">' +
     '<div id="'+ddId+'" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:500;' +
     'background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;' +
     'box-shadow:0 6px 20px rgba(0,0,0,0.12)"></div>' +
     '<div style="margin-top:4px">' +
-    '  <input type="text" value="'+customVal+'" placeholder="🏷️ ข้อความทดแทนในเอกสาร / ชื่อตามลูกค้า (เว้นว่างได้)"' +
+    '  <input id="ep-custom-'+rowIdx+'" type="text" value="'+customVal+'" placeholder="🏷️ ข้อความทดแทนในเอกสาร / ชื่อตามลูกค้า (เว้นว่างได้)"' +
     '    style="width:100%;background:#f8fafc;border:1px dashed var(--border2);border-radius:5px;padding:3px 6px;color:var(--text);font-size:11px;box-sizing:border-box"' +
     '    oninput="editItems['+rowIdx+'].product_name=this.value">' +
     '</div>' +
@@ -5516,7 +5521,8 @@ function renderEditItems() {
   // fill product name inputs
   editItems.forEach((it, i) => {
     const inp = document.getElementById('ep-inp-'+i);
-    if (inp) inp.value = it.product_name || '';
+    const linked = it.product_id ? editProdList.find(p => p.id === it.product_id) : null;
+    if (inp) inp.value = linked?.name || it.product_name || '';
   });
   updateEditTotal();
 }
