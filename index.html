@@ -21467,10 +21467,17 @@ async function saveAIQuoteNewProduct(rowIdx, modalEl) {
     toast('เกิดข้อผิดพลาดในการบันทึกสินค้า: ' + err.message, 'error');
   }
 }
-    toast('คัดลอกข้อความตอบกลับ LINE/Telegram เรียบร้อย ✓', 'success');
-  }).catch(() => {
+
+async function copyAIChatReply(msg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(msg).then(() => {
+      toast('คัดลอกข้อความตอบกลับ LINE/Telegram เรียบร้อย ✓', 'success');
+    }).catch(() => {
+      prompt('กด Ctrl+C เพื่อคัดลอกข้อความ:', msg);
+    });
+  } else {
     prompt('กด Ctrl+C เพื่อคัดลอกข้อความ:', msg);
-  });
+  }
 }
 
 // ── 6. Save Draft Quotation to SEALTHAI System ───────────────
