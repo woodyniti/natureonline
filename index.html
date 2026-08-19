@@ -1107,6 +1107,7 @@ function renderSidebar() {
     {page:'orders',      icon:'🛒', label: 'ออเดอร์ (SO)'},
     {page:'arinvoice',   icon:'💰', label: 'AR Invoice'},
     {page:'marketplace', icon:'🛍️', label: 'มาร์เก็ตเพลส (Marketplace Hub)'},
+    {page:'contentstudio', icon:'✨', label: 'AI Content Studio (สร้างโพสต์)'},
     {page:'goodsreturn', icon:'🔄', label: 'รับคืนสินค้า'},
     {page:'expenses',    icon:'💸', label: t('nav.expenses')},
     {page:'finance',     icon:'📈', label: 'รายได้อื่น & เงินลงทุน'},
@@ -1596,7 +1597,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings };
+  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
   if (pages[page]) pages[page]();
 }
 
@@ -22476,3 +22477,337 @@ async function deleteApprovedSub(id) {
 </div>
 </body>
 </html>
+
+
+
+// ══════════════════════════════════════════════════════════
+// AI CONTENT STUDIO & MARKETING HUB
+// ══════════════════════════════════════════════════════════
+let _csSelectedProduct = null;
+
+async function contentstudio() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-secondary btn-sm" onclick="window.open('http://169.58.151.88/sealthai/blog/oil-seal-viton-id20.html','_blank')">🌐 ดูหน้าเว็บตัวอย่าง</button>
+      <button class="btn btn-primary btn-sm" onclick="generateAIContentDraft()">⚡ สร้างดราฟต์ AI ใหม่</button>
+    </div>
+  `;
+
+  if (!allProducts || !allProducts.length) {
+    await loadProducts();
+  }
+
+  setContent(`
+    <!-- Top Preset Bar -->
+    <div class="card mb-3" style="padding:12px 16px;background:linear-gradient(135deg, #0f172a, #1e293b);color:#fff;border-radius:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#38bdf8;display:flex;align-items:center;gap:6px">
+            ✨ AI Content Studio & Marketing Hub
+          </div>
+          <div style="font-size:12px;color:#94a3b8">
+            สร้าง ปรับแต่งข้อความ/รูปภาพ และเผยแพร่คอนเทนต์ลง LINE VOOM, Facebook และ Website SEO Blog
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCSPreset('viton')" style="background:#334155;color:#fff;border-color:#475569;font-size:11px">🔥 ซีลไวตัน FKM</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCSPreset('oring')" style="background:#334155;color:#fff;border-color:#475569;font-size:11px">⭕ โอริง NBR/Viton</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCSPreset('pu')" style="background:#334155;color:#fff;border-color:#475569;font-size:11px">💧 ไฮดรอลิก PU</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickCSPreset('tc')" style="background:#334155;color:#fff;border-color:#475569;font-size:11px">🚗 ออยซีล TC เพลา</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="pickRandomCSProduct()" style="font-size:11px">🎲 สุ่มสินค้าใหม่</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Studio Grid -->
+    <div class="grid-2" style="gap:16px;align-items:start">
+      
+      <!-- Left Column: Form Editor -->
+      <div class="card" style="padding:16px;border-radius:12px">
+        <div style="font-weight:800;font-size:15px;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:6px">
+          ✏️ ตัวแก้ไขเนื้อหา & รูปภาพ (Content Editor)
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">📦 เลือกสินค้าจากสต๊อก / แคตตาล็อก</label>
+          <select id="cs-prod-sel" onchange="onSelectCSProduct(this.value)" style="width:100%;height:42px;font-size:13px;font-weight:600">
+            <option value="">-- เลือกสินค้าที่ต้องการทำคอนเทนต์ --</option>
+            ${allProducts.slice(0, 150).map(p => `
+              <option value="${p.id}">${escapeHTML(p.name)} ${p.sku ? ('(' + p.sku + ')') : ''} - ฿${fmt(p.sell_price||p.current_cost||0)}</option>
+            `).join('')}
+          </select>
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">🎯 สไตล์ / โทนเนื้อหา (Angle / Tone)</label>
+          <select id="cs-tone" onchange="generateAIContentDraft()" style="width:100%;height:40px;font-size:13px">
+            <option value="problem">🔧 ช่างบอกต่อ — แก้ปัญหาน้ำมันรั่วซึม & ทนความร้อนสูง</option>
+            <option value="specs">🏆 เจาะลึกสเปกวัสดุ — NBR vs Viton vs PU เลือกแบบไหนทนสุด</option>
+            <option value="dimension">📐 เทียบขนาดมิติ & เบอร์ซีล — มีขนาดพร้อมส่งทันที</option>
+            <option value="promo">🛒 โพสต์ขายจัดโปรโมชั่น — สั่งด่วนส่งไวจากคลังไทย</option>
+          </select>
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">📌 พาดหัวหลัก (Title / Headline)</label>
+          <input type="text" id="cs-title" oninput="updateCSLivePreview()" placeholder="เช่น ออยซีลไวตัน FKM ID 20 mm ซีลกันน้ำมัน ทนร้อน 200°C" style="font-weight:700;font-size:14px">
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">🖼️ ลิงก์รูปภาพปกสินค้า (Cover Image URL)</label>
+          <div style="display:flex;gap:6px">
+            <input type="text" id="cs-image-url" oninput="updateCSLivePreview()" placeholder="https://cf.shopee.co.th/file/..." style="flex:1;font-size:12px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="previewCSImage()">👁️ ดูรูป</button>
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">📝 ข้อความแคปชั่นสำหรับโพสต์ (Social Caption)</label>
+          <textarea id="cs-caption" rows="9" oninput="updateCSLivePreview()" style="font-size:13px;line-height:1.6;font-family:inherit" placeholder="พิมพ์หรือแก้ไขเนื้อหาข้อความได้ตามใจชอบ..."></textarea>
+        </div>
+
+        <div class="grid-2 mb-3" style="gap:10px">
+          <div class="form-group" style="margin:0">
+            <label style="font-weight:700;font-size:12px">💰 ราคาแสดงผล</label>
+            <input type="text" id="cs-price" oninput="updateCSLivePreview()" placeholder="เช่น ฿125 - ฿318">
+          </div>
+          <div class="form-group" style="margin:0">
+            <label style="font-weight:700;font-size:12px">🚚 ข้อมูลการจัดส่ง</label>
+            <input type="text" id="cs-shipping" oninput="updateCSLivePreview()" value="ส่งจันทร์-ศุกร์ ตัดรอบ 11:00 น. ถึงใน 1-2 วัน">
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">🛒 ลิงก์สั่งซื้อ Shopee</label>
+          <input type="text" id="cs-shopee-link" oninput="updateCSLivePreview()" placeholder="https://shopee.co.th/product/...">
+        </div>
+
+        <div class="form-group mb-3">
+          <label style="font-weight:700;font-size:12px">#️⃣ แฮชแท็ก (#Hashtags)</label>
+          <input type="text" id="cs-hashtags" oninput="updateCSLivePreview()" value="#ซีลกันน้ำมัน #ออยซีล #ซีลไวตัน #โอริง #FKM #อะไหล่โรงงาน #ซีลไฮดรอลิก #Sealthai">
+        </div>
+
+      </div>
+
+      <!-- Right Column: Live Interactive Preview -->
+      <div class="card" style="padding:16px;border-radius:12px;position:sticky;top:70px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+          <div style="font-weight:800;font-size:15px;color:var(--text)">
+            📱 จอพรีวิวสด (Live Preview)
+          </div>
+          <div class="tabs" style="margin:0">
+            <button class="tab active" id="tab-prev-voom" onclick="switchCSPreviewTab('voom')">🟢 LINE VOOM</button>
+            <button class="tab" id="tab-prev-fb" onclick="switchCSPreviewTab('fb')">📘 Facebook</button>
+            <button class="tab" id="tab-prev-web" onclick="switchCSPreviewTab('web')">🌐 Web Blog</button>
+          </div>
+        </div>
+
+        <!-- LINE VOOM Preview Card -->
+        <div id="cs-preview-voom" class="cs-preview-card" style="background:#fff;border:1.5px solid #06c755;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(6,199,85,0.15)">
+          <div style="background:#06c755;color:#fff;padding:8px 12px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px">
+            <span>🟢 LINE VOOM Post Preview</span>
+          </div>
+          <div style="padding:14px">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+              <div style="width:36px;height:36px;border-radius:50%;background:#06c755;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px">ST</div>
+              <div>
+                <div style="font-weight:700;font-size:13px;color:#0f172a">SEALTHAI Official</div>
+                <div style="font-size:10px;color:#64748b">Sponsored · สาธารณะ</div>
+              </div>
+            </div>
+            <div id="cs-prev-text" style="font-size:13px;line-height:1.6;color:#1e293b;white-space:pre-wrap;margin-bottom:10px"></div>
+            <div style="border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:10px;max-height:260px;display:flex;align-items:center;justify-content:center;background:#f8fafc">
+              <img id="cs-prev-img" src="" alt="Product Cover" style="width:100%;max-height:260px;object-fit:contain">
+            </div>
+            <div style="display:flex;gap:6px">
+              <a id="cs-prev-shopee-btn" href="#" target="_blank" class="btn btn-primary" style="flex:1;background:#ee4d2d;border-color:#ee4d2d;font-size:12px;font-weight:700;padding:8px;text-align:center">🛒 สั่งซื้อผ่าน Shopee</a>
+              <a href="https://lin.ee/sealthai" target="_blank" class="btn btn-secondary" style="background:#f0fdf4;border-color:#06c755;color:#047857;font-size:12px;font-weight:700;padding:8px;text-align:center">💬 ทัก LINE</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons Bar -->
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+          <button class="btn btn-primary btn-full" onclick="copyCSContentForLINEVOOM()" style="background:#06c755;border-color:#059669;font-size:14px;font-weight:700;padding:12px">
+            📋 1-Click คัดลอกข้อความสำหรับ LINE VOOM
+          </button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <button class="btn btn-secondary" onclick="downloadCSCoverImage()" style="font-size:12px;font-weight:600">
+              📸 ดาวน์โหลดรูปภาพ HD
+            </button>
+            <button class="btn btn-secondary" onclick="openLiveSampleBlogPage()" style="font-size:12px;font-weight:600">
+              🌐 เปิดดูหน้าเว็บจริง
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  `);
+
+  // Default load first item or preset
+  setQuickCSPreset('viton');
+}
+
+function setQuickCSPreset(type) {
+  let matched = null;
+  if (type === 'viton') {
+    matched = allProducts.find(p => (p.name||'').toLowerCase().includes('viton') || (p.material||'').includes('FKM'));
+    if (!matched) matched = { name: 'ออยซีลไวตัน Oil seal Viton ID 20 mm ซีลกันน้ำมัน ทนร้อน 200°C FKM SC OD 30-62 mm', sell_price: 125, current_cost: 65, sku: 'VITON-SC-ID20' };
+  } else if (type === 'oring') {
+    matched = allProducts.find(p => (p.name||'').toLowerCase().includes('o-ring') || (p.name||'').includes('โอริง'));
+    if (!matched) matched = { name: 'โอริงกล่อง Viton / NBR O-Ring Box Set ซีลกันรั่วทนสารเคมี', sell_price: 250, current_cost: 130, sku: 'OR-BOX-01' };
+  } else if (type === 'pu') {
+    matched = allProducts.find(p => (p.material||'').includes('PU') || (p.name||'').toLowerCase().includes('pu'));
+    if (!matched) matched = { name: 'ซีลไฮดรอลิก PU Hydraulic Seal U-Cup ทนแรงดัน 400 bar', sell_price: 180, current_cost: 95, sku: 'HYD-PU-50' };
+  } else {
+    matched = allProducts.find(p => (p.name||'').includes('TC') || (p.seal_type||'').includes('TC'));
+    if (!matched) matched = allProducts[0];
+  }
+  
+  if (matched) {
+    _csSelectedProduct = matched;
+    populateCSProductForm(matched);
+  }
+}
+
+function pickRandomCSProduct() {
+  if (!allProducts.length) return;
+  const rand = allProducts[Math.floor(Math.random() * allProducts.length)];
+  _csSelectedProduct = rand;
+  populateCSProductForm(rand);
+}
+
+function onSelectCSProduct(prodId) {
+  const p = allProducts.find(x => x.id === prodId);
+  if (p) {
+    _csSelectedProduct = p;
+    populateCSProductForm(p);
+  }
+}
+
+function populateCSProductForm(p) {
+  const titleEl = document.getElementById('cs-title');
+  const imgEl = document.getElementById('cs-image-url');
+  const priceEl = document.getElementById('cs-price');
+  const shopeeEl = document.getElementById('cs-shopee-link');
+  const selEl = document.getElementById('cs-prod-sel');
+
+  if (selEl && p.id) selEl.value = p.id;
+  if (titleEl) titleEl.value = p.name || 'ซีลและโอริงมาตรฐานอุตสาหกรรม';
+  if (imgEl) imgEl.value = p.image_url || 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
+  if (priceEl) priceEl.value = p.sell_price ? `฿${fmt(p.sell_price)}` : '฿125 - ฿318';
+  if (shopeeEl) shopeeEl.value = 'https://shopee.co.th/product/161670256/58163711163';
+
+  generateAIContentDraft();
+}
+
+function generateAIContentDraft() {
+  const p = _csSelectedProduct || {};
+  const tone = document.getElementById('cs-tone')?.value || 'problem';
+  const name = document.getElementById('cs-title')?.value || p.name || 'ออยซีลไวตัน FKM';
+  const price = document.getElementById('cs-price')?.value || '฿125';
+  const shipping = document.getElementById('cs-shipping')?.value || 'ส่งจันทร์-ศุกร์ ตัดรอบ 11:00 น. ถึงใน 1-2 วัน';
+  const shopeeLink = document.getElementById('cs-shopee-link')?.value || 'https://shopee.co.th/product/161670256/58163711163';
+
+  let caption = '';
+
+  if (tone === 'problem') {
+    caption = `🔥 หมดปัญหาน้ำมันรั่วซึม เพลาหมุนเร็วเกิดความร้อนสูง! 🛢️✨\n\n` +
+      `แนะนำ <b>${name}</b> คุณภาพระดับ OEM\n` +
+      `เนื้อยาง FKM (Viton) แท้ ทนความร้อนสูงต่อเนื่องถึง 200°C และทนน้ำมันสังเคราะห์ สารเคมีกัดกร่อนได้ดีเยี่ยม ยางไม่แข็งกรอบ ไม่เปื่อยง่าย\n\n` +
+      `📐 <b>สเปกขนาดพร้อมส่ง:</b>\n` +
+      `• ขอบสปริงสแตนเลส รัดเพลาแน่นสนิท\n` +
+      `• รองรับงานปั๊มไฮดรอลิก, มอเตอร์, เพลาเกียร์, เครื่องจักรหนัก\n\n` +
+      `💰 <b>ราคาเริ่มต้น:</b> ${price} / ชิ้น\n` +
+      `🚚 <b>การจัดส่ง:</b> ${shipping}\n\n` +
+      `🛒 <b>สั่งซื้อผ่าน Shopee:</b>\n${shopeeLink}\n\n` +
+      `💬 <b>หรือสั่งซื้อ/สอบถามทาง LINE:</b>\n👉 https://lin.ee/sealthai`;
+  } else if (tone === 'specs') {
+    caption = `🏆 เจาะลึกสเปกซีลคุณภาพสูง: <b>${name}</b> ⚙️\n\n` +
+      `เทียบความแตกต่างทำไมช่างมืออาชีพถึงเลือกใช้ Viton (FKM)?\n` +
+      `• ทนความร้อน: -20°C ถึง +200°C (ดีกว่ายาง NBR ทั่วไปถึง 2 เท่า)\n` +
+      `• ทนการสึกหรอและเพลาหมุนความเร็วรอบสูง\n` +
+      `• ทนน้ำมันเครื่องสังเคราะห์ ทนกรด-ด่าง สารเคมี\n\n` +
+      `💰 <b>ราคา:</b> ${price}\n` +
+      `📦 มีสต๊อกพร้อมส่งทุกเบอร์ในไทย\n` +
+      `🚚 <b>รอบส่ง:</b> ${shipping}\n\n` +
+      `🛒 <b>ดูตารางไซส์และสั่งซื้อ:</b>\n${shopeeLink}`;
+  } else if (tone === 'dimension') {
+    caption = `📐 เทียบขนาดมิติ รูใน (ID) × โตนอก (OD) × ความหนา (W) มีของพร้อมส่งทันที! 📦✨\n\n` +
+      `<b>${name}</b>\n` +
+      `เช็คเบอร์ซีลและสั่งซื้อได้เลย ไม่ต้องรอสั่งผลิตจากต่างประเทศ\n\n` +
+      `• ID 20x30x5 | 20x32x5 | 20x35x7 | 20x40x7 | 20x62x6.5 mm\n` +
+      `• โครงเหล็กแข็งแรง ปากซีลคมสองชั้นกันฝุ่นและกันน้ำมัน\n\n` +
+      `💰 <b>ราคา:</b> ${price} / ชิ้น\n` +
+      `🚚 ${shipping}\n\n` +
+      `🛒 <b>สั่งซื้อบน Shopee:</b>\n${shopeeLink}\n` +
+      `💬 <b>แชตเช็คขนาดทาง LINE:</b> https://lin.ee/sealthai`;
+  } else {
+    caption = `🎉 สินค้าขายดีประจำสัปดาห์: <b>${name}</b> 🚀\n\n` +
+      `โปรโมชั่นราคาพิเศษ พร้อมจัดส่งด่วนทั่วประเทศ!\n` +
+      `ซีลมาตรฐานโรงงานอุตสาหกรรม คม ทน แนบสนิท ไม่รั่วซึม\n\n` +
+      `💰 ราคาเริ่มต้นเพียง: <b>${price}</b>\n` +
+      `🚚 <b>การจัดส่ง:</b> ${shipping}\n\n` +
+      `🛒 <b>กดสั่งซื้อผ่าน Shopee ได้ที่นี่:</b>\n${shopeeLink}\n` +
+      `📞 <b>ติดต่อฝ่ายขาย LINE:</b> https://lin.ee/sealthai`;
+  }
+
+  const captionEl = document.getElementById('cs-caption');
+  if (captionEl) captionEl.value = caption.replace(/\\n/g, '\n');
+
+  updateCSLivePreview();
+}
+
+function updateCSLivePreview() {
+  const caption = document.getElementById('cs-caption')?.value || '';
+  const imgUrl = document.getElementById('cs-image-url')?.value || 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
+  const hashtags = document.getElementById('cs-hashtags')?.value || '';
+  const shopeeLink = document.getElementById('cs-shopee-link')?.value || '#';
+
+  const fullText = caption + (hashtags ? ('\n\n' + hashtags) : '');
+
+  const prevTextEl = document.getElementById('cs-prev-text');
+  if (prevTextEl) prevTextEl.innerHTML = escapeHTML(fullText).replace(/\n/g, '<br>');
+
+  const prevImgEl = document.getElementById('cs-prev-img');
+  if (prevImgEl) prevImgEl.src = imgUrl;
+
+  const btnEl = document.getElementById('cs-prev-shopee-btn');
+  if (btnEl) btnEl.href = shopeeLink;
+}
+
+function copyCSContentForLINEVOOM() {
+  const caption = document.getElementById('cs-caption')?.value || '';
+  const hashtags = document.getElementById('cs-hashtags')?.value || '';
+  const fullText = caption + (hashtags ? ('\n\n' + hashtags) : '');
+
+  navigator.clipboard.writeText(fullText).then(() => {
+    toast('📋 คัดลอกเนื้อหาสำหรับ LINE VOOM สำเร็จ! นำไปวางโพสต์ได้ทันที ✓', 'success');
+  }).catch(() => {
+    toast('กรุณาคัดลอกข้อความจากช่องแคปชั่น', 'info');
+  });
+}
+
+function downloadCSCoverImage() {
+  const imgUrl = document.getElementById('cs-image-url')?.value;
+  if (imgUrl) {
+    window.open(imgUrl, '_blank');
+    toast('เปิดรูปภาพความละเอียดสูงเรียบร้อยแล้ว ✓', 'success');
+  }
+}
+
+function openLiveSampleBlogPage() {
+  window.open('http://169.58.151.88/sealthai/blog/oil-seal-viton-id20.html', '_blank');
+}
+
+function switchCSPreviewTab(tab) {
+  ['voom', 'fb', 'web'].forEach(t => {
+    const btn = document.getElementById('tab-prev-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+  if (tab === 'web') {
+    openLiveSampleBlogPage();
+  }
+}
