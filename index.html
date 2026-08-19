@@ -6600,7 +6600,7 @@ let allProducts = [];
 let productCategories = [];
 
 async function products() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openModal('modal-product')">+ เพิ่มสินค้า</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openNewProductModal()">+ เพิ่มสินค้า</button>`;
 
   setContent(`
     <!-- Prominent High-Contrast Product Search Box -->
@@ -7236,6 +7236,48 @@ function findProductDup({ sku, supplier_sku, part_no }, excludeId = null) {
   return null;
 }
 
+
+// ── Reset & Open Product Modal ──────────────────────────────
+function resetProductModalForm() {
+  const fields = [
+    'p-sku', 'p-supplier-sku', 'p-part-no', 'p-cat', 'p-name',
+    'p-sell', 'p-buy', 'p-cost', 'p-stock',
+    'p-id', 'p-od', 'p-width', 'p-material', 'p-seal-type',
+    'p-max-press', 'p-temp-min', 'p-temp-max', 'p-max-speed',
+    'p-hs-code', 'p-drawing-no', 'p-machine-model',
+    'p-preferred-sup', 'p-manual-rop'
+  ];
+  fields.forEach(f => {
+    const el = document.getElementById(f);
+    if (el) el.value = '';
+  });
+
+  const unitDim = document.getElementById('p-unit-dim');
+  if (unitDim) unitDim.value = 'mm';
+  const leadTime = document.getElementById('p-lead-time');
+  if (leadTime) leadTime.value = '30';
+  const moq = document.getElementById('p-moq');
+  if (moq) moq.value = '1';
+  const packSize = document.getElementById('p-pack-size');
+  if (packSize) packSize.value = '1';
+  const safetyDays = document.getElementById('p-safety-days');
+  if (safetyDays) safetyDays.value = '15';
+  const minSafety = document.getElementById('p-min-safety');
+  if (minSafety) minSafety.value = '0';
+
+  if (typeof switchAddProdTab === 'function') {
+    switchAddProdTab(1);
+  }
+}
+
+function openNewProductModal() {
+  resetProductModalForm();
+  openModal('modal-product');
+  setTimeout(() => {
+    document.getElementById('p-sku')?.focus();
+  }, 150);
+}
+
 async function saveProduct() {
   const name = document.getElementById('p-name').value.trim();
   if (!name) { toast('กรุณาใส่ชื่อสินค้า','error'); return; }
@@ -7327,6 +7369,7 @@ async function saveProduct() {
     });
   }
   closeModal('modal-product');
+  resetProductModalForm();
   toast('เพิ่มสินค้าสำเร็จ ✓','success');
   await loadProducts();
   if (currentPage === 'products') filterProducts();
