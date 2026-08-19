@@ -22914,7 +22914,7 @@ async function contentstudio() {
           <select id="cs-prod-sel" onchange="onSelectCSProduct(this.value)" style="width:100%;height:42px;font-size:13px;font-weight:600">
             <option value="">-- เลือกสินค้าที่ต้องการทำคอนเทนต์ --</option>
             ${allProducts.slice(0, 150).map(p => `
-              <option value="${p.id}">${escapeHTML(p.name)} ${p.sku ? ('(' + p.sku + ')') : ''} - ฿${fmt(p.sell_price||p.current_cost||0)}</option>
+              <option value="${p.id}">${escapeHTML(p.name)} - ฿${fmt(p.sell_price||p.current_cost||0)}</option>
             `).join('')}
           </select>
         </div>
