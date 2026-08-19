@@ -39,7 +39,7 @@
 // ── Cache Cleaner & Service Worker ────────────────────
 if ('caches' in window) {
   caches.keys().then(keys => {
-    keys.forEach(k => { if (k !== 'sealthai-v1.38') caches.delete(k); });
+    keys.forEach(k => { if (k !== 'sealthai-v1.40') caches.delete(k); });
   }).catch(()=>{});
 }
 
@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.39';
+    const CACHE = 'sealthai-v1.40';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -984,7 +984,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <div class="logo-sub">v1.39</div>
+            <div class="logo-sub">v1.40</div>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -4073,7 +4073,7 @@ function drillMonthlyDay(date) {
 
 
 async function orders() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" id="btn-batch-ar" onclick="batchConvertSOtoAR()" title="เลือกหลายออเดอร์แล้วออกบิล AR Invoice พร้อมกัน">📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" id="btn-batch-ar" onclick="batchConvertSOtoAR()" title="เลือกหลายออเดอร์แล้วออกบิล AR Invoice พร้อมกัน">📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-batch-po" onclick="openBatchSOtoPOModal()" title="เลือกรายการสินค้าจากหลายออเดอร์ไปทำใบสั่งซื้อ (PO)" style="background:#f0fdf4;border-color:#16a34a;color:#15803d;font-weight:700">🛒 สร้าง PO จากออเดอร์ (<span id="so-po-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
 
   setContent(`
     <!-- Quick filter รายเดือน/รายปี -->
@@ -14996,12 +14996,13 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.39</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Customer Document Display Name & Item Customization</span></div>
+          <div>🚀 <strong>SEALTHAI v1.40</strong> &nbsp;<span style="background:#e8f5f0;color:#00a882;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:600">Multi-Order Batch PO Generator & AI Sales Analytics Engine</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.40', type:'minor', date:'2026-08-19', title:'Multi-Order Batch PO Generator & AI Sales Analytics Engine', items:['ระบบสร้างใบสั่งซื้อ (PO) จากรายการขายหลายออเดอร์ (Multi-Order to Single PO): เลือกติ๊กหลายออเดอร์ในหน้า Orders แล้วดึงรายการสินค้ามาเปิด PO ใบเดียวได้ทันที','เลือกโหมดจัดกลุ่มสินค้า (Grouping Mode): รวมจำนวนตามรหัส SKU เดียวกันอัตโนมัติ (Sum Quantity) หรือแยกรายการตามแต่ละออเดอร์ลูกค้า','ยืดหยุ่นสูง (Item-Level Customization): ติ๊กเลือกเฉพาะบางรายการที่ต้องการสั่ง, ปรับแก้จำนวนสั่งซื้อ (PO Qty), และแก้ไขราคาต้นทุนต่อหน่วย (Unit Cost) ได้อย่างอิสระ','คำนวณและออกเอกสาร PO ทันที: เชื่อมโยง Supplier, คำนวณ VAT 7% (รวมใน/แยกนอก), และสร้างเลขที่ PO เข้าระบบจัดซื้อพร้อมพิมพ์ใบสั่งซื้อได้ทันที','ระบบตรวจจับและจดจำประวัติราคาเดิม (Agreed Pricing Priority Memory): เช็คประวัติราคาเดิมที่เคยให้ลูกค้าเป็นอันดับ 1 ก่อนคำนวณราคาใหม่ เพื่อป้องกันราคาคลาดเคลื่อน','ระบบจัดเก็บและวิเคราะห์พฤติกรรมการซื้อ (Sales & Demand Analytics Engine): บันทึกข้อมูลลูกค้าซื้อเลย / ต่อรองราคา / ลังเล พร้อมวิเคราะห์ความต้องการสินค้าขาดสต็อก (Unmet Demand)'] },
             { v:'1.39', type:'minor', date:'2026-08-18', title:'Customer Document Display Name & Order Customization', items:['ระบบข้อความทดแทนรายการสินค้า (Customer Display Name): ระบุชื่อสินค้าหรือ Part No. เฉพาะของลูกค้าในแต่ละรายการได้ทันที','คงการตัดสต๊อกและคิดราคาทุนจริงตามคลังสินค้า (Stock Link): ยังคงผูกกับสินค้าในระบบคลัง 100% แต่เอกสารออกตามชื่อที่ลูกค้าต้องการ','รองรับทั้งการสร้างออเดอร์ใหม่ (+ เพิ่มออเดอร์) และการแก้ไขออเดอร์ (Edit Order)','อัปเดตเอกสารพิมพ์บิลเงินสด (Cash Sale), ใบเสร็จ, ใบเสนอราคา, AR Invoice และใบปะหน้า ให้แสดงชื่อตามที่ลูกค้าต้องการอัตโนมัติ'] },
             { v:'1.38', type:'minor', date:'2026-08-16', title:'Executive AI & Predictive Intelligence Dashboard', items:['ระบบเตือนลูกค้าประจำที่หยุดสั่งซื้อ (Lost Customer Churn Alert): แจ้งเตือนลูกค้าที่ขาดการติดต่อเกิน 30-90 วัน','คำนวณมูลค่ายอดขายที่อาจสูญเสียต่อเดือน พร้อมปุ่ม 1-Click โทรติดตามและเปิดใบเสนอราคาดึงลูกค้ากลับมา (Win-back)','แบบจำลองพยากรณ์กระแสเงินสดล่วงหน้า 30/60/90 วัน (Cash Flow Forecasting): คำนวณรายรับ (AR) vs รายจ่าย (AP, นำเข้า, งบประจำ)','วิเคราะห์คู่สินค้าที่ลูกค้ามักสั่งซื้อคู่กัน (Market Basket Analysis & Cross-Sell Pairing) เพื่อเพิ่มยอดต่อบิล (AOV)','สรุปดัชนีสุขภาพธุรกิจสำหรับผู้บริหาร (Executive AI Health Check) พร้อม 3 เรื่องเร่งด่วนที่ต้องโฟกัสในแต่ละสัปดาห์'] },
             { v:'1.37', type:'minor', date:'2026-08-16', title:'CRM, Multi-Tier Pricing & B2B Sales Management', items:['ทะเบียนลูกค้าองค์กร & B2B CRM Master: บันทึก Tax ID, สำนักงานใหญ่/สาขา, ที่อยู่ออกบิล/ส่งของ, และผู้ติดต่อ','ระบบราคาหลายระดับ (Multi-Tier Pricing): กำหนดราคาเฉพาะตามกลุ่มลูกค้า (ปลีก, ช่าง/อู่, ร้านค้าส่ง, โรงงาน, VIP)','ราคาส่งตามจำนวน (Volume Break Discounts): กำหนดราคาขั้นบันไดตามจำนวนชิ้นที่สั่งซื้อ','ระบบควบคุมวงเงินสินเชื่อ & เครดิตเทอม (Credit Control): กำหนดวันครบกำหนดและแจ้งเตือนเมื่อเกินวงเงิน Credit Limit','กระดานติดตามใบเสนอราคา (Quotation Deal Pipeline): ติดตามสถานะ Draft, Sent, Follow-up, Won, Lost พร้อมคลิกเดียวแปลงเป็น SO'] },
@@ -16043,6 +16044,8 @@ function updateSOSelectCount() {
   });
   const cnt = document.getElementById('so-sel-count');
   if (cnt) cnt.textContent = _selectedSOIds.size;
+  const cntPO = document.getElementById('so-po-sel-count');
+  if (cntPO) cntPO.textContent = _selectedSOIds.size;
 }
 
 async function batchConvertSOtoAR() {
@@ -16112,6 +16115,517 @@ async function batchConvertSOtoAR() {
 // ══════════════════════════════════════════════════════════
 // MOBILE CARD RENDERER — ใช้ร่วมกันทุกหน้า
 // ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// BATCH SALES ORDERS TO PURCHASE ORDER (PO) GENERATOR
+// ══════════════════════════════════════════════════════════
+let _batchPOItems = [];
+let _batchPOGroupBySKU = true;
+
+async function openBatchSOtoPOModal() {
+  updateSOSelectCount();
+  let orderIds = Array.from(_selectedSOIds);
+
+  if (!orderIds.length) {
+    const visibleCheckboxes = Array.from(document.querySelectorAll('.chk-so-select'));
+    if (visibleCheckboxes.length) {
+      const ok = confirm(`ยังไม่ได้เลือกออเดอร์ (Checkbox)\\nต้องการดึงรายการสินค้าจากออเดอร์ทั้งหมดที่แสดงอยู่ในหน้านี้ (${visibleCheckboxes.length} ออเดอร์) มาทำ PO หรือไม่?`);
+      if (ok) {
+        toggleSelectAllSO(true);
+        orderIds = Array.from(_selectedSOIds);
+      } else {
+        return;
+      }
+    } else {
+      toast('ไม่พบรายการออเดอร์ในหน้าปัจจุบัน กรุณาค้นหาหรือเลือกออเดอร์ที่ต้องการ', 'error');
+      return;
+    }
+  }
+
+  // Load suppliers if empty
+  if (!allSuppliers || !allSuppliers.length) {
+    const { data: sups } = await sb.from('suppliers').select('*').eq('shop_id', currentShop.id).order('name');
+    allSuppliers = sups || [];
+  }
+
+  // Load orders with items
+  toast('กำลังดึงรายการสินค้าจาก ' + orderIds.length + ' ออเดอร์...', 'info');
+  const { data: ordersData, error } = await sb.from('orders')
+    .select('*, order_items(*)')
+    .in('id', orderIds)
+    .neq('doc_status', 'cancelled')
+    .neq('shipping_status', 'cancelled');
+
+  if (error || !ordersData || !ordersData.length) {
+    toast('ไม่สามารถดึงข้อมูลออเดอร์ได้: ' + (error?.message || 'ไม่พบรายการที่ถูกต้อง'), 'error');
+    return;
+  }
+
+  // Build raw item list
+  const rawItems = [];
+  ordersData.forEach(ord => {
+    const oNo = ord.order_no || ('SO-' + ord.id.slice(0,8));
+    const cust = ord.customer_name || 'ลูกค้าทั่วไป';
+    const oDate = ord.order_date || '';
+    (ord.order_items || []).forEach(it => {
+      const prod = allProducts.find(p => p.id === it.product_id || (it.product_name && p.name === it.product_name));
+      const sku = prod?.sku || it.sku || '';
+      const pName = it.product_name || prod?.name || 'สินค้า';
+      const cost = Number(it.cost_price || prod?.current_cost || 0);
+      const qtySold = Number(it.qty || 1);
+
+      rawItems.push({
+        id: 'bpoi_' + Math.random().toString(36).slice(2, 9),
+        order_id: ord.id,
+        order_no: oNo,
+        order_date: oDate,
+        customer_name: cust,
+        product_id: it.product_id || prod?.id || null,
+        product_name: pName,
+        sku: sku,
+        qty_sold: qtySold,
+        qty_po: qtySold,
+        unit_cost: cost,
+        selected: true
+      });
+    });
+  });
+
+  if (!rawItems.length) {
+    toast('ไม่พบรายการสินค้าในออเดอร์ที่เลือก', 'error');
+    return;
+  }
+
+  _batchPOItems = rawItems;
+
+  const existingModal = document.getElementById('modal-batch-po');
+  if (existingModal) existingModal.remove();
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.id = 'modal-batch-po';
+  modal.style.zIndex = '450';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:920px;width:95vw">
+      <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>🛒 สร้างใบสั่งซื้อ (PO) จากรายการขาย (${ordersData.length} ออเดอร์)</span>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+
+      <!-- Top PO Header Settings -->
+      <div class="grid-2 mb-3" style="gap:10px">
+        <div class="form-group">
+          <label style="font-weight:700">วันที่ออก PO:</label>
+          <input type="date" id="bpo-date" value="${today()}">
+        </div>
+        <div class="form-group">
+          <label style="font-weight:700">วันที่คาดว่าจะได้รับของ:</label>
+          <input type="date" id="bpo-expected" value="${(()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10);})()}">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label style="font-weight:700">เลือก Supplier / ผู้จัดจำหน่าย <span style="color:var(--red)">*</span>:</label>
+          <select id="bpo-supplier-sel" onchange="onBatchPOSupplierChange()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:15px;color:var(--text);font-weight:600">
+            <option value="">-- กรุณาเลือก Supplier เพื่อออกใบสั่งซื้อ --</option>
+            ${allSuppliers.map(s=>`<option value="${s.id}" data-phone="${s.phone||''}" data-contact="${s.contact_name||''}">${s.name} ${s.phone?('('+s.phone+')'):''}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <!-- Controls & Toggle Grouping -->
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;background:var(--bg3);padding:8px 12px;border-radius:8px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer">
+            <input type="checkbox" id="bpo-select-all" checked onchange="toggleAllBatchPOItems(this.checked)"> เลือกทั้งหมด
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer">
+            <input type="checkbox" id="bpo-group-toggle" ${_batchPOGroupBySKU?'checked':''} onchange="toggleBatchPOGrouping(this.checked)"> 🔄 รวมจำนวนตามรหัส SKU / สินค้าเดียวกัน
+          </label>
+        </div>
+        <div style="font-size:12px;color:var(--text3)">
+          เลือกแล้ว <b id="bpo-selected-count" style="color:var(--accent)">0</b> รายการ
+        </div>
+      </div>
+
+      <!-- Items Table -->
+      <div class="table-wrap" style="max-height:340px;overflow-y:auto;border:1px solid var(--border2);border-radius:6px">
+        <table id="table-bpo-items">
+          <thead>
+            <tr style="background:#f8fafc">
+              <th style="width:36px;text-align:center">✓</th>
+              <th style="width:120px">อ้างอิงออเดอร์</th>
+              <th>รหัส SKU & ชื่อสินค้า</th>
+              <th style="width:80px;text-align:right">ยอดขาย</th>
+              <th style="width:100px;text-align:right">จำนวนสั่ง PO</th>
+              <th style="width:110px;text-align:right">ต้นทุน/หน่วย (บ.)</th>
+              <th style="width:110px;text-align:right">รวมต้นทุน (บ.)</th>
+              <th style="width:40px;text-align:center">✕</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-bpo-items"></tbody>
+        </table>
+      </div>
+
+      <!-- Calculation Summary Box -->
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
+              <input type="checkbox" id="bpo-vat-on" onchange="calcBatchPOTotals()"> มี VAT 7%
+            </label>
+            <select id="bpo-vat-type" onchange="calcBatchPOTotals()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:12px">
+              <option value="excluded">VAT แยก (บวกเพิ่ม 7%)</option>
+              <option value="included">VAT รวมใน (รวมในยอดแล้ว)</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:20px;text-align:right">
+            <div>
+              <div style="font-size:11px;color:var(--text3)">รวมจำนวนสั่งซื้อ</div>
+              <div class="font-mono" id="bpo-sum-qty" style="font-weight:700;font-size:15px">0 ชิ้น</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3)">ยอดรวมก่อน VAT</div>
+              <div class="font-mono" id="bpo-sum-subtotal" style="font-weight:700;font-size:15px">฿0</div>
+            </div>
+            <div id="bpo-vat-amount-box" style="display:none">
+              <div style="font-size:11px;color:var(--text3)">VAT 7%</div>
+              <div class="font-mono text-amber" id="bpo-sum-vat" style="font-weight:700;font-size:15px">฿0</div>
+            </div>
+            <div>
+              <div style="font-size:11px;color:var(--text3)">ยอดรวมทั้งสิ้น (PO Total)</div>
+              <div class="font-mono text-green" id="bpo-sum-total" style="font-weight:800;font-size:18px">฿0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top:10px">
+        <label>หมายเหตุใบสั่งซื้อ (PO Note):</label>
+        <textarea id="bpo-note" rows="2" placeholder="เช่น สั่งผลิต/จัดซื้อตามรายการขาย Sales Orders รวม..."></textarea>
+      </div>
+
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-secondary" onclick="saveBatchPOFromOrders('draft')">💾 บันทึกเป็นแบบร่าง (Draft PO)</button>
+          <button class="btn btn-primary" style="background:#16a34a;border-color:#15803d;font-weight:700" onclick="saveBatchPOFromOrders('sent')">📄 สร้าง Purchase Order (PO)</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  renderBatchPOItemsTable();
+}
+
+function onBatchPOSupplierChange() {
+  const sel = document.getElementById('bpo-supplier-sel');
+  const opt = sel?.options[sel.selectedIndex];
+  if (opt && opt.value) {
+    const ph = opt.dataset.phone || '';
+    const note = document.getElementById('bpo-note');
+    if (note && !note.value) {
+      note.value = `สั่งซื้อสินค้าตามรายการขายออเดอร์ ติดต่อ: ${opt.text}`;
+    }
+  }
+}
+
+function toggleBatchPOGrouping(isGroup) {
+  _batchPOGroupBySKU = isGroup;
+  renderBatchPOItemsTable();
+}
+
+function toggleAllBatchPOItems(checked) {
+  _batchPOItems.forEach(it => { it.selected = checked; });
+  renderBatchPOItemsTable();
+}
+
+function renderBatchPOItemsTable() {
+  const tbody = document.getElementById('tbody-bpo-items');
+  if (!tbody) return;
+
+  let displayItems = [];
+
+  if (_batchPOGroupBySKU) {
+    const groupMap = {};
+    _batchPOItems.forEach(it => {
+      const key = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+      if (!groupMap[key]) {
+        groupMap[key] = {
+          key: key,
+          product_id: it.product_id,
+          product_name: it.product_name,
+          sku: it.sku,
+          qty_sold: 0,
+          qty_po: 0,
+          unit_cost: it.unit_cost,
+          selected: it.selected,
+          order_refs: new Set(),
+          raw_items: []
+        };
+      }
+      groupMap[key].qty_sold += it.qty_sold;
+      groupMap[key].qty_po += it.qty_po;
+      groupMap[key].order_refs.add(it.order_no);
+      groupMap[key].raw_items.push(it);
+      if (it.selected) groupMap[key].selected = true;
+    });
+
+    displayItems = Object.values(groupMap).map(g => ({
+      ...g,
+      order_no_display: Array.from(g.order_refs).join(', ')
+    }));
+  } else {
+    displayItems = _batchPOItems.map(it => ({
+      ...it,
+      key: it.id,
+      order_no_display: `${it.order_no} (${it.customer_name})`
+    }));
+  }
+
+  tbody.innerHTML = displayItems.map((item) => {
+    const lineTotal = (Number(item.qty_po) || 0) * (Number(item.unit_cost) || 0);
+    return `
+      <tr style="${item.selected ? '' : 'opacity:0.4;background:#f1f5f9'}">
+        <td style="text-align:center">
+          <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="onToggleBatchPOItem('${item.key}', this.checked)">
+        </td>
+        <td style="font-size:11px;color:var(--text3);white-space:nowrap">
+          <div style="font-weight:600;color:var(--text)">${escapeHTML(item.order_no_display)}</div>
+        </td>
+        <td>
+          <div style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(item.product_name)}</div>
+          ${item.sku ? `<span class="badge badge-gray font-mono" style="font-size:10px">${escapeHTML(item.sku)}</span>` : ''}
+        </td>
+        <td style="text-align:right;font-size:12px;color:var(--text3);font-family:monospace">
+          ${item.qty_sold}
+        </td>
+        <td style="text-align:right">
+          <input type="number" min="1" step="1" value="${item.qty_po}" onchange="onChangeBatchPOQty('${item.key}', this.value)" style="width:70px;text-align:right;font-weight:700;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
+        </td>
+        <td style="text-align:right">
+          <input type="number" min="0" step="0.01" value="${item.unit_cost}" onchange="onChangeBatchPOCost('${item.key}', this.value)" style="width:80px;text-align:right;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
+        </td>
+        <td style="text-align:right;font-weight:700;font-family:monospace">
+          ${fmtB(lineTotal)}
+        </td>
+        <td style="text-align:center">
+          <button class="btn btn-secondary btn-sm" style="padding:2px 5px;font-size:10px;color:var(--red)" onclick="removeBatchPOItem('${item.key}')">✕</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  calcBatchPOTotals();
+}
+
+function onToggleBatchPOItem(key, checked) {
+  if (_batchPOGroupBySKU) {
+    _batchPOItems.forEach(it => {
+      const itKey = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+      if (itKey === key) it.selected = checked;
+    });
+  } else {
+    const item = _batchPOItems.find(it => it.id === key);
+    if (item) item.selected = checked;
+  }
+  renderBatchPOItemsTable();
+}
+
+function onChangeBatchPOQty(key, newQty) {
+  const val = Math.max(1, Number(newQty) || 1);
+  if (_batchPOGroupBySKU) {
+    const matching = _batchPOItems.filter(it => {
+      const itKey = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+      return itKey === key;
+    });
+    if (matching.length) {
+      const perItem = Math.max(1, Math.round(val / matching.length));
+      matching.forEach(it => { it.qty_po = perItem; });
+    }
+  } else {
+    const item = _batchPOItems.find(it => it.id === key);
+    if (item) item.qty_po = val;
+  }
+  renderBatchPOItemsTable();
+}
+
+function onChangeBatchPOCost(key, newCost) {
+  const val = Math.max(0, Number(newCost) || 0);
+  if (_batchPOGroupBySKU) {
+    _batchPOItems.forEach(it => {
+      const itKey = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+      if (itKey === key) it.unit_cost = val;
+    });
+  } else {
+    const item = _batchPOItems.find(it => it.id === key);
+    if (item) item.unit_cost = val;
+  }
+  renderBatchPOItemsTable();
+}
+
+function removeBatchPOItem(key) {
+  if (_batchPOGroupBySKU) {
+    _batchPOItems = _batchPOItems.filter(it => {
+      const itKey = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+      return itKey !== key;
+    });
+  } else {
+    _batchPOItems = _batchPOItems.filter(it => it.id !== key);
+  }
+  renderBatchPOItemsTable();
+}
+
+function calcBatchPOTotals() {
+  const selectedItems = _batchPOItems.filter(it => it.selected);
+  const cntEl = document.getElementById('bpo-selected-count');
+  if (cntEl) cntEl.textContent = selectedItems.length;
+
+  let totalQty = 0;
+  let subtotal = 0;
+
+  if (_batchPOGroupBySKU) {
+    const groupMap = {};
+    selectedItems.forEach(it => {
+      const key = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+      if (!groupMap[key]) {
+        groupMap[key] = { qty_po: 0, unit_cost: it.unit_cost };
+      }
+      groupMap[key].qty_po += it.qty_po;
+    });
+    Object.values(groupMap).forEach(g => {
+      totalQty += g.qty_po;
+      subtotal += g.qty_po * g.unit_cost;
+    });
+  } else {
+    selectedItems.forEach(it => {
+      totalQty += it.qty_po;
+      subtotal += it.qty_po * it.unit_cost;
+    });
+  }
+
+  const vatOn = document.getElementById('bpo-vat-on')?.checked || false;
+  const vatType = document.getElementById('bpo-vat-type')?.value || 'excluded';
+  const vatAmt = vatOn ? (vatType === 'excluded' ? subtotal * 0.07 : subtotal - subtotal / 1.07) : 0;
+  const netTotal = vatType === 'excluded' ? subtotal + vatAmt : subtotal;
+
+  const sqEl = document.getElementById('bpo-sum-qty');
+  if (sqEl) sqEl.textContent = `${totalQty} ชิ้น`;
+
+  const ssubEl = document.getElementById('bpo-sum-subtotal');
+  if (ssubEl) ssubEl.textContent = fmtB(subtotal);
+
+  const svBox = document.getElementById('bpo-vat-amount-box');
+  if (svBox) svBox.style.display = vatOn ? 'block' : 'none';
+
+  const svEl = document.getElementById('bpo-sum-vat');
+  if (svEl) svEl.textContent = fmtB(vatAmt);
+
+  const stotEl = document.getElementById('bpo-sum-total');
+  if (stotEl) stotEl.textContent = fmtB(netTotal);
+
+  return { totalQty, subtotal, vatAmt, netTotal };
+}
+
+async function saveBatchPOFromOrders(status = 'sent') {
+  const supplierSel = document.getElementById('bpo-supplier-sel');
+  const supplierId = supplierSel?.value;
+  if (!supplierId) {
+    toast('กรุณาเลือก Supplier ผู้จัดจำหน่าย', 'error');
+    supplierSel?.focus();
+    return;
+  }
+
+  const supplierName = allSuppliers.find(s => s.id === supplierId)?.name || '';
+  const supplierPhone = allSuppliers.find(s => s.id === supplierId)?.phone || '';
+  const date = document.getElementById('bpo-date')?.value || today();
+  const expectedDate = document.getElementById('bpo-expected')?.value || null;
+  const note = document.getElementById('bpo-note')?.value || '';
+
+  const selectedItems = _batchPOItems.filter(it => it.selected && it.qty_po > 0);
+  if (!selectedItems.length) {
+    toast('กรุณาเลือกรายการสินค้าที่ต้องการสั่งซื้ออย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+
+  const { totalQty, subtotal, vatAmt, netTotal } = calcBatchPOTotals();
+  const vatOn = document.getElementById('bpo-vat-on')?.checked || false;
+  const vatType = document.getElementById('bpo-vat-type')?.value || 'excluded';
+
+  const poNo = await generatePONo(date);
+
+  const poPayload = {
+    shop_id: currentShop.id,
+    po_no: poNo,
+    po_date: date,
+    expected_date: expectedDate,
+    supplier_id: supplierId,
+    supplier_name: supplierName,
+    supplier_contact: supplierPhone,
+    note: note,
+    status: status,
+    total_amount: Math.round(netTotal * 100) / 100,
+    vat_amount: Math.round(vatAmt * 100) / 100,
+    vat_type: vatOn ? vatType : null,
+  };
+
+  try {
+    toast('กำลังสร้าง Purchase Order ' + poNo + '...', 'info');
+    const { data: po, error: poErr } = await sb.from('purchase_orders').insert(poPayload).select().single();
+    if (poErr || !po) {
+      toast('สร้าง PO ไม่สำเร็จ: ' + (poErr?.message || 'เกิดข้อผิดพลาด'), 'error');
+      return;
+    }
+
+    let itemsToInsert = [];
+    if (_batchPOGroupBySKU) {
+      const groupMap = {};
+      selectedItems.forEach(it => {
+        const key = it.product_id ? ('P_' + it.product_id) : ('N_' + it.product_name);
+        if (!groupMap[key]) {
+          groupMap[key] = {
+            po_id: po.id,
+            product_id: it.product_id || null,
+            product_name: it.product_name,
+            qty_ordered: 0,
+            qty_received: 0,
+            unit_cost: it.unit_cost
+          };
+        }
+        groupMap[key].qty_ordered += it.qty_po;
+      });
+      itemsToInsert = Object.values(groupMap);
+    } else {
+      itemsToInsert = selectedItems.map(it => ({
+        po_id: po.id,
+        product_id: it.product_id || null,
+        product_name: it.product_name,
+        qty_ordered: it.qty_po,
+        qty_received: 0,
+        unit_cost: it.unit_cost
+      }));
+    }
+
+    const { error: itemsErr } = await sb.from('purchase_order_items').insert(itemsToInsert);
+    if (itemsErr) {
+      console.error('Error inserting batch PO items:', itemsErr);
+      toast('สร้าง PO ได้แต่รายการสินค้าขัดข้อง: ' + itemsErr.message, 'error');
+    } else {
+      toast(`🎉 สร้างใบสั่งซื้อ ${poNo} เรียบร้อยแล้ว (รวม ${itemsToInsert.length} รายการ จาก ${Array.from(_selectedSOIds).length || 'หลาย'} ออเดอร์) ✓`, 'success');
+    }
+
+    _selectedSOIds.clear();
+    updateSOSelectCount();
+    document.getElementById('modal-batch-po')?.remove();
+
+    showPage('purchase');
+    setTimeout(() => {
+      viewPO(po.id);
+    }, 400);
+
+  } catch(err) {
+    toast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+  }
+}
+
 function renderMobileCards(containerId, rows, cardFn) {
   const el = document.getElementById(containerId);
   if (!el) return;
