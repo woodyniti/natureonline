@@ -7798,6 +7798,19 @@ async function stock() {
     </div>`;
 
   setContent(`
+    <!-- Mobile Quick Action Toolbar -->
+    <div class="mobile-only mb-3" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px">
+      <button class="btn btn-primary" onclick="openStockModal()" style="padding:10px 4px;font-size:12px;font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <span style="font-size:16px">📥</span> + รับสินค้าเข้า
+      </button>
+      <button class="btn btn-secondary" onclick="openGoodsReturnModal()" style="padding:10px 4px;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <span style="font-size:16px">↩</span> คืนสินค้า
+      </button>
+      <button class="btn btn-secondary" onclick="openGoodsIssueModal()" style="padding:10px 4px;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <span style="font-size:16px">📤</span> จ่ายสินค้าออก
+      </button>
+    </div>
+
     <div class="filter-bar mb-4">
       <input type="text" id="sh-search" placeholder="🔍 ค้นหาประวัติ ชื่อสินค้า / Lot" oninput="filterStockHistory()" style="flex:1;min-width:160px">
       <select id="sh-prod-filter" onchange="filterStockHistory()" style="min-width:140px">
@@ -7899,7 +7912,7 @@ async function stock() {
     </div>
 
     <!-- ─── Modal: Goods Return ─────────────────────────────── -->
-    <div class="modal-overlay" id="modal-gr">
+    <div class="modal-overlay" id="modal-goods-return">
       <div class="modal" style="max-width:700px">
         <div class="modal-title">↩ คืนสินค้า (Goods Return)</div>
         <div class="form-group" style="margin-bottom:12px">
@@ -7924,7 +7937,7 @@ async function stock() {
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('modal-gr')">ยกเลิก</button>
+          <button class="btn btn-secondary" onclick="closeModal('modal-goods-return')">ยกเลิก</button>
           <button class="btn btn-danger" onclick="saveGoodsReturn()">↩ บันทึกคืนสินค้า</button>
         </div>
       </div>
@@ -9126,7 +9139,7 @@ async function openGoodsReturnModal() {
   document.getElementById('gr-remark').value = '';
   document.getElementById('gr-rows-wrap').innerHTML =
     '<div style="color:var(--text3);padding:16px;text-align:center;background:var(--bg3);border-radius:8px;font-size:13px">เลือก PO เพื่อดูรายการสินค้าที่รับเข้า</div>';
-  openModal('modal-gr');
+  openModal('modal-goods-return');
   await loadReceivedPOsForGR();
 }
 
@@ -9233,7 +9246,7 @@ async function saveGoodsReturn() {
   }).eq('id', poId);
 
   await recalcStockQty([...new Set(valid.map(r => r.product_id))]);
-  closeModal('modal-gr');
+  closeModal('modal-grpo');
   toast('บันทึกคืนสินค้าสำเร็จ '+valid.length+' รายการ ✓','success');
   loadStockHistory();
 }
@@ -10791,10 +10804,10 @@ async function grpo() {
     <div class="card" id="gr-list"><div class="loading"><div class="spinner"></div></div></div>
 
     <!-- Goods Receipt Modal -->
-    <div class="modal-overlay" id="modal-gr">
-      <div class="modal" style="max-width:680px">
-        <div id="gr-content"></div>
-        <div class="modal-footer" id="gr-footer"></div>
+    <div class="modal-overlay" id="modal-grpo">
+      <div class="modal" style="max-width:680px;display:flex;flex-direction:column;max-height:90vh">
+        <div id="gr-content" style="flex:1;overflow-y:auto"></div>
+        <div class="modal-footer" id="gr-footer" style="position:sticky;bottom:0;background:#fff;z-index:20;border-top:1px solid var(--border);padding-top:10px;margin-top:8px"></div>
       </div>
     </div>
   `);
@@ -10891,7 +10904,7 @@ async function openGR(poId) {
         <div class="modal-title" style="margin-bottom:2px">📦 บันทึกรับสินค้าเข้าสต๊อก</div>
         <div style="font-size:13px;color:var(--text);font-weight:700">${escapeHTML(po.po_no||'-')} · <span style="color:var(--accent)">${escapeHTML(po.supplier_name||'')}</span></div>
       </div>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-gr')" style="padding:4px 8px">✕ ปิด</button>
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-grpo')" style="padding:4px 8px">✕ ปิด</button>
     </div>
 
     <!-- Mobile Header Card -->
@@ -10979,12 +10992,12 @@ async function openGR(poId) {
 
   document.getElementById('gr-footer').innerHTML = `
     <div style="display:flex;gap:8px;width:100%">
-      <button class="btn btn-secondary" onclick="closeModal('modal-gr')" style="flex:1;min-height:44px;font-size:14px">ยกเลิก</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-grpo')" style="flex:1;min-height:44px;font-size:14px">ยกเลิก</button>
       <button class="btn btn-primary" onclick="confirmGR('${poId}',${pending.length})" style="flex:2;min-height:44px;font-size:15px;font-weight:700;background:#16a34a;border-color:#15803d">✅ ยืนยันรับสินค้าเข้าคลัง</button>
     </div>
   `;
 
-  openModal('modal-gr');
+  openModal('modal-grpo');
 }
 
 function adjustGRQty(idx, delta, maxVal) {
@@ -11113,7 +11126,7 @@ async function confirmGR(poId, pendingCount) {
     status: allDone ? 'received' : 'partial'
   }).eq('id',poId);
 
-  closeModal('modal-gr');
+  closeModal('modal-grpo');
   toast('รับสินค้าสำเร็จ ✓ Stock อัพเดทแล้ว','success');
   loadGRPO();
 }
