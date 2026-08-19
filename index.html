@@ -481,6 +481,11 @@ tbody td:first-child { color: var(--text); }
   .stat-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; gap: 10px; }
 
+  /* ── Mobile Product Search Bar Styling ── */
+  .prod-search-card { padding: 10px !important; margin-bottom: 12px !important; }
+  .prod-search-card input#prod-search { height: 48px !important; font-size: 15px !important; }
+  .prod-quick-pills button { min-height: 32px !important; }
+
   /* ── Mobile Goods Receipt & Stock In Styling ── */
   .gr-item-card { width: 100%; box-sizing: border-box; }
   .stock-row-inner { display: flex !important; flex-direction: column !important; gap: 8px !important; align-items: stretch !important; }
@@ -6595,11 +6600,28 @@ async function products() {
   document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openModal('modal-product')">+ เพิ่มสินค้า</button>`;
 
   setContent(`
-    <div class="filter-bar mb-4">
-      <input type="text" id="prod-search" placeholder="🔍 ค้นหา ชื่อ / SKU / Part No / หมวด — ใช้ * ได้ เช่น OS*20X6 หรือหลายคำ เช่น oil 20 viton" oninput="filterProducts()" title="* = อักขระใดๆ, ? = 1 ตัว ; เว้นวรรคหลายคำ = ต้องเจอทุกคำ" style="flex:1;min-width:180px">
-      <select id="prod-cat-filter" onchange="filterProducts()">
-        <option value="">ทุกหมวดหมู่</option>
-      </select>
+    <!-- Prominent High-Contrast Product Search Box -->
+    <div class="prod-search-card mb-4" style="background:#fff;border:2px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,168,130,0.12)">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:240px">
+          <input type="text" id="prod-search" placeholder="🔍 ค้นหาสินค้า / ขนาด / SKU / Wildcard (* เช่น 35*50*8, TC*35*50, viton)..." oninput="onProdSearchInput(this.value)" title="รองรับ * เช่น 35*50*8 หรือหลายคำเว้นวรรค" 
+            style="width:100%;height:46px;background:#f8fafc;border:1.5px solid var(--border2);border-radius:9px;padding:0 36px 0 14px;font-size:15px;font-weight:600;color:var(--text);box-sizing:border-box;outline:none;transition:border-color 0.2s">
+          <button type="button" id="btn-clear-prod-search" onclick="clearProductSearch()" style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:4px">✕</button>
+        </div>
+        <select id="prod-cat-filter" onchange="filterProducts()" style="height:46px;background:#fff;border:1.5px solid var(--border2);border-radius:9px;padding:0 12px;font-size:14px;font-weight:600;color:var(--text);min-width:140px">
+          <option value="">📁 ทุกหมวดหมู่</option>
+        </select>
+      </div>
+
+      <!-- Quick Filter Pills for Fast 1-Tap Search on Mobile -->
+      <div style="display:flex;gap:6px;overflow-x:auto;margin-top:10px;padding-top:8px;border-top:1px solid #f1f5f9;scrollbar-width:none;-webkit-overflow-scrolling:touch" class="prod-quick-pills">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickProdSearch('TC')" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">🛢️ ซีล TC</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickProdSearch('O-Ring')" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">⭕ โอริง</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickProdSearch('Viton')" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">🔥 ไวตัน (FKM)</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickProdSearch('PU')" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">💧 ไฮดรอลิก PU</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="filterZeroStock()" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;color:var(--red);font-weight:600">⚠️ สต๊อก = 0</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="clearProductSearch()" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">📋 ดูทั้งหมด</button>
+      </div>
     </div>
     <div class="stat-grid mb-4" id="prod-stats"></div>
 
@@ -6871,18 +6893,47 @@ async function loadProducts() {
   loadProductDashboard();
 }
 
-// ค้นหาแบบ wildcard: * = อักขระใดๆ (รวมว่าง), ? = 1 ตัว ; ไม่มี wildcard = ค้นแบบมีคำนี้อยู่ (substring)
+// ค้นหาแบบ wildcard: * = อักขระใดๆ, ? = 1 ตัว ; ไม่มี wildcard = ค้นแบบมีคำนี้อยู่ (substring)
 function wildcardMatch(str, pattern) {
   if (!pattern) return true;
   str = String(str||'').toLowerCase();
   pattern = String(pattern).toLowerCase();
   if (pattern.indexOf('*') >= 0 || pattern.indexOf('?') >= 0) {
-    const re = new RegExp(pattern.replace(/[.+^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*').replace(/\?/g,'.'), 'i');
-    return re.test(str);
+    const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*').replace(/\?/g, '.');
+    try {
+      const re = new RegExp(escaped, 'i');
+      return re.test(str);
+    } catch(e) {
+      return str.includes(pattern.replace(/[*?]/g, ''));
+    }
   }
   return str.includes(pattern);
 }
 
+function onProdSearchInput(val) {
+  const clearBtn = document.getElementById('btn-clear-prod-search');
+  if (clearBtn) clearBtn.style.display = val.trim() ? 'block' : 'none';
+  filterProducts();
+}
+
+function clearProductSearch() {
+  const el = document.getElementById('prod-search');
+  if (el) el.value = '';
+  const clearBtn = document.getElementById('btn-clear-prod-search');
+  if (clearBtn) clearBtn.style.display = 'none';
+  const cf = document.getElementById('prod-cat-filter');
+  if (cf) cf.value = '';
+  filterProducts();
+}
+
+function setQuickProdSearch(term) {
+  const el = document.getElementById('prod-search');
+  if (el) {
+    el.value = term;
+    onProdSearchInput(term);
+    el.focus();
+  }
+}
 
 function switchAddProdTab(tabNum) {
   [1, 2, 3].forEach(n => {
@@ -6896,8 +6947,8 @@ function switchAddProdTab(tabNum) {
 let allCrossReferences = [];
 
 function parseDimensionQuery(q) {
-  // Matches formats like 25*40*7 or 25x40x7 or 25 40 7
-  const m = q.match(/^(\d+(?:\.\d+)?)[*xX\s]+(\d+(?:\.\d+)?)(?:[*xX\s]+(\d+(?:\.\d+)?))?$/);
+  // Matches formats like 25*40*7 or 25x40x7 or 25 40 7 or 25-40-7
+  const m = q.match(/^(\d+(?:\.\d+)?)[*xX\s/-]+(\d+(?:\.\d+)?)(?:[*xX\s/-]+(\d+(?:\.\d+)?))?$/);
   if (!m) return null;
   return { id: Number(m[1]), od: Number(m[2]), w: m[3] ? Number(m[3]) : null };
 }
@@ -6915,26 +6966,59 @@ function filterProducts() {
         const odMatch = p.outer_diameter && Number(p.outer_diameter) === dim.od;
         const wMatch = dim.w ? (p.width && Number(p.width) === dim.w) : true;
         if (idMatch && odMatch && wMatch) return true;
-        // fallback text search
-        const txt = `${p.name} ${p.sku} ${p.supplier_sku} ${p.part_no}`.toLowerCase();
-        return txt.includes(q.toLowerCase());
+        
+        // Match in concatenated text
+        const txt = `${p.name||''} ${p.sku||''} ${p.supplier_sku||''} ${p.part_no||''}`.toLowerCase();
+        const normTxt = txt.replace(/[-*xX×/\s]+/g, 'x');
+        const normQ = q.toLowerCase().replace(/[-*xX×/\s]+/g, 'x');
+        return txt.includes(q.toLowerCase()) || normTxt.includes(normQ);
       });
     } else {
       const terms = q.split(/\s+/).filter(Boolean);
       filtered = filtered.filter(p => {
-        // Match product fields
+        // Collect all searchable fields
         const fields = [
-          p.name, p.sku, p.supplier_sku, p.part_no, p.category,
-          p.material, p.seal_type, p.hs_code, p.machine_model,
+          p.name || '',
+          p.sku || '',
+          p.supplier_sku || '',
+          p.part_no || '',
+          p.item_no || '',
+          p.category || '',
+          p.material || '',
+          p.seal_type || '',
+          p.hs_code || '',
+          p.machine_model || '',
           p.inner_diameter ? String(p.inner_diameter) : '',
           p.outer_diameter ? String(p.outer_diameter) : '',
-          p.width ? String(p.width) : ''
+          p.width ? String(p.width) : '',
+          (p.inner_diameter && p.outer_diameter) ? `${p.inner_diameter}x${p.outer_diameter}${p.width?('x'+p.width):''}` : '',
+          (p.inner_diameter && p.outer_diameter) ? `${p.inner_diameter}-${p.outer_diameter}${p.width?('-'+p.width):''}` : '',
+          (p.inner_diameter && p.outer_diameter) ? `${p.inner_diameter}*${p.outer_diameter}${p.width?('*'+p.width):''}` : ''
         ];
-        // Match xrefs
-        const pXrefs = allCrossReferences.filter(x => x.product_id === p.id);
-        pXrefs.forEach(x => { fields.push(x.brand); fields.push(x.reference_part_no); });
 
-        return terms.every(t => fields.some(f => wildcardMatch(f, t)));
+        // Match cross references
+        const pXrefs = allCrossReferences.filter(x => x.product_id === p.id);
+        pXrefs.forEach(x => {
+          if (x.brand) fields.push(x.brand);
+          if (x.reference_part_no) fields.push(x.reference_part_no);
+        });
+
+        const combinedFullText = fields.join(' ').toLowerCase();
+        const normalizedFullText = combinedFullText.replace(/[-*xX×/\s]+/g, 'x');
+
+        return terms.every(t => {
+          const tLower = t.toLowerCase();
+          const normT = tLower.replace(/[-*xX×/\s]+/g, 'x');
+          
+          // 1. Direct wildcard / substring on single fields
+          if (fields.some(f => wildcardMatch(f, tLower))) return true;
+          // 2. Wildcard on combined full product text
+          if (wildcardMatch(combinedFullText, tLower)) return true;
+          // 3. Dimension-normalized wildcard match (e.g. 35*50*8 vs 35X50X8 vs 35-50-8)
+          if (wildcardMatch(normalizedFullText, normT)) return true;
+
+          return false;
+        });
       });
     }
   }
