@@ -1078,7 +1078,7 @@ function canSee(page) {
   // admin เห็นทุกหน้ายกเว้น settings
   if (role === 'admin') return page !== 'settings';
   const perms = currentUser?._perms || {};
-  if (page === 'aiIntelligence') return true;
+  if (page === 'aiIntelligence' || page === 'contentstudio') return true;
   if (page === 'stockPlanning' && perms?.products) return true;
   if (page === 'chinaImport' && perms?.purchase) return true;
   if (page === 'marketplace' && (perms?.orders || perms?.sales)) return true;
@@ -1094,8 +1094,11 @@ function renderSidebar() {
   if (!nav) return;
   // กรอง menu ตาม permission
   const allMenus = [
-    {section: t('nav.overview')},
+    {section: '✨ AI & การตลาด (AI Marketing)', accent: true},
+    {page:'contentstudio', icon:'🎨', label: 'AI Content Studio (สร้างโพสต์)'},
     {page:'aiIntelligence', icon:'🤖', label: 'AI วิเคราะห์ธุรกิจ (AI Advisor)'},
+
+    {section: t('nav.overview')},
     {page:'ownerDashboard', icon:'🏠', label: t('nav.owner')},
     {page:'dashboard',      icon:'📊', label: t('nav.dashboard')},
     {page:'monthly',        icon:'📅', label: t('nav.monthly')},
@@ -1107,7 +1110,6 @@ function renderSidebar() {
     {page:'orders',      icon:'🛒', label: 'ออเดอร์ (SO)'},
     {page:'arinvoice',   icon:'💰', label: 'AR Invoice'},
     {page:'marketplace', icon:'🛍️', label: 'มาร์เก็ตเพลส (Marketplace Hub)'},
-    {page:'contentstudio', icon:'✨', label: 'AI Content Studio (สร้างโพสต์)'},
     {page:'goodsreturn', icon:'🔄', label: 'รับคืนสินค้า'},
     {page:'expenses',    icon:'💸', label: t('nav.expenses')},
     {page:'finance',     icon:'📈', label: 'รายได้อื่น & เงินลงทุน'},
@@ -22450,34 +22452,6 @@ async function deleteApprovedSub(id) {
   loadApprovedSubstitutesTable();
 }
 
-</script>
-
-<!-- Mobile Bottom Nav -->
-<button id="back-to-top" onclick="scrollToTop()" title="กลับขึ้นบนสุด" aria-label="กลับขึ้นบนสุด">↑</button>
-
-<div class="mobile-bottom-nav" id="mobile-bottom-nav">
-  <button class="mob-nav-item" onclick="showPage('dashboard')" data-page="dashboard">
-    <span class="mob-icon">📊</span><span>ภาพรวม</span>
-  </button>
-  <button class="mob-nav-item" onclick="showPage('orders')" data-page="orders">
-    <span class="mob-icon">🛒</span><span>ออเดอร์</span>
-  </button>
-  <button class="mob-nav-item" onclick="showPage('arinvoice')" data-page="arinvoice">
-    <span class="mob-icon">💰</span><span>AR</span>
-  </button>
-  <button class="mob-nav-item" onclick="showPage('purchase')" data-page="purchase">
-    <span class="mob-icon">📝</span><span>PO</span>
-  </button>
-  <button class="mob-nav-item" onclick="showPage('products')" data-page="products">
-    <span class="mob-icon">📦</span><span>สินค้า</span>
-  </button>
-  <button class="mob-nav-item" onclick="toggleSidebar()" id="mob-more-btn">
-    <span class="mob-icon">☰</span><span>เพิ่มเติม</span>
-  </button>
-</div>
-</body>
-</html>
-
 
 
 // ══════════════════════════════════════════════════════════
@@ -22811,3 +22785,31 @@ function switchCSPreviewTab(tab) {
     openLiveSampleBlogPage();
   }
 }
+
+</script>
+
+<!-- Mobile Bottom Nav -->
+<button id="back-to-top" onclick="scrollToTop()" title="กลับขึ้นบนสุด" aria-label="กลับขึ้นบนสุด">↑</button>
+
+<div class="mobile-bottom-nav" id="mobile-bottom-nav">
+  <button class="mob-nav-item" onclick="showPage('dashboard')" data-page="dashboard">
+    <span class="mob-icon">📊</span><span>ภาพรวม</span>
+  </button>
+  <button class="mob-nav-item" onclick="showPage('orders')" data-page="orders">
+    <span class="mob-icon">🛒</span><span>ออเดอร์</span>
+  </button>
+  <button class="mob-nav-item" onclick="showPage('arinvoice')" data-page="arinvoice">
+    <span class="mob-icon">💰</span><span>AR</span>
+  </button>
+  <button class="mob-nav-item" onclick="showPage('purchase')" data-page="purchase">
+    <span class="mob-icon">📝</span><span>PO</span>
+  </button>
+  <button class="mob-nav-item" onclick="showPage('products')" data-page="products">
+    <span class="mob-icon">📦</span><span>สินค้า</span>
+  </button>
+  <button class="mob-nav-item" onclick="toggleSidebar()" id="mob-more-btn">
+    <span class="mob-icon">☰</span><span>เพิ่มเติม</span>
+  </button>
+</div>
+</body>
+</html>
