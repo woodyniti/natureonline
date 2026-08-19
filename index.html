@@ -7898,15 +7898,24 @@ async function stock() {
       </button>
     </div>
 
-    <div class="filter-bar mb-4">
-      <input type="text" id="sh-search" placeholder="🔍 ค้นหาประวัติ ชื่อสินค้า / Lot" oninput="filterStockHistory()" style="flex:1;min-width:160px">
-      <select id="sh-prod-filter" onchange="filterStockHistory()" style="min-width:140px">
+    <!-- View Switcher Tabs -->
+    <div class="tabs mb-3" style="display:flex;gap:6px">
+      <button type="button" class="tab active" id="tab-stock-docs" onclick="switchStockView('docs')">📄 รายการเอกสารรับเข้า (Goods Receipts)</button>
+      <button type="button" class="tab" id="tab-stock-items" onclick="switchStockView('items')">📦 ประวัติเคลื่อนไหวรายสินค้า (Item Movement Log)</button>
+    </div>
+
+    <!-- Document Search / Filter Bar -->
+    <div class="filter-bar mb-4" id="stock-filter-bar">
+      <input type="text" id="sh-search" placeholder="🔍 ค้นหาเอกสาร: เลขที่ Lot / PO / Supplier / สินค้า" oninput="filterStockHistory()" style="flex:1;min-width:180px">
+      <select id="sh-prod-filter" onchange="filterStockHistory()" style="min-width:140px;display:none">
         <option value="">ทุกสินค้า</option>
       </select>
     </div>
+
+    <!-- Document / Movements Container -->
     <div class="card">
       <div class="card-title flex-between">
-        <span>📋 ประวัติการเคลื่อนไหวสต๊อก</span>
+        <span id="stock-view-title">📄 รายการเอกสารใบรับสินค้าเข้า (Goods Receipts)</span>
         <span id="sh-count" style="font-size:12px;color:var(--text3)"></span>
       </div>
       <div class="table-wrap" id="stock-table"><div class="loading"><div class="spinner"></div></div></div>
@@ -8848,29 +8857,384 @@ async function openProductHistory(productId) {
   ov.addEventListener('click', e => { if (e.target === ov) closeProductHistory(); });
 }
 
-// ── Stock history ──────────────────────────────────────
+// ── Stock history & Document-Based Goods Receipt ─────────────────
 let allStockHistory = [];
+let allStockDocs = [];
+let _stockCurrentView = 'docs'; // 'docs' or 'items'
 
 async function loadStockHistory() {
-  // ดึง: รับเข้า (in) + คืนสินค้า (note เริ่ม GR|) + จ่ายออก (note เริ่ม GI|)
-  const { data } = await sb.from('stock_movements')
-    .select('*,products(name)')
-    .eq('shop_id', currentShop.id)
-    .or('move_type.eq.in,note.like.GR|%,note.like.GI|%')
-    .order('move_date',{ascending:false})
-    .limit(300);
-  allStockHistory = data || [];
+  const [mvRes, lcRes, poRes] = await Promise.all([
+    sb.from('stock_movements')
+      .select('*,products(id,name,sku)')
+      .eq('shop_id', currentShop.id)
+      .or('move_type.eq.in,note.like.GR|%,note.like.GI|%')
+      .order('move_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(600),
+    sb.from('landed_costs')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .limit(300),
+    sb.from('purchase_orders')
+      .select('id,po_no,po_date,supplier_name,total_amount')
+      .eq('shop_id', currentShop.id)
+      .limit(300)
+  ]);
+
+  allStockHistory = mvRes.data || [];
+  const landedCosts = lcRes.data || [];
+  const poMap = new Map((poRes.data || []).map(p => [p.id, p]));
+
+  // ── Group incoming stock movements into Goods Receipt Documents ──
+  const docGroups = new Map();
+
+  allStockHistory.forEach(r => {
+    if (r.move_type !== 'in') return;
+    const po = r.po_id ? poMap.get(r.po_id) : null;
+    const poNo = po ? po.po_no : (r.note && r.note.includes('PO:') ? r.note.split('PO:')[1].trim() : '-');
+    const supName = po ? po.supplier_name : '-';
+    
+    // Group Key: Date + Lot + PO + (first 13 chars of created_at for time batching)
+    const timeKey = (r.created_at || '').slice(0, 14); // YYYY-MM-DDTHH
+    const grKey = `${r.move_date}_${r.lot_name || 'NO_LOT'}_${r.po_id || 'NO_PO'}_${timeKey}`;
+
+    if (!docGroups.has(grKey)) {
+      docGroups.set(grKey, {
+        gr_key: grKey,
+        move_date: r.move_date,
+        lot_name: r.lot_name || '-',
+        po_id: r.po_id || null,
+        po_no: poNo,
+        supplier_name: supName,
+        created_at: r.created_at,
+        items: [],
+        total_qty: 0,
+        total_base_cost: 0,
+        total_landed_cost: 0,
+        total_net_cost: 0,
+        landed_breakdown: []
+      });
+    }
+
+    const doc = docGroups.get(grKey);
+    const qty = Number(r.qty) || 0;
+    const netUnitCost = Number(r.cost_per_unit) || 0;
+    const landedShare = Number(r.other_cost) || 0;
+    const baseTotal = Math.max(0, (netUnitCost * qty) - landedShare);
+    const baseUnitCost = qty > 0 ? (baseTotal / qty) : netUnitCost;
+
+    doc.items.push({
+      movement_id: r.id,
+      product_id: r.product_id,
+      product_name: r.products?.name || 'สินค้า',
+      product_sku: r.products?.sku || '-',
+      qty: qty,
+      base_unit_cost: baseUnitCost,
+      base_total: baseTotal,
+      landed_share: landedShare,
+      net_unit_cost: netUnitCost,
+      net_total: netUnitCost * qty,
+      note: r.note || ''
+    });
+
+    doc.total_qty += qty;
+    doc.total_base_cost += baseTotal;
+    doc.total_landed_cost += landedShare;
+    doc.total_net_cost += (netUnitCost * qty);
+  });
+
+  // Attach landed costs breakdown if available
+  docGroups.forEach(doc => {
+    const matchedLC = landedCosts.filter(lc => 
+      (lc.lot_name && lc.lot_name === doc.lot_name) ||
+      (lc.po_id && doc.po_id && lc.po_id === doc.po_id && lc.move_date === doc.move_date)
+    );
+    doc.landed_breakdown = matchedLC;
+  });
+
+  allStockDocs = Array.from(docGroups.values());
 
   // populate product filter
   const seen = new Set();
-  allStockHistory.forEach(r => {
-    if (r.product_id && !seen.has(r.product_id)) {
-      seen.add(r.product_id);
-    }
-  });
+  const prodFilter = document.getElementById('sh-prod-filter');
+  if (prodFilter) {
+    let opts = '<option value="">ทุกสินค้า</option>';
+    allStockHistory.forEach(r => {
+      if (r.product_id && !seen.has(r.product_id) && r.products?.name) {
+        seen.add(r.product_id);
+        opts += `<option value="${r.product_id}">${escapeHTML(r.products.name)}</option>`;
+      }
+    });
+    prodFilter.innerHTML = opts;
+  }
 
-  renderStockTable(allStockHistory);
+  filterStockHistory();
 }
+
+function switchStockView(view) {
+  _stockCurrentView = view;
+  document.getElementById('tab-stock-docs')?.classList.toggle('active', view === 'docs');
+  document.getElementById('tab-stock-items')?.classList.toggle('active', view === 'items');
+  
+  const titleEl = document.getElementById('stock-view-title');
+  const prodFilter = document.getElementById('sh-prod-filter');
+  const searchInput = document.getElementById('sh-search');
+
+  if (view === 'docs') {
+    if (titleEl) titleEl.textContent = '📄 รายการเอกสารใบรับสินค้าเข้า (Goods Receipts)';
+    if (prodFilter) prodFilter.style.display = 'none';
+    if (searchInput) searchInput.placeholder = '🔍 ค้นหาเอกสาร: เลขที่ Lot / PO / Supplier / สินค้า';
+  } else {
+    if (titleEl) titleEl.textContent = '📦 ประวัติการเคลื่อนไหวสต๊อกรายสินค้า (Item Movements)';
+    if (prodFilter) prodFilter.style.display = 'block';
+    if (searchInput) searchInput.placeholder = '🔍 ค้นหาประวัติ ชื่อสินค้า / Lot / หมายเหตุ';
+  }
+
+  filterStockHistory();
+}
+
+function filterStockHistory() {
+  const q = (document.getElementById('sh-search')?.value || '').toLowerCase().trim();
+  const prod = document.getElementById('sh-prod-filter')?.value || '';
+
+  if (_stockCurrentView === 'docs') {
+    let docs = allStockDocs;
+    if (q) {
+      docs = docs.filter(d => 
+        (d.lot_name || '').toLowerCase().includes(q) ||
+        (d.po_no || '').toLowerCase().includes(q) ||
+        (d.supplier_name || '').toLowerCase().includes(q) ||
+        d.items.some(it => (it.product_name || '').toLowerCase().includes(q) || (it.product_sku || '').toLowerCase().includes(q))
+      );
+    }
+    renderStockDocumentsTable(docs);
+  } else {
+    let rows = allStockHistory;
+    if (q) {
+      rows = rows.filter(r =>
+        (r.products?.name || '').toLowerCase().includes(q) ||
+        (r.products?.sku || '').toLowerCase().includes(q) ||
+        (r.lot_name || '').toLowerCase().includes(q) ||
+        (r.note || '').toLowerCase().includes(q)
+      );
+    }
+    if (prod) rows = rows.filter(r => r.product_id === prod);
+    renderStockTable(rows);
+  }
+}
+
+function renderStockDocumentsTable(docs) {
+  const cnt = document.getElementById('sh-count');
+  if (cnt) cnt.textContent = `${docs.length} ใบรับเข้า`;
+  const el = document.getElementById('stock-table');
+  if (!el) return;
+
+  if (!docs.length) {
+    el.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">📄</div>
+        <div class="empty-text">ยังไม่มีเอกสารใบรับสินค้าเข้า</div>
+        <button class="btn btn-primary btn-sm mt-3" onclick="openStockModal()">+ สร้างใบรับสินค้าเข้าใหม่</button>
+      </div>
+    `;
+    return;
+  }
+
+  if (!isMob()) {
+    el.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>วันที่รับ</th>
+            <th>Lot / เลขที่รับเข้า</th>
+            <th>PO อ้างอิง</th>
+            <th>ผู้จำหน่าย (Supplier)</th>
+            <th class="text-right">จำนวนรายการ</th>
+            <th class="text-right">มูลค่าสินค้า</th>
+            <th class="text-right">Landed Cost</th>
+            <th class="text-right">ต้นทุนรวมสุทธิ</th>
+            <th style="text-align:center;min-width:100px">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${docs.map(d => `
+            <tr>
+              <td style="white-space:nowrap;font-size:12px;font-weight:600">${escapeHTML(d.move_date)}</td>
+              <td>
+                <div style="font-weight:700;color:var(--text)">🏷️ ${escapeHTML(d.lot_name)}</div>
+                <div style="font-size:10px;color:var(--text3)">${d.items.length} รายการ · รวม ${fmt(d.total_qty)} ชิ้น</div>
+              </td>
+              <td>
+                ${d.po_no !== '-' ? `<span class="badge badge-blue" style="cursor:pointer" onclick="showPage('purchase')" title="ดูรายละเอียด PO">${escapeHTML(d.po_no)}</span>` : '<span style="color:var(--text3)">-</span>'}
+              </td>
+              <td style="font-size:12px;color:var(--text2)">
+                ${d.supplier_name !== '-' ? escapeHTML(d.supplier_name) : '<span style="color:var(--text3)">-</span>'}
+              </td>
+              <td class="text-right font-mono" style="font-weight:600;color:var(--green)">
+                +${fmt(d.total_qty)}
+              </td>
+              <td class="text-right font-mono" style="font-size:12px">
+                ${fmtB(d.total_base_cost)}
+              </td>
+              <td class="text-right font-mono" style="font-size:12px;color:${d.total_landed_cost > 0 ? 'var(--amber)' : 'var(--text3)'}">
+                ${d.total_landed_cost > 0 ? `+${fmtB(d.total_landed_cost)}` : '฿0'}
+              </td>
+              <td class="text-right font-mono" style="font-weight:700;color:var(--accent);font-size:13px">
+                ${fmtB(d.total_net_cost)}
+              </td>
+              <td style="text-align:center;white-space:nowrap">
+                <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key)}')">👁️ ดูเอกสาร</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } else {
+    // Mobile Document Cards
+    el.innerHTML = '<div class="mobile-only">' + docs.map(d => `
+      <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--accent)">
+        <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--text)">🏷️ Lot: ${escapeHTML(d.lot_name)}</div>
+            <div style="font-size:11px;color:var(--text3)">วันที่: ${escapeHTML(d.move_date)} · PO: ${escapeHTML(d.po_no)}</div>
+          </div>
+          <div class="font-mono" style="font-size:15px;font-weight:700;color:var(--green)">
+            +${fmt(d.total_qty)} ชิ้น
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">
+          ผู้จำหน่าย: <b>${escapeHTML(d.supplier_name)}</b> (${d.items.length} รายการ)
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;padding:8px 10px;border-radius:8px;margin-bottom:10px;font-size:12px">
+          <div>
+            <span style="color:var(--text3)">Landed Cost: </span>
+            <b class="font-mono" style="color:var(--amber)">+${fmtB(d.total_landed_cost)}</b>
+          </div>
+          <div>
+            <span style="color:var(--text3)">รวมสุทธิ: </span>
+            <b class="font-mono" style="color:var(--accent);font-size:13px">${fmtB(d.total_net_cost)}</b>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key)}')">👁️ เปิดดูใบรับเข้า</button>
+        </div>
+      </div>
+    `).join('') + '</div>';
+  }
+}
+
+function openGRDocumentDetail(encodedKey) {
+  const grKey = decodeURIComponent(encodedKey);
+  const doc = allStockDocs.find(d => d.gr_key === grKey);
+  if (!doc) { toast('ไม่พบข้อมูลเอกสาร', 'error'); return; }
+
+  const modalId = 'modal-gr-doc-detail';
+  let modal = document.getElementById(modalId);
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = modalId;
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:850px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <div>
+          <div class="modal-title" style="margin:0;display:flex;align-items:center;gap:8px">
+            <span>📄 ใบรับสินค้าเข้าสต๊อก (Goods Receipt)</span>
+            <span class="badge badge-green">รับเข้าสำเร็จ</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:4px">
+            วันที่รับ: <b>${escapeHTML(doc.move_date)}</b> | Lot: <b>${escapeHTML(doc.lot_name)}</b>
+          </div>
+        </div>
+        <button onclick="closeModal('${modalId}')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      </div>
+
+      <!-- Header Info Grid -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:12px;background:var(--bg3);padding:12px;border-radius:10px;margin-bottom:16px;font-size:12px">
+        <div>
+          <div style="color:var(--text3)">PO อ้างอิง</div>
+          <div style="font-weight:700;font-size:13px;color:var(--blue)">
+            ${doc.po_no !== '-' ? `📄 ${escapeHTML(doc.po_no)}` : '-'}
+          </div>
+        </div>
+        <div>
+          <div style="color:var(--text3)">ผู้จำหน่าย (Supplier)</div>
+          <div style="font-weight:700;font-size:13px">${escapeHTML(doc.supplier_name)}</div>
+        </div>
+        <div>
+          <div style="color:var(--text3)">จำนวนที่รับรวม</div>
+          <div class="font-mono" style="font-weight:700;font-size:14px;color:var(--green)">+${fmt(doc.total_qty)} ชิ้น</div>
+        </div>
+        <div>
+          <div style="color:var(--text3)">ต้นทุนรวมสุทธิ</div>
+          <div class="font-mono" style="font-weight:800;font-size:15px;color:var(--accent)">${fmtB(doc.total_net_cost)}</div>
+        </div>
+      </div>
+
+      <!-- Itemized Table -->
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px">📦 รายการสินค้าในใบรับเข้า</div>
+      <div class="table-wrap mb-3" style="max-height:280px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>รหัส SKU</th>
+              <th>ชื่อสินค้า</th>
+              <th class="text-right">จำนวน</th>
+              <th class="text-right">ราคาซื้อ/ชิ้น</th>
+              <th class="text-right">Landed Share</th>
+              <th class="text-right">ต้นทุนสุทธิ/ชิ้น</th>
+              <th class="text-right">รวมเงิน</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${doc.items.map((it, idx) => `
+              <tr>
+                <td style="color:var(--text3);font-size:11px">${idx + 1}</td>
+                <td><span class="sku-chip">${escapeHTML(it.product_sku)}</span></td>
+                <td style="font-weight:500">${escapeHTML(it.product_name)}</td>
+                <td class="text-right font-mono" style="font-weight:700;color:var(--green)">+${fmt(it.qty)}</td>
+                <td class="text-right font-mono" style="font-size:12px">${fmtB(it.base_unit_cost)}</td>
+                <td class="text-right font-mono" style="font-size:12px;color:var(--amber)">+${fmtB(it.landed_share)}</td>
+                <td class="text-right font-mono" style="font-weight:700;color:var(--text)">${fmtB(it.net_unit_cost)}</td>
+                <td class="text-right font-mono" style="font-weight:700;color:var(--accent)">${fmtB(it.net_total)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Cost Breakdown Summary -->
+      <div style="background:var(--bg3);border-radius:10px;padding:12px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--text3)">มูลค่าราคาสินค้าตั้งต้น (Base Cost):</span>
+          <span class="font-mono">${fmtB(doc.total_base_cost)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="color:var(--text3)">ค่าใช้จ่ายเพิ่มเติม (Landed Cost รวม):</span>
+          <span class="font-mono text-amber">+${fmtB(doc.total_landed_cost)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:6px">
+          <span>ต้นทุนรับเข้าสุทธิรวมทั้งใบ:</span>
+          <span class="font-mono" style="color:var(--accent);font-size:16px">${fmtB(doc.total_net_cost)}</span>
+        </div>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์ใบรับสินค้า</button>
+        <button class="btn btn-primary" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  `;
+
+  modal.classList.add('open');
+}
+
 
 function filterStockHistory() {
   const q    = (document.getElementById('sh-search')?.value||'').toLowerCase();
