@@ -12999,8 +12999,15 @@ async function viewPO(poId) {
       const product = skuMap[it.product_id] || {};
       const pending=Number(it.qty_ordered)-Number(it.qty_received||0);
       const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
+      let displayName = it.product_name || product.sku || '-';
+      let soBadgeHTML = '';
+      const soMatch = displayName.match(/\[SO:\s*([^\]]+)\]/i);
+      if (soMatch) {
+        soBadgeHTML = '<div style="margin-top:3px"><span class="badge badge-blue font-mono" style="font-size:10px;font-weight:700">📄 SO: '+escapeHTML(soMatch[1])+'</span></div>';
+        displayName = displayName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
+      }
       return '<tr>'+
-        '<td style="text-align:center">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||it.product_name||'-')+'</span>'+poCopyButton(product.sku||it.product_name,'SKU')+'</div></td>'+
+        '<td style="text-align:center">'+(i+1)+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+'</td>'+
         '<td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.supplier_sku||'-')+'</span>'+poCopyButton(product.supplier_sku,'Supplier SKU')+'</div></td>'+
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
         '<td style="text-align:right;color:var(--accent)">'+fmt(it.qty_received||0)+'</td>'+
@@ -13171,7 +13178,14 @@ async function printPO(poId) {
   (items||[]).forEach((it,i)=>{
     const product = skuMap[it.product_id] || {};
     const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
-    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(product.sku||it.product_name||'-')+'</td><td>'+escapeHTML(product.supplier_sku||'-')+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
+    let displayName = product.sku || it.product_name || '-';
+    let soPrintHTML = '';
+    const soMatch = (it.product_name || '').match(/\[SO:\s*([^\]]+)\]/i);
+    if (soMatch) {
+      soPrintHTML = '<div style="font-size:10px;color:#1e40af;font-weight:600;margin-top:2px">📄 SO: '+escapeHTML(soMatch[1])+'</div>';
+      displayName = displayName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
+    }
+    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(displayName)+soPrintHTML+'</td><td>'+escapeHTML(product.supplier_sku||'-')+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
   });
   for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
   bp.push('</tbody></table>');
@@ -16587,17 +16601,29 @@ async function saveBatchPOFromOrders(status = 'sent') {
             product_name: it.product_name,
             qty_ordered: 0,
             qty_received: 0,
-            unit_cost: it.unit_cost
+            unit_cost: it.unit_cost,
+            order_refs: new Set()
           };
         }
         groupMap[key].qty_ordered += it.qty_po;
+        if (it.order_no) groupMap[key].order_refs.add(it.order_no);
       });
-      itemsToInsert = Object.values(groupMap);
+      itemsToInsert = Object.values(groupMap).map(g => {
+        const soStr = Array.from(g.order_refs).join(', ');
+        return {
+          po_id: g.po_id,
+          product_id: g.product_id,
+          product_name: g.product_name + (soStr ? ` [SO: ${soStr}]` : ''),
+          qty_ordered: g.qty_ordered,
+          qty_received: 0,
+          unit_cost: g.unit_cost
+        };
+      });
     } else {
       itemsToInsert = selectedItems.map(it => ({
         po_id: po.id,
         product_id: it.product_id || null,
-        product_name: it.product_name,
+        product_name: it.product_name + (it.order_no ? ` [SO: ${it.order_no}]` : ''),
         qty_ordered: it.qty_po,
         qty_received: 0,
         unit_cost: it.unit_cost
