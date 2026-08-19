@@ -16265,6 +16265,11 @@ async function openBatchSOtoPOModal() {
     allSuppliers = sups || [];
   }
 
+  // Ensure allProducts is loaded with purchase_price
+  if (!allProducts || !allProducts.length) {
+    await loadProducts();
+  }
+
   // Load orders with items
   toast('กำลังดึงรายการสินค้าจาก ' + orderIds.length + ' ออเดอร์...', 'info');
   const { data: ordersData, error } = await sb.from('orders')
@@ -16285,10 +16290,23 @@ async function openBatchSOtoPOModal() {
     const cust = ord.customer_name || 'ลูกค้าทั่วไป';
     const oDate = ord.order_date || '';
     (ord.order_items || []).forEach(it => {
-      const prod = allProducts.find(p => p.id === it.product_id || (it.product_name && p.name === it.product_name));
-      const sku = prod?.sku || it.sku || '';
-      const pName = it.product_name || prod?.name || 'สินค้า';
-      const cost = Number(it.cost_price || prod?.current_cost || 0);
+      const itProdName = (it.product_name || '').trim();
+      const itSKU = (it.sku || '').trim();
+
+      // Match product by ID, SKU, Item Code, Part No, or Name
+      const prod = allProducts.find(p => {
+        if (it.product_id && p.id === it.product_id) return true;
+        if (itSKU && (p.sku === itSKU || (p.item_no && p.item_no === itSKU) || (p.part_no && p.part_no === itSKU))) return true;
+        if (itProdName && (p.name === itProdName || p.sku === itProdName)) return true;
+        if (itProdName && p.name && p.name.toLowerCase() === itProdName.toLowerCase()) return true;
+        return false;
+      });
+
+      const sku = prod?.sku || prod?.item_no || itSKU || '';
+      const pName = itProdName || prod?.name || 'สินค้า';
+
+      // ดึงราคาซื้อที่ใส่ไว้ใน item code (purchase_price) เป็นอันดับ 1
+      const buyPrice = Number(prod?.purchase_price || prod?.current_cost || it.cost_price || 0);
       const qtySold = Number(it.qty || 1);
 
       rawItems.push({
@@ -16302,7 +16320,7 @@ async function openBatchSOtoPOModal() {
         sku: sku,
         qty_sold: qtySold,
         qty_po: qtySold,
-        unit_cost: cost,
+        unit_cost: buyPrice,
         selected: true
       });
     });
