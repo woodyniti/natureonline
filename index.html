@@ -2756,8 +2756,14 @@ async function dashboard() {
 <!-- ── Top 20 สินค้าซื้อซ้ำ ── -->
     <div class="card mb-4">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin-bottom:0">🏆 Top 20 สินค้าที่มีการซื้อซ้ำ (Repeat Purchases)</div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:13px">
+        <div>
+          <div class="card-title" style="margin-bottom:0">🏆 Top 20 สินค้าที่มีการซื้อซ้ำ (Repeat Purchases)</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">ติ๊กเลือกสินค้าที่ต้องการ แล้วกดปุ่ม "เปิด PO" เพื่อสั่งซื้อเติมสต๊อกได้ทันที</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:13px;flex-wrap:wrap">
+          <button type="button" class="btn btn-primary btn-sm" id="btn-repeat-create-po" onclick="createPOFromSelectedRepeat()" style="display:none;background:var(--accent);border-color:var(--accent);font-weight:700;box-shadow:0 2px 8px rgba(0,212,168,0.25)">
+            🛒 เปิด PO จากสินค้าที่เลือก (<span id="repeat-selected-count">0</span>)
+          </button>
           <span style="color:var(--text3)">หมวดหมู่:</span>
           <select id="repeat-cat-filter" onchange="filterRepeatProducts(this.value)" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px;color:var(--text)">
             <option value="">ทุกหมวดหมู่</option>
@@ -2772,13 +2778,16 @@ async function dashboard() {
         <table>
           <thead>
             <tr>
+              <th style="width:36px;text-align:center">
+                <input type="checkbox" id="repeat-check-all" onchange="toggleCheckAllRepeat(this.checked)" title="เลือกทั้งหมด">
+              </th>
               <th>#</th>
               <th>สินค้า</th>
               <th>หมวดหมู่</th>
-              <th class="text-right">จำนวนลูกค้าซื้อซ้ำ</th>
-              <th class="text-right">จำนวนออเดอร์</th>
-              <th class="text-right">จำนวนสินค้าที่ซื้อซ้ำ</th>
-              <th>รายละเอียด</th>
+              <th class="text-right">ลูกค้าซื้อซ้ำ</th>
+              <th class="text-right">ออเดอร์</th>
+              <th class="text-right">จำนวนซื้อซ้ำ</th>
+              <th style="text-align:center;min-width:140px">จัดการ</th>
             </tr>
           </thead>
           <tbody id="repeat-products-body">
@@ -2902,24 +2911,109 @@ function filterRepeatProducts(cat) {
   
   const top20 = list.slice(0, 20);
   
+  const checkAllEl = document.getElementById('repeat-check-all');
+  if (checkAllEl) checkAllEl.checked = false;
+  updateRepeatPOCounter();
+
   if (top20.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:var(--text3);padding:20px">ไม่พบข้อมูลการซื้อซ้ำในหมวดหมู่นี้</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center" style="color:var(--text3);padding:20px">ไม่พบข้อมูลการซื้อซ้ำในหมวดหมู่นี้</td></tr>';
     return;
   }
   
   tbody.innerHTML = top20.map((p, i) => {
-    return `<tr>
+    return `<tr id="repeat-row-${p.product_id}">
+      <td style="text-align:center">
+        <input type="checkbox" class="repeat-item-check" data-pid="${p.product_id}" data-name="${escapeHTML(p.name)}" data-qty="${p.totalQty||1}" onchange="updateRepeatPOCounter()">
+      </td>
       <td><span class="badge badge-${i===0?'amber':'gray'}">${i+1}</span></td>
-      <td style="font-weight:500">${p.name}</td>
-      <td>${p.category}</td>
+      <td style="font-weight:600;color:var(--text)">${escapeHTML(p.name)}</td>
+      <td><span class="badge badge-gray">${escapeHTML(p.category||'-')}</span></td>
       <td class="text-right font-mono">${fmt(p.repeatBuyersCount)}</td>
       <td class="text-right font-mono text-accent" style="font-weight:600">${fmt(p.orders.length)}</td>
-      <td class="text-right font-mono" style="font-weight:600">${fmt(p.totalQty)}</td>
-      <td>
-        <button class="btn btn-secondary btn-sm" onclick="viewProductRepeatOrders('${p.product_id}')">🔍 ดูออเดอร์</button>
+      <td class="text-right font-mono" style="font-weight:700;color:var(--green)">+${fmt(p.totalQty)}</td>
+      <td style="text-align:center;white-space:nowrap">
+        <button class="btn btn-secondary btn-sm" onclick="viewProductRepeatOrders('${p.product_id}')" title="ดูประวัติออเดอร์ที่ซื้อซ้ำ">🔍 ดูออเดอร์</button>
+        <button class="btn btn-primary btn-sm" onclick="createSingleRepeatPO('${p.product_id}')" style="margin-left:4px" title="เปิด PO สินค้านี้ทันที">🛒 เปิด PO</button>
       </td>
     </tr>`;
   }).join('');
+}
+
+function toggleCheckAllRepeat(checked) {
+  const checkboxes = document.querySelectorAll('.repeat-item-check');
+  checkboxes.forEach(cb => cb.checked = checked);
+  updateRepeatPOCounter();
+}
+
+function updateRepeatPOCounter() {
+  const selected = document.querySelectorAll('.repeat-item-check:checked');
+  const btn = document.getElementById('btn-repeat-create-po');
+  const counter = document.getElementById('repeat-selected-count');
+  if (counter) counter.textContent = selected.length;
+  if (btn) btn.style.display = selected.length > 0 ? 'inline-flex' : 'none';
+}
+
+async function createPOFromSelectedRepeat() {
+  const selectedCheckboxes = document.querySelectorAll('.repeat-item-check:checked');
+  if (!selectedCheckboxes.length) {
+    toast('กรุณาติ๊กเลือกสินค้าอย่างน้อย 1 รายการเพื่อเปิด PO', 'info');
+    return;
+  }
+
+  // Make sure allProducts is loaded
+  if (!allProducts || !allProducts.length) {
+    await loadProducts();
+  }
+
+  const itemsToOrder = [];
+  selectedCheckboxes.forEach(cb => {
+    const pid = cb.getAttribute('data-pid');
+    const prod = allProducts.find(p => p.id === pid) || {};
+    const repeatData = (window._repeatProductList || []).find(r => r.product_id === pid);
+    
+    // Suggest reorder quantity (e.g. recent repeat sales quantity or pack size)
+    const suggestedQty = Math.max(1, Math.min(100, Number(cb.getAttribute('data-qty')) || Number(prod.moq) || 10));
+    const cost = Number(prod.purchase_price) || Number(prod.current_cost) || 0;
+
+    itemsToOrder.push({
+      product_id: pid,
+      product_name: prod.name || cb.getAttribute('data-name') || 'สินค้า',
+      sku: prod.sku || '',
+      qty_ordered: suggestedQty,
+      unit_cost: cost
+    });
+  });
+
+  // Switch to purchase page and open new PO with prefilled items
+  showPage('purchase');
+  setTimeout(() => {
+    openNewPO(itemsToOrder, null);
+    toast(`📥 ดึง ${itemsToOrder.length} สินค้าซื้อซ้ำเข้าสู่ใบสั่งซื้อ (PO) เรียบร้อย ✓`, 'success');
+  }, 200);
+}
+
+async function createSingleRepeatPO(productId) {
+  if (!allProducts || !allProducts.length) {
+    await loadProducts();
+  }
+  const prod = allProducts.find(p => p.id === productId) || {};
+  const repeatData = (window._repeatProductList || []).find(r => r.product_id === productId);
+  const suggestedQty = Math.max(1, Math.min(100, Number(repeatData?.totalQty) || Number(prod.moq) || 10));
+  const cost = Number(prod.purchase_price) || Number(prod.current_cost) || 0;
+
+  const itemToOrder = [{
+    product_id: productId,
+    product_name: prod.name || 'สินค้า',
+    sku: prod.sku || '',
+    qty_ordered: suggestedQty,
+    unit_cost: cost
+  }];
+
+  showPage('purchase');
+  setTimeout(() => {
+    openNewPO(itemToOrder, prod.preferred_supplier_id || null);
+    toast(`📥 ดึง "${prod.name}" เข้าสู่ใบสั่งซื้อ (PO) เรียบร้อย ✓`, 'success');
+  }, 200);
 }
 
 function viewProductRepeatOrders(productId) {
@@ -13279,10 +13373,10 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   if (Array.isArray(prefilledItems) && prefilledItems.length > 0) {
     poItems = prefilledItems.map(it => ({
       product_id: it.product_id,
-      product_name: it.product_name,
-      sku: it.sku,
-      qty: it.qty,
-      buy_price: it.buy_price
+      product_name: it.product_name || it.name,
+      sku: it.sku || '',
+      qty_ordered: Number(it.qty_ordered) || Number(it.qty) || 1,
+      unit_cost: Number(it.unit_cost) || Number(it.buy_price) || Number(it.purchase_price) || 0
     }));
   }
 
