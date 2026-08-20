@@ -23120,8 +23120,11 @@ async function contentstudio() {
 
         <!-- Action Buttons Bar -->
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
-          <button class="btn btn-primary btn-full" onclick="copyCSContentForLINEVOOM()" style="background:#06c755;border-color:#059669;font-size:14px;font-weight:700;padding:12px">
-            📋 1-Click คัดลอกข้อความสำหรับ LINE VOOM
+          <button class="btn btn-primary btn-full" onclick="shareToFacebookNow()" style="background:#1877f2;border-color:#1877f2;font-size:14px;font-weight:700;padding:12px">
+            📘 1-Click แชร์ขึ้น Facebook เพจทันที
+          </button>
+          <button class="btn btn-primary btn-full" onclick="copyCSContentForLINEVOOM()" style="background:#06c755;border-color:#059669;font-size:14px;font-weight:700;padding:10px">
+            📋 คัดลอกข้อความและแฮชแท็กทั้งหมด
           </button>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
             <button class="btn btn-secondary" onclick="downloadCSCoverImage()" style="font-size:12px;font-weight:600">
@@ -23268,6 +23271,16 @@ function updateCSLivePreview() {
 
   const btnEl = document.getElementById('cs-prev-shopee-btn');
   if (btnEl) btnEl.href = shopeeLink;
+}
+
+
+function shareToFacebookNow() {
+  const prodId = _csSelectedProduct?.id || '45163728772';
+  const slug = 'seal-' + prodId;
+  const webUrl = `https://sealthai.com/blog/${slug}.html`;
+  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(webUrl)}`;
+  window.open(fbUrl, '_blank', 'width=620,height=580');
+  toast('🚀 เปิดหน้าต่างแชร์โพสต์ขึ้น Facebook เรียบร้อยแล้วค่ะ ✓', 'success');
 }
 
 function copyCSContentForLINEVOOM() {
