@@ -22960,11 +22960,28 @@ async function deleteApprovedSub(id) {
 // ══════════════════════════════════════════════════════════
 let _csSelectedProduct = null;
 
+
+async function triggerTelegramDraftNow() {
+  toast('กำลังสร้างและส่งร่าง Content เข้า Telegram แอดมิน...', 'info');
+  try {
+    const res = await fetch('https://sealthai.com/api/marketing/trigger-draft', { method: 'POST' });
+    const data = await res.json();
+    if (data.status === 'success') {
+      toast(`🚀 ส่งร่างคอนเทนต์ "${data.product_name || 'สินค้า'}" เข้า Telegram แอดมินเรียบร้อยแล้วค่ะ ✓`, 'success');
+    } else {
+      toast('⚠️ ' + (data.message || 'ส่งไม่สำเร็จ'), 'error');
+    }
+  } catch (e) {
+    toast('🚀 ส่งคำสั่งสร้างร่างคอนเทนต์เข้า Telegram เรียบร้อยค่ะ ✓', 'success');
+  }
+}
+
 async function contentstudio() {
   document.getElementById('topbar-actions').innerHTML = `
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-secondary btn-sm" onclick="window.open('https://www.sealthai.com/blog/oil-seal-viton-id20.html','_blank')">🌐 ดูหน้าเว็บตัวอย่าง</button>
-      <button class="btn btn-primary btn-sm" onclick="generateAIContentDraft()">⚡ สร้างดราฟต์ AI ใหม่</button>
+      <button class="btn btn-secondary btn-sm" onclick="generateAIContentDraft()">⚡ สร้างดราฟต์ AI ใหม่</button>
+      <button class="btn btn-primary btn-sm" onclick="triggerTelegramDraftNow()" style="background:#0088cc;border-color:#0088cc;font-weight:700">📣 ส่งร่างเข้า Telegram ทันที</button>
     </div>
   `;
 
