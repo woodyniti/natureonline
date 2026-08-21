@@ -4,6 +4,16 @@
 
 ---
 
+## 🚀 [v1.43] — 2026-08-21
+### 🌟 ไฮไลต์การอัปเดต:
+* **📦 In-Modal Quick Product Creation (สร้างสินค้าเข้าคลังด่วนจากหน้า Order / PO):**
+  * เพิ่มปุ่ม **`➕ สร้างสินค้าใหม่เข้าคลัง`** ในหน้าต่างบันทึกออเดอร์ (Sale Order) และใบสั่งซื้อ (Purchase Order)
+  * เมื่อพิมพ์ค้นหาชื่อสินค้า/SKU ในช่องแล้วไม่พบ จะมีปุ่มลัด **`➕ สร้างสินค้าใหม่ "{ชื่อที่พิมพ์}" เข้าคลัง`** ขึ้นมาให้กดสร้างได้ทันที
+  * ระบบจะดึงขนาด ID × OD × W จากชื่อที่พิมพ์มาใส่ช่องขนาดให้อัตโนมัติ (เช่น พิมพ์ 25-47-10)
+  * เมื่อกดบันทึก สินค้าจะถูกสร้างลงฐานข้อมูล Supabase และ **เลือกใส่ในรายการออเดอร์/PO ให้อัตโนมัติทันที 100%** โดยไม่ต้องปิดหน้าต่างเดิม และไม่สูญเสียข้อมูลลูกค้าหรือสินค้าแถวอื่นที่กรอกไว้
+
+---
+
 ## 🚀 [v1.42] — 2026-08-21
 ### 🌟 ไฮไลต์การอัปเดต:
 * **🔍 Unified Customer Search (ระบบค้นหาลูกค้าแบบรวมศูนย์):**
@@ -26,30 +36,13 @@
 ---
 
 ## 🚀 [v1.41] — 2026-08-20
-### 🌟 ไฮไลต์การอัปเดต:
-* **🤖 AI Content Studio & Marketing Engine:**
-  * ระบบสร้างร่างคอนเทนต์สินค้ารายวัน 4 สไตล์ (ช่างบอกต่อ, เจาะสเปก, ตารางเทียบขนาด, โปรโมชั่น)
-  * ส่งร่างคอนเทนต์พร้อมรูปภาพเข้า Telegram แอดมินอัตโนมัติวันละ 2 รอบ (09:00 น. และ 15:00 น.)
-* **🚀 1-Click Facebook Share & Caption Copy:**
-  * ปุ่มลัดแชร์ขึ้น Facebook ใน 1 วินาที พร้อมบล็อกคัดลอกข้อความแคปชันและแฮชแท็ก
-* **🌐 Real-time FTP SEO Blog Publisher:**
-  * สร้างหน้าบทความเว็บสำหรับสินค้าแต่ละตัว และอัปโหลดผ่าน FTP ไปที่ `sealthai.com/blog/...` อัตโนมัติเมื่อกดอนุมัติ
-* **🌙 Daily Business Briefing (03:00 น. & 09:00 น.):**
-  * สรุปรายงานยอดขาย, กำไรสุทธิ, ออเดอร์รอจัดส่ง และวิเคราะห์แชตลูกค้าที่ต้องการสินค้าขาดสต็อก (Unmet Demand)
+* **🤖 AI Content Studio & Marketing Engine:** ร่างคอนเทนต์อัตโนมัติ 09:00 / 15:00 น. ส่งเข้า Telegram
+* **🚀 1-Click Facebook Share & Caption Copy:** แชร์ขึ้น Facebook ทันใจใน 1 คลิก
+* **🌐 Real-time FTP SEO Blog Publisher:** สร้างหน้าบทความเว็บสำหรับสินค้าแต่ละตัว
+* **🌙 Daily Business Briefing:** สรุปยอดขายและการวิเคราะห์แชตลูกค้าที่ต้องการสินค้าขาดสต็อก (Unmet Demand)
 
 ---
 
 ## 🚀 [v1.40] — 2026-08-19
 * **Multi-Order Batch PO Generator:** รวมหลายออเดอร์สร้างใบสั่งซื้อ (PO) ใบเดียว ยุบ SKU เดียวกันอัตโนมัติ
 * **Agreed Pricing Priority Memory:** จดจำราคาประวัติเดิมที่เคยให้ลูกค้าแต่ละรายเป็นอันดับแรก
-
----
-
-## 🚀 [v1.30 – v1.39]
-* v1.39: Customer Display Name & Order Customization
-* v1.38: Executive AI & Predictive Intelligence Dashboard (Churn Alert & Cash Flow Forecasting)
-* v1.37: CRM, Multi-Tier Pricing & B2B Sales Management
-* v1.36: Multi-Marketplace Sync Hub (Shopee, Lazada, TikTok, LINE)
-* v1.35: China Import & Landed Cost Tracking
-* v1.34: Product Master & Stock Planning Intelligence (ROP / MOQ / ABC Analysis)
-* v1.33: Storage RLS Policies Update
