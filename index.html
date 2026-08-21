@@ -7479,8 +7479,8 @@ function renderProductTable(prods) {
     '</tr></thead><tbody>' +
     sorted.map((p, idx) => {
       const margin   = Number(p.sell_price||0)-Number(p.current_cost||0);
-      const stInhouse = Number(p.stock_inhouse || 0);
-      const stEcoseal = Number(p.stock_ecoseal !== undefined ? p.stock_ecoseal : (p.stock_qty || 0));
+      const stInhouse = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+      const stEcoseal = Number(p.stock_ecoseal || 0);
       const totalQty = stInhouse + stEcoseal;
       const stockVal = Number(p.current_cost||0) * stInhouse; // คำนวณเงินจมเฉพาะคลังร้านจริง
       const zeroSt   = totalQty === 0;
@@ -23789,7 +23789,7 @@ async function viewProductInventoryPosting(productId) {
           <div style="font-size:20px;font-weight:800;color:${currentActualStock > 0 ? '#059669' : '#dc2626'};font-family:var(--mono);margin-top:2px">
             ${fmt(currentActualStock)} <span style="font-size:12px;font-weight:600;color:#64748b">ชิ้น</span>
           </div>
-          <div style="font-size:11px;color:#64748b;margin-top:2px">คลังร้าน: ${fmt(prod.stock_inhouse||currentActualStock)} | Ecoseal: ${fmt(prod.stock_ecoseal||0)}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">คลังร้าน: ${fmt(prod.stock_inhouse !== undefined && prod.stock_inhouse !== null ? prod.stock_inhouse : currentActualStock)} | Ecoseal: ${fmt(prod.stock_ecoseal||0)}</div>
         </div>
         <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:10px;padding:10px 14px">
           <div style="font-size:11.5px;color:#64748b;font-weight:600">🟢 รวมรับเข้าทั้งหมด (+In)</div>
