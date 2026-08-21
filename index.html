@@ -23046,10 +23046,22 @@ async function contentstudio() {
         </div>
 
         <div class="form-group mb-3">
-          <label style="font-weight:700;font-size:12px">🖼️ ลิงก์รูปภาพปกสินค้า (Cover Image URL)</label>
-          <div style="display:flex;gap:6px">
-            <input type="text" id="cs-image-url" oninput="updateCSLivePreview()" placeholder="https://cf.shopee.co.th/file/..." style="flex:1;font-size:12px">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="previewCSImage()">👁️ ดูรูป</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <label style="font-weight:700;font-size:12px;margin:0">🖼️ รูปภาพสินค้า (Image URL หรือ อัปโหลดภาพเอง)</label>
+            <span id="cs-custom-img-badge" style="display:none;font-size:11px;font-weight:700;color:#16a34a;background:#dcfce7;padding:2px 8px;border-radius:10px">✓ ใช้ภาพของแอดมิน</span>
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <input type="text" id="cs-image-url" oninput="updateCSLivePreview()" placeholder="วางลิงก์รูปภาพ https://... หรือกดปุ่มเลือกไฟล์ด้านขวา" style="flex:1;font-size:12px">
+            <input type="file" id="cs-file-input" accept="image/*" style="display:none" onchange="handleCSCustomImageUpload(event)">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('cs-file-input').click()" style="white-space:nowrap;font-size:12px;font-weight:700;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe">
+              📁 เลือกรูปจากเครื่อง
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="clearCSCustomImage()" title="ล้างรูป/คืนค่าเดิม" style="font-size:12px">
+              🔄
+            </button>
+          </div>
+          <div style="font-size:11.5px;color:#64748b">
+            💡 แอดมินสามารถ <b>วาง URL รูปภาพใหม่</b> หรือ <b>กดเลือกรูปภาพจากคอม/มือถือ</b> ได้ทันที ระบบจะใช้ภาพนี้เป็น Thumbnail แบนเนอร์และภาพในโพสต์ให้อัตโนมัติ
           </div>
         </div>
 
@@ -23273,6 +23285,46 @@ function updateCSLivePreview() {
   if (btnEl) btnEl.href = shopeeLink;
 }
 
+
+
+function handleCSCustomImageUpload(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  
+  if (!file.type.startsWith('image/')) {
+    toast('กรุณาเลือกไฟล์รูปภาพเท่านั้นค่ะ', 'warning');
+    return;
+  }
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64Data = e.target.result;
+    const input = document.getElementById('cs-image-url');
+    if (input) {
+      input.value = base64Data;
+      updateCSLivePreview();
+      const badge = document.getElementById('cs-custom-img-badge');
+      if (badge) badge.style.display = 'inline-block';
+      toast('🖼️ นำเข้ารูปภาพของแอดมินเรียบร้อยแล้วค่ะ ✓', 'success');
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearCSCustomImage() {
+  const input = document.getElementById('cs-image-url');
+  if (_csSelectedProduct) {
+    input.value = _csSelectedProduct.image || _csSelectedProduct.cover_image || '';
+  } else {
+    input.value = 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
+  }
+  const badge = document.getElementById('cs-custom-img-badge');
+  if (badge) badge.style.display = 'none';
+  const fileInput = document.getElementById('cs-file-input');
+  if (fileInput) fileInput.value = '';
+  updateCSLivePreview();
+  toast('คืนค่ารูปภาพสินค้ามาตรฐานเรียบร้อยแล้วค่ะ', 'info');
+}
 
 function shareToFacebookNow() {
   const prodId = _csSelectedProduct?.id || '45163728772';
