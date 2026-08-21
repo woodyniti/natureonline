@@ -1151,6 +1151,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div style="font-size:13px;color:#475569;margin-top:4px" id="ipl-subtitle">แสดงธุรกรรมการรับเข้า, ขายออก, ปรับยอดสต๊อก, และคืนสินค้าทั้งหมดแบบ Real-time</div>
       </div>
       <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="openQuickAdjustStockFromPosting()" style="background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700" title="ปรับยอดสต๊อกให้ตรงกับของจริง">⚖️ ปรับยอดสต๊อก</button>
         <button class="btn btn-secondary btn-sm" onclick="refreshCurrentInventoryPosting()" title="โหลดข้อมูลล่าสุด">🔄 รีเฟรช</button>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-inventory-posting')">✕ ปิด</button>
       </div>
@@ -23667,10 +23668,12 @@ async function viewProductInventoryPosting(productId) {
     const dimTxt = (prod.inner_diameter && prod.outer_diameter) ? ` · ขนาด: ${prod.inner_diameter}×${prod.outer_diameter}${prod.width ? '×'+prod.width : ''} ${prod.unit_dim||'mm'}` : '';
     if (subtitleEl) subtitleEl.textContent = `หมวดหมู่: ${prod.category || 'ทั่วไป'}${dimTxt} · ชั้นวาง: ${prod.location_shelf || 'ไม่ระบุ'}`;
 
-    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, order_items, goods_returns, purchase_orders
-    const [movesRes, ordersRes, posRes, grsRes] = await Promise.all([
+    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, order_items (ทั้ง product_id และ sku), goods_returns, purchase_orders
+    const prodSku = (prod.sku || '').trim();
+    const [movesRes, ordersRes, ordersBySkuRes, posRes, grsRes] = await Promise.all([
       sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true }),
       sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,orders(id,order_no,order_date,customer_name,status)').eq('product_id', productId),
+      prodSku ? sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,orders(id,order_no,order_date,customer_name,status)').eq('sku', prodSku) : Promise.resolve({ data: [] }),
       sb.from('purchase_order_items').select('id,po_id,qty,unit_cost,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('product_id', productId),
       sb.from('goods_return_items').select('id,gr_id,qty,goods_returns(id,gr_no,gr_date,customer_name)').eq('product_id', productId)
     ]);
@@ -23733,8 +23736,14 @@ async function viewProductInventoryPosting(productId) {
       });
     });
 
-    // B. เพิ่ม Order items ถ้าไม่มีใน stock_movements บันทึกไว้
-    orderItemsList.forEach(oi => {
+    // B. เพิ่ม Order items (รวมทั้งจาก product_id และ SKU) ถ้าไม่มีใน stock_movements บันทึกไว้
+    const allOrderItems = [...orderItemsList, ...(ordersBySkuRes?.data || [])];
+    const seenOrderIds = new Set();
+
+    allOrderItems.forEach(oi => {
+      if (seenOrderIds.has(oi.id)) return;
+      seenOrderIds.add(oi.id);
+
       const ord = oi.orders;
       if (!ord || ord.status === 'cancelled') return;
       const orderNo = ord.order_no || ('SO-' + ord.id);
@@ -23765,17 +23774,41 @@ async function viewProductInventoryPosting(productId) {
       return tA.localeCompare(tB);
     });
 
-    // คำนวณ Running Balance
+    // ตรวจสอบยอดยกมา / ยอดเริ่มต้น (Initial Balance)
+    const currentActualStock = Number(prod.stock_qty) || 0;
+    const currentActualCost = Number(prod.current_cost) || 0;
+
     let runningBal = 0;
     let totalInQty = 0;
     let totalOutQty = 0;
 
-    unifiedList.forEach(tx => {
-      runningBal += tx.qty;
-      tx.runningBalance = runningBal;
-      if (tx.qty > 0) totalInQty += tx.qty;
-      else if (tx.qty < 0) totalOutQty += Math.abs(tx.qty);
-    });
+    // ถ้าไม่มีรายการเคลื่อนไหวเลย แต่ยอดสต๊อกในระบบไม่ใช่ 0 (เช่น มีการตั้งค่าเริ่มต้น/นำเข้าข้อมูล)
+    if (unifiedList.length === 0 && currentActualStock !== 0) {
+      unifiedList.push({
+        id: 'init_' + prod.id,
+        date: (prod.created_at ? prod.created_at.slice(0, 10) : today()),
+        timestamp: prod.created_at || today(),
+        typeKey: currentActualStock > 0 ? 'in' : 'out',
+        typeLabel: currentActualStock > 0 ? '⚪ ยอดตั้งต้นในระบบ' : '⚠️ ยอดติดลบตั้งต้น',
+        badgeStyle: currentActualStock > 0 ? 'background:#f1f5f9;color:#475569' : 'background:#fee2e2;color:#b91c1c',
+        qty: currentActualStock,
+        runningBalance: currentActualStock,
+        unitCostPrice: currentActualCost,
+        refDoc: 'Initial Setup',
+        note: currentActualStock < 0 ? 'ยอดสต๊อกในระบบถูกบันทึกติดลบไว้ (อาจเกิดจากการตัดสต๊อกโดยไม่มีการรับเข้า หรือแก้ไขจำนวนสต๊อกโดยตรง)' : 'ยอดยกมา / ยอดตั้งต้นจากฐานข้อมูลสินค้า',
+        source: 'initial'
+      });
+      if (currentActualStock > 0) totalInQty = currentActualStock;
+      else totalOutQty = Math.abs(currentActualStock);
+      runningBal = currentActualStock;
+    } else {
+      unifiedList.forEach(tx => {
+        runningBal += tx.qty;
+        tx.runningBalance = runningBal;
+        if (tx.qty > 0) totalInQty += tx.qty;
+        else if (tx.qty < 0) totalOutQty += Math.abs(tx.qty);
+      });
+    }
 
     const currentActualStock = Number(prod.stock_qty) || 0;
     const currentActualCost = Number(prod.current_cost) || 0;
@@ -23829,6 +23862,60 @@ function refreshCurrentInventoryPosting() {
   if (_currentPostingProductId) {
     viewProductInventoryPosting(_currentPostingProductId);
   }
+}
+
+
+function openQuickAdjustStockFromPosting() {
+  if (!_currentPostingProductId) return;
+  const prod = (allProducts || []).find(p => p.id === _currentPostingProductId);
+  if (!prod) return;
+
+  const currentQty = Number(prod.stock_qty) || 0;
+  const newQtyStr = prompt(`⚖️ ปรับยอดสต๊อกสินค้า: ${prod.name}\n\nสต๊อกปัจจุบันในระบบ: ${currentQty} ชิ้น\n\nกรุณาระบุจำนวนสต๊อกที่ถูกต้องจริง:`, currentQty < 0 ? '0' : String(currentQty));
+  if (newQtyStr === null) return;
+
+  const newQty = Number(newQtyStr.trim());
+  if (isNaN(newQty)) {
+    toast('กรุณาระบุตัวเลขจำนวนสต๊อกที่ถูกต้อง', 'error');
+    return;
+  }
+
+  const reason = prompt('ระบุเหตุผลในการปรับยอดสต๊อก:', currentQty < 0 ? 'ปรับแก้สต๊อกติดลบตั้งต้นให้ตรงกับสินค้าจริง' : 'ตรวจนับสต๊อกจริง') || 'ปรับยอดสต๊อก';
+
+  const diff = newQty - currentQty;
+  if (diff === 0) {
+    toast('จำนวนสต๊อกเท่าเดิม ไม่มีการเปลี่ยนแปลง', 'info');
+    return;
+  }
+
+  // บันทึกลง stock_movements และอัปเดต products
+  const moveType = diff > 0 ? 'in' : 'out';
+  const movement = {
+    shop_id: currentShop.id,
+    product_id: prod.id,
+    move_type: moveType,
+    qty: diff,
+    cost_per_unit: Number(prod.current_cost) || 0,
+    move_date: today(),
+    lot_name: 'Stock Adjustment',
+    note: `[ปรับยอดสต๊อก] จาก ${currentQty} เป็น ${newQty} ชิ้น (${reason})`
+  };
+
+  sb.from('stock_movements').insert(movement).then(({ error: mErr }) => {
+    if (mErr) console.warn('Movement insert note:', mErr);
+    sb.from('products').update({ stock_qty: newQty, stock_inhouse: newQty }).eq('id', prod.id).then(({ error: pErr }) => {
+      if (pErr) {
+        toast('ปรับยอดไม่สำเร็จ: ' + pErr.message, 'error');
+        return;
+      }
+      prod.stock_qty = newQty;
+      prod.stock_inhouse = newQty;
+      toast(`ปรับยอดสต๊อกเป็น ${newQty} ชิ้น เรียบร้อยแล้ว ✓`, 'success');
+      viewProductInventoryPosting(prod.id);
+      if (typeof loadProducts === 'function') loadProducts();
+      if (typeof loadStockPlanningData === 'function') loadStockPlanningData();
+    });
+  });
 }
 
 function filterInventoryPostingRows() {
