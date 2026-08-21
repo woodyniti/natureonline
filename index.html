@@ -4702,55 +4702,143 @@ async function importQuoteToOrder(qtId) {
   toast('ดึงข้อมูลจาก '+(qt.quote_no||'ใบเสนอราคา')+' แล้ว ✓','success');
 }
 
-// โหลดรายชื่อลูกค้าจากออเดอร์เดิม (รวม field ให้ครบที่สุดต่อลูกค้า) → _orderCustomerList
+// โหลดรายชื่อลูกค้าแบบรวมศูนย์ (จากทั้ง CRM Customers + ประวัติออเดอร์เดิม + ใบเสนอราคา) → _orderCustomerList
 async function loadOrderCustomerList() {
-  const baseCols = 'customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username';
-  // ลองดึงพร้อม billing_address — ถ้าคอลัมน์ยังไม่มีใน DB ให้ fallback เป็นชุดเดิม (auto-fill อื่นจะไม่พัง)
-  let res = await sb.from('orders').select(baseCols+',billing_address')
-    .eq('shop_id', currentShop.id).not('customer_name','is',null)
-    .order('created_at',{ascending:false}).limit(500);
-  if (res.error) {
-    res = await sb.from('orders').select(baseCols)
+  if (!currentShop?.id) return;
+  
+  // 1. ดึงรายชื่อจากฐานข้อมูลลูกค้า CRM (customers table)
+  let crmCusts = [];
+  try {
+    const cRes = await sb.from('customers').select('*').eq('shop_id', currentShop.id).order('name');
+    if (cRes.data) crmCusts = cRes.data;
+  } catch(e) {}
+
+  // 2. ดึงรายชื่อจากประวัติออเดอร์ (orders table) สูงสุด 1,000 รายการล่าสุด
+  const baseCols = 'id,customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username,billing_address,order_date,channel';
+  let ordCusts = [];
+  try {
+    let res = await sb.from('orders').select(baseCols)
       .eq('shop_id', currentShop.id).not('customer_name','is',null)
-      .order('created_at',{ascending:false}).limit(500);
-  }
-  const byName = {};
-  (res.data || []).forEach(c => {                // เรียงจากล่าสุดมาก่อน
-    const k = (c.customer_name||'').trim().toLowerCase();
+      .order('created_at',{ascending:false}).limit(1000);
+    if (res.error) {
+      res = await sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username')
+        .eq('shop_id', currentShop.id).not('customer_name','is',null)
+        .order('created_at',{ascending:false}).limit(1000);
+    }
+    ordCusts = res.data || [];
+  } catch(e) {}
+
+  // รวมข้อมูลลูกค้าทั้งหมดแบบตัดข้อมูลซ้ำ และรวมฟิลด์ให้สมบูรณ์ที่สุด
+  const byKey = {};
+  
+  // นำเข้า CRM ลูกค้า
+  crmCusts.forEach(c => {
+    const k = (c.name||'').trim().toLowerCase();
     if (!k) return;
-    if (!byName[k]) byName[k] = { ...c };
-    else ['customer_username','customer_social','customer_contact','customer_phone','customer_address','billing_address']
-      .forEach(f => { if (!byName[k][f] && c[f]) byName[k][f] = c[f]; });
+    byKey[k] = {
+      source: 'crm',
+      id: c.id,
+      customer_name: c.name,
+      customer_phone: c.phone || '',
+      customer_contact: c.contact_person || '',
+      customer_address: c.address || '',
+      billing_address: c.billing_address || c.address || '',
+      customer_username: c.tax_id ? 'Tax ID: ' + c.tax_id : '',
+      customer_tier: c.customer_tier || 'retail',
+      company_name: c.company_name || '',
+      order_count: 0
+    };
   });
-  _orderCustomerList = Object.values(byName);
+
+  // ผสานข้อมูลจากออเดอร์
+  ordCusts.forEach(c => {
+    const k = (c.customer_name||'').trim().toLowerCase();
+    if (!k || k === 'ไม่ระบุ' || k === '-') return;
+    if (!byKey[k]) {
+      byKey[k] = {
+        source: 'order',
+        customer_name: c.customer_name,
+        customer_phone: c.customer_phone || '',
+        customer_contact: c.customer_contact || '',
+        customer_address: c.customer_address || '',
+        billing_address: c.billing_address || '',
+        customer_username: c.customer_username || '',
+        customer_social: c.customer_social || '',
+        channel: c.channel || '',
+        order_count: 1
+      };
+    } else {
+      byKey[k].order_count = (byKey[k].order_count || 0) + 1;
+      ['customer_username','customer_social','customer_contact','customer_phone','customer_address','billing_address']
+        .forEach(f => { if (!byKey[k][f] && c[f]) byKey[k][f] = c[f]; });
+    }
+  });
+
+  _orderCustomerList = Object.values(byKey);
 }
 
-// generic: แสดง dropdown ลูกค้าใน element ddId, เลือกแล้วเรียก fillFn(idx)
+// generic: แสดง dropdown ค้นหาลูกค้าแบบเรียลไทม์ (ค้นหาได้ทั้ง ชื่อ, เบอร์โทร, username, ที่อยู่, ผู้ติดต่อ)
 function _renderCustDropdown(ddId, fillFn, q) {
   const dd = document.getElementById(ddId);
   if (!dd) return;
-  if (!_orderCustomerList.length) { dd.style.display = 'none'; return; }
+  if (!_orderCustomerList || !_orderCustomerList.length) {
+    loadOrderCustomerList().then(() => {
+      if (_orderCustomerList && _orderCustomerList.length) _renderCustDropdown(ddId, fillFn, q);
+    });
+    return;
+  }
   const term = (q||'').trim().toLowerCase();
   const matches = (!term
-    ? _orderCustomerList
+    ? _orderCustomerList.slice(0, 10)
     : _orderCustomerList.filter(c =>
         (c.customer_name||'').toLowerCase().includes(term) ||
         (c.customer_phone||'').includes(term) ||
         (c.customer_username||'').toLowerCase().includes(term) ||
-        (c.customer_contact||'').toLowerCase().includes(term))
-  ).slice(0, 8);
-  if (!matches.length) { dd.style.display = 'none'; return; }
+        (c.customer_contact||'').toLowerCase().includes(term) ||
+        (c.customer_address||'').toLowerCase().includes(term) ||
+        (c.company_name||'').toLowerCase().includes(term) ||
+        (c.customer_social||'').toLowerCase().includes(term))
+  ).slice(0, 12);
+
+  if (!matches.length) {
+    if (term) {
+      dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:var(--text3);background:var(--bg2);text-align:center">
+        ไม่พบลอยประวัติลูกค้า "<b>${escapeHTML(term)}</b>" — พิมพ์ต่อเพื่อสร้างเป็นลูกค้าใหม่ได้เลยค่ะ ✨
+      </div>`;
+      dd.style.display = 'block';
+    } else {
+      dd.style.display = 'none';
+    }
+    return;
+  }
+
   const header = !term
-    ? '<div style="padding:6px 12px;font-size:10px;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border)">ลูกค้าล่าสุด — คลิกเพื่อเติมข้อมูลอัตโนมัติ</div>'
-    : '';
-  dd.innerHTML = header + matches.map((c,i) =>
-    `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px"
+    ? '<div style="padding:6px 12px;font-size:10.5px;font-weight:700;color:var(--text3);background:var(--bg3);border-bottom:1px solid var(--border)">👥 ลูกค้าในระบบ / ออเดอร์ล่าสุด — คลิกเพื่อเติมข้อมูลอัตโนมัติ</div>'
+    : `<div style="padding:6px 12px;font-size:10.5px;font-weight:700;color:var(--blue);background:var(--bg3);border-bottom:1px solid var(--border)">🔍 พบลูกค้าที่ตรงกัน ${matches.length} รายการ (คลิกเพื่อเติมข้อมูล)</div>`;
+
+  dd.innerHTML = header + matches.map((c,i) => {
+    const badge = c.source === 'crm'
+      ? `<span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:6px">🏢 CRM ${c.customer_tier ? c.customer_tier.toUpperCase() : 'B2B'}</span>`
+      : `<span style="font-size:10px;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;font-weight:600;margin-left:6px">🛒 ออเดอร์เดิม (${c.order_count || 1} ครั้ง)</span>`;
+    
+    const details = [
+      c.customer_phone ? '📞 ' + c.customer_phone : null,
+      c.customer_contact ? '👤 ' + c.customer_contact : null,
+      c.customer_username ? '🏷️ ' + c.customer_username : null,
+      c.customer_address ? '📍 ' + c.customer_address.slice(0, 30) + '...' : null
+    ].filter(Boolean).join(' · ') || '—';
+
+    return `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;transition:background 0.15s"
       onmousedown="${fillFn}(${i})"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
-      <div style="font-weight:600">${c.customer_name}</div>
-      <div style="font-size:11px;color:var(--text3)">${[c.customer_username,c.customer_phone,c.customer_contact].filter(Boolean).join(' · ')||'—'}</div>
-    </div>`
-  ).join('');
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:700;color:var(--text)">${escapeHTML(c.customer_name)} ${badge}</div>
+        ${c.channel ? `<span style="font-size:10px;color:var(--text3)">${escapeHTML(c.channel)}</span>` : ''}
+      </div>
+      <div style="font-size:11.5px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(details)}</div>
+    </div>`;
+  }).join('');
+
   dd.style.display = 'block';
   dd._matches = matches;
 }
