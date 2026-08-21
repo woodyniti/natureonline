@@ -39,7 +39,7 @@
 // ── Cache Cleaner & Service Worker ────────────────────
 if ('caches' in window) {
   caches.keys().then(keys => {
-    keys.forEach(k => { if (k !== 'sealthai-v1.43') caches.delete(k); });
+    keys.forEach(k => { if (k !== 'sealthai-v1.44') caches.delete(k); });
   }).catch(()=>{});
 }
 
@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.43';
+    const CACHE = 'sealthai-v1.44';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -995,7 +995,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.43 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.44 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1132,6 +1132,77 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <button type="button" class="btn btn-primary" onclick="saveQuickProduct()" style="background:#10b981;border-color:#059669;font-weight:700;font-size:13.5px">
         💾 บันทึกสินค้า & ใส่ในฟอร์มทันที
       </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ── Modal: รายการเคลื่อนไหวสต๊อกสินค้า (Inventory Posting List & Stock Ledger) ── -->
+<div class="modal-overlay" id="modal-inventory-posting" style="z-index:1200">
+  <div class="modal" style="max-width:960px;width:95%;max-height:90vh;display:flex;flex-direction:column;padding:20px;background:#ffffff;box-shadow:0 25px 50px rgba(0,0,0,0.25);border:1px solid var(--border)">
+    <!-- Modal Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #e2e8f0;padding-bottom:14px;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:22px">📜</span>
+          <span style="font-size:18px;font-weight:800;color:#0f172a" id="ipl-title">Inventory Posting List & ประวัติสต๊อก</span>
+          <span style="background:#e0f2fe;color:#0284c7;font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px" id="ipl-sku-badge">-</span>
+        </div>
+        <div style="font-size:13px;color:#475569;margin-top:4px" id="ipl-subtitle">แสดงธุรกรรมการรับเข้า, ขายออก, ปรับยอดสต๊อก, และคืนสินค้าทั้งหมดแบบ Real-time</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="refreshCurrentInventoryPosting()" title="โหลดข้อมูลล่าสุด">🔄 รีเฟรช</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-inventory-posting')">✕ ปิด</button>
+      </div>
+    </div>
+
+    <!-- Product Summary & KPIs -->
+    <div id="ipl-summary-cards" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;margin-bottom:14px">
+      <!-- Generated via JS -->
+    </div>
+
+    <!-- Filter toolbar -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;align-items:center">
+        <select id="ipl-filter-type" onchange="filterInventoryPostingRows()" style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;font-size:12.5px;font-weight:600">
+          <option value="all">🔍 ทุกประเภทธุรกรรม (All Postings)</option>
+          <option value="in">🟢 รับเข้า / ซื้อเข้า (Stock In / Buy)</option>
+          <option value="out">🔴 ขายออก / เบิกใช้ (Sales / Goods Issue)</option>
+          <option value="adjust">🟡 ปรับยอดสต๊อก (Adjustment)</option>
+          <option value="return">🔵 รับคืนสินค้า (Return In)</option>
+        </select>
+        <input type="text" id="ipl-search-note" placeholder="ค้นหาเลขที่เอกสาร / หมายเหตุ..." oninput="filterInventoryPostingRows()" style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;font-size:12.5px;width:220px">
+      </div>
+      <div style="font-size:12px;color:var(--text3);font-family:var(--mono)" id="ipl-rows-count">0 รายการ</div>
+    </div>
+
+    <!-- Transactions Ledger Table -->
+    <div style="flex:1;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;background:#ffffff">
+      <table style="width:100%;border-collapse:collapse" id="ipl-table">
+        <thead>
+          <tr style="background:#f8fafc;border-bottom:1.5px solid #e2e8f0;position:sticky;top:0;z-index:5">
+            <th style="padding:10px 8px;text-align:center;font-size:12px;width:40px">#</th>
+            <th style="padding:10px 8px;text-align:left;font-size:12px;width:120px">วันที่ & เวลา</th>
+            <th style="padding:10px 8px;text-align:center;font-size:12px;width:110px">ประเภทรายการ</th>
+            <th style="padding:10px 8px;text-align:right;font-size:12px;width:90px">จำนวน (+ / -)</th>
+            <th style="padding:10px 8px;text-align:right;font-size:12px;width:100px;background:#f0fdf4;color:#166534">คงเหลือสะสม</th>
+            <th style="padding:10px 8px;text-align:right;font-size:12px;width:100px">ต้นทุน/ราคา (฿)</th>
+            <th style="padding:10px 8px;text-align:left;font-size:12px;width:140px">เอกสารอ้างอิง</th>
+            <th style="padding:10px 8px;text-align:left;font-size:12px">รายละเอียด / หมายเหตุ / ผู้บันทึก</th>
+          </tr>
+        </thead>
+        <tbody id="ipl-tbody">
+          <tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8"><div class="spinner"></div> กำลังดึงประวัติการเคลื่อนไหวสต๊อก...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #e2e8f0;padding-top:12px;margin-top:12px">
+      <div style="font-size:12px;color:#64748b">
+        💡 ระบบคำนวณยอดคงเหลือสะสม (Running Balance) เรียงตามลำดับเวลาการทำรายการจริง
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-inventory-posting')">ตกลง</button>
     </div>
   </div>
 </div>
@@ -7434,10 +7505,11 @@ function renderProductTable(prods) {
         '<td class="text-right font-mono '+(margin>=0?'text-green':'text-red')+'">'+fmtB(margin)+'</td>' +
         '<td class="text-right font-mono" style="font-weight:700;color:'+(stInhouse>0?'var(--green)':'var(--text3)')+'">'+fmt(stInhouse)+'</td>' +
         '<td class="text-right font-mono" style="color:var(--blue)">'+fmt(stEcoseal)+'</td>' +
-        '<td class="text-right font-mono '+(zeroSt?'text-red':lowSt?'text-amber':'text-green')+'" style="font-weight:700">'+
-          fmt(totalQty)+(zeroSt?' ❌':lowSt?' ⚠️':'')+'</td>' +
+        '<td class="text-right font-mono '+(zeroSt?'text-red':lowSt?'text-amber':'text-green')+'" style="font-weight:700;cursor:pointer" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Posting List)">'+
+          fmt(totalQty)+(zeroSt?' ❌':lowSt?' ⚠️':'')+' <span style="font-size:10px;color:var(--blue)">🔍</span></td>' +
         '<td class="text-right font-mono text-amber">'+fmtB(stockVal)+'</td>' +
         '<td style="white-space:nowrap">' +
+          '<button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="ดูประวัติความเคลื่อนไหวสต๊อก & Inventory Posting List" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:11.5px;padding:3px 7px;margin-right:4px">📜 เคลื่อนไหว</button>' +
           '<button class="btn btn-secondary btn-sm" onclick="editProduct(&quot;'+p.id+'&quot;)" title="แก้ไข">✏️</button> ' +
           '<button class="btn btn-secondary btn-sm" onclick="archiveProduct(&quot;'+p.id+'&quot;)" title="ซ่อนจากรายการ (ไม่ลบข้อมูล)">🙈</button> ' +
           '<button class="btn btn-danger btn-sm" onclick="deleteProduct(&quot;'+p.id+'&quot;)" title="ลบถาวร (ได้เฉพาะสินค้าที่ไม่มีเอกสาร/ธุรกรรม)">🗑️</button>' +
@@ -12422,8 +12494,8 @@ function renderStockPlanningTable(items) {
                   ${p.seal_type ? `<span class="seal-badge-type">${escapeHTML(p.seal_type.split(' ')[0])}</span>` : ''}
                 </div>
               </td>
-              <td class="text-right font-mono ${isZero ? 'text-red' : 'text-green'}" style="font-weight:700">
-                ${fmt(p.stock_qty)}${isZero ? ' ❌' : ''}
+              <td class="text-right font-mono ${isZero ? 'text-red' : 'text-green'}" style="font-weight:700;cursor:pointer" onclick="viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Posting List)">
+                ${fmt(p.stock_qty)}${isZero ? ' ❌' : ''} <span style="font-size:10px;color:var(--blue)">🔍</span>
               </td>
               <td class="text-right font-mono" style="color:var(--purple)">
                 ${p.inTransit > 0 ? `+${fmt(p.inTransit)}` : '<span style="color:var(--text3)">-</span>'}
@@ -12448,6 +12520,7 @@ function renderStockPlanningTable(items) {
                   style="width:75px;text-align:right;font-weight:700;color:var(--accent);background:#fff;border:1.5px solid var(--accent);border-radius:6px;padding:3px 6px;font-size:13px">
               </td>
               <td style="white-space:nowrap;text-align:center">
+                <button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting('${p.id}')" title="ดูประวัติความเคลื่อนไหวสต๊อก & Inventory Posting List" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:11.5px;padding:3px 7px;margin-right:3px">📜 เคลื่อนไหว</button>
                 <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" title="แก้ไขสเปกและพารามิเตอร์สั่งซื้อ">⚙️</button>
               </td>
             </tr>
@@ -15938,7 +16011,7 @@ async function settings() {
 
         <div class="card-title" style="margin-top:16px">ℹ️ เกี่ยวกับระบบ</div>
         <div style="font-size:13px;color:var(--text2);line-height:2;margin-bottom:12px">
-          <div>🚀 <strong>SEALTHAI v1.43</strong> &nbsp;<span style="background:#e0f2fe;color:#0284c7;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700">Unified Customer Search · 1200x630 FB Thumbnail · Public Blog Hub</span></div>
+          <div>🚀 <strong>SEALTHAI v1.44</strong> &nbsp;<span style="background:#e0f2fe;color:#0284c7;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700">Unified Customer Search · 1200x630 FB Thumbnail · Public Blog Hub</span></div>
           <div>🗄️ Supabase (PostgreSQL) &nbsp;|&nbsp; 📊 Chart.js &nbsp;|&nbsp; 🎨 Vanilla JS</div>
         </div>
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
@@ -23556,6 +23629,274 @@ function clearCSCustomImage() {
 
 // ── Quick Product Creator Engine (สร้างสินค้าด่วนจากหน้า Order / PO / Quote) ──
 let _quickProdContext = { type: 'order', rowIdx: -1 };
+
+
+// ── Inventory Posting List & Stock Movement Ledger Engine ──
+let _currentPostingProductId = null;
+let _currentPostingLedger = [];
+
+async function viewProductInventoryPosting(productId) {
+  _currentPostingProductId = productId;
+  openModal('modal-inventory-posting');
+
+  const titleEl = document.getElementById('ipl-title');
+  const skuBadgeEl = document.getElementById('ipl-sku-badge');
+  const subtitleEl = document.getElementById('ipl-subtitle');
+  const summaryEl = document.getElementById('ipl-summary-cards');
+  const tbody = document.getElementById('ipl-tbody');
+  const countEl = document.getElementById('ipl-rows-count');
+
+  if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#64748b"><div class="spinner"></div> กำลังดึงประวัติการเคลื่อนไหวสต๊อกทั้งหมด...</td></tr>';
+  if (summaryEl) summaryEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:10px;color:#94a3b8">กำลังโหลดสรุปยอด...</div>';
+
+  try {
+    // 1. ดึงข้อมูลสินค้า
+    let prod = (allProducts || []).find(p => p.id === productId);
+    if (!prod) {
+      const { data: pData } = await sb.from('products').select('*').eq('id', productId).single();
+      prod = pData;
+    }
+
+    if (!prod) {
+      if (tbody) tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444">ไม่พบข้อมูลสินค้าในระบบ</td></tr>';
+      return;
+    }
+
+    if (titleEl) titleEl.textContent = prod.name || 'รายการสินค้า';
+    if (skuBadgeEl) skuBadgeEl.textContent = prod.sku || prod.supplier_sku || 'SKU';
+    const dimTxt = (prod.inner_diameter && prod.outer_diameter) ? ` · ขนาด: ${prod.inner_diameter}×${prod.outer_diameter}${prod.width ? '×'+prod.width : ''} ${prod.unit_dim||'mm'}` : '';
+    if (subtitleEl) subtitleEl.textContent = `หมวดหมู่: ${prod.category || 'ทั่วไป'}${dimTxt} · ชั้นวาง: ${prod.location_shelf || 'ไม่ระบุ'}`;
+
+    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, order_items, goods_returns, purchase_orders
+    const [movesRes, ordersRes, posRes, grsRes] = await Promise.all([
+      sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true }),
+      sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,orders(id,order_no,order_date,customer_name,status)').eq('product_id', productId),
+      sb.from('purchase_order_items').select('id,po_id,qty,unit_cost,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('product_id', productId),
+      sb.from('goods_return_items').select('id,gr_id,qty,goods_returns(id,gr_no,gr_date,customer_name)').eq('product_id', productId)
+    ]);
+
+    const rawMoves = movesRes.data || [];
+    const orderItemsList = ordersRes.data || [];
+    const poItemsList = posRes.data || [];
+    const grItemsList = grsRes.data || [];
+
+    // สร้าง Unified Transaction Entries
+    const unifiedList = [];
+
+    // A. ใส่ข้อมูลจาก stock_movements
+    rawMoves.forEach(m => {
+      let typeKey = 'adjust';
+      let typeLabel = '🟡 ปรับยอด';
+      let badgeStyle = 'background:#fef3c7;color:#b45309';
+      let signedQty = Number(m.qty) || 0;
+
+      const mType = (m.move_type || '').toLowerCase();
+      const mNote = (m.note || '').toLowerCase();
+
+      if (mType === 'in' || mNote.includes('รับเข้า') || mNote.includes('ซื้อ') || mNote.includes('นำเข้า')) {
+        typeKey = 'in';
+        typeLabel = '🟢 รับเข้า';
+        badgeStyle = 'background:#dcfce7;color:#15803d';
+        signedQty = Math.abs(signedQty);
+      } else if (mType === 'out' || mNote.includes('ขาย') || mNote.includes('จ่ายออก') || mNote.includes('เบิก')) {
+        typeKey = 'out';
+        typeLabel = '🔴 ตัดจ่ายออก';
+        badgeStyle = 'background:#fee2e2;color:#b91c1c';
+        signedQty = -Math.abs(signedQty);
+      } else if (mType === 'return' || mNote.includes('คืน')) {
+        typeKey = 'return';
+        typeLabel = '🔵 รับคืน';
+        badgeStyle = 'background:#e0f2fe;color:#0369a1';
+        signedQty = Math.abs(signedQty);
+      } else if (signedQty < 0) {
+        typeKey = 'out';
+        typeLabel = '🔴 ปรับลดยอด';
+        badgeStyle = 'background:#fee2e2;color:#b91c1c';
+      } else if (signedQty > 0) {
+        typeKey = 'in';
+        typeLabel = '🟢 ปรับเพิ่มยอด';
+        badgeStyle = 'background:#dcfce7;color:#15803d';
+      }
+
+      unifiedList.push({
+        id: 'sm_' + m.id,
+        date: m.move_date || (m.created_at ? m.created_at.slice(0, 10) : today()),
+        timestamp: m.created_at || m.move_date || '',
+        typeKey: typeKey,
+        typeLabel: typeLabel,
+        badgeStyle: badgeStyle,
+        qty: signedQty,
+        unitCostPrice: Number(m.cost_per_unit) || Number(prod.current_cost) || 0,
+        refDoc: m.lot_name || (m.po_id ? 'PO Ref' : '-'),
+        note: m.note || m.lot_name || 'บันทึกสต๊อก',
+        source: 'movement'
+      });
+    });
+
+    // B. เพิ่ม Order items ถ้าไม่มีใน stock_movements บันทึกไว้
+    orderItemsList.forEach(oi => {
+      const ord = oi.orders;
+      if (!ord || ord.status === 'cancelled') return;
+      const orderNo = ord.order_no || ('SO-' + ord.id);
+      
+      // ตรวจสอบว่าใน stock_movements มี note อ้างถึง order_no นี้แล้วหรือยัง
+      const alreadyHasMove = rawMoves.some(m => (m.note && m.note.includes(orderNo)));
+      if (!alreadyHasMove) {
+        unifiedList.push({
+          id: 'ord_' + oi.id,
+          date: ord.order_date || today(),
+          timestamp: ord.order_date || '',
+          typeKey: 'out',
+          typeLabel: '🔴 ขายออเดอร์',
+          badgeStyle: 'background:#fee2e2;color:#b91c1c',
+          qty: -(Number(oi.qty) || 1),
+          unitCostPrice: Number(oi.sell_price) || Number(prod.sell_price) || 0,
+          refDoc: orderNo,
+          note: `ขายให้: ${ord.customer_name || 'ลูกค้าทั่วไป'}`,
+          source: 'order'
+        });
+      }
+    });
+
+    // เรียงตามเวลาจากอดีต -> ปัจจุบัน (ascending) เพื่อคำนวณ Running Balance
+    unifiedList.sort((a, b) => {
+      const tA = a.timestamp || a.date;
+      const tB = b.timestamp || b.date;
+      return tA.localeCompare(tB);
+    });
+
+    // คำนวณ Running Balance
+    let runningBal = 0;
+    let totalInQty = 0;
+    let totalOutQty = 0;
+
+    unifiedList.forEach(tx => {
+      runningBal += tx.qty;
+      tx.runningBalance = runningBal;
+      if (tx.qty > 0) totalInQty += tx.qty;
+      else if (tx.qty < 0) totalOutQty += Math.abs(tx.qty);
+    });
+
+    const currentActualStock = Number(prod.stock_qty) || 0;
+    const currentActualCost = Number(prod.current_cost) || 0;
+    const totalVal = currentActualStock * currentActualCost;
+
+    // Render KPI Cards
+    if (summaryEl) {
+      summaryEl.innerHTML = `
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #0284c7;border-radius:10px;padding:10px 14px">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">📦 สต๊อกคงเหลือปัจจุบัน</div>
+          <div style="font-size:20px;font-weight:800;color:${currentActualStock > 0 ? '#059669' : '#dc2626'};font-family:var(--mono);margin-top:2px">
+            ${fmt(currentActualStock)} <span style="font-size:12px;font-weight:600;color:#64748b">ชิ้น</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">คลังร้าน: ${fmt(prod.stock_inhouse||currentActualStock)} | Ecoseal: ${fmt(prod.stock_ecoseal||0)}</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #16a34a;border-radius:10px;padding:10px 14px">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">🟢 รวมรับเข้าทั้งหมด (+In)</div>
+          <div style="font-size:20px;font-weight:800;color:#16a34a;font-family:var(--mono);margin-top:2px">
+            +${fmt(totalInQty)} <span style="font-size:12px;font-weight:600;color:#64748b">ชิ้น</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">จากการซื้อเข้า & ปรับเพิ่มยอด</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #dc2626;border-radius:10px;padding:10px 14px">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">🔴 รวมขาย / จ่ายออก (-Out)</div>
+          <div style="font-size:20px;font-weight:800;color:#dc2626;font-family:var(--mono);margin-top:2px">
+            -${fmt(totalOutQty)} <span style="font-size:12px;font-weight:600;color:#64748b">ชิ้น</span>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">จากออเดอร์ & จ่ายเบิกใช้</div>
+        </div>
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #f59e0b;border-radius:10px;padding:10px 14px">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">💰 มูลค่าสต๊อก (ต้นทุนเฉลี่ย)</div>
+          <div style="font-size:20px;font-weight:800;color:#d97706;font-family:var(--mono);margin-top:2px">
+            ${fmtB(totalVal)}
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">ทุน/หน่วย: ${fmtB(currentActualCost)} | ขาย: ${fmtB(prod.sell_price||0)}</div>
+        </div>
+      `;
+    }
+
+    // เก็บข้อมูลใส่ _currentPostingLedger (เรียงจากใหม่สุด -> เก่าสุด สำหรับแสดงผล)
+    _currentPostingLedger = [...unifiedList].reverse();
+    renderInventoryPostingTableRows(_currentPostingLedger);
+
+  } catch (err) {
+    console.error('Error loading inventory posting list:', err);
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${escapeHTML(err.message||err)}</td></tr>`;
+  }
+}
+
+function refreshCurrentInventoryPosting() {
+  if (_currentPostingProductId) {
+    viewProductInventoryPosting(_currentPostingProductId);
+  }
+}
+
+function filterInventoryPostingRows() {
+  const filterType = document.getElementById('ipl-filter-type')?.value || 'all';
+  const searchNote = (document.getElementById('ipl-search-note')?.value || '').trim().toLowerCase();
+
+  const filtered = _currentPostingLedger.filter(tx => {
+    if (filterType !== 'all' && tx.typeKey !== filterType) return false;
+    if (searchNote) {
+      const matchDoc = (tx.refDoc || '').toLowerCase().includes(searchNote);
+      const matchNote = (tx.note || '').toLowerCase().includes(searchNote);
+      const matchDate = (tx.date || '').toLowerCase().includes(searchNote);
+      if (!matchDoc && !matchNote && !matchDate) return false;
+    }
+    return true;
+  });
+
+  renderInventoryPostingTableRows(filtered);
+}
+
+function renderInventoryPostingTableRows(list) {
+  const tbody = document.getElementById('ipl-tbody');
+  const countEl = document.getElementById('ipl-rows-count');
+  if (countEl) countEl.textContent = `แสดง ${list.length} รายการ`;
+
+  if (!tbody) return;
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8"><div style="font-size:24px">📦</div><div style="margin-top:6px;font-weight:600">ยังไม่มีรายการเคลื่อนไหวสต๊อก</div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = list.map((tx, idx) => {
+    const isPlus = tx.qty > 0;
+    const qtyColor = isPlus ? '#15803d' : '#b91c1c';
+    const qtySign = isPlus ? `+${fmt(tx.qty)}` : `${fmt(tx.qty)}`;
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;transition:background 0.15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+        <td style="padding:9px 8px;text-align:center;color:#94a3b8;font-size:11.5px">${idx + 1}</td>
+        <td style="padding:9px 8px;font-size:12px;color:#334155">
+          <div style="font-weight:600">${tx.date}</div>
+          ${tx.timestamp && tx.timestamp.length > 10 ? `<div style="font-size:10.5px;color:#94a3b8">${tx.timestamp.slice(11, 19)}</div>` : ''}
+        </td>
+        <td style="padding:9px 8px;text-align:center">
+          <span style="${tx.badgeStyle};font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;display:inline-block">
+            ${tx.typeLabel}
+          </span>
+        </td>
+        <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:13.5px;font-weight:800;color:${qtyColor}">
+          ${qtySign}
+        </td>
+        <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:13.5px;font-weight:800;color:#0f172a;background:#f0fdf4">
+          ${fmt(tx.runningBalance)}
+        </td>
+        <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:12.5px;color:#64748b">
+          ${fmtB(tx.unitCostPrice)}
+        </td>
+        <td style="padding:9px 8px;font-size:12px;font-family:var(--mono);font-weight:600;color:#0284c7">
+          ${escapeHTML(tx.refDoc || '-')}
+        </td>
+        <td style="padding:9px 8px;font-size:12px;color:#334155">
+          ${escapeHTML(tx.note || '-')}
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
 
 function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery = '') {
   _quickProdContext = { type: contextType, rowIdx: rowIdx };
