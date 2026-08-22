@@ -4,6 +4,12 @@
 
 ---
 
+## 🛠️ [v1.45] — 2026-08-22
+### Login Recovery & JavaScript Startup Fix
+* แก้การประกาศตัวแปร `currentActualStock` และ `currentActualCost` ซ้ำในหน้าประวัติความเคลื่อนไหวสต๊อก
+* แก้ JavaScript หยุดทำงานตั้งแต่เปิดหน้า ซึ่งทำให้ปุ่ม Login ไม่ตอบสนอง
+* อัปเดต Service Worker cache เป็น `sealthai-v1.45` เพื่อบังคับโหลดไฟล์ระบบล่าสุด
+
 ## 🚀 [v1.44] — 2026-08-21
 ### 🌟 ไฮไลต์การอัปเดต:
 * **📜 Inventory Posting List & Stock Movement Ledger (ระบบดูประวัติความเคลื่อนไหวสต๊อกสินค้า):**
