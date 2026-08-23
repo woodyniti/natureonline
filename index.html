@@ -21248,6 +21248,11 @@ async function saveAITrainingKnowledge(modalEl) {
 async function loadAIIntelligenceData(force = false) {
   if (!currentShop?.id) return;
 
+  if (force) {
+    // Trigger 12H AI Analysis Engine immediately
+    fetch('https://www.sealthai.com/api/v1/analytics/trigger-12h').catch(()=>{});
+  }
+
   const d180 = new Date();
   d180.setDate(d180.getDate() - 180);
   const d180Str = d180.toISOString().slice(0, 10);
