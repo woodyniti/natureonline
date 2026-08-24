@@ -1110,16 +1110,12 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <input type="text" id="qp-supplier-sku" placeholder="เว้นว่างได้">
       </div>
       <div class="form-group">
-        <label style="font-weight:700;font-size:12px">หมวดหมู่สินค้า</label>
-        <select id="qp-cat" style="width:100%;height:38px">
-          <option value="Oil Seal" selected>Oil Seal (ออยซีล)</option>
-          <option value="Hydraulic Seal">Hydraulic Seal (ซีลไฮดรอลิก)</option>
-          <option value="Pneumatic Seal">Pneumatic Seal (ซีลลม)</option>
-          <option value="O-Ring">O-Ring (โอริง)</option>
-          <option value="V-Ring">V-Ring (วีริง)</option>
-          <option value="Mechanical Seal">Mechanical Seal</option>
-          <option value="Other">อื่นๆ (General Parts)</option>
-        </select>
+        <label style="font-weight:700;font-size:12px">หมวดหมู่สินค้า <span style="font-size:11px;color:var(--text3)">(พิมพ์หรือเลือก)</span></label>
+        <div class="cat-combo" id="cat-combo-wrap-qp">
+          <input type="text" id="qp-cat" placeholder="เลือกหรือพิมพ์หมวดใหม่" autocomplete="off"
+            oninput="filterCatDropdownQP()" onfocus="openCatDropdownQP()" onclick="openCatDropdownQP()">
+          <div class="cat-dropdown" id="cat-dropdown-qp"></div>
+        </div>
       </div>
       <div class="form-group">
         <label style="font-weight:700;font-size:12px">สต๊อกเริ่มต้น (Initial Qty)</label>
@@ -7667,6 +7663,48 @@ function selectCat2(val) {
   const inp = document.getElementById('ep-cat');
   if (inp) inp.value = val;
   const dd = document.getElementById('cat-dropdown2');
+  if (dd) dd.classList.remove('open');
+  if (!productCategories.includes(val)) productCategories.push(val);
+}
+
+// ── Category combobox for Quick Product Modal (qp-cat) ──
+function openCatDropdownQP() {
+  if (!productCategories.length && allProducts && allProducts.length) {
+    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
+  }
+  const dd = document.getElementById('cat-dropdown-qp');
+  if (!dd) return;
+  filterCatDropdownQP();
+  dd.classList.add('open');
+  document.addEventListener('click', closeCatOnOutsideQP, { once: true });
+}
+function closeCatOnOutsideQP(e) {
+  const wrap = document.getElementById('cat-combo-wrap-qp');
+  if (wrap && !wrap.contains(e.target)) {
+    const dd = document.getElementById('cat-dropdown-qp');
+    if (dd) dd.classList.remove('open');
+  }
+}
+function filterCatDropdownQP() {
+  if (!productCategories.length && allProducts && allProducts.length) {
+    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
+  }
+  const dd = document.getElementById('cat-dropdown-qp');
+  const inp = document.getElementById('qp-cat');
+  if (!dd || !inp) return;
+  const q = (inp.value || '').toLowerCase();
+  const filtered = productCategories.filter(c => c.toLowerCase().includes(q));
+  dd.innerHTML = filtered.map(c =>
+    `<div class="cat-option" onclick="selectCatQP('${c.replace(/'/g, "\\\'")}');">${c}</div>`
+  ).join('') +
+  (q && !productCategories.find(c => c.toLowerCase() === q)
+    ? `<div class="cat-option add-new" onclick="selectCatQP('${inp.value.replace(/'/g, "\\\'")}')">+ เพิ่ม "${inp.value}"</div>` : '');
+  dd.classList.add('open');
+}
+function selectCatQP(val) {
+  const inp = document.getElementById('qp-cat');
+  if (inp) inp.value = val;
+  const dd = document.getElementById('cat-dropdown-qp');
   if (dd) dd.classList.remove('open');
   if (!productCategories.includes(val)) productCategories.push(val);
 }
@@ -24109,7 +24147,22 @@ function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery 
     skuEl.value = cleanQ || '';
   }
   if (supSkuEl) supSkuEl.value = '';
-  if (catEl) catEl.value = 'Oil Seal';
+  
+  if (!productCategories.length && allProducts && allProducts.length) {
+    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
+  }
+  let defaultCat = 'Oil Seal';
+  if (productCategories.length) {
+    if (productCategories.includes('Oil Seal')) defaultCat = 'Oil Seal';
+    else defaultCat = productCategories[0];
+  }
+  const lowQ = (initialQuery || '').toLowerCase();
+  if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) defaultCat = 'O-Ring';
+  else if (lowQ.includes('hydraulic') || lowQ.includes('ไฮดรอลิก') || lowQ.includes('u-cup')) defaultCat = 'Hydraulic Seal';
+  else if (lowQ.includes('pneumatic') || lowQ.includes('นิวเมติก') || lowQ.includes('ลม')) defaultCat = 'Pneumatic Seal';
+  else if (lowQ.includes('v-ring') || lowQ.includes('วีริง')) defaultCat = 'V-Ring';
+  if (catEl) catEl.value = defaultCat;
+
   if (stockEl) stockEl.value = contextType === 'po' ? '0' : '10';
   if (sellEl) sellEl.value = '';
   if (costEl) costEl.value = '';
