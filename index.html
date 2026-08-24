@@ -355,6 +355,50 @@ tbody td:first-child { color: var(--text); }
 .toast.success { border-left: 3px solid var(--green); }
 .toast.error { border-left: 3px solid var(--red); }
 
+/* ── Category combobox & dropdown (Add & Edit Product) ── */
+.cat-combo {
+  position: relative;
+  width: 100%;
+}
+.cat-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--bg2, #ffffff);
+  border: 1px solid var(--border2, #cbd5e1);
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  z-index: 1050;
+}
+.cat-dropdown.open {
+  display: block;
+}
+.cat-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text, #1e293b);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.cat-option:hover {
+  background: var(--bg3, #f1f5f9);
+  color: var(--accent, #0284c7);
+  font-weight: 600;
+}
+.cat-option.add-new {
+  color: var(--accent, #0284c7);
+  font-weight: 600;
+  border-top: 1px dashed var(--border2, #cbd5e1);
+  background: #f0fdf4;
+}
+.cat-option.add-new:hover {
+  background: #dcfce7;
+}
+
 /* ── Loading ── */
 .loading {
   display: flex; align-items: center; justify-content: center;
@@ -7589,6 +7633,42 @@ function selectCat(val) {
   if (!productCategories.includes(val)) productCategories.push(val);
 }
 
+// ── Category combobox for Edit Product Modal (ep-cat) ──
+function openCatDropdown2() {
+  const dd = document.getElementById('cat-dropdown2');
+  if (!dd) return;
+  filterCatDropdown2();
+  dd.classList.add('open');
+  document.addEventListener('click', closeCatOnOutside2, { once:true });
+}
+function closeCatOnOutside2(e) {
+  const wrap = document.getElementById('cat-combo-wrap2');
+  if (wrap && !wrap.contains(e.target)) {
+    const dd = document.getElementById('cat-dropdown2');
+    if (dd) dd.classList.remove('open');
+  }
+}
+function filterCatDropdown2() {
+  const dd = document.getElementById('cat-dropdown2');
+  const inp = document.getElementById('ep-cat');
+  if (!dd || !inp) return;
+  const q = inp.value.toLowerCase();
+  const filtered = productCategories.filter(c => c.toLowerCase().includes(q));
+  dd.innerHTML = filtered.map(c =>
+    `<div class="cat-option" onclick="selectCat2('${c.replace(/'/g,"\\\'")}');">${c}</div>`
+  ).join('') +
+  (q && !productCategories.find(c=>c.toLowerCase()===q)
+    ? `<div class="cat-option add-new" onclick="selectCat2('${inp.value.replace(/'/g,"\\\'")}')">+ เพิ่ม "${inp.value}"</div>` : '');
+  dd.classList.add('open');
+}
+function selectCat2(val) {
+  const inp = document.getElementById('ep-cat');
+  if (inp) inp.value = val;
+  const dd = document.getElementById('cat-dropdown2');
+  if (dd) dd.classList.remove('open');
+  if (!productCategories.includes(val)) productCategories.push(val);
+}
+
 // ── ตรวจรหัสซ้ำ: SKU / Supplier SKU / Part No ห้ามซ้ำกับสินค้าอื่น (เทียบทีละฟิลด์) ──
 // คืน {label,value,product} เมื่อพบซ้ำ, คืน null เมื่อไม่ซ้ำ. excludeId ใช้ตอนแก้ไขเพื่อยกเว้นตัวเอง
 function findProductDup({ sku, supplier_sku, part_no }, excludeId = null) {
@@ -7793,9 +7873,9 @@ async function editProduct(id) {
       </div>
       <div class="grid-2">
         <div class="form-group"><label>Part No / เบอร์ซีล</label><input type="text" id="ep-part-no" placeholder="เช่น KB-OS-14267"></div>
-        <div class="form-group"><label>หมวดหมู่</label>
+        <div class="form-group"><label>หมวดหมู่ <span style="font-size:11px;color:var(--text3)">(พิมพ์หรือเลือก)</span></label>
           <div class="cat-combo" id="cat-combo-wrap2">
-            <input type="text" id="ep-cat" autocomplete="off"
+            <input type="text" id="ep-cat" placeholder="เลือกหรือพิมพ์หมวดใหม่" autocomplete="off"
               oninput="filterCatDropdown2()" onfocus="openCatDropdown2()" onclick="openCatDropdown2()">
             <div class="cat-dropdown" id="cat-dropdown2"></div>
           </div>
