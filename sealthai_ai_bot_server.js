@@ -131,10 +131,24 @@ function calculatePrice(product, qty, sealType) {
   return Math.round(priceMax * 2.00);
 }
 
+// Bot Modes: 'active' (Auto-Reply), 'silent' (Log & Telegram Only, No LINE Reply), 'off' (Disabled)
+let botMode = 'silent'; // default: silent (ไม่ตอบลูกค้า แต่เก็บข้อมูล & แจ้งเตือนแอดมิน)
+let isBotActive = true;
+let botPausedUntil = null;
+
 // ── 2. LINE OA Webhook Endpoint ──────────────────────────────────────
 app.post('/webhook/line', async (req, res) => {
   res.status(200).send('OK');
   const events = req.body.events || [];
+
+  // Check if bot is disabled or paused
+  if (botMode === 'off' || !isBotActive) {
+    console.log('LINE Bot is currently disabled (OFF)');
+    return;
+  }
+
+  const isPaused = botPausedUntil && new Date() < botPausedUntil;
+  const isSilent = (botMode === 'silent' || isPaused);
 
   for (const event of events) {
     if (event.type === 'message' && event.message.type === 'text') {
@@ -145,7 +159,18 @@ app.post('/webhook/line', async (req, res) => {
       try {
         // Quick greeting response
         if (userMsg.match(/^(สวัสดี|hello|hi|ดีครับ|ดีค่ะ)/i) && !userMsg.match(/\d+[xX*×\s]\d+/)) {
-          await replyLineMessage(replyToken, 'สวัสดีค่ะ Sealthai ยินดีให้บริการค่ะ 🙏✨\nท่านสามารถแจ้งชื่อรุ่น หรือขนาดโอริง/ออยซีล/ไฮดรอลิก เช่น 14x2.5 หรือ TC 25 40 7 เพื่อให้ระบบเช็คราคาและสต็อกได้ทันทีค่ะ');
+          if (!isSilent) {
+            await replyLineMessage(replyToken, 'สวัสดีค่ะ Sealthai ยินดีให้บริการค่ะ 🙏✨\nท่านสามารถแจ้งชื่อรุ่น หรือขนาดโอริง/ออยซีล/ไฮดรอลิก เช่น 14x2.5 หรือ TC 25 40 7 เพื่อให้ระบบเช็คราคาและสต็อกได้ทันทีค่ะ');
+          } else {
+            console.log('[Silent Mode] Logged customer greeting, skipped auto-reply.');
+          }
+          // Log chat
+          await supabase.from('ai_chat_logs').insert({
+            channel: 'line',
+            sender_id: userId,
+            message_text: userMsg,
+            ai_response: 'greeting'
+          });
           continue;
         }
 
@@ -180,23 +205,47 @@ app.post('/webhook/line', async (req, res) => {
                       `• สถานะ: ${evalRes.notes}\n\n` +
                       `หากต้องการสั่งซื้อหรือเปิดใบเสนอราคา พิมพ์ "ยืนยันสั่งซื้อ" ได้เลยค่ะ 🙏`;
 
-          await replyLineMessage(replyToken, reply);
+          if (!isSilent) {
+            await replyLineMessage(replyToken, reply);
+          } else {
+            console.log('[Silent Mode] Customer inquired:', userMsg, 'Matched:', p.name, 'Price:', unitPrice, 'Stock:', p.stock_qty);
+            // Send prompt summary to Telegram Admin so admin knows what to reply!
+            await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, 
+              `📩 <b>ลูกค้าทัก LINE (โหมดเงียบ - บอทไม่ได้ตอบ):</b>\n\n` +
+              `• ข้อความลูกค้า: <code>${escapeHTML(userMsg)}</code>\n` +
+              `• สินค้าในระบบ: <b>${escapeHTML(p.name)}</b>\n` +
+              `• สต็อกพร้อมส่ง: <b>${p.stock_qty}</b> ชิ้น\n` +
+              `• ราคาแนะนำ: <b>${unitPrice}</b> บ. (รวม ${qty} ชิ้น = ${finalTotal} บ.)\n\n` +
+              `<i>💡 แอดมินสามารถเปิดแชต LINE คุยตอบลูกค้าได้ทันทีค่ะ</i>`
+            );
+          }
         } else if (evalRes.status === 'needs_admin_approval') {
-          // Notify customer to wait
-          await replyLineMessage(replyToken, `ทางเราพบขนาดใกล้เคียงที่อาจใช้ทดแทนได้ค่ะ (${evalRes.notes})\nขณะนี้กำลังส่งให้วิศวกรและแอดมินตรวจสอบความเหมาะสมสักครู่ค่ะ 🙏`);
-          
+          if (!isSilent) {
+            // Notify customer to wait
+            await replyLineMessage(replyToken, `ทางเราพบขนาดใกล้เคียงที่อาจใช้ทดแทนได้ค่ะ (${evalRes.notes})\nขณะนี้กำลังส่งให้วิศวกรและแอดมินตรวจสอบความเหมาะสมสักครู่ค่ะ 🙏`);
+          }
           // Send Telegram Alert to Admin with inline buttons
           await sendTelegramApprovalRequest(userId, specText, evalRes.product?.name, evalRes.notes);
         } else {
-          await replyLineMessage(replyToken, `ขออภัยค่ะ ไม่พบสต็อกขนาด ${specText} ตรงรุ่นในระบบ\nทีมงานกำลังตรวจสอบสต็อกสาขาเพิ่มเติมให้สักครู่นะคะ 🙏`);
+          if (!isSilent) {
+            await replyLineMessage(replyToken, `ขออภัยค่ะ ไม่พบสต็อกขนาด ${specText} ตรงรุ่นในระบบ\nทีมงานกำลังตรวจสอบสต็อกสาขาเพิ่มเติมให้สักครู่นะคะ 🙏`);
+          } else {
+            await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID,
+              `⚠️ <b>ลูกค้าทักถามสินค้าไม่พบสต็อก (โหมดเงียบ):</b>\n\n` +
+              `• ข้อความลูกค้า: <code>${escapeHTML(userMsg)}</code>\n` +
+              `• ผลการค้นหา: ไม่พบรุ่นตรงในระบบ\n\n` +
+              `<i>💡 โปรดเปิด LINE ตรวจสอบและประสานงานกับลูกค้าค่ะ</i>`
+            );
+          }
         }
 
-        // Log chat
+        // Log chat to database
         await supabase.from('ai_chat_logs').insert({
           channel: 'line',
           sender_id: userId,
           message_text: userMsg,
-          ai_response: evalRes.status
+          ai_response: evalRes.status,
+          silent_mode: isSilent
         });
       } catch (err) {
         console.error('LINE Webhook Error:', err);
@@ -205,18 +254,136 @@ app.post('/webhook/line', async (req, res) => {
   }
 });
 
-// ── 3. Telegram Webhook Endpoint (Admin Approval Workflow) ───────────
+// ── 3. Telegram Webhook Endpoint (Admin Approval & Remote Control) ───
 app.post('/webhook/telegram', async (req, res) => {
   res.status(200).send('OK');
   const update = req.body;
 
+  // Handle Telegram Text Commands
+  if (update.message && update.message.text) {
+    const text = update.message.text.trim();
+    const chatId = update.message.chat.id;
+
+    if (text === '/silent' || text === '/log_only' || text === 'โหมดเงียบ' || text === 'เก็บข้อมูล') {
+      botMode = 'silent';
+      isBotActive = true;
+      botPausedUntil = null;
+      await sendTelegramMessage(chatId, `🟡 <b>เปิด "โหมดเงียบ (Silent Mode)" เรียบร้อยแล้ว</b>\n\n` +
+        `• ❌ <b>บอทจะไม่ตอบลูกค้าบน LINE OA</b> (แอดมินคนจริงสามารถคุยเองได้ 100%)\n` +
+        `• ✅ <b>ระบบยังคงเก็บข้อมูลสถิติและคำค้นหาลูกค้าลงฐานข้อมูล</b>\n` +
+        `• 🔔 <b>ส่งข้อมูลเช็คสต็อก+ราคาเข้า Telegram แอดมินอัตโนมัติ</b> เพื่อให้แอดมินนำไปตอบลูกค้าได้สะดวกรวดเร็วค่ะ\n\n` +
+        `(หากต้องการให้บอทกลับมาตอบอัตโนมัติ พิมพ์ /active หรือ /start_bot)`);
+    } else if (text === '/active' || text === '/start_bot' || text === '/on' || text === 'เปิดบอท' || text === 'ตอบอัตโนมัติ') {
+      botMode = 'active';
+      isBotActive = true;
+      botPausedUntil = null;
+      await sendTelegramMessage(chatId, `🟢 <b>เปิดระบบตอบ LINE อัตโนมัติ (Active Mode) เรียบร้อยแล้ว</b>\n\nบอทพร้อมเช็คสต็อกและส่งข้อความตอบลูกค้าบน LINE OA ตามปกติค่ะ ✨`);
+    } else if (text === '/stop_bot' || text === '/off' || text === 'ปิดบอท' || text === 'หยุดบอท') {
+      botMode = 'off';
+      isBotActive = false;
+      botPausedUntil = null;
+      await sendTelegramMessage(chatId, `🔴 <b>สั่งปิดระบบบอททั้งหมดเรียบร้อยแล้ว</b>\n\nระบบจะไม่ตอบและไม่ประมวลผลข้อความ\n(หากต้องการให้เก็บข้อมูลอย่างเดียว พิมพ์ /silent)`);
+    } else if (text.startsWith('/pause_') || text.startsWith('/stop_')) {
+      const mins = parseInt(text.replace(/[^0-9]/g, ''), 10) || 30;
+      botPausedUntil = new Date(Date.now() + mins * 60 * 1000);
+      botMode = 'silent';
+      await sendTelegramMessage(chatId, `⏳ <b>สั่งหยุดบอทตอบลูกค้าชั่วคราวเป็นเวลา ${mins} นาที</b>\n\n(ระหว่างนี้ระบบจะอยู่ในโหมดเงียบ คอยเก็บข้อมูลและส่งสต็อกให้แอดมินทาง Telegram จนถึงเวลา ${botPausedUntil.toLocaleTimeString('th-TH')} น.)`);
+    } else if (text === '/status' || text === 'สถานะ' || text === '/help') {
+      const modeLabel = botMode === 'off' 
+        ? '🔴 ปิดระบบทั้งหมด (Disabled)' 
+        : (botMode === 'silent' 
+            ? '🟡 โหมดเงียบ: เก็บข้อมูล & แจ้งเตือนแอดมิน (ไม่ตอบลูกค้า)' 
+            : (botPausedUntil && new Date() < botPausedUntil 
+                ? `⏳ หยุดตอบชั่วคราวถึง ${botPausedUntil.toLocaleTimeString('th-TH')} น.` 
+                : '🟢 ตอบอัตโนมัติเต็มรูปแบบ (Active)'));
+      
+      const helpMsg = `🤖 <b>แผงควบคุมระบบบอท LINE OA (@sealthai):</b>\n\n` +
+                      `• สถานะปัจจุบัน: <b>${modeLabel}</b>\n\n` +
+                      `<b>เลือกโหมดการทำงาน:</b>\n` +
+                      `1. <code>/active</code> : บอทตอบลูกค้าอัตโนมัติ\n` +
+                      `2. <code>/silent</code> : <b>โหมดเงียบ (ไม่ตอบลูกค้า แต่เก็บข้อมูล + แจ้งสต็อกแอดมิน)</b>\n` +
+                      `3. <code>/pause_30</code> : หยุดตอบ 30 นาที\n` +
+                      `4. <code>/stop_bot</code> : ปิดระบบทั้งหมด`;
+
+      await sendTelegramMessage(chatId, helpMsg, [
+        [
+          { text: '🟢 ตอบอัตโนมัติ', callback_data: 'SET_MODE:ACTIVE' },
+          { text: '🟡 โหมดเงียบ (ไม่ตอบ)', callback_data: 'SET_MODE:SILENT' }
+        ],
+        [
+          { text: '⏳ พัก 30 นาที', callback_data: 'SET_MODE:PAUSE_30' },
+          { text: '🔴 ปิดระบบ', callback_data: 'SET_MODE:OFF' }
+        ]
+      ]);
+    }
+  }
+
+  // Handle Telegram Inline Keyboard Buttons
   if (update.callback_query) {
     const cb = update.callback_query;
-    const data = cb.data || ''; // e.g. "APPROVE:O-Ring:90x5.5:OR-089-057"
+    const data = cb.data || '';
     const chatId = cb.message.chat.id;
     const msgId = cb.message.message_id;
 
-    if (data.startsWith('APPROVE:')) {
+    if (data === 'SET_MODE:SILENT' || data === 'TOGGLE_BOT:OFF') {
+      botMode = 'silent';
+      isBotActive = true;
+      botPausedUntil = null;
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+        chat_id: chatId,
+        message_id: msgId,
+        parse_mode: 'HTML',
+        text: `🟡 <b>เปิดโหมดเงียบ (Silent Mode) แล้ว</b>\nบอทจะไม่ตอบลูกค้าบน LINE OA แต่จะบันทึกข้อมูลและส่งสต็อก+ราคาให้แอดมินทาง Telegram ค่ะ`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🟢 สลับเป็นโหมดตอบอัตโนมัติ', callback_data: 'SET_MODE:ACTIVE' }]
+          ]
+        }
+      });
+    } else if (data === 'SET_MODE:ACTIVE' || data === 'TOGGLE_BOT:ON') {
+      botMode = 'active';
+      isBotActive = true;
+      botPausedUntil = null;
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+        chat_id: chatId,
+        message_id: msgId,
+        parse_mode: 'HTML',
+        text: `🟢 <b>เปิดโหมดตอบอัตโนมัติ (Active Mode) แล้ว</b>\nบอทพร้อมเช็คสต็อกและส่งข้อความตอบลูกค้าบน LINE OA ตามปกติค่ะ ✨`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🟡 สลับเป็นโหมดเงียบ (ไม่ตอบลูกค้า)', callback_data: 'SET_MODE:SILENT' }]
+          ]
+        }
+      });
+    } else if (data === 'SET_MODE:OFF') {
+      botMode = 'off';
+      isBotActive = false;
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+        chat_id: chatId,
+        message_id: msgId,
+        parse_mode: 'HTML',
+        text: `🔴 <b>สั่งปิดระบบบอททั้งหมดเรียบร้อยแล้ว</b>`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🟡 เปิดโหมดเงียบ (เก็บข้อมูล)', callback_data: 'SET_MODE:SILENT' }, { text: '🟢 เปิดตอบอัตโนมัติ', callback_data: 'SET_MODE:ACTIVE' }]
+          ]
+        }
+      });
+    } else if (data === 'SET_MODE:PAUSE_30' || data === 'TOGGLE_BOT:PAUSE_30') {
+      botPausedUntil = new Date(Date.now() + 30 * 60 * 1000);
+      botMode = 'silent';
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+        chat_id: chatId,
+        message_id: msgId,
+        parse_mode: 'HTML',
+        text: `⏳ <b>สั่งหยุดตอบลูกค้าชั่วคราว 30 นาที (เข้าโหมดเงียบ)</b>\nบอทจะกลับมาตอบอัตโนมัติเวลา ${botPausedUntil.toLocaleTimeString('th-TH')} น.`,
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🟢 เปิดตอบทันที', callback_data: 'SET_MODE:ACTIVE' }]
+          ]
+        }
+      });
+    } else if (data.startsWith('APPROVE:')) {
       const parts = data.split(':');
       const sealType = parts[1];
       const reqSpec = parts[2];
@@ -255,6 +422,19 @@ async function replyLineMessage(replyToken, text) {
   }, {
     headers: { Authorization: `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}` }
   });
+}
+
+async function sendTelegramMessage(chatId, text, inlineKeyboard = null) {
+  if (!TELEGRAM_BOT_TOKEN) return;
+  const payload = {
+    chat_id: chatId,
+    text: text,
+    parse_mode: 'HTML'
+  };
+  if (inlineKeyboard) {
+    payload.reply_markup = { inline_keyboard: inlineKeyboard };
+  }
+  await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, payload);
 }
 
 async function sendTelegramApprovalRequest(userId, reqSpec, subName, notes) {
