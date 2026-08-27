@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.46';
+    const CACHE = 'sealthai-v1.48';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1039,7 +1039,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.46 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.48 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -4626,11 +4626,12 @@ async function loadOrders() {
   const ds = document.getElementById('ord-doc-status')?.value || '';
   if (ds)   q = q.eq('doc_status', ds);
 
-  const [ordRes, empRes, _shopee, arRes] = await Promise.all([
+  const [ordRes, empRes, _shopee, arRes, poRes] = await Promise.all([
     q,
     sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
     ensureShopeeFeeData(),
-    sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null)
+    sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
+    sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered)').eq('shop_id', currentShop.id).neq('status','cancelled')
   ]);
 
   if (ordRes.error) {
@@ -4645,6 +4646,61 @@ async function loadOrders() {
   const arByOrderId = {};
   (arRes?.data||[]).forEach(ar => {
     if (ar.status !== 'cancelled') arByOrderId[ar.order_id] = ar;
+  });
+
+  // Map POs linked to Orders and Order Items
+  const poByOrderNo = {};
+  const poItemMapByOrder = {};
+  window._latestPOByOrderNo = poByOrderNo;
+  window._latestPOItemMapByOrder = poItemMapByOrder;
+
+  (poRes?.data || []).forEach(po => {
+    (po.purchase_order_items || []).forEach(poi => {
+      const pName = poi.product_name || '';
+      const match = pName.match(/\[SO:\s*([^\]]+)\]/i);
+      if (match && match[1]) {
+        const soRefs = match[1].split(',').map(s => s.trim().replace(/\s*\([^)]*\)/g, ''));
+        soRefs.forEach(soRef => {
+          if (!poByOrderNo[soRef]) poByOrderNo[soRef] = [];
+          if (!poByOrderNo[soRef].some(p => p.po_id === po.id)) {
+            poByOrderNo[soRef].push({
+              po_id: po.id,
+              po_no: po.po_no,
+              status: po.status,
+              supplier_name: po.supplier_name
+            });
+          }
+          if (!poItemMapByOrder[soRef]) poItemMapByOrder[soRef] = [];
+          poItemMapByOrder[soRef].push({
+            po_id: po.id,
+            po_no: po.po_no,
+            status: po.status,
+            supplier_name: po.supplier_name,
+            product_id: poi.product_id,
+            clean_product_name: pName.replace(/\[SO:[^\]]*\]/gi, '').trim(),
+            raw_product_name: pName,
+            qty_ordered: poi.qty_ordered
+          });
+        });
+      }
+    });
+
+    if (po.note) {
+      const noteMatches = po.note.match(/(ORD-[0-9\-]+|SO-[0-9a-zA-Z\-]+)/gi);
+      if (noteMatches) {
+        noteMatches.forEach(soRef => {
+          if (!poByOrderNo[soRef]) poByOrderNo[soRef] = [];
+          if (!poByOrderNo[soRef].some(p => p.po_id === po.id)) {
+            poByOrderNo[soRef].push({
+              po_id: po.id,
+              po_no: po.po_no,
+              status: po.status,
+              supplier_name: po.supplier_name
+            });
+          }
+        });
+      }
+    }
   });
 
   // merge ข้อมูลพนักงานเข้าไป
@@ -4771,9 +4827,30 @@ async function loadOrders() {
           const isPlat=feeInfo.isPlatform;
           const fee=cancelled?0:feeInfo.fee;
           const profit=cancelled?0:sale-cost-fee;
-          const products=(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-';
           const linkedAR = arByOrderId[o.id];
           const hasAR = !!linkedAR;
+          const linkedPOs = poByOrderNo[o.order_no] || poByOrderNo[o.id] || [];
+          const hasPO = linkedPOs.length > 0;
+          const orderPOItems = poItemMapByOrder[o.order_no] || poItemMapByOrder[o.id] || [];
+
+          const isItemInPO = (it) => {
+            if (!hasPO && !orderPOItems.length) return null;
+            return orderPOItems.find(poi => 
+              (it.product_id && poi.product_id && it.product_id === poi.product_id) ||
+              (it.product_name && poi.clean_product_name && it.product_name.trim().toLowerCase() === poi.clean_product_name.toLowerCase()) ||
+              (it.product_name && poi.raw_product_name && poi.raw_product_name.toLowerCase().includes(it.product_name.trim().toLowerCase()))
+            );
+          };
+
+          const products = (o.order_items||[]).map(it => {
+            const qtyTxt = Number(it.qty) > 1 ? it.qty + '× ' : '';
+            const poMatch = isItemInPO(it);
+            const poTag = poMatch 
+              ? ` <span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:9.5px;padding:1px 4px;border-radius:4px;font-weight:700" title="เปิด PO แล้ว: ${escapeHTML(poMatch.po_no)}">🛒 PO</span>`
+              : '';
+            return `${qtyTxt}${escapeHTML(it.product_name||'')}${poTag}`;
+          }).join(', ') || '-';
+
           return `<tr>
           <td style="text-align:center" onclick="event.stopPropagation()">
             ${hasAR
@@ -4786,6 +4863,7 @@ async function loadOrders() {
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
             ${hasAR?`<div style="margin-top:3px"><span class="badge badge-blue" style="font-size:10px;cursor:pointer" onclick="showPage('arinvoice');setTimeout(()=>openARDetail('${linkedAR.id}'),250)" title="คลิกดู AR Invoice ${escapeHTML(linkedAR.ar_no)}">📄 ${escapeHTML(linkedAR.ar_no)}</span></div>`:''}
+            ${hasPO?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${linkedPOs.map(po=>`<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;cursor:pointer;padding:1px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px" onclick="showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)" title="คลิกดูใบสั่งซื้อ PO: ${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')})">🛒 ${escapeHTML(po.po_no)}</span>`).join('')}</div>`:''}
           </td>
           <td class="col-customer">
             <div style="font-weight:500">${o.customer_name||'-'}</div>
@@ -4834,7 +4912,23 @@ async function loadOrders() {
           ${channelBadge(o.channel)}
         </div>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${(o.order_items||[]).map(it=>(Number(it.qty)>1?it.qty+'× ':'')+(it.product_name||'')).join(', ')||'-'}</div>
+      ${(()=>{
+        const linkedPOs = (window._latestPOByOrderNo||{})[o.order_no] || (window._latestPOByOrderNo||{})[o.id] || [];
+        const orderPOItems = (window._latestPOItemMapByOrder||{})[o.order_no] || (window._latestPOItemMapByOrder||{})[o.id] || [];
+        const isItemInPO = (it) => orderPOItems.find(poi => 
+          (it.product_id && poi.product_id && it.product_id === poi.product_id) ||
+          (it.product_name && poi.clean_product_name && it.product_name.trim().toLowerCase() === poi.clean_product_name.toLowerCase()) ||
+          (it.product_name && poi.raw_product_name && poi.raw_product_name.toLowerCase().includes(it.product_name.trim().toLowerCase()))
+        );
+        const prodHtml = (o.order_items||[]).map(it => {
+          const qtyTxt = Number(it.qty) > 1 ? it.qty + '× ' : '';
+          const poMatch = isItemInPO(it);
+          const poTag = poMatch ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700">🛒 PO</span>' : '';
+          return `${qtyTxt}${escapeHTML(it.product_name||'')}${poTag}`;
+        }).join(', ') || '-';
+        return `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${prodHtml}</div>` +
+          (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => `<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px" onclick="event.stopPropagation();showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)">🛒 PO: ${escapeHTML(po.po_no)}</span>`).join('')}</div>` : '');
+      })()}
       ${(()=>{
         const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
         if (isOrderCancelled(o)) return '<div style="font-size:11px;margin-bottom:8px;font-weight:600" class="text-red">ไม่นับในยอดขาย ต้นทุน GP และกำไร</div>';
@@ -4950,7 +5044,7 @@ let orderSourceQuoteId = null;
 async function openNewOrder() {
   orderItems = [];
   const [prodRes] = await Promise.all([
-    sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost,stock_qty,stock_inhouse').eq('shop_id', currentShop.id).eq('active',true).order('name'),
     loadOrderCustomerList()
   ]);
   productList = prodRes.data || [];
@@ -5313,7 +5407,7 @@ function newOrderProdSearch(rowIdx) {
   inp.value = linkedProd?.name || it?.product_name || '';
 
   const dd = document.createElement('div');
-  dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:200px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.12)';
+  dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.15)';
 
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:relative;flex:1;min-width:120px';
@@ -5327,19 +5421,38 @@ function newOrderProdSearch(rowIdx) {
     dd.innerHTML = '';
     results.forEach(p => {
       const div = document.createElement('div');
-      div.style.cssText = 'padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0';
-      const sku = p.sku || p.supplier_sku || '';
-      div.innerHTML = '';
+      div.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px';
+      
+      const leftDiv = document.createElement('div');
+      leftDiv.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+      
       const nameSpan = document.createElement('span');
       nameSpan.textContent = p.name;
-      nameSpan.style.fontWeight = '500';
-      div.appendChild(nameSpan);
+      nameSpan.style.fontWeight = '600';
+      nameSpan.style.color = '#0f172a';
+      leftDiv.appendChild(nameSpan);
+
+      const sku = p.sku || p.supplier_sku || '';
       if (sku) {
         const skuSpan = document.createElement('span');
         skuSpan.textContent = ' · ' + sku;
-        skuSpan.style.cssText = 'color:var(--blue);font-size:11px';
-        div.appendChild(skuSpan);
+        skuSpan.style.cssText = 'color:var(--blue);font-size:11px;font-weight:normal';
+        leftDiv.appendChild(skuSpan);
       }
+      div.appendChild(leftDiv);
+
+      // Stock Pill Badge in Search Dropdown
+      const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+      const stockBadge = document.createElement('span');
+      if (stockVal > 0) {
+        stockBadge.style.cssText = 'background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap';
+        stockBadge.textContent = 'สต๊อก ' + fmt(stockVal) + ' ชิ้น';
+      } else {
+        stockBadge.style.cssText = 'background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap';
+        stockBadge.textContent = 'หมด (0 ชิ้น)';
+      }
+      div.appendChild(stockBadge);
+
       div.onmouseover = ()=>div.style.background='#f0f7ff';
       div.onmouseout  = ()=>div.style.background='';
       div.onmousedown = e => {
@@ -5402,7 +5515,7 @@ function newOrderProdSearch(rowIdx) {
 function renderOrderItems() {
   const container = document.getElementById('order-items-container');
   if (!orderItems.length) {
-    container.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:13px;text-align:center">กด "+ เพิ่มสินค้า" เพื่อเพิ่มรายการ</div>';
+    container.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:13px;text-align:center">กด "+ เพิ่มรายการสินค้า" เพื่อเพิ่มรายการ</div>';
     updateOrderSummary();
     return;
   }
@@ -5446,6 +5559,13 @@ function renderOrderItems() {
     const card = document.createElement('div');
     card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;position:relative';
 
+    const linkedProd = item.product_id && item.product_id !== '__custom__' 
+      ? productList.find(p => p.id === item.product_id) 
+      : null;
+    const stockVal = linkedProd 
+      ? Number(linkedProd.stock_inhouse !== undefined && linkedProd.stock_inhouse !== null ? linkedProd.stock_inhouse : (linkedProd.stock_qty || 0)) 
+      : null;
+
     // ── Row 1: Product search + delete button ──
     const row1 = document.createElement('div');
     row1.style.cssText='display:flex;gap:8px;align-items:start;margin-bottom:10px';
@@ -5467,9 +5587,14 @@ function renderOrderItems() {
     }
 
     const statusHelp = document.createElement('div');
-    statusHelp.style.cssText = 'font-size:11px;margin-top:3px;margin-bottom:6px;font-weight:500';
+    statusHelp.style.cssText = 'font-size:11.5px;margin-top:4px;margin-bottom:6px;font-weight:500;display:flex;align-items:center;flex-wrap:wrap;gap:6px';
     if (item.product_id && item.product_id !== '__custom__') {
-      statusHelp.innerHTML = '<span style="color:#10b981">✓ เชื่อมโยงคลังสินค้า (ระบบจะตัดสต๊อกและคิดราคาทุนจากสินค้านี้)</span>';
+      const stockBadge = stockVal !== null
+        ? (stockVal > 0 
+            ? `<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:4px">📦 สต๊อกคงเหลือในร้าน: <b>${fmt(stockVal)}</b> ชิ้น</span>` 
+            : `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:4px">⚠️ สต๊อกหมด (0 ชิ้น)</span>`)
+        : '';
+      statusHelp.innerHTML = `<span style="color:#10b981;font-weight:600">✓ เชื่อมโยงคลังสินค้า</span> ${stockBadge}`;
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่ตัดสต๊อก)</span>';
     }
@@ -5509,8 +5634,43 @@ function renderOrderItems() {
 
     // Qty
     const wQty = fieldWrap();
-    wQty.appendChild(label('จำนวน'));
-    wQty.appendChild(numInp(item.qty||1, v=>{orderItems[i].qty=v;updateOrderSummary();}));
+    const qtyLabelWrap = document.createElement('div');
+    qtyLabelWrap.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:3px';
+    
+    const qtyTitle = document.createElement('span');
+    qtyTitle.style.cssText = 'font-size:11px;color:var(--text3);font-weight:500';
+    qtyTitle.textContent = 'จำนวน';
+
+    const qtyWarn = document.createElement('span');
+    qtyWarn.style.cssText = 'font-size:10px;font-weight:700;margin-left:4px';
+    
+    function updateQtyWarning(currentQty) {
+      if (stockVal !== null) {
+        if (stockVal <= 0) {
+          qtyWarn.style.color = '#dc2626';
+          qtyWarn.textContent = '(สต๊อก 0)';
+        } else if (currentQty > stockVal) {
+          qtyWarn.style.color = '#dc2626';
+          qtyWarn.textContent = `(เกินสต๊อก: มี ${fmt(stockVal)})`;
+        } else {
+          qtyWarn.style.color = '#15803d';
+          qtyWarn.textContent = `(คงเหลือ ${fmt(stockVal)})`;
+        }
+      } else {
+        qtyWarn.textContent = '';
+      }
+    }
+    updateQtyWarning(item.qty || 1);
+
+    qtyLabelWrap.appendChild(qtyTitle);
+    qtyLabelWrap.appendChild(qtyWarn);
+    wQty.appendChild(qtyLabelWrap);
+    
+    wQty.appendChild(numInp(item.qty||1, v => {
+      orderItems[i].qty = v;
+      updateQtyWarning(v);
+      updateOrderSummary();
+    }));
     row2.appendChild(wQty);
 
     // Price
@@ -5861,6 +6021,15 @@ function renderEditProdSearch(rowIdx) {
   const stockProdName = (linkedProd?.name || (it && !isLinked ? it.product_name : '') || '').replace(/"/g, '&quot;');
   const customVal = (it?.product_name || '').replace(/"/g, '&quot;');
   
+  // Check if item has been ordered in a PO
+  const matchedPO = (window._currentOrderPOItems || []).find(poi =>
+    (it && it.product_id && poi.product_id && it.product_id === poi.product_id) ||
+    (it && it.product_name && poi.product_name && poi.product_name.toLowerCase().includes(it.product_name.trim().toLowerCase()))
+  );
+  const poBadgeHtml = matchedPO
+    ? '<div style="margin-top:4px"><span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px;display:inline-flex;align-items:center;gap:4px">🛒 เปิด PO แล้ว: <b>' + escapeHTML(matchedPO.purchase_orders?.po_no || 'PO') + '</b>' + (matchedPO.purchase_orders?.supplier_name ? ' (' + escapeHTML(matchedPO.purchase_orders.supplier_name) + ')' : '') + ' · สั่ง ' + fmt(matchedPO.qty_ordered) + ' ชิ้น</span></div>'
+    : '';
+
   return '<div style="position:relative;min-width:160px;flex:2">' +
     '<div style="font-size:10.5px;font-weight:700;color:var(--text);margin-bottom:2px">📦 1. สินค้าคลัง (ตัดสต๊อก):</div>' +
     '<input id="'+inpId+'" type="text" autocomplete="off" value="'+stockProdName+'" placeholder="ค้นหาสินค้าคลัง / SKU..."' +
@@ -5870,7 +6039,8 @@ function renderEditProdSearch(rowIdx) {
     'background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;' +
     'box-shadow:0 6px 20px rgba(0,0,0,0.12)"></div>' +
     '<div style="font-size:10px;margin-top:2px;margin-bottom:4px;color:'+statusColor+';font-weight:600">'+statusText+'</div>' +
-    '<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:5px;padding:4px 6px">' +
+    poBadgeHtml +
+    '<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:5px;padding:4px 6px;margin-top:4px">' +
     '  <div style="font-size:10px;color:#1e40af;font-weight:700;margin-bottom:2px">🏷️ 2. ข้อความพิมพ์หน้าบิล (ชื่อตามลูกค้า):</div>' +
     '  <input id="ep-custom-'+rowIdx+'" type="text" value="'+customVal+'" placeholder="เว้นว่างใช้ชื่อคลัง | หรือระบุชื่อเฉพาะลูกค้า"' +
     '    style="width:100%;background:#ffffff;border:1px solid #93c5fd;border-radius:4px;padding:3px 6px;color:var(--text);font-size:11px;box-sizing:border-box"' +
@@ -6138,8 +6308,18 @@ async function viewOrder(orderId) {
     showPage('orders');
   }
   await ensureShopeeFeeData();
-  const { data: order } = await sb.from('orders').select('*,order_items(*)').eq('id',orderId).single();
+  const [{ data: order }, { data: orderPOItemsRaw }] = await Promise.all([
+    sb.from('orders').select('*,order_items(*)').eq('id',orderId).single(),
+    sb.from('purchase_order_items').select('id, po_id, product_id, product_name, qty_ordered, purchase_orders(id, po_no, po_date, supplier_name, status)')
+  ]);
   if (!order) return;
+  
+  // Filter PO items matching this order
+  const thisOrderPOItems = (orderPOItemsRaw || []).filter(poi => {
+    const pName = poi.product_name || '';
+    return pName.includes(order.order_no) || pName.includes(order.id);
+  });
+  window._currentOrderPOItems = thisOrderPOItems;
   window._editingOrderForGP = order;
   editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount'}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
@@ -6164,6 +6344,19 @@ async function viewOrder(orderId) {
   const __odEl = document.getElementById('order-detail-content');
   if (!__odEl) return;
   __odEl.innerHTML = `
+    ${(()=>{
+      const poList = (window._currentOrderPOItems || []).map(p => p.purchase_orders).filter(Boolean);
+      const uniquePOs = [];
+      poList.forEach(po => { if (!uniquePOs.some(u => u.id === po.id)) uniquePOs.push(po); });
+      if (!uniquePOs.length) return '';
+      return `<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div style="font-size:12.5px;color:#15803d;font-weight:700;display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px">🛒</span>
+          <span>ออเดอร์นี้มีการเปิดใบสั่งซื้อ (PO) แล้ว:</span>
+          ${uniquePOs.map(po => `<span class="badge" style="background:#fff;color:#15803d;border:1px solid #86efac;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;cursor:pointer" onclick="closeModal('modal-order-detail');showPage('purchase');setTimeout(()=>viewPO('${po.id}'),250)" title="คลิกไปดูใบสั่งซื้อ">${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')}) 🔗</span>`).join(' ')}
+        </div>
+      </div>`;
+    })()}
     <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:13px">
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
@@ -8178,7 +8371,76 @@ function selectCat2(val) {
   if (!productCategories.includes(val)) productCategories.push(val);
 }
 
-// ── Category combobox for Quick Product Modal (qp-cat) ──
+// ── Quick Product Dropdowns & Chips Engine (qp-cat, qp-material, qp-seal-type) ──
+const popularQPCategories = [
+  { val: 'Oil Seal', label: '🏷️ Oil Seal' },
+  { val: 'O-Ring', label: '⭕ O-Ring' },
+  { val: 'Hydraulic Seal', label: '💧 Hydraulic' },
+  { val: 'Pneumatic Seal', label: '💨 Pneumatic' },
+  { val: 'Mechanical Seal', label: '🔧 Mechanical' },
+  { val: 'V-Ring', label: '🔄 V-Ring' },
+  { val: 'Gasket', label: '⚙️ Gasket' },
+  { val: 'Other', label: '📦 อื่นๆ' }
+];
+
+let defaultSealMaterials = ['NBR', 'FKM (Viton)', 'PU (Polyurethane)', 'PTFE (Teflon)', 'Silicone', 'EPDM', 'HNBR', 'Bakelite', 'POM', 'ACM', 'FFKM'];
+const popularQPMaterials = ['NBR', 'FKM (Viton)', 'PU', 'PTFE', 'Silicone', 'EPDM', 'HNBR', 'Bakelite', 'POM', 'ACM', 'FFKM'];
+
+let defaultSealProfiles = ['TC', 'SC', 'TB', 'SB', 'VC', 'VB', 'TA', 'SA', 'TCV', 'TCN', 'U-Cup', 'Rod Seal', 'Piston Seal', 'Wiper Seal', 'Wearing Ring', 'O-Ring', 'V-Ring', 'End Cover', 'Gammaseal', 'V-Packing'];
+const popularQPSealTypes = ['TC', 'SC', 'TB', 'SB', 'VC', 'VB', 'TA', 'SA', 'TCV', 'TCN', 'U-Cup', 'Rod Seal', 'Piston Seal', 'Wiper Seal', 'Wearing Ring', 'O-Ring', 'V-Ring', 'End Cover'];
+
+function renderQPChips() {
+  const curCat = (document.getElementById('qp-cat')?.value || '').trim();
+  const curMat = (document.getElementById('qp-material')?.value || '').trim();
+  const curType = (document.getElementById('qp-seal-type')?.value || '').trim();
+
+  // 1. Category Chips
+  const catChipsEl = document.getElementById('qp-cat-chips');
+  if (catChipsEl) {
+    catChipsEl.innerHTML = popularQPCategories.map(item => {
+      const isSel = curCat.toLowerCase() === item.val.toLowerCase() || (item.val === 'Other' && curCat && !popularQPCategories.some(p => p.val.toLowerCase() === curCat.toLowerCase()));
+      const bg = isSel ? '#2563eb' : '#f1f5f9';
+      const col = isSel ? '#ffffff' : '#334155';
+      const bdr = isSel ? '#1d4ed8' : '#cbd5e1';
+      return `<button type="button" onclick="selectCatQP('${item.val.replace(/'/g, "\'")}')"
+        style="cursor:pointer;background:${bg};color:${col};border:1px solid ${bdr};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:3px;transition:all 0.12s;box-shadow:${isSel ? '0 2px 4px rgba(37,99,235,0.25)' : 'none'}">
+        ${item.label}
+      </button>`;
+    }).join('');
+  }
+
+  // 2. Material Chips
+  const matChipsEl = document.getElementById('qp-mat-chips');
+  if (matChipsEl) {
+    matChipsEl.innerHTML = popularQPMaterials.map(mat => {
+      const isSel = curMat.toLowerCase() === mat.toLowerCase() || (mat === 'FKM (Viton)' && (curMat.toLowerCase().includes('fkm') || curMat.toLowerCase().includes('viton')));
+      const bg = isSel ? '#0d9488' : '#f1f5f9';
+      const col = isSel ? '#ffffff' : '#334155';
+      const bdr = isSel ? '#0f766e' : '#cbd5e1';
+      return `<button type="button" onclick="selectMatQP('${mat.replace(/'/g, "\'")}')"
+        style="cursor:pointer;background:${bg};color:${col};border:1px solid ${bdr};padding:3px 7px;border-radius:12px;font-size:10.5px;font-weight:600;display:inline-flex;align-items:center;transition:all 0.12s;box-shadow:${isSel ? '0 2px 4px rgba(13,148,136,0.25)' : 'none'}">
+        ${mat}
+      </button>`;
+    }).join('');
+  }
+
+  // 3. Seal Type Chips
+  const typeChipsEl = document.getElementById('qp-type-chips');
+  if (typeChipsEl) {
+    typeChipsEl.innerHTML = popularQPSealTypes.map(st => {
+      const isSel = curType.toLowerCase() === st.toLowerCase();
+      const bg = isSel ? '#7c3aed' : '#f1f5f9';
+      const col = isSel ? '#ffffff' : '#334155';
+      const bdr = isSel ? '#6d28d9' : '#cbd5e1';
+      return `<button type="button" onclick="selectTypeQP('${st.replace(/'/g, "\'")}')"
+        style="cursor:pointer;background:${bg};color:${col};border:1px solid ${bdr};padding:3px 7px;border-radius:12px;font-size:10.5px;font-weight:600;display:inline-flex;align-items:center;transition:all 0.12s;box-shadow:${isSel ? '0 2px 4px rgba(124,58,237,0.25)' : 'none'}">
+        ${st}
+      </button>`;
+    }).join('');
+  }
+}
+
+// ── Category Dropdown functions ──
 function openCatDropdownQP() {
   if (!productCategories.length && allProducts && allProducts.length) {
     productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
@@ -8200,16 +8462,17 @@ function filterCatDropdownQP() {
   if (!productCategories.length && allProducts && allProducts.length) {
     productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
   }
+  const allCats = [...new Set([...popularQPCategories.map(p => p.val), ...productCategories])].filter(Boolean).sort();
   const dd = document.getElementById('cat-dropdown-qp');
   const inp = document.getElementById('qp-cat');
   if (!dd || !inp) return;
-  const q = (inp.value || '').toLowerCase();
-  const filtered = productCategories.filter(c => c.toLowerCase().includes(q));
+  const q = (inp.value || '').toLowerCase().trim();
+  const filtered = q ? allCats.filter(c => c.toLowerCase().includes(q)) : allCats;
   dd.innerHTML = filtered.map(c =>
-    `<div class="cat-option" onclick="selectCatQP('${c.replace(/'/g, "\\\'")}');">${c}</div>`
+    `<div class="cat-option" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:500" onclick="selectCatQP('${c.replace(/'/g, "\'")}');">${c}</div>`
   ).join('') +
-  (q && !productCategories.find(c => c.toLowerCase() === q)
-    ? `<div class="cat-option add-new" onclick="selectCatQP('${inp.value.replace(/'/g, "\\\'")}')">+ เพิ่ม "${inp.value}"</div>` : '');
+  (q && !allCats.find(c => c.toLowerCase() === q)
+    ? `<div class="cat-option add-new" style="padding:8px 10px;cursor:pointer;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700" onclick="selectCatQP('${inp.value.replace(/'/g, "\'")}')">+ ใช้หมวดหมู่ใหม่ "${escapeHTML(inp.value)}"</div>` : '');
   dd.classList.add('open');
 }
 function selectCatQP(val) {
@@ -8218,22 +8481,14 @@ function selectCatQP(val) {
   const dd = document.getElementById('cat-dropdown-qp');
   if (dd) dd.classList.remove('open');
   if (!productCategories.includes(val)) productCategories.push(val);
+  renderQPChips();
 }
 
-// ── Material Combobox for Quick Product (qp-material) ──
-let defaultSealMaterials = ['NBR', 'FKM', 'PU', 'PTFE', 'Silicone', 'EPDM', 'HNBR', 'Bakelite', 'POM', 'ACM', 'FFKM', 'Viton'];
-let defaultSealProfiles = ['TC', 'SC', 'TB', 'SB', 'VC', 'VB', 'TA', 'SA', 'TCV', 'TCN', 'U-Cup', 'Rod Seal', 'Piston Seal', 'Wiper Seal', 'Wearing Ring', 'O-Ring', 'V-Ring', 'End Cover', 'Gammaseal', 'V-Packing'];
-
+// ── Material Dropdown functions ──
 function getAvailableMaterialsQP() {
   const existing = (allProducts || []).map(p => (p.material || '').trim()).filter(Boolean);
   return [...new Set([...defaultSealMaterials, ...existing])].sort();
 }
-
-function getAvailableSealTypesQP() {
-  const existing = (allProducts || []).map(p => (p.seal_type || '').trim()).filter(Boolean);
-  return [...new Set([...defaultSealProfiles, ...existing])].sort();
-}
-
 function openMatDropdownQP() {
   const dd = document.getElementById('mat-dropdown-qp');
   if (!dd) return;
@@ -8254,12 +8509,12 @@ function filterMatDropdownQP() {
   if (!dd || !inp) return;
   const list = getAvailableMaterialsQP();
   const q = (inp.value || '').trim().toLowerCase();
-  const filtered = list.filter(m => m.toLowerCase().includes(q));
-  dd.innerHTML = filtered.slice(0, 20).map(m =>
-    `<div class="cat-option" onclick="selectMatQP('${m.replace(/'/g, "\\\'")}');">${escapeHTML(m)}</div>`
+  const filtered = q ? list.filter(m => m.toLowerCase().includes(q)) : list;
+  dd.innerHTML = filtered.slice(0, 25).map(m =>
+    `<div class="cat-option" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:500" onclick="selectMatQP('${m.replace(/'/g, "\'")}');">${escapeHTML(m)}</div>`
   ).join('') +
   (q && !list.find(m => m.toLowerCase() === q)
-    ? `<div class="cat-option add-new" onclick="selectMatQP('${inp.value.replace(/'/g, "\\\'")}')">+ เพิ่มเนื้อยางใหม่ "${escapeHTML(inp.value)}"</div>` : '');
+    ? `<div class="cat-option add-new" style="padding:8px 10px;cursor:pointer;background:#f0fdf4;color:#15803d;font-size:12px;font-weight:700" onclick="selectMatQP('${inp.value.replace(/'/g, "\'")}')">+ ใช้เนื้อยางใหม่ "${escapeHTML(inp.value)}"</div>` : '');
   dd.classList.add('open');
 }
 function selectMatQP(val) {
@@ -8268,9 +8523,14 @@ function selectMatQP(val) {
   const dd = document.getElementById('mat-dropdown-qp');
   if (dd) dd.classList.remove('open');
   if (!defaultSealMaterials.includes(val)) defaultSealMaterials.push(val);
+  renderQPChips();
 }
 
-// ── Seal Type Combobox for Quick Product (qp-seal-type) ──
+// ── Seal Type Dropdown functions ──
+function getAvailableSealTypesQP() {
+  const existing = (allProducts || []).map(p => (p.seal_type || '').trim()).filter(Boolean);
+  return [...new Set([...defaultSealProfiles, ...existing])].sort();
+}
 function openTypeDropdownQP() {
   const dd = document.getElementById('type-dropdown-qp');
   if (!dd) return;
@@ -8291,12 +8551,12 @@ function filterTypeDropdownQP() {
   if (!dd || !inp) return;
   const list = getAvailableSealTypesQP();
   const q = (inp.value || '').trim().toLowerCase();
-  const filtered = list.filter(t => t.toLowerCase().includes(q));
-  dd.innerHTML = filtered.slice(0, 20).map(t =>
-    `<div class="cat-option" onclick="selectTypeQP('${t.replace(/'/g, "\\\'")}');">${escapeHTML(t)}</div>`
+  const filtered = q ? list.filter(t => t.toLowerCase().includes(q)) : list;
+  dd.innerHTML = filtered.slice(0, 25).map(t =>
+    `<div class="cat-option" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:500" onclick="selectTypeQP('${t.replace(/'/g, "\'")}');">${escapeHTML(t)}</div>`
   ).join('') +
   (q && !list.find(t => t.toLowerCase() === q)
-    ? `<div class="cat-option add-new" onclick="selectTypeQP('${inp.value.replace(/'/g, "\\\'")}')">+ เพิ่มประเภทซีลใหม่ "${escapeHTML(inp.value)}"</div>` : '');
+    ? `<div class="cat-option add-new" style="padding:8px 10px;cursor:pointer;background:#faf5ff;color:#7c3aed;font-size:12px;font-weight:700" onclick="selectTypeQP('${inp.value.replace(/'/g, "\'")}')">+ ใช้ประเภทซีลใหม่ "${escapeHTML(inp.value)}"</div>` : '');
   dd.classList.add('open');
 }
 function selectTypeQP(val) {
@@ -8305,7 +8565,71 @@ function selectTypeQP(val) {
   const dd = document.getElementById('type-dropdown-qp');
   if (dd) dd.classList.remove('open');
   if (!defaultSealProfiles.includes(val)) defaultSealProfiles.push(val);
+  renderQPChips();
 }
+
+// ── Real-time Auto-detect on Product Name Typing ──
+function onQPNameChange(query) {
+  const lowQ = (query || '').toLowerCase().trim();
+  const idEl = document.getElementById('qp-id');
+  const odEl = document.getElementById('qp-od');
+  const wEl = document.getElementById('qp-width');
+  const matEl = document.getElementById('qp-material');
+  const stEl = document.getElementById('qp-seal-type');
+  const catEl = document.getElementById('qp-cat');
+  const skuEl = document.getElementById('qp-sku');
+
+  // Auto SKU if empty
+  if (skuEl && !skuEl.value) {
+    const cleanQ = (query || '').replace(/[^a-zA-Z0-9\.\-]/g, '').toUpperCase();
+    if (cleanQ.length >= 3) skuEl.value = cleanQ;
+  }
+
+  // Dimensions
+  const dimMatch = query.match(/(\d+(?:\.\d+)?)[xX*\-_](\d+(?:\.\d+)?)[xX*\-_](\d+(?:\.\d+)?)/);
+  if (dimMatch && idEl && odEl && wEl) {
+    idEl.value = dimMatch[1];
+    odEl.value = dimMatch[2];
+    wEl.value = dimMatch[3];
+  }
+
+  // Category
+  if (catEl && (!catEl.value || catEl.value === 'Oil Seal' || catEl.value === 'Other')) {
+    if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) catEl.value = 'O-Ring';
+    else if (lowQ.includes('hydraulic') || lowQ.includes('ไฮดรอลิก') || lowQ.includes('u-cup')) catEl.value = 'Hydraulic Seal';
+    else if (lowQ.includes('pneumatic') || lowQ.includes('นิวเมติก') || lowQ.includes('ลม')) catEl.value = 'Pneumatic Seal';
+    else if (lowQ.includes('v-ring') || lowQ.includes('วีริง')) catEl.value = 'V-Ring';
+    else if (lowQ.includes('gasket') || lowQ.includes('ปะเก็น')) catEl.value = 'Gasket';
+    else if (lowQ.includes('mechanical') || lowQ.includes('แมคคานิคอล')) catEl.value = 'Mechanical Seal';
+    else if (lowQ.includes('oil seal') || lowQ.includes('ออยซีล')) catEl.value = 'Oil Seal';
+  }
+
+  // Material
+  if (matEl && !matEl.value) {
+    if (lowQ.includes('viton') || lowQ.includes('fkm') || lowQ.includes('ไวตัน')) matEl.value = 'FKM (Viton)';
+    else if (lowQ.includes('nbr') || lowQ.includes('ไนไตรล์')) matEl.value = 'NBR';
+    else if (lowQ.includes('pu') || lowQ.includes('ยูรีเทน')) matEl.value = 'PU';
+    else if (lowQ.includes('ptfe') || lowQ.includes('teflon') || lowQ.includes('เทฟลอน')) matEl.value = 'PTFE (Teflon)';
+    else if (lowQ.includes('silicone') || lowQ.includes('ซิลิโคน')) matEl.value = 'Silicone';
+    else if (lowQ.includes('epdm')) matEl.value = 'EPDM';
+    else if (lowQ.includes('bakelite') || lowQ.includes('เบกาไลท์')) matEl.value = 'Bakelite';
+    else if (lowQ.includes('pom')) matEl.value = 'POM';
+  }
+
+  // Seal Type
+  if (stEl && !stEl.value) {
+    const typeMatch = query.match(/\b(tc|sc|tb|sb|vc|vb|ta|sa|tcv|tcn|u-cup|v-ring)\b/i);
+    if (typeMatch) stEl.value = typeMatch[1].toUpperCase();
+    else if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) stEl.value = 'O-Ring';
+    else if (lowQ.includes('rod seal') || lowQ.includes('ก้านสูบ')) stEl.value = 'Rod Seal';
+    else if (lowQ.includes('piston seal') || lowQ.includes('ลูกสูบ')) stEl.value = 'Piston Seal';
+    else if (lowQ.includes('wiper') || lowQ.includes('กันฝุ่น')) stEl.value = 'Wiper Seal';
+    else if (lowQ.includes('wearing') || lowQ.includes('แหวนนำร่อง')) stEl.value = 'Wearing Ring';
+  }
+
+  renderQPChips();
+}
+
 
 // ── ตรวจรหัสซ้ำ: SKU / Supplier SKU / Part No ห้ามซ้ำกับสินค้าอื่น (เทียบทีละฟิลด์) ──
 // คืน {label,value,product} เมื่อพบซ้ำ, คืน null เมื่อไม่ซ้ำ. excludeId ใช้ตอนแก้ไขเพื่อยกเว้นตัวเอง
@@ -11671,7 +11995,7 @@ async function loadQuotes() {
 
 async function ensureQuoteProductList() {
   if(!productList.length) {
-    const {data} = await sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost').eq('shop_id', currentShop.id).eq('active',true).order('name');
+    const {data} = await sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost,stock_qty,stock_inhouse').eq('shop_id', currentShop.id).eq('active',true).order('name');
     productList = data||[];
   }
 }
@@ -16736,6 +17060,8 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.48', type:'minor', date:'2026-08-27', title:'Quick Product Multi-Category Chips & Premium UX · Responsive Anti-Overflow', items:['Quick Product Multi-Category: เลือกหมวดหมู่ได้ทุกหมวด (Oil Seal, O-Ring, Hydraulic, Pneumatic, Mechanical, V-Ring, Gasket ฯลฯ) ทั้งพิมพ์ค้นหาและกดปุ่มลัด (Chips)','Material & Seal Type Interactive Chips: เพิ่มปุ่มลัดเลือกเนื้อยางและประเภทซีล พร้อม Auto-Highlight ตามคำค้นหา','Anti-Overflow & Responsive UI: ปรับ Modal เป็น Flex Layout ควบคุมความสูง (Max 92vh) ล็อกหัว-ท้าย และเลื่อนเฉพาะเนื้อหา ไม่ล้นจออีกต่อไป'] },
+            { v:'1.47', type:'minor', date:'2026-08-27', title:'Live Stock Indicators · Order PO Tracking Badges · Quick Product Default Qty 0', items:['Order Live Stock Indicator: แสดงสต๊อกคงเหลือในร้านแบบเรียลไทม์ ทั้งในกล่องค้นหาและในการ์ดรายการสินค้า พร้อมระบบเตือนเมื่อสั่งเกินสต๊อก','Order PO Tracking Badges: แสดงสัญลักษณ์และป้ายกำกับ PO ชัดเจนในตารางออเดอร์ รายการสินค้า และหน้าต่างแก้ไขออเดอร์ ป้องกันสั่งซ้ำซ้อน','Quick Product Default Initial Qty = 0: ปรับค่าเริ่มต้นของสต๊อกเริ่มต้นใน Quick Product ให้เป็น 0 เสมอ'] },
             { v:'1.46', type:'minor', date:'2026-08-26', title:'Quick Product Expansion · Expense Health AI · Telegram Silent Bot', items:['Quick Product Expansion: สร้างสินค้าด่วนรองรับการพิมพ์/เพิ่มเนื้อยางใหม่ (Material) และประเภทซีลใหม่ (Seal Type) ได้อิสระ พร้อมระบบ Auto-Detect มิติและสเปกอัตโนมัติ','Expense-to-Sales AI Analysis: เพิ่มการวิเคราะห์สุขภาพสัดส่วนค่าใช้จ่ายต่อยอดขาย 4 ระดับ พร้อมคำแนะนำเชิงบริหาร','Telegram Remote Control & Silent Mode: ควบคุมการทำงานของบอท LINE OA ผ่าน Telegram ได้โดยตรง พร้อมโหมดเงียบ (Silent Mode) เก็บข้อมูลอย่างเดียวไม่ส่งข้อความตอบลูกค้า','UI Hints & Guided Explanations: จัดทำคำอธิบายและ Hint สำหรับทุกหัวข้อทั้งฝั่ง Guest และ Owner เพื่อการใช้งานที่เข้าใจง่าย'] },
             { v:'1.45', type:'patch', date:'2026-08-22', title:'Login Recovery & JavaScript Startup Fix', items:['แก้ตัวแปร currentActualStock และ currentActualCost ถูกประกาศซ้ำในหน้าประวัติสต๊อก','ป้องกัน JavaScript หยุดทำงานตั้งแต่เปิดหน้า ซึ่งทำให้ปุ่ม Login ไม่ตอบสนอง','อัปเดต Service Worker cache เป็น v1.45 เพื่อให้เครื่องผู้ใช้โหลดไฟล์แก้ไขล่าสุด'] },
             { v:'1.42', type:'minor', date:'2026-08-21', title:'Unified Customer Search · 1200x630 FB Banners · Public Blog Hub', items:['Unified Customer Search: ค้นหารายชื่อลูกค้าแบบรวมศูนย์จาก CRM + Orders + Quotations พร้อมเติมข้อมูลและระบุป้ายสถานะอัตโนมัติ','1200x630 HD Facebook Thumbnail Generator: สร้างภาพกราฟิกแบนเนอร์ HD อัตโนมัติสำหรับแชร์ขึ้น Facebook','Custom Image Upload: แอดมินสามารถเลือกรูปภาพจากเครื่องคอมพิวเตอร์/มือถือ หรือใส่ URL เองใน AI Content Studio','Public Product Blog Hub (sealthai.com/blog): หน้ารวมบล็อกสินค้าพร้อมตัวกรองหมวดหมู่ และเพิ่มเมนูใน Navbar','Business Compliance Sanitization: ลบข้อความเรื่องใบกำกับภาษีออกจากบทความเก่าและแบนเนอร์ทั้งหมด'] },
@@ -24726,7 +25052,7 @@ function renderInventoryPostingTableRows(list) {
 function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery = '') {
   _quickProdContext = { type: contextType, rowIdx: rowIdx };
 
-  // Reset form
+  // Reset form elements
   const nameEl = document.getElementById('qp-name');
   const skuEl = document.getElementById('qp-sku');
   const supSkuEl = document.getElementById('qp-supplier-sku');
@@ -24750,19 +25076,22 @@ function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery 
   if (!productCategories.length && allProducts && allProducts.length) {
     productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
   }
-  let defaultCat = 'Oil Seal';
-  if (productCategories.length) {
-    if (productCategories.includes('Oil Seal')) defaultCat = 'Oil Seal';
-    else defaultCat = productCategories[0];
-  }
+
+  // Detect category from query
   const lowQ = (initialQuery || '').toLowerCase();
+  let defaultCat = 'Oil Seal';
   if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) defaultCat = 'O-Ring';
   else if (lowQ.includes('hydraulic') || lowQ.includes('ไฮดรอลิก') || lowQ.includes('u-cup')) defaultCat = 'Hydraulic Seal';
   else if (lowQ.includes('pneumatic') || lowQ.includes('นิวเมติก') || lowQ.includes('ลม')) defaultCat = 'Pneumatic Seal';
   else if (lowQ.includes('v-ring') || lowQ.includes('วีริง')) defaultCat = 'V-Ring';
+  else if (lowQ.includes('gasket') || lowQ.includes('ปะเก็น')) defaultCat = 'Gasket';
+  else if (lowQ.includes('mechanical') || lowQ.includes('แมคคานิคอล')) defaultCat = 'Mechanical Seal';
+  else if (initialQuery && !lowQ.includes('oil seal') && !lowQ.includes('ออยซีล') && !lowQ.includes('tc') && !lowQ.includes('sc')) {
+    defaultCat = 'Other';
+  }
   if (catEl) catEl.value = defaultCat;
 
-  if (stockEl) stockEl.value = contextType === 'po' ? '0' : '10';
+  if (stockEl) stockEl.value = '0';
   if (sellEl) sellEl.value = '';
   if (costEl) costEl.value = '';
   if (idEl) idEl.value = '';
@@ -24771,39 +25100,16 @@ function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery 
   if (matEl) matEl.value = '';
   if (stEl) stEl.value = '';
 
-  // Parse dimensions from query if user typed dimensions like 25-47-10
+  // Auto-detect dimensions and specs from initialQuery
   if (initialQuery) {
-    const dimMatch = initialQuery.match(/(\d+(?:\.\d+)?)[xX*\-_](\d+(?:\.\d+)?)[xX*\-_](\d+(?:\.\d+)?)/);
-    if (dimMatch && idEl && odEl && wEl) {
-      idEl.value = dimMatch[1];
-      odEl.value = dimMatch[2];
-      wEl.value = dimMatch[3];
-    }
-    // Auto-detect Material
-    if (matEl && !matEl.value) {
-      if (lowQ.includes('viton') || lowQ.includes('fkm') || lowQ.includes('ไวตัน')) matEl.value = 'FKM';
-      else if (lowQ.includes('nbr') || lowQ.includes('ไนไตรล์')) matEl.value = 'NBR';
-      else if (lowQ.includes('pu') || lowQ.includes('ยูรีเทน')) matEl.value = 'PU';
-      else if (lowQ.includes('ptfe') || lowQ.includes('teflon') || lowQ.includes('เทฟลอน')) matEl.value = 'PTFE';
-      else if (lowQ.includes('silicone') || lowQ.includes('ซิลิโคน')) matEl.value = 'Silicone';
-      else if (lowQ.includes('epdm')) matEl.value = 'EPDM';
-      else if (lowQ.includes('bakelite') || lowQ.includes('เบกาไลท์')) matEl.value = 'Bakelite';
-      else if (lowQ.includes('pom')) matEl.value = 'POM';
-    }
-    // Auto-detect Seal Type
-    if (stEl && !stEl.value) {
-      const typeMatch = initialQuery.match(/\b(tc|sc|tb|sb|vc|vb|ta|sa|tcv|tcn|u-cup|v-ring)\b/i);
-      if (typeMatch) stEl.value = typeMatch[1].toUpperCase();
-      else if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) stEl.value = 'O-Ring';
-      else if (lowQ.includes('rod seal') || lowQ.includes('ก้านสูบ')) stEl.value = 'Rod Seal';
-      else if (lowQ.includes('piston seal') || lowQ.includes('ลูกสูบ')) stEl.value = 'Piston Seal';
-      else if (lowQ.includes('wiper') || lowQ.includes('กันฝุ่น')) stEl.value = 'Wiper Seal';
-      else if (lowQ.includes('wearing') || lowQ.includes('แหวนนำร่อง')) stEl.value = 'Wearing Ring';
-    }
+    onQPNameChange(initialQuery);
+  } else {
+    renderQPChips();
   }
 
   openModal('modal-quick-product');
   setTimeout(() => {
+    renderQPChips();
     if (nameEl && !nameEl.value) nameEl.focus();
     else if (skuEl && !skuEl.value) skuEl.focus();
     else if (sellEl) sellEl.focus();
@@ -24945,7 +25251,17 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.46', date:'2026-08-26', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Quick Product Multi-Specs · Expense Health AI · Telegram Silent Bot', items:[
+    { v:'1.48', date:'2026-08-27', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Quick Product Multi-Category Chips & Premium UX · Responsive Anti-Overflow', items:[
+      '⚡ <b>Quick Product Multi-Category Selection:</b> รองรับการเลือกหมวดหมู่สินค้าทุกประเภท (Oil Seal, O-Ring, Hydraulic Seal, Pneumatic Seal, Mechanical Seal, V-Ring, Gasket, อื่นๆ) ทั้งแบบพิมพ์ค้นหาในระบบ และคลิกเลือกผ่านปุ่มลัด (Quick Chips)',
+      '🧪 <b>Material & Seal Type Quick Chips:</b> ปุ่มลัดคลิกเลือกเนื้อยาง (NBR, FKM, PU, PTFE, Silicone ฯลฯ) และประเภทซีล (TC, SC, TB, SB, U-Cup ฯลฯ) พร้อมระบบ Auto-Highlight เมื่อพิมพ์ชื่อสินค้า',
+      '📱 <b>Premium Responsive UI & Anti-Overflow:</b> ปรับโครงสร้าง Modal แบบ Fixed Header/Footer และ Scrollable Body (Max 92vh) หมดปัญหาหน้าต่างหรือ Dropdown ล้นจอ'
+    ]},
+    { v:'1.47', date:'2026-08-27', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Live Stock Indicators · Order PO Tracking Badges · Quick Product Default Qty 0', items:[
+      '📦 <b>Order Live Stock Indicator:</b> แสดงจำนวนสต๊อกสินค้าคงเหลือในร้านแบบเรียลไทม์ ทั้งในกล่องค้นหา (Autocomplete) และในการ์ดรายการสินค้า พร้อมแจ้งเตือนทันทีหากกรอกจำนวนเกินสต๊อก',
+      '🛒 <b>Order PO Tracking Badges:</b> แสดงสัญลักษณ์และป้ายกำกับ PO ชัดเจนในตารางออเดอร์ รายการสินค้า และหน้าต่างแก้ไขออเดอร์ (Order Detail Modal) ป้องกันการสั่งซื้อสินค้าซ้ำซ้อน',
+      '⚡ <b>Quick Product Initial Qty = 0:</b> ปรับค่าเริ่มต้นของสต๊อกเริ่มต้นในระบบสร้างสินค้าด่วนเข้าคลัง (Quick Product) ให้เป็น 0 เสมอ'
+    ]},
+    { v:'1.46', date:'2026-08-26', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Quick Product Multi-Specs · Expense Health AI · Telegram Silent Bot', items:[
       '📦 <b>Quick Product Expansion:</b> สร้างสินค้าด่วนรองรับการพิมพ์/เพิ่มเนื้อยางใหม่ (Material) และประเภทซีลใหม่ (Seal Type) ได้อิสระ พร้อมระบบ Auto-Detect มิติและสเปกอัตโนมัติจากคำค้นหา',
       '📊 <b>Expense-to-Sales AI Analysis:</b> ระบบวิเคราะห์สุขภาพสัดส่วนค่าใช้จ่ายต่อยอดขาย 4 ระดับ (ดีเยี่ยม / สุขภาพดี / เริ่มสูง / สูงเกินเกณฑ์) พร้อมคำแนะนำเชิงบริหารแบบ Actionable',
       '🤖 <b>Telegram Remote Control & Silent Mode:</b> สั่งงานบอท LINE OA ผ่าน Telegram ได้โดยตรง ทั้งสั่งปิด/เปิด/หยุดชั่วคราว พร้อม "โหมดเงียบ (Silent Mode)" ที่ไม่ตอบลูกค้าแต่ยังคงเก็บข้อมูลและส่งสต็อกให้แอดมิน',
@@ -24983,7 +25299,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.46</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.48</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
