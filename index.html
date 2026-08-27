@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.50';
+    const CACHE = 'sealthai-v1.51';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -913,6 +913,26 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
 .ch-other { background: var(--bg3); color: var(--text2); }
 
 /* ── SEALTHAI v1.34 & v1.35: Seal Master & Stock Planning Styles ── */
+.planning-tag-repeat-high {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #dcfce7; color: #15803d; border: 1px solid #86efac;
+  padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 700;
+}
+.planning-tag-repeat-med {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #fef3c7; color: #b45309; border: 1px solid #fde68a;
+  padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 700;
+}
+.planning-tag-repeat-low {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;
+  padding: 2px 7px; border-radius: 6px; font-size: 11px; font-weight: 600;
+}
+.planning-tag-repeat-zero {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0;
+  padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 500;
+}
 .seal-badge-dim {
   display: inline-flex; align-items: center; gap: 4px;
   background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0;
@@ -1039,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.50 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.51 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -13068,17 +13088,20 @@ async function stockPlanning() {
     <div id="hot-selling-oos-cards"></div>
 
     <!-- Filter & Toolbar -->
-    <div class="filter-bar mb-4" style="flex-wrap:wrap;gap:8px">
-      <input type="text" id="pl-search" placeholder="🔍 ค้นหา SKU / ชื่อ / เบอร์ซีล / ขนาด IDxODxW" oninput="filterStockPlanning()" style="flex:1;min-width:180px">
-      <select id="pl-status-filter" onchange="filterStockPlanning()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
-        <option value="all">ทุกสถานะสต๊อก</option>
-        <option value="urgent">🔴 วิกฤต / สต๊อกหมด (Critical)</option>
-        <option value="reorder">🟡 ถึงจุดสั่งซื้อ (Reorder Needed)</option>
-        <option value="healthy">🟢 สต๊อกปกติ (Healthy)</option>
-        <option value="dead">🔵 เงินจม / Dead Stock (>90 วัน)</option>
+    <div class="filter-bar mb-4" style="flex-wrap:wrap;gap:8px;align-items:center">
+      <input type="text" id="pl-search" placeholder="🔍 ค้นหา SKU / ชื่อ / เบอร์ซีล / ขนาด IDxODxW" oninput="filterStockPlanning()" style="flex:1;min-width:200px">
+      <select id="pl-status-filter" onchange="filterStockPlanning()" style="background:#fff;border:1.5px solid #93c5fd;border-radius:6px;padding:6px 12px;font-size:13px;font-weight:700;color:#0f172a">
+        <option value="repeat_target" selected>🎯 เฉพาะสินค้าซื้อซ้ำ (≥ 2-3 รอบ / 2 เดือน) [แนะนำเก็บสต๊อก]</option>
+        <option value="repeat_high">🔥 ซื้อซ้ำสูงมาก (≥ 3 รอบ / 2 เดือน) [เก็บสต๊อกแน่นอน]</option>
+        <option value="repeat_med">🔁 ซื้อซ้ำปานกลาง (2 รอบ / 2 เดือน) [เก็บสต๊อกขั้นต่ำ]</option>
+        <option value="urgent">🔴 ซื้อซ้ำแต่สต๊อกหมด / วิกฤต (Critical OOS)</option>
+        <option value="reorder">🟡 ซื้อซ้ำถึงจุดสั่งซื้อ (Reorder)</option>
+        <option value="repeat_low">⚪ ซื้อรอบเดียว (1 รอบ / 2 เดือน) [สั่งตามออเดอร์]</option>
+        <option value="dead">🔵 เงินจม / Dead Stock (>90 วัน ไม่เคลื่อนไหว)</option>
         <option value="abc_a">⭐ สินค้าหลัก Class A (80% ยอดขาย)</option>
         <option value="abc_b">Class B (15% ยอดขาย)</option>
         <option value="abc_c">Class C (5% ยอดขาย)</option>
+        <option value="all">📋 สินค้าทั้งหมดในระบบ (All Products)</option>
       </select>
       <select id="pl-cat-filter" onchange="filterStockPlanning()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
         <option value="">ทุกหมวดหมู่</option>
@@ -13091,8 +13114,13 @@ async function stockPlanning() {
     <div class="card">
       <div class="card-header">
         <div>
-          <div class="card-title">📊 รายการวิเคราะห์สต๊อก & แนะนำการสั่งซื้อ (Replenishment Plan)</div>
-          <div class="card-subtitle">สูตร: จุดสั่งซื้อ (ROP) = (ยอดขายเฉลี่ย/วัน × Lead Time วัน) + Safety Stock | จำนวนแนะนำ = ROP - คงเหลือ - ระหว่างทาง (ปัดตาม MOQ/Pack Size)</div>
+          <div class="card-title" style="display:flex;align-items:center;gap:8px">
+            <span>📊 รายการวิเคราะห์สต๊อก & แนะนำการสั่งซื้อ (Replenishment Plan)</span>
+            <span style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">เน้นสินค้าซื้อซ้ำ 2-3 รอบ/2 เดือน</span>
+          </div>
+          <div class="card-subtitle" style="margin-top:4px">
+            💡 <b>เกณฑ์วางแผนสต๊อก:</b> เน้นสั่งเก็บสต๊อกเฉพาะสินค้าที่มี <b>การซื้อซ้ำเกิน 2-3 รอบ ในรอบ 2 เดือน (60 วัน)</b> เพื่อป้องกันความเสี่ยงเงินจม | สินค้าที่ซื้อเพียงครั้งเดียวแนะนำสั่งซื้อแบบตามออเดอร์ (Back-to-back)
+          </div>
         </div>
         <div id="pl-item-count" style="font-size:12px;color:var(--text3);font-family:var(--mono)"></div>
       </div>
@@ -13112,7 +13140,7 @@ async function loadStockPlanningData() {
 
   const [prodsRes, ordersRes, posRes, xrefRes, supRes] = await Promise.all([
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true),
-    sb.from('orders').select('id,order_date,order_items(product_id,qty,sell_price,cost_per_unit)')
+    sb.from('orders').select('id,order_date,customer_name,order_items(product_id,qty,sell_price,cost_per_unit)')
       .eq('shop_id', currentShop.id).gte('order_date', d180Str),
     sb.from('purchase_orders').select('id,po_no,po_date,expected_date,status,supplier_id,purchase_order_items(product_id,qty)')
       .eq('shop_id', currentShop.id).in('status', ['sent', 'partial']),
@@ -13137,28 +13165,47 @@ async function loadStockPlanningData() {
       allSuppliers.map(s => `<option value="${s.id}">${escapeHTML(s.name)}</option>`).join('');
   }
 
-  // 1. คำนวณยอดขายย้อนหลัง 30/90/180 วัน
+  // 1. คำนวณยอดขายและความถี่การซื้อซ้ำย้อนหลัง 30 / 60 (2 เดือน) / 90 / 180 วัน
   const now = new Date();
   const d30 = new Date(); d30.setDate(d30.getDate() - 30);
+  const d60 = new Date(); d60.setDate(d60.getDate() - 60); // 2 เดือน
   const d90 = new Date(); d90.setDate(d90.getDate() - 90);
 
-  const salesMap = {}; // { prod_id: { qty30, qty90, qty180, rev180, lastDate, orderCount30, orderCount90 } }
+  const salesMap = {}; // { prod_id: { qty30, qty60, qty90, qty180, rev180, lastDate, orderCount30, orderCount60, orderCount90, customers60 } }
   (ordersRes.data || []).forEach(o => {
     const oDate = new Date(o.order_date);
-    // Track which products appear in this order (for frequency counting)
+    const custName = (o.customer_name || '').trim();
     const seenInOrder30 = new Set();
+    const seenInOrder60 = new Set();
     const seenInOrder90 = new Set();
+
     (o.order_items || []).forEach(it => {
       const pid = it.product_id;
       if (!pid) return;
-      if (!salesMap[pid]) salesMap[pid] = { qty30:0, qty90:0, qty180:0, rev180:0, lastDate: null, orderCount30:0, orderCount90:0 };
+      if (!salesMap[pid]) {
+        salesMap[pid] = {
+          qty30: 0, qty60: 0, qty90: 0, qty180: 0, rev180: 0,
+          lastDate: null,
+          orderCount30: 0, orderCount60: 0, orderCount90: 0,
+          customers60: new Set()
+        };
+      }
       const q = Number(it.qty) || 0;
       const rev = q * (Number(it.sell_price) || 0);
       salesMap[pid].qty180 += q;
       salesMap[pid].rev180 += rev;
+
       if (oDate >= d90) {
         salesMap[pid].qty90 += q;
         if (!seenInOrder90.has(pid)) { salesMap[pid].orderCount90++; seenInOrder90.add(pid); }
+      }
+      if (oDate >= d60) {
+        salesMap[pid].qty60 += q;
+        if (!seenInOrder60.has(pid)) {
+          salesMap[pid].orderCount60++;
+          seenInOrder60.add(pid);
+          if (custName) salesMap[pid].customers60.add(custName);
+        }
       }
       if (oDate >= d30) {
         salesMap[pid].qty30 += q;
@@ -13171,7 +13218,7 @@ async function loadStockPlanningData() {
   });
 
   // 2. คำนวณ In-Transit จาก POs
-  const inTransitMap = {}; // { prod_id: qty }
+  const inTransitMap = {};
   (posRes.data || []).forEach(po => {
     (po.purchase_order_items || []).forEach(it => {
       const pid = it.product_id;
@@ -13180,12 +13227,10 @@ async function loadStockPlanningData() {
     });
   });
 
-  // 3. คำนวณพารามิเตอร์การวางแผนสต๊อกให้แต่ละ SKU
+  // 3. จัดกลุ่ม ABC ตามยอดขาย 180 วัน
   const totalShopRev180 = Object.values(salesMap).reduce((s, x) => s + x.rev180, 0);
-
-  // คำนวณเบื้องต้นเพื่อจัดกลุ่ม ABC
   const sortedByRev = [...allProducts].map(p => {
-    const sm = salesMap[p.id] || { qty30:0, qty90:0, qty180:0, rev180:0, lastDate: null };
+    const sm = salesMap[p.id] || { rev180: 0 };
     return { p, rev180: sm.rev180 };
   }).sort((a,b) => b.rev180 - a.rev180);
 
@@ -13203,18 +13248,20 @@ async function loadStockPlanningData() {
     }
   });
 
+  // 4. สร้าง Model การวางแผนสต๊อกโดยเน้น Repeat Purchase (ซื้อซ้ำ >= 2-3 รอบ ใน 2 เดือน)
   planningProducts = allProducts.map(p => {
-    const sm = salesMap[p.id] || { qty30:0, qty90:0, qty180:0, rev180:0, lastDate: null };
+    const sm = salesMap[p.id] || { qty30:0, qty60:0, qty90:0, qty180:0, rev180:0, lastDate:null, orderCount30:0, orderCount60:0, orderCount90:0, customers60: new Set() };
     const stockQty = Number(p.stock_qty) || 0;
     const inTransit = inTransitMap[p.id] || 0;
     const cost = Number(p.current_cost || p.purchase_price || 0);
-    const buyPrice = Number(p.purchase_price || cost || 0);
+    const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null ? p.purchase_price : cost);
 
-    // Weighted daily run rate (ADS)
+    // Weighted daily run rate (ADS) โดยให้น้ำหนัก 60 วัน (2 เดือน) เป็นแกนหลัก
     const ads30 = sm.qty30 / 30;
+    const ads60 = sm.qty60 / 60;
     const ads90 = sm.qty90 / 90;
     const ads180 = sm.qty180 / 180;
-    const adsWeighted = (0.5 * ads30) + (0.3 * ads90) + (0.2 * ads180);
+    const adsWeighted = (0.5 * ads60) + (0.3 * ads30) + (0.2 * ads90);
 
     const leadTime = Number(p.supplier_lead_time_days) || 30;
     const moq = Math.max(1, Number(p.moq) || 1);
@@ -13222,27 +13269,61 @@ async function loadStockPlanningData() {
     const safetyDays = Number(p.safety_stock_days) || 15;
     const minSafety = Number(p.min_safety_stock_qty) || 0;
 
-    // Safety Stock & Reorder Point
+    // Safety Stock & Reorder Point (ROP)
     const calculatedSS = Math.ceil(Math.max(minSafety, adsWeighted * safetyDays));
     const calculatedROP = Math.ceil((adsWeighted * leadTime) + calculatedSS);
     const rop = (p.manual_reorder_point !== null && p.manual_reorder_point !== undefined && p.manual_reorder_point > 0)
       ? Number(p.manual_reorder_point)
       : calculatedROP;
 
-    // Days of stock
     const daysOfStock = adsWeighted > 0 ? Math.round(stockQty / adsWeighted) : (stockQty > 0 ? 999 : 0);
 
-    // Suggested replenishment quantity
+    // ── REPEAT PURCHASE CLASSIFICATION (เกณฑ์ซื้อซ้ำใน 2 เดือน / 60 วัน) ──
+    const ordCnt60 = sm.orderCount60 || 0;
+    const custCnt60 = (sm.customers60 || new Set()).size;
+
+    let repeatClass = 'zero';
+    let repeatLabel = '0 ครั้งใน 2 ด.';
+    let repeatBadgeClass = 'planning-tag-repeat-zero';
+    let stockStrategy = '⛔ ไม่เก็บสต๊อก / Dead Stock Risk';
+    let shouldHoldStock = false;
+
+    if (ordCnt60 >= 3) {
+      repeatClass = 'high';
+      repeatLabel = `🔥 ซื้อซ้ำสูง (${ordCnt60} รอบ/2ด.)`;
+      repeatBadgeClass = 'planning-tag-repeat-high';
+      stockStrategy = '🟢 แนะนำเก็บสต๊อกแน่นอน (High Priority)';
+      shouldHoldStock = true;
+    } else if (ordCnt60 === 2) {
+      repeatClass = 'med';
+      repeatLabel = `🔁 ซื้อซ้ำปานกลาง (2 รอบ/2ด.)`;
+      repeatBadgeClass = 'planning-tag-repeat-med';
+      stockStrategy = '🟡 เก็บสต๊อกขั้นต่ำ (Minimum Stock)';
+      shouldHoldStock = true;
+    } else if (ordCnt60 === 1) {
+      repeatClass = 'low';
+      repeatLabel = `1️⃣ ซื้อรอบเดียว (1 รอบ/2ด.)`;
+      repeatBadgeClass = 'planning-tag-repeat-low';
+      stockStrategy = '⚪ สั่งตามออเดอร์ (ไม่แนะนำตุนสต๊อก)';
+      shouldHoldStock = (p.manual_reorder_point > 0); // กักตุนเฉพาะเมื่อตั้งใจระบุ manual ROP
+    }
+
+    // Suggested replenishment quantity: คำนวณแนะนำเฉพาะสินค้าที่เข้าเกณฑ์ซื้อซ้ำ (>= 2-3 รอบ)
     let suggestedQty = 0;
     const netAvailable = stockQty + inTransit;
-    if (netAvailable < rop || stockQty <= 0) {
-      const needed = rop - netAvailable;
-      if (needed > 0) {
-        // เพิ่มรอบสั่งซื้อให้พอดีกับ Review Period (เช่น 30 วัน)
-        const targetOrder = Math.max(needed, adsWeighted * 30);
-        const orderBeforePack = Math.max(moq, targetOrder);
-        suggestedQty = Math.ceil(orderBeforePack / packSize) * packSize;
+
+    if (shouldHoldStock) {
+      if (netAvailable < rop || stockQty <= 0) {
+        const needed = rop - netAvailable;
+        if (needed > 0) {
+          const targetOrder = repeatClass === 'high' ? Math.max(needed, adsWeighted * 30) : Math.max(needed, moq);
+          const orderBeforePack = Math.max(moq, targetOrder);
+          suggestedQty = Math.ceil(orderBeforePack / packSize) * packSize;
+        }
       }
+    } else {
+      // สำหรับสินค้าซื้อครั้งเดียว (<= 1 รอบ) แนะนำสั่งเป็น 0 เพื่อไม่ให้เผลอตุนสต๊อก
+      suggestedQty = 0;
     }
 
     // Status classification
@@ -13252,16 +13333,22 @@ async function loadStockPlanningData() {
 
     const isDeadStock = (stockQty > 0 && sm.qty90 === 0) || daysOfStock > 180;
     if (stockQty <= 0) {
-      status = 'urgent';
-      statusLabel = '🔴 สินค้าหมด / วิกฤต';
-      statusClass = 'planning-tag-urgent';
-    } else if (daysOfStock <= Math.max(7, Math.round(leadTime / 2))) {
+      if (shouldHoldStock) {
+        status = 'urgent';
+        statusLabel = '🔴 สินค้าซื้อซ้ำหมดสต๊อก!';
+        statusClass = 'planning-tag-urgent';
+      } else {
+        status = 'oos_low';
+        statusLabel = '⚪ หมด (สั่งตามออเดอร์)';
+        statusClass = 'planning-tag-repeat-low';
+      }
+    } else if (daysOfStock <= Math.max(7, Math.round(leadTime / 2)) && shouldHoldStock) {
       status = 'urgent';
       statusLabel = '🔴 เสี่ยงของขาด';
       statusClass = 'planning-tag-urgent';
-    } else if (netAvailable <= rop) {
+    } else if (netAvailable <= rop && shouldHoldStock) {
       status = 'reorder';
-      statusLabel = '🟡 ถึงจุดสั่งซื้อ';
+      statusLabel = '🟡 ซื้อซ้ำถึงจุดสั่งซื้อ';
       statusClass = 'planning-tag-reorder';
     } else if (isDeadStock) {
       status = 'dead';
@@ -13272,13 +13359,22 @@ async function loadStockPlanningData() {
     return {
       ...p,
       sales30: sm.qty30,
+      sales60: sm.qty60,
       sales90: sm.qty90,
       sales180: sm.qty180,
       rev180: sm.rev180,
       lastSoldDate: sm.lastDate,
       orderCount30: sm.orderCount30 || 0,
+      orderCount60: ordCnt60,
       orderCount90: sm.orderCount90 || 0,
+      custCount60: custCnt60,
+      repeatClass,
+      repeatLabel,
+      repeatBadgeClass,
+      stockStrategy,
+      shouldHoldStock,
       ads30,
+      ads60,
       adsWeighted,
       inTransit,
       cost,
@@ -13308,35 +13404,36 @@ function renderStockPlanningKPIs() {
   const statsEl = document.getElementById('planning-stats');
   if (!statsEl) return;
 
+  const repeatHighCount = planningProducts.filter(p => p.repeatClass === 'high').length;
+  const repeatMedCount = planningProducts.filter(p => p.repeatClass === 'med').length;
   const urgentCount = planningProducts.filter(p => p.status === 'urgent').length;
   const reorderCount = planningProducts.filter(p => p.status === 'reorder').length;
   const deadProds = planningProducts.filter(p => p.status === 'dead');
   const deadValue = deadProds.reduce((s, p) => s + (Number(p.stock_qty||0) * p.cost), 0);
-  const totalInTransitQty = planningProducts.reduce((s, p) => s + p.inTransit, 0);
-  const totalInTransitVal = planningProducts.reduce((s, p) => s + (p.inTransit * p.buyPrice), 0);
+
   const totalSugOrderQty = planningProducts.reduce((s, p) => s + p.suggestedQty, 0);
   const totalSugOrderVal = planningProducts.reduce((s, p) => s + (p.suggestedQty * p.buyPrice), 0);
 
   statsEl.innerHTML = `
-    <div class="stat-card" style="border-left:4px solid var(--red);cursor:pointer" onclick="setPlanningStatusFilter('urgent')">
-      <div class="stat-label">🔴 วิกฤต / สต๊อกหมด</div>
-      <div class="stat-value text-red">${urgentCount} <span style="font-size:14px;font-weight:400;color:var(--text3)">SKU</span></div>
-      <div class="stat-sub text-red">สินค้าหมดหรือเสี่ยงขาดก่อน Lead Time</div>
+    <div class="stat-card" style="border-left:4px solid #10b981;cursor:pointer" onclick="setPlanningStatusFilter('repeat_high')">
+      <div class="stat-label">🔥 ซื้อซ้ำสูง (≥3 รอบ / 2 เดือน)</div>
+      <div class="stat-value text-green">${repeatHighCount} <span style="font-size:14px;font-weight:400;color:var(--text3)">SKU</span></div>
+      <div class="stat-sub text-green">กลุ่มสำคัญสูงสุด แนะนำเก็บสต๊อกแน่นอน ✅</div>
     </div>
-    <div class="stat-card" style="border-left:4px solid var(--amber);cursor:pointer" onclick="setPlanningStatusFilter('reorder')">
-      <div class="stat-label">🟡 ถึงจุดสั่งซื้อ (Reorder)</div>
-      <div class="stat-value text-amber">${reorderCount} <span style="font-size:14px;font-weight:400;color:var(--text3)">SKU</span></div>
-      <div class="stat-sub text-amber">ยอดสั่งแนะนำรวม: ${fmt(totalSugOrderQty)} ชิ้น (${fmtB(totalSugOrderVal)})</div>
+    <div class="stat-card" style="border-left:4px solid #f59e0b;cursor:pointer" onclick="setPlanningStatusFilter('repeat_med')">
+      <div class="stat-label">🔁 ซื้อซ้ำปานกลาง (2 รอบ / 2 เดือน)</div>
+      <div class="stat-value text-amber">${repeatMedCount} <span style="font-size:14px;font-weight:400;color:var(--text3)">SKU</span></div>
+      <div class="stat-sub text-amber">แนะนำเก็บสต๊อกขั้นต่ำ (MOQ)</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #ef4444;cursor:pointer" onclick="setPlanningStatusFilter('urgent')">
+      <div class="stat-label">🔴 ซื้อซ้ำแต่สต๊อกหมด / วิกฤต</div>
+      <div class="stat-value text-red">${urgentCount} <span style="font-size:14px;font-weight:400;color:var(--text3)">SKU</span></div>
+      <div class="stat-sub text-red">แนะนำสั่งรวม: ${fmt(totalSugOrderQty)} ชิ้น (${fmtB(totalSugOrderVal)})</div>
     </div>
     <div class="stat-card" style="border-left:4px solid var(--blue);cursor:pointer" onclick="setPlanningStatusFilter('dead')">
       <div class="stat-label">🔵 เงินจม / Dead Stock (>90 วัน)</div>
       <div class="stat-value text-blue">${fmtB(deadValue)}</div>
-      <div class="stat-sub">${deadProds.length} SKU ไม่เคลื่อนไหว</div>
-    </div>
-    <div class="stat-card" style="border-left:4px solid var(--purple)">
-      <div class="stat-label">🚚 ระหว่างทาง (In-Transit)</div>
-      <div class="stat-value" style="color:var(--purple)">${fmt(totalInTransitQty)} <span style="font-size:14px;font-weight:400;color:var(--text3)">ชิ้น</span></div>
-      <div class="stat-sub">${fmtB(totalInTransitVal)} อยู่ใน PO รอรับเข้า</div>
+      <div class="stat-sub">${deadProds.length} SKU ไม่มียอดขาย</div>
     </div>
   `;
 }
@@ -13437,13 +13534,23 @@ function setPlanningStatusFilter(st) {
 
 function filterStockPlanning() {
   const q = (document.getElementById('pl-search')?.value || '').trim().toLowerCase();
-  const st = document.getElementById('pl-status-filter')?.value || 'all';
+  const st = document.getElementById('pl-status-filter')?.value || 'repeat_target';
   const cat = document.getElementById('pl-cat-filter')?.value || '';
   const sup = document.getElementById('pl-sup-filter')?.value || '';
 
   let filtered = planningProducts;
 
-  if (st !== 'all') {
+  // Filter by Status / Repeat Criteria
+  if (st === 'repeat_target') {
+    // เน้นสินค้าซื้อซ้ำ >= 2 รอบใน 2 เดือน
+    filtered = filtered.filter(p => p.orderCount60 >= 2);
+  } else if (st === 'repeat_high') {
+    filtered = filtered.filter(p => p.repeatClass === 'high');
+  } else if (st === 'repeat_med') {
+    filtered = filtered.filter(p => p.repeatClass === 'med');
+  } else if (st === 'repeat_low') {
+    filtered = filtered.filter(p => p.repeatClass === 'low');
+  } else if (st !== 'all') {
     if (st.startsWith('abc_')) {
       const cls = st.split('_')[1].toUpperCase();
       filtered = filtered.filter(p => p.abcClass === cls);
@@ -13483,13 +13590,13 @@ function filterStockPlanning() {
 
 function renderStockPlanningTable(items) {
   const countEl = document.getElementById('pl-item-count');
-  if (countEl) countEl.textContent = `แสดง ${items.length} รายการ`;
+  if (countEl) countEl.textContent = `แสดง ${items.length} รายการ (จากทั้งหมด ${planningProducts.length} SKU)`;
 
   const wrap = document.getElementById('planning-table-wrap');
   if (!wrap) return;
 
   if (!items.length) {
-    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">ไม่พบรายการที่ตรงกับเงื่อนไข</div></div>';
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">ไม่พบรายการที่ตรงกับเงื่อนไขการซื้อซ้ำหรือตัวกรอง</div></div>';
     updatePlanningSelectedCount();
     return;
   }
@@ -13499,16 +13606,17 @@ function renderStockPlanningTable(items) {
       <thead>
         <tr>
           <th style="width:36px;text-align:center"><input type="checkbox" id="pl-select-all" onchange="toggleSelectAllPlanning(this.checked)" title="เลือกทั้งหมด"></th>
+          <th style="width:130px">ความถี่ซื้อซ้ำ (2 เดือน)</th>
           <th style="width:50px">เกรด</th>
           <th>SKU / เบอร์ซีล / ขนาด</th>
-          <th>ชื่อสินค้า</th>
+          <th>ชื่อสินค้า & กลยุทธ์</th>
           <th class="text-right">คงเหลือ</th>
           <th class="text-right">ระหว่างทาง</th>
-          <th class="text-right" title="ยอดขายเฉลี่ย 30 วัน / 90 วัน / 180 วัน">ขาย 30/90/180 วัน</th>
+          <th class="text-right" title="ยอดขายเฉลี่ย 30 วัน / 60 วัน (2 เดือน) / 90 วัน">ขาย 30 / 60 / 90 วัน</th>
           <th class="text-right" title="จำนวนวันที่สต๊อกจะพอขาย">Days of Stock</th>
           <th class="text-right" title="Reorder Point: จุดที่ต้องเริ่มสั่งซื้อ">จุดสั่งซื้อ (ROP)</th>
           <th class="text-right" title="MOQ / Lead Time รอของ">MOQ / Lead Time</th>
-          <th class="text-right" style="background:rgba(0,168,130,0.05);color:var(--accent);font-weight:700">แนะนำสั่ง (ชิ้น)</th>
+          <th class="text-right" style="background:rgba(0,168,130,0.06);color:var(--accent);font-weight:700">แนะนำสั่ง (ชิ้น)</th>
           <th style="width:70px"></th>
         </tr>
       </thead>
@@ -13523,6 +13631,10 @@ function renderStockPlanningTable(items) {
               <td style="text-align:center">
                 <input type="checkbox" class="pl-chk" data-id="${p.id}" ${p.selectedForPO ? 'checked' : ''} onchange="togglePlanningItemSelect('${p.id}', this.checked)">
               </td>
+              <td>
+                <span class="${p.repeatBadgeClass}">${p.repeatLabel}</span>
+                <div style="font-size:10px;color:var(--text3);margin-top:2px">${p.custCount60} ลูกค้า | ${p.orderCount60} บิล</div>
+              </td>
               <td>${abcBadge}</td>
               <td>
                 <div class="font-mono" style="font-size:12px;font-weight:700;color:var(--blue)">${p.sku || '-'}</div>
@@ -13530,7 +13642,8 @@ function renderStockPlanningTable(items) {
                 ${dimTxt ? `<div class="seal-badge-dim" style="margin-top:2px">${dimTxt}</div>` : ''}
               </td>
               <td>
-                <div style="font-weight:500;font-size:13px">${escapeHTML(p.name)}</div>
+                <div style="font-weight:600;font-size:13px">${escapeHTML(p.name)}</div>
+                <div style="font-size:11px;color:#475569;margin-top:2px;font-weight:500">${p.stockStrategy}</div>
                 <div style="display:flex;gap:4px;align-items:center;margin-top:4px;flex-wrap:wrap">
                   <span class="${p.statusClass}">${p.statusLabel}</span>
                   ${p.material ? `<span class="seal-badge-mat">${escapeHTML(p.material.split(' ')[0])}</span>` : ''}
@@ -13544,7 +13657,7 @@ function renderStockPlanningTable(items) {
                 ${p.inTransit > 0 ? `+${fmt(p.inTransit)}` : '<span style="color:var(--text3)">-</span>'}
               </td>
               <td class="text-right font-mono" style="font-size:12px">
-                <span style="font-weight:600">${fmt(p.sales30)}</span> / <span style="color:var(--text2)">${fmt(p.sales90)}</span> / <span style="color:var(--text3)">${fmt(p.sales180)}</span>
+                <span style="font-weight:600">${fmt(p.sales30)}</span> / <span style="font-weight:700;color:#047857">${fmt(p.sales60)}</span> / <span style="color:var(--text3)">${fmt(p.sales90)}</span>
               </td>
               <td class="text-right font-mono ${p.daysOfStock <= 15 ? 'text-red' : (p.daysOfStock > 180 ? 'text-blue' : 'text-accent')}" style="font-weight:600">
                 ${p.daysOfStock >= 999 ? '∞ (Dead)' : p.daysOfStock + ' วัน'}
@@ -13558,9 +13671,13 @@ function renderStockPlanningTable(items) {
                 <div style="font-size:11px;color:var(--text3)">Lead: ${p.leadTime} วัน</div>
               </td>
               <td class="text-right font-mono" style="background:rgba(0,168,130,0.06)">
-                <input type="number" id="sug-qty-${p.id}" value="${p.suggestedQty}" 
-                  onchange="updateCustomSuggestedQty('${p.id}', this.value)"
-                  style="width:75px;text-align:right;font-weight:700;color:var(--accent);background:#fff;border:1.5px solid var(--accent);border-radius:6px;padding:3px 6px;font-size:13px">
+                ${p.suggestedQty > 0 ? `
+                  <input type="number" id="sug-qty-${p.id}" value="${p.suggestedQty}" 
+                    onchange="updateCustomSuggestedQty('${p.id}', this.value)"
+                    style="width:75px;text-align:right;font-weight:700;color:var(--accent);background:#fff;border:1.5px solid var(--accent);border-radius:6px;padding:3px 6px;font-size:13px">
+                ` : `
+                  <span style="font-size:11px;color:var(--text3);font-weight:500">${p.shouldHoldStock ? 'พอขาย' : 'สั่งตามออเดอร์'}</span>
+                `}
               </td>
               <td style="white-space:nowrap;text-align:center">
                 <button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting('${p.id}')" title="ดูประวัติความเคลื่อนไหวสต๊อก & Inventory Posting List" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:11.5px;padding:3px 7px;margin-right:3px">📜 เคลื่อนไหว</button>
@@ -17060,6 +17177,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.51', type:'minor', date:'2026-08-28', title:'Repeat-Purchase Stock Replenishment Strategy (≥2-3 Orders / 60 Days)', items:['Repeat-Purchase-Centric Replenishment: ปรับโมเดลการวางแผนสต๊อกให้เน้น "ความถี่การซื้อซ้ำ (Repeat Purchase Frequency)" ในรอบ 2 เดือน (60 วัน) เป็นเกณฑ์หลักในการตัดสินใจกักตุนสต๊อก','Stock Strategy Classification: แยกกลุ่มสินค้าซื้อซ้ำสูง (≥3 รอบ/2ด. แนะนำเก็บสต๊อกแน่นอน), ซื้อซ้ำปานกลาง (2 รอบ/2ด. เก็บสต๊อกขั้นต่ำ), และซื้อรอบเดียว (1 รอบ/2ด. สั่งตามออเดอร์ Back-to-back เพื่อป้องกันเงินจม)','Repeat Metrics & Smart Filters: เพิ่มคอลัมน์แสดงจำนวนรอบซื้อซ้ำ จำนวนลูกค้า และตัวกรองเจาะจงสินค้าซื้อซ้ำ 2-3 รอบ พร้อมคำนวณจำนวนสั่งซื้อแนะนำเฉพาะสินค้าที่คุ้มค่าแก่การตุน'] },
             { v:'1.50', type:'minor', date:'2026-08-27', title:'Telegram Admin Live Price & Stock Alert · Silent Assistant Mode', items:['Telegram Admin Live Price Check: เมื่อมีลูกค้าสอบถามสินค้าเข้ามา ระบบจะส่งข้อความแจ้งเตือนมายัง Telegram ของ Admin ทันที พร้อมเช็คราคาขายหน้าร้าน ราคาต้นทุน/ซื้อ และจำนวนสต็อกคงเหลือในร้านแบบเรียลไทม์','Ready-to-Copy Reply Draft: จัดเตรียมข้อความร่างคำตอบให้ Admin คัดลอกไปตอบลูกค้าได้ทันทีในคลิกเดียว','Silent Assistant Mode (โหมดเงียบ): บอทจะไม่ตอบลูกค้าใน LINE OA โดยตรง ป้องกันการตอบผิดพลาด และให้สิทธิ์ Admin เป็นผู้ตอบลูกค้า 100%'] },
             { v:'1.49', type:'patch', date:'2026-08-27', title:'Batch PO Supplier Purchase Price Fix', items:['Batch PO Fixed Supplier Price: ปรับราคาซื้อ/หน่วย ในหน้าสร้างใบสั่งซื้อ (PO) จากรายการขาย ให้ดึงเฉพาะ "ราคาซื้อ (Purchase Price)" ที่ตั้งไว้สำหรับส่ง Supplier โดยเฉพาะ','Exclude Moving Average & Computed Costs: ไม่ดึงราคาทุนเฉลี่ยหรือต้นทุนจากการคำนวณทางบัญชี (current_cost / Landed Cost) มาใส่ในใบสั่งซื้อ ป้องกันราคาคลาดเคลื่อน'] },
             { v:'1.48', type:'minor', date:'2026-08-27', title:'Quick Product Multi-Category Chips & Premium UX · Responsive Anti-Overflow', items:['Quick Product Multi-Category: เลือกหมวดหมู่ได้ทุกหมวด (Oil Seal, O-Ring, Hydraulic, Pneumatic, Mechanical, V-Ring, Gasket ฯลฯ) ทั้งพิมพ์ค้นหาและกดปุ่มลัด (Chips)','Material & Seal Type Interactive Chips: เพิ่มปุ่มลัดเลือกเนื้อยางและประเภทซีล พร้อม Auto-Highlight ตามคำค้นหา','Anti-Overflow & Responsive UI: ปรับ Modal เป็น Flex Layout ควบคุมความสูง (Max 92vh) ล็อกหัว-ท้าย และเลื่อนเฉพาะเนื้อหา ไม่ล้นจออีกต่อไป'] },
@@ -25254,7 +25372,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.50', date:'2026-08-27', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Telegram Admin Live Price & Stock Alert · Silent Assistant Mode', items:[
+    { v:'1.51', date:'2026-08-28', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Repeat-Purchase Stock Replenishment Strategy (≥2-3 Orders / 60 Days)', items:[
+      '📊 <b>Repeat-Purchase Replenishment Engine:</b> พัฒนาระบบวางแผนสต๊อกให้ยึด "ความถี่การซื้อซ้ำ (Repeat Purchase Frequency)" ในรอบ 2 เดือน (60 วัน) เป็นเกณฑ์หลักในการสั่งตุนสต๊อก',
+      '🎯 <b>Stock Strategy Classification:</b> จำแนกกลยุทธ์สต๊อกเป็น 3 ระดับ: ซื้อซ้ำสูง (≥3 รอบ แนะนำเก็บสต๊อกแน่นอน), ซื้อซ้ำปานกลาง (2 รอบ เก็บสต๊อกขั้นต่ำ), และซื้อครั้งเดียว (1 รอบ แนะนำสั่งตามออเดอร์เพื่อป้องกัน Dead Stock)',
+      '🔍 <b>Smart Repeat Filters & Metrics:</b> เพิ่มคอลัมน์ความถี่ซื้อซ้ำ แสดงจำนวนบิล/ลูกค้า และตั้งค่าตัวกรองเริ่มต้นให้โฟกัสเฉพาะสินค้าซื้อซ้ำ 2-3 รอบทันทีที่เปิดหน้า'
+    ]},
+    { v:'1.50', date:'2026-08-27', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Telegram Admin Live Price & Stock Alert · Silent Assistant Mode', items:[
       '🤖 <b>Telegram Admin Live Price & Stock Alert:</b> เมื่อลูกค้าทักแชตสอบถามสินค้าเข้ามา บอทจะดึงสเปก ขนาด เช็คราคาขายหน้าร้าน ราคาต้นทุน และจำนวนสต็อกในร้าน ส่งแจ้งเตือน Admin ใน Telegram ทันที',
       '📋 <b>Ready-to-Copy Reply Draft:</b> แนบข้อความร่างสำหรับตอบลูกค้าให้ Admin ก็อปปี้ไปส่งต่อใน LINE OA ได้ทันที สะดวกรวดเร็ว',
       '🤫 <b>Silent Assistant Mode:</b> บอททำงานในโหมดผู้ช่วยเงียบ โดยจะไม่ส่งข้อความตอบกลับลูกค้าใน LINE OA เอง ปล่อยให้ Admin คุมการตอบ 100%'
@@ -25311,7 +25434,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.50</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.51</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
