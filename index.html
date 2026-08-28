@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.55';
+    const CACHE = 'sealthai-v1.56';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.55 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.56 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -7123,9 +7123,19 @@ function openNewExpense() {
   openModal('modal-expense');
 }
 
-function editExpense(id) {
-  const e = (window._activeExpenses || []).find(x => x.id === id);
-  if (!e) return;
+async function editExpense(id) {
+  let e = (window._activeExpenses || []).find(x => x.id === id) || 
+          (typeof expenseDashboardRows !== 'undefined' ? expenseDashboardRows.find(x => x.id === id) : null);
+
+  if (!e && typeof sb !== 'undefined') {
+    const res = await sb.from('expenses').select('*').eq('id', id).single();
+    if (res.data) e = res.data;
+  }
+
+  if (!e) {
+    toast('ไม่พบข้อมูลรายการค่าใช้จ่าย', 'error');
+    return;
+  }
 
   editingExpenseId = id;
   const titleEl = document.querySelector('#modal-expense .modal-title');
@@ -7742,7 +7752,14 @@ function openNewRecurringExpenseModal() {
 }
 
 async function quickPayRecurringExpense(id, type, targetDueDate) {
-  const row = (window._activeExpenses || expenseDashboardRows || []).find(x => x.id === id);
+  let row = (window._activeExpenses || []).find(x => x.id === id) || 
+            (typeof expenseDashboardRows !== 'undefined' ? expenseDashboardRows.find(x => x.id === id) : null);
+
+  if (!row && typeof sb !== 'undefined') {
+    const res = await sb.from('expenses').select('*').eq('id', id).single();
+    if (res.data) row = res.data;
+  }
+
   if (!row) {
     toast('ไม่พบข้อมูลค่าใช้จ่าย', 'error');
     return;
@@ -17460,6 +17477,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.56', type:'patch', date:'2026-08-29', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:['Fix Edit Button on Yearly & Cross-Month Expenses: แก้ไขปัญหาการกดปุ่ม ✏️ แก้ไขรายการค่าใช้จ่ายประจำรายปี หรือรายการที่อยู่คนละเดือนแล้วไม่เปิดฟอร์ม โดยปรับให้ค้นหาข้ามเดือนจากประวัติทั้งปี (12 Months) และดึงตรงจากฐานข้อมูลเมื่อจำเป็น ทำให้เปิดแก้ไขได้ 100% ทุกรายการ','Universal Quick Pay: ปรับระบบจ่ายด่วนให้รองรับรายการข้ามเดือนและรายปีได้อย่างราบรื่น'] },
             { v:'1.55', type:'minor', date:'2026-08-29', title:'Yearly & Monthly Recurring Expense Tracker', items:['Yearly vs Monthly Separation: แยกการแสดงผลค่าใช้จ่ายประจำแบบ "รายเดือน" (เช่น ค่าเช่า น้ำไฟ เน็ต) และ "รายปี" (เช่น ประกันภัย โดเมน เซิร์ฟเวอร์ ค่าสอบบัญชี CPA) ชัดเจน','Annual Anniversary & Countdown: แสดงเดือนและวันที่ครบกำหนดจ่ายของรายการรายปี พร้อมนับถอยหลังแจ้งเตือนล่วงหน้าหลายเดือนเพื่อให้วางแผนสภาพคล่องได้ทันท่วงที','Tab Filter View: เพิ่มปุ่มกรองดูเฉพาะ "ทั้งหมด", "ประจำทุกเดือน", หรือ "ประจำรายปี" ได้อย่างสะดวก'] },
             { v:'1.54', type:'minor', date:'2026-08-29', title:'Monthly Recurring Expense Commitments & Schedule Tracker', items:['Monthly Recurring Commitment Dashboard: เพิ่มแผงสรุปค่าใช้จ่ายประจำที่ต้องจ่ายทุกเดือนไว้ด้านบนสุดของหน้าค่าใช้จ่าย แสดงรายการคงที่ทั้งหมด เช่น ค่าเช่า ค่าน้ำไฟ เน็ต ซอฟต์แวร์/Server ค่าทำบัญชี','Real-time Monthly Status Checking: ตรวจสอบสถานะการจ่ายในรอบเดือนปัจจุบันอัตโนมัติ (จ่ายแล้ว ✅ / รอจ่าย ⏰ / เกินกำหนด 🔴)','Quick Pay in One-Click: มีปุ่มบันทึกจ่ายเงินของรอบเดือนปัจจุบันได้ในคลิกเดียว พร้อมแสดงยอดรวมงบประจำ จ่ายแล้ว และยอดคงเหลือรอจ่ายชัดเจน'] },
             { v:'1.53', type:'patch', date:'2026-08-29', title:'Recurring Expense DB Check Constraint Fix', items:['Fix expenses_recurrence_check: ปรับการแปลงค่า recurrence (รอบบิลค่าใช้จ่ายประจำ) ให้เข้ากับ PostgreSQL Check Constraint (one_time / recurring) อัตโนมัติ ป้องกัน Error บันทึกค่าใช้จ่ายรายเดือน/รายปีไม่สำเร็จ','Seamless Recurring UI: แสดงผลรอบบิลประจำทุกเดือน/ทุกปีในหน้าแก้ไขและระบบแจ้งเตือนได้อย่างถูกต้องแม่นยำ'] },
@@ -25659,7 +25677,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.55', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Yearly & Monthly Recurring Expense Tracker', items:[
+    { v:'1.56', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:[
+      '🛠️ <b>Fix Edit on Yearly & Cross-Month Expenses:</b> แก้ไขข้อผิดพลาดที่ทำให้กดปุ่ม ✏️ แก้ไขรายการรายปี (หรือรายการประจำที่ลงวันที่ไว้คนละเดือน) ไม่ได้ โดยเปลี่ยนการค้นหาจากเฉพาะเดือนปัจจุบัน มาเป็นค้นหาจากประวัติทั้งปี (12 Months) พร้อมเชื่อมต่อ Supabase Fetch โดยตรง',
+      '⚡ <b>Cross-Month Quick Pay:</b> รองรับการกดบันทึกจ่ายด่วนสำหรับรายการข้ามเดือนและรายปีได้อย่างสมบูรณ์แบบ'
+    ]},
+    { v:'1.55', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Yearly & Monthly Recurring Expense Tracker', items:[
       '🗓️ <b>Yearly & Monthly Recurring Separation:</b> เพิ่มระบบแยกแยะค่าใช้จ่ายประจำ "รายเดือน" และ "รายปี" อย่างชาญฉลาด',
       '⏰ <b>Annual Schedule & Countdown:</b> รายการรายปีจะแสดงเดือนและวันที่ครบกำหนด เช่น "15 ส.ค." พร้อมนับถอยหลังว่าเหลืออีกกี่เดือน เพื่อให้เตรียมเงินก้อนใหญ่ล่วงหน้าได้',
       '🔘 <b>Interactive Tab Filter:</b> มีปุ่มสลับดูเฉพาะ "ทั้งหมด", "ประจำทุกเดือน", หรือ "ประจำรายปี" ในคลิกเดียว'
@@ -25740,7 +25762,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.55</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.56</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
