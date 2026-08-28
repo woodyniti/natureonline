@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.56';
+    const CACHE = 'sealthai-v1.57';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.56 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.57 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -7156,11 +7156,30 @@ async function editExpense(id) {
   document.getElementById('e-pay-method').value=e.payment_method||'';
   document.getElementById('e-pay-date').value=e.payment_date||'';
   document.getElementById('e-due-date').value=e.due_date||'';
-  document.getElementById('e-recur').value=(e.recurrence==='recurring'?'monthly':(e.recurrence||'one_time'));
+  const isExplicitYearly = e.recurrence === 'yearly' || 
+                           (e.note || '').includes('[recurrence:yearly]') || 
+                           (e.note || '').includes('[yearly]') || 
+                           (e.note || '').includes('รายปี');
+  const isExplicitMonthly = e.recurrence === 'monthly' || 
+                            (e.note || '').includes('[recurrence:monthly]') || 
+                            (e.note || '').includes('[monthly]') || 
+                            (e.note || '').includes('รายเดือน');
+
+  if (isExplicitYearly) {
+    document.getElementById('e-recur').value = 'yearly';
+  } else if (isExplicitMonthly || e.recurrence === 'recurring') {
+    document.getElementById('e-recur').value = 'monthly';
+  } else {
+    document.getElementById('e-recur').value = e.recurrence || 'one_time';
+  }
+
   document.getElementById('e-vat-claim').checked=!!e.vat_claimable;
   document.getElementById('e-profit').checked=e.include_in_profit!==false;
   document.getElementById('e-dup').checked=!!e.duplicate_risk;
-  document.getElementById('e-note').value = e.note || '';
+  
+  // Clean up tag from user-visible note input
+  const cleanNote = (e.note || '').replace(/\s*\[recurrence:[^\]]+\]/g, '').trim();
+  document.getElementById('e-note').value = cleanNote;
   recalcExpenseAmounts();
   openModal('modal-expense');
 }
@@ -7194,7 +7213,20 @@ async function saveExpense() {
   if (!cat) { toast('กรุณาเลือกหมวดมาตรฐาน','error'); return; }
   const type=document.getElementById('e-type').value;
   const rawRecur = document.getElementById('e-recur').value || 'one_time';
-  // Normalize recurrence for database check constraint ('one_time' or 'recurring')
+  
+  let noteVal = (document.getElementById('e-note').value || '').trim();
+  // Clean up existing recurrence tags
+  noteVal = noteVal.replace(/\s*\[recurrence:[^\]]+\]/g, '').replace(/\s*\[(รายปี|รายเดือน|yearly|monthly)\]/g, '').trim();
+
+  // Attach explicit recurrence tag to guarantee persistent Yearly vs Monthly classification
+  if (rawRecur === 'yearly') {
+    noteVal = noteVal ? `${noteVal} [recurrence:yearly]` : '[recurrence:yearly]';
+  } else if (rawRecur === 'monthly') {
+    noteVal = noteVal ? `${noteVal} [recurrence:monthly]` : '[recurrence:monthly]';
+  } else if (rawRecur === 'quarterly') {
+    noteVal = noteVal ? `${noteVal} [recurrence:quarterly]` : '[recurrence:quarterly]';
+  }
+
   const dbRecur = (rawRecur === 'one_time') ? 'one_time' : 'recurring';
 
   let payload = {
@@ -7202,7 +7234,7 @@ async function saveExpense() {
     expense_date: document.getElementById('e-date').value,
     category: cat,
     amount: calc.pnl,
-    note: document.getElementById('e-note').value
+    note: noteVal
   };
   if (expenseSchemaReady) payload={...payload,
     standardized_category:cat, subcategory:document.getElementById('e-subcat').value.trim()||null,
@@ -7212,7 +7244,7 @@ async function saveExpense() {
     withholding_tax:calc.wht, paid_amount:Number(document.getElementById('e-paid').value||0),
     payment_status:document.getElementById('e-pay-status').value, payment_method:document.getElementById('e-pay-method').value||null,
     payment_date:document.getElementById('e-pay-date').value||null, due_date:document.getElementById('e-due-date').value||null,
-    expense_type:type, recurrence:dbRecur,
+    expense_type:type, recurrence:rawRecur,
     include_in_profit:document.getElementById('e-profit').checked, duplicate_risk:document.getElementById('e-dup').checked,
     review_status:'approved', created_by:currentUser?.id||null, updated_at:new Date().toISOString()
   };
@@ -7223,7 +7255,7 @@ async function saveExpense() {
 
   // Auto-fallback if check constraint is violated
   if (res.error && res.error.message && res.error.message.includes('expenses_recurrence_check')) {
-    payload.recurrence = 'recurring';
+    payload.recurrence = dbRecur;
     res = editingExpenseId
       ? await sb.from('expenses').update(payload).eq('id',editingExpenseId).select().single()
       : await sb.from('expenses').insert(payload).select().single();
@@ -7387,7 +7419,7 @@ function getRecurringExpenseAlerts(expensesList) {
   recurringMap.forEach((e, recurKey) => {
     const dueDateStr = e.due_date || '';
     const expDateStr = e.expense_date || '';
-    const isYearly = e.recurrence === 'yearly' || (e.note || '').toLowerCase().includes('รายปี') || (e.note || '').toLowerCase().includes('[yearly]');
+    const isYearly = e.recurrence === 'yearly' || (e.note || '').includes('[recurrence:yearly]') || (e.note || '').toLowerCase().includes('รายปี') || (e.note || '').toLowerCase().includes('[yearly]');
     
     let dueDay = 1;
     let dueMonth = curMonth;
@@ -17477,6 +17509,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.57', type:'minor', date:'2026-08-29', title:'Persistent Yearly & Monthly Recurrence Classification', items:['Persistent Yearly vs Monthly Tags: เพิ่มระบบแท็กกำกับความถี่ [recurrence:yearly] ในการบันทึกค่าใช้จ่าย เพื่อให้แยกระหว่างค่าใช้จ่ายรายปีและรายเดือนได้อย่างแม่นยำ 100% แม้ฐานข้อมูลจะมี Check Constraint','Smart Recurrence Editing: เมื่อกดแก้ไขรายการรายปี ตัวเลือกในดรอปดาวน์จะแสดงเป็น "ประจำทุกปี (Yearly)" เสมอ และสามารถสลับเป็นรายเดือนหรือรายปีได้ทันที'] },
             { v:'1.56', type:'patch', date:'2026-08-29', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:['Fix Edit Button on Yearly & Cross-Month Expenses: แก้ไขปัญหาการกดปุ่ม ✏️ แก้ไขรายการค่าใช้จ่ายประจำรายปี หรือรายการที่อยู่คนละเดือนแล้วไม่เปิดฟอร์ม โดยปรับให้ค้นหาข้ามเดือนจากประวัติทั้งปี (12 Months) และดึงตรงจากฐานข้อมูลเมื่อจำเป็น ทำให้เปิดแก้ไขได้ 100% ทุกรายการ','Universal Quick Pay: ปรับระบบจ่ายด่วนให้รองรับรายการข้ามเดือนและรายปีได้อย่างราบรื่น'] },
             { v:'1.55', type:'minor', date:'2026-08-29', title:'Yearly & Monthly Recurring Expense Tracker', items:['Yearly vs Monthly Separation: แยกการแสดงผลค่าใช้จ่ายประจำแบบ "รายเดือน" (เช่น ค่าเช่า น้ำไฟ เน็ต) และ "รายปี" (เช่น ประกันภัย โดเมน เซิร์ฟเวอร์ ค่าสอบบัญชี CPA) ชัดเจน','Annual Anniversary & Countdown: แสดงเดือนและวันที่ครบกำหนดจ่ายของรายการรายปี พร้อมนับถอยหลังแจ้งเตือนล่วงหน้าหลายเดือนเพื่อให้วางแผนสภาพคล่องได้ทันท่วงที','Tab Filter View: เพิ่มปุ่มกรองดูเฉพาะ "ทั้งหมด", "ประจำทุกเดือน", หรือ "ประจำรายปี" ได้อย่างสะดวก'] },
             { v:'1.54', type:'minor', date:'2026-08-29', title:'Monthly Recurring Expense Commitments & Schedule Tracker', items:['Monthly Recurring Commitment Dashboard: เพิ่มแผงสรุปค่าใช้จ่ายประจำที่ต้องจ่ายทุกเดือนไว้ด้านบนสุดของหน้าค่าใช้จ่าย แสดงรายการคงที่ทั้งหมด เช่น ค่าเช่า ค่าน้ำไฟ เน็ต ซอฟต์แวร์/Server ค่าทำบัญชี','Real-time Monthly Status Checking: ตรวจสอบสถานะการจ่ายในรอบเดือนปัจจุบันอัตโนมัติ (จ่ายแล้ว ✅ / รอจ่าย ⏰ / เกินกำหนด 🔴)','Quick Pay in One-Click: มีปุ่มบันทึกจ่ายเงินของรอบเดือนปัจจุบันได้ในคลิกเดียว พร้อมแสดงยอดรวมงบประจำ จ่ายแล้ว และยอดคงเหลือรอจ่ายชัดเจน'] },
@@ -25677,7 +25710,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.56', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:[
+    { v:'1.57', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Persistent Yearly & Monthly Recurrence Classification', items:[
+      '🗓️ <b>Persistent Yearly vs Monthly Tags:</b> เพิ่มระบบบันทึกแท็กความถี่รอบบิล [recurrence:yearly] ทำให้แยกระหว่างค่าใช้จ่าย "รายปี" (เช่น Hostatom, ค่าเซิร์ฟเวอร์/โดเมน, ค่าสอบบัญชี) และ "รายเดือน" ได้อย่างแม่นยำถาวร',
+      '✏️ <b>Seamless Recurrence Switch:</b> กดแก้ไขแล้วเลือกสลับเป็น "ประจำทุกปี (Yearly)" หรือ "ประจำทุกเดือน (Monthly)" ได้ทันที ระบบจะย้ายแท็บและแสดงผลตรงตามรอบบิลที่เลือก 100%'
+    ]},
+    { v:'1.56', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:[
       '🛠️ <b>Fix Edit on Yearly & Cross-Month Expenses:</b> แก้ไขข้อผิดพลาดที่ทำให้กดปุ่ม ✏️ แก้ไขรายการรายปี (หรือรายการประจำที่ลงวันที่ไว้คนละเดือน) ไม่ได้ โดยเปลี่ยนการค้นหาจากเฉพาะเดือนปัจจุบัน มาเป็นค้นหาจากประวัติทั้งปี (12 Months) พร้อมเชื่อมต่อ Supabase Fetch โดยตรง',
       '⚡ <b>Cross-Month Quick Pay:</b> รองรับการกดบันทึกจ่ายด่วนสำหรับรายการข้ามเดือนและรายปีได้อย่างสมบูรณ์แบบ'
     ]},
@@ -25762,7 +25799,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.56</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.57</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
