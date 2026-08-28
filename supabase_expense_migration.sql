@@ -45,7 +45,7 @@ alter table public.expenses add constraint expenses_expense_type_check
   check (expense_type in ('operating','inventory','landed_cost','asset','owner_draw','tax','refund'));
 alter table public.expenses drop constraint if exists expenses_recurrence_check;
 alter table public.expenses add constraint expenses_recurrence_check
-  check (recurrence in ('one_time','recurring'));
+  check (recurrence in ('one_time','recurring','monthly','yearly','quarterly','weekly'));
 alter table public.expenses drop constraint if exists expenses_review_status_check;
 alter table public.expenses add constraint expenses_review_status_check
   check (review_status in ('needs_review','approved'));
