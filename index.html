@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.54';
+    const CACHE = 'sealthai-v1.55';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.54 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.55 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -7289,14 +7289,14 @@ function getRecurrenceLabel(r) {
 }
 
 function getRecurringExpenseAlerts(expensesList) {
-  if (!expensesList || !expensesList.length) return { list: [], totalMonthlyCommitment: 0, paidThisMonthAmt: 0, pendingThisMonthAmt: 0, paidCount: 0, pendingCount: 0 };
+  if (!expensesList || !expensesList.length) return { list: [], monthlyList: [], yearlyList: [], totalMonthlyCommitment: 0, paidThisMonthAmt: 0, pendingThisMonthAmt: 0, paidCount: 0, pendingCount: 0 };
   const todayStr = today();
   const now = new Date(todayStr + 'T00:00:00');
   const ym = document.getElementById('exp-month')?.value || todayStr.slice(0, 7);
   const [curYear, curMonth] = ym.split('-').map(Number);
   const currentMonthPrefix = `${curYear}-${String(curMonth).padStart(2, '0')}`;
   
-  const recurringMap = new Map(); // key -> item
+  const recurringMap = new Map(); // key -> latest item
   const unpaidBills = [];
   const processedKeys = new Set();
 
@@ -7353,7 +7353,7 @@ function getRecurringExpenseAlerts(expensesList) {
     }
   });
 
-  // 2. Scan for recurring monthly commitments (recurrence in ['monthly', 'recurring', 'yearly', 'quarterly', 'weekly'])
+  // 2. Scan for recurring commitments
   expensesList.forEach(e => {
     const isRecur = e.recurrence && e.recurrence !== 'one_time';
     if (!isRecur) return;
@@ -7362,7 +7362,6 @@ function getRecurringExpenseAlerts(expensesList) {
     const recurKey = `${e.vendor_name || ''}_${effectiveExpenseCategory(e)}_${baseAmt}`;
     
     if (recurringMap.has(recurKey)) {
-      // Keep the latest record for reference
       const existing = recurringMap.get(recurKey);
       if (e.expense_date > existing.expense_date) recurringMap.set(recurKey, e);
       return;
@@ -7370,92 +7369,190 @@ function getRecurringExpenseAlerts(expensesList) {
     recurringMap.set(recurKey, e);
   });
 
-  // 3. Build recurring schedule for the currently selected month
-  const recurringList = [];
+  // 3. Build recurring schedule (distinguishing Monthly vs Yearly)
+  const monthlyList = [];
+  const yearlyList = [];
   const lastDayOfMonth = new Date(curYear, curMonth, 0).getDate();
 
   recurringMap.forEach((e, recurKey) => {
     const dueDateStr = e.due_date || '';
     const expDateStr = e.expense_date || '';
-    let dueDay = 1;
-    if (dueDateStr) dueDay = parseInt(dueDateStr.split('-')[2], 10) || 1;
-    else if (expDateStr) dueDay = parseInt(expDateStr.split('-')[2], 10) || 1;
+    const isYearly = e.recurrence === 'yearly' || (e.note || '').toLowerCase().includes('รายปี') || (e.note || '').toLowerCase().includes('[yearly]');
     
-    const targetDay = Math.min(dueDay, lastDayOfMonth);
-    const targetDueDateStr = `${curYear}-${String(curMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
-    const targetDueDate = new Date(targetDueDateStr + 'T00:00:00');
-    const diffDays = Math.round((targetDueDate - now) / (1000 * 60 * 60 * 24));
+    let dueDay = 1;
+    let dueMonth = curMonth;
 
-    // Check if this recurring item has already been paid in current month
-    const paidMatch = expensesList.find(other => {
-      const otherKey = `${other.vendor_name || ''}_${effectiveExpenseCategory(other)}_${Number(other.base_amount ?? other.amount ?? 0)}`;
-      return otherKey === recurKey &&
-             (other.expense_date || '').startsWith(currentMonthPrefix) &&
-             (other.payment_status === 'paid');
-    });
-
-    const isPaidThisMonth = !!paidMatch;
-    let statusLevel = 'upcoming';
-    let statusText = '';
-
-    if (isPaidThisMonth) {
-      statusLevel = 'paid';
-      statusText = `✅ จ่ายแล้วรอบเดือนนี้ (${paidMatch.expense_date ? paidMatch.expense_date.slice(8,10)+'/'+paidMatch.expense_date.slice(5,7) : 'เรียบร้อย'})`;
-    } else {
-      if (diffDays < 0) {
-        statusLevel = 'overdue';
-        statusText = `🔴 ประจำเดือนนี้ (เลยมา ${Math.abs(diffDays)} วัน)`;
-      } else if (diffDays === 0) {
-        statusLevel = 'today';
-        statusText = `🚨 ครบกำหนดจ่ายวันนี้!`;
-      } else if (diffDays <= 3) {
-        statusLevel = 'urgent';
-        statusText = `🟠 ครบกำหนดในอีก ${diffDays} วัน (${targetDay}/${curMonth})`;
-      } else if (diffDays <= 7) {
-        statusLevel = 'soon';
-        statusText = `🟡 ครบกำหนดในอีก ${diffDays} วัน (${targetDay}/${curMonth})`;
-      } else {
-        statusLevel = 'upcoming';
-        statusText = `📅 ทุกวันที่ ${targetDay} ของเดือน`;
-      }
+    if (dueDateStr) {
+      const parts = dueDateStr.split('-');
+      dueMonth = parseInt(parts[1], 10) || curMonth;
+      dueDay = parseInt(parts[2], 10) || 1;
+    } else if (expDateStr) {
+      const parts = expDateStr.split('-');
+      dueMonth = parseInt(parts[1], 10) || curMonth;
+      dueDay = parseInt(parts[2], 10) || 1;
     }
 
     const amt = Number(e.base_amount ?? e.amount ?? 0);
-    recurringList.push({
-      id: paidMatch ? paidMatch.id : e.id,
-      type: 'recurring_cycle',
-      vendor: e.vendor_name || e.note || effectiveExpenseCategory(e),
-      category: effectiveExpenseCategory(e),
-      subcategory: e.subcategory || '',
-      recurrence: e.recurrence || 'monthly',
-      dueDay: targetDay,
-      amount: amt,
-      total_amount: amt,
-      due_date: targetDueDateStr,
-      expense_date: targetDueDateStr,
-      diffDays: diffDays,
-      statusLevel: statusLevel,
-      statusText: statusText,
-      isPaidThisMonth: isPaidThisMonth,
-      paidRecord: paidMatch,
-      raw: e
-    });
+    const monthThShort = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'][dueMonth - 1] || '';
+
+    if (isYearly) {
+      // ── YEARLY EXPENSE ──
+      const thisYearDueStr = `${curYear}-${String(dueMonth).padStart(2, '0')}-${String(dueDay).padStart(2, '0')}`;
+      const thisYearDueDate = new Date(thisYearDueStr + 'T00:00:00');
+      const diffDays = Math.round((thisYearDueDate - now) / (1000 * 60 * 60 * 24));
+      
+      // Check if paid in this year
+      const paidMatchYear = expensesList.find(other => {
+        const otherKey = `${other.vendor_name || ''}_${effectiveExpenseCategory(other)}_${Number(other.base_amount ?? other.amount ?? 0)}`;
+        return otherKey === recurKey &&
+               (other.expense_date || '').startsWith(String(curYear)) &&
+               (other.payment_status === 'paid');
+      });
+
+      const isPaidThisYear = !!paidMatchYear;
+      const isCurrentDueMonth = (dueMonth === curMonth);
+      let statusLevel = 'upcoming';
+      let statusText = '';
+
+      if (isPaidThisYear) {
+        statusLevel = 'paid';
+        statusText = `✅ จ่ายรอบปี ${curYear+543} แล้ว (${paidMatchYear.expense_date ? paidMatchYear.expense_date.slice(8,10)+'/'+paidMatchYear.expense_date.slice(5,7) : 'เรียบร้อย'})`;
+      } else if (isCurrentDueMonth) {
+        if (diffDays < 0) {
+          statusLevel = 'overdue';
+          statusText = `🔴 ครบกำหนดรอบปีนี้ (เลยมา ${Math.abs(diffDays)} วัน)`;
+        } else if (diffDays === 0) {
+          statusLevel = 'today';
+          statusText = `🚨 ครบกำหนดจ่ายรอบปีนี้วันนี้!`;
+        } else if (diffDays <= 7) {
+          statusLevel = 'urgent';
+          statusText = `🟠 ครบกำหนดรอบปีนี้ในอีก ${diffDays} วัน (${dueDay} ${monthThShort})`;
+        } else {
+          statusLevel = 'upcoming';
+          statusText = `📅 ครบกำหนดรอบปีนี้ (${dueDay} ${monthThShort})`;
+        }
+      } else {
+        // Other month
+        const diffMonths = dueMonth - curMonth;
+        statusLevel = 'upcoming';
+        statusText = diffMonths > 0 
+          ? `🗓️ ครบกำหนด ${dueDay} ${monthThShort} (อีก ${diffMonths} เดือน)`
+          : `🗓️ ประจำทุกปี (${dueDay} ${monthThShort})`;
+      }
+
+      yearlyList.push({
+        id: paidMatchYear ? paidMatchYear.id : e.id,
+        type: 'recurring_cycle',
+        vendor: e.vendor_name || e.note || effectiveExpenseCategory(e),
+        category: effectiveExpenseCategory(e),
+        subcategory: e.subcategory || '',
+        recurrence: 'yearly',
+        recurrenceLabel: `รายปี (${dueDay} ${monthThShort})`,
+        dueDay: dueDay,
+        dueMonth: dueMonth,
+        dueMonthName: monthThShort,
+        isCurrentDueMonth: isCurrentDueMonth,
+        amount: amt,
+        total_amount: amt,
+        due_date: thisYearDueStr,
+        expense_date: thisYearDueStr,
+        diffDays: diffDays,
+        statusLevel: statusLevel,
+        statusText: statusText,
+        isPaidThisMonth: isPaidThisYear,
+        isPaidThisYear: isPaidThisYear,
+        paidRecord: paidMatchYear,
+        raw: e
+      });
+
+    } else {
+      // ── MONTHLY EXPENSE ──
+      const targetDay = Math.min(dueDay, lastDayOfMonth);
+      const targetDueDateStr = `${curYear}-${String(curMonth).padStart(2, '0')}-${String(targetDay).padStart(2, '0')}`;
+      const targetDueDate = new Date(targetDueDateStr + 'T00:00:00');
+      const diffDays = Math.round((targetDueDate - now) / (1000 * 60 * 60 * 24));
+
+      const paidMatch = expensesList.find(other => {
+        const otherKey = `${other.vendor_name || ''}_${effectiveExpenseCategory(other)}_${Number(other.base_amount ?? other.amount ?? 0)}`;
+        return otherKey === recurKey &&
+               (other.expense_date || '').startsWith(currentMonthPrefix) &&
+               (other.payment_status === 'paid');
+      });
+
+      const isPaidThisMonth = !!paidMatch;
+      let statusLevel = 'upcoming';
+      let statusText = '';
+
+      if (isPaidThisMonth) {
+        statusLevel = 'paid';
+        statusText = `✅ จ่ายแล้วรอบเดือนนี้ (${paidMatch.expense_date ? paidMatch.expense_date.slice(8,10)+'/'+paidMatch.expense_date.slice(5,7) : 'เรียบร้อย'})`;
+      } else {
+        if (diffDays < 0) {
+          statusLevel = 'overdue';
+          statusText = `🔴 ประจำเดือนนี้ (เลยมา ${Math.abs(diffDays)} วัน)`;
+        } else if (diffDays === 0) {
+          statusLevel = 'today';
+          statusText = `🚨 ครบกำหนดจ่ายวันนี้!`;
+        } else if (diffDays <= 3) {
+          statusLevel = 'urgent';
+          statusText = `🟠 ครบกำหนดในอีก ${diffDays} วัน (${targetDay}/${curMonth})`;
+        } else if (diffDays <= 7) {
+          statusLevel = 'soon';
+          statusText = `🟡 ครบกำหนดในอีก ${diffDays} วัน (${targetDay}/${curMonth})`;
+        } else {
+          statusLevel = 'upcoming';
+          statusText = `📅 ทุกวันที่ ${targetDay} ของเดือน`;
+        }
+      }
+
+      monthlyList.push({
+        id: paidMatch ? paidMatch.id : e.id,
+        type: 'recurring_cycle',
+        vendor: e.vendor_name || e.note || effectiveExpenseCategory(e),
+        category: effectiveExpenseCategory(e),
+        subcategory: e.subcategory || '',
+        recurrence: 'monthly',
+        recurrenceLabel: 'ประจำทุกเดือน',
+        dueDay: targetDay,
+        dueMonth: curMonth,
+        isCurrentDueMonth: true,
+        amount: amt,
+        total_amount: amt,
+        due_date: targetDueDateStr,
+        expense_date: targetDueDateStr,
+        diffDays: diffDays,
+        statusLevel: statusLevel,
+        statusText: statusText,
+        isPaidThisMonth: isPaidThisMonth,
+        paidRecord: paidMatch,
+        raw: e
+      });
+    }
   });
 
-  // Sort: unpaid items first (by diffDays), then paid items
-  recurringList.sort((a, b) => {
+  // Sort monthly: unpaid first by diffDays, then paid
+  monthlyList.sort((a, b) => {
     if (a.isPaidThisMonth !== b.isPaidThisMonth) return a.isPaidThisMonth ? 1 : -1;
     return a.dueDay - b.dueDay;
   });
 
-  const totalMonthlyCommitment = recurringList.reduce((s, r) => s + r.amount, 0);
-  const paidThisMonthAmt = recurringList.filter(r => r.isPaidThisMonth).reduce((s, r) => s + r.amount, 0);
-  const pendingThisMonthAmt = recurringList.filter(r => !r.isPaidThisMonth).reduce((s, r) => s + r.amount, 0);
-  const paidCount = recurringList.filter(r => r.isPaidThisMonth).length;
-  const pendingCount = recurringList.filter(r => !r.isPaidThisMonth).length;
+  // Sort yearly: items due in current month first, then by dueMonth
+  yearlyList.sort((a, b) => {
+    if (a.isCurrentDueMonth !== b.isCurrentDueMonth) return a.isCurrentDueMonth ? -1 : 1;
+    return a.dueMonth - b.dueMonth;
+  });
+
+  const allRecurring = [...monthlyList, ...yearlyList];
+  const totalMonthlyCommitment = monthlyList.reduce((s, r) => s + r.amount, 0);
+  const paidThisMonthAmt = monthlyList.filter(r => r.isPaidThisMonth).reduce((s, r) => s + r.amount, 0);
+  const pendingThisMonthAmt = monthlyList.filter(r => !r.isPaidThisMonth).reduce((s, r) => s + r.amount, 0);
+  const paidCount = monthlyList.filter(r => r.isPaidThisMonth).length;
+  const pendingCount = monthlyList.filter(r => !r.isPaidThisMonth).length;
 
   return {
-    list: recurringList,
+    list: allRecurring,
+    monthlyList,
+    yearlyList,
     unpaidBills,
     totalMonthlyCommitment,
     paidThisMonthAmt,
@@ -7469,21 +7566,21 @@ function renderExpenseRecurringAlerts(recurringData) {
   const el = document.getElementById('exp-recurring-alerts');
   if (!el) return;
 
-  const { list, unpaidBills, totalMonthlyCommitment, paidThisMonthAmt, pendingThisMonthAmt, paidCount, pendingCount } = recurringData;
+  const { list, monthlyList, yearlyList, unpaidBills, totalMonthlyCommitment, paidThisMonthAmt, pendingThisMonthAmt, paidCount, pendingCount } = recurringData;
   const ym = document.getElementById('exp-month')?.value || today().slice(0, 7);
   const [curYear, curMonth] = ym.split('-').map(Number);
   const monthNameTh = new Date(curYear, curMonth - 1, 1).toLocaleDateString('th-TH', { month: 'long', year: 'numeric' });
 
-  if (!list.length && (!unpaidBills || !unpaidBills.length)) {
+  if (!monthlyList.length && !yearlyList.length && (!unpaidBills || !unpaidBills.length)) {
     el.innerHTML = `
       <div class="card mb-4" style="background:linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);border:1.5px dashed #bfdbfe;border-radius:12px;padding:14px 18px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <div>
             <div style="font-weight:700;font-size:14px;color:#1e40af;display:flex;align-items:center;gap:6px">
-              <span>🔄</span> <b>รายการค่าใช้จ่ายประจำรายเดือน (Monthly Recurring Commitments)</b>
+              <span>🔄</span> <b>รายการค่าใช้จ่ายประจำรายเดือน & รายปี (Recurring Commitments)</b>
             </div>
             <div style="font-size:12px;color:var(--text3);margin-top:2px">
-              ยังไม่มีการตั้งค่าใช้จ่ายประจำ (เช่น ค่าเช่า, ค่าน้ำไฟ, ค่าเน็ต, ค่าซอฟต์แวร์/Server, ค่าทำบัญชี)
+              ยังไม่มีการตั้งค่าใช้จ่ายประจำ (เช่น ค่าเช่า, ค่าน้ำไฟ, ค่าเน็ต, ค่าซอฟต์แวร์, ค่าทำบัญชี, ค่าประกัน/เซิร์ฟเวอร์รายปี)
             </div>
           </div>
           <button class="btn btn-sm btn-primary" onclick="openNewRecurringExpenseModal()" style="font-weight:700;padding:6px 14px">
@@ -7495,23 +7592,31 @@ function renderExpenseRecurringAlerts(recurringData) {
     return;
   }
 
-  const hasOverdue = list.some(a => !a.isPaidThisMonth && a.diffDays < 0);
-  const hasUrgent = list.some(a => !a.isPaidThisMonth && a.diffDays >= 0 && a.diffDays <= 3);
+  const hasOverdue = monthlyList.some(a => !a.isPaidThisMonth && a.diffDays < 0) || yearlyList.some(a => a.isCurrentDueMonth && !a.isPaidThisYear && a.diffDays < 0);
+  const hasUrgent = monthlyList.some(a => !a.isPaidThisMonth && a.diffDays >= 0 && a.diffDays <= 3) || yearlyList.some(a => a.isCurrentDueMonth && !a.isPaidThisYear && a.diffDays >= 0 && a.diffDays <= 3);
+
+  // Tab filter: 'all', 'monthly', 'yearly'
+  window._expRecurTab = window._expRecurTab || 'all';
+  const currentTab = window._expRecurTab;
+
+  let displayItems = list;
+  if (currentTab === 'monthly') displayItems = monthlyList;
+  else if (currentTab === 'yearly') displayItems = yearlyList;
 
   el.innerHTML = `
     <div class="card mb-4" style="background:#fff;border:1.5px solid ${hasOverdue ? '#fca5a5' : (hasUrgent ? '#fdba74' : '#bfdbfe')};border-radius:14px;padding:16px 18px;box-shadow:0 4px 14px rgba(0,0,0,0.04)">
       
       <!-- Top Summary Header -->
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div>
           <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:22px">${hasOverdue ? '🚨' : (hasUrgent ? '⏰' : '🗓️')}</span>
             <div>
               <h3 style="margin:0;font-size:16px;font-weight:800;color:${hasOverdue ? '#b91c1c' : (hasUrgent ? '#c2410c' : '#1e3a8a')}">
-                รายการค่าใช้จ่ายประจำ & กำหนดจ่ายทุกเดือน (${monthNameTh})
+                รายการค่าใช้จ่ายประจำ & กำหนดจ่าย (${monthNameTh})
               </h3>
               <div style="font-size:12px;color:var(--text2);margin-top:2px">
-                สรุปค่าใช้จ่ายคงที่ที่ต้องจ่ายประจำทุกเดือน พร้อมเช็คสถานะการจ่ายในรอบเดือนนี้
+                สรุปค่าใช้จ่ายประจำรายเดือน และก้อนใหญ่รายปี พร้อมเช็คสถานะการจ่ายรอบเดือนนี้
               </div>
             </div>
           </div>
@@ -7520,7 +7625,7 @@ function renderExpenseRecurringAlerts(recurringData) {
         <!-- Summary KPI Pills -->
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:4px 10px;text-align:right">
-            <div style="font-size:10px;color:var(--text3);font-weight:600">งบประจำเดือนนี้ (${list.length} รายการ)</div>
+            <div style="font-size:10px;color:var(--text3);font-weight:600">งบประจำเดือนนี้ (${monthlyList.length} รายการ)</div>
             <div class="font-mono" style="font-size:13px;font-weight:800;color:var(--text)">${fmtB(totalMonthlyCommitment)}</div>
           </div>
           <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:4px 10px;text-align:right">
@@ -7537,10 +7642,24 @@ function renderExpenseRecurringAlerts(recurringData) {
         </div>
       </div>
 
+      <!-- Filter Tabs: ทั้งหมด / รายเดือน / รายปี -->
+      <div style="display:flex;gap:6px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-sm ${currentTab==='all'?'btn-primary':'btn-secondary'}" onclick="setExpRecurTab('all')" style="font-size:11.5px;padding:3px 10px;font-weight:600">
+          ทั้งหมด (${list.length})
+        </button>
+        <button class="btn btn-sm ${currentTab==='monthly'?'btn-primary':'btn-secondary'}" onclick="setExpRecurTab('monthly')" style="font-size:11.5px;padding:3px 10px;font-weight:600">
+          🔄 ประจำทุกเดือน (${monthlyList.length})
+        </button>
+        <button class="btn btn-sm ${currentTab==='yearly'?'btn-primary':'btn-secondary'}" onclick="setExpRecurTab('yearly')" style="font-size:11.5px;padding:3px 10px;font-weight:600;background:${currentTab==='yearly'?'#7c3aed':''};border-color:${currentTab==='yearly'?'#6d28d9':''}">
+          🗓️ ประจำรายปี (${yearlyList.length})
+        </button>
+      </div>
+
       <!-- Recurring Items Grid -->
       <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(290px, 1fr));gap:12px">
-        ${list.map(item => {
-          const isPaid = item.isPaidThisMonth;
+        ${displayItems.map(item => {
+          const isYearly = item.recurrence === 'yearly';
+          const isPaid = isYearly ? item.isPaidThisYear : item.isPaidThisMonth;
           let cardBorder = '#e2e8f0';
           let cardBg = '#fff';
           let badgeStyle = 'background:#f1f5f9;color:#475569';
@@ -7549,14 +7668,17 @@ function renderExpenseRecurringAlerts(recurringData) {
             cardBorder = '#bbf7d0';
             cardBg = '#fcfdfd';
             badgeStyle = 'background:#dcfce7;color:#15803d;border:1px solid #86efac';
-          } else if (item.diffDays < 0) {
+          } else if (item.isCurrentDueMonth && item.diffDays < 0) {
             cardBorder = '#fca5a5';
             cardBg = '#fef2f2';
             badgeStyle = 'background:#fee2e2;color:#b91c1c;border:1px solid #f87171';
-          } else if (item.diffDays <= 3) {
+          } else if (item.isCurrentDueMonth && item.diffDays <= 3) {
             cardBorder = '#fed7aa';
             cardBg = '#fff7ed';
             badgeStyle = 'background:#ffedd5;color:#c2410c;border:1px solid #fb923c';
+          } else if (isYearly) {
+            cardBorder = '#ddd6fe';
+            badgeStyle = 'background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd';
           } else {
             cardBorder = '#bfdbfe';
             badgeStyle = 'background:#eff6ff;color:#1e40af;border:1px solid #93c5fd';
@@ -7570,7 +7692,8 @@ function renderExpenseRecurringAlerts(recurringData) {
                     <b style="font-size:13.5px;color:var(--text);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(item.vendor)}">${escapeHTML(item.vendor)}</b>
                     <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
                       <span class="badge badge-gray" style="font-size:10px">${escapeHTML(item.category)}</span>
-                      <span style="color:#64748b;font-size:10.5px">📅 ทุกวันที่ ${item.dueDay}</span>
+                      <span class="badge ${isYearly ? 'badge-purple' : 'badge-blue'}" style="font-size:10px;font-weight:700">${isYearly ? '🗓️ รายปี' : '🔄 รายเดือน'}</span>
+                      <span style="color:#64748b;font-size:10.5px">${isYearly ? `📅 ${item.dueDay} ${item.dueMonthName}` : `📅 ทุกวันที่ ${item.dueDay}`}</span>
                     </div>
                   </div>
                   <span class="font-mono" style="font-weight:800;font-size:15px;color:var(--text);white-space:nowrap">${fmtB(item.amount)}</span>
@@ -7605,12 +7728,17 @@ function renderExpenseRecurringAlerts(recurringData) {
   `;
 }
 
+function setExpRecurTab(tab) {
+  window._expRecurTab = tab;
+  renderExpenseView();
+}
+
 function openNewRecurringExpenseModal() {
   openNewExpense();
   document.getElementById('e-recur').value = 'monthly';
   const titleEl = document.querySelector('#modal-expense .modal-title');
-  if (titleEl) titleEl.textContent = '🔄 เพิ่มค่าใช้จ่ายประจำรายเดือนรอบใหม่';
-  document.getElementById('e-note').value = 'ค่าใช้จ่ายประจำรายเดือน (เช่น ค่าเช่า, ค่าน้ำไฟ, ค่าเน็ต, ค่าบริการ)';
+  if (titleEl) titleEl.textContent = '🔄 เพิ่มค่าใช้จ่ายประจำรอบใหม่ (รายเดือน / รายปี)';
+  document.getElementById('e-note').value = 'ค่าใช้จ่ายประจำ (เช่น ค่าเช่า, ค่าน้ำไฟ, ค่าเน็ต, ค่าบริการ, ค่าประกัน/ภาษีรายปี)';
 }
 
 async function quickPayRecurringExpense(id, type, targetDueDate) {
@@ -17332,6 +17460,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.55', type:'minor', date:'2026-08-29', title:'Yearly & Monthly Recurring Expense Tracker', items:['Yearly vs Monthly Separation: แยกการแสดงผลค่าใช้จ่ายประจำแบบ "รายเดือน" (เช่น ค่าเช่า น้ำไฟ เน็ต) และ "รายปี" (เช่น ประกันภัย โดเมน เซิร์ฟเวอร์ ค่าสอบบัญชี CPA) ชัดเจน','Annual Anniversary & Countdown: แสดงเดือนและวันที่ครบกำหนดจ่ายของรายการรายปี พร้อมนับถอยหลังแจ้งเตือนล่วงหน้าหลายเดือนเพื่อให้วางแผนสภาพคล่องได้ทันท่วงที','Tab Filter View: เพิ่มปุ่มกรองดูเฉพาะ "ทั้งหมด", "ประจำทุกเดือน", หรือ "ประจำรายปี" ได้อย่างสะดวก'] },
             { v:'1.54', type:'minor', date:'2026-08-29', title:'Monthly Recurring Expense Commitments & Schedule Tracker', items:['Monthly Recurring Commitment Dashboard: เพิ่มแผงสรุปค่าใช้จ่ายประจำที่ต้องจ่ายทุกเดือนไว้ด้านบนสุดของหน้าค่าใช้จ่าย แสดงรายการคงที่ทั้งหมด เช่น ค่าเช่า ค่าน้ำไฟ เน็ต ซอฟต์แวร์/Server ค่าทำบัญชี','Real-time Monthly Status Checking: ตรวจสอบสถานะการจ่ายในรอบเดือนปัจจุบันอัตโนมัติ (จ่ายแล้ว ✅ / รอจ่าย ⏰ / เกินกำหนด 🔴)','Quick Pay in One-Click: มีปุ่มบันทึกจ่ายเงินของรอบเดือนปัจจุบันได้ในคลิกเดียว พร้อมแสดงยอดรวมงบประจำ จ่ายแล้ว และยอดคงเหลือรอจ่ายชัดเจน'] },
             { v:'1.53', type:'patch', date:'2026-08-29', title:'Recurring Expense DB Check Constraint Fix', items:['Fix expenses_recurrence_check: ปรับการแปลงค่า recurrence (รอบบิลค่าใช้จ่ายประจำ) ให้เข้ากับ PostgreSQL Check Constraint (one_time / recurring) อัตโนมัติ ป้องกัน Error บันทึกค่าใช้จ่ายรายเดือน/รายปีไม่สำเร็จ','Seamless Recurring UI: แสดงผลรอบบิลประจำทุกเดือน/ทุกปีในหน้าแก้ไขและระบบแจ้งเตือนได้อย่างถูกต้องแม่นยำ'] },
             { v:'1.52', type:'minor', date:'2026-08-29', title:'Executive & Overview Dashboard Financial Synchronization', items:['Unified Accounting Calculations: ปรับสูตรคำนวณในกระดานผู้บริหาร (ownerDashboard) ให้ตรงกับ Dashboard ภาพรวม 100% โดยหักค่าธรรมเนียม Shopee/Lazada, Landed Cost (ค่าขนส่ง/จัดการรับของ), ค่าคอมมิชชั่นพนักงาน และค่าแรง CFO (20%) ครบถ้วน','Exclude Cancelled Orders: กรองออเดอร์ที่ถูกยกเลิก (Cancelled) ออกจากยอดขาย ต้นทุน และสถิติออเดอร์ของกระดานผู้บริหารอย่างสมบูรณ์','Date Range Alignment: ปรับช่วงเวลาตัวกรองรายเดือนของ ownerDashboard ให้ครอบคลุมตั้งแต่วันที่ 1 ถึงสิ้นเดือนตรงตามเวลาไทย (UTC+7)'] },
@@ -25530,7 +25659,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.54', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Monthly Recurring Expense Commitments & Schedule Tracker', items:[
+    { v:'1.55', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Yearly & Monthly Recurring Expense Tracker', items:[
+      '🗓️ <b>Yearly & Monthly Recurring Separation:</b> เพิ่มระบบแยกแยะค่าใช้จ่ายประจำ "รายเดือน" และ "รายปี" อย่างชาญฉลาด',
+      '⏰ <b>Annual Schedule & Countdown:</b> รายการรายปีจะแสดงเดือนและวันที่ครบกำหนด เช่น "15 ส.ค." พร้อมนับถอยหลังว่าเหลืออีกกี่เดือน เพื่อให้เตรียมเงินก้อนใหญ่ล่วงหน้าได้',
+      '🔘 <b>Interactive Tab Filter:</b> มีปุ่มสลับดูเฉพาะ "ทั้งหมด", "ประจำทุกเดือน", หรือ "ประจำรายปี" ในคลิกเดียว'
+    ]},
+    { v:'1.54', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Monthly Recurring Expense Commitments & Schedule Tracker', items:[
       '🗓️ <b>Monthly Recurring Commitment Dashboard:</b> เพิ่มส่วนแสดงรายการค่าใช้จ่ายประจำทุกเดือนไว้ด้านบนสุด แสดงรายการทั้งหมดที่ต้องจ่ายในแต่ละเดือนอย่างครบถ้วน',
       '🚦 <b>Monthly Payment Status Tracking:</b> เช็คสถานะการจ่ายของรอบเดือนปัจจุบันอัตโนมัติ (จ่ายแล้ว ✅ / รอจ่าย ⏰ / เกินกำหนด 🔴) พร้อมวันที่กำหนดจ่ายในแต่ละเดือน',
       '⚡ <b>One-Click Quick Pay:</b> กดบันทึกจ่ายประจำรอบเดือนนี้ได้ทันทีในคลิกเดียว พร้อมสรุปยอดรวมงบประจำ จ่ายแล้ว และยอดคงเหลือรอจ่าย'
@@ -25606,7 +25740,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.54</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.55</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
