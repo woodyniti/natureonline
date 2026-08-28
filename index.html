@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.57';
+    const CACHE = 'sealthai-v1.58';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.57 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.58 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -6909,6 +6909,49 @@ let expenseDashboardRows = [];
 let expenseCurrentRows = [];
 let expenseCurrentBudgets = [];
 
+const EXPENSE_CATEGORY_COLOR_MAP = {
+  'การตลาดและโฆษณา': { bg:'#ffe4e6', color:'#be123c', border:'#fda4af', icon:'📢' },
+  'บรรจุภัณฑ์และการจัดส่ง': { bg:'#ffedd5', color:'#c2410c', border:'#fed7aa', icon:'📦' },
+  'บุคลากรและค่าจ้าง': { bg:'#eff6ff', color:'#1d4ed8', border:'#bfdbfe', icon:'👥' },
+  'สถานที่และสาธารณูปโภค': { bg:'#e0f2fe', color:'#0369a1', border:'#bae6fd', icon:'🏢' },
+  'เทคโนโลยีและซอฟต์แวร์': { bg:'#f5f3ff', color:'#6d28d9', border:'#ddd6fe', icon:'💻' },
+  'เดินทางและยานพาหนะ': { bg:'#ecfdf5', color:'#047857', border:'#a7f3d0', icon:'🚗' },
+  'บริการวิชาชีพ': { bg:'#fae8ff', color:'#a21caf', border:'#f5d0fe', icon:'⚖️' },
+  'ค่าบริการวิชาชีพและที่ปรึกษา': { bg:'#fae8ff', color:'#a21caf', border:'#f5d0fe', icon:'⚖️' },
+  'อาหาร ประชุม และสวัสดิการ': { bg:'#fef3c7', color:'#b45309', border:'#fde68a', icon:'☕' },
+  'ธนาคารและการเงิน': { bg:'#f1f5f9', color:'#334155', border:'#cbd5e1', icon:'🏦' },
+  'ภาษีและค่าธรรมเนียมราชการ': { bg:'#fee2e2', color:'#b91c1c', border:'#fca5a5', icon:'🏛️' },
+  'สำนักงานและบริหาร': { bg:'#f4f4f5', color:'#3f3f46', border:'#e4e4e7', icon:'📁' },
+  'ซ่อมแซมและบำรุงรักษา': { bg:'#fffbeb', color:'#92400e', border:'#fde68a', icon:'🔧' },
+  'ค่าใช้จ่ายดำเนินงานอื่น': { bg:'#f3f4f6', color:'#374151', border:'#e5e7eb', icon:'📌' }
+};
+
+function getExpenseCategoryBadge(cat) {
+  if (!cat) return '<span class="badge badge-gray" style="font-size:10.5px">ไม่ระบุหมวด</span>';
+  const c = String(cat).trim();
+  const conf = EXPENSE_CATEGORY_COLOR_MAP[c] || { bg:'#f3f4f6', color:'#4b5563', border:'#e5e7eb', icon:'🏷️' };
+  return `<span class="badge" style="background:${conf.bg};color:${conf.color};border:1px solid ${conf.border};font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px">
+    <span>${conf.icon}</span> <span>${escapeHTML(c)}</span>
+  </span>`;
+}
+
+function getExpenseTypeBadge(type) {
+  const t = type || 'operating';
+  const typeMap = {
+    operating: { label: '💼 ค่าใช้จ่ายดำเนินงาน', bg:'#f1f5f9', color:'#475569', border:'#e2e8f0' },
+    inventory: { label: '📦 ซื้อสินค้าสต๊อก', bg:'#fef3c7', color:'#b45309', border:'#fde68a' },
+    landed_cost: { label: '🚚 Landed Cost', bg:'#ffedd5', color:'#c2410c', border:'#fed7aa' },
+    asset: { label: '🏢 ซื้อทรัพย์สิน', bg:'#f3e8ff', color:'#7e22ce', border:'#d8b4fe' },
+    owner_draw: { label: '👤 ถอนเงินเจ้าของ', bg:'#e0f2fe', color:'#0369a1', border:'#bae6fd' },
+    tax: { label: '🏛️ ภาษี/เงินนำส่ง', bg:'#fee2e2', color:'#b91c1c', border:'#fca5a5' },
+    refund: { label: '💰 เงินคืนจากผู้ขาย', bg:'#dcfce7', color:'#15803d', border:'#86efac' }
+  };
+  const conf = typeMap[t] || { label: EXPENSE_TYPE_LABELS[t] || t, bg:'#f3f4f6', color:'#4b5563', border:'#e5e7eb' };
+  return `<span class="badge" style="background:${conf.bg};color:${conf.color};border:1px solid ${conf.border};font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px">
+    ${escapeHTML(conf.label)}
+  </span>`;
+}
+
 function expenseProfitAmount(e) {
   if (e?.include_in_profit === false) return 0;
   const amount = Number(e?.amount || 0);
@@ -7733,7 +7776,7 @@ function renderExpenseRecurringAlerts(recurringData) {
                   <div style="flex:1;min-width:0">
                     <b style="font-size:13.5px;color:var(--text);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(item.vendor)}">${escapeHTML(item.vendor)}</b>
                     <div style="font-size:11px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-                      <span class="badge badge-gray" style="font-size:10px">${escapeHTML(item.category)}</span>
+                      ${getExpenseCategoryBadge(item.category)}
                       <span class="badge ${isYearly ? 'badge-purple' : 'badge-blue'}" style="font-size:10px;font-weight:700">${isYearly ? '🗓️ รายปี' : '🔄 รายเดือน'}</span>
                       <span style="color:#64748b;font-size:10.5px">${isYearly ? `📅 ${item.dueDay} ${item.dueMonthName}` : `📅 ทุกวันที่ ${item.dueDay}`}</span>
                     </div>
@@ -7948,11 +7991,18 @@ function renderExpenseTable(rows) {
   const todayStr = today();
   document.getElementById('exp-result-count').textContent=`แสดง ${rows.length} รายการ`;
   document.getElementById('exp-table').innerHTML=rows.length?`<table><thead><tr><th>วันที่</th><th>หมวด/ประเภท</th><th>ผู้ขาย/เอกสาร</th><th>สถานะ</th><th class="text-right">P&amp;L</th><th></th></tr></thead><tbody>${rows.map(e=>`<tr>
-    <td>${escapeHTML(e.expense_date||'-')}</td>
+    <td style="white-space:nowrap;font-size:12.5px">${escapeHTML(e.expense_date||'-')}</td>
     <td>
-      <span class="badge badge-amber">${escapeHTML(effectiveExpenseCategory(e))}</span>
-      ${e.recurrence && e.recurrence !== 'one_time' ? `<span class="badge badge-blue" style="font-size:10px;margin-left:4px" title="ค่าใช้จ่ายประจำ">🔄 ${getRecurrenceLabel(e.recurrence)}</span>` : ''}
-      <div style="font-size:10px;color:var(--text3);margin-top:3px">${escapeHTML(EXPENSE_TYPE_LABELS[e.expense_type||'operating']||'ค่าใช้จ่ายดำเนินงาน')}${e.include_in_profit===false?' · ไม่นับกำไร':''}${e.duplicate_risk?' · ⚠️ ตรวจซ้ำ':''}${e.legacy_category&&e.legacy_category!==effectiveExpenseCategory(e)?`<br>เดิม: ${escapeHTML(e.legacy_category)}`:''}</div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+        ${getExpenseCategoryBadge(effectiveExpenseCategory(e))}
+        ${e.recurrence && e.recurrence !== 'one_time' ? `<span class="badge badge-blue" style="font-size:10px" title="ค่าใช้จ่ายประจำ">🔄 ${getRecurrenceLabel(e.recurrence)}</span>` : ''}
+      </div>
+      <div style="margin-top:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+        ${getExpenseTypeBadge(e.expense_type||'operating')}
+        ${e.include_in_profit===false?'<span class="badge badge-gray" style="font-size:9.5px;padding:1px 5px">ไม่นับกำไร</span>':''}
+        ${e.duplicate_risk?'<span class="badge badge-red" style="font-size:9.5px;padding:1px 5px">⚠️ ตรวจซ้ำ</span>':''}
+        ${e.legacy_category&&e.legacy_category!==effectiveExpenseCategory(e)?`<span style="font-size:9.5px;color:var(--text3)">(เดิม: ${escapeHTML(e.legacy_category)})</span>`:''}
+      </div>
     </td>
     <td><b style="font-size:12px">${escapeHTML(e.vendor_name||e.note||'-')}</b><div style="font-size:10px;color:var(--text3)">${escapeHTML(e.document_no||e.note||'-')}</div></td>
     <td>
@@ -17509,6 +17559,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.58', type:'minor', date:'2026-08-29', title:'Distinct Visual Category & Type Color Badges', items:['Color-Coded Category Badges: ปรับแต่งสีและไอคอนประจำหมวดหมู่ค่าใช้จ่ายให้แตกต่างกันอย่างชัดเจนทุกหมวด (เช่น 📢 การตลาด=ชมพู, 📦 บรรจุภัณฑ์=ส้ม, 👥 เงินเดือน=น้ำเงิน, 🏢 สาธารณูปโภค=ฟ้า, 💻 ซอฟต์แวร์=ม่วง, 🚗 ยานพาหนะ=เขียว, ⚖️ บัญชี/วิชาชีพ=ม่วงบานเย็น)','Type Pill Badges: แสดงป้ายประเภทรายการ (ค่าใช้จ่ายดำเนินงาน / ซื้อสต๊อก / Landed Cost / ทรัพย์สิน / ภาษี / ถอนเงินเจ้าของ) ด้วย Badge สีสันสวยงาม อ่านง่ายสบายตา'] },
             { v:'1.57', type:'minor', date:'2026-08-29', title:'Persistent Yearly & Monthly Recurrence Classification', items:['Persistent Yearly vs Monthly Tags: เพิ่มระบบแท็กกำกับความถี่ [recurrence:yearly] ในการบันทึกค่าใช้จ่าย เพื่อให้แยกระหว่างค่าใช้จ่ายรายปีและรายเดือนได้อย่างแม่นยำ 100% แม้ฐานข้อมูลจะมี Check Constraint','Smart Recurrence Editing: เมื่อกดแก้ไขรายการรายปี ตัวเลือกในดรอปดาวน์จะแสดงเป็น "ประจำทุกปี (Yearly)" เสมอ และสามารถสลับเป็นรายเดือนหรือรายปีได้ทันที'] },
             { v:'1.56', type:'patch', date:'2026-08-29', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:['Fix Edit Button on Yearly & Cross-Month Expenses: แก้ไขปัญหาการกดปุ่ม ✏️ แก้ไขรายการค่าใช้จ่ายประจำรายปี หรือรายการที่อยู่คนละเดือนแล้วไม่เปิดฟอร์ม โดยปรับให้ค้นหาข้ามเดือนจากประวัติทั้งปี (12 Months) และดึงตรงจากฐานข้อมูลเมื่อจำเป็น ทำให้เปิดแก้ไขได้ 100% ทุกรายการ','Universal Quick Pay: ปรับระบบจ่ายด่วนให้รองรับรายการข้ามเดือนและรายปีได้อย่างราบรื่น'] },
             { v:'1.55', type:'minor', date:'2026-08-29', title:'Yearly & Monthly Recurring Expense Tracker', items:['Yearly vs Monthly Separation: แยกการแสดงผลค่าใช้จ่ายประจำแบบ "รายเดือน" (เช่น ค่าเช่า น้ำไฟ เน็ต) และ "รายปี" (เช่น ประกันภัย โดเมน เซิร์ฟเวอร์ ค่าสอบบัญชี CPA) ชัดเจน','Annual Anniversary & Countdown: แสดงเดือนและวันที่ครบกำหนดจ่ายของรายการรายปี พร้อมนับถอยหลังแจ้งเตือนล่วงหน้าหลายเดือนเพื่อให้วางแผนสภาพคล่องได้ทันท่วงที','Tab Filter View: เพิ่มปุ่มกรองดูเฉพาะ "ทั้งหมด", "ประจำทุกเดือน", หรือ "ประจำรายปี" ได้อย่างสะดวก'] },
@@ -25710,7 +25761,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.57', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Persistent Yearly & Monthly Recurrence Classification', items:[
+    { v:'1.58', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Distinct Visual Category & Type Color Badges', items:[
+      '🎨 <b>Color-Coded Category Badges:</b> แยกสีและไอคอนประจำหมวดหมู่ค่าใช้จ่ายทุกหมวดอย่างสวยงามและชัดเจน (การตลาด, บรรจุภัณฑ์, เงินเดือน, สถานที่, ซอฟต์แวร์, ยานพาหนะ, บัญชี ฯลฯ)',
+      '🏷️ <b>Enhanced Type Badges:</b> แสดงป้ายประเภทรายการด้วยสีเฉพาะตัว ทำให้อ่านตารางและแยกแยะค่าใช้จ่ายได้รวดเร็วทันที'
+    ]},
+    { v:'1.57', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Persistent Yearly & Monthly Recurrence Classification', items:[
       '🗓️ <b>Persistent Yearly vs Monthly Tags:</b> เพิ่มระบบบันทึกแท็กความถี่รอบบิล [recurrence:yearly] ทำให้แยกระหว่างค่าใช้จ่าย "รายปี" (เช่น Hostatom, ค่าเซิร์ฟเวอร์/โดเมน, ค่าสอบบัญชี) และ "รายเดือน" ได้อย่างแม่นยำถาวร',
       '✏️ <b>Seamless Recurrence Switch:</b> กดแก้ไขแล้วเลือกสลับเป็น "ประจำทุกปี (Yearly)" หรือ "ประจำทุกเดือน (Monthly)" ได้ทันที ระบบจะย้ายแท็บและแสดงผลตรงตามรอบบิลที่เลือก 100%'
     ]},
@@ -25799,7 +25854,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.57</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.58</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
