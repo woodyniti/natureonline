@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.59';
+    const CACHE = 'sealthai-v1.60';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.59 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.60 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -12003,15 +12003,33 @@ function financeSetupError(error) {
 }
 
 
-// ─── PAGE: GRATUITY (ค่าสินน้ำใจ) · v1.59 ──────────────────────────
+// ─── PAGE: GRATUITY & TOP UP (ค่าสินน้ำใจ & เงินพิเศษเพิ่มเติม) · v1.60 ────────
 let gratuityRows = [];
 let editingGratuityId = null;
+
+// Top Up Configuration (Local state & Shop config)
+let gratuityTopUpSettings = {
+  enableTopUp: true,
+  requireReason: true,
+  requireApproval: false,
+  maxTopUpPerWeek: null,
+  maxTopUpPct: 20
+};
+
+const TOP_UP_REASONS = [
+  { key: 'Extra Support', label: '🌟 Extra Support (ช่วยงานพิเศษ/ประสานงานเพิ่มเติม)' },
+  { key: 'Special Assistance', label: '🤝 Special Assistance (ช่วยเหลือปิดดีล/ประสานงานเคสพิเศษ)' },
+  { key: 'Urgent Support', label: '⚡ Urgent Support (งานด่วนนอกเวลา/เสาร์-อาทิตย์)' },
+  { key: 'Delivery Support', label: '🚚 Delivery Support (ช่วยเร่งการจัดส่ง/ประสานขนส่งพิเศษ)' },
+  { key: 'Other', label: '📌 Other (เหตุผลอื่นๆ ระบุเพิ่มเติม)' }
+];
 
 async function gratuity() {
   const curYM = today().slice(0, 7);
   document.getElementById('topbar-actions').innerHTML = `
     <button class="btn btn-secondary btn-sm" onclick="exportGratuityExcel()">📥 ส่งออก Excel</button>
-    <button class="btn btn-primary btn-sm" onclick="openNewGratuity()"><span class="btn-icon">➕</span> บันทึกค่าสินน้ำใจ</button>
+    <button class="btn btn-secondary btn-sm" onclick="openGratuitySettingsModal()">⚙️ ตั้งค่า Top Up</button>
+    <button class="btn btn-primary btn-sm" onclick="openNewGratuity()"><span class="btn-icon">➕</span> บันทึกค่าสินน้ำใจ / Top Up</button>
   `;
 
   setContent(`
@@ -12025,27 +12043,28 @@ async function gratuity() {
           <option value="unpaid">⏳ รอจ่าย / ยังไม่จ่าย</option>
         </select>
         <select id="grat-filter-type" onchange="renderGratuityView()">
-          <option value="">ทุกประเภทสินน้ำใจ</option>
+          <option value="">ทุกประเภท</option>
           <option value="ค่านายหน้า/ปิดดีล">🤝 ค่านายหน้า/ปิดดีล</option>
           <option value="สินน้ำใจผู้ประสานงาน">🎁 สินน้ำใจผู้ประสานงาน</option>
           <option value="ของขวัญขอบคุณลูกค้า">💐 ของขวัญขอบคุณลูกค้า</option>
           <option value="ค่าตอบแทนแนะนำงาน">🌟 ค่าตอบแทนแนะนำงาน</option>
+          <option value="Top Up">🎁 มี Top Up เงินพิเศษ</option>
           <option value="อื่นๆ">📌 อื่นๆ</option>
         </select>
-        <input id="grat-search" placeholder="ค้นหาผู้รับ / เบอร์โทร / ออเดอร์ / หมายเหตุ" oninput="renderGratuityView()" style="min-width:220px;flex:1">
+        <input id="grat-search" placeholder="ค้นหาผู้รับ / ออเดอร์ / เหตุผล Top Up / หมายเหตุ" oninput="renderGratuityView()" style="min-width:220px;flex:1">
       </div>
 
-      <!-- KPI Summary Cards -->
+      <!-- KPI Summary Cards (Separating Progressive vs Top Up) -->
       <div class="stat-grid mb-4" id="grat-stats"></div>
 
       <!-- Analytics Charts -->
       <div class="grid-2 mb-4">
         <div class="card">
-          <div class="card-title">📈 แนวโน้มค่าสินน้ำใจรายเดือน (12 เดือน)</div>
+          <div class="card-title">📈 สรุปยอดจ่ายตามสูตร vs Top Up เงินพิเศษ (12 เดือน)</div>
           <div class="chart-box" style="height:230px"><canvas id="ch-grat-trend"></canvas></div>
         </div>
         <div class="card">
-          <div class="card-title">🏆 อันดับผู้รับสินน้ำใจยอดสูงสุด</div>
+          <div class="card-title">🏆 อันดับผู้รับสินน้ำใจ & เงินพิเศษสูงสุด</div>
           <div id="grat-top-payees" style="max-height:230px;overflow-y:auto;padding-right:4px"></div>
         </div>
       </div>
@@ -12054,7 +12073,7 @@ async function gratuity() {
       <div class="card">
         <div class="card-title flex-between">
           <div style="display:flex;align-items:center;gap:8px">
-            <span>📋 รายการค่าสินน้ำใจ & ค่าตอบแทนพิเศษ</span>
+            <span>📋 รายการค่าสินน้ำใจ & Top Up เงินพิเศษ</span>
             <span id="grat-result-count" class="badge badge-gray" style="font-size:11px"></span>
           </div>
           <button class="btn btn-sm btn-primary" onclick="openNewGratuity()">➕ บันทึกเพิ่ม</button>
@@ -12065,17 +12084,18 @@ async function gratuity() {
       </div>
     </div>
 
-    <!-- Modal: บันทึกค่าสินน้ำใจ -->
+    <!-- Modal: บันทึกค่าสินน้ำใจ & Top Up เงินพิเศษ -->
     <div class="modal-overlay" id="modal-gratuity">
-      <div class="modal" style="max-width:680px">
-        <div class="modal-title">🎁 บันทึกค่าสินน้ำใจ & ค่าตอบแทนพิเศษ</div>
+      <div class="modal" style="max-width:720px">
+        <div class="modal-title">🎁 บันทึกค่าสินน้ำใจ & Top Up เงินพิเศษ</div>
+        
         <div class="grid-2">
           <div class="form-group">
             <label>วันที่จ่าย / วันที่เกิดรายการ *</label>
             <input type="date" id="g-date" value="${today()}">
           </div>
           <div class="form-group">
-            <label>ประเภทของสินน้ำใจ *</label>
+            <label>ประเภทรายการ *</label>
             <select id="g-type">
               <option value="ค่านายหน้า/ปิดดีล">🤝 ค่านายหน้า/ปิดดีล</option>
               <option value="สินน้ำใจผู้ประสานงาน">🎁 สินน้ำใจผู้ประสานงาน</option>
@@ -12099,12 +12119,62 @@ async function gratuity() {
 
         <div class="grid-2">
           <div class="form-group">
-            <label>ยอดเงินสินน้ำใจ (บาท) *</label>
-            <input type="number" step="0.01" id="g-amount" placeholder="0.00" style="font-weight:700;font-size:16px;color:#db2777">
-          </div>
-          <div class="form-group">
             <label>อ้างอิงออเดอร์ / ลูกค้า / โปรเจกต์</label>
             <input type="text" id="g-ref-order" placeholder="เช่น SO-202608-001 หรือ บ.ไทยออยล์">
+          </div>
+          <div class="form-group">
+            <label>ยอดฐานคำนวณ (Base Amount / ยอดซื้อ)</label>
+            <input type="number" step="0.01" id="g-base-amt" placeholder="เช่น 10,000.00" oninput="calcGratuityAmounts()">
+          </div>
+        </div>
+
+        <!-- 3-Line Calculation & Top Up Section -->
+        <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+          <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:8px;display:flex;align-items:center;gap:6px">
+            <span>🧮</span> <b>คำนวณยอดจ่าย & Top Up เงินพิเศษ</b>
+          </div>
+          
+          <div class="grid-2">
+            <div class="form-group" style="margin-bottom:8px">
+              <label style="font-size:12px;color:#475569">1. ค่าคำนวณตามสูตร (Progressive) *</label>
+              <input type="number" step="0.01" id="g-calc-amt" placeholder="0.00" oninput="calcGratuityAmounts()" style="font-weight:700;color:#0284c7">
+            </div>
+            <div class="form-group" style="margin-bottom:8px">
+              <label style="font-size:12px;color:#db2777;font-weight:700">2. Top Up / เงินพิเศษเพิ่มเติม (+)</label>
+              <input type="number" step="0.01" id="g-topup-amt" placeholder="0.00" value="0" min="0" oninput="calcGratuityAmounts()" style="font-weight:800;color:#db2777;border-color:#fbcfe8;background:#fff5f7">
+            </div>
+          </div>
+
+          <!-- Top Up Reason & Note (Shown when Top Up > 0) -->
+          <div id="g-topup-details-wrap" style="border-top:1px dashed #cbd5e1;padding-top:8px;margin-top:4px">
+            <div class="grid-2">
+              <div class="form-group" style="margin-bottom:6px">
+                <label style="font-size:11.5px;color:#db2777">เหตุผลของ Top Up (Reason) *</label>
+                <select id="g-topup-reason" onchange="topUpReasonChanged()" style="font-size:12px">
+                  ${TOP_UP_REASONS.map(r => `<option value="${r.key}">${r.label}</option>`).join('')}
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:6px">
+                <label style="font-size:11.5px;color:#475569">บันทึกเหตุผลเพิ่มเติม (Top Up Note)</label>
+                <input type="text" id="g-topup-note" placeholder="เช่น ช่วยค่าจัดส่งด่วนพิเศษนอกเวลา" style="font-size:12px">
+              </div>
+            </div>
+          </div>
+
+          <!-- 3-Line Summary Card -->
+          <div id="g-3line-preview" style="background:#fff;border:1.5px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-top:8px;font-size:13px;line-height:1.6">
+            <div style="display:flex;justify-content:space-between;color:#475569">
+              <span>🔹 ค่าตามสูตร (Progressive Calculation):</span>
+              <b class="font-mono" id="prev-calc-amt">฿0.00</b>
+            </div>
+            <div style="display:flex;justify-content:space-between;color:#db2777">
+              <span>🎁 Top Up / เงินพิเศษเพิ่มเติม:</span>
+              <b class="font-mono" id="prev-topup-amt">+฿0.00</b>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-top:1.5px dashed #cbd5e1;padding-top:4px;margin-top:4px;font-size:14.5px;font-weight:800;color:#0f172a">
+              <span>💰 ยอดจ่ายสุทธิ (Final Total Expense):</span>
+              <b class="font-mono text-green" id="prev-final-amt" style="font-size:16px">฿0.00</b>
+            </div>
           </div>
         </div>
 
@@ -12139,15 +12209,62 @@ async function gratuity() {
         </div>
 
         <div class="form-group">
-          <label>หมายเหตุ / วัตถุประสงค์การให้</label>
-          <textarea id="g-note" rows="2" placeholder="เช่น สินน้ำใจปิดดีลงานจัดซื้อซีลไฮดรอลิก โครงการโรงงานชลบุรี"></textarea>
+          <label>หมายเหตุทั่วไป / วัตถุประสงค์</label>
+          <textarea id="g-note" rows="2" placeholder="เช่น ค่าสินน้ำใจปิดดีลงานจัดซื้อซีลไฮดรอลิก โครงการโรงงานชลบุรี"></textarea>
         </div>
 
         <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
           <button class="btn btn-secondary" onclick="closeModal('modal-gratuity')">ยกเลิก</button>
           <button class="btn btn-primary" id="g-save-btn" onclick="saveGratuity()" style="font-weight:700;padding:6px 18px;background:#db2777;border-color:#be185d">
-            💾 บันทึกค่าสินน้ำใจ
+            💾 บันทึกค่าสินน้ำใจ / Top Up
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Settings for Top Up -->
+    <div class="modal-overlay" id="modal-gratuity-settings">
+      <div class="modal" style="max-width:520px">
+        <div class="modal-title">⚙️ ตั้งค่า Top Up / เงินพิเศษเพิ่มเติม</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:14px">
+          กำหนดกติกาการกรอกเงินพิเศษเพิ่มเติม และขีดจำกัดเพื่อควบคุมงบประมาณ
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="set-enable-topup" checked>
+            <b>เปิดใช้งานฟังก์ชัน Top Up (Enable Top Up)</b>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="set-require-reason" checked>
+            <span>บังคับระบุเหตุผลเมื่อมี Top Up (Require Reason)</span>
+          </label>
+        </div>
+
+        <div class="form-group" style="margin-bottom:12px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="set-require-approval">
+            <span>ต้องให้ Admin อนุมัติ Top Up ก่อนจ่าย (Require Approval)</span>
+          </label>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>เพดาน Top Up สูงสุด/รายการ (บาท)</label>
+            <input type="number" id="set-max-topup-amt" placeholder="เช่น 1,000 (ว่าง = ไม่จำกัด)">
+          </div>
+          <div class="form-group">
+            <label>เพดาน Top Up สูงสุด (% ของฐาน)</label>
+            <input type="number" id="set-max-topup-pct" placeholder="เช่น 20% (ว่าง = ไม่จำกัด)">
+          </div>
+        </div>
+
+        <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+          <button class="btn btn-secondary" onclick="closeModal('modal-gratuity-settings')">ปิด</button>
+          <button class="btn btn-primary" onclick="saveGratuitySettings()">💾 บันทึกการตั้งค่า</button>
         </div>
       </div>
     </div>
@@ -12156,7 +12273,88 @@ async function gratuity() {
   await loadGratuities();
 }
 
+function calcGratuityAmounts() {
+  const calc = Math.max(0, Number(document.getElementById('g-calc-amt')?.value || 0));
+  const topUp = Math.max(0, Number(document.getElementById('g-topup-amt')?.value || 0));
+  const finalAmt = calc + topUp;
+
+  const prevCalcEl = document.getElementById('prev-calc-amt');
+  const prevTopUpEl = document.getElementById('prev-topup-amt');
+  const prevFinalEl = document.getElementById('prev-final-amt');
+
+  if (prevCalcEl) prevCalcEl.textContent = fmtB(calc);
+  if (prevTopUpEl) prevTopUpEl.textContent = `+${fmtB(topUp)}`;
+  if (prevFinalEl) prevFinalEl.textContent = fmtB(finalAmt);
+
+  const topUpWrap = document.getElementById('g-topup-details-wrap');
+  if (topUpWrap) {
+    topUpWrap.style.display = topUp > 0 ? 'block' : 'none';
+  }
+}
+
+function topUpReasonChanged() {
+  const reason = document.getElementById('g-topup-reason')?.value;
+  const noteInput = document.getElementById('g-topup-note');
+  if (reason === 'Other' && noteInput) {
+    noteInput.focus();
+  }
+}
+
+function openGratuitySettingsModal() {
+  document.getElementById('set-enable-topup').checked = !!gratuityTopUpSettings.enableTopUp;
+  document.getElementById('set-require-reason').checked = !!gratuityTopUpSettings.requireReason;
+  document.getElementById('set-require-approval').checked = !!gratuityTopUpSettings.requireApproval;
+  document.getElementById('set-max-topup-amt').value = gratuityTopUpSettings.maxTopUpPerWeek || '';
+  document.getElementById('set-max-topup-pct').value = gratuityTopUpSettings.maxTopUpPct || '';
+  openModal('modal-gratuity-settings');
+}
+
+function saveGratuitySettings() {
+  gratuityTopUpSettings.enableTopUp = document.getElementById('set-enable-topup').checked;
+  gratuityTopUpSettings.requireReason = document.getElementById('set-require-reason').checked;
+  gratuityTopUpSettings.requireApproval = document.getElementById('set-require-approval').checked;
+  gratuityTopUpSettings.maxTopUpPerWeek = Number(document.getElementById('set-max-topup-amt').value) || null;
+  gratuityTopUpSettings.maxTopUpPct = Number(document.getElementById('set-max-topup-pct').value) || null;
+  
+  localStorage.setItem('gratuity_topup_settings_' + (currentShop?.id || 'default'), JSON.stringify(gratuityTopUpSettings));
+  closeModal('modal-gratuity-settings');
+  toast('บันทึกการตั้งค่า Top Up เรียบร้อยแล้ว ✓', 'success');
+}
+
+function parseGratuityMetadata(e) {
+  const note = e?.note || '';
+  const matchCalc = note.match(/\[calc:([0-9.]+)\]/);
+  const matchTopUp = note.match(/\[topup:([0-9.]+)\]/);
+  const matchReason = note.match(/\[reason:([^\]]+)\]/);
+  const matchTopUpNote = note.match(/\[topup_note:([^\]]+)\]/);
+  const matchBase = note.match(/\[base:([0-9.]+)\]/);
+  const matchStatus = note.match(/\[topup_status:([^\]]+)\]/);
+
+  const finalAmt = Number(e?.base_amount ?? e?.amount ?? 0);
+  const topUpAmt = matchTopUp ? Number(matchTopUp[1]) : 0;
+  const calcAmt = matchCalc ? Number(matchCalc[1]) : (topUpAmt > 0 ? Math.max(0, finalAmt - topUpAmt) : finalAmt);
+  const baseAmt = matchBase ? Number(matchBase[1]) : null;
+  const reason = matchReason ? matchReason[1] : (topUpAmt > 0 ? 'Extra Support' : '');
+  const topUpNote = matchTopUpNote ? matchTopUpNote[1] : '';
+  const topUpStatus = matchStatus ? matchStatus[1] : (topUpAmt > 0 ? 'approved' : 'none');
+
+  return {
+    calcAmt,
+    topUpAmt,
+    finalAmt,
+    baseAmt,
+    reason,
+    topUpNote,
+    topUpStatus
+  };
+}
+
 async function loadGratuities() {
+  const savedSettings = localStorage.getItem('gratuity_topup_settings_' + (currentShop?.id || 'default'));
+  if (savedSettings) {
+    try { gratuityTopUpSettings = JSON.parse(savedSettings); } catch(err){}
+  }
+
   const ym = document.getElementById('grat-month')?.value;
   let q = sb.from('expenses').select('*').eq('shop_id', currentShop.id);
   
@@ -12175,7 +12373,6 @@ async function loadGratuities() {
     return;
   }
 
-  // Filter for gratuity expenses (category = 'ค่าสินน้ำใจ' or subcategory/note contains 'สินน้ำใจ')
   gratuityRows = (data || []).filter(e => {
     const cat = (effectiveExpenseCategory(e) || '').toLowerCase();
     const sub = (e.subcategory || '').toLowerCase();
@@ -12201,44 +12398,63 @@ function renderGratuityView() {
     filtered = filtered.filter(e => (e.payment_status || 'paid') === statusFilter);
   }
   if (typeFilter) {
-    filtered = filtered.filter(e => (e.subcategory || '').includes(typeFilter) || (e.note || '').includes(typeFilter));
+    if (typeFilter === 'Top Up') {
+      filtered = filtered.filter(e => parseGratuityMetadata(e).topUpAmt > 0);
+    } else {
+      filtered = filtered.filter(e => (e.subcategory || '').includes(typeFilter) || (e.note || '').includes(typeFilter));
+    }
   }
   if (search) {
     filtered = filtered.filter(e => {
-      const text = `${e.vendor_name || ''} ${e.document_no || ''} ${e.subcategory || ''} ${e.note || ''}`.toLowerCase();
+      const meta = parseGratuityMetadata(e);
+      const text = `${e.vendor_name || ''} ${e.document_no || ''} ${e.subcategory || ''} ${e.note || ''} ${meta.reason} ${meta.topUpNote}`.toLowerCase();
       return text.includes(search);
     });
   }
 
-  // Calculate KPIs
-  const totalPaid = filtered.filter(e => (e.payment_status || 'paid') === 'paid').reduce((s, e) => s + Number(e.amount || e.base_amount || 0), 0);
-  const totalUnpaid = filtered.filter(e => (e.payment_status || 'paid') !== 'paid').reduce((s, e) => s + Number(e.amount || e.base_amount || 0), 0);
-  const totalAll = totalPaid + totalUnpaid;
-  const count = filtered.length;
-  const uniquePayees = new Set(filtered.map(e => (e.vendor_name || '').trim()).filter(Boolean)).size;
+  // Calculate KPIs (Separating Progressive vs Top Up)
+  let totalProgressive = 0;
+  let totalTopUp = 0;
+  let totalFinalPaid = 0;
+  let totalFinalUnpaid = 0;
+
+  filtered.forEach(e => {
+    const meta = parseGratuityMetadata(e);
+    totalProgressive += meta.calcAmt;
+    totalTopUp += meta.topUpAmt;
+    if ((e.payment_status || 'paid') === 'paid') {
+      totalFinalPaid += meta.finalAmt;
+    } else {
+      totalFinalUnpaid += meta.finalAmt;
+    }
+  });
+
+  const totalAll = totalFinalPaid + totalFinalUnpaid;
+  const topUpCount = filtered.filter(e => parseGratuityMetadata(e).topUpAmt > 0).length;
+  const topUpPct = totalAll > 0 ? (totalTopUp / totalAll * 100) : 0;
 
   const statEl = document.getElementById('grat-stats');
   if (statEl) {
     statEl.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid #0284c7">
+        <div class="stat-label">🔹 ค่าตามสูตร (Progressive)</div>
+        <div class="stat-val font-mono text-blue">${fmtB(totalProgressive)}</div>
+        <div class="stat-sub">ตามสูตรคำนวณมาตรฐาน</div>
+      </div>
       <div class="stat-card" style="border-left:4px solid #db2777">
-        <div class="stat-label">🎁 ยอดจ่ายสินน้ำใจ (จ่ายแล้ว)</div>
-        <div class="stat-val font-mono" style="color:#db2777">${fmtB(totalPaid)}</div>
+        <div class="stat-label">🎁 Top Up / เงินพิเศษ (${topUpCount} รายการ)</div>
+        <div class="stat-val font-mono" style="color:#db2777">+${fmtB(totalTopUp)}</div>
+        <div class="stat-sub font-mono">${topUpPct.toFixed(1)}% ของยอดจ่ายสุทธิ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid #10b981">
+        <div class="stat-label">💰 ยอดจ่ายสุทธิ (จ่ายแล้ว)</div>
+        <div class="stat-val font-mono text-green">${fmtB(totalFinalPaid)}</div>
         <div class="stat-sub">${filtered.filter(e => (e.payment_status || 'paid') === 'paid').length} รายการ</div>
       </div>
-      <div class="stat-card" style="border-left:4px solid ${totalUnpaid > 0 ? '#ea580c' : '#10b981'}">
+      <div class="stat-card" style="border-left:4px solid ${totalFinalUnpaid > 0 ? '#ea580c' : '#cbd5e1'}">
         <div class="stat-label">⏳ รอจ่าย / ยังไม่จ่าย</div>
-        <div class="stat-val font-mono ${totalUnpaid > 0 ? 'text-amber' : 'text-green'}">${fmtB(totalUnpaid)}</div>
+        <div class="stat-val font-mono ${totalFinalUnpaid > 0 ? 'text-amber' : 'text-muted'}">${fmtB(totalFinalUnpaid)}</div>
         <div class="stat-sub">${filtered.filter(e => (e.payment_status || 'paid') !== 'paid').length} รายการ</div>
-      </div>
-      <div class="stat-card" style="border-left:4px solid #8b5cf6">
-        <div class="stat-label">👥 จำนวนผู้รับสินน้ำใจ</div>
-        <div class="stat-val font-mono" style="color:#8b5cf6">${uniquePayees} <span style="font-size:14px;font-weight:400;color:var(--text3)">คน/หน่วยงาน</span></div>
-        <div class="stat-sub">รวมทั้งหมด ${count} รายการ</div>
-      </div>
-      <div class="stat-card" style="border-left:4px solid #0284c7">
-        <div class="stat-label">💰 รวมมูลค่าทั้งหมด</div>
-        <div class="stat-val font-mono text-blue">${fmtB(totalAll)}</div>
-        <div class="stat-sub">เฉลี่ย ${count ? fmtB(totalAll / count) : '฿0'}/รายการ</div>
       </div>
     `;
   }
@@ -12258,7 +12474,7 @@ function renderGratuityTable(rows) {
     tableEl.innerHTML = `
       <div class="empty">
         <div class="empty-icon">🎁</div>
-        <div class="empty-text">ไม่พบรายการค่าสินน้ำใจ</div>
+        <div class="empty-text">ไม่พบรายการค่าสินน้ำใจ / Top Up</div>
         <button class="btn btn-sm btn-primary mt-3" onclick="openNewGratuity()">➕ บันทึกค่าสินน้ำใจรายการแรก</button>
       </div>
     `;
@@ -12270,45 +12486,54 @@ function renderGratuityTable(rows) {
       <thead>
         <tr>
           <th>วันที่</th>
-          <th>ผู้รับสินน้ำใจ & ข้อมูลติดต่อ</th>
-          <th>ประเภท</th>
-          <th>อ้างอิงออเดอร์/ลูกค้า</th>
-          <th>ช่องทางจ่าย</th>
+          <th>ผู้รับ & ข้อมูลติดต่อ</th>
+          <th>อ้างอิงออเดอร์/งาน</th>
+          <th class="text-right">ค่าตามสูตร</th>
+          <th class="text-right">Top Up พิเศษ</th>
+          <th class="text-right">ยอดรวมจ่ายสุทธิ</th>
           <th>สถานะ</th>
-          <th class="text-right">จำนวนเงิน</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         ${rows.map(e => {
           const isPaid = (e.payment_status || 'paid') === 'paid';
-          const amt = Number(e.amount || e.base_amount || 0);
+          const meta = parseGratuityMetadata(e);
+          const hasTopUp = meta.topUpAmt > 0;
+          
           return `
             <tr>
               <td style="white-space:nowrap;font-size:12.5px">${escapeHTML(e.expense_date || '-')}</td>
               <td>
                 <b style="font-size:13px;color:var(--text)">${escapeHTML(e.vendor_name || 'ไม่ระบุชื่อผู้รับ')}</b>
-                ${e.note ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${escapeHTML(e.note.replace(/\s*\[(gratuity|recurrence:[^\]]+)\]/g, ''))}</div>` : ''}
-              </td>
-              <td>
-                <span class="badge" style="background:#fdf2f8;color:#db2777;border:1px solid #fbcfe8;font-size:10.5px;font-weight:700">
-                  🎁 ${escapeHTML(e.subcategory || 'ค่าสินน้ำใจ')}
-                </span>
+                <div style="font-size:10.5px;color:var(--text3);margin-top:2px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+                  <span class="badge" style="background:#fdf2f8;color:#db2777;border:1px solid #fbcfe8;font-size:9.5px;font-weight:700">🎁 ${escapeHTML(e.subcategory || 'สินน้ำใจ')}</span>
+                  ${e.payment_method ? `<span>· ${escapeHTML(e.payment_method)}</span>` : ''}
+                </div>
               </td>
               <td>
                 <span style="font-size:12px;color:var(--accent);font-weight:600">${escapeHTML(e.document_no || '—')}</span>
+                ${meta.baseAmt ? `<div style="font-size:10px;color:var(--text3)">ฐาน: ${fmtB(meta.baseAmt)}</div>` : ''}
               </td>
-              <td style="font-size:11.5px;color:var(--text2)">
-                ${escapeHTML(e.payment_method || 'โอนเงินธนาคาร')}
+              <td class="text-right font-mono" style="font-size:13px;color:#0284c7">
+                ${fmtB(meta.calcAmt)}
+              </td>
+              <td class="text-right font-mono" style="font-size:13px">
+                ${hasTopUp ? `
+                  <div style="color:#db2777;font-weight:800">+${fmtB(meta.topUpAmt)}</div>
+                  <div style="font-size:10px;color:#9d174d;margin-top:1px" title="${escapeHTML(meta.topUpNote || meta.reason)}">
+                    🏷️ ${escapeHTML(meta.reason || 'Extra')}
+                  </div>
+                ` : `<span style="color:var(--text3)">—</span>`}
+              </td>
+              <td class="text-right font-mono" style="font-weight:800;font-size:14.5px;color:${isPaid ? '#15803d' : '#ea580c'}">
+                ${fmtB(meta.finalAmt)}
               </td>
               <td>
                 <span class="badge ${isPaid ? 'badge-green' : 'badge-amber'}" style="font-size:10.5px">
                   ${isPaid ? '✅ จ่ายแล้ว' : '⏳ รอจ่าย'}
                 </span>
                 ${e.receipt_path ? ` <button class="btn btn-secondary btn-sm" style="padding:2px 6px;font-size:10px" onclick="viewExpenseReceipt('${String(e.receipt_path).replace(/'/g, "\\'")}')">📎</button>` : ''}
-              </td>
-              <td class="text-right font-mono" style="font-weight:800;font-size:14px;color:#db2777">
-                ${fmtB(amt)}
               </td>
               <td style="white-space:nowrap;text-align:right">
                 <button class="btn btn-secondary btn-sm" onclick="editGratuity('${e.id}')">✏️ แก้ไข</button>
@@ -12325,11 +12550,17 @@ function renderGratuityTable(rows) {
 function renderGratuityCharts(rows) {
   if (charts.gratTrend) { charts.gratTrend.destroy(); delete charts.gratTrend; }
 
-  // 1. Monthly Trend
-  const trendMap = {};
+  // 1. Monthly Trend (Stacked: Progressive vs Top Up)
+  const calcTrend = {};
+  const topUpTrend = {};
+
   gratuityRows.forEach(e => {
     const ym = (e.expense_date || '').slice(0, 7);
-    if (ym) trendMap[ym] = (trendMap[ym] || 0) + Number(e.amount || e.base_amount || 0);
+    if (ym) {
+      const meta = parseGratuityMetadata(e);
+      calcTrend[ym] = (calcTrend[ym] || 0) + meta.calcAmt;
+      topUpTrend[ym] = (topUpTrend[ym] || 0) + meta.topUpAmt;
+    }
   });
 
   const labels = [];
@@ -12349,17 +12580,31 @@ function renderGratuityCharts(rows) {
           const [a, b] = x.split('-');
           return new Date(+a, +b - 1, 1).toLocaleDateString('th-TH', { month: 'short', year: '2-digit' });
         }),
-        datasets: [{
-          label: 'ยอดค่าสินน้ำใจ',
-          data: labels.map(x => trendMap[x] || 0),
-          backgroundColor: '#db2777',
-          borderRadius: 6
-        }]
+        datasets: [
+          {
+            label: 'ค่าตามสูตร (Progressive)',
+            data: labels.map(x => calcTrend[x] || 0),
+            backgroundColor: '#0284c7',
+            borderRadius: 4
+          },
+          {
+            label: 'Top Up เงินพิเศษ',
+            data: labels.map(x => topUpTrend[x] || 0),
+            backgroundColor: '#db2777',
+            borderRadius: 4
+          }
+        ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } }
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true }
+        },
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } }
+        }
       }
     });
   }
@@ -12368,22 +12613,29 @@ function renderGratuityCharts(rows) {
   const payeeMap = {};
   rows.forEach(e => {
     const p = (e.vendor_name || 'ไม่ระบุชื่อ').trim();
-    payeeMap[p] = (payeeMap[p] || 0) + Number(e.amount || e.base_amount || 0);
+    const meta = parseGratuityMetadata(e);
+    if (!payeeMap[p]) payeeMap[p] = { total: 0, topUp: 0, calc: 0 };
+    payeeMap[p].total += meta.finalAmt;
+    payeeMap[p].topUp += meta.topUpAmt;
+    payeeMap[p].calc += meta.calcAmt;
   });
 
-  const sortedPayees = Object.entries(payeeMap).sort((a, b) => b[1] - a[1]).slice(0, 7);
+  const sortedPayees = Object.entries(payeeMap).sort((a, b) => b[1].total - a[1].total).slice(0, 7);
   const topEl = document.getElementById('grat-top-payees');
   if (topEl) {
     if (!sortedPayees.length) {
       topEl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:10px 0">ไม่มีข้อมูลผู้รับ</div>';
     } else {
-      topEl.innerHTML = sortedPayees.map(([name, sum], idx) => `
+      topEl.innerHTML = sortedPayees.map(([name, data], idx) => `
         <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-weight:800;color:${idx === 0 ? '#db2777' : (idx === 1 ? '#f59e0b' : '#6b7280')};width:16px">${idx + 1}.</span>
-            <span style="font-weight:600;color:var(--text)">${escapeHTML(name)}</span>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-weight:800;color:${idx === 0 ? '#db2777' : (idx === 1 ? '#f59e0b' : '#6b7280')};width:16px">${idx + 1}.</span>
+              <b style="color:var(--text)">${escapeHTML(name)}</b>
+            </div>
+            ${data.topUp > 0 ? `<div style="font-size:10px;color:#db2777;margin-left:22px">สูตร: ${fmtB(data.calc)} · Top Up: +${fmtB(data.topUp)}</div>` : ''}
           </div>
-          <b class="font-mono" style="color:#db2777">${fmtB(sum)}</b>
+          <b class="font-mono text-green" style="font-size:13.5px">${fmtB(data.total)}</b>
         </div>
       `).join('');
     }
@@ -12393,13 +12645,17 @@ function renderGratuityCharts(rows) {
 function openNewGratuity() {
   editingGratuityId = null;
   const titleEl = document.querySelector('#modal-gratuity .modal-title');
-  if (titleEl) titleEl.textContent = '🎁 บันทึกค่าสินน้ำใจ & ค่าตอบแทนพิเศษ';
+  if (titleEl) titleEl.textContent = '🎁 บันทึกค่าสินน้ำใจ & Top Up เงินพิเศษ';
 
   document.getElementById('g-date').value = today();
   document.getElementById('g-type').value = 'ค่านายหน้า/ปิดดีล';
   document.getElementById('g-payee').value = '';
   document.getElementById('g-contact').value = '';
-  document.getElementById('g-amount').value = '';
+  document.getElementById('g-base-amt').value = '';
+  document.getElementById('g-calc-amt').value = '';
+  document.getElementById('g-topup-amt').value = '0';
+  document.getElementById('g-topup-reason').value = 'Extra Support';
+  document.getElementById('g-topup-note').value = '';
   document.getElementById('g-ref-order').value = '';
   document.getElementById('g-status').value = 'paid';
   document.getElementById('g-pay-date').value = today();
@@ -12408,6 +12664,7 @@ function openNewGratuity() {
   document.getElementById('g-receipt').value = '';
   document.getElementById('g-note').value = '';
 
+  calcGratuityAmounts();
   openModal('modal-gratuity');
 }
 
@@ -12424,12 +12681,18 @@ async function editGratuity(id) {
 
   editingGratuityId = id;
   const titleEl = document.querySelector('#modal-gratuity .modal-title');
-  if (titleEl) titleEl.textContent = '✏️ แก้ไขรายการค่าสินน้ำใจ';
+  if (titleEl) titleEl.textContent = '✏️ แก้ไขรายการค่าสินน้ำใจ & Top Up';
+
+  const meta = parseGratuityMetadata(e);
 
   document.getElementById('g-date').value = e.expense_date || today();
   document.getElementById('g-type').value = e.subcategory || 'ค่านายหน้า/ปิดดีล';
   document.getElementById('g-payee').value = e.vendor_name || '';
-  document.getElementById('g-amount').value = e.base_amount ?? e.amount ?? '';
+  document.getElementById('g-base-amt').value = meta.baseAmt || '';
+  document.getElementById('g-calc-amt').value = meta.calcAmt || '';
+  document.getElementById('g-topup-amt').value = meta.topUpAmt || 0;
+  document.getElementById('g-topup-reason').value = meta.reason || 'Extra Support';
+  document.getElementById('g-topup-note').value = meta.topUpNote || '';
   document.getElementById('g-ref-order').value = e.document_no || '';
   document.getElementById('g-status').value = e.payment_status || 'paid';
   document.getElementById('g-pay-date').value = e.payment_date || e.expense_date || today();
@@ -12437,27 +12700,64 @@ async function editGratuity(id) {
   document.getElementById('g-pay-method').value = e.payment_method || 'โอนเงินธนาคาร';
   document.getElementById('g-receipt').value = '';
   
-  // Clean up tag from note input
-  const cleanNote = (e.note || '').replace(/\s*\[(gratuity|recurrence:[^\]]+)\]/g, '').trim();
+  // Clean up metadata tags from note input
+  const cleanNote = (e.note || '')
+    .replace(/\[(gratuity|calc:[0-9.]+|topup:[0-9.]+|reason:[^\]]+|topup_note:[^\]]+|base:[0-9.]+|topup_status:[^\]]+)\]/g, '')
+    .trim();
   document.getElementById('g-note').value = cleanNote;
 
+  calcGratuityAmounts();
   openModal('modal-gratuity');
 }
 
 async function saveGratuity() {
   const payee = (document.getElementById('g-payee').value || '').trim();
-  const amt = Number(document.getElementById('g-amount').value || 0);
+  const calcAmt = Math.max(0, Number(document.getElementById('g-calc-amt').value || 0));
+  const topUpAmt = Math.max(0, Number(document.getElementById('g-topup-amt').value || 0));
+  const baseAmt = Number(document.getElementById('g-base-amt').value || 0);
   const dateVal = document.getElementById('g-date').value;
 
   if (!payee) { toast('กรุณาระบุชื่อผู้รับสินน้ำใจ', 'error'); return; }
-  if (!(amt > 0)) { toast('กรุณาระบุยอดเงินมากกว่า 0', 'error'); return; }
+  if (!(calcAmt + topUpAmt > 0)) { toast('กรุณาระบุยอดเงินมากกว่า 0', 'error'); return; }
   if (!dateVal) { toast('กรุณาระบุวันที่เกิดรายการ', 'error'); return; }
 
+  const topUpReason = document.getElementById('g-topup-reason').value;
+  const topUpNote = (document.getElementById('g-topup-note').value || '').trim();
+
+  // Validate Top Up Limits if configured
+  if (topUpAmt > 0) {
+    if (gratuityTopUpSettings.requireReason && !topUpReason) {
+      toast('กรุณาระบุเหตุผลของ Top Up เงินพิเศษ', 'error');
+      return;
+    }
+    if (gratuityTopUpSettings.maxTopUpPerWeek && topUpAmt > gratuityTopUpSettings.maxTopUpPerWeek) {
+      if (!confirm(`⚠️ ยอด Top Up (${fmtB(topUpAmt)}) เกินเพดานที่ตั้งไว้ (${fmtB(gratuityTopUpSettings.maxTopUpPerWeek)})
+ยืนยันต้องการบันทึกหรือไม่?`)) return;
+    }
+    if (baseAmt > 0 && gratuityTopUpSettings.maxTopUpPct && (topUpAmt / baseAmt * 100) > gratuityTopUpSettings.maxTopUpPct) {
+      if (!confirm(`⚠️ ยอด Top Up คิดเป็น ${(topUpAmt/baseAmt*100).toFixed(1)}% ของฐาน เกินเพดาน ${gratuityTopUpSettings.maxTopUpPct}%
+ยืนยันต้องการบันทึกหรือไม่?`)) return;
+    }
+  }
+
+  const finalAmt = calcAmt + topUpAmt;
   const status = document.getElementById('g-status').value;
   const contact = (document.getElementById('g-contact').value || '').trim();
-  let noteText = (document.getElementById('g-note').value || '').trim();
-  if (contact) noteText = `${noteText ? noteText + ' · ' : ''}ติดต่อ/บัญชี: ${contact}`;
-  noteText = `${noteText} [gratuity]`.trim();
+  let rawNote = (document.getElementById('g-note').value || '').trim();
+  if (contact) rawNote = `${rawNote ? rawNote + ' · ' : ''}ติดต่อ/บัญชี: ${contact}`;
+
+  // Pack Top Up metadata into note for 100% database persistence & audit trail
+  const metaTags = [
+    `[gratuity]`,
+    `[calc:${calcAmt.toFixed(2)}]`,
+    `[topup:${topUpAmt.toFixed(2)}]`,
+    topUpAmt > 0 ? `[reason:${topUpReason}]` : '',
+    topUpNote ? `[topup_note:${topUpNote}]` : '',
+    baseAmt > 0 ? `[base:${baseAmt.toFixed(2)}]` : '',
+    `[topup_status:${topUpAmt > 0 ? (gratuityTopUpSettings.requireApproval ? 'proposed' : 'approved') : 'none'}]`
+  ].filter(Boolean).join('');
+
+  const fullNote = `${rawNote} ${metaTags}`.trim();
 
   const payload = {
     shop_id: currentShop.id,
@@ -12467,11 +12767,11 @@ async function saveGratuity() {
     subcategory: document.getElementById('g-type').value,
     vendor_name: payee,
     document_no: (document.getElementById('g-ref-order').value || '').trim() || null,
-    base_amount: amt,
-    amount: amt,
+    base_amount: finalAmt,
+    amount: finalAmt,
     vat_amount: 0,
     withholding_tax: 0,
-    paid_amount: status === 'paid' ? amt : 0,
+    paid_amount: status === 'paid' ? finalAmt : 0,
     payment_status: status,
     payment_method: document.getElementById('g-pay-method').value,
     payment_date: status === 'paid' ? (document.getElementById('g-pay-date').value || dateVal) : null,
@@ -12480,7 +12780,7 @@ async function saveGratuity() {
     include_in_profit: true,
     duplicate_risk: false,
     review_status: 'approved',
-    note: noteText,
+    note: fullNote,
     created_by: currentUser?.id || null,
     updated_at: new Date().toISOString()
   };
@@ -12506,7 +12806,7 @@ async function saveGratuity() {
   }
 
   closeModal('modal-gratuity');
-  toast('บันทึกค่าสินน้ำใจเรียบร้อยแล้ว ✓', 'success');
+  toast('บันทึกค่าสินน้ำใจ & Top Up เรียบร้อยแล้ว ✓', 'success');
   await loadGratuities();
 }
 
@@ -12523,14 +12823,15 @@ async function delGratuity(id) {
 
 function exportGratuityExcel() {
   if (!gratuityRows.length) { toast('ไม่มีข้อมูลสำหรับส่งออก', 'error'); return; }
-  let csv = '\uFEFFวันที่,ผู้รับสินน้ำใจ,ประเภท,อ้างอิงออเดอร์/ลูกค้า,ยอดเงิน,สถานะ,ช่องทางชำระ,หมายเหตุ\n';
+  let csv = '\uFEFFวันที่,ผู้รับสินน้ำใจ,ประเภท,อ้างอิงออเดอร์/ลูกค้า,ยอดฐานคำนวณ,ค่าตามสูตร,Top Up พิเศษ,เหตุผล Top Up,ยอดจ่ายสุทธิ,สถานะ,ช่องทางชำระ,หมายเหตุ\n';
   gratuityRows.forEach(e => {
-    csv += `"${e.expense_date||''}","${(e.vendor_name||'').replace(/"/g,'""')}","${e.subcategory||''}","${e.document_no||''}","${e.amount||e.base_amount||0}","${(e.payment_status==='paid'?'จ่ายแล้ว':'รอจ่าย')}","${e.payment_method||''}","${(e.note||'').replace(/"/g,'""')}"\n`;
+    const meta = parseGratuityMetadata(e);
+    csv += `"${e.expense_date||''}","${(e.vendor_name||'').replace(/"/g,'""')}","${e.subcategory||''}","${e.document_no||''}","${meta.baseAmt||''}","${meta.calcAmt}","${meta.topUpAmt}","${meta.reason||''}","${meta.finalAmt}","${(e.payment_status==='paid'?'จ่ายแล้ว':'รอจ่าย')}","${e.payment_method||''}","${(e.note||'').replace(/"/g,'""')}"\n`;
   });
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `ค่าสินน้ำใจ_${currentShop?.name||'shop'}_${today()}.csv`;
+  a.download = `ค่าสินน้ำใจ_TopUp_${currentShop?.name||'shop'}_${today()}.csv`;
   a.click();
   toast('ส่งออกไฟล์เรียบร้อยแล้ว ✓', 'success');
 }
@@ -18096,6 +18397,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.60', type:'minor', date:'2026-08-29', title:'Progressive Calculation & Top Up Incentive System', items:['3-Line Breakdown UI: แสดงผลแยกชัดเจน 3 บรรทัด (1. ค่าคำนวณตามสูตร Progressive, 2. Top Up เงินพิเศษเพิ่มเติม, 3. ยอดจ่ายสุทธิ Final Expense)','Top Up Management & Reasons: รองรับการเลือกเหตุผล Top Up (Extra Support, Special Assistance, Urgent Support, Delivery Support, Other) พร้อมบันทึก Note และ Audit Log ครบถ้วน','Settings & Limit Controls: ตั้งค่าเพดานยอด Top Up สูงสุด (บาท/%) และเปิด/ปิดเงื่อนไขการระบุเหตุผลได้ทันที','Stacked Analytics & Excel Report: กราฟแท่งแยกสัดส่วนค่าตามสูตร vs Top Up รายเดือน พร้อมส่งออก Excel ครบทุกฟิลด์'] },
             { v:'1.59', type:'minor', date:'2026-08-29', title:'New Gratuity & Incentive Management Module', items:['New Sidebar Menu "ค่าสินน้ำใจ": เพิ่มเมนูใหม่ใต้ค่าใช้จ่ายสำหรับบันทึกและบริหารจัดการค่าสินน้ำใจ ค่านายหน้า ค่าตอบแทนพิเศษ และของขวัญขอบคุณลูกค้าโดยเฉพาะ','Gratuity Analytics & Top Payees: สรุปยอดจ่ายสะสม ยอดค้างจ่าย และจัดอันดับผู้รับสินน้ำใจยอดสูงสุด พร้อมกราฟแนวโน้ม 12 เดือน','Seamless Financial Sync: บันทึกข้อมูลเข้าสู่ระบบการเงิน P&L และ Cash Flow อัตโนมัติ พร้อมส่งออก Excel รายงานได้ทันที'] },
             { v:'1.58', type:'minor', date:'2026-08-29', title:'Distinct Visual Category & Type Color Badges', items:['Color-Coded Category Badges: ปรับแต่งสีและไอคอนประจำหมวดหมู่ค่าใช้จ่ายให้แตกต่างกันอย่างชัดเจนทุกหมวด (เช่น 📢 การตลาด=ชมพู, 📦 บรรจุภัณฑ์=ส้ม, 👥 เงินเดือน=น้ำเงิน, 🏢 สาธารณูปโภค=ฟ้า, 💻 ซอฟต์แวร์=ม่วง, 🚗 ยานพาหนะ=เขียว, ⚖️ บัญชี/วิชาชีพ=ม่วงบานเย็น)','Type Pill Badges: แสดงป้ายประเภทรายการ (ค่าใช้จ่ายดำเนินงาน / ซื้อสต๊อก / Landed Cost / ทรัพย์สิน / ภาษี / ถอนเงินเจ้าของ) ด้วย Badge สีสันสวยงาม อ่านง่ายสบายตา'] },
             { v:'1.57', type:'minor', date:'2026-08-29', title:'Persistent Yearly & Monthly Recurrence Classification', items:['Persistent Yearly vs Monthly Tags: เพิ่มระบบแท็กกำกับความถี่ [recurrence:yearly] ในการบันทึกค่าใช้จ่าย เพื่อให้แยกระหว่างค่าใช้จ่ายรายปีและรายเดือนได้อย่างแม่นยำ 100% แม้ฐานข้อมูลจะมี Check Constraint','Smart Recurrence Editing: เมื่อกดแก้ไขรายการรายปี ตัวเลือกในดรอปดาวน์จะแสดงเป็น "ประจำทุกปี (Yearly)" เสมอ และสามารถสลับเป็นรายเดือนหรือรายปีได้ทันที'] },
@@ -26299,7 +26601,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.59', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'New Gratuity & Incentive Management Module', items:[
+    { v:'1.60', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Progressive Calculation & Top Up Incentive System', items:[
+      '🧮 <b>3-Line Calculation Breakdown:</b> แสดงผลแยกชัดเจน 3 บรรทัด ได้แก่ 1. ค่าตามสูตร Progressive, 2. Top Up เงินพิเศษ, 3. ยอดจ่ายสุทธิ Final Expense',
+      '🎁 <b>Top Up Reasons & Audit Trail:</b> เลือกระบุเหตุผล (Extra Support, Special Assistance, Urgent Support, Delivery Support, Other) พร้อมบันทึกประวัติและผู้กรอกถาวร',
+      '⚙️ <b>Configurable Limits & Rules:</b> ตั้งค่าเพดาน Top Up สูงสุด (บาท หรือ %) และระบบแจ้งเตือน Warning เมื่อกรอกเกินเกณฑ์',
+      '📊 <b>Stacked Charts & Full Export:</b> กราฟแท่งเปรียบเทียบสัดส่วนยอดตามสูตร vs Top Up รายเดือน และส่งออกรายงาน Excel ครบทุกมิติ'
+    ]},
+    { v:'1.59', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'New Gratuity & Incentive Management Module', items:[
       '🎁 <b>เมนูใหม่ "ค่าสินน้ำใจ":</b> เพิ่มเมนูเฉพาะใต้เมนูค่าใช้จ่าย สำหรับบันทึกและติดตามค่าสินน้ำใจ ค่านายหน้าปิดดีล สินน้ำใจผู้ประสานงาน และของขวัญขอบคุณ',
       '📊 <b>Gratuity Analytics:</b> แดชบอร์ดสรุปยอดจ่าย ยอดรอจ่าย รายชื่อผู้รับเงินยอดสูงสุด และกราฟเปรียบเทียบรายเดือน',
       '📥 <b>Full Export & Receipt Upload:</b> รองรับการแนบสลิปโอนเงิน อ้างอิงเลขออเดอร์ และส่งออกไฟล์ Excel ได้ในคลิกเดียว'
@@ -26397,7 +26705,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.59</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.60</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
