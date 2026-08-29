@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.58';
+    const CACHE = 'sealthai-v1.59';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.58 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.59 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1339,6 +1339,7 @@ function canSee(page) {
   const perms = currentUser?._perms || {};
   if (page === 'aiIntelligence' || page === 'contentstudio') return true;
   if (page === 'stockPlanning' && perms?.products) return true;
+  if (page === 'gratuity' && (perms?.expenses || perms?.finance || perms?.sales || perms?.orders)) return true;
   if (page === 'chinaImport' && perms?.purchase) return true;
   if (page === 'marketplace' && (perms?.orders || perms?.sales)) return true;
   if (page === 'customers' && (perms?.customers || perms?.orders || perms?.sales)) return true;
@@ -1371,6 +1372,7 @@ function renderSidebar() {
     {page:'marketplace', icon:'🛍️', label: 'มาร์เก็ตเพลส (Marketplace Hub)'},
     {page:'goodsreturn', icon:'🔄', label: 'รับคืนสินค้า'},
     {page:'expenses',    icon:'💸', label: t('nav.expenses')},
+    {page:'gratuity',    icon:'🎁', label: 'ค่าสินน้ำใจ'},
     {page:'finance',     icon:'📈', label: 'รายได้อื่น & เงินลงทุน'},
 
     {section: '🛒 งานซื้อ', accent: true},
@@ -1819,6 +1821,7 @@ const pageTitles = {
   monthly: 'สรุปยอดขายรายเดือน',
   orders: 'บันทึกออเดอร์',
   expenses: 'ค่าใช้จ่าย',
+  gratuity: '🎁 ค่าสินน้ำใจ (Gratuity & Incentive)',
   finance: 'รายได้อื่น & เงินลงทุน',
   products: 'สินค้า',
   stock: 'รับสินค้าเข้าสต๊อก',
@@ -1858,7 +1861,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
+  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
   if (pages[page]) pages[page]();
 }
 
@@ -6894,7 +6897,7 @@ const STANDARD_EXPENSE_CATS = [
   'การตลาดและโฆษณา','บรรจุภัณฑ์และการจัดส่ง','บุคลากรและค่าจ้าง',
   'สถานที่และสาธารณูปโภค','เทคโนโลยีและซอฟต์แวร์','เดินทางและยานพาหนะ',
   'บริการวิชาชีพ','อาหาร ประชุม และสวัสดิการ','ธนาคารและการเงิน','ภาษีและค่าธรรมเนียมราชการ',
-  'สำนักงานและบริหาร','ซ่อมแซมและบำรุงรักษา','ค่าใช้จ่ายดำเนินงานอื่น'
+  'สำนักงานและบริหาร','ซ่อมแซมและบำรุงรักษา','ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น'
 ];
 const EXPENSE_TYPES = [
   ['operating','ค่าใช้จ่ายดำเนินงาน'],['inventory','ซื้อสินค้าเข้าสต๊อก'],
@@ -6918,12 +6921,13 @@ const EXPENSE_CATEGORY_COLOR_MAP = {
   'เดินทางและยานพาหนะ': { bg:'#ecfdf5', color:'#047857', border:'#a7f3d0', icon:'🚗' },
   'บริการวิชาชีพ': { bg:'#fae8ff', color:'#a21caf', border:'#f5d0fe', icon:'⚖️' },
   'ค่าบริการวิชาชีพและที่ปรึกษา': { bg:'#fae8ff', color:'#a21caf', border:'#f5d0fe', icon:'⚖️' },
+  'ค่าสินน้ำใจ': { bg:'#fdf2f8', color:'#db2777', border:'#fbcfe8', icon:'🎁' },
   'อาหาร ประชุม และสวัสดิการ': { bg:'#fef3c7', color:'#b45309', border:'#fde68a', icon:'☕' },
   'ธนาคารและการเงิน': { bg:'#f1f5f9', color:'#334155', border:'#cbd5e1', icon:'🏦' },
   'ภาษีและค่าธรรมเนียมราชการ': { bg:'#fee2e2', color:'#b91c1c', border:'#fca5a5', icon:'🏛️' },
   'สำนักงานและบริหาร': { bg:'#f4f4f5', color:'#3f3f46', border:'#e4e4e7', icon:'📁' },
   'ซ่อมแซมและบำรุงรักษา': { bg:'#fffbeb', color:'#92400e', border:'#fde68a', icon:'🔧' },
-  'ค่าใช้จ่ายดำเนินงานอื่น': { bg:'#f3f4f6', color:'#374151', border:'#e5e7eb', icon:'📌' }
+  'ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น': { bg:'#f3f4f6', color:'#374151', border:'#e5e7eb', icon:'📌' }
 };
 
 function getExpenseCategoryBadge(cat) {
@@ -6972,7 +6976,7 @@ function defaultExpenseProfitFlag(type) {
 }
 function suggestExpenseClassification(e) {
   const s = `${e?.category||''} ${e?.note||''}`.toLowerCase();
-  let category = 'ค่าใช้จ่ายดำเนินงานอื่น';
+  let category = 'ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น';
   let needsDecision = false;
   if (/facebook|google|ads|โฆษณา|การตลาด/.test(s)) category='การตลาดและโฆษณา';
   else if (/line\s*oa/.test(s)) category='การตลาดและโฆษณา';
@@ -6986,9 +6990,9 @@ function suggestExpenseClassification(e) {
   else if (/ภาษี|ราชการ|ใบอนุญาต/.test(s)) category='ภาษีและค่าธรรมเนียมราชการ';
   else if (/กระดาษ|เอกสาร|อุปกรณ์|ชั้นวาง/.test(s)) category='สำนักงานและบริหาร';
   const duplicateRisk = /\bso[- ]?\d|จัดส่ง|ขนส่ง|แพค|แพ็ก|สินค้า|วัตถุดิบ/.test(s);
-  const safeAuto = !duplicateRisk && !needsDecision && category !== 'ค่าใช้จ่ายดำเนินงานอื่น';
+  const safeAuto = !duplicateRisk && !needsDecision && category !== 'ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น';
   return { category, type:'operating', include:true, duplicateRisk, needsDecision, safeAuto,
-    reason: duplicateRisk ? 'ควรตรวจว่าไม่ซ้ำกับ SO, PO, ต้นทุนสินค้า หรือ Landed Cost' : needsDecision ? 'โปรดเลือกว่านี่คือค่าอาหารเพื่อธุรกิจ/สวัสดิการ หรือเป็นเงินถอนเจ้าของ' : category==='ค่าใช้จ่ายดำเนินงานอื่น' ? 'ข้อมูลยังไม่พอสำหรับจัดหมวดอัตโนมัติ' : 'จัดหมวดจากชื่อเดิมและหมายเหตุ' };
+    reason: duplicateRisk ? 'ควรตรวจว่าไม่ซ้ำกับ SO, PO, ต้นทุนสินค้า หรือ Landed Cost' : needsDecision ? 'โปรดเลือกว่านี่คือค่าอาหารเพื่อธุรกิจ/สวัสดิการ หรือเป็นเงินถอนเจ้าของ' : category==='ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น' ? 'ข้อมูลยังไม่พอสำหรับจัดหมวดอัตโนมัติ' : 'จัดหมวดจากชื่อเดิมและหมายเหตุ' };
 }
 
 async function checkExpenseSchema() {
@@ -11996,6 +12000,539 @@ function financeTypeOptions(map, selected='') {
 function financeSetupError(error) {
   const msg=String(error?.message||'').toLowerCase();
   return msg.includes('relation') || msg.includes('schema cache') || msg.includes('could not find');
+}
+
+
+// ─── PAGE: GRATUITY (ค่าสินน้ำใจ) · v1.59 ──────────────────────────
+let gratuityRows = [];
+let editingGratuityId = null;
+
+async function gratuity() {
+  const curYM = today().slice(0, 7);
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="exportGratuityExcel()">📥 ส่งออก Excel</button>
+    <button class="btn btn-primary btn-sm" onclick="openNewGratuity()"><span class="btn-icon">➕</span> บันทึกค่าสินน้ำใจ</button>
+  `;
+
+  setContent(`
+    <div id="gratuity-page">
+      <div class="filter-bar mb-4" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="grat-month" onchange="loadGratuities()" style="min-width:140px">${getMonthOptions(curYM)}</select>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('grat-month').value='';loadGratuities()">ดูประวัติทั้งหมด</button>
+        <select id="grat-filter-status" onchange="renderGratuityView()">
+          <option value="">ทุกสถานะการจ่าย</option>
+          <option value="paid">✅ จ่ายแล้ว</option>
+          <option value="unpaid">⏳ รอจ่าย / ยังไม่จ่าย</option>
+        </select>
+        <select id="grat-filter-type" onchange="renderGratuityView()">
+          <option value="">ทุกประเภทสินน้ำใจ</option>
+          <option value="ค่านายหน้า/ปิดดีล">🤝 ค่านายหน้า/ปิดดีล</option>
+          <option value="สินน้ำใจผู้ประสานงาน">🎁 สินน้ำใจผู้ประสานงาน</option>
+          <option value="ของขวัญขอบคุณลูกค้า">💐 ของขวัญขอบคุณลูกค้า</option>
+          <option value="ค่าตอบแทนแนะนำงาน">🌟 ค่าตอบแทนแนะนำงาน</option>
+          <option value="อื่นๆ">📌 อื่นๆ</option>
+        </select>
+        <input id="grat-search" placeholder="ค้นหาผู้รับ / เบอร์โทร / ออเดอร์ / หมายเหตุ" oninput="renderGratuityView()" style="min-width:220px;flex:1">
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="stat-grid mb-4" id="grat-stats"></div>
+
+      <!-- Analytics Charts -->
+      <div class="grid-2 mb-4">
+        <div class="card">
+          <div class="card-title">📈 แนวโน้มค่าสินน้ำใจรายเดือน (12 เดือน)</div>
+          <div class="chart-box" style="height:230px"><canvas id="ch-grat-trend"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏆 อันดับผู้รับสินน้ำใจยอดสูงสุด</div>
+          <div id="grat-top-payees" style="max-height:230px;overflow-y:auto;padding-right:4px"></div>
+        </div>
+      </div>
+
+      <!-- Main Gratuity Table -->
+      <div class="card">
+        <div class="card-title flex-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>📋 รายการค่าสินน้ำใจ & ค่าตอบแทนพิเศษ</span>
+            <span id="grat-result-count" class="badge badge-gray" style="font-size:11px"></span>
+          </div>
+          <button class="btn btn-sm btn-primary" onclick="openNewGratuity()">➕ บันทึกเพิ่ม</button>
+        </div>
+        <div class="table-wrap" id="grat-table">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: บันทึกค่าสินน้ำใจ -->
+    <div class="modal-overlay" id="modal-gratuity">
+      <div class="modal" style="max-width:680px">
+        <div class="modal-title">🎁 บันทึกค่าสินน้ำใจ & ค่าตอบแทนพิเศษ</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>วันที่จ่าย / วันที่เกิดรายการ *</label>
+            <input type="date" id="g-date" value="${today()}">
+          </div>
+          <div class="form-group">
+            <label>ประเภทของสินน้ำใจ *</label>
+            <select id="g-type">
+              <option value="ค่านายหน้า/ปิดดีล">🤝 ค่านายหน้า/ปิดดีล</option>
+              <option value="สินน้ำใจผู้ประสานงาน">🎁 สินน้ำใจผู้ประสานงาน</option>
+              <option value="ของขวัญขอบคุณลูกค้า">💐 ของขวัญขอบคุณลูกค้า</option>
+              <option value="ค่าตอบแทนแนะนำงาน">🌟 ค่าตอบแทนแนะนำงาน</option>
+              <option value="อื่นๆ">📌 อื่นๆ</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>ชื่อผู้รับสินน้ำใจ *</label>
+            <input type="text" id="g-payee" placeholder="เช่น คุณสมชาย (จัดซื้อ บ.ABC)">
+          </div>
+          <div class="form-group">
+            <label>เบอร์โทร / เลขที่บัญชีโอนเงิน</label>
+            <input type="text" id="g-contact" placeholder="เช่น 081-xxx-xxxx / กสิกร 123-x-xxxxx">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>ยอดเงินสินน้ำใจ (บาท) *</label>
+            <input type="number" step="0.01" id="g-amount" placeholder="0.00" style="font-weight:700;font-size:16px;color:#db2777">
+          </div>
+          <div class="form-group">
+            <label>อ้างอิงออเดอร์ / ลูกค้า / โปรเจกต์</label>
+            <input type="text" id="g-ref-order" placeholder="เช่น SO-202608-001 หรือ บ.ไทยออยล์">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>สถานะการจ่ายเงิน *</label>
+            <select id="g-status" onchange="document.getElementById('g-pay-date-wrap').style.display=this.value==='paid'?'block':'none'">
+              <option value="paid">✅ จ่ายเงินเรียบร้อยแล้ว</option>
+              <option value="unpaid">⏳ ยังไม่จ่าย / รอจ่าย</option>
+            </select>
+          </div>
+          <div class="form-group" id="g-pay-date-wrap">
+            <label>วันที่จ่ายเงินจริง</label>
+            <input type="date" id="g-pay-date" value="${today()}">
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label>ช่องทางการชำระเงิน</label>
+            <select id="g-pay-method">
+              <option value="โอนเงินธนาคาร">🏦 โอนเงินธนาคาร</option>
+              <option value="เงินสด">💵 เงินสด</option>
+              <option value="บัตรของขวัญ/Voucher">🎟️ บัตรของขวัญ/Voucher</option>
+              <option value="ของขวัญ/กระเช้า">🎁 ของขวัญ/สิ่งของ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>แนบสลิปโอนเงิน / หลักฐาน (ถ้ามี)</label>
+            <input type="file" id="g-receipt" accept="image/*,application/pdf">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>หมายเหตุ / วัตถุประสงค์การให้</label>
+          <textarea id="g-note" rows="2" placeholder="เช่น สินน้ำใจปิดดีลงานจัดซื้อซีลไฮดรอลิก โครงการโรงงานชลบุรี"></textarea>
+        </div>
+
+        <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
+          <button class="btn btn-secondary" onclick="closeModal('modal-gratuity')">ยกเลิก</button>
+          <button class="btn btn-primary" id="g-save-btn" onclick="saveGratuity()" style="font-weight:700;padding:6px 18px;background:#db2777;border-color:#be185d">
+            💾 บันทึกค่าสินน้ำใจ
+          </button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  await loadGratuities();
+}
+
+async function loadGratuities() {
+  const ym = document.getElementById('grat-month')?.value;
+  let q = sb.from('expenses').select('*').eq('shop_id', currentShop.id);
+  
+  if (ym) {
+    const [y, m] = ym.split('-').map(Number);
+    const startDate = new Date(y, m - 12, 1);
+    const trendFrom = localDateString(startDate);
+    q = q.gte('expense_date', trendFrom).lte('expense_date', monthEnd(y, m));
+  }
+  
+  q = q.order('expense_date', { ascending: false }).limit(2000);
+  const { data, error } = await q;
+
+  if (error) {
+    toast('โหลดข้อมูลค่าสินน้ำใจไม่สำเร็จ: ' + error.message, 'error');
+    return;
+  }
+
+  // Filter for gratuity expenses (category = 'ค่าสินน้ำใจ' or subcategory/note contains 'สินน้ำใจ')
+  gratuityRows = (data || []).filter(e => {
+    const cat = (effectiveExpenseCategory(e) || '').toLowerCase();
+    const sub = (e.subcategory || '').toLowerCase();
+    const note = (e.note || '').toLowerCase();
+    return cat.includes('สินน้ำใจ') || sub.includes('สินน้ำใจ') || note.includes('สินน้ำใจ') || (e.note || '').includes('[gratuity]');
+  });
+
+  renderGratuityView();
+}
+
+function renderGratuityView() {
+  const ym = document.getElementById('grat-month')?.value;
+  const statusFilter = document.getElementById('grat-filter-status')?.value || '';
+  const typeFilter = document.getElementById('grat-filter-type')?.value || '';
+  const search = (document.getElementById('grat-search')?.value || '').trim().toLowerCase();
+
+  let filtered = gratuityRows;
+
+  if (ym) {
+    filtered = filtered.filter(e => (e.expense_date || '').startsWith(ym));
+  }
+  if (statusFilter) {
+    filtered = filtered.filter(e => (e.payment_status || 'paid') === statusFilter);
+  }
+  if (typeFilter) {
+    filtered = filtered.filter(e => (e.subcategory || '').includes(typeFilter) || (e.note || '').includes(typeFilter));
+  }
+  if (search) {
+    filtered = filtered.filter(e => {
+      const text = `${e.vendor_name || ''} ${e.document_no || ''} ${e.subcategory || ''} ${e.note || ''}`.toLowerCase();
+      return text.includes(search);
+    });
+  }
+
+  // Calculate KPIs
+  const totalPaid = filtered.filter(e => (e.payment_status || 'paid') === 'paid').reduce((s, e) => s + Number(e.amount || e.base_amount || 0), 0);
+  const totalUnpaid = filtered.filter(e => (e.payment_status || 'paid') !== 'paid').reduce((s, e) => s + Number(e.amount || e.base_amount || 0), 0);
+  const totalAll = totalPaid + totalUnpaid;
+  const count = filtered.length;
+  const uniquePayees = new Set(filtered.map(e => (e.vendor_name || '').trim()).filter(Boolean)).size;
+
+  const statEl = document.getElementById('grat-stats');
+  if (statEl) {
+    statEl.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid #db2777">
+        <div class="stat-label">🎁 ยอดจ่ายสินน้ำใจ (จ่ายแล้ว)</div>
+        <div class="stat-val font-mono" style="color:#db2777">${fmtB(totalPaid)}</div>
+        <div class="stat-sub">${filtered.filter(e => (e.payment_status || 'paid') === 'paid').length} รายการ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid ${totalUnpaid > 0 ? '#ea580c' : '#10b981'}">
+        <div class="stat-label">⏳ รอจ่าย / ยังไม่จ่าย</div>
+        <div class="stat-val font-mono ${totalUnpaid > 0 ? 'text-amber' : 'text-green'}">${fmtB(totalUnpaid)}</div>
+        <div class="stat-sub">${filtered.filter(e => (e.payment_status || 'paid') !== 'paid').length} รายการ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid #8b5cf6">
+        <div class="stat-label">👥 จำนวนผู้รับสินน้ำใจ</div>
+        <div class="stat-val font-mono" style="color:#8b5cf6">${uniquePayees} <span style="font-size:14px;font-weight:400;color:var(--text3)">คน/หน่วยงาน</span></div>
+        <div class="stat-sub">รวมทั้งหมด ${count} รายการ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid #0284c7">
+        <div class="stat-label">💰 รวมมูลค่าทั้งหมด</div>
+        <div class="stat-val font-mono text-blue">${fmtB(totalAll)}</div>
+        <div class="stat-sub">เฉลี่ย ${count ? fmtB(totalAll / count) : '฿0'}/รายการ</div>
+      </div>
+    `;
+  }
+
+  renderGratuityTable(filtered);
+  renderGratuityCharts(filtered);
+}
+
+function renderGratuityTable(rows) {
+  const countEl = document.getElementById('grat-result-count');
+  if (countEl) countEl.textContent = `แสดง ${rows.length} รายการ`;
+
+  const tableEl = document.getElementById('grat-table');
+  if (!tableEl) return;
+
+  if (!rows.length) {
+    tableEl.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🎁</div>
+        <div class="empty-text">ไม่พบรายการค่าสินน้ำใจ</div>
+        <button class="btn btn-sm btn-primary mt-3" onclick="openNewGratuity()">➕ บันทึกค่าสินน้ำใจรายการแรก</button>
+      </div>
+    `;
+    return;
+  }
+
+  tableEl.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>วันที่</th>
+          <th>ผู้รับสินน้ำใจ & ข้อมูลติดต่อ</th>
+          <th>ประเภท</th>
+          <th>อ้างอิงออเดอร์/ลูกค้า</th>
+          <th>ช่องทางจ่าย</th>
+          <th>สถานะ</th>
+          <th class="text-right">จำนวนเงิน</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(e => {
+          const isPaid = (e.payment_status || 'paid') === 'paid';
+          const amt = Number(e.amount || e.base_amount || 0);
+          return `
+            <tr>
+              <td style="white-space:nowrap;font-size:12.5px">${escapeHTML(e.expense_date || '-')}</td>
+              <td>
+                <b style="font-size:13px;color:var(--text)">${escapeHTML(e.vendor_name || 'ไม่ระบุชื่อผู้รับ')}</b>
+                ${e.note ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${escapeHTML(e.note.replace(/\s*\[(gratuity|recurrence:[^\]]+)\]/g, ''))}</div>` : ''}
+              </td>
+              <td>
+                <span class="badge" style="background:#fdf2f8;color:#db2777;border:1px solid #fbcfe8;font-size:10.5px;font-weight:700">
+                  🎁 ${escapeHTML(e.subcategory || 'ค่าสินน้ำใจ')}
+                </span>
+              </td>
+              <td>
+                <span style="font-size:12px;color:var(--accent);font-weight:600">${escapeHTML(e.document_no || '—')}</span>
+              </td>
+              <td style="font-size:11.5px;color:var(--text2)">
+                ${escapeHTML(e.payment_method || 'โอนเงินธนาคาร')}
+              </td>
+              <td>
+                <span class="badge ${isPaid ? 'badge-green' : 'badge-amber'}" style="font-size:10.5px">
+                  ${isPaid ? '✅ จ่ายแล้ว' : '⏳ รอจ่าย'}
+                </span>
+                ${e.receipt_path ? ` <button class="btn btn-secondary btn-sm" style="padding:2px 6px;font-size:10px" onclick="viewExpenseReceipt('${String(e.receipt_path).replace(/'/g, "\\'")}')">📎</button>` : ''}
+              </td>
+              <td class="text-right font-mono" style="font-weight:800;font-size:14px;color:#db2777">
+                ${fmtB(amt)}
+              </td>
+              <td style="white-space:nowrap;text-align:right">
+                <button class="btn btn-secondary btn-sm" onclick="editGratuity('${e.id}')">✏️ แก้ไข</button>
+                <button class="btn btn-danger btn-sm" onclick="delGratuity('${e.id}')">🗑️ ลบ</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderGratuityCharts(rows) {
+  if (charts.gratTrend) { charts.gratTrend.destroy(); delete charts.gratTrend; }
+
+  // 1. Monthly Trend
+  const trendMap = {};
+  gratuityRows.forEach(e => {
+    const ym = (e.expense_date || '').slice(0, 7);
+    if (ym) trendMap[ym] = (trendMap[ym] || 0) + Number(e.amount || e.base_amount || 0);
+  });
+
+  const labels = [];
+  const curYM = document.getElementById('grat-month')?.value || today().slice(0, 7);
+  const [yy, mm] = curYM.split('-').map(Number);
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(yy, mm - 1 - i, 1);
+    labels.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  }
+
+  const trendCanvas = document.getElementById('ch-grat-trend');
+  if (trendCanvas) {
+    charts.gratTrend = new Chart(trendCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels.map(x => {
+          const [a, b] = x.split('-');
+          return new Date(+a, +b - 1, 1).toLocaleDateString('th-TH', { month: 'short', year: '2-digit' });
+        }),
+        datasets: [{
+          label: 'ยอดค่าสินน้ำใจ',
+          data: labels.map(x => trendMap[x] || 0),
+          backgroundColor: '#db2777',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  // 2. Top Payees Ranking
+  const payeeMap = {};
+  rows.forEach(e => {
+    const p = (e.vendor_name || 'ไม่ระบุชื่อ').trim();
+    payeeMap[p] = (payeeMap[p] || 0) + Number(e.amount || e.base_amount || 0);
+  });
+
+  const sortedPayees = Object.entries(payeeMap).sort((a, b) => b[1] - a[1]).slice(0, 7);
+  const topEl = document.getElementById('grat-top-payees');
+  if (topEl) {
+    if (!sortedPayees.length) {
+      topEl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:10px 0">ไม่มีข้อมูลผู้รับ</div>';
+    } else {
+      topEl.innerHTML = sortedPayees.map(([name, sum], idx) => `
+        <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-weight:800;color:${idx === 0 ? '#db2777' : (idx === 1 ? '#f59e0b' : '#6b7280')};width:16px">${idx + 1}.</span>
+            <span style="font-weight:600;color:var(--text)">${escapeHTML(name)}</span>
+          </div>
+          <b class="font-mono" style="color:#db2777">${fmtB(sum)}</b>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+function openNewGratuity() {
+  editingGratuityId = null;
+  const titleEl = document.querySelector('#modal-gratuity .modal-title');
+  if (titleEl) titleEl.textContent = '🎁 บันทึกค่าสินน้ำใจ & ค่าตอบแทนพิเศษ';
+
+  document.getElementById('g-date').value = today();
+  document.getElementById('g-type').value = 'ค่านายหน้า/ปิดดีล';
+  document.getElementById('g-payee').value = '';
+  document.getElementById('g-contact').value = '';
+  document.getElementById('g-amount').value = '';
+  document.getElementById('g-ref-order').value = '';
+  document.getElementById('g-status').value = 'paid';
+  document.getElementById('g-pay-date').value = today();
+  document.getElementById('g-pay-date-wrap').style.display = 'block';
+  document.getElementById('g-pay-method').value = 'โอนเงินธนาคาร';
+  document.getElementById('g-receipt').value = '';
+  document.getElementById('g-note').value = '';
+
+  openModal('modal-gratuity');
+}
+
+async function editGratuity(id) {
+  let e = gratuityRows.find(x => x.id === id);
+  if (!e && typeof sb !== 'undefined') {
+    const res = await sb.from('expenses').select('*').eq('id', id).single();
+    if (res.data) e = res.data;
+  }
+  if (!e) {
+    toast('ไม่พบข้อมูลค่าสินน้ำใจ', 'error');
+    return;
+  }
+
+  editingGratuityId = id;
+  const titleEl = document.querySelector('#modal-gratuity .modal-title');
+  if (titleEl) titleEl.textContent = '✏️ แก้ไขรายการค่าสินน้ำใจ';
+
+  document.getElementById('g-date').value = e.expense_date || today();
+  document.getElementById('g-type').value = e.subcategory || 'ค่านายหน้า/ปิดดีล';
+  document.getElementById('g-payee').value = e.vendor_name || '';
+  document.getElementById('g-amount').value = e.base_amount ?? e.amount ?? '';
+  document.getElementById('g-ref-order').value = e.document_no || '';
+  document.getElementById('g-status').value = e.payment_status || 'paid';
+  document.getElementById('g-pay-date').value = e.payment_date || e.expense_date || today();
+  document.getElementById('g-pay-date-wrap').style.display = (e.payment_status || 'paid') === 'paid' ? 'block' : 'none';
+  document.getElementById('g-pay-method').value = e.payment_method || 'โอนเงินธนาคาร';
+  document.getElementById('g-receipt').value = '';
+  
+  // Clean up tag from note input
+  const cleanNote = (e.note || '').replace(/\s*\[(gratuity|recurrence:[^\]]+)\]/g, '').trim();
+  document.getElementById('g-note').value = cleanNote;
+
+  openModal('modal-gratuity');
+}
+
+async function saveGratuity() {
+  const payee = (document.getElementById('g-payee').value || '').trim();
+  const amt = Number(document.getElementById('g-amount').value || 0);
+  const dateVal = document.getElementById('g-date').value;
+
+  if (!payee) { toast('กรุณาระบุชื่อผู้รับสินน้ำใจ', 'error'); return; }
+  if (!(amt > 0)) { toast('กรุณาระบุยอดเงินมากกว่า 0', 'error'); return; }
+  if (!dateVal) { toast('กรุณาระบุวันที่เกิดรายการ', 'error'); return; }
+
+  const status = document.getElementById('g-status').value;
+  const contact = (document.getElementById('g-contact').value || '').trim();
+  let noteText = (document.getElementById('g-note').value || '').trim();
+  if (contact) noteText = `${noteText ? noteText + ' · ' : ''}ติดต่อ/บัญชี: ${contact}`;
+  noteText = `${noteText} [gratuity]`.trim();
+
+  const payload = {
+    shop_id: currentShop.id,
+    expense_date: dateVal,
+    category: 'ค่าสินน้ำใจ',
+    standardized_category: 'ค่าสินน้ำใจ',
+    subcategory: document.getElementById('g-type').value,
+    vendor_name: payee,
+    document_no: (document.getElementById('g-ref-order').value || '').trim() || null,
+    base_amount: amt,
+    amount: amt,
+    vat_amount: 0,
+    withholding_tax: 0,
+    paid_amount: status === 'paid' ? amt : 0,
+    payment_status: status,
+    payment_method: document.getElementById('g-pay-method').value,
+    payment_date: status === 'paid' ? (document.getElementById('g-pay-date').value || dateVal) : null,
+    expense_type: 'operating',
+    recurrence: 'one_time',
+    include_in_profit: true,
+    duplicate_risk: false,
+    review_status: 'approved',
+    note: noteText,
+    created_by: currentUser?.id || null,
+    updated_at: new Date().toISOString()
+  };
+
+  const btn = document.getElementById('g-save-btn');
+  btn.disabled = true;
+
+  let res = editingGratuityId
+    ? await sb.from('expenses').update(payload).eq('id', editingGratuityId).select().single()
+    : await sb.from('expenses').insert(payload).select().single();
+
+  btn.disabled = false;
+
+  if (res.error) {
+    toast('บันทึกไม่สำเร็จ: ' + res.error.message, 'error');
+    return;
+  }
+
+  const file = document.getElementById('g-receipt').files?.[0];
+  if (file && res.data?.id) {
+    try { await uploadExpenseReceipt(file, res.data.id); }
+    catch (err) { toast('บันทึกแล้ว แต่อัปโหลดหลักฐานไม่สำเร็จ: ' + err.message, 'error'); }
+  }
+
+  closeModal('modal-gratuity');
+  toast('บันทึกค่าสินน้ำใจเรียบร้อยแล้ว ✓', 'success');
+  await loadGratuities();
+}
+
+async function delGratuity(id) {
+  if (!confirm('ยืนยันต้องการลบรายการค่าสินน้ำใจนี้?')) return;
+  const { error } = await sb.from('expenses').delete().eq('id', id);
+  if (error) {
+    toast('ลบไม่สำเร็จ: ' + error.message, 'error');
+    return;
+  }
+  toast('ลบรายการเรียบร้อยแล้ว', 'success');
+  await loadGratuities();
+}
+
+function exportGratuityExcel() {
+  if (!gratuityRows.length) { toast('ไม่มีข้อมูลสำหรับส่งออก', 'error'); return; }
+  let csv = '\uFEFFวันที่,ผู้รับสินน้ำใจ,ประเภท,อ้างอิงออเดอร์/ลูกค้า,ยอดเงิน,สถานะ,ช่องทางชำระ,หมายเหตุ\n';
+  gratuityRows.forEach(e => {
+    csv += `"${e.expense_date||''}","${(e.vendor_name||'').replace(/"/g,'""')}","${e.subcategory||''}","${e.document_no||''}","${e.amount||e.base_amount||0}","${(e.payment_status==='paid'?'จ่ายแล้ว':'รอจ่าย')}","${e.payment_method||''}","${(e.note||'').replace(/"/g,'""')}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ค่าสินน้ำใจ_${currentShop?.name||'shop'}_${today()}.csv`;
+  a.click();
+  toast('ส่งออกไฟล์เรียบร้อยแล้ว ✓', 'success');
 }
 
 async function finance() {
@@ -17559,6 +18096,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.59', type:'minor', date:'2026-08-29', title:'New Gratuity & Incentive Management Module', items:['New Sidebar Menu "ค่าสินน้ำใจ": เพิ่มเมนูใหม่ใต้ค่าใช้จ่ายสำหรับบันทึกและบริหารจัดการค่าสินน้ำใจ ค่านายหน้า ค่าตอบแทนพิเศษ และของขวัญขอบคุณลูกค้าโดยเฉพาะ','Gratuity Analytics & Top Payees: สรุปยอดจ่ายสะสม ยอดค้างจ่าย และจัดอันดับผู้รับสินน้ำใจยอดสูงสุด พร้อมกราฟแนวโน้ม 12 เดือน','Seamless Financial Sync: บันทึกข้อมูลเข้าสู่ระบบการเงิน P&L และ Cash Flow อัตโนมัติ พร้อมส่งออก Excel รายงานได้ทันที'] },
             { v:'1.58', type:'minor', date:'2026-08-29', title:'Distinct Visual Category & Type Color Badges', items:['Color-Coded Category Badges: ปรับแต่งสีและไอคอนประจำหมวดหมู่ค่าใช้จ่ายให้แตกต่างกันอย่างชัดเจนทุกหมวด (เช่น 📢 การตลาด=ชมพู, 📦 บรรจุภัณฑ์=ส้ม, 👥 เงินเดือน=น้ำเงิน, 🏢 สาธารณูปโภค=ฟ้า, 💻 ซอฟต์แวร์=ม่วง, 🚗 ยานพาหนะ=เขียว, ⚖️ บัญชี/วิชาชีพ=ม่วงบานเย็น)','Type Pill Badges: แสดงป้ายประเภทรายการ (ค่าใช้จ่ายดำเนินงาน / ซื้อสต๊อก / Landed Cost / ทรัพย์สิน / ภาษี / ถอนเงินเจ้าของ) ด้วย Badge สีสันสวยงาม อ่านง่ายสบายตา'] },
             { v:'1.57', type:'minor', date:'2026-08-29', title:'Persistent Yearly & Monthly Recurrence Classification', items:['Persistent Yearly vs Monthly Tags: เพิ่มระบบแท็กกำกับความถี่ [recurrence:yearly] ในการบันทึกค่าใช้จ่าย เพื่อให้แยกระหว่างค่าใช้จ่ายรายปีและรายเดือนได้อย่างแม่นยำ 100% แม้ฐานข้อมูลจะมี Check Constraint','Smart Recurrence Editing: เมื่อกดแก้ไขรายการรายปี ตัวเลือกในดรอปดาวน์จะแสดงเป็น "ประจำทุกปี (Yearly)" เสมอ และสามารถสลับเป็นรายเดือนหรือรายปีได้ทันที'] },
             { v:'1.56', type:'patch', date:'2026-08-29', title:'Universal Recurring & Cross-Month Expense Edit Fix', items:['Fix Edit Button on Yearly & Cross-Month Expenses: แก้ไขปัญหาการกดปุ่ม ✏️ แก้ไขรายการค่าใช้จ่ายประจำรายปี หรือรายการที่อยู่คนละเดือนแล้วไม่เปิดฟอร์ม โดยปรับให้ค้นหาข้ามเดือนจากประวัติทั้งปี (12 Months) และดึงตรงจากฐานข้อมูลเมื่อจำเป็น ทำให้เปิดแก้ไขได้ 100% ทุกรายการ','Universal Quick Pay: ปรับระบบจ่ายด่วนให้รองรับรายการข้ามเดือนและรายปีได้อย่างราบรื่น'] },
@@ -25761,7 +26299,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.58', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Distinct Visual Category & Type Color Badges', items:[
+    { v:'1.59', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'New Gratuity & Incentive Management Module', items:[
+      '🎁 <b>เมนูใหม่ "ค่าสินน้ำใจ":</b> เพิ่มเมนูเฉพาะใต้เมนูค่าใช้จ่าย สำหรับบันทึกและติดตามค่าสินน้ำใจ ค่านายหน้าปิดดีล สินน้ำใจผู้ประสานงาน และของขวัญขอบคุณ',
+      '📊 <b>Gratuity Analytics:</b> แดชบอร์ดสรุปยอดจ่าย ยอดรอจ่าย รายชื่อผู้รับเงินยอดสูงสุด และกราฟเปรียบเทียบรายเดือน',
+      '📥 <b>Full Export & Receipt Upload:</b> รองรับการแนบสลิปโอนเงิน อ้างอิงเลขออเดอร์ และส่งออกไฟล์ Excel ได้ในคลิกเดียว'
+    ]},
+    { v:'1.58', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Distinct Visual Category & Type Color Badges', items:[
       '🎨 <b>Color-Coded Category Badges:</b> แยกสีและไอคอนประจำหมวดหมู่ค่าใช้จ่ายทุกหมวดอย่างสวยงามและชัดเจน (การตลาด, บรรจุภัณฑ์, เงินเดือน, สถานที่, ซอฟต์แวร์, ยานพาหนะ, บัญชี ฯลฯ)',
       '🏷️ <b>Enhanced Type Badges:</b> แสดงป้ายประเภทรายการด้วยสีเฉพาะตัว ทำให้อ่านตารางและแยกแยะค่าใช้จ่ายได้รวดเร็วทันที'
     ]},
@@ -25854,7 +26397,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.58</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.59</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
