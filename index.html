@@ -49,7 +49,7 @@ if ('serviceWorker' in navigator) {
   }).catch(()=>{});
 
   const swCode = `
-    const CACHE = 'sealthai-v1.60';
+    const CACHE = 'sealthai-v1.61';
     const OFFLINE_URLS = [location.href];
     self.addEventListener('install', e => {
       e.waitUntil(caches.open(CACHE).then(c => c.addAll(OFFLINE_URLS)));
@@ -1059,7 +1059,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.60 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.61 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1341,6 +1341,7 @@ function canSee(page) {
   if (page === 'stockPlanning' && perms?.products) return true;
   if (page === 'gratuity' && (perms?.expenses || perms?.finance || perms?.sales || perms?.orders)) return true;
   if (page === 'chinaImport' && perms?.purchase) return true;
+  if (page === 'supplierWeeklyExpense' && (perms?.purchase || perms?.expenses || perms?.finance)) return true;
   if (page === 'marketplace' && (perms?.orders || perms?.sales)) return true;
   if (page === 'customers' && (perms?.customers || perms?.orders || perms?.sales)) return true;
   // staff: ตรวจ permissions object
@@ -1379,6 +1380,7 @@ function renderSidebar() {
     {page:'suppliers',  icon:'🏢', label: t('nav.suppliers')},
     {page:'chinaImport', icon:'🚢', label: 'นำเข้าสินค้า (China Import)'},
     {page:'purchase',   icon:'📝', label: 'Purchase Order (PO)'},
+    {page:'supplierWeeklyExpense', icon:'🧮', label: 'ค่าใช้จ่าย Supplier รายสัปดาห์'},
     {page:'apinvoice',  icon:'📄', label: 'AP Invoice'},
 
     {section: '📦 สินค้า & สต๊อก', accent: true},
@@ -1861,7 +1863,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
+  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, supplierWeeklyExpense, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
   if (pages[page]) pages[page]();
 }
 
@@ -16540,6 +16542,1075 @@ async function printPO(poId) {
 // ══════════════════════════════════════════════════════════
 // AP INVOICE PAGE
 // ══════════════════════════════════════════════════════════
+
+// ─── MODULE: WEEKLY SUPPLIER EXPENSE PROGRESSIVE ENGINE · v1.61 ──────
+const DEFAULT_SUPPLIER_PROGRESSIVE_TIERS = [
+  { id: 'tier-1', min_amount: 0, max_amount: 2500, rate_percent: 4.0, is_active: true, sort_order: 1 },
+  { id: 'tier-2', min_amount: 2500, max_amount: 5000, rate_percent: 2.0, is_active: true, sort_order: 2 },
+  { id: 'tier-3', min_amount: 5000, max_amount: 10000, rate_percent: 1.0, is_active: true, sort_order: 3 },
+  { id: 'tier-4', min_amount: 10000, max_amount: 25000, rate_percent: 0.5, is_active: true, sort_order: 4 },
+  { id: 'tier-5', min_amount: 25000, max_amount: null, rate_percent: 0.25, is_active: true, sort_order: 5 }
+];
+
+function getSupplierProgressiveTiers() {
+  const key = 'supplier_prog_tiers_' + (currentShop?.id || 'default');
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    } catch(e) {}
+  }
+  return JSON.parse(JSON.stringify(DEFAULT_SUPPLIER_PROGRESSIVE_TIERS));
+}
+
+function saveSupplierProgressiveTiers(tiers) {
+  const key = 'supplier_prog_tiers_' + (currentShop?.id || 'default');
+  localStorage.setItem(key, JSON.stringify(tiers));
+}
+
+function getSupplierExpenseWeekCycle() {
+  return localStorage.getItem('supplier_week_cycle_' + (currentShop?.id || 'default')) || 'mon_sun';
+}
+
+function saveSupplierExpenseWeekCycle(cycle) {
+  localStorage.setItem('supplier_week_cycle_' + (currentShop?.id || 'default'), cycle);
+}
+
+// ── CALCULATION ENGINE (Pure, Dynamic, No Hardcoding) ──
+function calculateProgressiveSupplierExpense(amount, tiers) {
+  const amt = Math.max(0, Number(amount) || 0);
+  if (!(amt > 0)) {
+    return { total_expense: 0, tier_breakdown: [] };
+  }
+
+  const activeTiers = (tiers || getSupplierProgressiveTiers())
+    .filter(t => t.is_active !== false)
+    .sort((a, b) => (Number(a.min_amount) || 0) - (Number(b.min_amount) || 0));
+
+  let totalExpense = 0;
+  const breakdown = [];
+
+  activeTiers.forEach((tier, idx) => {
+    const minAmt = Math.max(0, Number(tier.min_amount) || 0);
+    const maxAmt = (tier.max_amount !== null && tier.max_amount !== undefined && tier.max_amount !== '')
+      ? Number(tier.max_amount)
+      : Infinity;
+    const ratePct = Number(tier.rate_percent) || 0;
+    const rateDecimal = ratePct / 100;
+
+    if (amt > minAmt) {
+      const applicable = Math.min(amt, maxAmt) - minAmt;
+      const tierExpense = applicable * rateDecimal;
+      totalExpense += tierExpense;
+
+      breakdown.push({
+        tier_index: idx + 1,
+        tier_name: `Tier ${idx + 1}`,
+        min_amount: minAmt,
+        max_amount: maxAmt === Infinity ? null : maxAmt,
+        rate_percent: ratePct,
+        rate_decimal: rateDecimal,
+        applicable_amount: applicable,
+        expense: tierExpense
+      });
+    }
+  });
+
+  // Round final expense to 2 decimal places
+  return {
+    total_expense: Math.round(totalExpense * 100) / 100,
+    tier_breakdown: breakdown
+  };
+}
+
+// ── WEEK HELPER (Mon-Sun or Sun-Sat) ──
+function getWeekRange(dateStr, cycle = 'mon_sun') {
+  const d = new Date((dateStr || today()) + 'T00:00:00');
+  const day = d.getDay(); // 0 is Sunday, 1 is Monday
+  let diffStart = 0;
+
+  if (cycle === 'sun_sat') {
+    diffStart = -day;
+  } else {
+    // mon_sun (Default)
+    diffStart = day === 0 ? -6 : 1 - day;
+  }
+
+  const start = new Date(d);
+  start.setDate(d.getDate() + diffStart);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  const startStr = localDateString(start);
+  const endStr = localDateString(end);
+  const weekLabel = `${startStr.slice(5)} ถึง ${endStr.slice(5)} (${start.toLocaleDateString('th-TH',{month:'short',year:'2-digit'})})`;
+
+  return {
+    start_date: startStr,
+    end_date: endStr,
+    week_key: `${startStr}_${endStr}`,
+    label: weekLabel
+  };
+}
+
+let weeklySupplierData = [];
+let currentViewingWeeklyId = null;
+
+async function supplierWeeklyExpense() {
+  const curYM = today().slice(0, 7);
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-secondary btn-sm" onclick="exportWeeklySupplierExcel()">📥 ส่งออก Excel</button>
+    <button class="btn btn-secondary btn-sm" onclick="openSupplierRateSettingsModal()">⚙️ จัดการ Progressive Rate</button>
+    <button class="btn btn-primary btn-sm" onclick="loadWeeklySupplierExpenses()"><span class="btn-icon">🔄</span> รีเฟรชคำนวณ</button>
+  `;
+
+  setContent(`
+    <div id="supplier-weekly-page">
+      <!-- Filter Bar -->
+      <div class="filter-bar mb-4" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="sw-month" onchange="loadWeeklySupplierExpenses()" style="min-width:140px">
+          ${getMonthOptions(curYM)}
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sw-month').value='';loadWeeklySupplierExpenses()">ดูทั้งหมด</button>
+        <select id="sw-filter-status" onchange="renderWeeklySupplierView()">
+          <option value="">ทุกสถานะ</option>
+          <option value="draft">📝 Draft / รอคำนวณ</option>
+          <option value="calculated">🧮 Calculated / คำนวณแล้ว</option>
+          <option value="approved">✅ Approved / อนุมัติแล้ว</option>
+          <option value="paid">💰 Paid / จ่ายเงินแล้ว</option>
+        </select>
+        <select id="sw-filter-supplier" onchange="renderWeeklySupplierView()" style="min-width:160px">
+          <option value="">ทุก Supplier</option>
+        </select>
+        <input id="sw-search" placeholder="ค้นหา Supplier / เลขที่ PO / หมายเหตุ" oninput="renderWeeklySupplierView()" style="min-width:220px;flex:1">
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="stat-grid mb-4" id="sw-stats"></div>
+
+      <!-- Analytics Charts -->
+      <div class="grid-2 mb-4">
+        <div class="card">
+          <div class="card-title">📈 ยอดซื้อสุทธิ vs ค่าใช้จ่าย Progressive & Top Up รายสัปดาห์</div>
+          <div class="chart-box" style="height:230px"><canvas id="ch-sw-trend"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏢 อันดับ Supplier ที่มียอดคำนวณสูงสุด</div>
+          <div id="sw-top-suppliers" style="max-height:230px;overflow-y:auto;padding-right:4px"></div>
+        </div>
+      </div>
+
+      <!-- Main Weekly Summary Table -->
+      <div class="card">
+        <div class="card-title flex-between">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>📋 สรุปค่าใช้จ่าย Supplier รายสัปดาห์ (Progressive Tier & Top Up)</span>
+            <span id="sw-result-count" class="badge badge-gray" style="font-size:11px"></span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-sm btn-secondary" onclick="openSupplierRateSettingsModal()">⚙️ ตาราง Rate</button>
+            <button class="btn btn-sm btn-primary" onclick="loadWeeklySupplierExpenses()">🔄 คำนวณใหม่</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="sw-table">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: รายละเอียดการคำนวณ 3-Line Breakdown & POs -->
+    <div class="modal-overlay" id="modal-sw-detail">
+      <div class="modal" style="max-width:760px">
+        <div class="modal-title" id="sw-modal-title">🧮 รายละเอียดการคำนวณค่าใช้จ่าย Supplier</div>
+        <div id="sw-detail-content"></div>
+      </div>
+    </div>
+
+    <!-- Modal: Settings for Progressive Rates -->
+    <div class="modal-overlay" id="modal-sw-settings">
+      <div class="modal" style="max-width:740px">
+        <div class="modal-title">⚙️ ตั้งค่า Progressive Rate สำหรับค่าใช้จ่าย Supplier</div>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
+          กำหนดช่วงยอดซื้อและอัตรา % แบบขั้นบันได (Marginal Rate) โดยไม่มีการ Hardcode ในระบบ
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+            <span>รอบสัปดาห์:</span>
+            <select id="sw-set-cycle" style="padding:4px 8px;font-size:12px">
+              <option value="mon_sun">จันทร์ - อาทิตย์ (Monday - Sunday)</option>
+              <option value="sun_sat">อาทิตย์ - เสาร์ (Sunday - Saturday)</option>
+            </select>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="addNewProgressiveTierRow()">➕ เพิ่ม Tier ใหม่</button>
+        </div>
+
+        <div class="table-wrap mb-3">
+          <table style="font-size:12.5px" id="sw-tiers-edit-table">
+            <thead>
+              <tr>
+                <th style="width:70px">ลำดับ</th>
+                <th>ช่วงยอดซื้อเริ่มต้น (บาท)</th>
+                <th>ถึงยอดซื้อ (บาท)</th>
+                <th style="width:110px">อัตรา Rate (%)</th>
+                <th style="width:70px;text-align:center">เปิดใช้</th>
+                <th style="width:60px"></th>
+              </tr>
+            </thead>
+            <tbody id="sw-tiers-edit-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Live Calculation Simulator / Validator -->
+        <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px">
+          <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:6px">
+            🧪 ทดสอบคำนวณสด (Live Calculation Simulator)
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:12px;color:var(--text3)">ลองกรอกยอดซื้อ:</span>
+              <input type="number" id="sim-test-amount" value="20000" oninput="runLiveTierSimulation()" style="width:130px;font-weight:700">
+            </div>
+            <div id="sim-test-result" class="font-mono" style="font-weight:800;font-size:14px;color:#0284c7"></div>
+          </div>
+          <div id="sim-test-breakdown" style="font-size:11.5px;color:var(--text2);margin-top:6px"></div>
+        </div>
+
+        <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
+          <button class="btn btn-secondary" onclick="resetToDefaultTiers()">🔄 คืนค่าเริ่มต้น (Defaults)</button>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" onclick="closeModal('modal-sw-settings')">ยกเลิก</button>
+            <button class="btn btn-primary" onclick="saveProgressiveRateSettings()">💾 บันทึกตาราง Rate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+
+  await loadWeeklySupplierExpenses();
+}
+
+async function loadWeeklySupplierExpenses() {
+  const ym = document.getElementById('sw-month')?.value;
+  const cycle = getSupplierExpenseWeekCycle();
+  const tiers = getSupplierProgressiveTiers();
+
+  // Load POs
+  let poQuery = sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).neq('status', 'cancelled');
+  if (ym) {
+    const [y, m] = ym.split('-').map(Number);
+    const mStart = monthStart(y, m);
+    const mEnd = monthEnd(y, m);
+    poQuery = poQuery.gte('po_date', mStart).lte('po_date', mEnd);
+  }
+  
+  const { data: pos, error } = await poQuery.order('po_date', { ascending: false }).limit(2000);
+  if (error) {
+    toast('โหลดข้อมูล PO ไม่สำเร็จ: ' + error.message, 'error');
+    return;
+  }
+
+  // Load Saved Weekly Records & Expenses
+  const savedRecordsKey = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try {
+    savedRecords = JSON.parse(localStorage.getItem(savedRecordsKey) || '{}');
+  } catch(e) {}
+
+  // Group POs by Supplier & Week
+  const groups = {};
+  (pos || []).forEach(po => {
+    const supId = po.supplier_id || po.supplier_name || 'unknown';
+    const supName = po.supplier_name || 'ไม่ระบุ Supplier';
+    const week = getWeekRange(po.po_date, cycle);
+    const groupKey = `${supId}_${week.week_key}`;
+
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        id: groupKey,
+        supplier_id: supId,
+        supplier_name: supName,
+        week_start: week.start_date,
+        week_end: week.end_date,
+        week_label: week.label,
+        po_list: [],
+        gross_amount: 0,
+        discount_amount: 0,
+        vat_amount: 0,
+        net_purchase_amount: 0,
+        top_up_amount: 0,
+        top_up_reason: 'Extra Support',
+        top_up_note: '',
+        status: 'calculated',
+        paid_date: null,
+        payment_method: null,
+        calculation_snapshot: null,
+        created_at: new Date().toISOString()
+      };
+    }
+
+    // Net purchase amount for this PO = Subtotal - Discount (Excluding VAT and Shipping)
+    const poSubtotal = Number(po.subtotal || (po.vat_type === 'included' ? (Number(po.total_amount||0)/1.07) : Number(po.total_amount||0)));
+    const poDiscount = Number(po.discount_amount || 0);
+    const poNet = Math.max(0, poSubtotal - poDiscount);
+
+    groups[groupKey].po_list.push({
+      id: po.id,
+      po_no: po.po_no || '-',
+      po_date: po.po_date,
+      status: po.status,
+      subtotal: poSubtotal,
+      discount: poDiscount,
+      vat_amount: Number(po.vat_amount || 0),
+      total_amount: Number(po.total_amount || 0),
+      net_amount: poNet
+    });
+
+    groups[groupKey].gross_amount += poSubtotal;
+    groups[groupKey].discount_amount += poDiscount;
+    groups[groupKey].vat_amount += Number(po.vat_amount || 0);
+    groups[groupKey].net_purchase_amount += poNet;
+  });
+
+  // Calculate Progressive & Merge Saved States
+  weeklySupplierData = Object.values(groups).map(g => {
+    const saved = savedRecords[g.id] || {};
+    const effectiveTiers = saved.calculation_snapshot || tiers;
+    const calcResult = calculateProgressiveSupplierExpense(g.net_purchase_amount, effectiveTiers);
+    
+    const topUp = Number(saved.top_up_amount || 0);
+    const calculatedExpense = calcResult.total_expense;
+    const finalExpense = calculatedExpense + topUp;
+
+    return {
+      ...g,
+      ...saved,
+      po_count: g.po_list.length,
+      weekly_base_amount: g.net_purchase_amount,
+      calculated_expense_amount: calculatedExpense,
+      top_up_amount: topUp,
+      top_up_reason: saved.top_up_reason || 'Extra Support',
+      top_up_note: saved.top_up_note || '',
+      final_expense_amount: finalExpense,
+      tier_breakdown: calcResult.tier_breakdown,
+      status: saved.status || (calculatedExpense > 0 ? 'calculated' : 'draft')
+    };
+  });
+
+  // Sort by week_start descending, then supplier_name
+  weeklySupplierData.sort((a, b) => b.week_start.localeCompare(a.week_start) || a.supplier_name.localeCompare(b.supplier_name, 'th'));
+
+  // Populate Supplier Filter
+  const supFilterEl = document.getElementById('sw-filter-supplier');
+  if (supFilterEl) {
+    const uniqueSups = [...new Set(weeklySupplierData.map(x => x.supplier_name))].sort();
+    const curVal = supFilterEl.value;
+    supFilterEl.innerHTML = '<option value="">ทุก Supplier</option>' + uniqueSups.map(s => `<option value="${escapeHTML(s)}" ${s===curVal?'selected':''}>${escapeHTML(s)}</option>`).join('');
+  }
+
+  renderWeeklySupplierView();
+}
+
+function renderWeeklySupplierView() {
+  const statusFilter = document.getElementById('sw-filter-status')?.value || '';
+  const supFilter = document.getElementById('sw-filter-supplier')?.value || '';
+  const search = (document.getElementById('sw-search')?.value || '').trim().toLowerCase();
+
+  let filtered = weeklySupplierData;
+
+  if (statusFilter) {
+    filtered = filtered.filter(x => x.status === statusFilter);
+  }
+  if (supFilter) {
+    filtered = filtered.filter(x => x.supplier_name === supFilter);
+  }
+  if (search) {
+    filtered = filtered.filter(x => {
+      const poNos = x.po_list.map(p => p.po_no).join(' ');
+      const text = `${x.supplier_name} ${poNos} ${x.week_label} ${x.top_up_reason} ${x.top_up_note}`.toLowerCase();
+      return text.includes(search);
+    });
+  }
+
+  // Calculate KPIs
+  const totalBase = filtered.reduce((s, x) => s + x.weekly_base_amount, 0);
+  const totalProgressive = filtered.reduce((s, x) => s + x.calculated_expense_amount, 0);
+  const totalTopUp = filtered.reduce((s, x) => s + x.top_up_amount, 0);
+  const totalFinal = filtered.reduce((s, x) => s + x.final_expense_amount, 0);
+  const avgPct = totalBase > 0 ? (totalFinal / totalBase * 100) : 0;
+
+  const statEl = document.getElementById('sw-stats');
+  if (statEl) {
+    statEl.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid #0284c7">
+        <div class="stat-label">🛒 ยอดซื้อสุทธิรวม (Weekly Base)</div>
+        <div class="stat-val font-mono text-blue">${fmtB(totalBase)}</div>
+        <div class="stat-sub">${filtered.length} รอบสัปดาห์ / ${filtered.reduce((s,x)=>s+x.po_count,0)} PO</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid #8b5cf6">
+        <div class="stat-label">🧮 ค่าตามสูตร Progressive</div>
+        <div class="stat-val font-mono" style="color:#8b5cf6">${fmtB(totalProgressive)}</div>
+        <div class="stat-sub">${(totalBase>0?(totalProgressive/totalBase*100):0).toFixed(2)}% ของยอดซื้อ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid #db2777">
+        <div class="stat-label">🎁 Top Up เงินพิเศษ</div>
+        <div class="stat-val font-mono" style="color:#db2777">+${fmtB(totalTopUp)}</div>
+        <div class="stat-sub">${filtered.filter(x=>x.top_up_amount>0).length} รายการที่มี Top Up</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid #10b981">
+        <div class="stat-label">💰 ยอดจ่ายสุทธิรวม (Final)</div>
+        <div class="stat-val font-mono text-green">${fmtB(totalFinal)}</div>
+        <div class="stat-sub font-mono">เฉลี่ย ${avgPct.toFixed(2)}% ของยอดซื้อ</div>
+      </div>
+    `;
+  }
+
+  renderWeeklySupplierTable(filtered);
+  renderWeeklySupplierCharts(filtered);
+}
+
+function renderWeeklySupplierTable(rows) {
+  const countEl = document.getElementById('sw-result-count');
+  if (countEl) countEl.textContent = `แสดง ${rows.length} รายการ`;
+
+  const tableEl = document.getElementById('sw-table');
+  if (!tableEl) return;
+
+  if (!rows.length) {
+    tableEl.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">🧮</div>
+        <div class="empty-text">ไม่พบรายการยอดซื้อ Supplier ในช่วงเวลาที่เลือก</div>
+      </div>
+    `;
+    return;
+  }
+
+  const statusBadges = {
+    draft: '<span class="badge badge-gray">📝 Draft</span>',
+    calculated: '<span class="badge badge-blue">🧮 คำนวณแล้ว</span>',
+    approved: '<span class="badge badge-amber">✅ Approved</span>',
+    paid: '<span class="badge badge-green">💰 จ่ายแล้ว</span>',
+    cancelled: '<span class="badge badge-red">❌ ยกเลิก</span>'
+  };
+
+  tableEl.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>รอบสัปดาห์ (Week)</th>
+          <th>Supplier</th>
+          <th class="text-right">ยอดซื้อสุทธิ</th>
+          <th class="text-right">ค่าตามสูตร</th>
+          <th class="text-right">Top Up พิเศษ</th>
+          <th class="text-right">ยอดรวมจ่ายสุทธิ</th>
+          <th>สถานะ</th>
+          <th style="text-align:right">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r => `
+          <tr>
+            <td style="white-space:nowrap;font-size:12px">
+              <b>${escapeHTML(r.week_label)}</b>
+              <div style="font-size:10px;color:var(--text3)">${r.week_start} ถึง ${r.week_end}</div>
+            </td>
+            <td>
+              <b style="font-size:13px;color:var(--text)">${escapeHTML(r.supplier_name)}</b>
+              <div style="font-size:10.5px;color:var(--text3);margin-top:2px">
+                📦 ${r.po_count} บิล PO
+              </div>
+            </td>
+            <td class="text-right font-mono" style="font-size:13px;font-weight:700">
+              ${fmtB(r.weekly_base_amount)}
+            </td>
+            <td class="text-right font-mono" style="font-size:13px;color:#0284c7">
+              ${fmtB(r.calculated_expense_amount)}
+            </td>
+            <td class="text-right font-mono" style="font-size:13px">
+              ${r.top_up_amount > 0 ? `
+                <div style="color:#db2777;font-weight:800">+${fmtB(r.top_up_amount)}</div>
+                <div style="font-size:9.5px;color:#9d174d">${escapeHTML(r.top_up_reason)}</div>
+              ` : '<span style="color:var(--text3)">—</span>'}
+            </td>
+            <td class="text-right font-mono" style="font-size:14.5px;font-weight:800;color:${r.status==='paid'?'#15803d':'#0f172a'}">
+              ${fmtB(r.final_expense_amount)}
+            </td>
+            <td>
+              ${statusBadges[r.status] || r.status}
+            </td>
+            <td style="white-space:nowrap;text-align:right">
+              <button class="btn btn-primary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:3px 8px">
+                🔍 รายละเอียด & Top Up
+              </button>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderWeeklySupplierCharts(rows) {
+  if (charts.swTrend) { charts.swTrend.destroy(); delete charts.swTrend; }
+
+  // Trend
+  const weekMap = {};
+  rows.forEach(r => {
+    if (!weekMap[r.week_label]) weekMap[r.week_label] = { base: 0, calc: 0, topUp: 0 };
+    weekMap[r.week_label].base += r.weekly_base_amount;
+    weekMap[r.week_label].calc += r.calculated_expense_amount;
+    weekMap[r.week_label].topUp += r.top_up_amount;
+  });
+
+  const labels = Object.keys(weekMap).reverse().slice(0, 10);
+  const trendCanvas = document.getElementById('ch-sw-trend');
+  if (trendCanvas) {
+    charts.swTrend = new Chart(trendCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'ค่าตามสูตร Progressive',
+            data: labels.map(k => weekMap[k]?.calc || 0),
+            backgroundColor: '#8b5cf6',
+            borderRadius: 4
+          },
+          {
+            label: 'Top Up เงินพิเศษ',
+            data: labels.map(k => weekMap[k]?.topUp || 0),
+            backgroundColor: '#db2777',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: { x: { stacked: true }, y: { stacked: true } },
+        plugins: { legend: { position: 'top', labels: { boxWidth: 10, font: { size: 10 } } } }
+      }
+    });
+  }
+
+  // Top Suppliers
+  const supMap = {};
+  rows.forEach(r => {
+    const s = r.supplier_name;
+    if (!supMap[s]) supMap[s] = { base: 0, final: 0, calc: 0, topUp: 0 };
+    supMap[s].base += r.weekly_base_amount;
+    supMap[s].final += r.final_expense_amount;
+    supMap[s].calc += r.calculated_expense_amount;
+    supMap[s].topUp += r.top_up_amount;
+  });
+
+  const sortedSups = Object.entries(supMap).sort((a, b) => b[1].final - a[1].final).slice(0, 7);
+  const topEl = document.getElementById('sw-top-suppliers');
+  if (topEl) {
+    if (!sortedSups.length) {
+      topEl.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:10px 0">ไม่มีข้อมูล</div>';
+    } else {
+      topEl.innerHTML = sortedSups.map(([name, data], idx) => `
+        <div class="flex-between" style="padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+          <div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-weight:800;color:${idx === 0 ? '#db2777' : (idx === 1 ? '#f59e0b' : '#6b7280')};width:16px">${idx + 1}.</span>
+              <b style="color:var(--text)">${escapeHTML(name)}</b>
+            </div>
+            <div style="font-size:10px;color:var(--text3);margin-left:22px">
+              ยอดซื้อ: ${fmtB(data.base)} · สูตร: ${fmtB(data.calc)} ${data.topUp > 0 ? `· Top Up: +${fmtB(data.topUp)}` : ''}
+            </div>
+          </div>
+          <b class="font-mono text-green" style="font-size:13.5px">${fmtB(data.final)}</b>
+        </div>
+      `).join('');
+    }
+  }
+}
+
+// ── DETAIL & 3-LINE BREAKDOWN MODAL ──
+function viewWeeklySupplierDetail(id) {
+  const row = weeklySupplierData.find(x => x.id === id);
+  if (!row) { toast('ไม่พบข้อมูลรายการ', 'error'); return; }
+  currentViewingWeeklyId = id;
+
+  const isApprovedOrPaid = ['approved', 'paid'].includes(row.status);
+  const titleEl = document.getElementById('sw-modal-title');
+  if (titleEl) titleEl.innerHTML = `🧮 รายละเอียดค่าใช้จ่าย: ${escapeHTML(row.supplier_name)} (${escapeHTML(row.week_label)})`;
+
+  const contentEl = document.getElementById('sw-detail-content');
+  if (!contentEl) return;
+
+  contentEl.innerHTML = `
+    <!-- Top Summary Banner -->
+    <div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;border-radius:8px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-size:11px;color:var(--text3)">ยอดซื้อสุทธิรวมสัปดาห์นี้ (Weekly Base Amount)</div>
+        <div class="font-mono" style="font-size:20px;font-weight:800;color:#0284c7">${fmtB(row.weekly_base_amount)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text3)">สถานะรายการ</div>
+        <div><span class="badge ${row.status==='paid'?'badge-green':(row.status==='approved'?'badge-amber':'badge-blue')}" style="font-size:12px;font-weight:700">${row.status.toUpperCase()}</span></div>
+      </div>
+    </div>
+
+    <!-- 3-Line Breakdown Preview -->
+    <div style="background:#fff;border:2px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13.5px;line-height:1.7">
+      <div style="font-weight:800;font-size:14px;color:#1e3a8a;margin-bottom:6px;border-bottom:1px solid #e2e8f0;padding-bottom:4px">
+        📊 สรุปยอดจ่าย (3-Line Calculation Breakdown):
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#334155">
+        <span>1. 🔹 ค่าคำนวณตามสูตร (Progressive Calculation):</span>
+        <b class="font-mono" id="modal-sw-prev-calc" style="font-size:14.5px">${fmtB(row.calculated_expense_amount)}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;color:#db2777">
+        <span>2. 🎁 Top Up / เงินพิเศษเพิ่มเติม:</span>
+        <b class="font-mono" id="modal-sw-prev-topup" style="font-size:14.5px">+${fmtB(row.top_up_amount)}</b>
+      </div>
+      <div style="display:flex;justify-content:space-between;border-top:1.5px dashed #cbd5e1;padding-top:6px;margin-top:6px;font-size:16px;font-weight:800;color:#0f172a">
+        <span>3. 💰 ยอดรวมจ่ายสุทธิ (Final Expense Amount):</span>
+        <b class="font-mono text-green" id="modal-sw-prev-final" style="font-size:18px">${fmtB(row.final_expense_amount)}</b>
+      </div>
+    </div>
+
+    <!-- Top Up Input & Reason Section -->
+    <div style="background:${isApprovedOrPaid?'#f8fafc':'#fff5f7'};border:1.5px solid ${isApprovedOrPaid?'#cbd5e1':'#fbcfe8'};border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <b style="font-size:13px;color:${isApprovedOrPaid?'#475569':'#be185d'}">
+          🎁 ส่วนเงินพิเศษ Top Up (กรอกเพิ่มเติมได้)
+        </b>
+        ${isApprovedOrPaid ? '<span class="badge badge-gray" style="font-size:10px">🔒 ล็อคแล้วหลัง Approved</span>' : ''}
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group" style="margin-bottom:6px">
+          <label style="font-size:12px;font-weight:700">Top Up Amount (บาท)</label>
+          <input type="number" step="0.01" min="0" id="sw-edit-topup-amt" value="${row.top_up_amount||0}" ${isApprovedOrPaid?'disabled':''} oninput="calcModalSWAmounts()" style="font-weight:800;color:#db2777;font-size:15px">
+        </div>
+        <div class="form-group" style="margin-bottom:6px">
+          <label style="font-size:12px">เหตุผลของ Top Up (Reason)</label>
+          <select id="sw-edit-topup-reason" ${isApprovedOrPaid?'disabled':''} style="font-size:12px">
+            ${TOP_UP_REASONS.map(r => `<option value="${r.key}" ${r.key===(row.top_up_reason||'Extra Support')?'selected':''}>${r.label}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:0">
+        <label style="font-size:11.5px">บันทึกเหตุผลเพิ่มเติม (Top Up Note)</label>
+        <input type="text" id="sw-edit-topup-note" value="${escapeHTML(row.top_up_note||'')}" ${isApprovedOrPaid?'disabled':''} placeholder="เช่น สินน้ำใจปิดดีลงานด่วนวันหยุด" style="font-size:12px">
+      </div>
+    </div>
+
+    <!-- Tier-by-Tier Marginal Breakdown Table -->
+    <div style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#1e293b">
+        📐 รายละเอียดการคิดคำนวณตามขั้นบันได (Tier Breakdown)
+      </div>
+      <div class="table-wrap">
+        <table style="font-size:12px">
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>ช่วงยอดซื้อ</th>
+              <th class="text-right">อัตรา Rate (%)</th>
+              <th class="text-right">ยอดที่เข้าเกณฑ์ (Applicable)</th>
+              <th class="text-right">ค่าใช้จ่ายคำนวณได้</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${row.tier_breakdown.map(t => `
+              <tr>
+                <td><b>${t.tier_name}</b></td>
+                <td>${fmtB(t.min_amount)} ${t.max_amount ? '– ' + fmtB(t.max_amount) : 'ขึ้นไป (No Limit)'}</td>
+                <td class="text-right font-mono text-blue"><b>${t.rate_percent}%</b></td>
+                <td class="text-right font-mono">${fmtB(t.applicable_amount)}</td>
+                <td class="text-right font-mono text-green" style="font-weight:700">${fmtB(t.expense)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Linked Purchase Orders -->
+    <div style="margin-bottom:14px">
+      <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#1e293b">
+        📦 รายการบิล PO ที่รวมในรอบนี้ (${row.po_list.length} บิล)
+      </div>
+      <div class="table-wrap" style="max-height:160px;overflow-y:auto">
+        <table style="font-size:11.5px">
+          <thead>
+            <tr>
+              <th>เลขที่ PO</th>
+              <th>วันที่</th>
+              <th class="text-right">ยอดก่อน VAT</th>
+              <th class="text-right">ส่วนลด</th>
+              <th class="text-right">ยอดซื้อสุทธิ (Net Base)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${row.po_list.map(p => `
+              <tr>
+                <td><b>${escapeHTML(p.po_no)}</b></td>
+                <td>${p.po_date}</td>
+                <td class="text-right font-mono">${fmtB(p.subtotal)}</td>
+                <td class="text-right font-mono text-red">${p.discount > 0 ? '-' + fmtB(p.discount) : '—'}</td>
+                <td class="text-right font-mono text-blue" style="font-weight:700">${fmtB(p.net_amount)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal Footer Actions -->
+    <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <button class="btn btn-secondary" onclick="closeModal('modal-sw-detail')">ปิดหน้าต่าง</button>
+      
+      <div style="display:flex;gap:8px">
+        ${!isApprovedOrPaid ? `
+          <button class="btn btn-secondary" onclick="saveWeeklySupplierTopUp('${row.id}')" style="color:#db2777;border-color:#fbcfe8;font-weight:700">
+            💾 บันทึก Top Up
+          </button>
+          <button class="btn btn-primary" onclick="approveWeeklySupplierExpense('${row.id}')" style="background:#ea580c;border-color:#c2410c;font-weight:700">
+            ✅ อนุมัติยอด (Approve & Snapshot)
+          </button>
+        ` : (row.status === 'approved' ? `
+          <button class="btn btn-primary" onclick="markPaidWeeklySupplierExpense('${row.id}')" style="background:#16a34a;border-color:#15803d;font-weight:700">
+            💰 บันทึกจ่ายเงิน (Mark Paid)
+          </button>
+        ` : `
+          <span style="font-size:12px;color:#15803d;font-weight:700;padding:6px 12px;background:#f0fdf4;border-radius:6px">
+            ✓ รายการชำระเงินเรียบร้อยแล้ว
+          </span>
+        `)}
+      </div>
+    </div>
+  `;
+
+  openModal('modal-sw-detail');
+}
+
+function calcModalSWAmounts() {
+  const row = weeklySupplierData.find(x => x.id === currentViewingWeeklyId);
+  if (!row) return;
+
+  const topUp = Math.max(0, Number(document.getElementById('sw-edit-topup-amt')?.value || 0));
+  const calc = row.calculated_expense_amount;
+  const finalAmt = calc + topUp;
+
+  const prevTopUpEl = document.getElementById('modal-sw-prev-topup');
+  const prevFinalEl = document.getElementById('modal-sw-prev-final');
+
+  if (prevTopUpEl) prevTopUpEl.textContent = `+${fmtB(topUp)}`;
+  if (prevFinalEl) prevFinalEl.textContent = fmtB(finalAmt);
+}
+
+function saveWeeklySupplierTopUp(id) {
+  const row = weeklySupplierData.find(x => x.id === id);
+  if (!row) return;
+
+  const topUp = Math.max(0, Number(document.getElementById('sw-edit-topup-amt')?.value || 0));
+  const reason = document.getElementById('sw-edit-topup-reason')?.value || 'Extra Support';
+  const note = (document.getElementById('sw-edit-topup-note')?.value || '').trim();
+
+  const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+
+  savedRecords[id] = {
+    ...(savedRecords[id] || {}),
+    top_up_amount: topUp,
+    top_up_reason: reason,
+    top_up_note: note,
+    top_up_by: currentUser?.id || 'admin',
+    top_up_at: new Date().toISOString()
+  };
+
+  localStorage.setItem(key, JSON.stringify(savedRecords));
+  toast('บันทึก Top Up เงินพิเศษเรียบร้อยแล้ว ✓', 'success');
+  closeModal('modal-sw-detail');
+  loadWeeklySupplierExpenses();
+}
+
+async function approveWeeklySupplierExpense(id) {
+  const row = weeklySupplierData.find(x => x.id === id);
+  if (!row) return;
+
+  if (!confirm(`ยืนยันการอนุมัติยอดจ่าย ${fmtB(row.final_expense_amount)} สำหรับ Supplier "${row.supplier_name}" รอบ ${row.week_label}?
+ระบบจะทำการล็อค Snapshot อัตรา Rate และสร้างรายการค่าใช้จ่ายเข้าสู่ระบบบัญชีโดยอัตโนมัติ`)) {
+    return;
+  }
+
+  // 1. Snapshot Tiers & Breakdown
+  const tiers = getSupplierProgressiveTiers();
+  const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+
+  const topUp = Math.max(0, Number(document.getElementById('sw-edit-topup-amt')?.value || row.top_up_amount || 0));
+  const reason = document.getElementById('sw-edit-topup-reason')?.value || row.top_up_reason || 'Extra Support';
+  const note = (document.getElementById('sw-edit-topup-note')?.value || row.top_up_note || '').trim();
+
+  // 2. Create Linked Expense in DB
+  const payload = {
+    shop_id: currentShop.id,
+    expense_date: row.week_end,
+    category: 'ค่าสินน้ำใจ',
+    standardized_category: 'ค่าสินน้ำใจ',
+    subcategory: 'ค่าตอบแทน Supplier รายสัปดาห์',
+    vendor_name: row.supplier_name,
+    document_no: `SW-${row.week_start.replace(/-/g,'')}`,
+    base_amount: row.final_expense_amount,
+    amount: row.final_expense_amount,
+    vat_amount: 0,
+    withholding_tax: 0,
+    paid_amount: 0,
+    payment_status: 'unpaid',
+    payment_method: 'โอนเงินธนาคาร',
+    due_date: row.week_end,
+    expense_type: 'operating',
+    recurrence: 'one_time',
+    include_in_profit: true,
+    review_status: 'approved',
+    note: `ค่าใช้จ่ายยอดซื้อ Supplier รอบสัปดาห์ (${row.week_start} ถึง ${row.week_end}) ยอดซื้อสุทธิ ฿${fmt(row.weekly_base_amount)} [สูตร: ฿${fmt(row.calculated_expense_amount)}${topUp>0?` + Top Up: ฿${fmt(topUp)} (${reason})`:''}] [supplier_weekly_id:${id}] [gratuity]`,
+    created_by: currentUser?.id || null,
+    updated_at: new Date().toISOString()
+  };
+
+  const res = await sb.from('expenses').insert(payload).select().single();
+  if (res.error) {
+    toast('อนุมัติไม่สำเร็จ: ' + res.error.message, 'error');
+    return;
+  }
+
+  savedRecords[id] = {
+    ...(savedRecords[id] || {}),
+    top_up_amount: topUp,
+    top_up_reason: reason,
+    top_up_note: note,
+    status: 'approved',
+    approved_by: currentUser?.id || 'admin',
+    approved_at: new Date().toISOString(),
+    calculation_snapshot: tiers,
+    expense_id: res.data?.id
+  };
+
+  localStorage.setItem(key, JSON.stringify(savedRecords));
+  toast('อนุมัติยอดและบันทึกค่าใช้จ่ายเรียบร้อยแล้ว ✓', 'success');
+  closeModal('modal-sw-detail');
+  await loadWeeklySupplierExpenses();
+}
+
+async function markPaidWeeklySupplierExpense(id) {
+  const row = weeklySupplierData.find(x => x.id === id);
+  if (!row) return;
+
+  if (!confirm(`ยืนยันบันทึกการชำระเงิน ${fmtB(row.final_expense_amount)} ให้แก่ Supplier "${row.supplier_name}" (วันที่จ่าย: วันนี้)?`)) {
+    return;
+  }
+
+  const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+
+  // Update linked expense if exists
+  const expId = savedRecords[id]?.expense_id;
+  if (expId) {
+    await sb.from('expenses').update({
+      payment_status: 'paid',
+      payment_date: today(),
+      paid_amount: row.final_expense_amount,
+      updated_at: new Date().toISOString()
+    }).eq('id', expId);
+  }
+
+  savedRecords[id] = {
+    ...(savedRecords[id] || {}),
+    status: 'paid',
+    paid_date: today(),
+    payment_method: 'โอนเงินธนาคาร',
+    paid_by: currentUser?.id || 'admin'
+  };
+
+  localStorage.setItem(key, JSON.stringify(savedRecords));
+  toast('บันทึกสถานะชำระเงินเรียบร้อยแล้ว ✓', 'success');
+  closeModal('modal-sw-detail');
+  await loadWeeklySupplierExpenses();
+}
+
+// ── SETTINGS MODAL & TIER MANAGEMENT ──
+function openSupplierRateSettingsModal() {
+  const tiers = getSupplierProgressiveTiers();
+  const cycle = getSupplierExpenseWeekCycle();
+  
+  const cycleSelect = document.getElementById('sw-set-cycle');
+  if (cycleSelect) cycleSelect.value = cycle;
+
+  renderProgressiveTiersEditTable(tiers);
+  runLiveTierSimulation();
+  openModal('modal-sw-settings');
+}
+
+function renderProgressiveTiersEditTable(tiers) {
+  const tbody = document.getElementById('sw-tiers-edit-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = tiers.map((t, idx) => `
+    <tr data-tier-id="${t.id || 't-'+idx}">
+      <td style="font-weight:700;color:#64748b">Tier ${idx + 1}</td>
+      <td>
+        <input type="number" class="sw-t-min" value="${t.min_amount}" min="0" oninput="runLiveTierSimulation()" style="width:100%;padding:4px 6px">
+      </td>
+      <td>
+        <input type="number" class="sw-t-max" value="${t.max_amount !== null && t.max_amount !== undefined ? t.max_amount : ''}" placeholder="No Limit (ว่าง)" oninput="runLiveTierSimulation()" style="width:100%;padding:4px 6px">
+      </td>
+      <td>
+        <div style="display:flex;align-items:center;gap:4px">
+          <input type="number" step="0.01" class="sw-t-rate" value="${t.rate_percent}" min="0" oninput="runLiveTierSimulation()" style="width:80px;padding:4px 6px;font-weight:700;color:#0284c7">
+          <span>%</span>
+        </div>
+      </td>
+      <td style="text-align:center">
+        <input type="checkbox" class="sw-t-active" ${t.is_active !== false ? 'checked' : ''} onchange="runLiveTierSimulation()">
+      </td>
+      <td style="text-align:center">
+        ${tiers.length > 1 ? `<button class="btn btn-sm btn-danger" onclick="deleteProgressiveTierRow('${t.id || 't-'+idx}')" style="padding:2px 6px">🗑️</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+function addNewProgressiveTierRow() {
+  const currentTiers = readTiersFromEditTable();
+  const lastTier = currentTiers[currentTiers.length - 1];
+  const newMin = lastTier && lastTier.max_amount ? lastTier.max_amount : (lastTier ? lastTier.min_amount + 5000 : 0);
+
+  currentTiers.push({
+    id: 'tier-' + Date.now(),
+    min_amount: newMin,
+    max_amount: null,
+    rate_percent: 0.25,
+    is_active: true,
+    sort_order: currentTiers.length + 1
+  });
+
+  renderProgressiveTiersEditTable(currentTiers);
+  runLiveTierSimulation();
+}
+
+function deleteProgressiveTierRow(id) {
+  let currentTiers = readTiersFromEditTable();
+  if (currentTiers.length <= 1) {
+    toast('ต้องมีตาราง Rate อย่างน้อย 1 Tier', 'error');
+    return;
+  }
+  currentTiers = currentTiers.filter(t => t.id !== id);
+  renderProgressiveTiersEditTable(currentTiers);
+  runLiveTierSimulation();
+}
+
+function readTiersFromEditTable() {
+  const rows = [...document.querySelectorAll('#sw-tiers-edit-tbody tr')];
+  return rows.map((tr, idx) => {
+    const minVal = Number(tr.querySelector('.sw-t-min')?.value || 0);
+    const maxInput = tr.querySelector('.sw-t-max')?.value;
+    const maxVal = (maxInput !== '' && maxInput !== null && maxInput !== undefined) ? Number(maxInput) : null;
+    const rateVal = Number(tr.querySelector('.sw-t-rate')?.value || 0);
+    const activeVal = !!tr.querySelector('.sw-t-active')?.checked;
+
+    return {
+      id: tr.dataset.tierId || ('tier-' + idx),
+      min_amount: minVal,
+      max_amount: maxVal,
+      rate_percent: rateVal,
+      is_active: activeVal,
+      sort_order: idx + 1
+    };
+  });
+}
+
+function runLiveTierSimulation() {
+  const tiers = readTiersFromEditTable();
+  const testAmt = Math.max(0, Number(document.getElementById('sim-test-amount')?.value || 0));
+  const res = calculateProgressiveSupplierExpense(testAmt, tiers);
+
+  const resEl = document.getElementById('sim-test-result');
+  const breakEl = document.getElementById('sim-test-breakdown');
+
+  if (resEl) resEl.textContent = `ค่าคำนวณสุทธิ: ${fmtB(res.total_expense)} (${testAmt > 0 ? (res.total_expense / testAmt * 100).toFixed(2) : 0}%)`;
+  if (breakEl) {
+    if (!res.tier_breakdown.length) {
+      breakEl.textContent = 'ยอดซื้อ ฿0 ไม่มีค่าใช้จ่ายคำนวณ';
+    } else {
+      breakEl.innerHTML = res.tier_breakdown.map(t => `
+        <span style="display:inline-block;margin-right:12px;margin-top:2px">
+          ${t.tier_name}: ฿${fmt(t.applicable_amount)} × ${t.rate_percent}% = <b>฿${fmt(t.expense)}</b>
+        </span>
+      `).join(' + ');
+    }
+  }
+}
+
+function saveProgressiveRateSettings() {
+  const tiers = readTiersFromEditTable();
+  
+  // Validation
+  tiers.sort((a, b) => a.min_amount - b.min_amount);
+  
+  for (let i = 0; i < tiers.length; i++) {
+    const t = tiers[i];
+    if (t.min_amount < 0) { toast('ยอดเริ่มต้นห้ามติดลบ', 'error'); return; }
+    if (t.rate_percent < 0) { toast('อัตรา Rate ห้ามติดลบ', 'error'); return; }
+    if (t.max_amount !== null && t.max_amount <= t.min_amount) {
+      toast(`Tier ${i+1}: ยอดสูงสุด (${fmtB(t.max_amount)}) ต้องมากกว่ายอดเริ่มต้น (${fmtB(t.min_amount)})`, 'error');
+      return;
+    }
+    // Check gaps with next tier
+    if (i < tiers.length - 1) {
+      const nextT = tiers[i+1];
+      if (t.max_amount === null) {
+        toast(`Tier ${i+1} ตั้งเป็น No Limit แล้ว ไม่สามารถมี Tier ถัดไปได้`, 'error');
+        return;
+      }
+      if (t.max_amount !== nextT.min_amount) {
+        toast(`คำเตือน: มีช่องว่างหรือช่วงซ้อนกันระหว่าง Tier ${i+1} (${fmtB(t.max_amount)}) และ Tier ${i+2} (${fmtB(nextT.min_amount)})`, 'error');
+        return;
+      }
+    }
+  }
+
+  const cycle = document.getElementById('sw-set-cycle')?.value || 'mon_sun';
+  saveSupplierProgressiveTiers(tiers);
+  saveSupplierExpenseWeekCycle(cycle);
+
+  closeModal('modal-sw-settings');
+  toast('บันทึกตาราง Progressive Rate และรอบสัปดาห์เรียบร้อยแล้ว ✓', 'success');
+  loadWeeklySupplierExpenses();
+}
+
+function resetToDefaultTiers() {
+  if (!confirm('ยืนยันต้องการคืนค่าตาราง Rate สู่ค่าเริ่มต้นของระบบ (4%, 2%, 1%, 0.5%, 0.25%)?')) return;
+  renderProgressiveTiersEditTable(DEFAULT_SUPPLIER_PROGRESSIVE_TIERS);
+  runLiveTierSimulation();
+}
+
+function exportWeeklySupplierExcel() {
+  if (!weeklySupplierData.length) { toast('ไม่มีข้อมูลสำหรับส่งออก', 'error'); return; }
+  let csv = '\uFEFFรอบสัปดาห์,วันเริ่มต้น,วันสิ้นสุด,Supplier,จำนวนบิลPO,ยอดซื้อสุทธิ,ค่าตามสูตรProgressive,TopUpพิเศษ,เหตุผลTopUp,ยอดรวมจ่ายสุทธิ,สถานะ\n';
+  weeklySupplierData.forEach(r => {
+    csv += `"${r.week_label}","${r.week_start}","${r.week_end}","${(r.supplier_name||'').replace(/"/g,'""')}","${r.po_count}","${r.weekly_base_amount}","${r.calculated_expense_amount}","${r.top_up_amount}","${r.top_up_reason||''}","${r.final_expense_amount}","${r.status}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ค่าใช้จ่าย_Supplier_รายสัปดาห์_${currentShop?.name||'shop'}_${today()}.csv`;
+  a.click();
+  toast('ส่งออกไฟล์เรียบร้อยแล้ว ✓', 'success');
+}
+
 async function apinvoice() {
   document.getElementById('topbar-actions').innerHTML = '';
   setContent(`
@@ -18397,6 +19468,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.61', type:'minor', date:'2026-08-29', title:'Weekly Supplier Expense Progressive Calculation Engine & Top Up', items:['Weekly Supplier Expense Engine: ระบบคำนวณค่าใช้จ่ายอ้างอิงจากยอดซื้อ Supplier รายสัปดาห์แบบ Progressive Tier (Marginal Rate) อัตโนมัติ','Dynamic Rate Configuration: ปรับแต่งช่วงยอดและอัตรา % ได้อิสระจากหน้า Settings โดยไม่ Hardcode อัตราในระบบ พร้อมตัวทดสอบ Live Simulator','3-Line Breakdown & Top Up: แสดงผลแยกชัดเจน 3 บรรทัด (ค่าตามสูตร, Top Up เงินพิเศษ, ยอดจ่ายสุทธิ)','Rate Snapshot on Approval: ล็อค Snapshot อัตราและสูตรคำนวณเมื่อ Approved ป้องกันข้อมูลประวัติศาสตร์เปลี่ยน'] },
             { v:'1.60', type:'minor', date:'2026-08-29', title:'Progressive Calculation & Top Up Incentive System', items:['3-Line Breakdown UI: แสดงผลแยกชัดเจน 3 บรรทัด (1. ค่าคำนวณตามสูตร Progressive, 2. Top Up เงินพิเศษเพิ่มเติม, 3. ยอดจ่ายสุทธิ Final Expense)','Top Up Management & Reasons: รองรับการเลือกเหตุผล Top Up (Extra Support, Special Assistance, Urgent Support, Delivery Support, Other) พร้อมบันทึก Note และ Audit Log ครบถ้วน','Settings & Limit Controls: ตั้งค่าเพดานยอด Top Up สูงสุด (บาท/%) และเปิด/ปิดเงื่อนไขการระบุเหตุผลได้ทันที','Stacked Analytics & Excel Report: กราฟแท่งแยกสัดส่วนค่าตามสูตร vs Top Up รายเดือน พร้อมส่งออก Excel ครบทุกฟิลด์'] },
             { v:'1.59', type:'minor', date:'2026-08-29', title:'New Gratuity & Incentive Management Module', items:['New Sidebar Menu "ค่าสินน้ำใจ": เพิ่มเมนูใหม่ใต้ค่าใช้จ่ายสำหรับบันทึกและบริหารจัดการค่าสินน้ำใจ ค่านายหน้า ค่าตอบแทนพิเศษ และของขวัญขอบคุณลูกค้าโดยเฉพาะ','Gratuity Analytics & Top Payees: สรุปยอดจ่ายสะสม ยอดค้างจ่าย และจัดอันดับผู้รับสินน้ำใจยอดสูงสุด พร้อมกราฟแนวโน้ม 12 เดือน','Seamless Financial Sync: บันทึกข้อมูลเข้าสู่ระบบการเงิน P&L และ Cash Flow อัตโนมัติ พร้อมส่งออก Excel รายงานได้ทันที'] },
             { v:'1.58', type:'minor', date:'2026-08-29', title:'Distinct Visual Category & Type Color Badges', items:['Color-Coded Category Badges: ปรับแต่งสีและไอคอนประจำหมวดหมู่ค่าใช้จ่ายให้แตกต่างกันอย่างชัดเจนทุกหมวด (เช่น 📢 การตลาด=ชมพู, 📦 บรรจุภัณฑ์=ส้ม, 👥 เงินเดือน=น้ำเงิน, 🏢 สาธารณูปโภค=ฟ้า, 💻 ซอฟต์แวร์=ม่วง, 🚗 ยานพาหนะ=เขียว, ⚖️ บัญชี/วิชาชีพ=ม่วงบานเย็น)','Type Pill Badges: แสดงป้ายประเภทรายการ (ค่าใช้จ่ายดำเนินงาน / ซื้อสต๊อก / Landed Cost / ทรัพย์สิน / ภาษี / ถอนเงินเจ้าของ) ด้วย Badge สีสันสวยงาม อ่านง่ายสบายตา'] },
@@ -26601,7 +27673,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.60', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Progressive Calculation & Top Up Incentive System', items:[
+    { v:'1.61', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Weekly Supplier Expense Progressive Calculation Engine & Top Up', items:[
+      '🧮 <b>Weekly Supplier Expense Engine:</b> ระบบคำนวณค่าใช้จ่ายจากยอดซื้อ Supplier รายสัปดาห์แบบ Progressive Tier (Marginal Rate) โดยรวมยอดซื้อสุทธิหลังหักส่วนลด (ไม่รวม VAT/ค่าส่ง) อัตโนมัติ',
+      '⚙️ <b>Dynamic Progressive Settings:</b> จัดการช่วงยอดและอัตรา % ได้อย่างอิสระจากหน้า Settings พร้อมระบบ Live Simulator ทดสอบคำนวณสดและ Validation ป้องกันช่วงทับซ้อน',
+      '🎁 <b>3-Line Breakdown & Top Up:</b> แสดง 3 บรรทัดชัดเจน (1. ค่าตามสูตร Progressive, 2. Top Up เงินพิเศษ, 3. ยอดจ่ายสุทธิ Final Expense)',
+      '🔒 <b>Rate Snapshot on Approval:</b> ล็อค Snapshot อัตราคำนวณทันทีที่กด Approved พร้อมสร้างรายการค่าใช้จ่ายเข้าสู่ระบบบัญชี ป้องกันข้อมูลย้อนหลังเปลี่ยนแปลง'
+    ]},
+    { v:'1.60', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Progressive Calculation & Top Up Incentive System', items:[
       '🧮 <b>3-Line Calculation Breakdown:</b> แสดงผลแยกชัดเจน 3 บรรทัด ได้แก่ 1. ค่าตามสูตร Progressive, 2. Top Up เงินพิเศษ, 3. ยอดจ่ายสุทธิ Final Expense',
       '🎁 <b>Top Up Reasons & Audit Trail:</b> เลือกระบุเหตุผล (Extra Support, Special Assistance, Urgent Support, Delivery Support, Other) พร้อมบันทึกประวัติและผู้กรอกถาวร',
       '⚙️ <b>Configurable Limits & Rules:</b> ตั้งค่าเพดาน Top Up สูงสุด (บาท หรือ %) และระบบแจ้งเตือน Warning เมื่อกรอกเกินเกณฑ์',
@@ -26705,7 +27783,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.60</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.61</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
