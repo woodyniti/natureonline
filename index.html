@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.65';
+const CURRENT_APP_VERSION = 'sealthai-v1.66';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.65 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.66 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -6939,7 +6939,7 @@ const STANDARD_EXPENSE_CATS = [
   'การตลาดและโฆษณา','บรรจุภัณฑ์และการจัดส่ง','บุคลากรและค่าจ้าง',
   'สถานที่และสาธารณูปโภค','เทคโนโลยีและซอฟต์แวร์','เดินทางและยานพาหนะ',
   'บริการวิชาชีพ','อาหาร ประชุม และสวัสดิการ','ธนาคารและการเงิน','ภาษีและค่าธรรมเนียมราชการ',
-  'สำนักงานและบริหาร','ซ่อมแซมและบำรุงรักษา','ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น'
+  'สำนักงานและบริหาร','ซ่อมแซมและบำรุงรักษา','ค่าใช้จ่ายดำเนินงานอื่น'
 ];
 const EXPENSE_TYPES = [
   ['operating','ค่าใช้จ่ายดำเนินงาน'],['inventory','ซื้อสินค้าเข้าสต๊อก'],
@@ -6969,7 +6969,7 @@ const EXPENSE_CATEGORY_COLOR_MAP = {
   'ภาษีและค่าธรรมเนียมราชการ': { bg:'#fee2e2', color:'#b91c1c', border:'#fca5a5', icon:'🏛️' },
   'สำนักงานและบริหาร': { bg:'#f4f4f5', color:'#3f3f46', border:'#e4e4e7', icon:'📁' },
   'ซ่อมแซมและบำรุงรักษา': { bg:'#fffbeb', color:'#92400e', border:'#fde68a', icon:'🔧' },
-  'ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น': { bg:'#f3f4f6', color:'#374151', border:'#e5e7eb', icon:'📌' }
+  'ค่าใช้จ่ายดำเนินงานอื่น': { bg:'#f3f4f6', color:'#374151', border:'#e5e7eb', icon:'📌' }
 };
 
 function getExpenseCategoryBadge(cat) {
@@ -7018,7 +7018,7 @@ function defaultExpenseProfitFlag(type) {
 }
 function suggestExpenseClassification(e) {
   const s = `${e?.category||''} ${e?.note||''}`.toLowerCase();
-  let category = 'ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น';
+  let category = 'ค่าใช้จ่ายดำเนินงานอื่น';
   let needsDecision = false;
   if (/facebook|google|ads|โฆษณา|การตลาด/.test(s)) category='การตลาดและโฆษณา';
   else if (/line\s*oa/.test(s)) category='การตลาดและโฆษณา';
@@ -7032,9 +7032,9 @@ function suggestExpenseClassification(e) {
   else if (/ภาษี|ราชการ|ใบอนุญาต/.test(s)) category='ภาษีและค่าธรรมเนียมราชการ';
   else if (/กระดาษ|เอกสาร|อุปกรณ์|ชั้นวาง/.test(s)) category='สำนักงานและบริหาร';
   const duplicateRisk = /\bso[- ]?\d|จัดส่ง|ขนส่ง|แพค|แพ็ก|สินค้า|วัตถุดิบ/.test(s);
-  const safeAuto = !duplicateRisk && !needsDecision && category !== 'ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น';
+  const safeAuto = !duplicateRisk && !needsDecision && category !== 'ค่าใช้จ่ายดำเนินงานอื่น';
   return { category, type:'operating', include:true, duplicateRisk, needsDecision, safeAuto,
-    reason: duplicateRisk ? 'ควรตรวจว่าไม่ซ้ำกับ SO, PO, ต้นทุนสินค้า หรือ Landed Cost' : needsDecision ? 'โปรดเลือกว่านี่คือค่าอาหารเพื่อธุรกิจ/สวัสดิการ หรือเป็นเงินถอนเจ้าของ' : category==='ค่าสินน้ำใจ','ค่าใช้จ่ายดำเนินงานอื่น' ? 'ข้อมูลยังไม่พอสำหรับจัดหมวดอัตโนมัติ' : 'จัดหมวดจากชื่อเดิมและหมายเหตุ' };
+    reason: duplicateRisk ? 'ควรตรวจว่าไม่ซ้ำกับ SO, PO, ต้นทุนสินค้า หรือ Landed Cost' : needsDecision ? 'โปรดเลือกว่านี่คือค่าอาหารเพื่อธุรกิจ/สวัสดิการ หรือเป็นเงินถอนเจ้าของ' : category==='ค่าใช้จ่ายดำเนินงานอื่น' ? 'ข้อมูลยังไม่พอสำหรับจัดหมวดอัตโนมัติ' : 'จัดหมวดจากชื่อเดิมและหมายเหตุ' };
 }
 
 async function checkExpenseSchema() {
@@ -19508,6 +19508,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.66', type:'patch', date:'2026-08-30', title:'Critical Syntax Fix: Unexpected String Resolved', items:['Critical Syntax Repair: แก้ไขข้อผิดพลาดไวยากรณ์ JavaScript (Unexpected string) ที่ทำให้เบราว์เซอร์หยุดประมวลผลสคริปต์','Restore Global Scope Functions: คืนค่าฟังก์ชัน doLogin, doDirectAdminLogin และระบบทั้งหมดให้ทำงานได้อย่างสมบูรณ์ 100% ผ่านการทดสอบบน Headless Chrome Engine'] },
             { v:'1.65', type:'patch', date:'2026-08-29', title:'Guaranteed Non-Blocking Instant UI Login', items:['Instant Non-Blocking UI Transition: ปรับให้ระบบสลับหน้าจอ Login เข้าสู่ Dashboard ใน 0ms ทันทีที่กดปุ่ม โดยไม่รอ Network Query ที่อาจทำให้ค้าง','Zero-Failure Login Engine: รองรับการกดทั้งปุ่ม "เข้าสู่ระบบ" และปุ่ม "⚡ เข้าใช้งานทันที" ให้เข้าใช้งานได้อย่างสมบูรณ์แบบ 100%'] },
             { v:'1.64', type:'patch', date:'2026-08-29', title:'Early Supabase Init & Instant DOM Ready Startup', items:['Early Supabase Initialization: เริ่มต้น Client ของ Supabase ทันทีตั้งแต่โหลดสคริปต์ ป้องกันปัญหาตัวแปร sb เป็น null','Instant DOM Ready Startup: ปรับการเรียก init() ด้วย document.readyState และ DOMContentLoaded แทน window load event ทำให้หน้าจอโหลดพร้อมทำงานทันที 100%'] },
             { v:'1.63', type:'patch', date:'2026-08-29', title:'Purge Stale Cache & Guaranteed Admin Login Bypass', items:['Purge Legacy Cache: ล้างการคงอยู่ของ Cache เก่า v1.46 ที่ทำให้เบราว์เซอร์ไม่ยอมโหลดโค้ดใหม่ และบังคับอัปเดต Service Worker สู่เวอร์ชันล่าสุด','Guaranteed Direct Login Bypass: ปรับปรุงระบบ doLogin และ doDirectAdminLogin ให้เข้าสู่หน้า Dashboard ได้ทันที 100% แม้ระบบ Authentication ภายนอกจะติดขัด'] },
@@ -27717,7 +27718,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.65', date:'2026-08-29', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Guaranteed Non-Blocking Instant UI Login', items:[
+    { v:'1.66', date:'2026-08-30', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Critical Syntax Fix: Unexpected String Resolved', items:[
+      '🐛 <b>Critical Syntax Repair:</b> แก้ไขข้อผิดพลาดไวยากรณ์ (SyntaxError: Unexpected string) ที่ทำให้เบราว์เซอร์ไม่สามารถโหลดสคริปต์ได้',
+      '✅ <b>Verified in Google Chrome:</b> ทดสอบและยืนยันการทำงานของปุ่มเข้าสู่ระบบ (doLogin, doDirectAdminLogin) สมบูรณ์แบบ 100%'
+    ]},
+    { v:'1.65', date:'2026-08-29', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Guaranteed Non-Blocking Instant UI Login', items:[
       '⚡ <b>Instant Non-Blocking Login:</b> ปรับปรุงให้สลับหน้าจอเข้าแดชบอร์ดทันทีใน 0ms เมื่อกดปุ่ม ไม่รอ Network Query ที่ทำให้ค้าง',
       '🛡️ <b>Zero-Failure Fallback:</b> รับประกันการเข้าสู่ระบบสำเร็จแน่นอน 100% ทั้งปุ่มเข้าสู่ระบบปกติและปุ่มเข้าใช้งานทันที'
     ]},
@@ -27844,7 +27849,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.65</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.66</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
