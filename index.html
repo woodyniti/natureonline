@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.68';
+const CURRENT_APP_VERSION = 'sealthai-v1.69';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.68 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.69 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1131,13 +1131,17 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <label style="font-weight:700;font-size:12px">Supplier SKU / รหัสผู้ผลิต</label>
         <input type="text" id="qp-supplier-sku" placeholder="เว้นว่างได้">
       </div>
-      <div class="form-group">
-        <label style="font-weight:700;font-size:12px">หมวดหมู่สินค้า <span style="font-size:11px;color:var(--text3)">(พิมพ์หรือเลือก)</span></label>
-        <div class="cat-combo" id="cat-combo-wrap-qp">
-          <input type="text" id="qp-cat" placeholder="เลือกหรือพิมพ์หมวดใหม่" autocomplete="off"
-            oninput="filterCatDropdownQP()" onfocus="openCatDropdownQP()" onclick="openCatDropdownQP()">
-          <div class="cat-dropdown" id="cat-dropdown-qp"></div>
+      <div class="form-group" style="grid-column:1/-1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <label style="font-weight:700;font-size:12px;margin:0">หมวดหมู่สินค้า <span style="font-size:11px;color:var(--text3)">(พิมพ์ค้นหาหรือคลิกเลือกจากคลังสินค้า)</span></label>
+          <span id="qp-cat-count" style="font-size:11px;font-weight:700;color:var(--accent)"></span>
         </div>
+        <div class="cat-combo" id="cat-combo-wrap-qp">
+          <input type="text" id="qp-cat" placeholder="เลือกหมวดหมู่สินค้า หรือพิมพ์หมวดใหม่..." autocomplete="off"
+            oninput="filterCatDropdownQP()" onfocus="openCatDropdownQP()" onclick="openCatDropdownQP()" style="font-size:13.5px;background:#fff;border:1.5px solid #cbd5e1">
+          <div class="cat-dropdown" id="cat-dropdown-qp" style="max-height:220px;overflow-y:auto"></div>
+        </div>
+        <div id="qp-cat-chips" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"></div>
       </div>
       <div class="form-group">
         <label style="font-weight:700;font-size:12px">สต๊อกเริ่มต้น (Initial Qty)</label>
@@ -1169,6 +1173,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
               oninput="filterMatDropdownQP()" onfocus="openMatDropdownQP()" onclick="openMatDropdownQP()">
             <div class="cat-dropdown" id="mat-dropdown-qp"></div>
           </div>
+          <div id="qp-mat-chips" style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px"></div>
           <datalist id="qp-mat-datalist">
             <option value="NBR">
             <option value="FKM (Viton)">
@@ -1190,6 +1195,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
               oninput="filterTypeDropdownQP()" onfocus="openTypeDropdownQP()" onclick="openTypeDropdownQP()">
             <div class="cat-dropdown" id="type-dropdown-qp"></div>
           </div>
+          <div id="qp-type-chips" style="display:flex;gap:3px;flex-wrap:wrap;margin-top:4px"></div>
           <datalist id="qp-type-datalist">
             <option value="TC">
             <option value="SC">
@@ -8781,39 +8787,94 @@ function selectCat2(val) {
 }
 
 // ── Quick Product Dropdowns & Chips Engine (qp-cat, qp-material, qp-seal-type) ──
-const popularQPCategories = [
-  { val: 'Oil Seal', label: '🏷️ Oil Seal' },
-  { val: 'O-Ring', label: '⭕ O-Ring' },
-  { val: 'Hydraulic Seal', label: '💧 Hydraulic' },
-  { val: 'Pneumatic Seal', label: '💨 Pneumatic' },
-  { val: 'Mechanical Seal', label: '🔧 Mechanical' },
-  { val: 'V-Ring', label: '🔄 V-Ring' },
-  { val: 'Gasket', label: '⚙️ Gasket' },
-  { val: 'Other', label: '📦 อื่นๆ' }
-];
-
 let defaultSealMaterials = ['NBR', 'FKM (Viton)', 'PU (Polyurethane)', 'PTFE (Teflon)', 'Silicone', 'EPDM', 'HNBR', 'Bakelite', 'POM', 'ACM', 'FFKM'];
 const popularQPMaterials = ['NBR', 'FKM (Viton)', 'PU', 'PTFE', 'Silicone', 'EPDM', 'HNBR', 'Bakelite', 'POM', 'ACM', 'FFKM'];
 
 let defaultSealProfiles = ['TC', 'SC', 'TB', 'SB', 'VC', 'VB', 'TA', 'SA', 'TCV', 'TCN', 'U-Cup', 'Rod Seal', 'Piston Seal', 'Wiper Seal', 'Wearing Ring', 'O-Ring', 'V-Ring', 'End Cover', 'Gammaseal', 'V-Packing'];
 const popularQPSealTypes = ['TC', 'SC', 'TB', 'SB', 'VC', 'VB', 'TA', 'SA', 'TCV', 'TCN', 'U-Cup', 'Rod Seal', 'Piston Seal', 'Wiper Seal', 'Wearing Ring', 'O-Ring', 'V-Ring', 'End Cover'];
 
-function renderQPChips() {
+async function getShopProductCategories() {
+  const catSet = new Set();
+
+  // 1. จาก allCategories (ตาราง categories จากหน้าสินค้า/หมวดหมู่)
+  if (Array.isArray(allCategories) && allCategories.length > 0) {
+    allCategories.forEach(c => {
+      const name = (typeof c === 'string' ? c : c?.name || '').trim();
+      if (name) catSet.add(name);
+    });
+  }
+
+  // 2. จาก allProducts (ฟิลด์ category ของสินค้าทั้งหมดในคลัง)
+  if (Array.isArray(allProducts) && allProducts.length > 0) {
+    allProducts.forEach(p => {
+      if (p?.category && typeof p.category === 'string') {
+        const cat = p.category.trim();
+        if (cat) catSet.add(cat);
+      }
+    });
+  }
+
+  // 3. จาก productCategories ที่เก็บแคชไว้
+  if (Array.isArray(productCategories) && productCategories.length > 0) {
+    productCategories.forEach(c => {
+      if (c && typeof c === 'string') catSet.add(c.trim());
+    });
+  }
+
+  // 4. ถ้ายังไม่มี ให้ดึงจากฐานข้อมูล Supabase ทั้งตาราง categories และ products ทันที
+  if (catSet.size === 0 && sb && currentShop?.id) {
+    try {
+      const [catRes, prodRes] = await Promise.all([
+        sb.from('categories').select('id,name,sort_order').eq('shop_id', currentShop.id).order('sort_order'),
+        sb.from('products').select('category').eq('shop_id', currentShop.id).not('category', 'is', null).limit(2000)
+      ]);
+      if (catRes?.data && catRes.data.length > 0) {
+        allCategories = catRes.data;
+        catRes.data.forEach(c => { if (c?.name) catSet.add(c.name.trim()); });
+      }
+      if (prodRes?.data) {
+        prodRes.data.forEach(p => { if (p?.category) catSet.add(p.category.trim()); });
+      }
+    } catch(e) {
+      console.warn('Error fetching shop categories for quick product:', e);
+    }
+  }
+
+  const result = [...catSet].filter(Boolean);
+  if (result.length > 0) {
+    productCategories = result.sort((a, b) => a.localeCompare(b, 'th'));
+    return productCategories;
+  }
+
+  // Fallback พื้นฐานถ้ายังไม่มีหมวดหมู่ใดๆ ในระบบ
+  return ['Oil Seal', 'O-Ring', 'Hydraulic Seal', 'Pneumatic Seal', 'Mechanical Seal', 'V-Ring', 'Gasket', 'Other'];
+}
+
+async function renderQPChips() {
   const curCat = (document.getElementById('qp-cat')?.value || '').trim();
   const curMat = (document.getElementById('qp-material')?.value || '').trim();
   const curType = (document.getElementById('qp-seal-type')?.value || '').trim();
 
-  // 1. Category Chips
+  // 1. Category Chips (ดึงจากหมวดหมู่จริงในหน้าสินค้า)
   const catChipsEl = document.getElementById('qp-cat-chips');
+  const countEl = document.getElementById('qp-cat-count');
+  
   if (catChipsEl) {
-    catChipsEl.innerHTML = popularQPCategories.map(item => {
-      const isSel = curCat.toLowerCase() === item.val.toLowerCase() || (item.val === 'Other' && curCat && !popularQPCategories.some(p => p.val.toLowerCase() === curCat.toLowerCase()));
+    const cats = await getShopProductCategories();
+    if (countEl) countEl.textContent = `(มี ${cats.length} หมวดหมู่ในคลัง)`;
+    
+    // แสดงหมวดหมู่จริงของร้านเป็น Quick Chips (สูงสุด 10 หมวดแรก)
+    const displayCats = cats.slice(0, 10);
+    if (!displayCats.includes('Other') && cats.includes('Other')) displayCats.push('Other');
+
+    catChipsEl.innerHTML = displayCats.map(item => {
+      const isSel = curCat.toLowerCase() === item.toLowerCase();
       const bg = isSel ? '#2563eb' : '#f1f5f9';
       const col = isSel ? '#ffffff' : '#334155';
       const bdr = isSel ? '#1d4ed8' : '#cbd5e1';
-      return `<button type="button" onclick="selectCatQP('${item.val.replace(/'/g, "\'")}')"
+      return `<button type="button" onclick="selectCatQP('${item.replace(/'/g, "\'")}')"
         style="cursor:pointer;background:${bg};color:${col};border:1px solid ${bdr};padding:3px 8px;border-radius:12px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:3px;transition:all 0.12s;box-shadow:${isSel ? '0 2px 4px rgba(37,99,235,0.25)' : 'none'}">
-        ${item.label}
+        🏷️ ${escapeHTML(item)}
       </button>`;
     }).join('');
   }
@@ -8849,17 +8910,15 @@ function renderQPChips() {
   }
 }
 
-// ── Category Dropdown functions ──
-function openCatDropdownQP() {
-  if (!productCategories.length && allProducts && allProducts.length) {
-    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
-  }
+// ── Category Dropdown functions (ดึงจากฐานข้อมูลและหน้าสินค้าจริง) ──
+async function openCatDropdownQP() {
   const dd = document.getElementById('cat-dropdown-qp');
   if (!dd) return;
-  filterCatDropdownQP();
+  await filterCatDropdownQP();
   dd.classList.add('open');
   document.addEventListener('click', closeCatOnOutsideQP, { once: true });
 }
+
 function closeCatOnOutsideQP(e) {
   const wrap = document.getElementById('cat-combo-wrap-qp');
   if (wrap && !wrap.contains(e.target)) {
@@ -8867,23 +8926,30 @@ function closeCatOnOutsideQP(e) {
     if (dd) dd.classList.remove('open');
   }
 }
-function filterCatDropdownQP() {
-  if (!productCategories.length && allProducts && allProducts.length) {
-    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
-  }
-  const allCats = [...new Set([...popularQPCategories.map(p => p.val), ...productCategories])].filter(Boolean).sort();
+
+async function filterCatDropdownQP() {
+  const allCats = await getShopProductCategories();
   const dd = document.getElementById('cat-dropdown-qp');
   const inp = document.getElementById('qp-cat');
   if (!dd || !inp) return;
+  
   const q = (inp.value || '').toLowerCase().trim();
   const filtered = q ? allCats.filter(c => c.toLowerCase().includes(q)) : allCats;
-  dd.innerHTML = filtered.map(c =>
-    `<div class="cat-option" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:500" onclick="selectCatQP('${c.replace(/'/g, "\'")}');">${c}</div>`
-  ).join('') +
-  (q && !allCats.find(c => c.toLowerCase() === q)
-    ? `<div class="cat-option add-new" style="padding:8px 10px;cursor:pointer;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700" onclick="selectCatQP('${inp.value.replace(/'/g, "\'")}')">+ ใช้หมวดหมู่ใหม่ "${escapeHTML(inp.value)}"</div>` : '');
+  
+  if (!filtered.length && !q) {
+    dd.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">ยังไม่มีหมวดหมู่ในคลังสินค้า พิมพ์หมวดใหม่ด้านบนได้เลยค่ะ</div>';
+  } else {
+    dd.innerHTML = filtered.map(c =>
+      `<div class="cat-option" style="padding:7px 10px;cursor:pointer;border-bottom:1px solid #f1f5f9;font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px" onclick="selectCatQP('${c.replace(/'/g, "\'")}');">
+        <span>🏷️</span> <span>${escapeHTML(c)}</span>
+      </div>`
+    ).join('') +
+    (q && !allCats.find(c => c.toLowerCase() === q)
+      ? `<div class="cat-option add-new" style="padding:8px 10px;cursor:pointer;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px" onclick="selectCatQP('${inp.value.replace(/'/g, "\'")}')">➕ ใช้หมวดหมู่ใหม่ "${escapeHTML(inp.value)}"</div>` : '');
+  }
   dd.classList.add('open');
 }
+
 function selectCatQP(val) {
   const inp = document.getElementById('qp-cat');
   if (inp) inp.value = val;
@@ -19195,6 +19261,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.69', type:'minor', date:'2026-08-30', title:'Quick Product Dynamic Category Sync from Products Page', items:['Dynamic Category Loading: เชื่อมโยงหมวดหมู่สินค้าในหน้าสร้างสินค้าด่วน (Quick Product) ให้ดึงหมวดหมู่จริงจากหน้าสินค้าและฐานข้อมูลตาราง categories อัตโนมัติ','Interactive Category Chips & Dropdown: เพิ่มปุ่ม Quick Chips และระบบ Dropdown ค้นหาหมวดหมู่สินค้าจริงของร้าน พร้อมตัวเลือกสร้างหมวดหมู่ใหม่'] },
             { v:'1.68', type:'patch', date:'2026-08-30', title:'Safe UUID PostgREST Guard & Gratuity Route Fix', items:['PostgREST UUID Syntax Guard: ป้องกันข้อผิดพลาด HTTP 400 เมื่อ Query ข้อมูล shop_members ด้วย user_id ที่ไม่ใช่รูปแบบ UUID','Gratuity Route Definition: เพิ่มฟังก์ชัน routing ของ gratuity() เชื่อมต่อไปยังแท็บสรุปสถิติค่าสินน้ำใจโดยตรงอย่างสมบูรณ์แบบ'] },
             { v:'1.67', type:'minor', date:'2026-08-30', title:'Unified Supplier Expense & Gratuity Multi-Tab Hub', items:['Unified Multi-Tab Module: รวมหน้า "🧮 ค่าใช้จ่าย Supplier รายสัปดาห์ (Progressive Tier)" และ "📊 ภาพรวมค่าสินน้ำใจ (Gratuity & Incentive)" เป็นเมนูเดียวกันในหมวดงานซื้อ','Seamless Tab Navigation: สลับดูระหว่างการคำนวณยอดซื้อรายสัปดาห์, สถิติภาพรวมค่าสินน้ำใจ และหน้าตั้งค่าอัตรา Progressive Rate & Simulator ได้ในคลิกเดียว'] },
             { v:'1.66', type:'patch', date:'2026-08-30', title:'Critical Syntax Fix: Unexpected String Resolved', items:['Critical Syntax Repair: แก้ไขข้อผิดพลาดไวยากรณ์ JavaScript (Unexpected string) ที่ทำให้เบราว์เซอร์หยุดประมวลผลสคริปต์','Restore Global Scope Functions: คืนค่าฟังก์ชัน doLogin, doDirectAdminLogin และระบบทั้งหมดให้ทำงานได้อย่างสมบูรณ์ 100% ผ่านการทดสอบบน Headless Chrome Engine'] },
@@ -27205,7 +27272,7 @@ function renderInventoryPostingTableRows(list) {
   }).join('');
 }
 
-function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery = '') {
+async function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery = '') {
   _quickProdContext = { type: contextType, rowIdx: rowIdx };
 
   // Reset form elements
@@ -27229,22 +27296,33 @@ function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery 
   }
   if (supSkuEl) supSkuEl.value = '';
   
-  if (!productCategories.length && allProducts && allProducts.length) {
-    productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
+  // Load real shop categories from database and products page
+  const availableCats = await getShopProductCategories();
+
+  // Detect category from query or match against shop categories
+  const lowQ = (initialQuery || '').toLowerCase();
+  let defaultCat = '';
+
+  // Try matching with shop's actual categories first
+  const matchedShopCat = availableCats.find(c => {
+    const lc = c.toLowerCase();
+    return lowQ.includes(lc) || (lc.includes('oil seal') && (lowQ.includes('ออยซีล') || lowQ.includes('tc') || lowQ.includes('sc'))) ||
+           (lc.includes('o-ring') && lowQ.includes('โอริง')) ||
+           (lc.includes('hydraulic') && lowQ.includes('ไฮดรอลิก'));
+  });
+
+  if (matchedShopCat) {
+    defaultCat = matchedShopCat;
+  } else if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) defaultCat = availableCats.find(c => c.toLowerCase().includes('o-ring') || c.includes('โอริง')) || 'O-Ring';
+  else if (lowQ.includes('hydraulic') || lowQ.includes('ไฮดรอลิก') || lowQ.includes('u-cup')) defaultCat = availableCats.find(c => c.toLowerCase().includes('hydraulic') || c.includes('ไฮดรอลิก')) || 'Hydraulic Seal';
+  else if (lowQ.includes('pneumatic') || lowQ.includes('นิวเมติก') || lowQ.includes('ลม')) defaultCat = availableCats.find(c => c.toLowerCase().includes('pneumatic') || c.includes('นิวเมติก')) || 'Pneumatic Seal';
+  else if (lowQ.includes('v-ring') || lowQ.includes('วีริง')) defaultCat = availableCats.find(c => c.toLowerCase().includes('v-ring') || c.includes('วีริง')) || 'V-Ring';
+  else if (lowQ.includes('gasket') || lowQ.includes('ปะเก็น')) defaultCat = availableCats.find(c => c.toLowerCase().includes('gasket') || c.includes('ปะเก็น')) || 'Gasket';
+  else if (lowQ.includes('mechanical') || lowQ.includes('แมคคานิคอล')) defaultCat = availableCats.find(c => c.toLowerCase().includes('mechanical') || c.includes('แมคคานิคอล')) || 'Mechanical Seal';
+  else {
+    defaultCat = availableCats[0] || 'Oil Seal';
   }
 
-  // Detect category from query
-  const lowQ = (initialQuery || '').toLowerCase();
-  let defaultCat = 'Oil Seal';
-  if (lowQ.includes('o-ring') || lowQ.includes('โอริง')) defaultCat = 'O-Ring';
-  else if (lowQ.includes('hydraulic') || lowQ.includes('ไฮดรอลิก') || lowQ.includes('u-cup')) defaultCat = 'Hydraulic Seal';
-  else if (lowQ.includes('pneumatic') || lowQ.includes('นิวเมติก') || lowQ.includes('ลม')) defaultCat = 'Pneumatic Seal';
-  else if (lowQ.includes('v-ring') || lowQ.includes('วีริง')) defaultCat = 'V-Ring';
-  else if (lowQ.includes('gasket') || lowQ.includes('ปะเก็น')) defaultCat = 'Gasket';
-  else if (lowQ.includes('mechanical') || lowQ.includes('แมคคานิคอล')) defaultCat = 'Mechanical Seal';
-  else if (initialQuery && !lowQ.includes('oil seal') && !lowQ.includes('ออยซีล') && !lowQ.includes('tc') && !lowQ.includes('sc')) {
-    defaultCat = 'Other';
-  }
   if (catEl) catEl.value = defaultCat;
 
   if (stockEl) stockEl.value = '0';
@@ -27407,7 +27485,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.68', date:'2026-08-30', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Safe UUID PostgREST Guard & Gratuity Route Fix', items:[
+    { v:'1.69', date:'2026-08-30', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Quick Product Dynamic Category Sync from Products Page', items:[
+      '📦 <b>Dynamic Category Sync:</b> ดึงหมวดหมู่สินค้าจริงจากหน้าสินค้าและตาราง categories มาแสดงในหน้าสร้างสินค้าด่วน (Quick Product) ทันที',
+      '🏷️ <b>Smart Category Chips:</b> เพิ่มปุ่มลัดเลือกหมวดหมู่จริงของร้าน และระบบ Dropdown ค้นหา/เพิ่มหมวดใหม่ได้ทันใจ'
+    ]},
+    { v:'1.68', date:'2026-08-30', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Safe UUID PostgREST Guard & Gratuity Route Fix', items:[
       '🛡️ <b>Safe UUID Guard:</b> ป้องกันข้อผิดพลาด HTTP 400 ในการเรียก Supabase REST API',
       '🔗 <b>Gratuity Route:</b> แก้ไขการเชื่อมโยงฟังก์ชัน gratuity() เข้าสู่แท็บสรุปสถิติค่าสินน้ำใจ'
     ]},
@@ -27546,7 +27628,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.68</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.69</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
