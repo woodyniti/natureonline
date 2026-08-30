@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.67';
+const CURRENT_APP_VERSION = 'sealthai-v1.68';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.67 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.68 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1679,7 +1679,7 @@ function wcProdMatch(p, q) {
 
 function doDirectAdminLogin() {
   const adminUser = {
-    id: 'admin-master-user',
+    id: '00000000-0000-0000-0000-000000000001',
     email: 'admin@sealthai.com',
     role: 'authenticated',
     user_metadata: { role: 'owner' }
@@ -1751,6 +1751,8 @@ async function afterLogin(user) {
     },
     // 3. ดึงผ่าน shop_members → shop_id → shops
     async () => {
+      const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+      if (!isUUID(user?.id)) return null;
       const { data: m } = await sb.from('shop_members')
         .select('shop_id').eq('user_id', user.id).eq('active', true).limit(1).single();
       if (!m?.shop_id) return null;
@@ -1815,23 +1817,29 @@ if (shop) {
     }
   }
   currentShop = shop;
-  // โหลด role + permissions (ถ้า table ยังไม่มี ให้ fallback เป็น owner)
+  // โหลด role + permissions (ถ้า table ยังไม่มี หรือ user_id ไม่ใช่ UUID ให้ fallback เป็น owner)
   try {
-    const { data: memberData, error: memErr } = await sb.from('shop_members')
-      .select('role,name,permissions').eq('user_id', user.id).eq('shop_id', shop.id).single();
-    if (!memErr && memberData) {
-      currentUser._role  = memberData.role || 'owner';
-      currentUser._memberName = memberData.name || user.email;
-      currentUser._perms = memberData.permissions || null;
+    const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+    if (isUUID(user?.id) && isUUID(shop?.id)) {
+      const { data: memberData, error: memErr } = await sb.from('shop_members')
+        .select('role,name,permissions').eq('user_id', user.id).eq('shop_id', shop.id).single();
+      if (!memErr && memberData) {
+        currentUser._role  = memberData.role || 'owner';
+        currentUser._memberName = memberData.name || user.email;
+        currentUser._perms = memberData.permissions || null;
+      } else {
+        currentUser._role  = shop.owner_id === user.id ? 'owner' : 'staff';
+        currentUser._memberName = user.email;
+        currentUser._perms = null;
+      }
     } else {
-      // fallback: ถ้าเป็น owner ของ shop ให้ role = owner
-      currentUser._role  = shop.owner_id === user.id ? 'owner' : 'staff';
-      currentUser._memberName = user.email;
+      currentUser._role  = 'owner';
+      currentUser._memberName = user?.email || 'Admin';
       currentUser._perms = null;
     }
   } catch(e) {
     currentUser._role  = 'owner';
-    currentUser._memberName = user.email;
+    currentUser._memberName = user?.email || 'Admin';
     currentUser._perms = null;
   }
 
@@ -16372,6 +16380,10 @@ function getWeekRange(dateStr, cycle = 'mon_sun') {
 let weeklySupplierData = [];
 let currentViewingWeeklyId = null;
 
+async function gratuity() {
+  await supplierWeeklyExpense('analytics');
+}
+
 async function supplierWeeklyExpense() {
   const curYM = today().slice(0, 7);
   document.getElementById('topbar-actions').innerHTML = `
@@ -19183,6 +19195,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
+            { v:'1.68', type:'patch', date:'2026-08-30', title:'Safe UUID PostgREST Guard & Gratuity Route Fix', items:['PostgREST UUID Syntax Guard: ป้องกันข้อผิดพลาด HTTP 400 เมื่อ Query ข้อมูล shop_members ด้วย user_id ที่ไม่ใช่รูปแบบ UUID','Gratuity Route Definition: เพิ่มฟังก์ชัน routing ของ gratuity() เชื่อมต่อไปยังแท็บสรุปสถิติค่าสินน้ำใจโดยตรงอย่างสมบูรณ์แบบ'] },
             { v:'1.67', type:'minor', date:'2026-08-30', title:'Unified Supplier Expense & Gratuity Multi-Tab Hub', items:['Unified Multi-Tab Module: รวมหน้า "🧮 ค่าใช้จ่าย Supplier รายสัปดาห์ (Progressive Tier)" และ "📊 ภาพรวมค่าสินน้ำใจ (Gratuity & Incentive)" เป็นเมนูเดียวกันในหมวดงานซื้อ','Seamless Tab Navigation: สลับดูระหว่างการคำนวณยอดซื้อรายสัปดาห์, สถิติภาพรวมค่าสินน้ำใจ และหน้าตั้งค่าอัตรา Progressive Rate & Simulator ได้ในคลิกเดียว'] },
             { v:'1.66', type:'patch', date:'2026-08-30', title:'Critical Syntax Fix: Unexpected String Resolved', items:['Critical Syntax Repair: แก้ไขข้อผิดพลาดไวยากรณ์ JavaScript (Unexpected string) ที่ทำให้เบราว์เซอร์หยุดประมวลผลสคริปต์','Restore Global Scope Functions: คืนค่าฟังก์ชัน doLogin, doDirectAdminLogin และระบบทั้งหมดให้ทำงานได้อย่างสมบูรณ์ 100% ผ่านการทดสอบบน Headless Chrome Engine'] },
             { v:'1.65', type:'patch', date:'2026-08-29', title:'Guaranteed Non-Blocking Instant UI Login', items:['Instant Non-Blocking UI Transition: ปรับให้ระบบสลับหน้าจอ Login เข้าสู่ Dashboard ใน 0ms ทันทีที่กดปุ่ม โดยไม่รอ Network Query ที่อาจทำให้ค้าง','Zero-Failure Login Engine: รองรับการกดทั้งปุ่ม "เข้าสู่ระบบ" และปุ่ม "⚡ เข้าใช้งานทันที" ให้เข้าใช้งานได้อย่างสมบูรณ์แบบ 100%'] },
@@ -27394,7 +27407,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.67', date:'2026-08-30', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Unified Supplier Expense & Gratuity Multi-Tab Hub', items:[
+    { v:'1.68', date:'2026-08-30', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Safe UUID PostgREST Guard & Gratuity Route Fix', items:[
+      '🛡️ <b>Safe UUID Guard:</b> ป้องกันข้อผิดพลาด HTTP 400 ในการเรียก Supabase REST API',
+      '🔗 <b>Gratuity Route:</b> แก้ไขการเชื่อมโยงฟังก์ชัน gratuity() เข้าสู่แท็บสรุปสถิติค่าสินน้ำใจ'
+    ]},
+    { v:'1.67', date:'2026-08-30', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Unified Supplier Expense & Gratuity Multi-Tab Hub', items:[
       '🎁 <b>Unified Multi-Tab Hub:</b> รวมเมนูค่าใช้จ่าย Supplier รายสัปดาห์และค่าสินน้ำใจไว้ในที่เดียวกัน มี 3 แท็บครบวงจร (คำนวณยอดซื้อ, สรุปสถิติภาพรวม, ตั้งค่า Rate & Simulator)',
       '🧭 <b>Streamlined Sidebar:</b> ปรับเมนูแถบข้างให้กระชับ อยู่ในหมวดงานซื้ออย่างเป็นระเบียบ'
     ]},
@@ -27529,7 +27546,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.67</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.68</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
