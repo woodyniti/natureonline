@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.76';
+const CURRENT_APP_VERSION = 'sealthai-v1.77';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.76 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.77 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -16767,6 +16767,45 @@ async function printPO(poId) {
 // ══════════════════════════════════════════════════════════
 
 // ─── MODULE: WEEKLY SUPPLIER EXPENSE PROGRESSIVE ENGINE · v1.61 ──────
+// ── Per-Supplier Weekly Expense Configuration ──
+function getSupplierWeeklyExpenseConfig() {
+  const key = 'supplier_weekly_expense_cfg_' + (currentShop?.id || 'default');
+  const stored = localStorage.getItem(key);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      if (parsed && Array.isArray(parsed.enabled_suppliers)) return parsed;
+    } catch(e) {}
+  }
+  return { enabled_suppliers: [] };
+}
+
+function saveSupplierWeeklyExpenseConfig(cfg) {
+  const key = 'supplier_weekly_expense_cfg_' + (currentShop?.id || 'default');
+  localStorage.setItem(key, JSON.stringify(cfg));
+}
+
+function isSupplierWeeklyExpenseEnabled(supId, supName) {
+  const cfg = getSupplierWeeklyExpenseConfig();
+  if (!cfg.enabled_suppliers || !Array.isArray(cfg.enabled_suppliers)) return false;
+  return cfg.enabled_suppliers.includes(String(supId)) || cfg.enabled_suppliers.includes(String(supName));
+}
+
+function toggleSupplierWeeklyExpenseAgreement(supId, supName, enable) {
+  const cfg = getSupplierWeeklyExpenseConfig();
+  if (!cfg.enabled_suppliers) cfg.enabled_suppliers = [];
+  const targetId = String(supId || supName);
+  const targetName = String(supName || supId);
+  
+  if (enable) {
+    if (!cfg.enabled_suppliers.includes(targetId)) cfg.enabled_suppliers.push(targetId);
+    if (targetName && !cfg.enabled_suppliers.includes(targetName)) cfg.enabled_suppliers.push(targetName);
+  } else {
+    cfg.enabled_suppliers = cfg.enabled_suppliers.filter(x => x !== targetId && x !== targetName);
+  }
+  saveSupplierWeeklyExpenseConfig(cfg);
+}
+
 const DEFAULT_SUPPLIER_PROGRESSIVE_TIERS = [
   { id: 'tier-1', min_amount: 0, max_amount: 2500, rate_percent: 4.0, is_active: true, sort_order: 1 },
   { id: 'tier-2', min_amount: 2500, max_amount: 5000, rate_percent: 2.0, is_active: true, sort_order: 2 },
@@ -16954,42 +16993,70 @@ async function supplierWeeklyExpense() {
       </div>
     </div>
 
-    <!-- Modal: Settings for Progressive Rates -->
+    <!-- Modal: Settings for Progressive Rates & Per-Supplier Enablement -->
     <div class="modal-overlay" id="modal-sw-settings">
-      <div class="modal" style="max-width:740px">
-        <div class="modal-title">⚙️ ตั้งค่า Progressive Rate สำหรับค่าใช้จ่าย Supplier</div>
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px">
-          กำหนดช่วงยอดซื้อและอัตรา % แบบขั้นบันได (Marginal Rate) โดยไม่มีการ Hardcode ในระบบ
+      <div class="modal" style="max-width:780px">
+        <div class="modal-title">⚙️ ตั้งค่าเงินพิเศษ / สินน้ำใจ Supplier รายสัปดาห์</div>
+        
+        <!-- Tab Navigation -->
+        <div style="display:flex;gap:6px;border-bottom:2px solid var(--border);margin-bottom:14px;padding-bottom:2px">
+          <button type="button" class="tab active" id="sw-tab-sups" onclick="switchSWSettingsTab('suppliers')" style="font-weight:700;font-size:13px;padding:8px 14px">
+            🏢 1. เลือก Supplier ที่มีข้อตกลง (<span id="sw-set-active-sup-count">0</span> เจ้า)
+          </button>
+          <button type="button" class="tab" id="sw-tab-rates" onclick="switchSWSettingsTab('rates')" style="font-weight:700;font-size:13px;padding:8px 14px">
+            🧮 2. ตารางอัตรา Progressive Rate (Marginal)
+          </button>
         </div>
 
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-          <div style="display:flex;align-items:center;gap:8px;font-size:13px">
-            <span>รอบสัปดาห์:</span>
-            <select id="sw-set-cycle" style="padding:4px 8px;font-size:12px">
-              <option value="mon_sun">จันทร์ - อาทิตย์ (Monday - Sunday)</option>
-              <option value="sun_sat">อาทิตย์ - เสาร์ (Sunday - Saturday)</option>
-            </select>
+        <!-- TAB 1: PER-SUPPLIER SELECTION -->
+        <div id="sw-tab-content-suppliers" style="display:block">
+          <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;color:#0369a1;line-height:1.6">
+            💡 <b>เลือก Supplier ที่มีข้อตกลง:</b> ระบบจะคำนวณเงินพิเศษ/สินน้ำใจเฉพาะเจ้าที่ถูกติ๊กเลือกไว้เท่านั้น (เจ้าที่ไม่มีข้อตกลงจะมียอดคำนวณเป็น ฿0 และแสดงสถานะเป็น <i>⚪ ไม่มีข้อตกลง</i>)
           </div>
-          <button class="btn btn-sm btn-secondary" onclick="addNewProgressiveTierRow()">➕ เพิ่ม Tier ใหม่</button>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+            <input type="text" id="sw-sup-search-inp" oninput="filterSWSettingsSuppliers(this.value)" placeholder="🔍 พิมพ์ค้นหา Supplier..." style="flex:1;min-width:200px;padding:6px 10px;font-size:13px">
+            <div style="display:flex;gap:6px">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAllSWSuppliers(true)">✓ เลือกทั้งหมด</button>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAllSWSuppliers(false)">✕ ยกเลิกทั้งหมด</button>
+            </div>
+          </div>
+
+          <div id="sw-supplier-checklist-container" style="max-height:280px;overflow-y:auto;border:1.5px solid var(--border2);border-radius:8px;padding:6px;background:#fff;margin-bottom:14px">
+            <!-- Rendered by JS -->
+          </div>
         </div>
 
-        <div class="table-wrap mb-3">
-          <table style="font-size:12.5px" id="sw-tiers-edit-table">
-            <thead>
-              <tr>
-                <th style="width:70px">ลำดับ</th>
-                <th>ช่วงยอดซื้อเริ่มต้น (บาท)</th>
-                <th>ถึงยอดซื้อ (บาท)</th>
-                <th style="width:110px">อัตรา Rate (%)</th>
-                <th style="width:70px;text-align:center">เปิดใช้</th>
-                <th style="width:60px"></th>
-              </tr>
-            </thead>
-            <tbody id="sw-tiers-edit-tbody"></tbody>
-          </table>
-        </div>
+        <!-- TAB 2: PROGRESSIVE RATES FORMULA -->
+        <div id="sw-tab-content-rates" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px">
+              <span>รอบสัปดาห์:</span>
+              <select id="sw-set-cycle" style="padding:4px 8px;font-size:12px">
+                <option value="mon_sun">จันทร์ - อาทิตย์ (Monday - Sunday)</option>
+                <option value="sun_sat">อาทิตย์ - เสาร์ (Sunday - Saturday)</option>
+              </select>
+            </div>
+            <button class="btn btn-sm btn-secondary" onclick="addNewProgressiveTierRow()">➕ เพิ่ม Tier ใหม่</button>
+          </div>
 
-        <!-- Live Calculation Simulator / Validator -->
+          <div class="table-wrap mb-3">
+            <table style="font-size:12.5px" id="sw-tiers-edit-table">
+              <thead>
+                <tr>
+                  <th style="width:70px">ลำดับ</th>
+                  <th>ช่วงยอดซื้อเริ่มต้น (บาท)</th>
+                  <th>ถึงยอดซื้อ (บาท)</th>
+                  <th style="width:110px">อัตรา Rate (%)</th>
+                  <th style="width:70px;text-align:center">เปิดใช้</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody id="sw-tiers-edit-tbody"></tbody>
+            </table>
+          </div>
+
+          <!-- Live Calculation Simulator / Validator -->
         <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:12px;margin-bottom:14px">
           <div style="font-weight:700;font-size:13px;color:#1e293b;margin-bottom:6px">
             🧪 ทดสอบคำนวณสด (Live Calculation Simulator)
@@ -17100,15 +17167,27 @@ async function loadWeeklySupplierExpenses() {
     groups[groupKey].net_purchase_amount += poNet;
   });
 
-  // Calculate Progressive & Merge Saved States
+  // Calculate Progressive & Merge Saved States (Per-Supplier Enabled Check)
   weeklySupplierData = Object.values(groups).map(g => {
     const saved = savedRecords[g.id] || {};
+    const isAgreementEnabled = isSupplierWeeklyExpenseEnabled(g.supplier_id, g.supplier_name);
     const effectiveTiers = saved.calculation_snapshot || tiers;
-    const calcResult = calculateProgressiveSupplierExpense(g.net_purchase_amount, effectiveTiers);
+    
+    // If supplier is NOT enabled for weekly expense, calculation is 0
+    const calcResult = isAgreementEnabled 
+      ? calculateProgressiveSupplierExpense(g.net_purchase_amount, effectiveTiers)
+      : { total_expense: 0, tier_breakdown: [] };
     
     const topUp = Number(saved.top_up_amount || 0);
     const calculatedExpense = calcResult.total_expense;
     const finalExpense = calculatedExpense + topUp;
+
+    let defaultStatus = 'draft';
+    if (!isAgreementEnabled && !topUp) {
+      defaultStatus = 'no_agreement';
+    } else if (calculatedExpense > 0 || topUp > 0) {
+      defaultStatus = 'calculated';
+    }
 
     return {
       ...g,
@@ -17121,7 +17200,8 @@ async function loadWeeklySupplierExpenses() {
       top_up_note: saved.top_up_note || '',
       final_expense_amount: finalExpense,
       tier_breakdown: calcResult.tier_breakdown,
-      status: saved.status || (calculatedExpense > 0 ? 'calculated' : 'draft')
+      is_agreement_enabled: isAgreementEnabled,
+      status: saved.status || defaultStatus
     };
   });
 
@@ -17215,6 +17295,7 @@ function renderWeeklySupplierTable(rows) {
   }
 
   const statusBadges = {
+    no_agreement: '<span class="badge badge-gray" style="background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1">⚪ ไม่มีข้อตกลง</span>',
     draft: '<span class="badge badge-gray">📝 Draft</span>',
     calculated: '<span class="badge badge-blue">🧮 คำนวณแล้ว</span>',
     approved: '<span class="badge badge-amber">✅ Approved</span>',
@@ -17370,7 +17451,28 @@ function viewWeeklySupplierDetail(id) {
   const contentEl = document.getElementById('sw-detail-content');
   if (!contentEl) return;
 
-  contentEl.innerHTML = `
+  const isEnabled = row.is_agreement_enabled;
+  const agreementBanner = !isEnabled ? `
+    <div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-weight:700;color:#991b1b;font-size:13px">⚪ Supplier นี้ยังไม่ได้เปิดใช้ข้อตกลงเงินพิเศษ / สินน้ำใจ</div>
+        <div style="font-size:11.5px;color:#b91c1c;margin-top:2px">ยอดคำนวณตามสูตรจึงเป็น ฿0 (แต่ยังสามารถใส่ Top Up พิเศษได้ตามปกติ)</div>
+      </div>
+      <button class="btn btn-sm btn-primary" onclick="quickToggleWeeklySupplierAgreement('${escapeHTML(row.supplier_id)}', '${escapeHTML(row.supplier_name)}', true)" style="background:#16a34a;border-color:#15803d;font-weight:700;font-size:11.5px">
+        ⚡ เปิดใช้ข้อตกลงให้เจ้านี้
+      </button>
+    </div>` : `
+    <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-weight:700;color:#15803d;font-size:13px">🟢 เปิดใช้งานข้อตกลงเงินพิเศษรายสัปดาห์</div>
+        <div style="font-size:11.5px;color:#166534;margin-top:2px">คำนวณยอดเงินพิเศษตามสูตรขั้นบันได (Progressive Marginal Rate) อัตโนมัติ</div>
+      </div>
+      <button class="btn btn-sm btn-secondary" onclick="quickToggleWeeklySupplierAgreement('${escapeHTML(row.supplier_id)}', '${escapeHTML(row.supplier_name)}', false)" style="color:#b91c1c;border-color:#fca5a5;font-weight:600;font-size:11px">
+        ✕ ปิดการคำนวณ
+      </button>
+    </div>`;
+
+  contentEl.innerHTML = agreementBanner + `
     <!-- Top Summary Banner -->
     <div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;border-radius:8px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div>
@@ -17669,6 +17771,105 @@ async function markPaidWeeklySupplierExpense(id) {
 }
 
 // ── SETTINGS MODAL & TIER MANAGEMENT ──
+
+function switchSWSettingsTab(tab) {
+  const tSups = document.getElementById('sw-tab-sups');
+  const tRates = document.getElementById('sw-tab-rates');
+  const cSups = document.getElementById('sw-tab-content-suppliers');
+  const cRates = document.getElementById('sw-tab-content-rates');
+  
+  if (tab === 'suppliers') {
+    if (tSups) tSups.classList.add('active');
+    if (tRates) tRates.classList.remove('active');
+    if (cSups) cSups.style.display = 'block';
+    if (cRates) cRates.style.display = 'none';
+  } else {
+    if (tSups) tSups.classList.remove('active');
+    if (tRates) tRates.classList.add('active');
+    if (cSups) cSups.style.display = 'none';
+    if (cRates) cRates.style.display = 'block';
+    runLiveTierSimulation();
+  }
+}
+
+function renderSWSettingsSupplierList() {
+  const container = document.getElementById('sw-supplier-checklist-container');
+  if (!container) return;
+
+  const cfg = getSupplierWeeklyExpenseConfig();
+  const enabledSet = new Set(cfg.enabled_suppliers || []);
+
+  // Collect unique suppliers from allSuppliers and recent POs
+  const supMap = new Map();
+  (allSuppliers || []).forEach(s => {
+    if (s && s.name) supMap.set(String(s.id), { id: String(s.id), name: s.name, code: s.supplier_code || '' });
+  });
+  (weeklySupplierData || []).forEach(w => {
+    if (w && w.supplier_name && !supMap.has(String(w.supplier_id))) {
+      supMap.set(String(w.supplier_id), { id: String(w.supplier_id), name: w.supplier_name, code: '' });
+    }
+  });
+
+  const supList = [...supMap.values()].sort((a, b) => a.name.localeCompare(b.name, 'th'));
+  
+  // Update count badge
+  const activeCount = supList.filter(s => enabledSet.has(s.id) || enabledSet.has(s.name)).length;
+  const countEl = document.getElementById('sw-set-active-sup-count');
+  if (countEl) countEl.textContent = activeCount;
+
+  if (!supList.length) {
+    container.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text3);font-size:12.5px">ยังไม่มีข้อมูล Supplier ในระบบ</div>';
+    return;
+  }
+
+  container.innerHTML = supList.map(s => {
+    const isChecked = enabledSet.has(s.id) || enabledSet.has(s.name);
+    return `
+      <label class="sw-sup-chk-item" data-name="${escapeHTML(s.name.toLowerCase())}" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background 0.12s;border-radius:6px" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+          <input type="checkbox" class="sw-sup-chk" value="${escapeHTML(s.id)}" data-supname="${escapeHTML(s.name)}" ${isChecked ? 'checked' : ''} onchange="updateSWSettingsActiveCount()" style="width:17px;height:17px;cursor:pointer">
+          <div style="min-width:0">
+            <div style="font-weight:700;color:#0f172a;font-size:13px">${escapeHTML(s.name)}</div>
+            ${s.code ? `<div style="font-size:11px;color:var(--text3)">รหัส: ${escapeHTML(s.code)}</div>` : ''}
+          </div>
+        </div>
+        <div>
+          ${isChecked 
+            ? '<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:11px;font-weight:700">✓ เปิดคำนวณเงินพิเศษ</span>'
+            : '<span class="badge" style="background:#f1f5f9;color:#64748b;font-size:11px">⚪ ไม่มีข้อตกลง</span>'}
+        </div>
+      </label>
+    `;
+  }).join('');
+}
+
+function updateSWSettingsActiveCount() {
+  const chks = [...document.querySelectorAll('.sw-sup-chk')];
+  const activeCount = chks.filter(c => c.checked).length;
+  const countEl = document.getElementById('sw-set-active-sup-count');
+  if (countEl) countEl.textContent = activeCount;
+}
+
+function filterSWSettingsSuppliers(q) {
+  const term = (q || '').trim().toLowerCase();
+  document.querySelectorAll('.sw-sup-chk-item').forEach(el => {
+    const name = el.getAttribute('data-name') || '';
+    el.style.display = (!term || name.includes(term)) ? 'flex' : 'none';
+  });
+}
+
+function toggleAllSWSuppliers(check) {
+  document.querySelectorAll('.sw-sup-chk').forEach(c => { c.checked = check; });
+  updateSWSettingsActiveCount();
+}
+
+function quickToggleWeeklySupplierAgreement(supId, supName, enable) {
+  toggleSupplierWeeklyExpenseAgreement(supId, supName, enable);
+  toast((enable ? 'เปิดใช้งาน' : 'ปิด') + ' ข้อตกลงเงินพิเศษสำหรับ ' + supName + ' เรียบร้อยแล้ว ✓', 'success');
+  closeModal('modal-sw-detail');
+  loadWeeklySupplierExpenses();
+}
+
 function openSupplierRateSettingsModal() {
   const tiers = getSupplierProgressiveTiers();
   const cycle = getSupplierExpenseWeekCycle();
@@ -17677,7 +17878,8 @@ function openSupplierRateSettingsModal() {
   if (cycleSelect) cycleSelect.value = cycle;
 
   renderProgressiveTiersEditTable(tiers);
-  runLiveTierSimulation();
+  renderSWSettingsSupplierList();
+  switchSWSettingsTab('suppliers');
   openModal('modal-sw-settings');
 }
 
@@ -17813,8 +18015,18 @@ function saveProgressiveRateSettings() {
   saveSupplierProgressiveTiers(tiers);
   saveSupplierExpenseWeekCycle(cycle);
 
+  // Save Per-Supplier Active List
+  const selectedSupIds = [];
+  document.querySelectorAll('.sw-sup-chk:checked').forEach(chk => {
+    const val = chk.value;
+    const sname = chk.getAttribute('data-supname');
+    if (val && !selectedSupIds.includes(val)) selectedSupIds.push(val);
+    if (sname && !selectedSupIds.includes(sname)) selectedSupIds.push(sname);
+  });
+  saveSupplierWeeklyExpenseConfig({ enabled_suppliers: selectedSupIds });
+
   closeModal('modal-sw-settings');
-  toast('บันทึกตาราง Progressive Rate และรอบสัปดาห์เรียบร้อยแล้ว ✓', 'success');
+  toast('บันทึกการตั้งค่า Supplier และตาราง Progressive Rate เรียบร้อยแล้ว ✓', 'success');
   loadWeeklySupplierExpenses();
 }
 
@@ -28086,7 +28298,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.76</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.77</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
