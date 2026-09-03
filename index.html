@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.80';
+const CURRENT_APP_VERSION = 'sealthai-v1.81';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.80 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.81 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -6339,11 +6339,17 @@ function itemNetEdit(it) {
 let editProdList = []; // โหลดครั้งเดียวตอน viewOrder
 
 async function loadEditProdList() {
-  if (editProdList.length) return;
+  if (editProdList && editProdList.length) return;
+  if (allProducts && allProducts.length) {
+    editProdList = allProducts;
+    return;
+  }
   const { data } = await sb.from('products')
-    .select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name')
+    .select('*')
     .eq('shop_id', currentShop.id)
-    .eq('active',true).order('name').limit(50000);
+    .eq('active', true)
+    .order('name')
+    .limit(10000);
   editProdList = data || [];
 }
 
@@ -6388,81 +6394,95 @@ function renderEditProdSearch(rowIdx) {
 }
 
 function searchEditProd(rowIdx, q) {
-  const dd = document.getElementById('ep-dd-'+rowIdx);
+  const ddid = 'ep-dd-' + rowIdx;
+  const inpid = 'ep-inp-' + rowIdx;
+  const dd = document.getElementById(ddid);
+  const inp = document.getElementById(inpid);
   if (!dd) return;
-  const filtered = q.trim()
-    ? editProdList.filter(p => wcProdMatch(p, q.trim()))
-    : editProdList.slice(0,30);
-  if (!filtered.length) { dd.style.display='none'; return; }
-  const elDD = dd;
-  elDD.innerHTML = '';
-  filtered.forEach(p => {
-    const div = document.createElement('div');
-    div.style.cssText = 'padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0';
-    // แสดง SKU + ชื่อ
-    const skuLabel = p.sku || p.supplier_sku || '';
-    div.innerHTML = '';
-    const ns = document.createElement('span');
-    ns.textContent = p.name;
-    ns.style.fontWeight = '500';
-    div.appendChild(ns);
-    if (skuLabel) {
-      const ss = document.createElement('span');
-      ss.textContent = ' · ' + skuLabel;
-      ss.style.cssText = 'color:var(--blue);font-size:11px';
-      div.appendChild(ss);
-    }
-    div.onmouseover = () => div.style.background='#f0f7ff';
-    div.onmouseout  = () => div.style.background='';
-    div.onmousedown = (e) => { e.preventDefault(); selectEditProd(rowIdx, p.id); };
-    elDD.appendChild(div);
-  });
+
+  const prods = (editProdList && editProdList.length) ? editProdList : ((allProducts && allProducts.length) ? allProducts : (productList || []));
+  const ql = (q || '').trim().toLowerCase();
+
+  const filtered = ql
+    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
+    : prods.slice(0, 40);
+
+  let html = '';
+  if (!filtered.length) {
+    html = `<div style="padding:10px 12px;font-size:12px;color:var(--text3);text-align:center">
+      ${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '"' : 'พิมพ์เพื่อค้นหาสินค้า'}
+    </div>`;
+  } else {
+    html = filtered.map(p => {
+      const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+      const stockBadge = stockVal > 0
+        ? `<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
+        : `<span style="background:#fee2e2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
+
+      const codes = [];
+      if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
+      if (p.supplier_sku || p.supplier_code) codes.push('Code: ' + escapeHTML(p.supplier_sku || p.supplier_code));
+      if (p.part_no) codes.push('Part: ' + escapeHTML(p.part_no));
+      if (p.sell_price) codes.push('฿' + fmtB(p.sell_price));
+      const codeHtml = codes.length ? `<div style="font-size:10px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
+
+      return `
+        <div onclick="selectEditProd(${rowIdx}, '${p.id}'); event.stopPropagation();"
+          style="padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
+          onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+          <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <div style="font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
+            ${codeHtml}
+          </div>
+          ${stockBadge}
+        </div>`;
+    }).join('');
+  }
+
+  // Quick Add Button inside dropdown
+  const quickAddHtml = `
+    <div onclick="openQuickProductModal('edit_order', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+      style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:11.5px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
+      onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+      <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
+      <span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>
+    </div>`;
+  html += quickAddHtml;
+
+  dd.innerHTML = html;
   dd.style.display = 'block';
-  // close on blur
-  const inp = document.getElementById('ep-inp-'+rowIdx);
-  if (inp) inp.onblur = () => setTimeout(() => {
-    dd.style.display = 'none';
-    const val = inp.value.trim();
-    if (!val) {
-      editItems[rowIdx].product_id = null;
-      renderEditItems();
-      return;
+
+  // Safe outside click dismissal
+  const close = e => {
+    if (!dd.contains(e.target) && e.target !== inp) {
+      dd.style.display = 'none';
+      document.removeEventListener('click', close);
     }
-    const matched = editProdList.find(x => 
-      x.name.toLowerCase() === val.toLowerCase() || 
-      (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
-      (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-      (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
-    );
-    if (matched) {
-      if (editItems[rowIdx].product_id !== matched.id) {
-        editItems[rowIdx].product_id = matched.id;
-        editItems[rowIdx].product_name = matched.name;
-        editItems[rowIdx].sell_price = matched.sell_price;
-        editItems[rowIdx].cost_per_unit = matched.current_cost;
-        inp.value = matched.name;
-        renderEditItems();
-      }
-    } else {
-      editItems[rowIdx].product_id = null;
-      renderEditItems();
-    }
-  }, 250);
+  };
+  setTimeout(() => document.addEventListener('click', close), 100);
 }
 
 function selectEditProd(rowIdx, productId) {
-  const p = editProdList.find(x => x.id === productId);
-  if (!p) return;
-  editItems[rowIdx].product_id   = p.id;
+  const prods = (editProdList && editProdList.length) ? editProdList : ((allProducts && allProducts.length) ? allProducts : (productList || []));
+  const p = prods.find(x => x.id === productId);
+  if (!p || !editItems[rowIdx]) return;
+
+  const cost = getProductOrderCost(p);
+
+  editItems[rowIdx].product_id = p.id;
   editItems[rowIdx].product_name = p.name;
-  editItems[rowIdx].sell_price   = p.sell_price;
-  editItems[rowIdx].cost_per_unit = p.current_cost;
-  const inp = document.getElementById('ep-inp-'+rowIdx);
+  if (!editItems[rowIdx].sell_price || Number(editItems[rowIdx].sell_price) === 0) {
+    editItems[rowIdx].sell_price = Number(p.sell_price) || 0;
+  }
+  editItems[rowIdx].cost_per_unit = cost;
+
+  const inp = document.getElementById('ep-inp-' + rowIdx);
   if (inp) inp.value = p.name;
-  const dd = document.getElementById('ep-dd-'+rowIdx);
+  const dd = document.getElementById('ep-dd-' + rowIdx);
   if (dd) dd.style.display = 'none';
+
+  renderEditItems();
   updateEditTotal();
-  renderEditItems(); // re-render เพื่ออัพเดทราคา/ส่วนลด
 }
 
 function renderEditItems() {
@@ -28329,6 +28349,10 @@ async function saveQuickProduct() {
       }
       renderOrderItems();
       updateOrderSummary();
+    } else if (ctx.type === 'edit_order') {
+      if (ctx.rowIdx >= 0 && editItems[ctx.rowIdx]) {
+        selectEditProd(ctx.rowIdx, newProd.id);
+      }
     } else if (ctx.type === 'stock') {
       if (ctx.rowIdx >= 0 && stockRows[ctx.rowIdx]) {
         selectStockProduct(ctx.rowIdx, newProd.id, newProd.name);
@@ -28525,7 +28549,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.80</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.81</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
