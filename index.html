@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.78';
+const CURRENT_APP_VERSION = 'sealthai-v1.79';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.78 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.79 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -5193,6 +5193,20 @@ async function quickUpdateStatus(orderId, status, selEl) {
 }
 
 let orderItems = [];
+// ── Helper: ดึงต้นทุนสินค้าสำหรับออเดอร์ (ลำดับ: ต้นทุนเฉลี่ย -> ราคาซื้อ -> 0) ──
+function getProductOrderCost(p) {
+  if (!p) return 0;
+  // 1. ลองดึงต้นทุนเฉลี่ย (current_cost / avg_cost / cost_avg)
+  const avgCost = Number(p.current_cost !== undefined && p.current_cost !== null ? p.current_cost : (p.avg_cost !== undefined ? p.avg_cost : (p.cost_avg || 0)));
+  if (avgCost > 0) return avgCost;
+
+  // 2. ถ้ายังไม่มี ให้ดึงราคาซื้อ (purchase_price / buy_price / cost)
+  const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null ? p.purchase_price : (p.buy_price !== undefined ? p.buy_price : (p.cost || 0)));
+  if (buyPrice > 0) return buyPrice;
+
+  return 0;
+}
+
 let productList = [];
 let editingPOId = null;
 let editingPONo = null;
@@ -5265,7 +5279,7 @@ async function importQuoteToOrder(qtId) {
     return {
       product_id: it.product_id || '__custom__', product_name: it.product_name || product?.name || '',
       qty: Number(it.qty)||1, sell_price: Number(it.sell_price)||0,
-      cost_per_unit: Number(product?.current_cost)||0,
+      cost_per_unit: getProductOrderCost(product),
       discount: Number(it.discount)||0, discount_type: it.discount_type||'amount'
     };
   });
@@ -5693,7 +5707,7 @@ function handleOrderProdBlur(rowIdx, val) {
         orderItems[rowIdx].product_id = matched.id;
         orderItems[rowIdx].product_name = matched.name;
         if (!orderItems[rowIdx].sell_price) orderItems[rowIdx].sell_price = Number(matched.sell_price) || 0;
-        orderItems[rowIdx].cost_per_unit = Number(matched.current_cost) || 0;
+        orderItems[rowIdx].cost_per_unit = getProductOrderCost(matched);
       } else if (orderItems[rowIdx]) {
         orderItems[rowIdx].product_name = v;
         if (!orderItems[rowIdx].product_id) orderItems[rowIdx].product_id = '__custom__';
@@ -5708,12 +5722,14 @@ function selectNewOrderProductById(rowIdx, productId) {
   const p = prods.find(x => x.id === productId);
   if (!p || !orderItems[rowIdx]) return;
 
+  const cost = getProductOrderCost(p);
+
   orderItems[rowIdx] = {
     product_id: p.id,
     product_name: p.name,
     qty: orderItems[rowIdx]?.qty || 1,
     sell_price: Number(p.sell_price) || 0,
-    cost_per_unit: Number(p.current_cost) || 0,
+    cost_per_unit: cost,
     discount: Number(orderItems[rowIdx]?.discount) || 0,
     discount_type: orderItems[rowIdx]?.discount_type || 'amount'
   };
@@ -5806,10 +5822,19 @@ function renderOrderItems() {
     if (item.product_id && item.product_id !== '__custom__') {
       const stockBadge = stockVal !== null
         ? (stockVal > 0 
-            ? `<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:4px">📦 สต๊อกคงเหลือในร้าน: <b>${fmt(stockVal)}</b> ชิ้น</span>` 
-            : `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:4px">⚠️ สต๊อกหมด (0 ชิ้น)</span>`)
+            ? `<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:4px">📦 สต๊อก: <b>${fmt(stockVal)}</b> ชิ้น</span>` 
+            : `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:4px">⚠️ สต๊อกหมด (0)</span>`)
         : '';
-      statusHelp.innerHTML = `<span style="color:#10b981;font-weight:600">✓ เชื่อมโยงคลังสินค้า</span> ${stockBadge}`;
+      
+      const costSourceLabel = linkedProd
+        ? (Number(linkedProd.current_cost) > 0 
+            ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:12px;border:1px solid #bfdbfe;font-weight:600">💰 ต้นทุนเฉลี่ย: ฿${fmtB(item.cost_per_unit)}</span>`
+            : (Number(linkedProd.purchase_price) > 0 
+                ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600">🏷️ ราคาซื้อ: ฿${fmtB(item.cost_per_unit)}</span>`
+                : `<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:12px;border:1px solid #cbd5e1">ต้นทุน: ฿0</span>`))
+        : '';
+
+      statusHelp.innerHTML = `<span style="color:#10b981;font-weight:600">✓ เชื่อมโยงคลัง</span> ${stockBadge} ${costSourceLabel}`;
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่ตัดสต๊อก)</span>';
     }
@@ -5938,7 +5963,7 @@ function selectProduct(idx, productId) {
     orderItems[idx] = { product_id:'__custom__', product_name:'', qty:1, sell_price:0, cost_per_unit:0 };
   } else {
     const p = productList.find(x=>x.id===productId);
-    if (p) orderItems[idx] = { product_id:p.id, product_name:p.name, qty:1, sell_price:p.sell_price, cost_per_unit:p.current_cost, discount:0, discount_type:'amount' };
+    if (p) orderItems[idx] = { product_id:p.id, product_name:p.name, qty:1, sell_price:Number(p.sell_price)||0, cost_per_unit:getProductOrderCost(p), discount:0, discount_type:'amount' };
     else orderItems[idx].product_id = productId;
   }
   renderOrderItems();
@@ -6077,6 +6102,17 @@ async function saveOrder() {
   const billDisc = Number(document.getElementById('o-bill-disc')?.value||0);
   const billDiscType = document.getElementById('o-bill-disc-type')?.value || 'amount';
   const { subtotal, bd, shippingFee, grand } = getOrderSummary();
+  
+  // Guarantee cost_per_unit is populated from average cost / purchase price
+  orderItems.forEach(item => {
+    if (item.product_id && item.product_id !== '__custom__' && !(Number(item.cost_per_unit) > 0)) {
+      const prod = (productList||[]).find(p => p.id === item.product_id) || (allProducts||[]).find(p => p.id === item.product_id);
+      if (prod) {
+        item.cost_per_unit = getProductOrderCost(prod);
+      }
+    }
+  });
+
   const totalCost = orderItems.reduce((s,it) => s + Number(it.qty||1)*Number(it.cost_per_unit||0), 0);
 
   const orderPayload = {
@@ -28398,7 +28434,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.78</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.79</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
@@ -28498,3 +28534,15 @@ function switchCSPreviewTab(tab) {
 </div>
 </body>
 </html>
+
+
+async function convertQuotationToOrder(qtId) {
+  if (!qtId) return;
+  await showPage('orders');
+  await openNewOrder();
+  const sel = document.getElementById('o-quote-source');
+  if (sel) {
+    sel.value = qtId;
+    await importQuoteToOrder(qtId);
+  }
+}
