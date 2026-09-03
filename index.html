@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.74';
+const CURRENT_APP_VERSION = 'sealthai-v1.75';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.74 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.75 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -5202,10 +5202,10 @@ let orderSourceQuoteId = null;
 async function openNewOrder() {
   orderItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, cost_per_unit: 0, discount: 0, discount_type: 'amount' }];
   const [prodRes] = await Promise.all([
-    sb.from('products').select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name').eq('shop_id', currentShop.id).eq('active',true).order('name').limit(50000),
+    (allProducts && allProducts.length) ? Promise.resolve({ data: allProducts }) : sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true).order('name'),
     loadOrderCustomerList()
   ]);
-  productList = prodRes.data || [];
+  productList = (prodRes && prodRes.data && prodRes.data.length) ? prodRes.data : (allProducts || []);
   orderSourceQuoteId = null;
   renderOrderItems();
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
@@ -5555,168 +5555,159 @@ function updateOrderSummary() {
 
 // ── New order product search ────────────────────────────
 function newOrderProdSearch(rowIdx) {
-  const inp = document.createElement('input');
-  inp.type = 'text'; inp.autocomplete = 'off';
-  inp.placeholder = '🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด...';
-  inp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box';
-  
+  const pid = 'o-prod-inp-' + rowIdx;
+  const ddid = 'o-prod-dd-' + rowIdx;
   const it = orderItems[rowIdx];
-  const linkedProd = it?.product_id && it.product_id !== '__custom__' ? (productList||[]).find(p => p.id === it.product_id) : null;
-  inp.value = linkedProd?.name || it?.product_name || '';
+  const linkedProd = it?.product_id && it.product_id !== '__custom__' ? (productList||allProducts||[]).find(p => p.id === it.product_id) : null;
+  const val = (linkedProd?.name || it?.product_name || '').replace(/"/g, '&quot;');
 
-  const dd = document.createElement('div');
-  dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:600;background:#fff;border:1.5px solid var(--border2);border-radius:8px;max-height:250px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.18)';
+  return `
+    <div style="position:relative;flex:2;min-width:140px">
+      <input id="${pid}" type="text" autocomplete="off" value="${val}"
+        placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด..."
+        style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box"
+        oninput="searchOrderProduct(${rowIdx}, this.value)"
+        onfocus="searchOrderProduct(${rowIdx}, this.value)"
+        onblur="handleOrderProdBlur(${rowIdx}, this.value)">
+      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:900;
+        background:#fff;border:1.5px solid var(--border2);border-radius:8px;max-height:260px;overflow-y:auto;
+        box-shadow:0 8px 24px rgba(0,0,0,0.18)"></div>
+    </div>`;
+}
 
-  const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:relative;flex:2;min-width:140px';
-  wrap.appendChild(inp); wrap.appendChild(dd);
+let _orderSearchTimer = null;
 
-  let searchTimeout = null;
+function searchOrderProduct(rowIdx, q) {
+  const ddid = 'o-prod-dd-' + rowIdx;
+  const dd = document.getElementById(ddid);
+  if (!dd) return;
 
-  function renderDropdownResults(results, ql) {
-    dd.innerHTML = '';
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const ql = (q || '').trim();
+
+  function renderRows(results) {
     if (!results.length) {
-      const emptyDiv = document.createElement('div');
-      emptyDiv.style.cssText = 'padding:10px 12px;font-size:12px;color:var(--text3);text-align:center';
-      emptyDiv.textContent = ql ? 'ไม่พบสินค้า "' + ql + '" ในคลัง' : 'พิมพ์เพื่อค้นหาสินค้า';
-      dd.appendChild(emptyDiv);
+      dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--text3);text-align:center">
+        ${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '"' : 'พิมพ์เพื่อค้นหาสินค้า'}
+      </div>`;
     } else {
-      results.forEach(p => {
-        const div = document.createElement('div');
-        div.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px;transition:background 0.12s';
-        
-        const leftDiv = document.createElement('div');
-        leftDiv.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-        
-        const nameSpan = document.createElement('span');
-        nameSpan.textContent = p.name;
-        nameSpan.style.fontWeight = '600';
-        nameSpan.style.color = '#0f172a';
-        leftDiv.appendChild(nameSpan);
+      dd.innerHTML = results.map(p => {
+        const escapedName = (p.name || '').replace(/\/g, '\').replace(/'/g, "\'");
+        const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+        const stockBadge = stockVal > 0
+          ? `<span style="background:#dcfce7;color:#15803d;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
+          : `<span style="background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
 
         const codes = [];
-        if (p.sku) codes.push('SKU: ' + p.sku);
-        if (p.supplier_sku || p.supplier_code) codes.push('Supplier: ' + (p.supplier_sku || p.supplier_code));
-        if (p.part_no) codes.push('Part: ' + p.part_no);
-        if (p.brand) codes.push(p.brand);
+        if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
+        if (p.supplier_sku || p.supplier_code) codes.push('Code: ' + escapeHTML(p.supplier_sku || p.supplier_code));
+        if (p.part_no) codes.push('Part: ' + escapeHTML(p.part_no));
         if (p.sell_price) codes.push('฿' + fmtB(p.sell_price));
-        if (codes.length) {
-          const codeDiv = document.createElement('div');
-          codeDiv.style.cssText = 'font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:6px;flex-wrap:wrap';
-          codeDiv.innerHTML = codes.map(c => `<span style="background:var(--bg2);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">${escapeHTML(c)}</span>`).join('');
-          leftDiv.appendChild(codeDiv);
-        }
-        div.appendChild(leftDiv);
+        const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
 
-        // Stock Pill Badge
-        const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
-        const stockBadge = document.createElement('span');
-        if (stockVal > 0) {
-          stockBadge.style.cssText = 'background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap';
-          stockBadge.textContent = 'สต๊อก ' + fmt(stockVal) + ' ชิ้น';
-        } else {
-          stockBadge.style.cssText = 'background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap';
-          stockBadge.textContent = 'หมด (0 ชิ้น)';
-        }
-        div.appendChild(stockBadge);
-
-        div.onmouseover = () => div.style.background = '#f0f7ff';
-        div.onmouseout  = () => div.style.background = '';
-        div.onmousedown = (e) => {
-          e.preventDefault();
-          selectNewOrderProduct(rowIdx, p);
-        };
-        dd.appendChild(div);
-      });
+        return `
+          <div onclick="selectNewOrderProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
+            style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
+            onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+            <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              <div style="font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
+              ${codeHtml}
+            </div>
+            ${stockBadge}
+          </div>`;
+      }).join('');
     }
 
     // Quick Add Button inside dropdown
-    const quickAddDiv = document.createElement('div');
-    quickAddDiv.style.cssText = 'padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between;transition:background 0.15s';
-    quickAddDiv.innerHTML = `<span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span><span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>`;
-    quickAddDiv.onmouseover = () => quickAddDiv.style.background = '#dcfce7';
-    quickAddDiv.onmouseout = () => quickAddDiv.style.background = '#f0fdf4';
-    quickAddDiv.onmousedown = (e) => {
-      e.preventDefault();
-      dd.style.display = 'none';
-      openQuickProductModal('order', rowIdx, ql);
-    };
-    dd.appendChild(quickAddDiv);
+    const quickAddHtml = `
+      <div onclick="openQuickProductModal('order', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+        style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
+        onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+        <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
+        <span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>
+      </div>`;
+    dd.innerHTML += quickAddHtml;
     dd.style.display = 'block';
   }
 
-  function doSearch(q) {
-    const ql = (q || '').trim();
-    
-    // 1. Local filter in memory with wcProdMatch
-    let results = ql
-      ? (productList || []).filter(p => wcProdMatch(p, ql)).slice(0, 40)
-      : (productList || []).slice(0, 30);
-    
-    renderDropdownResults(results, ql);
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
+    : prods.slice(0, 30);
+  
+  renderRows(localFiltered);
 
-    // 2. Server-side async fallback search if typed query
-    if (ql.length >= 2) {
-      if (searchTimeout) clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(async () => {
-        try {
-          const { data, error } = await sb.from('products')
-            .select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name')
-            .eq('shop_id', currentShop.id)
-            .eq('active', true)
-            .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
-            .limit(40);
-          
-          if (data && data.length) {
-            // Merge into productList
-            data.forEach(dp => {
-              if (!productList.some(ep => ep.id === dp.id)) {
-                productList.push(dp);
-              }
-            });
-            // Re-filter with updated productList
-            const updatedResults = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
-            renderDropdownResults(updatedResults, ql);
-          }
-        } catch(err) {}
-      }, 200);
-    }
+  // 2. Server-side async fallback search if typed query
+  if (ql.length >= 2) {
+    if (_orderSearchTimer) clearTimeout(_orderSearchTimer);
+    _orderSearchTimer = setTimeout(async () => {
+      try {
+        const { data } = await sb.from('products')
+          .select('*')
+          .eq('shop_id', currentShop.id)
+          .eq('active', true)
+          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .limit(40);
+        
+        if (data && data.length) {
+          data.forEach(dp => {
+            if (!productList.some(ep => ep.id === dp.id)) productList.push(dp);
+            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
+          });
+          const updated = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+          renderRows(updated);
+        }
+      } catch(e) {}
+    }, 250);
   }
 
-  inp.oninput = () => doSearch(inp.value);
-  inp.onfocus = () => doSearch(inp.value);
-  inp.onblur  = () => setTimeout(() => {
-    dd.style.display = 'none';
-    const val = inp.value.trim();
-    if (!val) {
-      orderItems[rowIdx].product_id = null;
-      orderItems[rowIdx].product_name = '';
+  // Close on outside click
+  const close = e => {
+    if (!dd.contains(e.target) && e.target.id !== ('o-prod-inp-' + rowIdx)) {
+      dd.style.display = 'none';
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 100);
+}
+
+function handleOrderProdBlur(rowIdx, val) {
+  setTimeout(() => {
+    const dd = document.getElementById('o-prod-dd-' + rowIdx);
+    if (dd) dd.style.display = 'none';
+    const v = (val || '').trim();
+    if (!v) {
+      if (orderItems[rowIdx]) {
+        orderItems[rowIdx].product_id = null;
+        orderItems[rowIdx].product_name = '';
+      }
     } else {
-      const matched = (productList || []).find(x => 
-        x.name.toLowerCase() === val.toLowerCase() || 
-        (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
-        (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-        (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
+      const prods = (productList && productList.length) ? productList : (allProducts || []);
+      const matched = prods.find(x =>
+        x.name.toLowerCase() === v.toLowerCase() ||
+        (x.sku && x.sku.toLowerCase() === v.toLowerCase()) ||
+        (x.supplier_sku && x.supplier_sku.toLowerCase() === v.toLowerCase()) ||
+        (x.part_no && x.part_no.toLowerCase() === v.toLowerCase())
       );
-      if (matched) {
+      if (matched && orderItems[rowIdx]) {
         orderItems[rowIdx].product_id = matched.id;
         orderItems[rowIdx].product_name = matched.name;
-        if (!orderItems[rowIdx].sell_price) orderItems[rowIdx].sell_price = matched.sell_price;
-        orderItems[rowIdx].cost_per_unit = matched.current_cost;
-        inp.value = matched.name;
-      } else {
-        orderItems[rowIdx].product_name = val;
+        if (!orderItems[rowIdx].sell_price) orderItems[rowIdx].sell_price = Number(matched.sell_price) || 0;
+        orderItems[rowIdx].cost_per_unit = Number(matched.current_cost) || 0;
+      } else if (orderItems[rowIdx]) {
+        orderItems[rowIdx].product_name = v;
         if (!orderItems[rowIdx].product_id) orderItems[rowIdx].product_id = '__custom__';
       }
     }
     updateOrderSummary();
-  }, 300);
-
-  return wrap;
+  }, 250);
 }
 
-function selectNewOrderProduct(rowIdx, p) {
-  if (!p) return;
+function selectNewOrderProductById(rowIdx, productId) {
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === productId);
+  if (!p || !orderItems[rowIdx]) return;
+
   orderItems[rowIdx] = {
     product_id: p.id,
     product_name: p.name,
@@ -5726,6 +5717,10 @@ function selectNewOrderProduct(rowIdx, p) {
     discount: Number(orderItems[rowIdx]?.discount) || 0,
     discount_type: orderItems[rowIdx]?.discount_type || 'amount'
   };
+  
+  const dd = document.getElementById('o-prod-dd-' + rowIdx);
+  if (dd) dd.style.display = 'none';
+
   renderOrderItems();
   updateOrderSummary();
 }
@@ -5801,7 +5796,9 @@ function renderOrderItems() {
       inp.oninput = () => orderItems[i].product_name = inp.value;
       prodWrap.appendChild(inp);
     } else {
-      prodWrap.appendChild(newOrderProdSearch(i));
+      const searchBox = document.createElement('div');
+      searchBox.innerHTML = newOrderProdSearch(i);
+      prodWrap.appendChild(searchBox.firstElementChild);
     }
 
     const statusHelp = document.createElement('div');
@@ -28089,7 +28086,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.74</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.75</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
