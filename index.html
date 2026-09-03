@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.79';
+const CURRENT_APP_VERSION = 'sealthai-v1.80';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.79 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.80 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -2498,6 +2498,78 @@ function renderProfitJourney(cumulativeProfit, timing = {}) {
     </div>`;
 }
 
+// ── Helper: รวมค่าสินน้ำใจ/เงินพิเศษ Supplier ตาม PO ในช่วงเวลาที่เลือก ──
+function calculatePeriodSupplierWeeklyExpenses(pos) {
+  if (!pos || !pos.length) {
+    return { total: 0, activeCount: 0, suppliers: [] };
+  }
+  const cycle = getSupplierExpenseWeekCycle();
+  const tiers = getSupplierProgressiveTiers();
+  const savedRecordsKey = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try {
+    savedRecords = JSON.parse(localStorage.getItem(savedRecordsKey) || '{}');
+  } catch(e) {}
+
+  const groups = {};
+  pos.filter(p => p.status !== 'cancelled').forEach(po => {
+    const supId = po.supplier_id || po.supplier_name || 'unknown';
+    const supName = po.supplier_name || 'ไม่ระบุ Supplier';
+    const week = getWeekRange(po.po_date, cycle);
+    const groupKey = `${supId}_${week.week_key}`;
+
+    if (!groups[groupKey]) {
+      groups[groupKey] = {
+        id: groupKey,
+        supplier_id: supId,
+        supplier_name: supName,
+        net_purchase_amount: 0
+      };
+    }
+
+    const poSubtotal = Number(po.subtotal || (po.vat_type === 'included' ? (Number(po.total_amount||0)/1.07) : Number(po.total_amount||0)));
+    const poDiscount = Number(po.discount_amount || 0);
+    const poNet = Math.max(0, poSubtotal - poDiscount);
+    groups[groupKey].net_purchase_amount += poNet;
+  });
+
+  let totalExpense = 0;
+  const activeSups = new Set();
+  const supList = [];
+
+  Object.values(groups).forEach(g => {
+    const saved = savedRecords[g.id] || {};
+    const isAgreementEnabled = isSupplierWeeklyExpenseEnabled(g.supplier_id, g.supplier_name);
+    const effectiveTiers = saved.calculation_snapshot || tiers;
+
+    const calcResult = isAgreementEnabled
+      ? calculateProgressiveSupplierExpense(g.net_purchase_amount, effectiveTiers)
+      : { total_expense: 0, tier_breakdown: [] };
+
+    const topUp = Number(saved.top_up_amount || 0);
+    const finalAmt = calcResult.total_expense + topUp;
+
+    if (finalAmt > 0) {
+      totalExpense += finalAmt;
+      activeSups.add(g.supplier_name);
+      supList.push({
+        id: g.id,
+        name: g.supplier_name,
+        base: g.net_purchase_amount,
+        calc: calcResult.total_expense,
+        topUp: topUp,
+        final: finalAmt
+      });
+    }
+  });
+
+  return {
+    total: Math.round(totalExpense * 100) / 100,
+    activeCount: activeSups.size,
+    suppliers: supList
+  };
+}
+
 async function dashboard() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth()+1;
@@ -2641,10 +2713,14 @@ async function dashboard() {
   const totalPurchaseVat = purchaseTotals.vat;
   const totalPurchaseWithVat = purchaseTotals.totalWithVat;
 
+  // ── Supplier Weekly Expense (สินน้ำใจ & เงินพิเศษรายสัปดาห์) ──
+  const supplierWeeklyExpInfo = calculatePeriodSupplierWeeklyExpenses(pos);
+  const totalSupplierWeeklyExpense = supplierWeeklyExpInfo.total;
+
   // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
   const grossProfit   = totalRevenue - totalCost;
   const profitAfterPlatform = grossProfit - totalPlatformFee;
-  const netBeforeComm = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR;
+  const netBeforeComm = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR - totalSupplierWeeklyExpense;
   const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
 
   // ── Employee Commission: commission_rate% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ) ──
@@ -2991,6 +3067,11 @@ async function dashboard() {
         <div class="stat-sub">${landed.length} รายการ · ${Object.keys(landedTypeTotals).length} ประเภท</div>
         <div class="stat-sub" style="line-height:1.45">${Object.entries(landedTypeTotals).sort((a,b)=>b[1]-a[1]).map(([type,amount])=>escapeHTML(type)+' '+fmtB(amount)).join(' · ')||'ยังไม่มีรายการในช่วงนี้'}</div>
       </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #db2777" onclick="showPage('supplierWeeklyExpense')" title="คลิกดูรายละเอียดค่าสินน้ำใจ Supplier รายสัปดาห์">
+        <div class="stat-label">🎁 สินน้ำใจ Supplier <span style="font-size:10px;color:#db2777">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#db2777">${fmtB(totalSupplierWeeklyExpense)}</div>
+        <div class="stat-sub">${supplierWeeklyExpInfo.activeCount} Supplier มียอดคำนวณ · Progressive & Top Up</div>
+      </div>
       <div class="stat-card">
         <div class="stat-label">📦 มูลค่าสต๊อก</div>
         <div class="stat-value text-blue">${fmtB(stockValue)}</div>
@@ -3028,6 +3109,7 @@ async function dashboard() {
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
             ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% ของกำไรสุทธิก่อนคอม '+fmtB(commBase) })),
             ...(cfoWage>0 ? [{ label:'💼 ค่าแรง CFO: '+CFO_NAME+' '+CFO_WAGE_PCT+'%', val:-cfoWage, color:'#9333ea', plus:false, sub:CFO_WAGE_PCT+'% ของกำไรสุทธิก่อนหัก '+fmtB(commBase) }] : []),
+            ...(totalSupplierWeeklyExpense > 0 ? [{ label:'🎁 สินน้ำใจ Supplier รายสัปดาห์', val:-totalSupplierWeeklyExpense, color:'#db2777', plus:false, sub:supplierWeeklyExpInfo.activeCount+' Supplier (Progressive Rate & Top Up)', drill:'showPage(&quot;supplierWeeklyExpense&quot;)' }] : []),
             { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false, drill:'drillDashExpenses()' },
             { label:'✅ กำไรสุทธิ',         val: netProfit,        color: netProfit>=0?'var(--green)':'var(--red)', plus:netProfit>=0, isFinal:true },
           ];
@@ -3088,6 +3170,11 @@ async function dashboard() {
           <div style="font-size:11px;color:var(--text3)">🚚 ค่าขนส่ง 🔍</div>
           <div style="font-size:14px;font-weight:700;color:#0ea5e9">${fmtB(shippingCostGR)}</div>
           <div style="font-size:11px;color:var(--text3)">จากรับสินค้า</div>
+        </div>
+        <div onclick="showPage('supplierWeeklyExpense')" title="คลิกดูค่าสินน้ำใจ Supplier" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer;border-left:3px solid #db2777">
+          <div style="font-size:11px;color:var(--text3)">🎁 สินน้ำใจ Supplier 🔍</div>
+          <div style="font-size:14px;font-weight:700;color:#db2777">${fmtB(totalSupplierWeeklyExpense)}</div>
+          <div style="font-size:11px;color:var(--text3)">${supplierWeeklyExpInfo.activeCount} เจ้า · Progressive Rate</div>
         </div>
         <div style="text-align:center;padding:10px;background:${netProfit>=0?'#e8fdf0':'#fef2f2'};border-radius:8px;border:2px solid ${netProfit>=0?'var(--green)':'var(--red)'}">
           <div style="font-size:11px;color:var(--text3)">กำไรสุทธิ</div>
@@ -18744,10 +18831,14 @@ async function loadDashData() {
   const shippingCostGR = landed.filter(l => l.type === 'ค่าขนส่ง').reduce((s, l) => s + Number(l.amount || 0), 0);
   const totalOtherIncome = otherIncomes.reduce((s, e) => s + Number(e.realized_profit || 0), 0);
 
+  // ── Supplier Weekly Expense ──
+  const supWeeklyInfo = calculatePeriodSupplierWeeklyExpenses(pos || []);
+  const totalSupWeeklyExp = supWeeklyInfo.total;
+
   // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
   const grossProfit   = sales - costSum;
   const profitAfterPlatform = grossProfit - platformFee;
-  const netBeforeComm = profitAfterPlatform - expSum - handlingCost - shippingCostGR;
+  const netBeforeComm = profitAfterPlatform - expSum - handlingCost - shippingCostGR - totalSupWeeklyExp;
   const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
 
   // ── Employee Commission & CFO Wage ──
@@ -28434,7 +28525,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.79</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.80</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
