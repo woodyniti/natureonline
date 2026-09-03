@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.71';
+const CURRENT_APP_VERSION = 'sealthai-v1.74';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.71 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.74 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1661,26 +1661,102 @@ function gotoOrder(orderNo) {
   }, 400);
 }
 
-// ── Wildcard search helper ─────────────────────────────────
-// รองรับ * = any chars, ? = 1 char, ไม่มี wildcard = includes
+// ── Enhanced Universal Multi-Column & Wildcard Search Engine ────────
+// รองรับ: * = any chars, ? = 1 char, เว้นวรรค = multi-token, ตรวจสอบทุก column ของสินค้า
+function getProductSearchableText(p) {
+  if (!p) return '';
+  if (p._searchableText) return p._searchableText;
+  const fields = [
+    p.name || '',
+    p.sku || '',
+    p.supplier_sku || '',
+    p.supplier_code || '',
+    p.part_no || '',
+    p.item_no || '',
+    p.barcode || '',
+    p.brand || '',
+    p.category || '',
+    p.sub_category || '',
+    p.group_name || '',
+    p.seal_type || '',
+    p.material || '',
+    p.dimension || '',
+    p.dimensions || '',
+    p.size || '',
+    p.supplier_name || '',
+    p.supplier || '',
+    p.notes || '',
+    p.description || '',
+    p.oem_no || '',
+    p.car_models || '',
+    // Variations with different separators
+    (p.name || '').replace(/[xX×]/g, '*'),
+    (p.name || '').replace(/[*xX×]/g, ' '),
+    (p.sku || '').replace(/[xX×]/g, '*'),
+    (p.sku || '').replace(/[*xX×]/g, ' '),
+    (p.supplier_sku || '').replace(/[xX×]/g, '*'),
+    (p.supplier_code || '').replace(/[xX×]/g, '*'),
+    (p.part_no || '').replace(/[xX×]/g, '*')
+  ];
+  p._searchableText = fields.join(' ').toLowerCase();
+  return p._searchableText;
+}
+
 function wcSearch(str, pattern) {
   if (!pattern) return true;
-  const s = (str||'').toLowerCase();
-  const p = pattern.toLowerCase();
-  if (!p.includes('*') && !p.includes('?')) return s.includes(p);
-  const re = new RegExp(
-    '^' + p.replace(/[.+^${}()|[\]\\]/g,'\\$&')
-            .replace(/\*/g,'.*')
-            .replace(/\?/g,'.') + '$'
-  );
-  return re.test(s);
+  const s = (str || '').toLowerCase();
+  const p = pattern.trim().toLowerCase();
+  if (!p) return true;
+
+  // If pattern contains * or ?
+  if (p.includes('*') || p.includes('?')) {
+    const rxStr = p.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                   .replace(/\*/g, '.*')
+                   .replace(/\?/g, '.');
+    try {
+      const re = new RegExp(rxStr, 'i');
+      if (re.test(s)) return true;
+    } catch(e) {}
+  }
+
+  // Multi-token / space-separated check
+  const normP = p.replace(/[*xX×\-\/]+/g, ' ').trim();
+  const tokens = normP.split(/\s+/).filter(Boolean);
+  if (tokens.length > 0 && tokens.every(tok => s.includes(tok))) {
+    return true;
+  }
+
+  return s.includes(p);
 }
+
 function wcProdMatch(p, q) {
-  return wcSearch(p.name, q) ||
-         wcSearch(p.sku||'', q) ||
-         wcSearch(p.supplier_sku||'', q) ||
-         wcSearch(p.part_no||'', q) ||
-         wcSearch(p.category||'', q);
+  if (!q) return true;
+  if (!p) return false;
+  const qStr = q.trim().toLowerCase();
+  if (!qStr) return true;
+
+  const searchable = getProductSearchableText(p);
+
+  // 1. Wildcard Regex match on full searchable text
+  if (qStr.includes('*') || qStr.includes('?')) {
+    const rxStr = qStr.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+                      .replace(/\*/g, '.*')
+                      .replace(/\?/g, '.');
+    try {
+      const re = new RegExp(rxStr, 'i');
+      if (re.test(searchable)) return true;
+    } catch(e) {}
+  }
+
+  // 2. Multi-token / space separated match on full searchable text
+  const normQ = qStr.replace(/[*xX×\-\/]+/g, ' ').trim();
+  const tokens = normQ.split(/\s+/).filter(Boolean);
+  if (tokens.length > 0 && tokens.every(tok => searchable.includes(tok))) {
+    return true;
+  }
+
+  // 3. Direct substring match
+  return searchable.includes(qStr);
 }
 
 function doDirectAdminLogin() {
@@ -5124,9 +5200,9 @@ let editingPONo = null;
 let _orderCustomerList = [];
 let orderSourceQuoteId = null;
 async function openNewOrder() {
-  orderItems = [];
+  orderItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, cost_per_unit: 0, discount: 0, discount_type: 'amount' }];
   const [prodRes] = await Promise.all([
-    sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost,stock_qty,stock_inhouse').eq('shop_id', currentShop.id).eq('active',true).order('name'),
+    sb.from('products').select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name').eq('shop_id', currentShop.id).eq('active',true).order('name').limit(50000),
     loadOrderCustomerList()
   ]);
   productList = prodRes.data || [];
@@ -5481,71 +5557,78 @@ function updateOrderSummary() {
 function newOrderProdSearch(rowIdx) {
   const inp = document.createElement('input');
   inp.type = 'text'; inp.autocomplete = 'off';
-  inp.placeholder = 'ชื่อ / SKU / *wildcard*';
-  inp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;box-sizing:border-box';
+  inp.placeholder = '🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด...';
+  inp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box';
   
   const it = orderItems[rowIdx];
-  const linkedProd = it?.product_id && it.product_id !== '__custom__' ? productList.find(p => p.id === it.product_id) : null;
+  const linkedProd = it?.product_id && it.product_id !== '__custom__' ? (productList||[]).find(p => p.id === it.product_id) : null;
   inp.value = linkedProd?.name || it?.product_name || '';
 
   const dd = document.createElement('div');
-  dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,0.15)';
+  dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:600;background:#fff;border:1.5px solid var(--border2);border-radius:8px;max-height:250px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.18)';
 
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:relative;flex:1;min-width:120px';
+  wrap.style.cssText = 'position:relative;flex:2;min-width:140px';
   wrap.appendChild(inp); wrap.appendChild(dd);
 
-  function doSearch(q) {
-    const ql = q.trim();
-    const results = ql
-      ? productList.filter(p => wcProdMatch(p, ql))
-      : productList.slice(0,30);
+  let searchTimeout = null;
+
+  function renderDropdownResults(results, ql) {
     dd.innerHTML = '';
-    results.forEach(p => {
-      const div = document.createElement('div');
-      div.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center;gap:8px';
-      
-      const leftDiv = document.createElement('div');
-      leftDiv.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
-      
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = p.name;
-      nameSpan.style.fontWeight = '600';
-      nameSpan.style.color = '#0f172a';
-      leftDiv.appendChild(nameSpan);
+    if (!results.length) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.style.cssText = 'padding:10px 12px;font-size:12px;color:var(--text3);text-align:center';
+      emptyDiv.textContent = ql ? 'ไม่พบสินค้า "' + ql + '" ในคลัง' : 'พิมพ์เพื่อค้นหาสินค้า';
+      dd.appendChild(emptyDiv);
+    } else {
+      results.forEach(p => {
+        const div = document.createElement('div');
+        div.style.cssText = 'padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px;transition:background 0.12s';
+        
+        const leftDiv = document.createElement('div');
+        leftDiv.style.cssText = 'flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = p.name;
+        nameSpan.style.fontWeight = '600';
+        nameSpan.style.color = '#0f172a';
+        leftDiv.appendChild(nameSpan);
 
-      const sku = p.sku || p.supplier_sku || '';
-      if (sku) {
-        const skuSpan = document.createElement('span');
-        skuSpan.textContent = ' · ' + sku;
-        skuSpan.style.cssText = 'color:var(--blue);font-size:11px;font-weight:normal';
-        leftDiv.appendChild(skuSpan);
-      }
-      div.appendChild(leftDiv);
+        const codes = [];
+        if (p.sku) codes.push('SKU: ' + p.sku);
+        if (p.supplier_sku || p.supplier_code) codes.push('Supplier: ' + (p.supplier_sku || p.supplier_code));
+        if (p.part_no) codes.push('Part: ' + p.part_no);
+        if (p.brand) codes.push(p.brand);
+        if (p.sell_price) codes.push('฿' + fmtB(p.sell_price));
+        if (codes.length) {
+          const codeDiv = document.createElement('div');
+          codeDiv.style.cssText = 'font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:6px;flex-wrap:wrap';
+          codeDiv.innerHTML = codes.map(c => `<span style="background:var(--bg2);padding:1px 5px;border-radius:3px;border:1px solid var(--border)">${escapeHTML(c)}</span>`).join('');
+          leftDiv.appendChild(codeDiv);
+        }
+        div.appendChild(leftDiv);
 
-      // Stock Pill Badge in Search Dropdown
-      const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
-      const stockBadge = document.createElement('span');
-      if (stockVal > 0) {
-        stockBadge.style.cssText = 'background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap';
-        stockBadge.textContent = 'สต๊อก ' + fmt(stockVal) + ' ชิ้น';
-      } else {
-        stockBadge.style.cssText = 'background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap';
-        stockBadge.textContent = 'หมด (0 ชิ้น)';
-      }
-      div.appendChild(stockBadge);
+        // Stock Pill Badge
+        const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+        const stockBadge = document.createElement('span');
+        if (stockVal > 0) {
+          stockBadge.style.cssText = 'background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap';
+          stockBadge.textContent = 'สต๊อก ' + fmt(stockVal) + ' ชิ้น';
+        } else {
+          stockBadge.style.cssText = 'background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap';
+          stockBadge.textContent = 'หมด (0 ชิ้น)';
+        }
+        div.appendChild(stockBadge);
 
-      div.onmouseover = ()=>div.style.background='#f0f7ff';
-      div.onmouseout  = ()=>div.style.background='';
-      div.onmousedown = e => {
-        e.preventDefault();
-        orderItems[rowIdx] = {product_id:p.id,product_name:p.name,qty:orderItems[rowIdx]?.qty||1,sell_price:p.sell_price,cost_per_unit:p.current_cost,discount:orderItems[rowIdx]?.discount||0,discount_type:orderItems[rowIdx]?.discount_type||'amount'};
-        inp.value = p.name;
-        dd.style.display='none';
-        renderOrderItems();
-      };
-      dd.appendChild(div);
-    });
+        div.onmouseover = () => div.style.background = '#f0f7ff';
+        div.onmouseout  = () => div.style.background = '';
+        div.onmousedown = (e) => {
+          e.preventDefault();
+          selectNewOrderProduct(rowIdx, p);
+        };
+        dd.appendChild(div);
+      });
+    }
 
     // Quick Add Button inside dropdown
     const quickAddDiv = document.createElement('div');
@@ -5553,7 +5636,7 @@ function newOrderProdSearch(rowIdx) {
     quickAddDiv.innerHTML = `<span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span><span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>`;
     quickAddDiv.onmouseover = () => quickAddDiv.style.background = '#dcfce7';
     quickAddDiv.onmouseout = () => quickAddDiv.style.background = '#f0fdf4';
-    quickAddDiv.onmousedown = e => {
+    quickAddDiv.onmousedown = (e) => {
       e.preventDefault();
       dd.style.display = 'none';
       openQuickProductModal('order', rowIdx, ql);
@@ -5561,37 +5644,90 @@ function newOrderProdSearch(rowIdx) {
     dd.appendChild(quickAddDiv);
     dd.style.display = 'block';
   }
+
+  function doSearch(q) {
+    const ql = (q || '').trim();
+    
+    // 1. Local filter in memory with wcProdMatch
+    let results = ql
+      ? (productList || []).filter(p => wcProdMatch(p, ql)).slice(0, 40)
+      : (productList || []).slice(0, 30);
+    
+    renderDropdownResults(results, ql);
+
+    // 2. Server-side async fallback search if typed query
+    if (ql.length >= 2) {
+      if (searchTimeout) clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(async () => {
+        try {
+          const { data, error } = await sb.from('products')
+            .select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name')
+            .eq('shop_id', currentShop.id)
+            .eq('active', true)
+            .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+            .limit(40);
+          
+          if (data && data.length) {
+            // Merge into productList
+            data.forEach(dp => {
+              if (!productList.some(ep => ep.id === dp.id)) {
+                productList.push(dp);
+              }
+            });
+            // Re-filter with updated productList
+            const updatedResults = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+            renderDropdownResults(updatedResults, ql);
+          }
+        } catch(err) {}
+      }, 200);
+    }
+  }
+
   inp.oninput = () => doSearch(inp.value);
   inp.onfocus = () => doSearch(inp.value);
-  inp.onblur  = () => setTimeout(()=>{
-    dd.style.display='none';
+  inp.onblur  = () => setTimeout(() => {
+    dd.style.display = 'none';
     const val = inp.value.trim();
     if (!val) {
       orderItems[rowIdx].product_id = null;
-      renderOrderItems();
-      return;
-    }
-    const matched = productList.find(x => 
-      x.name.toLowerCase() === val.toLowerCase() || 
-      (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
-      (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-      (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
-    );
-    if (matched) {
-      if (orderItems[rowIdx].product_id !== matched.id) {
+      orderItems[rowIdx].product_name = '';
+    } else {
+      const matched = (productList || []).find(x => 
+        x.name.toLowerCase() === val.toLowerCase() || 
+        (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
+        (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
+        (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
+      );
+      if (matched) {
         orderItems[rowIdx].product_id = matched.id;
         orderItems[rowIdx].product_name = matched.name;
-        orderItems[rowIdx].sell_price = matched.sell_price;
+        if (!orderItems[rowIdx].sell_price) orderItems[rowIdx].sell_price = matched.sell_price;
         orderItems[rowIdx].cost_per_unit = matched.current_cost;
         inp.value = matched.name;
-        renderOrderItems();
+      } else {
+        orderItems[rowIdx].product_name = val;
+        if (!orderItems[rowIdx].product_id) orderItems[rowIdx].product_id = '__custom__';
       }
-    } else {
-      orderItems[rowIdx].product_id = null;
-      renderOrderItems();
     }
-  }, 250);
+    updateOrderSummary();
+  }, 300);
+
   return wrap;
+}
+
+function selectNewOrderProduct(rowIdx, p) {
+  if (!p) return;
+  orderItems[rowIdx] = {
+    product_id: p.id,
+    product_name: p.name,
+    qty: orderItems[rowIdx]?.qty || 1,
+    sell_price: Number(p.sell_price) || 0,
+    cost_per_unit: Number(p.current_cost) || 0,
+    discount: Number(orderItems[rowIdx]?.discount) || 0,
+    discount_type: orderItems[rowIdx]?.discount_type || 'amount'
+  };
+  renderOrderItems();
+  updateOrderSummary();
 }
 
 function renderOrderItems() {
@@ -6085,9 +6221,9 @@ let editProdList = []; // โหลดครั้งเดียวตอน vi
 async function loadEditProdList() {
   if (editProdList.length) return;
   const { data } = await sb.from('products')
-    .select('id,name,sku,supplier_sku,part_no,sell_price,current_cost')
+    .select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name')
     .eq('shop_id', currentShop.id)
-    .eq('active',true).order('name');
+    .eq('active',true).order('name').limit(50000);
   editProdList = data || [];
 }
 
@@ -10327,9 +10463,23 @@ function selectStockProduct(rowIdx, productId, productName) {
   stockRows[rowIdx].product_id = productId;
   stockRows[rowIdx].product_name = productName;
   const inp = document.getElementById('sr-prod-'+rowIdx);
-  if (inp) inp.value = productName;
+  if (inp) {
+    inp.value = productName;
+    inp.style.background = '#fff';
+    inp.style.borderColor = 'var(--border2)';
+  }
+  const badge = document.getElementById('sr-unmapped-badge-'+rowIdx);
+  if (badge) {
+    badge.style.background = '#dcfce7';
+    badge.style.color = '#15803d';
+    badge.textContent = '✓ เชื่อมสินค้าแล้ว';
+  }
   const dd = document.getElementById('sr-dd-'+rowIdx);
   if (dd) dd.style.display = 'none';
+  if (stockRows[rowIdx].po_item_id) {
+    sb.from('purchase_order_items').update({ product_id: productId }).eq('id', stockRows[rowIdx].po_item_id).then(()=>{});
+  }
+  updateStockTotal();
 }
 
 // ── Stock rows ─────────────────────────────────────────
@@ -10349,7 +10499,10 @@ function addStockRow(initial={}) {
   div.style.cssText = 'background:var(--bg3);border-radius:8px;padding:12px;position:relative;border:1px solid var(--border)';
   div.innerHTML = `
     ${row.po_item_id ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap">
-      <div style="font-size:11px;color:var(--blue);font-weight:600">PO: ${escapeHTML(row.po_no||'-')} · ${escapeHTML(row.supplier_name||'-')}</div>
+      <div style="font-size:11px;display:flex;align-items:center;gap:6px">
+        <span style="color:var(--blue);font-weight:600">PO: ${escapeHTML(row.po_no||'-')} · ${escapeHTML(row.supplier_name||'-')}</span>
+        ${!row.product_id ? `<span id="sr-unmapped-badge-${idx}" style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-weight:700;font-size:10.5px">⚠️ ยังไม่เชื่อมสินค้า (คลิกค้นหาที่ช่องสินค้าเพื่อเชื่อม)</span>` : ''}
+      </div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;cursor:pointer;color:var(--accent)">
         <input type="checkbox" id="sr-use-${idx}" ${row.enabled!==false?'checked':''} onchange="toggleStockPORow(${idx},this.checked)"> รับรายการนี้
       </label>
@@ -10386,12 +10539,18 @@ function addStockRow(initial={}) {
   const nameInp = document.getElementById('sr-prod-'+idx);
   if (nameInp) {
     nameInp.value = row.product_name || '';
-    if (row.po_item_id) {
+    if (row.po_item_id && row.product_id) {
       nameInp.readOnly = true;
       nameInp.removeAttribute('oninput');
       nameInp.removeAttribute('onfocus');
       nameInp.style.background = '#f4f6f8';
       nameInp.title = 'รายการจาก PO '+(row.po_no||'');
+    } else if (row.po_item_id && !row.product_id) {
+      nameInp.readOnly = false;
+      nameInp.placeholder = '⚠️ คลิกเพื่อค้นหาและเชื่อมสินค้าในคลัง...';
+      nameInp.style.background = '#fffbeb';
+      nameInp.style.borderColor = 'var(--amber)';
+      nameInp.title = 'รายการจาก PO '+(row.po_no||'')+' (ยังไม่เชื่อมกับสินค้าในคลัง — พิมพ์เพื่อเลือกสินค้า)';
     }
   }
   updateStockTotal();
@@ -10498,7 +10657,13 @@ async function saveStockBatch() {
   const lot  = document.getElementById('s-lot').value;
   const unmappedPOItem = stockRows.find(r=>r&&r.enabled!==false&&r.po_item_id&&r.qty>0&&!r.product_id);
   if (unmappedPOItem) {
-    toast('รายการ '+(unmappedPOItem.product_name||'-')+' ใน '+(unmappedPOItem.po_no||'PO')+' ยังไม่เชื่อมกับสินค้าในคลัง กรุณาเอาเครื่องหมายรับรายการนี้ออกก่อน','error');
+    const unmappedIdx = stockRows.indexOf(unmappedPOItem);
+    const prodInp = document.getElementById('sr-prod-'+unmappedIdx);
+    if (prodInp) {
+      prodInp.focus();
+      prodInp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    toast('รายการ "'+(unmappedPOItem.product_name||'-')+'" ใน '+(unmappedPOItem.po_no||'PO')+' ยังไม่ได้เชื่อมกับสินค้าในคลัง\n👉 กรุณาคลิกที่ช่องชื่อสินค้าเพื่อเลือกสินค้า หรือเอาเครื่องหมายติ๊ก "รับรายการนี้" ออก','error', 6000);
     return;
   }
   const valid = stockRows.filter(r=>r&&r.enabled!==false&&r.product_id&&r.qty>0);
@@ -11721,11 +11886,25 @@ async function applyPOsToStock() {
     (po.pendingItems||[]).forEach(it => {
       const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
       if (remaining <= 0) return;
+      let pid = it.product_id || '';
+      let pname = it.product_name || '';
+      if (!pid && pname && stockProductList && stockProductList.length) {
+        const cleanPName = pname.trim().toLowerCase();
+        const found = stockProductList.find(p => 
+          p.name.trim().toLowerCase() === cleanPName || 
+          (p.sku && p.sku.trim().toLowerCase() === cleanPName)
+        );
+        if (found) {
+          pid = found.id;
+          pname = found.name;
+          sb.from('purchase_order_items').update({ product_id: pid }).eq('id', it.id).then(()=>{});
+        }
+      }
       pendingRows.push({
-        product_id:it.product_id||'', product_name:it.product_name||'',
-        qty:remaining, cost:Number(it.unit_cost||0), other:0,
-        po_id:po.id, po_item_id:it.id, po_no:po.po_no||'',
-        supplier_name:po.supplier_name||'', remaining, enabled:true,
+        product_id: pid, product_name: pname,
+        qty: remaining, cost: Number(it.unit_cost||0), other: 0,
+        po_id: po.id, po_item_id: it.id, po_no: po.po_no||'',
+        supplier_name: po.supplier_name||'', remaining, enabled: true,
       });
     });
   });
@@ -13238,7 +13417,7 @@ async function loadQuotes() {
 
 async function ensureQuoteProductList() {
   if(!productList.length) {
-    const {data} = await sb.from('products').select('id,name,sku,supplier_sku,part_no,sell_price,current_cost,stock_qty,stock_inhouse').eq('shop_id', currentShop.id).eq('active',true).order('name');
+    const {data} = await sb.from('products').select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name').eq('shop_id', currentShop.id).eq('active',true).order('name');
     productList = data||[];
   }
 }
@@ -19519,7 +19698,7 @@ async function settings() {
         <div class="card-title" style="margin-top:16px;margin-bottom:10px">📋 ประวัติการอัปเดต</div>
         <div style="font-size:12px;max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:4px 0">
           ${[
-            { v:'1.71', type:'minor', date:'2026-08-31', title:'Smart Vendor Autocomplete & Historical Recall in Expense Form', items:['Vendor Autocomplete & History Dropdown: ระบบค้นหาและแนะนำชื่อผู้ขาย/ผู้รับเงิน (Vendor/Payee) จากประวัติค่าใช้จ่ายและรายชื่อ Supplier ทั้งหมดในร้าน','Smart Auto-Fill from Previous Records: เมื่อเลือกผู้ขายที่เคยบันทึกไว้ ระบบจะดึงหมวดหมู่หลัก, หมวดย่อย, ช่องทางชำระเงิน และรอบบิลเดิมมาแสดงให้อัตโนมัติทันที พร้อมปุ่ม Quick Chips ผู้ขายที่ใช้บ่อย'] },
+            { v:'1.72', type:'minor', date:'2026-08-31', title:'Smart Vendor Autocomplete & Historical Recall in Expense Form', items:['Vendor Autocomplete & History Dropdown: ระบบค้นหาและแนะนำชื่อผู้ขาย/ผู้รับเงิน (Vendor/Payee) จากประวัติค่าใช้จ่ายและรายชื่อ Supplier ทั้งหมดในร้าน','Smart Auto-Fill from Previous Records: เมื่อเลือกผู้ขายที่เคยบันทึกไว้ ระบบจะดึงหมวดหมู่หลัก, หมวดย่อย, ช่องทางชำระเงิน และรอบบิลเดิมมาแสดงให้อัตโนมัติทันที พร้อมปุ่ม Quick Chips ผู้ขายที่ใช้บ่อย'] },
             { v:'1.70', type:'patch', date:'2026-08-31', title:'Intelligent Purchase Price Fallback in Batch PO from Sales Orders', items:['Intelligent Purchase Price Cascade: แก้ไขหน้าสร้างใบสั่งซื้อ (PO) จากรายการขาย ให้ดึงราคาซื้อ/ต้นทุนอย่างชาญฉลาด (purchase_price -> current_cost -> cost_per_unit ในบิลขาย) หมดปัญหาราคาซื้อขึ้นเป็น 0','Enhanced SKU & Variation Matching: ปรับปรุงระบบจับคู่สินค้าข้าม SKU และรหัสสเปกซีลให้แม่นยำยิ่งขึ้น'] },
             { v:'1.69', type:'minor', date:'2026-08-30', title:'Quick Product Dynamic Category Sync from Products Page', items:['Dynamic Category Loading: เชื่อมโยงหมวดหมู่สินค้าในหน้าสร้างสินค้าด่วน (Quick Product) ให้ดึงหมวดหมู่จริงจากหน้าสินค้าและฐานข้อมูลตาราง categories อัตโนมัติ','Interactive Category Chips & Dropdown: เพิ่มปุ่ม Quick Chips และระบบ Dropdown ค้นหาหมวดหมู่สินค้าจริงของร้าน พร้อมตัวเลือกสร้างหมวดหมู่ใหม่'] },
             { v:'1.68', type:'patch', date:'2026-08-30', title:'Safe UUID PostgREST Guard & Gratuity Route Fix', items:['PostgREST UUID Syntax Guard: ป้องกันข้อผิดพลาด HTTP 400 เมื่อ Query ข้อมูล shop_members ด้วย user_id ที่ไม่ใช่รูปแบบ UUID','Gratuity Route Definition: เพิ่มฟังก์ชัน routing ของ gratuity() เชื่อมต่อไปยังแท็บสรุปสถิติค่าสินน้ำใจโดยตรงอย่างสมบูรณ์แบบ'] },
@@ -27758,7 +27937,7 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.71', date:'2026-08-31', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Smart Vendor Autocomplete & Historical Recall in Expense Form', items:[
+    { v:'1.72', date:'2026-08-31', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Smart Vendor Autocomplete & Historical Recall in Expense Form', items:[
       '🏢 <b>Smart Vendor Recall:</b> แนะนำและดึงข้อมูลประวัติผู้ขาย/ผู้รับเงินเดิมที่เคยบันทึกไว้มาแสดงให้อัตโนมัติ',
       '⚡ <b>Auto-Fill Category & Details:</b> เมื่อเลือกผู้ขาย ระบบจะกรอกหมวดหมู่, หมวดย่อย, ช่องทาง และรอบบิลล่าสุดให้อัตโนมัติทันที',
       '🏷️ <b>Vendor Quick Chips:</b> เพิ่มปุ่มลัดเลือกผู้ขายที่ใช้บ่อยใต้ช่องกรอก สะดวกและรวดเร็ว'
@@ -27910,7 +28089,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.71</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.74</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
