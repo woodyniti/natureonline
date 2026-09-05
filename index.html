@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.85';
+const CURRENT_APP_VERSION = 'sealthai-v1.86';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -2717,28 +2717,41 @@ async function dashboard() {
   const supplierWeeklyExpInfo = calculatePeriodSupplierWeeklyExpenses(pos);
   const totalSupplierWeeklyExpense = supplierWeeklyExpInfo.total;
 
-  // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
+  // ── Net Profit Base (กำไรหลัง GP Platform) ───────────────
   const grossProfit   = totalRevenue - totalCost;
   const profitAfterPlatform = grossProfit - totalPlatformFee;
-  const netBeforeComm = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR - totalSupplierWeeklyExpense;
-  const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
+  const commBase      = Math.max(0, profitAfterPlatform);   // ฐานคิดคอมพนักงานและค่าแรง CFO = กำไรหลัง GP Platform (ขาดทุนไม่คิด)
 
-  // ── Employee Commission: commission_rate% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ) ──
-  const empCommList = employees.map(e => {
+  // ── Employee Commission: นิติ บุญสายันต์ 15% กำไรหลัง GP Platform ──
+  const DEFAULT_EMP_NAME = 'นิติ บุญสายันต์';
+  const DEFAULT_EMP_COMM_PCT = 15;
+  const activeEmps = (employees || []).filter(e => e.active !== false);
+  let empCommList = activeEmps.map(e => {
     const empOrders = orders.filter(o => o.employee_id === e.id);
     const empRev    = empOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
-    const empComm   = commBase * Number(e.commission_rate||0) / 100;
-    return { ...e, revenue: empRev, commission: empComm };
+    const rate      = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
+    const empComm   = commBase * rate / 100;
+    return { ...e, commission_rate: rate, revenue: empRev, commission: empComm };
   }).filter(e => e.commission > 0);
+
+  if (empCommList.length === 0 && commBase > 0) {
+    empCommList = [{
+      id: 'default-emp',
+      name: DEFAULT_EMP_NAME,
+      commission_rate: DEFAULT_EMP_COMM_PCT,
+      revenue: totalRevenue,
+      commission: commBase * DEFAULT_EMP_COMM_PCT / 100
+    }];
+  }
   const totalEmpComm = empCommList.reduce((s,e) => s + e.commission, 0);
 
-  // ── ค่าแรง CFO: นันทนา 20% ของกำไรสุทธิ (หลังหักค่าใช้จ่ายต่างๆ ฐานเดียวกับคอมพนักงาน) ──
+  // ── ค่าแรง CFO: นันทนา 15% กำไรหลัง GP Platform ──
   const CFO_NAME = 'นันทนา';
-  const CFO_WAGE_PCT = 20;
-  const cfoWage = commBase * CFO_WAGE_PCT / 100;   // commBase = กำไรสุทธิก่อนหัก (ขาดทุน=0)
+  const CFO_WAGE_PCT = 15;
+  const cfoWage = commBase * CFO_WAGE_PCT / 100;   // 15% ของกำไรหลัง GP Platform
 
-  // ── Net Profit สุดท้าย (หลังหักคอมพนักงาน + ค่าแรง CFO) ──
-  const netProfit   = netBeforeComm - totalEmpComm - cfoWage + totalOtherIncome;
+  // ── Net Profit สุดท้าย (หลังหักค่าใช้จ่าย, สินน้ำใจ, คอมพนักงาน และ ค่าแรง CFO) ──
+  const netProfit   = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR - totalSupplierWeeklyExpense - totalEmpComm - cfoWage + totalOtherIncome;
   const totalIncome = totalRevenue + totalOtherIncome;
   const netPct      = totalIncome > 0 ? (netProfit/totalIncome*100).toFixed(1) : '0.0';
 
@@ -2752,11 +2765,11 @@ async function dashboard() {
     .filter(l => l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')
     .reduce((s,l) => s + Number(l.amount||0), 0);
   const lifetimeOtherIncome = (allOtherIncomeRes?.data||[]).reduce((s,e)=>s+Number(e.realized_profit||0),0);
-  const lifetimeBeforeComm = lifetimeRevenue - lifetimeCost - lifetimePlatformFee - lifetimeExpenses - lifetimeLanded;
-  const lifetimeCommBase = Math.max(0, lifetimeBeforeComm);
-  const lifetimeEmployeeComm = employees.reduce((s,e) => s + lifetimeCommBase * Number(e.commission_rate||0) / 100, 0);
-  const lifetimeCfoWage = lifetimeCommBase * CFO_WAGE_PCT / 100;
-  const cumulativeNetProfit = lifetimeBeforeComm - lifetimeEmployeeComm - lifetimeCfoWage + lifetimeOtherIncome;
+  const lifetimeProfitAfterPlatform = lifetimeRevenue - lifetimeCost - lifetimePlatformFee;
+  const lifetimeCommBase = Math.max(0, lifetimeProfitAfterPlatform);
+  const lifetimeEmployeeComm = lifetimeCommBase * (DEFAULT_EMP_COMM_PCT / 100);
+  const lifetimeCfoWage = lifetimeCommBase * (CFO_WAGE_PCT / 100);
+  const cumulativeNetProfit = lifetimeProfitAfterPlatform - lifetimeExpenses - lifetimeLanded - lifetimeEmployeeComm - lifetimeCfoWage + lifetimeOtherIncome;
 
   // Timeline กำไรสุทธิสะสม: ใช้หาวันที่แตะเป้าครั้งแรกและประมาณเวลาไปยังเป้าถัดไป
   const profitByDate = {};
@@ -3107,8 +3120,8 @@ async function dashboard() {
             ...(lazadaFee>0 ? [{ label:'💸 ค่า GP Lazada '+LAZADA_GP_FALLBACK_PCT+'%', val: -lazadaFee, color:'#f97316', plus:false, sub:'จากยอด Lazada '+fmtB(lazadaRev) }] : []),
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
-            ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% ของกำไรสุทธิก่อนคอม '+fmtB(commBase) })),
-            ...(cfoWage>0 ? [{ label:'💼 ค่าแรง CFO: '+CFO_NAME+' '+CFO_WAGE_PCT+'%', val:-cfoWage, color:'#9333ea', plus:false, sub:CFO_WAGE_PCT+'% ของกำไรสุทธิก่อนหัก '+fmtB(commBase) }] : []),
+            ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% กำไรหลัง GP Platform '+fmtB(commBase) })),
+            ...(cfoWage>0 ? [{ label:'💼 ค่าแรง CFO: '+CFO_NAME+' '+CFO_WAGE_PCT+'%', val:-cfoWage, color:'#9333ea', plus:false, sub:CFO_WAGE_PCT+'% กำไรหลัง GP Platform '+fmtB(commBase) }] : []),
             ...(totalSupplierWeeklyExpense > 0 ? [{ label:'🎁 สินน้ำใจ Supplier รายสัปดาห์', val:-totalSupplierWeeklyExpense, color:'#db2777', plus:false, sub:supplierWeeklyExpInfo.activeCount+' Supplier (Progressive Rate & Top Up)', drill:'showPage(&quot;supplierWeeklyExpense&quot;)' }] : []),
             { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false, drill:'drillDashExpenses()' },
             { label:'✅ กำไรสุทธิ',         val: netProfit,        color: netProfit>=0?'var(--green)':'var(--red)', plus:netProfit>=0, isFinal:true },
@@ -3154,12 +3167,12 @@ async function dashboard() {
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าคอมพนักงาน</div>
           <div style="font-size:14px;font-weight:700;color:#be185d">${fmtB(totalEmpComm)}</div>
-          <div style="font-size:11px;color:var(--text3)">${empCommList.map(e=>e.name+' '+fmtB(e.commission)).join(' · ')||'-'}</div>
+          <div style="font-size:11px;color:var(--text3)">${empCommList.map(e=>e.name+' '+fmtB(e.commission)).join(' · ')||DEFAULT_EMP_NAME+' 15% กำไรหลัง GP Platform'}</div>
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">💼 ค่าแรง CFO</div>
           <div style="font-size:14px;font-weight:700;color:#9333ea">${fmtB(cfoWage)}</div>
-          <div style="font-size:11px;color:var(--text3)">${CFO_NAME} ${CFO_WAGE_PCT}% ของกำไรสุทธิ</div>
+          <div style="font-size:11px;color:var(--text3)">${CFO_NAME} ${CFO_WAGE_PCT}% กำไรหลัง GP Platform</div>
         </div>
         <div onclick="drillLandedCost('ค่าจัดการ')" title="คลิกดูที่มา" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer">
           <div style="font-size:11px;color:var(--text3)">🔧 ค่าจัดการ 🔍</div>
@@ -12583,8 +12596,9 @@ async function computeNetProfitBase(from, to) {
   const platformFee = orders.reduce((sum,o)=>sum+getOrderPlatformFeeInfo(o).fee,0);
   const handling   = landed.filter(l=>l.type==='ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
   const shipGR     = landed.filter(l=>l.type==='ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
-  const netBeforeComm = (revenue-cost) - exp - platformFee - handling - shipGR;
-  return { netBeforeComm, revenue, cost, exp, platformFee, handling, shipGR };
+  const profitAfterPlatform = (revenue - cost) - platformFee;
+  const netBeforeComm = profitAfterPlatform;
+  return { netBeforeComm, profitAfterPlatform, revenue, cost, exp, platformFee, handling, shipGR };
 }
 
 async function loadEmployeeStats() {
@@ -12646,7 +12660,7 @@ async function loadEmployeeStats() {
 
   document.getElementById('emp-kpi-table').innerHTML = empStats.length ? `
     <div style="font-size:12px;color:var(--text2);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:12px">
-      💡 <b>ค่าคอม = commission_rate% × กำไรสุทธิ</b> (หลังหักต้นทุน + ค่าธรรมเนียม/ขนส่ง Shopee + ค่าจัดการ/ขนส่งรับเข้า + ค่าใช้จ่ายทุกหมวด) · กำไรสุทธิงวดนี้ = <b class="${commBase>=0?'text-green':'text-red'}">${fmtB(commBase)}</b>
+      💡 <b>ค่าคอม = commission_rate% × กำไรหลัง GP Platform</b> (ยอดขาย − ต้นทุนสินค้า − ค่า GP Platform) · กำไรหลัง GP Platform = <b class="${commBase>=0?'text-green':'text-red'}">${fmtB(commBase)}</b>
     </div>
     <table class="desktop-only">
       <thead><tr>
@@ -19157,19 +19171,23 @@ async function loadDashData() {
   const supWeeklyInfo = calculatePeriodSupplierWeeklyExpenses(pos || []);
   const totalSupWeeklyExp = supWeeklyInfo.total;
 
-  // ── Net Profit Base (ก่อนหักคอมพนักงาน) ─────────────────
+  // ── Net Profit Base (กำไรหลัง GP Platform) ───────────────
   const grossProfit   = sales - costSum;
   const profitAfterPlatform = grossProfit - platformFee;
-  const netBeforeComm = profitAfterPlatform - expSum - handlingCost - shippingCostGR - totalSupWeeklyExp;
-  const commBase      = Math.max(0, netBeforeComm);   // ขาดทุนไม่คิดคอม
+  const commBase      = Math.max(0, profitAfterPlatform);   // ขาดทุนไม่คิดคอม
 
-  // ── Employee Commission & CFO Wage ──
-  const totalEmpComm = emps.reduce((s, e) => s + (commBase * Number(e.commission_rate || 0) / 100), 0);
-  const CFO_WAGE_PCT = 20;
-  const cfoWage = commBase * CFO_WAGE_PCT / 100;   // นันทนา 20%
+  // ── Employee Commission & CFO Wage (15% กำไรหลัง GP Platform) ──
+  const DEFAULT_EMP_NAME = 'นิติ บุญสายันต์';
+  const DEFAULT_EMP_COMM_PCT = 15;
+  const CFO_NAME = 'นันทนา';
+  const CFO_WAGE_PCT = 15;
+  const totalEmpComm = (emps.length > 0
+    ? emps.reduce((s, e) => s + (commBase * Number(e.commission_rate || DEFAULT_EMP_COMM_PCT) / 100), 0)
+    : (commBase * DEFAULT_EMP_COMM_PCT / 100));
+  const cfoWage = commBase * CFO_WAGE_PCT / 100;   // นันทนา 15%
 
   // ── Net Profit สุทธิทางบัญชี (ซิงค์ตรง 100% กับ Dashboard ภาพรวม) ──
-  const netProfit   = netBeforeComm - totalEmpComm - cfoWage + totalOtherIncome;
+  const netProfit   = profitAfterPlatform - expSum - handlingCost - shippingCostGR - totalSupWeeklyExp - totalEmpComm - cfoWage + totalOtherIncome;
   const totalIncome = sales + totalOtherIncome;
   const netPct      = totalIncome > 0 ? (netProfit / totalIncome * 100).toFixed(1) : '0.0';
   const grossPct    = sales > 0 ? (grossProfit / sales * 100).toFixed(1) : '0.0';
