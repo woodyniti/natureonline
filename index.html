@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.82';
+const CURRENT_APP_VERSION = 'sealthai-v1.83';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.82 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.83 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -18876,7 +18876,7 @@ function getDashDateRange() {
 async function loadDashData() {
   const {from, to} = getDashDateRange();
 
-  const [ordRes, prodRes, expRes, apRes, empRes, landedRes, otherIncomeRes] = await Promise.all([
+  const [ordRes, prodRes, expRes, apRes, empRes, landedRes, otherIncomeRes, poRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id)
       .gte('order_date', from).lte('order_date', to).order('order_date'),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true),
@@ -18888,6 +18888,8 @@ async function loadDashData() {
       .gte('move_date', from).lte('move_date', to),
     sb.from('other_income').select('*').eq('shop_id', currentShop.id)
       .gte('income_date', from).lte('income_date', to),
+    sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id)
+      .gte('po_date', from).lte('po_date', to),
     ensureShopeeFeeData()
   ]);
 
@@ -18899,6 +18901,7 @@ async function loadDashData() {
   const emps     = empRes.data  || [];
   const landed   = landedRes?.data || [];
   const otherIncomes = otherIncomeRes?.data || [];
+  const pos      = poRes?.data || [];
 
   // fallback ต้นทุน: ถ้า order_item ขายก่อนรับเข้า (cost_per_unit=0) ให้ใช้ current_cost ของสินค้าแทน
   const _prodCostMap = {};
@@ -28614,7 +28617,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.82</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.83</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
