@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.83';
+const CURRENT_APP_VERSION = 'sealthai-v1.85';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.83 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.85 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -18792,6 +18792,195 @@ async function saveEditMember() {
 let _dashPeriod = 'month'; // day|week|month|quarter|year
 let _dashData   = null;
 
+
+// ── Monthly Performance Comparison Bar Chart (ยอดขาย vs ต้นทุน/ค่าใช้จ่าย vs กำไรสุทธิ) ──
+function renderOwnerMonthlyBarChart() {
+  if (!_ownerHistData) return;
+  const canvas = document.getElementById('dash-bar-chart');
+  if (!canvas || !window.Chart) return;
+
+  const monthsCount = Number(document.getElementById('dash-hist-months-sel')?.value || 12);
+  const now = new Date();
+  
+  // Build month keys list for the last N months
+  const monthKeys = [];
+  for (let i = monthsCount - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    monthKeys.push(`${y}-${m}`);
+  }
+
+  // Cost fallback map
+  const prodCostMap = {};
+  (_ownerHistData.products || []).forEach(p => { if (p.id) prodCostMap[p.id] = Number(p.current_cost || 0); });
+
+  const monthlyAgg = {};
+  monthKeys.forEach(k => {
+    monthlyAgg[k] = { sales: 0, cogs: 0, exp: 0, fee: 0, landed: 0, other: 0, count: 0 };
+  });
+
+  // Aggregate orders
+  (_ownerHistData.orders || []).filter(o => !isOrderCancelled(o)).forEach(o => {
+    const k = (o.order_date || '').slice(0, 7);
+    if (monthlyAgg[k]) {
+      monthlyAgg[k].sales += Number(o.total_amount || 0);
+      monthlyAgg[k].count++;
+      monthlyAgg[k].fee += getOrderPlatformFeeInfo(o).fee;
+      (o.order_items || []).forEach(it => {
+        const c = Number(it.cost_per_unit || 0);
+        const unitCost = c > 0 ? c : Number(prodCostMap[it.product_id] || 0);
+        monthlyAgg[k].cogs += Number(it.qty || 0) * unitCost;
+      });
+    }
+  });
+
+  // Aggregate expenses
+  (_ownerHistData.expenses || []).forEach(e => {
+    const k = (e.expense_date || '').slice(0, 7);
+    if (monthlyAgg[k]) {
+      monthlyAgg[k].exp += expenseProfitAmount(e);
+    }
+  });
+
+  // Aggregate landed costs
+  (_ownerHistData.landed || []).forEach(l => {
+    const k = (l.move_date || '').slice(0, 7);
+    if (monthlyAgg[k] && (l.type === 'ค่าจัดการ' || l.type === 'ค่าขนส่ง')) {
+      monthlyAgg[k].landed += Number(l.amount || 0);
+    }
+  });
+
+  // Aggregate other income
+  (_ownerHistData.otherIncome || []).forEach(inc => {
+    const k = (inc.income_date || '').slice(0, 7);
+    if (monthlyAgg[k]) {
+      monthlyAgg[k].other += Number(inc.realized_profit || 0);
+    }
+  });
+
+  const labels = [];
+  const salesData = [];
+  const costExpData = [];
+  const profitData = [];
+
+  const thaiMonthNames = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+  monthKeys.forEach(k => {
+    const [y, m] = k.split('-');
+    const mIdx = Number(m) - 1;
+    const thaiYearShort = String((Number(y) + 543)).slice(-2);
+    labels.push(`${thaiMonthNames[mIdx]} ${thaiYearShort}`);
+
+    const d = monthlyAgg[k];
+    const totalCostAndExpenses = d.cogs + d.exp + d.fee + d.landed;
+    const netProfit = d.sales + d.other - totalCostAndExpenses;
+
+    salesData.push(Math.round(d.sales));
+    costExpData.push(Math.round(totalCostAndExpenses));
+    profitData.push(Math.round(netProfit));
+  });
+
+  if (canvas._chart) canvas._chart.destroy();
+
+  canvas._chart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: '💰 ยอดขาย (Revenue)',
+          data: salesData,
+          backgroundColor: '#0284c7',
+          borderRadius: 4,
+          barPercentage: 0.85,
+          categoryPercentage: 0.8
+        },
+        {
+          label: '📦 ต้นทุน & ค่าใช้จ่าย (Cost & Exp)',
+          data: costExpData,
+          backgroundColor: '#f59e0b',
+          borderRadius: 4,
+          barPercentage: 0.85,
+          categoryPercentage: 0.8
+        },
+        {
+          label: '✨ กำไรสุทธิ (Net Profit)',
+          data: profitData,
+          backgroundColor: profitData.map(v => v >= 0 ? '#10b981' : '#ef4444'),
+          borderRadius: 4,
+          barPercentage: 0.85,
+          categoryPercentage: 0.8
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            boxWidth: 10,
+            font: { size: 11, family: 'Montserrat, "Noto Sans Thai", sans-serif' }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ฿' + Number(context.raw).toLocaleString();
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          ticks: { font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.05)' },
+          ticks: {
+            font: { size: 10.5 },
+            callback: v => '฿' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : (v >= 1000 ? (v/1000).toFixed(0)+'k' : v))
+          }
+        }
+      }
+    }
+  });
+
+  // Calculate MoM Highlights
+  const summaryEl = document.getElementById('dash-mom-summary');
+  if (summaryEl && salesData.length >= 2) {
+    const curSales = salesData[salesData.length - 1];
+    const prevSales = salesData[salesData.length - 2];
+    const momPct = prevSales > 0 ? ((curSales - prevSales) / prevSales * 100).toFixed(1) : 0;
+    const avgProfit = Math.round(profitData.reduce((s, v) => s + v, 0) / profitData.length);
+    
+    // Find best month
+    let maxSale = 0, bestMonthIdx = 0;
+    salesData.forEach((s, idx) => {
+      if (s > maxSale) { maxSale = s; bestMonthIdx = idx; }
+    });
+
+    summaryEl.innerHTML = `
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:4px 8px;color:#0369a1;font-weight:600">
+        📈 ยอดขายเดือนนี้ vs เดือนก่อน: <b>${momPct >= 0 ? '+' : ''}${momPct}%</b> (${fmtB(curSales)} vs ${fmtB(prevSales)})
+      </div>
+      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:4px 8px;color:#15803d;font-weight:600">
+        ✨ กำไรเฉลี่ย: <b>฿${fmtB(avgProfit)}/เดือน</b>
+      </div>
+      <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:4px 8px;color:#92400e;font-weight:600">
+        🏆 เดือนยอดขายสูงสุด: <b>${labels[bestMonthIdx]} (฿${fmtB(maxSale)})</b>
+      </div>
+    `;
+  }
+}
+
 async function ownerDashboard() {
   document.getElementById('topbar-actions').innerHTML =
     '<button class="btn btn-secondary btn-sm" onclick="ownerDashboard()">🔄</button>';
@@ -18802,10 +18991,35 @@ async function ownerDashboard() {
         .map(([k,l])=>'<button class="period-tab '+(_dashPeriod===k?'active':'')+'" onclick="setDashPeriod(&quot;'+k+'&quot;)">'+l+'</button>').join('')}
     </div>
     <div class="dash-stat-row" id="dash-stats"></div>
-    <div class="dash-chart-card">
-      <div class="dash-chart-title">📈 กำไรสะสม</div>
-      <canvas id="dash-chart" height="80"></canvas>
+
+    <!-- Charts Row: Monthly Comparison Bar Chart + Cumulative Profit Line Chart -->
+    <div class="grid-2 mb-4" id="dash-charts-row" style="gap:14px;margin-bottom:20px">
+      <!-- 1. Monthly Performance Comparison Bar Chart -->
+      <div class="card" style="padding:16px">
+        <div class="card-title flex-between" style="gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:14px;font-weight:700">📊 ยอดขาย / ต้นทุน / กำไร เปรียบเทียบรายเดือน</span>
+          </div>
+          <select id="dash-hist-months-sel" onchange="renderOwnerMonthlyBarChart()" style="padding:4px 8px;font-size:12px;border-radius:6px;border:1px solid var(--border2);background:#fff">
+            <option value="6">ย้อนหลัง 6 เดือน</option>
+            <option value="12" selected>ย้อนหลัง 12 เดือน</option>
+          </select>
+        </div>
+        <div class="chart-box" style="height:230px;position:relative"><canvas id="dash-bar-chart"></canvas></div>
+        <div id="dash-mom-summary" style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;font-size:11.5px"></div>
+      </div>
+
+      <!-- 2. Cumulative Profit Trend Line Chart -->
+      <div class="card" style="padding:16px">
+        <div class="card-title flex-between" style="gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <span style="font-size:14px;font-weight:700">📈 แนวโน้มกำไรสะสม (ช่วงที่เลือก)</span>
+          <span id="dash-cum-total-badge" class="badge badge-green font-mono" style="font-size:12px;font-weight:700"></span>
+        </div>
+        <div class="chart-box" style="height:230px;position:relative"><canvas id="dash-chart"></canvas></div>
+        <div id="dash-cum-summary" style="margin-top:10px;font-size:11.5px;color:var(--text3)"></div>
+      </div>
     </div>
+
     <div id="dash-alerts-wrap" style="margin-bottom:20px"></div>
     <div class="dash-grid-2" id="dash-bottom">
       <div class="dash-card">
@@ -18873,10 +19087,22 @@ function getDashDateRange() {
   return { from, to };
 }
 
+let _ownerHistData = null;
+
 async function loadDashData() {
   const {from, to} = getDashDateRange();
+  const now = new Date();
+  const formatLocalDate = (d) => {
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yy}-${mm}-${dd}`;
+  };
+  const histStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const histStartStr = formatLocalDate(histStart);
+  const histEndStr = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  const [ordRes, prodRes, expRes, apRes, empRes, landedRes, otherIncomeRes, poRes] = await Promise.all([
+  const [ordRes, prodRes, expRes, apRes, empRes, landedRes, otherIncomeRes, poRes, histOrdersRes, histExpRes, histLandedRes, histIncomeRes] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id)
       .gte('order_date', from).lte('order_date', to).order('order_date'),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true),
@@ -18890,6 +19116,14 @@ async function loadDashData() {
       .gte('income_date', from).lte('income_date', to),
     sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id)
       .gte('po_date', from).lte('po_date', to),
+    sb.from('orders').select('id,order_no,order_date,total_amount,doc_status,channel,shipping_status,order_items(product_id,qty,cost_per_unit)')
+      .eq('shop_id', currentShop.id).gte('order_date', histStartStr).lte('order_date', histEndStr),
+    sb.from('expenses').select('id,expense_date,amount,include_in_profit,category,standardized_category')
+      .eq('shop_id', currentShop.id).gte('expense_date', histStartStr).lte('expense_date', histEndStr),
+    sb.from('landed_costs').select('id,move_date,type,amount')
+      .eq('shop_id', currentShop.id).gte('move_date', histStartStr).lte('move_date', histEndStr),
+    sb.from('other_income').select('id,income_date,realized_profit')
+      .eq('shop_id', currentShop.id).gte('income_date', histStartStr).lte('income_date', histEndStr),
     ensureShopeeFeeData()
   ]);
 
@@ -18957,7 +19191,17 @@ async function loadDashData() {
     '</div>'
   ).join('');
 
-  // ── Chart: กำไรสะสม ─────────────────────────────────────────
+  // ── Cache data for Monthly Comparison Bar Chart ──
+  _ownerHistData = {
+    orders: histOrdersRes?.data || [],
+    expenses: histExpRes?.data || [],
+    landed: histLandedRes?.data || [],
+    otherIncome: histIncomeRes?.data || [],
+    products: products
+  };
+  renderOwnerMonthlyBarChart();
+
+  // ── Chart: กำไรสะสม (Line Chart) ───────────────────────────
   const dateMap = {};
   orders.forEach(o => {
     const d = o.order_date?.slice(0,10);
@@ -18974,6 +19218,9 @@ async function loadDashData() {
     return Math.round(cumProfit);
   });
 
+  const cumBadgeEl = document.getElementById('dash-cum-total-badge');
+  if (cumBadgeEl) cumBadgeEl.textContent = `กำไรสะสม: ${fmtB(cumProfit)}`;
+
   const ctx = document.getElementById('dash-chart');
   if (ctx && window.Chart) {
     if (ctx._chart) ctx._chart.destroy();
@@ -18982,24 +19229,29 @@ async function loadDashData() {
       data: {
         labels: dates.map(d => d.slice(5)),
         datasets: [{
+          label: 'กำไรสะสม (บาท)',
           data: cumData,
           borderColor: '#1D9E75',
-          backgroundColor: 'rgba(29,158,117,0.08)',
-          borderWidth: 2,
+          backgroundColor: 'rgba(29,158,117,0.12)',
+          borderWidth: 2.5,
           fill: true,
-          tension: 0.4,
-          pointRadius: cumData.length > 30 ? 0 : 3,
-          pointHoverRadius: 5,
+          tension: 0.35,
+          pointRadius: cumData.length > 30 ? 0 : 3.5,
+          pointHoverRadius: 6,
         }]
       },
       options: {
-        responsive:true, maintainAspectRatio:true,
-        plugins:{ legend:{display:false}, tooltip:{
-          callbacks:{ label: ctx => '฿'+Number(ctx.raw).toLocaleString() }
-        }},
-        scales:{
-          x:{ grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:11}} },
-          y:{ grid:{color:'rgba(0,0,0,0.05)'}, ticks:{font:{size:11}, callback: v=>'฿'+Number(v).toLocaleString()} }
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: { label: ctx => 'กำไรสะสม: ฿' + Number(ctx.raw).toLocaleString() }
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(0,0,0,0.04)' }, ticks: { font: { size: 11 } } },
+          y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 11 }, callback: v => '฿' + Number(v).toLocaleString() } }
         }
       }
     });
@@ -28617,7 +28869,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.83</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.85</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
