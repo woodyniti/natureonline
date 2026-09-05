@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.81';
+const CURRENT_APP_VERSION = 'sealthai-v1.82';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1061,7 +1061,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.81 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.82 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -17165,60 +17165,67 @@ async function gratuity() {
 async function supplierWeeklyExpense() {
   const curYM = today().slice(0, 7);
   document.getElementById('topbar-actions').innerHTML = `
-    <button class="btn btn-secondary btn-sm" onclick="exportWeeklySupplierExcel()">📥 ส่งออก Excel</button>
-    <button class="btn btn-secondary btn-sm" onclick="openSupplierRateSettingsModal()">⚙️ จัดการ Progressive Rate</button>
-    <button class="btn btn-primary btn-sm" onclick="loadWeeklySupplierExpenses()"><span class="btn-icon">🔄</span> รีเฟรชคำนวณ</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary btn-sm" onclick="exportWeeklySupplierExcel()" style="padding:5px 9px;font-size:12px">📥 Excel</button>
+      <button class="btn btn-secondary btn-sm" onclick="openSupplierRateSettingsModal()" style="padding:5px 9px;font-size:12px">⚙️ Rate & ข้อตกลง</button>
+      <button class="btn btn-primary btn-sm" onclick="loadWeeklySupplierExpenses()" style="padding:5px 10px;font-size:12px"><span class="btn-icon">🔄</span> คำนวณใหม่</button>
+    </div>
   `;
 
   setContent(`
     <div id="supplier-weekly-page">
-      <!-- Filter Bar -->
+      <!-- Filter Bar (Mobile-Friendly Flex Wrap) -->
       <div class="filter-bar mb-4" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <select id="sw-month" onchange="loadWeeklySupplierExpenses()" style="min-width:140px">
-          ${getMonthOptions(curYM)}
-        </select>
-        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sw-month').value='';loadWeeklySupplierExpenses()">ดูทั้งหมด</button>
-        <select id="sw-filter-status" onchange="renderWeeklySupplierView()">
-          <option value="">ทุกสถานะ</option>
-          <option value="draft">📝 Draft / รอคำนวณ</option>
-          <option value="calculated">🧮 Calculated / คำนวณแล้ว</option>
-          <option value="approved">✅ Approved / อนุมัติแล้ว</option>
-          <option value="paid">💰 Paid / จ่ายเงินแล้ว</option>
-        </select>
-        <select id="sw-filter-supplier" onchange="renderWeeklySupplierView()" style="min-width:160px">
-          <option value="">ทุก Supplier</option>
-        </select>
-        <input id="sw-search" placeholder="ค้นหา Supplier / เลขที่ PO / หมายเหตุ" oninput="renderWeeklySupplierView()" style="min-width:220px;flex:1">
+        <div style="display:flex;gap:6px;flex:1 1 240px;min-width:0">
+          <select id="sw-month" onchange="loadWeeklySupplierExpenses()" style="flex:1;min-width:0;padding:6px 8px;font-size:12.5px">
+            ${getMonthOptions(curYM)}
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('sw-month').value='';loadWeeklySupplierExpenses()" style="white-space:nowrap;font-size:12px;padding:6px 10px">ดูทั้งหมด</button>
+        </div>
+        <div style="display:flex;gap:6px;flex:1 1 240px;min-width:0">
+          <select id="sw-filter-status" onchange="renderWeeklySupplierView()" style="flex:1;min-width:0;padding:6px 8px;font-size:12.5px">
+            <option value="">ทุกสถานะ</option>
+            <option value="calculated">🧮 คำนวณแล้ว</option>
+            <option value="approved">✅ อนุมัติแล้ว (Approved)</option>
+            <option value="paid">💰 จ่ายแล้ว (Paid)</option>
+            <option value="no_agreement">⚪ ไม่มีข้อตกลง</option>
+            <option value="draft">📝 Draft</option>
+          </select>
+          <select id="sw-filter-supplier" onchange="renderWeeklySupplierView()" style="flex:1;min-width:0;padding:6px 8px;font-size:12.5px">
+            <option value="">ทุก Supplier</option>
+          </select>
+        </div>
+        <input id="sw-search" placeholder="🔍 ค้นหา Supplier / เลขที่ PO / หมายเหตุ..." oninput="renderWeeklySupplierView()" style="flex:1 1 100%;min-width:0;padding:7px 10px;font-size:13px">
       </div>
 
-      <!-- KPI Summary Cards -->
-      <div class="stat-grid mb-4" id="sw-stats"></div>
+      <!-- KPI Summary Cards (Auto Responsive Grid) -->
+      <div class="stat-grid mb-4" id="sw-stats" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px"></div>
 
       <!-- Analytics Charts -->
-      <div class="grid-2 mb-4">
-        <div class="card">
-          <div class="card-title">📈 ยอดซื้อสุทธิ vs ค่าใช้จ่าย Progressive & Top Up รายสัปดาห์</div>
-          <div class="chart-box" style="height:230px"><canvas id="ch-sw-trend"></canvas></div>
+      <div class="grid-2 mb-4" style="gap:12px">
+        <div class="card" style="padding:14px">
+          <div class="card-title" style="font-size:13px;line-height:1.4">📈 ยอดซื้อสุทธิ vs ค่าใช้จ่าย Progressive & Top Up</div>
+          <div class="chart-box" style="height:220px;position:relative"><canvas id="ch-sw-trend"></canvas></div>
         </div>
-        <div class="card">
-          <div class="card-title">🏢 อันดับ Supplier ที่มียอดคำนวณสูงสุด</div>
-          <div id="sw-top-suppliers" style="max-height:230px;overflow-y:auto;padding-right:4px"></div>
+        <div class="card" style="padding:14px">
+          <div class="card-title" style="font-size:13px;line-height:1.4">🏢 อันดับ Supplier ที่มียอดคำนวณสูงสุด</div>
+          <div id="sw-top-suppliers" style="max-height:220px;overflow-y:auto;padding-right:4px"></div>
         </div>
       </div>
 
-      <!-- Main Weekly Summary Table -->
-      <div class="card">
-        <div class="card-title flex-between">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span>📋 สรุปค่าใช้จ่าย Supplier รายสัปดาห์ (Progressive Tier & Top Up)</span>
+      <!-- Main Weekly Summary List / Table -->
+      <div class="card" style="padding:14px">
+        <div class="card-title flex-between" style="gap:8px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-size:14px;font-weight:700">📋 สรุปค่าสินน้ำใจ Supplier รายสัปดาห์</span>
             <span id="sw-result-count" class="badge badge-gray" style="font-size:11px"></span>
           </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-sm btn-secondary" onclick="openSupplierRateSettingsModal()">⚙️ ตาราง Rate</button>
-            <button class="btn btn-sm btn-primary" onclick="loadWeeklySupplierExpenses()">🔄 คำนวณใหม่</button>
+          <div style="display:flex;gap:6px;width:auto">
+            <button class="btn btn-sm btn-secondary" onclick="openSupplierRateSettingsModal()" style="font-size:11.5px">⚙️ Rate & ติ๊กเลือก</button>
+            <button class="btn btn-sm btn-primary" onclick="loadWeeklySupplierExpenses()" style="font-size:11.5px">🔄 คำนวณใหม่</button>
           </div>
         </div>
-        <div class="table-wrap" id="sw-table">
+        <div id="sw-table">
           <div class="loading"><div class="spinner"></div></div>
         </div>
       </div>
@@ -17226,16 +17233,16 @@ async function supplierWeeklyExpense() {
 
     <!-- Modal: รายละเอียดการคำนวณ 3-Line Breakdown & POs -->
     <div class="modal-overlay" id="modal-sw-detail">
-      <div class="modal" style="max-width:760px">
-        <div class="modal-title" id="sw-modal-title">🧮 รายละเอียดการคำนวณค่าใช้จ่าย Supplier</div>
+      <div class="modal" style="max-width:760px;width:100%;box-sizing:border-box;padding:16px;max-height:92vh;overflow-y:auto">
+        <div class="modal-title" id="sw-modal-title" style="font-size:15px;line-height:1.4">🧮 รายละเอียดค่าใช้จ่าย Supplier</div>
         <div id="sw-detail-content"></div>
       </div>
     </div>
 
     <!-- Modal: Settings for Progressive Rates & Per-Supplier Enablement -->
     <div class="modal-overlay" id="modal-sw-settings">
-      <div class="modal" style="max-width:780px">
-        <div class="modal-title">⚙️ ตั้งค่าเงินพิเศษ / สินน้ำใจ Supplier รายสัปดาห์</div>
+      <div class="modal" style="max-width:780px;width:100%;box-sizing:border-box;padding:16px;max-height:92vh;overflow-y:auto">
+        <div class="modal-title" style="font-size:15px;line-height:1.4">⚙️ ตั้งค่าเงินพิเศษ / สินน้ำใจ Supplier รายสัปดาห์</div>
         
         <!-- Tab Navigation -->
         <div style="display:flex;gap:6px;border-bottom:2px solid var(--border);margin-bottom:14px;padding-bottom:2px">
@@ -17534,69 +17541,127 @@ function renderWeeklySupplierTable(rows) {
   }
 
   const statusBadges = {
-    no_agreement: '<span class="badge badge-gray" style="background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1">⚪ ไม่มีข้อตกลง</span>',
-    draft: '<span class="badge badge-gray">📝 Draft</span>',
-    calculated: '<span class="badge badge-blue">🧮 คำนวณแล้ว</span>',
-    approved: '<span class="badge badge-amber">✅ Approved</span>',
-    paid: '<span class="badge badge-green">💰 จ่ายแล้ว</span>',
-    cancelled: '<span class="badge badge-red">❌ ยกเลิก</span>'
+    no_agreement: '<span class="badge badge-gray" style="background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;white-space:nowrap">⚪ ไม่มีข้อตกลง</span>',
+    draft: '<span class="badge badge-gray" style="white-space:nowrap">📝 Draft</span>',
+    calculated: '<span class="badge badge-blue" style="white-space:nowrap">🧮 คำนวณแล้ว</span>',
+    approved: '<span class="badge badge-amber" style="white-space:nowrap">✅ Approved</span>',
+    paid: '<span class="badge badge-green" style="white-space:nowrap">💰 จ่ายแล้ว</span>',
+    cancelled: '<span class="badge badge-red" style="white-space:nowrap">❌ ยกเลิก</span>'
   };
 
-  tableEl.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>รอบสัปดาห์ (Week)</th>
-          <th>Supplier</th>
-          <th class="text-right">ยอดซื้อสุทธิ</th>
-          <th class="text-right">ค่าตามสูตร</th>
-          <th class="text-right">Top Up พิเศษ</th>
-          <th class="text-right">ยอดรวมจ่ายสุทธิ</th>
-          <th>สถานะ</th>
-          <th style="text-align:right">จัดการ</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map(r => `
+  // 1. Desktop Table View
+  const desktopHtml = `
+    <div class="desktop-only table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td style="white-space:nowrap;font-size:12px">
-              <b>${escapeHTML(r.week_label)}</b>
-              <div style="font-size:10px;color:var(--text3)">${r.week_start} ถึง ${r.week_end}</div>
-            </td>
-            <td>
-              <b style="font-size:13px;color:var(--text)">${escapeHTML(r.supplier_name)}</b>
-              <div style="font-size:10.5px;color:var(--text3);margin-top:2px">
-                📦 ${r.po_count} บิล PO
-              </div>
-            </td>
-            <td class="text-right font-mono" style="font-size:13px;font-weight:700">
-              ${fmtB(r.weekly_base_amount)}
-            </td>
-            <td class="text-right font-mono" style="font-size:13px;color:#0284c7">
-              ${fmtB(r.calculated_expense_amount)}
-            </td>
-            <td class="text-right font-mono" style="font-size:13px">
-              ${r.top_up_amount > 0 ? `
-                <div style="color:#db2777;font-weight:800">+${fmtB(r.top_up_amount)}</div>
-                <div style="font-size:9.5px;color:#9d174d">${escapeHTML(r.top_up_reason)}</div>
-              ` : '<span style="color:var(--text3)">—</span>'}
-            </td>
-            <td class="text-right font-mono" style="font-size:14.5px;font-weight:800;color:${r.status==='paid'?'#15803d':'#0f172a'}">
-              ${fmtB(r.final_expense_amount)}
-            </td>
-            <td>
-              ${statusBadges[r.status] || r.status}
-            </td>
-            <td style="white-space:nowrap;text-align:right">
-              <button class="btn btn-primary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:3px 8px">
-                🔍 รายละเอียด & Top Up
-              </button>
-            </td>
+            <th>รอบสัปดาห์ (Week)</th>
+            <th>Supplier</th>
+            <th class="text-right">ยอดซื้อสุทธิ</th>
+            <th class="text-right">ค่าตามสูตร</th>
+            <th class="text-right">Top Up พิเศษ</th>
+            <th class="text-right">ยอดรวมจ่ายสุทธิ</th>
+            <th>สถานะ</th>
+            <th style="text-align:right">จัดการ</th>
           </tr>
-        `).join('')}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          ${rows.map(r => `
+            <tr>
+              <td style="white-space:nowrap;font-size:12px">
+                <b>${escapeHTML(r.week_label)}</b>
+                <div style="font-size:10px;color:var(--text3)">${r.week_start} ถึง ${r.week_end}</div>
+              </td>
+              <td>
+                <b style="font-size:13px;color:var(--text)">${escapeHTML(r.supplier_name)}</b>
+                <div style="font-size:10.5px;color:var(--text3);margin-top:2px">
+                  📦 ${r.po_count} บิล PO
+                </div>
+              </td>
+              <td class="text-right font-mono" style="font-size:13px;font-weight:700">
+                ${fmtB(r.weekly_base_amount)}
+              </td>
+              <td class="text-right font-mono" style="font-size:13px;color:#0284c7">
+                ${fmtB(r.calculated_expense_amount)}
+              </td>
+              <td class="text-right font-mono" style="font-size:13px">
+                ${r.top_up_amount > 0 ? `
+                  <div style="color:#db2777;font-weight:800">+${fmtB(r.top_up_amount)}</div>
+                  <div style="font-size:9.5px;color:#9d174d">${escapeHTML(r.top_up_reason)}</div>
+                ` : '<span style="color:var(--text3)">—</span>'}
+              </td>
+              <td class="text-right font-mono" style="font-size:14.5px;font-weight:800;color:${r.status==='paid'?'#15803d':'#0f172a'}">
+                ${fmtB(r.final_expense_amount)}
+              </td>
+              <td>
+                ${statusBadges[r.status] || r.status}
+              </td>
+              <td style="white-space:nowrap;text-align:right">
+                <button class="btn btn-primary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:4px 9px">
+                  🔍 รายละเอียด & Top Up
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
   `;
+
+  // 2. Mobile Responsive Card List View
+  const mobileHtml = `
+    <div class="mobile-only" style="display:none">
+      ${rows.map(r => `
+        <div style="background:#fff;border:1.5px solid var(--border2);border-radius:12px;padding:12px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,0.03)">
+          <!-- Top row: Week & Status -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">
+            <div>
+              <div style="font-size:12px;font-weight:700;color:#1e293b">📅 ${escapeHTML(r.week_label)}</div>
+              <div style="font-size:10px;color:var(--text3)">${r.week_start} ถึง ${r.week_end}</div>
+            </div>
+            <div>${statusBadges[r.status] || r.status}</div>
+          </div>
+
+          <!-- Supplier Name & POs -->
+          <div style="margin-bottom:10px">
+            <div style="font-size:14.5px;font-weight:700;color:#0f172a">${escapeHTML(r.supplier_name)}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">📦 รวม ${r.po_count} บิล PO</div>
+          </div>
+
+          <!-- 3-Box Financial Grid -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;background:var(--bg3);border-radius:8px;padding:8px 6px;margin-bottom:10px;text-align:center">
+            <div>
+              <div style="font-size:9.5px;color:var(--text3)">ยอดซื้อสุทธิ</div>
+              <div class="font-mono" style="font-size:11.5px;font-weight:700;color:#334155;margin-top:2px">${fmtB(r.weekly_base_amount)}</div>
+            </div>
+            <div>
+              <div style="font-size:9.5px;color:var(--text3)">ตามสูตร Rate</div>
+              <div class="font-mono" style="font-size:11.5px;font-weight:700;color:#0284c7;margin-top:2px">${fmtB(r.calculated_expense_amount)}</div>
+            </div>
+            <div>
+              <div style="font-size:9.5px;color:var(--text3)">Top Up</div>
+              <div class="font-mono" style="font-size:11.5px;font-weight:700;color:${r.top_up_amount>0?'#db2777':'var(--text3)'};margin-top:2px">
+                ${r.top_up_amount>0?'+'+fmtB(r.top_up_amount):'—'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Payout Banner -->
+          <div style="display:flex;justify-content:space-between;align-items:center;background:${r.status==='paid'?'#f0fdf4':'#eff6ff'};border:1px solid ${r.status==='paid'?'#86efac':'#bfdbfe'};border-radius:8px;padding:8px 12px;margin-bottom:10px">
+            <span style="font-size:11.5px;font-weight:700;color:${r.status==='paid'?'#166534':'#1e40af'}">💰 รวมจ่ายสุทธิ</span>
+            <span class="font-mono" style="font-size:16px;font-weight:800;color:${r.status==='paid'?'#15803d':'#0284c7'}">${fmtB(r.final_expense_amount)}</span>
+          </div>
+
+          <!-- Touch Action Button -->
+          <button class="btn btn-primary" onclick="viewWeeklySupplierDetail('${r.id}')" style="width:100%;min-height:38px;justify-content:center;font-size:12.5px;font-weight:700;border-radius:8px">
+            🔍 รายละเอียด & จัดการ Top Up
+          </button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  tableEl.innerHTML = desktopHtml + mobileHtml;
 }
 
 function renderWeeklySupplierCharts(rows) {
@@ -28549,7 +28614,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.81</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.82</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
