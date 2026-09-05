@@ -28690,6 +28690,16 @@ function switchCSPreviewTab(tab) {
   }
 }
 
+async function convertQuotationToOrder(qtId) {
+  if (!qtId) return;
+  await showPage('orders');
+  await openNewOrder();
+  const sel = document.getElementById('o-quote-source');
+  if (sel) {
+    sel.value = qtId;
+    await importQuoteToOrder(qtId);
+  }
+}
 </script>
 
 <!-- Mobile Bottom Nav -->
@@ -28717,15 +28727,3 @@ function switchCSPreviewTab(tab) {
 </div>
 </body>
 </html>
-
-
-async function convertQuotationToOrder(qtId) {
-  if (!qtId) return;
-  await showPage('orders');
-  await openNewOrder();
-  const sel = document.getElementById('o-quote-source');
-  if (sel) {
-    sel.value = qtId;
-    await importQuoteToOrder(qtId);
-  }
-}
