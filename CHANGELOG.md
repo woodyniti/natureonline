@@ -4,6 +4,14 @@
 
 ---
 
+## 🚀 [v1.95] — 2026-09-12
+### Login Recovery & JavaScript Regex Syntax Repair
+* **🐛 Critical Regex Syntax Repair:** แก้ไขไวยากรณ์ Regular Expression ในฟังก์ชัน `smartWildcardMatch` ให้ถูกต้องและโหลดบนเบราว์เซอร์ได้สมบูรณ์ 100%
+* **🔐 Login Restoration:** กู้คืนปุ่มเข้าสู่ระบบ (`doLogin` และ `doDirectAdminLogin`) ให้ทำงานได้ทันที
+* **🧹 Cache Refresh (v1.95):** อัปเดต Service Worker Cache เป็น `sealthai-v1.95` เพื่อบังคับล้างแคชและอัปเดตระบบ
+
+---
+
 ## 🚀 [v1.94] — 2026-09-12
 ### Smart Wildcard & Flexible Dimension Search in Orders (*, -, x, space)
 * **✨ Flexible Wildcard & Dimension Matching:** ค้นหาออเดอร์จากขนาดสินค้าด้วยสัญลักษณ์แทนได้อย่างอิสระ เช่น สินค้า `8x14x4` สามารถพิมพ์ค้นหาด้วย `8*14*4`, `8-14-4`, `8 14 4`, `8*4`, `TC*14*4` ได้อย่างแม่นยำ

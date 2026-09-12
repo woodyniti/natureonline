@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.94';
+const CURRENT_APP_VERSION = 'sealthai-v1.95';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -4902,7 +4902,7 @@ function smartWildcardMatch(targetText, searchPattern) {
   // 2. Direct Wildcard Regex Match (* และ ?)
   if (pattern.includes('*') || pattern.includes('?')) {
     try {
-      const escaped = pattern.replace(/[.+^${}()|[\]\]/g, '\\$&')
+      const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
                              .replace(/\*/g, '.*')
                              .replace(/\?/g, '.');
       const re = new RegExp(escaped, 'i');
@@ -4911,15 +4911,15 @@ function smartWildcardMatch(targetText, searchPattern) {
   }
 
   // 3. Flexible Dimension & Separator Normalization (e.g. 8x14x4 ↔ 8*14*4 ↔ 8-14-4 ↔ 8 14 4)
-  const normTarget = target.replace(/[-*xX×/\\s.]+/g, 'x');
-  const normPattern = pattern.replace(/[-*xX×/\\s.]+/g, 'x');
+  const normTarget = target.replace(/[-*xX×/\s.]+/g, 'x');
+  const normPattern = pattern.replace(/[-*xX×/\s.]+/g, 'x');
   if (normTarget.includes(normPattern)) return true;
 
   // 4. Wildcard with Dimension Normalization (e.g. tc*8*4 ↔ tc*8-14-4)
   if (pattern.includes('*') || pattern.includes('?')) {
     try {
-      const pClean = pattern.replace(/[-xX×/\\s.]+/g, 'x');
-      const escapedNorm = pClean.replace(/[.+^${}()|[\]\]/g, '\\$&')
+      const pClean = pattern.replace(/[-xX×/\s.]+/g, 'x');
+      const escapedNorm = pClean.replace(/[.+^${}()|[\]\\]/g, '\\$&')
                                 .replace(/\*/g, '.*')
                                 .replace(/\?/g, '.');
       const reNorm = new RegExp(escapedNorm, 'i');
@@ -4932,7 +4932,7 @@ function smartWildcardMatch(targetText, searchPattern) {
   if (words.length > 1) {
     const allMatch = words.every(w => {
       if (target.includes(w)) return true;
-      const nw = w.replace(/[-*xX×/\\s.]+/g, 'x');
+      const nw = w.replace(/[-*xX×/\s.]+/g, 'x');
       return normTarget.includes(nw);
     });
     if (allMatch) return true;
@@ -29388,7 +29388,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.94', date:'2026-09-12', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Smart Wildcard & Flexible Dimension Search in Orders (*, -, x, space)', items:[
+    { v:'1.95', date:'2026-09-12', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Login Recovery & JavaScript Regex Syntax Repair', items:[
+      '🐛 <b>Critical Regex Repair:</b> แก้ไขไวยากรณ์ Regular Expression ในฟังก์ชัน smartWildcardMatch ให้ทำงานราบรื่น 100%',
+      '🔐 <b>Login Restoration:</b> กู้คืนระบบ Login (ทั้ง doLogin และ doDirectAdminLogin) ให้เข้าสู่ระบบได้ทันที',
+      '🧹 <b>Cache Purge (v1.95):</b> ล้างแคช Service Worker และรีเฟรชระบบสู่เวอร์ชันล่าสุด'
+    ]},
+    { v:'1.94', date:'2026-09-12', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Smart Wildcard & Flexible Dimension Search in Orders (*, -, x, space)', items:[
       '✨ <b>Flexible Wildcard Matching:</b> ค้นหาออเดอร์จากขนาดสินค้าด้วยสัญลักษณ์แทนได้อย่างอิสระ เช่น สินค้า 8x14x4 สามารถพิมพ์ค้นหาด้วย <b>8*14*4</b>, <b>8-14-4</b>, <b>8 14 4</b> หรือ <b>TC*14*4</b> ได้ทันที',
       '🔍 <b>Full Dimension & Part No Support:</b> รองรับการค้นหาข้ามขนาดมิติ (IDxODxW), SKU, Part No และชื่อสินค้าแบบ Universal Search',
       '🧹 <b>Cache Purge (v1.94):</b> เคลียร์แคช Service Worker ทันที'
