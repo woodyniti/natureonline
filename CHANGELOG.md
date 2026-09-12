@@ -4,6 +4,14 @@
 
 ---
 
+## 🚀 [v1.94] — 2026-09-12
+### Smart Wildcard & Flexible Dimension Search in Orders (*, -, x, space)
+* **✨ Flexible Wildcard & Dimension Matching:** ค้นหาออเดอร์จากขนาดสินค้าด้วยสัญลักษณ์แทนได้อย่างอิสระ เช่น สินค้า `8x14x4` สามารถพิมพ์ค้นหาด้วย `8*14*4`, `8-14-4`, `8 14 4`, `8*4`, `TC*14*4` ได้อย่างแม่นยำ
+* **🔍 Universal Search Support:** สลับตัวคั่นมิติอัตโนมัติ (สลับ `x`, `*`, `-`, `/`, เว้นวรรค) พร้อมรองรับ `*` (แทนข้อความใดๆ) และ `?` (แทน 1 ตัวอักษร)
+* **🧹 Cache Refresh (v1.94):** อัปเดต Service Worker Cache เป็น `sealthai-v1.94`
+
+---
+
 ## 🚀 [v1.93] — 2026-09-12
 ### Fix Database Column Reference for Order Items & Enhanced Product Search
 * **🐛 PostgREST Query Fix:** ปรับแก้ไขคำสั่งเรียกข้อมูลตาราง `order_items` ให้ตรงกับโครงสร้างฟิลด์ฐานข้อมูล (ตัดฟิลด์ sku ที่ไม่อยู่ใน order_items ออก แล้วเชื่อมโยง SKU / Part No จาก Master Products แทน)

@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.93';
+const CURRENT_APP_VERSION = 'sealthai-v1.94';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -4766,7 +4766,7 @@ async function orders() {
       <select id="ord-sort" title="เรียงลำดับรายการ" onchange="window._ordSort=this.value;loadOrders()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px">
         ${(()=>{const cur=window._ordSort||'status';return [['status','↕️ รอจัดส่งก่อน'],['date','📅 วันที่ล่าสุด'],['sale','💰 ยอดขายสูงสุด'],['profit','📈 กำไรมากสุด'],['profit_asc','📉 กำไรน้อยสุด']].map(([v,l])=>'<option value="'+v+'"'+(cur===v?' selected':'')+'>'+l+'</option>').join('');})()}
       </select>
-      <input type="text" id="ord-search" placeholder="🔍 ค้นหา ชื่อสินค้า / รหัส SKU / Part No / ลูกค้า / เลขที่..." oninput="loadOrders()" onkeydown="if(event.key==='Enter')loadOrders()" style="min-width:240px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;color:var(--text)">
+      <input type="text" id="ord-search" placeholder="🔍 ค้นหา ชื่อสินค้า / SKU / Part No / Wildcard เช่น 8*14*4, 8-14-4, TC*14..." oninput="loadOrders()" onkeydown="if(event.key==='Enter')loadOrders()" style="min-width:260px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;color:var(--text)">
       <button class="btn btn-secondary btn-sm" onclick="loadOrders()">🔍 ค้นหา</button>
       <button class="btn btn-secondary btn-sm" onclick="clearOrdFilter()">📋 ทั้งหมด</button>
     </div>
@@ -4888,6 +4888,59 @@ async function orders() {
   loadEmployeeOptions('o-emp');
 }
 
+// ── Smart Wildcard & Flexible Dimension Matcher (*, -, x, X, space, /) ──
+function smartWildcardMatch(targetText, searchPattern) {
+  if (!searchPattern) return true;
+  if (!targetText) return false;
+
+  const target = String(targetText).toLowerCase().trim();
+  const pattern = String(searchPattern).toLowerCase().trim();
+
+  // 1. Exact Substring Match
+  if (target.includes(pattern)) return true;
+
+  // 2. Direct Wildcard Regex Match (* และ ?)
+  if (pattern.includes('*') || pattern.includes('?')) {
+    try {
+      const escaped = pattern.replace(/[.+^${}()|[\]\]/g, '\\$&')
+                             .replace(/\*/g, '.*')
+                             .replace(/\?/g, '.');
+      const re = new RegExp(escaped, 'i');
+      if (re.test(target)) return true;
+    } catch(e) {}
+  }
+
+  // 3. Flexible Dimension & Separator Normalization (e.g. 8x14x4 ↔ 8*14*4 ↔ 8-14-4 ↔ 8 14 4)
+  const normTarget = target.replace(/[-*xX×/\\s.]+/g, 'x');
+  const normPattern = pattern.replace(/[-*xX×/\\s.]+/g, 'x');
+  if (normTarget.includes(normPattern)) return true;
+
+  // 4. Wildcard with Dimension Normalization (e.g. tc*8*4 ↔ tc*8-14-4)
+  if (pattern.includes('*') || pattern.includes('?')) {
+    try {
+      const pClean = pattern.replace(/[-xX×/\\s.]+/g, 'x');
+      const escapedNorm = pClean.replace(/[.+^${}()|[\]\]/g, '\\$&')
+                                .replace(/\*/g, '.*')
+                                .replace(/\?/g, '.');
+      const reNorm = new RegExp(escapedNorm, 'i');
+      if (reNorm.test(normTarget)) return true;
+    } catch(e) {}
+  }
+
+  // 5. Multi-word AND matching (เมื่อเว้นวรรค เช่น "tc 8 14 4")
+  const words = pattern.split(/\s+/).filter(Boolean);
+  if (words.length > 1) {
+    const allMatch = words.every(w => {
+      if (target.includes(w)) return true;
+      const nw = w.replace(/[-*xX×/\\s.]+/g, 'x');
+      return normTarget.includes(nw);
+    });
+    if (allMatch) return true;
+  }
+
+  return false;
+}
+
 async function loadOrders() {
   const from = document.getElementById('ord-from')?.value || '';
   const to   = document.getElementById('ord-to')?.value   || '';
@@ -5000,34 +5053,37 @@ async function loadOrders() {
     employees: o.employee_id ? { name: empMap[o.employee_id] || '-' } : null
   }));
 
-  // client-side search ทุก column พร้อมรองรับ ค้นหาชื่อสินค้า, รหัส SKU, Part No, Supplier Code
-  const search = (document.getElementById('ord-search')?.value || '').trim().toLowerCase();
+  // client-side search ทุก column รองรับ Wildcard (*, ?), สลับตัวคั่นมิติ (8x14x4 ↔ 8*14*4 ↔ 8-14-4 ↔ 8 14 4), SKU, Part No
+  const search = (document.getElementById('ord-search')?.value || '').trim();
   if (search) {
     rows = rows.filter(o => {
-      // 1. ตรวจสอบข้อมูลหลักของออเดอร์
-      const baseMatch = [
+      // 1. ตรวจสอบข้อมูลหลักของออเดอร์ (เลขที่, ลูกค้า, ช่องทาง, โน้ต ฯลฯ)
+      const baseFields = [
         o.order_no, o.customer_name, o.customer_username, o.customer_social, o.customer_contact,
         o.customer_phone, o.tracking_no, o.channel, o.payment_method,
         o.note, o.customer_address,
         o.employee_id ? empMap[o.employee_id] : ''
-      ].some(v => String(v||'').toLowerCase().includes(search));
-      if (baseMatch) return true;
+      ];
+      if (baseFields.some(v => smartWildcardMatch(v, search))) return true;
 
       // 2. ตรวจสอบข้อมูลสินค้าใน Order Items (ชื่อสินค้า, รหัส SKU, Part No, Barcode ฯลฯ)
       const itemMatch = (o.order_items || []).some(it => {
         if (!it) return false;
-        const itName = String(it.product_name || '').toLowerCase();
-        const itSku = String(it.sku || '').toLowerCase();
-        if (itName.includes(search) || itSku.includes(search)) return true;
+        if (smartWildcardMatch(it.product_name, search) || smartWildcardMatch(it.sku, search)) return true;
 
-        // ค้นหาเพิ่มเติมจาก Master Catalog (Part No, Supplier SKU, Barcode)
+        // ค้นหาเพิ่มเติมจาก Master Catalog (Part No, Supplier SKU, Barcode, ขนาดมิติ)
         const p = (it.product_id ? prodMap[it.product_id] : null) || 
-                  (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) ||
-                  (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
+                  (it.product_name ? prodByName[String(it.product_name).trim().toLowerCase()] : null) ||
+                  (it.sku ? prodBySku[String(it.sku).trim().toLowerCase()] : null);
         if (p) {
-          return [
-            p.name, p.sku, p.supplier_sku, p.supplier_code, p.part_no, p.item_no, p.barcode
-          ].some(v => String(v || '').toLowerCase().includes(search));
+          const pFields = [
+            p.name, p.sku, p.supplier_sku, p.supplier_code, p.part_no, p.item_no, p.barcode,
+            p.category, p.sub_category, p.material, p.seal_type,
+            (p.inner_diameter && p.outer_diameter) ? `${p.inner_diameter}x${p.outer_diameter}${p.width ? ('x' + p.width) : ''}` : '',
+            (p.inner_diameter && p.outer_diameter) ? `${p.inner_diameter}*${p.outer_diameter}${p.width ? ('*' + p.width) : ''}` : '',
+            (p.inner_diameter && p.outer_diameter) ? `${p.inner_diameter}-${p.outer_diameter}${p.width ? ('-' + p.width) : ''}` : ''
+          ];
+          if (pFields.some(v => smartWildcardMatch(v, search))) return true;
         }
         return false;
       });
@@ -5036,10 +5092,10 @@ async function loadOrders() {
       // 3. ตรวจสอบ PO Items ที่เชื่อมโยงกับออเดอร์นี้
       const linkedPOItems = poItemMapByOrder[o.order_no] || poItemMapByOrder[o.id] || [];
       const poMatch = linkedPOItems.some(poi => 
-        String(poi.clean_product_name || '').toLowerCase().includes(search) ||
-        String(poi.raw_product_name || '').toLowerCase().includes(search) ||
-        String(poi.po_no || '').toLowerCase().includes(search) ||
-        String(poi.supplier_name || '').toLowerCase().includes(search)
+        smartWildcardMatch(poi.clean_product_name, search) ||
+        smartWildcardMatch(poi.raw_product_name, search) ||
+        smartWildcardMatch(poi.po_no, search) ||
+        smartWildcardMatch(poi.supplier_name, search)
       );
       if (poMatch) return true;
 
@@ -29332,7 +29388,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.93', date:'2026-09-12', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Fix Database Column Reference for Order Items & Enhanced Product Search', items:[
+    { v:'1.94', date:'2026-09-12', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Smart Wildcard & Flexible Dimension Search in Orders (*, -, x, space)', items:[
+      '✨ <b>Flexible Wildcard Matching:</b> ค้นหาออเดอร์จากขนาดสินค้าด้วยสัญลักษณ์แทนได้อย่างอิสระ เช่น สินค้า 8x14x4 สามารถพิมพ์ค้นหาด้วย <b>8*14*4</b>, <b>8-14-4</b>, <b>8 14 4</b> หรือ <b>TC*14*4</b> ได้ทันที',
+      '🔍 <b>Full Dimension & Part No Support:</b> รองรับการค้นหาข้ามขนาดมิติ (IDxODxW), SKU, Part No และชื่อสินค้าแบบ Universal Search',
+      '🧹 <b>Cache Purge (v1.94):</b> เคลียร์แคช Service Worker ทันที'
+    ]},
+    { v:'1.93', date:'2026-09-12', badge:'', color:'#059669', bg:'#dcfce7', title:'Fix Database Column Reference for Order Items & Enhanced Product Search', items:[
       '🐛 <b>PostgREST Query Fix:</b> แก้ไขการดึงข้อมูลตาราง order_items ให้ตรงกับโครงสร้างฐานข้อมูล เพื่อให้โหลดออเดอร์ได้อย่างถูกต้อง 100%',
       '🔍 <b>Smart Master Product Search:</b> เชื่อมต่อรหัส SKU, Part No, Supplier Code จากตารางสินค้า Master Products เข้าสู่การค้นหาออเดอร์อย่างสมบูรณ์แบบ'
     ]},
