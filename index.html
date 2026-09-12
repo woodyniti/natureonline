@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.92';
+const CURRENT_APP_VERSION = 'sealthai-v1.93';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -4895,7 +4895,7 @@ async function loadOrders() {
 
   // ดึง orders และ order_items ครบทุกฟิลด์ (product_id, sku, part_no, qty ฯลฯ)
   let q = sb.from('orders')
-    .select('*,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+    .select('*,order_items(*)')
     .eq('shop_id', currentShop.id)
     .order('order_date',{ascending:false})
     .order('created_at',{ascending:false});
@@ -27937,7 +27937,7 @@ async function triggerTelegramDraftNow() {
 async function loadRecentSoldProductsForStudio() {
   try {
     const { data: recentOrders } = await sb.from('orders')
-      .select('id,order_no,order_date,channel,customer_name,total_amount,order_items(product_id,product_name,sku,qty,sell_price)')
+      .select('id,order_no,order_date,channel,customer_name,total_amount,order_items(product_id,product_name,qty,sell_price)')
       .neq('doc_status', 'cancelled')
       .order('order_date', { ascending: false })
       .limit(150);
@@ -28357,7 +28357,7 @@ async function triggerAutoContentOnOrderShipped(orderId, optOrder) {
     let ord = optOrder;
     if (!ord || !ord.order_items || !ord.order_items.length) {
       const { data } = await sb.from('orders')
-        .select('id,order_no,channel,shipping_status,total_amount,order_items(product_id,product_name,sku,qty,sell_price)')
+        .select('id,order_no,channel,shipping_status,total_amount,order_items(product_id,product_name,qty,sell_price)')
         .eq('id', orderId).single();
       ord = data;
     }
@@ -28727,8 +28727,8 @@ async function viewProductInventoryPosting(productId) {
     const prodSku = (prod.sku || '').trim();
     const [movesRes, ordersRes, ordersBySkuRes, posRes, posBySkuRes, grsRes] = await Promise.all([
       sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true }),
-      sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,product_name,sku,orders(id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status)').eq('product_id', productId),
-      prodSku ? sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,product_name,sku,orders(id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status)').eq('sku', prodSku) : Promise.resolve({ data: [] }),
+      sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,product_name,orders(id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status)').eq('product_id', productId),
+      Promise.resolve({ data: [] }),
       sb.from('purchase_order_items').select('id,po_id,qty,qty_ordered,qty_received,unit_cost,purchase_price,product_name,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('product_id', productId),
       prodSku ? sb.from('purchase_order_items').select('id,po_id,qty,qty_ordered,qty_received,unit_cost,purchase_price,product_name,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('sku', prodSku) : Promise.resolve({ data: [] }),
       sb.from('goods_return_items').select('id,gr_id,qty,goods_returns(id,gr_no,gr_date,customer_name)').eq('product_id', productId)
@@ -29332,7 +29332,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.92', date:'2026-09-12', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Search Orders by Product Name, SKU, and Part No', items:[
+    { v:'1.93', date:'2026-09-12', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Fix Database Column Reference for Order Items & Enhanced Product Search', items:[
+      '🐛 <b>PostgREST Query Fix:</b> แก้ไขการดึงข้อมูลตาราง order_items ให้ตรงกับโครงสร้างฐานข้อมูล เพื่อให้โหลดออเดอร์ได้อย่างถูกต้อง 100%',
+      '🔍 <b>Smart Master Product Search:</b> เชื่อมต่อรหัส SKU, Part No, Supplier Code จากตารางสินค้า Master Products เข้าสู่การค้นหาออเดอร์อย่างสมบูรณ์แบบ'
+    ]},
+    { v:'1.92', date:'2026-09-12', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Search Orders by Product Name, SKU, and Part No', items:[
       '🔍 <b>Smart Order Product Search:</b> ช่องค้นหาในหน้าบันทึกออเดอร์รองรับการค้นหาตาม <b>ชื่อสินค้า, รหัส SKU, Part No, Supplier Code และ Barcode</b> ได้อย่างแม่นยำ',
       '📦 <b>Order Items Metadata Display:</b> แสดงป้ายรหัส [SKU] และ [#Part No] ควบคู่กับชื่อสินค้าในตารางรายการออเดอร์ทันที',
       '⚡ <b>Instant Cache Purge:</b> เคลียร์แคช Service Worker เป็นเวอร์ชัน v1.92 เพื่อให้สามารถค้นหาสินค้าในออเดอร์ได้ทันที'

@@ -4,6 +4,14 @@
 
 ---
 
+## 🚀 [v1.93] — 2026-09-12
+### Fix Database Column Reference for Order Items & Enhanced Product Search
+* **🐛 PostgREST Query Fix:** ปรับแก้ไขคำสั่งเรียกข้อมูลตาราง `order_items` ให้ตรงกับโครงสร้างฟิลด์ฐานข้อมูล (ตัดฟิลด์ sku ที่ไม่อยู่ใน order_items ออก แล้วเชื่อมโยง SKU / Part No จาก Master Products แทน)
+* **🔍 Seamless Search:** ค้นหาออเดอร์ตามชื่อสินค้า, รหัส SKU, Part No, Supplier Code, Barcode ได้อย่างรวดเร็วและไม่มีข้อผิดพลาด
+* **🧹 Cache Refresh (v1.93):** อัปเดต Service Worker Cache เป็น `sealthai-v1.93` เพื่อโหลดเวอร์ชันที่แก้ไขแล้วทันที
+
+---
+
 ## 🚀 [v1.92] — 2026-09-12
 ### Search Orders by Product Name, SKU, and Part No
 * **🔍 Smart Order Product Search:** ช่องค้นหาในหน้าบันทึกออเดอร์รองรับการค้นหาตาม **ชื่อสินค้า, รหัส SKU, Part No, Supplier Code และ Barcode** เพื่อให้ค้นหาได้สะดวกรวดเร็วว่าสินค้ารายการใดเคยเปิดออเดอร์ใบไหนไปบ้าง
