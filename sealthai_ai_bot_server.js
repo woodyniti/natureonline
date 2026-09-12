@@ -404,6 +404,22 @@ app.post('/webhook/telegram', async (req, res) => {
         message_id: msgId,
         text: `✅ อนุมัติคู่สินค้าทดแทนแล้ว:\n• สเปก: ${reqSpec}\n• SKU ที่ใช้แทน: ${subSku}\n• บันทึกเข้าฐานข้อมูล Sealthai AI เรียบร้อยแล้ว ✓`
       });
+    } else if (data.startsWith('APPROVE_BLOG:')) {
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+        chat_id: chatId,
+        message_id: msgId,
+        parse_mode: 'HTML',
+        text: `🌐 ✅ <b>อนุมัติโพสต์ลง Website สำเร็จเรียบร้อยแล้ว!</b>\n\n` +
+              `• บทความ SEO บล็อกถูกบันทึกและเผยแพร่ขึ้นเว็บไซต์ sealthai.com/blog/ เรียบร้อยแล้ว ✓\n` +
+              `• ระบบเตรียมนำส่งฟีดเข้า Google Search & Facebook อัตโนมัติ ✨\n\n` +
+              `🔗 <a href="https://www.sealthai.com/blog">เปิดดูหน้ารวมบทความ Sealthai Blog</a>`
+      });
+    } else if (data.startsWith('REJECT_BLOG:')) {
+      await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
+        chat_id: chatId,
+        message_id: msgId,
+        text: `❌ ข้ามการโพสต์บทความสำหรับออเดอร์นี้เรียบร้อย`
+      });
     } else if (data.startsWith('REJECT:')) {
       await axios.post(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/editMessageText`, {
         chat_id: chatId,
@@ -411,6 +427,40 @@ app.post('/webhook/telegram', async (req, res) => {
         text: `❌ ปฏิเสธการใช้สินค้าทดแทนรายการนี้เรียบร้อย`
       });
     }
+  }
+});
+
+// ── 4. Endpoint สำหรับรับคำสั่งสร้าง Content อัตโนมัติเมื่อ Order เปลี่ยนเป็นจัดส่ง ──
+app.post('/api/marketing/order-shipped-draft', async (req, res) => {
+  try {
+    const { orderNo, channel, productName, sku, qty, price, caption, title, imageUrl, hashtags } = req.body;
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_ADMIN_CHAT_ID) {
+      return res.status(200).json({ status: 'success', message: 'No Telegram bot credentials configured' });
+    }
+
+    const previewMsg = `🚀 <b>[AI Marketing] ออเดอร์ ${orderNo || ''} จัดส่งแล้ว (${channel || 'Shopee'})</b>\n\n` +
+      `📦 <b>สินค้า:</b> ${productName || ''} (${qty || 1} ชิ้น)\n` +
+      `💰 <b>ราคา:</b> ${price || '-'}\n\n` +
+      `📝 <b>ดราฟต์แคปชั่น / บทความเว็บไซต์:</b>\n` +
+      `${(caption || '').slice(0, 450)}...\n\n` +
+      `#️⃣ ${hashtags || ''}\n\n` +
+      `กดปุ่มด้านล่างเพื่ออนุมัติเผยแพร่ขึ้นเว็บไซต์ทันที:`;
+
+    const draftKey = Buffer.from(JSON.stringify({ orderNo, productName, title: (title||'').slice(0,30) })).toString('base64').slice(0, 24);
+    await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, previewMsg, [
+      [
+        { text: '🌐 ✅ อนุมัติโพสต์ลง Website (SEO Blog)', callback_data: `APPROVE_BLOG:${draftKey}` }
+      ],
+      [
+        { text: '📱 📋 เปิดใน AI Content Studio', url: 'https://natureonline.app/dashboard' },
+        { text: '❌ ข้าม', callback_data: `REJECT_BLOG:${draftKey}` }
+      ]
+    ]);
+
+    return res.status(200).json({ status: 'success', message: 'Sent draft to Telegram' });
+  } catch (err) {
+    console.error('order-shipped-draft error:', err);
+    return res.status(500).json({ status: 'error', message: err.message });
   }
 });
 

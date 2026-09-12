@@ -4,6 +4,29 @@
 
 ---
 
+## 🚀 [v1.92] — 2026-09-12
+### Search Orders by Product Name, SKU, and Part No
+* **🔍 Smart Order Product Search:** ช่องค้นหาในหน้าบันทึกออเดอร์รองรับการค้นหาตาม **ชื่อสินค้า, รหัส SKU, Part No, Supplier Code และ Barcode** เพื่อให้ค้นหาได้สะดวกรวดเร็วว่าสินค้ารายการใดเคยเปิดออเดอร์ใบไหนไปบ้าง
+* **🏷️ Order Items SKU & Part No Badges:** แสดงป้าย `[SKU]` และ `[#Part No]` ประกอบกับชื่อสินค้าในตารางรายการออเดอร์ (ทั้ง Desktop และ Mobile)
+* **🧹 Cache Refresh (v1.92):** อัปเดต Service Worker Cache เป็น `sealthai-v1.92` เพื่อโหลดเวอร์ชันใหม่ทันที
+
+---
+
+## 🚀 [v1.91] — 2026-09-11
+### Employee Commission Standard 15% of Profit After GP Platform
+* **👤 Employee Commission 15%:** ปรับการแสดงผลและสูตรคำนวณค่าคอมมิชชั่นพนักงาน (นิติ บุญสายันต์) ใน Dashboard ภาพรวม และหน้ารายการออเดอร์ เป็น **15% ของกำไรหลังหัก GP Platform แล้ว** ให้ตรงตามมาตรฐานร่วมกับ CFO (นันทนา 15%)
+* **🧹 Instant Cache Refresh:** อัปเดต Service Worker Cache เป็น `sealthai-v1.91` เพื่อบังคับล้างแคชและอัปเดตหน้าจอทันที
+
+---
+
+## 🚀 [v1.90] — 2026-09-08
+### AI Content Studio with Real Order Items & Auto-Trigger on Order Shipped
+* **🎨 Real Orders in AI Content Studio:** ดึงข้อมูลสินค้าที่ขายได้จริงจากคำสั่งซื้อ (Shopee, Lazada, หน้าร้าน) มาประมวลผลเป็นคอนเทนต์ขายดี พร้อมหลักฐานยอดขายจริง (Social Proof)
+* **🚀 Automatic Trigger on Order Shipped:** เมื่อเปลี่ยนสถานะคำสั่งซื้อเป็น **"จัดส่งแล้ว" (`shipped`)** (ทั้งจากตารางหลักและหน้าต่างแก้ไข) ระบบ AI จะสร้างดราฟต์บทความ SEO Blog และส่งแจ้งเตือนเข้า Telegram แอดมินอัตโนมัติทันที
+* **⚡ 1-Click Telegram Approval for Website Post:** ใน Telegram แจ้งเตือนจะมีปุ่ม **`🌐 ✅ อนุมัติโพสต์ลง Website (SEO Blog)`** ให้แอดมินกดอนุมัติเผยแพร่ขึ้น `sealthai.com/blog/` ได้ทันทีในคลิกเดียว
+
+---
+
 ## 🛠️ [v1.45] — 2026-08-22
 ### Login Recovery & JavaScript Startup Fix
 * แก้การประกาศตัวแปร `currentActualStock` และ `currentActualCost` ซ้ำในหน้าประวัติความเคลื่อนไหวสต๊อก

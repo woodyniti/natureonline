@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.86';
+const CURRENT_APP_VERSION = 'sealthai-v1.92';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -991,6 +991,9 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center">
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
+        <div style="margin-top:6px;display:flex;justify-content:center">
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v1.87 🚀 System Active</span>
+        </div>
       </div>
     </div>
     <div id="auth-login-view">
@@ -1009,6 +1012,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 1.87 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1061,7 +1065,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.85 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v1.87 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1090,6 +1094,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v1.87 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2729,10 +2734,21 @@ async function dashboard() {
   let empCommList = activeEmps.map(e => {
     const empOrders = orders.filter(o => o.employee_id === e.id);
     const empRev    = empOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
-    const rate      = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
+    // ล็อกอัตรา 15% ให้ตรงกับค่ามาตรฐาน 15% กำไรหลัง GP Platform (ตรงกับ CFO นันทนา 15%)
+    let rate = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
+    if (!rate || rate === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) {
+      rate = DEFAULT_EMP_COMM_PCT;
+    }
     const empComm   = commBase * rate / 100;
     return { ...e, commission_rate: rate, revenue: empRev, commission: empComm };
   }).filter(e => e.commission > 0);
+
+  // Sync database row if employee commission in DB was 20%
+  if (employees && employees.some(e => Number(e.commission_rate) === 20 || (e.name && e.name.includes('นิติ') && Number(e.commission_rate) !== 15))) {
+    try {
+      sb.from('employees').update({ commission_rate: 15 }).eq('shop_id', currentShop.id).or('commission_rate.eq.20,name.ilike.%นิติ%').then(()=>{});
+    } catch(err){}
+  }
 
   if (empCommList.length === 0 && commBase > 0) {
     empCommList = [{
@@ -2797,7 +2813,11 @@ async function dashboard() {
   const journeyStartDate = profitDates[0] || null;
   const dayMs = 86400000;
   const inclusiveDays = (from, to) => Math.max(1, Math.floor((new Date(to+'T00:00:00') - new Date(from+'T00:00:00')) / dayMs) + 1);
-  const totalProfitShareRate = employees.reduce((sum,e) => sum + Number(e.commission_rate || 0) / 100, 0) + CFO_WAGE_PCT / 100;
+  const totalProfitShareRate = employees.reduce((sum,e) => {
+    let r = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
+    if (!r || r === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) r = DEFAULT_EMP_COMM_PCT;
+    return sum + r / 100;
+  }, 0) + CFO_WAGE_PCT / 100;
   const reachedMilestones = {};
   let runningBeforeShare = 0;
   let runningOtherIncome = 0;
@@ -2993,6 +3013,9 @@ async function dashboard() {
         ${[0,1,2,3,4].map(i=>{const yy=y-i; return '<option value="'+yy+'" '+(selY===yy?'selected':'')+'>ปี '+(yy+543)+'</option>';}).join('')}
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.87)">v1.87 🚀</span>
+      </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
     <div class="mb-4" style="display:flex;flex-wrap:wrap;gap:4px">
@@ -3120,8 +3143,8 @@ async function dashboard() {
             ...(lazadaFee>0 ? [{ label:'💸 ค่า GP Lazada '+LAZADA_GP_FALLBACK_PCT+'%', val: -lazadaFee, color:'#f97316', plus:false, sub:'จากยอด Lazada '+fmtB(lazadaRev) }] : []),
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
-            ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' '+e.commission_rate+'%', val:-e.commission, color:'#be185d', plus:false, sub:e.commission_rate+'% กำไรหลัง GP Platform '+fmtB(commBase) })),
-            ...(cfoWage>0 ? [{ label:'💼 ค่าแรง CFO: '+CFO_NAME+' '+CFO_WAGE_PCT+'%', val:-cfoWage, color:'#9333ea', plus:false, sub:CFO_WAGE_PCT+'% กำไรหลัง GP Platform '+fmtB(commBase) }] : []),
+            ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' 15%', val:-e.commission, color:'#be185d', plus:false, sub:'15% ของกำไรหลังหัก GP Platform แล้ว '+fmtB(commBase) })),
+            ...(cfoWage>0 ? [{ label:'💼 ค่าแรง CFO: '+CFO_NAME+' '+CFO_WAGE_PCT+'%', val:-cfoWage, color:'#9333ea', plus:false, sub:CFO_WAGE_PCT+'% ของกำไรหลังหัก GP Platform แล้ว '+fmtB(commBase) }] : []),
             ...(totalSupplierWeeklyExpense > 0 ? [{ label:'🎁 สินน้ำใจ Supplier รายสัปดาห์', val:-totalSupplierWeeklyExpense, color:'#db2777', plus:false, sub:supplierWeeklyExpInfo.activeCount+' Supplier (Progressive Rate & Top Up)', drill:'showPage(&quot;supplierWeeklyExpense&quot;)' }] : []),
             { label:'💸 ค่าใช้จ่ายอื่นๆ',  val: -totalExpenses,   color:'var(--amber)',   plus:false, drill:'drillDashExpenses()' },
             { label:'✅ กำไรสุทธิ',         val: netProfit,        color: netProfit>=0?'var(--green)':'var(--red)', plus:netProfit>=0, isFinal:true },
@@ -3167,12 +3190,12 @@ async function dashboard() {
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าคอมพนักงาน</div>
           <div style="font-size:14px;font-weight:700;color:#be185d">${fmtB(totalEmpComm)}</div>
-          <div style="font-size:11px;color:var(--text3)">${empCommList.map(e=>e.name+' '+fmtB(e.commission)).join(' · ')||DEFAULT_EMP_NAME+' 15% กำไรหลัง GP Platform'}</div>
+          <div style="font-size:11px;color:var(--text3)">${empCommList.map(e=>e.name+' 15% ('+fmtB(e.commission)+')').join(' · ')||DEFAULT_EMP_NAME+' 15% ของกำไรหลังหัก GP Platform แล้ว'}</div>
         </div>
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">💼 ค่าแรง CFO</div>
           <div style="font-size:14px;font-weight:700;color:#9333ea">${fmtB(cfoWage)}</div>
-          <div style="font-size:11px;color:var(--text3)">${CFO_NAME} ${CFO_WAGE_PCT}% กำไรหลัง GP Platform</div>
+          <div style="font-size:11px;color:var(--text3)">${CFO_NAME} ${CFO_WAGE_PCT}% ของกำไรหลังหัก GP Platform แล้ว</div>
         </div>
         <div onclick="drillLandedCost('ค่าจัดการ')" title="คลิกดูที่มา" style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px;cursor:pointer">
           <div style="font-size:11px;color:var(--text3)">🔧 ค่าจัดการ 🔍</div>
@@ -4743,7 +4766,7 @@ async function orders() {
       <select id="ord-sort" title="เรียงลำดับรายการ" onchange="window._ordSort=this.value;loadOrders()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px">
         ${(()=>{const cur=window._ordSort||'status';return [['status','↕️ รอจัดส่งก่อน'],['date','📅 วันที่ล่าสุด'],['sale','💰 ยอดขายสูงสุด'],['profit','📈 กำไรมากสุด'],['profit_asc','📉 กำไรน้อยสุด']].map(([v,l])=>'<option value="'+v+'"'+(cur===v?' selected':'')+'>'+l+'</option>').join('');})()}
       </select>
-      <input type="text" id="ord-search" placeholder="🔍 ค้นหา ชื่อ / เลขที่ / ref / tracking..." oninput="loadOrders()" onkeydown="if(event.key==='Enter')loadOrders()" style="min-width:200px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;color:var(--text)">
+      <input type="text" id="ord-search" placeholder="🔍 ค้นหา ชื่อสินค้า / รหัส SKU / Part No / ลูกค้า / เลขที่..." oninput="loadOrders()" onkeydown="if(event.key==='Enter')loadOrders()" style="min-width:240px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;color:var(--text)">
       <button class="btn btn-secondary btn-sm" onclick="loadOrders()">🔍 ค้นหา</button>
       <button class="btn btn-secondary btn-sm" onclick="clearOrdFilter()">📋 ทั้งหมด</button>
     </div>
@@ -4870,10 +4893,9 @@ async function loadOrders() {
   const to   = document.getElementById('ord-to')?.value   || '';
   const ch   = document.getElementById('ord-channel')?.value || '';
 
-  // ดึง orders และ employees แยกกัน แล้ว join ใน JS
-  // (ป้องกันกรณี FK ยังไม่ได้ตั้งใน Supabase)
+  // ดึง orders และ order_items ครบทุกฟิลด์ (product_id, sku, part_no, qty ฯลฯ)
   let q = sb.from('orders')
-    .select('*,order_items(product_name,qty)')
+    .select('*,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
     .eq('shop_id', currentShop.id)
     .order('order_date',{ascending:false})
     .order('created_at',{ascending:false});
@@ -4884,12 +4906,13 @@ async function loadOrders() {
   const ds = document.getElementById('ord-doc-status')?.value || '';
   if (ds)   q = q.eq('doc_status', ds);
 
-  const [ordRes, empRes, _shopee, arRes, poRes] = await Promise.all([
+  const [ordRes, empRes, _shopee, arRes, poRes, prodRes] = await Promise.all([
     q,
     sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
     ensureShopeeFeeData(),
     sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
-    sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered)').eq('shop_id', currentShop.id).neq('status','cancelled')
+    sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered)').eq('shop_id', currentShop.id).neq('status','cancelled'),
+    sb.from('products').select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode').eq('shop_id', currentShop.id)
   ]);
 
   if (ordRes.error) {
@@ -4961,22 +4984,67 @@ async function loadOrders() {
     }
   });
 
+  // สร้าง map ข้อมูลสินค้าสำหรับค้นหาตาม SKU / Part No / ชื่อสินค้า
+  const prodMap = {};
+  const prodByName = {};
+  const prodBySku = {};
+  ((prodRes?.data && prodRes.data.length ? prodRes.data : (allProducts || []))).forEach(p => {
+    if (p.id) prodMap[p.id] = p;
+    if (p.name) prodByName[p.name.trim().toLowerCase()] = p;
+    if (p.sku) prodBySku[p.sku.trim().toLowerCase()] = p;
+  });
+
   // merge ข้อมูลพนักงานเข้าไป
   let rows = (ordRes.data||[]).map(o => ({
     ...o,
     employees: o.employee_id ? { name: empMap[o.employee_id] || '-' } : null
   }));
 
-  // client-side search ทุก column
+  // client-side search ทุก column พร้อมรองรับ ค้นหาชื่อสินค้า, รหัส SKU, Part No, Supplier Code
   const search = (document.getElementById('ord-search')?.value || '').trim().toLowerCase();
   if (search) {
-    rows = rows.filter(o => [
-      o.order_no, o.customer_name, o.customer_username, o.customer_social, o.customer_contact,
-      o.customer_phone, o.tracking_no, o.channel, o.payment_method,
-      o.note, o.customer_address,
-      o.employee_id ? empMap[o.employee_id] : '',
-      (o.order_items||[]).map(it=>it.product_name).join(' ')   // ค้นหาจากชื่อสินค้าในออเดอร์ได้
-    ].some(v => String(v||'').toLowerCase().includes(search)));
+    rows = rows.filter(o => {
+      // 1. ตรวจสอบข้อมูลหลักของออเดอร์
+      const baseMatch = [
+        o.order_no, o.customer_name, o.customer_username, o.customer_social, o.customer_contact,
+        o.customer_phone, o.tracking_no, o.channel, o.payment_method,
+        o.note, o.customer_address,
+        o.employee_id ? empMap[o.employee_id] : ''
+      ].some(v => String(v||'').toLowerCase().includes(search));
+      if (baseMatch) return true;
+
+      // 2. ตรวจสอบข้อมูลสินค้าใน Order Items (ชื่อสินค้า, รหัส SKU, Part No, Barcode ฯลฯ)
+      const itemMatch = (o.order_items || []).some(it => {
+        if (!it) return false;
+        const itName = String(it.product_name || '').toLowerCase();
+        const itSku = String(it.sku || '').toLowerCase();
+        if (itName.includes(search) || itSku.includes(search)) return true;
+
+        // ค้นหาเพิ่มเติมจาก Master Catalog (Part No, Supplier SKU, Barcode)
+        const p = (it.product_id ? prodMap[it.product_id] : null) || 
+                  (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) ||
+                  (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
+        if (p) {
+          return [
+            p.name, p.sku, p.supplier_sku, p.supplier_code, p.part_no, p.item_no, p.barcode
+          ].some(v => String(v || '').toLowerCase().includes(search));
+        }
+        return false;
+      });
+      if (itemMatch) return true;
+
+      // 3. ตรวจสอบ PO Items ที่เชื่อมโยงกับออเดอร์นี้
+      const linkedPOItems = poItemMapByOrder[o.order_no] || poItemMapByOrder[o.id] || [];
+      const poMatch = linkedPOItems.some(poi => 
+        String(poi.clean_product_name || '').toLowerCase().includes(search) ||
+        String(poi.raw_product_name || '').toLowerCase().includes(search) ||
+        String(poi.po_no || '').toLowerCase().includes(search) ||
+        String(poi.supplier_name || '').toLowerCase().includes(search)
+      );
+      if (poMatch) return true;
+
+      return false;
+    });
   }
 
   // เรียงตามตัวเลือกในดรอปดาวน์ "เรียงตาม" (ค่าเริ่มต้น: รอจัดส่งขึ้นก่อน → วันที่ล่าสุด → เลขที่ล่าสุด)
@@ -5008,7 +5076,7 @@ async function loadOrders() {
   const totalPlatformFee = activeRows.reduce((s,o)=> s + getOrderPlatformFeeInfo(o).fee, 0);
   const totalProfit = totalRev - totalCost - totalPlatformFee;   // กำไรหลังหักต้นทุน + ค่า GP Platform
   const commBase    = Math.max(0, totalProfit);                  // ฐานคิดคอม (ขาดทุน = ไม่มีคอม)
-  const commissionPerRole = commBase * 0.20;                    // Sales และ Account ได้ฝ่ายละ 20% เท่ากัน
+  const commissionPerRole = commBase * 0.15;                    // Sales และ Account ได้ฝ่ายละ 15% เท่ากัน
   const combinedCommission = commissionPerRole * 2;
   const distinctCustomers = new Set(
     activeRows.map(o=>(o.customer_name||'').trim().toLowerCase()).filter(k=>k && k!=='ไม่ระบุ' && k!=='-')
@@ -5056,7 +5124,7 @@ async function loadOrders() {
     <div class="stat-card"><div class="stat-label">📦 ต้นทุนรวม</div><div class="stat-value" style="color:#7c3aed">${fmtB(totalCost)}</div></div>
     <div class="stat-card"><div class="stat-label">💸 GP Platform ที่ถูกหัก</div><div class="stat-value text-red">${fmtB(totalPlatformFee)}</div></div>
     <div class="stat-card"><div class="stat-label">📈 กำไรรวม</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}">${fmtB(totalProfit)}</div></div>
-    <div class="stat-card"><div class="stat-label">💼 Sales / Account Commission <span style="font-size:10px;color:var(--text3)">20% เท่ากัน</span></div><div class="stat-value" style="color:#0891b2">${fmtB(commissionPerRole)} <span style="font-size:12px;font-family:var(--font);font-weight:500;color:var(--text3)">ต่อฝ่าย</span></div><div class="stat-sub">Sales ${fmtB(commissionPerRole)} · Account ${fmtB(commissionPerRole)}</div><div class="stat-sub">รวมทั้งสองฝ่าย ${fmtB(combinedCommission)}</div></div>
+    <div class="stat-card"><div class="stat-label">💼 Sales / Account Commission <span style="font-size:10px;color:var(--text3)">15% เท่ากัน</span></div><div class="stat-value" style="color:#0891b2">${fmtB(commissionPerRole)} <span style="font-size:12px;font-family:var(--font);font-weight:500;color:var(--text3)">ต่อฝ่าย</span></div><div class="stat-sub">Sales (นิติ) 15% ${fmtB(commissionPerRole)} · Account/CFO (นันทนา) 15% ${fmtB(commissionPerRole)}</div><div class="stat-sub">รวมทั้งสองฝ่าย ${fmtB(combinedCommission)}</div></div>
   `;
 
   if (!rows.length) {
@@ -5102,11 +5170,14 @@ async function loadOrders() {
 
           const products = (o.order_items||[]).map(it => {
             const qtyTxt = Number(it.qty) > 1 ? it.qty + '× ' : '';
+            const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null);
+            const partNoTxt = p?.part_no ? ` <span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)" title="Part No">#${escapeHTML(p.part_no)}</span>` : '';
+            const skuTxt = (it.sku || p?.sku) ? ` <span style="font-size:9.5px;color:var(--accent);background:#eff6ff;padding:1px 4px;border-radius:3px;font-family:var(--mono)" title="SKU">[${escapeHTML(it.sku || p.sku)}]</span>` : '';
             const poMatch = isItemInPO(it);
             const poTag = poMatch 
               ? ` <span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:9.5px;padding:1px 4px;border-radius:4px;font-weight:700" title="เปิด PO แล้ว: ${escapeHTML(poMatch.po_no)}">🛒 PO</span>`
               : '';
-            return `${qtyTxt}${escapeHTML(it.product_name||'')}${poTag}`;
+            return `${qtyTxt}${escapeHTML(it.product_name||'')}${skuTxt}${partNoTxt}${poTag}`;
           }).join(', ') || '-';
 
           return `<tr>
@@ -5180,9 +5251,12 @@ async function loadOrders() {
         );
         const prodHtml = (o.order_items||[]).map(it => {
           const qtyTxt = Number(it.qty) > 1 ? it.qty + '× ' : '';
+          const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null);
+          const partNoTxt = p?.part_no ? ` <span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)">#${escapeHTML(p.part_no)}</span>` : '';
+          const skuTxt = (it.sku || p?.sku) ? ` <span style="font-size:9.5px;color:var(--accent);background:#eff6ff;padding:1px 4px;border-radius:3px;font-family:var(--mono)">[${escapeHTML(it.sku || p.sku)}]</span>` : '';
           const poMatch = isItemInPO(it);
           const poTag = poMatch ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700">🛒 PO</span>' : '';
-          return `${qtyTxt}${escapeHTML(it.product_name||'')}${poTag}`;
+          return `${qtyTxt}${escapeHTML(it.product_name||'')}${skuTxt}${partNoTxt}${poTag}`;
         }).join(', ') || '-';
         return `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${prodHtml}</div>` +
           (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => `<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px" onclick="event.stopPropagation();showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)">🛒 PO: ${escapeHTML(po.po_no)}</span>`).join('')}</div>` : '');
@@ -5267,6 +5341,11 @@ async function quickUpdateStatus(orderId, status, selEl) {
   }
 
   await sb.from('orders').update({ shipping_status: status }).eq('id', orderId);
+
+  // ── Auto Marketing Content: เมื่อเปลี่ยนสถานะเป็น "จัดส่งแล้ว" (shipped) ──
+  if (status === 'shipped' && oldStatus !== 'shipped') {
+    triggerAutoContentOnOrderShipped(orderId, ord);
+  }
 
   const wasCancel = ord?.shipping_status === 'cancelled';
   const nowCancel = status === 'cancelled';
@@ -6305,6 +6384,14 @@ async function saveOrder() {
   closeModal('modal-order');
   toast('บันทึกออเดอร์สำเร็จ ✓', 'success');
   loadOrders();
+
+  // ── Auto Marketing Content: ถ้าสร้างออเดอร์พร้อมสถานะ "จัดส่งแล้ว" ──
+  if (orderPayload.shipping_status === 'shipped' && order) {
+    triggerAutoContentOnOrderShipped(order.id, {
+      ...order,
+      order_items: orderItems
+    });
+  }
 }
 
 // ── Tracking URL map ──────────────────────────────────
@@ -6567,11 +6654,23 @@ function renderEditItems() {
       '<div style="font-size:10px;font-weight:400;color:'+(_cpuRow>0?'#7c3aed':'var(--amber)')+'" title="ต้นทุนต่อชิ้นที่ใช้คิดกำไร">'+(_cpuRow>0?'ทุน/ชิ้น '+fmtB(_cpuRow):'⚠️ ไม่มีต้นทุน')+'</div>';
     tr.appendChild(tdTotal);
 
-    // ลบ
+    // ปุ่มทำ Content AI + ลบ
     const tdDel = document.createElement('td');
-    tdDel.style.cssText = tdStyle;
-    tdDel.innerHTML = '<button onclick="editItems.splice('+i+',1);renderEditItems();updateEditTotal()"' +
-      ' style="background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:5px;padding:3px 7px;cursor:pointer;font-size:12px">✕</button>';
+    tdDel.style.cssText = tdStyle + ';white-space:nowrap';
+    const prodNameEsc = (it.product_name || '').replace(/'/g, "\\'");
+    const prodIdVal = it.product_id || '';
+    const orderNoVal = (window._editingOrderForGP?.order_no || '').replace(/'/g, "\\'");
+    const chVal = (window._editingOrderForGP?.channel || 'Shopee').replace(/'/g, "\\'");
+    const sellPriceVal = Number(it.sell_price || 0);
+    const qtyVal = Number(it.qty || 1);
+
+    tdDel.innerHTML = `
+      <div style="display:flex;gap:4px;align-items:center;justify-content:flex-end">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-order-detail');openContentStudioWithOrderItem('${prodIdVal}','${prodNameEsc}',${qtyVal},'${chVal}','${orderNoVal}',${sellPriceVal})" title="นำสินค้านี้ไปสร้างโพสต์/คอนเทนต์ AI" style="padding:2px 7px;font-size:11px;background:#f0fdf4;color:#15803d;border-color:#86efac;font-weight:700">
+          🎨 ทำ Content
+        </button>
+        <button type="button" onclick="editItems.splice(${i},1);renderEditItems();updateEditTotal()" style="background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:5px;padding:3px 7px;cursor:pointer;font-size:12px">✕</button>
+      </div>`;
     tr.appendChild(tdDel);
 
     tbody.appendChild(tr);
@@ -6958,6 +7057,16 @@ async function saveOrderEdit(orderId) {
   closeModal('modal-order-detail');
   toast('บันทึกการแก้ไขสำเร็จ ✓','success');
   loadOrders();
+
+  // ── Auto Marketing Content: เมื่อเปลี่ยนสถานะเป็น "จัดส่งแล้ว" ใน Modal Edit ──
+  const oldShipStatus = window._editingOrderForGP?.shipping_status;
+  if (editPayload.shipping_status === 'shipped' && oldShipStatus !== 'shipped') {
+    triggerAutoContentOnOrderShipped(orderId, {
+      ...window._editingOrderForGP,
+      ...editPayload,
+      order_items: editItems
+    });
+  }
 }
 
 // ─── BAHT TEXT ────────────────────────────────────────
@@ -9213,13 +9322,13 @@ function renderProductTable(prods) {
         '<td class="text-right font-mono text-accent">'+fmtB(p.sell_price)+'</td>' +
         '<td class="text-right font-mono '+(margin>=0?'text-green':'text-red')+'">'+fmtB(margin)+'</td>' +
         '<td class="text-right font-mono" style="font-weight:700;color:'+(stInhouse>0?'var(--green)':'var(--text3)')+'">'+fmt(stInhouse)+'</td>' +
-        '<td class="text-right font-mono" style="color:var(--blue)">'+fmt(stEcoseal)+'</td>' +
-        '<td class="text-right font-mono '+(zeroSt?'text-red':lowSt?'text-amber':'text-green')+'" style="font-weight:700;cursor:pointer" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Posting List)">'+
-          fmt(totalQty)+(zeroSt?' ❌':lowSt?' ⚠️':'')+' <span style="font-size:10px;color:var(--blue)">🔍</span></td>' +
+        '        <td class="text-right font-mono" style="color:var(--blue)">'+fmt(stEcoseal)+'</td>' +
+        '<td class="text-right font-mono '+(zeroSt?'text-red':lowSt?'text-amber':'text-green')+'" style="font-weight:700;cursor:pointer" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="คลิกดูประวัติการซื้อ-ขายและการเคลื่อนไหวสต๊อก (Inventory Posting List)">'+
+          fmt(totalQty)+(zeroSt?' ❌':lowSt?' ⚠️':'')+' <span style="font-size:10px;color:var(--blue)">📜</span></td>' +
         '<td class="text-right font-mono text-amber">'+fmtB(stockVal)+'</td>' +
         '<td style="position:sticky;right:0;background:var(--bg2,#fff);z-index:5;box-shadow:-3px 0 8px rgba(0,0,0,0.08);white-space:nowrap;text-align:center">' +
           '<button class="btn btn-secondary btn-sm" onclick="editProduct(&quot;'+p.id+'&quot;)" title="แก้ไขสินค้าและสเปกซีล" style="background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700;padding:3px 8px;margin-right:4px">✏️ แก้ไข</button>' +
-          '<button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="ดูประวัติความเคลื่อนไหวสต๊อก & Inventory Posting List" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:11.5px;padding:3px 6px;margin-right:3px">📜 สต๊อก</button>' +
+          '<button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="ดูประวัติความเคลื่อนไหวสต๊อก & Inventory Posting List (เอกสารซื้อ/ขาย/รับเข้า/ตัดออก)" style="background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;font-weight:700;font-size:11.5px;padding:3px 8px;margin-right:3px">📜 สต๊อก (In/Out)</button>' +
           '<button class="btn btn-secondary btn-sm" onclick="archiveProduct(&quot;'+p.id+'&quot;)" title="ซ่อนจากรายการ (ไม่ลบข้อมูล)" style="padding:3px 6px">🙈</button> ' +
           '<button class="btn btn-danger btn-sm" onclick="deleteProduct(&quot;'+p.id+'&quot;)" title="ลบถาวร (ได้เฉพาะสินค้าที่ไม่มีเอกสาร/ธุรกรรม)" style="padding:3px 6px">🗑️</button>' +
         '</td></tr>';
@@ -9236,8 +9345,9 @@ function renderProductTable(prods) {
           <div style="font-weight:700;font-size:14px;margin-bottom:3px"><a href="javascript:void(0)" onclick="editProduct('${p.id}')" style="color:var(--text);text-decoration:none">${p.name} ✏️</a></div>
           <div style="font-size:11px;color:var(--text3)"><span style="font-weight:600;color:var(--accent)">${p.sku||''}</span> ${p.supplier_sku?'<span style="color:var(--blue)">· '+p.supplier_sku+'</span>':''} ${p.part_no?'<span style="color:var(--purple,#7c3aed)">· '+p.part_no+'</span>':''} · <span class="badge badge-gray" style="font-size:10px">${p.category||'ไม่ระบุ'}</span></div>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
+        <div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" style="background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700" title="แก้ไข">✏️ แก้ไข</button>
+          <button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting('${p.id}')" style="background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;font-weight:700" title="ดูประวัติความเคลื่อนไหวสต๊อก & เอกสารซื้อขาย">📜 สต๊อก</button>
           <button class="btn btn-secondary btn-sm" onclick="archiveProduct('${p.id}')" title="ซ่อนจากรายการ">🙈</button>
           <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')" title="ลบถาวร">🗑️</button>
         </div>
@@ -9251,8 +9361,8 @@ function renderProductTable(prods) {
           <div style="font-size:11px;color:var(--text3);margin-bottom:3px">กำไร/ชิ้น</div>
           <div class="font-mono ${margin>=0?'text-green':'text-red'}" style="font-size:14px;font-weight:600">${fmtB(margin)}</div>
         </div>
-        <div style="background:var(--bg4);border-radius:7px;padding:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:3px">คงเหลือ</div>
+        <div style="background:var(--bg4);border-radius:7px;padding:8px;text-align:center;cursor:pointer" onclick="viewProductInventoryPosting('${p.id}')" title="คลิกเพื่อดูประวัติสต๊อก (Posting List)">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:3px">คงเหลือ 🔍</div>
           <div class="font-mono ${lowStock?'text-red':'text-green'}" style="font-size:14px;font-weight:600">${fmt(p.stock_qty)}${lowStock?' ⚠️':''}</div>
         </div>
       </div>
@@ -12540,7 +12650,11 @@ function setEmpPeriod(period) {
 
 async function loadEmployeeList() {
   const { data } = await sb.from('employees').select('*').eq('shop_id', currentShop.id).order('name');
-  const rows = data || [];
+  const rows = (data || []).map(e => {
+    let comm = Number(e.commission_rate || 15);
+    if (comm === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) comm = 15;
+    return { ...e, commission_rate: comm };
+  });
   window._empList = rows;   // เก็บไว้ให้ editEmployee ใช้
   document.getElementById('emp-table').innerHTML = rows.length ? `
     <table class="desktop-only">
@@ -12653,9 +12767,11 @@ async function loadEmployeeStats() {
     const empOrders = orders.filter(o=>o.employee_id===e.id);
     const totalSales = empOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
     const orderCount = empOrders.length;
-    const commAmt = commBase * Number(e.commission_rate||0) / 100;
+    let rate = Number(e.commission_rate || 15);
+    if (!rate || rate === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) rate = 15;
+    const commAmt = commBase * rate / 100;
     const totalPay = Number(e.base_salary||0) + commAmt;
-    return { ...e, totalSales, orderCount, commAmt, totalPay };
+    return { ...e, commission_rate: rate, totalSales, orderCount, commAmt, totalPay };
   }).sort((a,b)=>b.totalSales-a.totalSales);
 
   document.getElementById('emp-kpi-table').innerHTML = empStats.length ? `
@@ -12721,7 +12837,11 @@ function _setEmpForm(emp) {
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=(v==null?'':v);};
   set('emp-name', emp?.name);
   set('emp-salary', emp?.base_salary);
-  set('emp-comm', emp?.commission_rate);
+  let comm = emp?.commission_rate;
+  if (comm === undefined || comm === null || comm === 20 || (emp?.name && (emp.name.includes('นิติ') || emp.name.toLowerCase().includes('niti')))) {
+    comm = 15;
+  }
+  set('emp-comm', comm);
   const st=document.getElementById('emp-active'); if(st) st.value = (emp ? !!emp.active : true) ? 'true' : 'false';
 }
 
@@ -19180,9 +19300,12 @@ async function loadDashData() {
   const DEFAULT_EMP_NAME = 'นิติ บุญสายันต์';
   const DEFAULT_EMP_COMM_PCT = 15;
   const CFO_NAME = 'นันทนา';
-  const CFO_WAGE_PCT = 15;
   const totalEmpComm = (emps.length > 0
-    ? emps.reduce((s, e) => s + (commBase * Number(e.commission_rate || DEFAULT_EMP_COMM_PCT) / 100), 0)
+    ? emps.reduce((s, e) => {
+        let r = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
+        if (!r || r === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) r = DEFAULT_EMP_COMM_PCT;
+        return s + (commBase * r / 100);
+      }, 0)
     : (commBase * DEFAULT_EMP_COMM_PCT / 100));
   const cfoWage = commBase * CFO_WAGE_PCT / 100;   // นันทนา 15%
 
@@ -19369,8 +19492,9 @@ async function loadDashData() {
         top.map(p=>{
           const gp = p.rev-p.cost;
           const mg = p.rev>0?(gp/p.rev*100).toFixed(0):0;
+          const pNameEsc = (p.name||'').replace(/'/g,"\\'");
           return '<tr>'+
-            '<td style="padding:5px 6px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px">'+p.name+'</td>'+
+            '<td style="padding:5px 6px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px"><a href="javascript:void(0)" onclick="openContentStudioWithOrderItem(\'\',\''+pNameEsc+'\','+p.qty+',\'Order รวม\',\'Top Seller\','+p.rev+')" title="นำสินค้าขายดีนี้ไปสร้างคอนเทนต์ AI" style="color:var(--text);text-decoration:none;font-weight:600">'+p.name+' <span style="color:#059669;font-size:10px" title="สร้างคอนเทนต์">🎨</span></a></td>'+
             '<td style="padding:5px 6px;text-align:right;font-family:var(--mono)">'+fmt(p.qty)+'</td>'+
             '<td style="padding:5px 6px;text-align:right;font-family:var(--mono);color:var(--accent)">'+fmtB(p.rev)+'</td>'+
             '<td style="padding:5px 6px;text-align:right;font-family:var(--mono);color:'+(gp>=0?'var(--accent)':'var(--red)')+'">'+fmtB(gp)+' <span style="font-size:10px;color:var(--text3)">('+mg+'%)</span></td>'+
@@ -19378,14 +19502,15 @@ async function loadDashData() {
         }).join('')+'</tbody></table>';
   }
 
-  // ── Employee KPI (ใช้ commBase เดียวกับ Dashboard ภาพรวม) ───
   const empEl = document.getElementById('dash-emp-kpi');
   if (empEl) {
     const empData = emps.map(e => {
       const eOrders = orders.filter(o=>o.employee_id===e.id);
       const eSales  = eOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
-      const eComm   = commBase * (Number(e.commission_rate||0)/100);
-      return {...e, eSales, eOrders:eOrders.length, eComm};
+      let r = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
+      if (!r || r === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) r = DEFAULT_EMP_COMM_PCT;
+      const eComm   = commBase * (r / 100);
+      return {...e, commission_rate: r, eSales, eOrders:eOrders.length, eComm};
     }).sort((a,b)=>b.eSales-a.eSales);
 
     empEl.innerHTML = empData.length===0
@@ -27786,10 +27911,13 @@ async function deleteApprovedSub(id) {
 
 
 // ══════════════════════════════════════════════════════════
-// AI CONTENT STUDIO & MARKETING HUB
+// ══════════════════════════════════════════════════════════
+// AI CONTENT STUDIO & MARKETING HUB (REAL ORDER-DRIVEN ENGINE)
 // ══════════════════════════════════════════════════════════
 let _csSelectedProduct = null;
-
+let _csOrderContext = null;
+let _csRecentSoldProducts = [];
+let _csSoldFilter = 'all';
 
 async function triggerTelegramDraftNow() {
   toast('กำลังสร้างและส่งร่าง Content เข้า Telegram แอดมิน...', 'info');
@@ -27806,6 +27934,65 @@ async function triggerTelegramDraftNow() {
   }
 }
 
+async function loadRecentSoldProductsForStudio() {
+  try {
+    const { data: recentOrders } = await sb.from('orders')
+      .select('id,order_no,order_date,channel,customer_name,total_amount,order_items(product_id,product_name,sku,qty,sell_price)')
+      .neq('doc_status', 'cancelled')
+      .order('order_date', { ascending: false })
+      .limit(150);
+
+    const soldMap = {};
+    (recentOrders || []).forEach(o => {
+      (o.order_items || []).forEach(it => {
+        const key = it.product_id || (it.product_name ? it.product_name.trim() : '');
+        if (!key) return;
+        if (!soldMap[key]) {
+          soldMap[key] = {
+            product_id: it.product_id || '',
+            name: it.product_name || 'สินค้า',
+            sku: it.sku || '',
+            totalQty: 0,
+            totalRev: 0,
+            orderCount: 0,
+            channels: new Set(),
+            latestOrderDate: o.order_date || today(),
+            latestOrderNo: o.order_no || ('SO-' + o.id),
+            latestChannel: o.channel || 'Shopee',
+            latestPrice: Number(it.sell_price || 0)
+          };
+        }
+        soldMap[key].totalQty += Number(it.qty || 1);
+        soldMap[key].totalRev += Number(it.qty || 1) * Number(it.sell_price || 0);
+        soldMap[key].orderCount += 1;
+        if (o.channel) soldMap[key].channels.add(o.channel);
+        if (o.order_date && (!soldMap[key].latestOrderDate || o.order_date > soldMap[key].latestOrderDate)) {
+          soldMap[key].latestOrderDate = o.order_date;
+          soldMap[key].latestOrderNo = o.order_no || ('SO-' + o.id);
+          soldMap[key].latestChannel = o.channel || 'Shopee';
+          if (it.sell_price) soldMap[key].latestPrice = Number(it.sell_price);
+        }
+      });
+    });
+
+    const result = Object.values(soldMap).map(s => {
+      const matchInCatalog = (allProducts || []).find(p => (s.product_id && p.id === s.product_id) || (s.name && p.name === s.name) || (s.sku && p.sku === s.sku));
+      return {
+        ...s,
+        channelsList: Array.from(s.channels),
+        catalogProduct: matchInCatalog || null,
+        image_url: matchInCatalog?.image_url || matchInCatalog?.image || matchInCatalog?.cover_image || ''
+      };
+    }).sort((a, b) => b.totalQty - a.totalQty);
+
+    _csRecentSoldProducts = result;
+    return result;
+  } catch(e) {
+    console.warn('loadRecentSoldProductsForStudio error', e);
+    return [];
+  }
+}
+
 async function contentstudio() {
   document.getElementById('topbar-actions').innerHTML = `
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -27819,16 +28006,19 @@ async function contentstudio() {
     await loadProducts();
   }
 
+  // Load recently sold products from orders
+  await loadRecentSoldProductsForStudio();
+
   setContent(`
-    <!-- Top Preset Bar -->
-    <div class="card mb-3" style="padding:12px 16px;background:linear-gradient(135deg, #0f172a, #1e293b);color:#fff;border-radius:12px">
+    <!-- Top Preset & Header Bar -->
+    <div class="card mb-3" style="padding:14px 18px;background:linear-gradient(135deg, #0f172a, #1e293b);color:#fff;border-radius:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
         <div>
           <div style="font-size:16px;font-weight:800;color:#38bdf8;display:flex;align-items:center;gap:6px">
             ✨ AI Content Studio & Marketing Hub
           </div>
           <div style="font-size:12px;color:#94a3b8">
-            สร้าง ปรับแต่งข้อความ/รูปภาพ และเผยแพร่คอนเทนต์ลง LINE VOOM, Facebook และ Website SEO Blog
+            นำข้อมูล <b>สินค้าที่ขายได้ใน Order จริง</b> มาสร้างคอนเทนต์ขายดี รีวิวส่งของ โพสต์ LINE VOOM, Facebook และ SEO Blog
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -27841,28 +28031,72 @@ async function contentstudio() {
       </div>
     </div>
 
+    <!-- ════════ RECENT SOLD PRODUCTS FROM ORDERS CAROUSEL ════════ -->
+    <div class="card mb-3" style="padding:14px;border:1.5px solid #0284c7;background:#f0f9ff;border-radius:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        <div style="font-weight:800;font-size:14px;color:#0369a1;display:flex;align-items:center;gap:6px">
+          <span>📦 สินค้าที่ขายได้จาก Order จริง (ดึงมาทำคอนเทนต์คลิกเดียว)</span>
+          <span class="badge" style="background:#0284c7;color:#fff;font-size:11px">${_csRecentSoldProducts.length} รายการ</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="filterCSSoldProducts('all')" id="btn-cs-filter-all" style="font-size:11px;font-weight:700;padding:2px 8px;background:#0284c7;color:#fff">ทั้งหมด</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="filterCSSoldProducts('top')" id="btn-cs-filter-top" style="font-size:11px;padding:2px 8px">🔥 ยอดขายสูงสุด</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="filterCSSoldProducts('shopee')" id="btn-cs-filter-shopee" style="font-size:11px;padding:2px 8px">🛍️ Shopee</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="filterCSSoldProducts('lazada')" id="btn-cs-filter-lazada" style="font-size:11px;padding:2px 8px">🟠 Lazada</button>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="filterCSSoldProducts('line')" id="btn-cs-filter-line" style="font-size:11px;padding:2px 8px">🟢 LINE/หน้าร้าน</button>
+        </div>
+      </div>
+
+      <div id="cs-sold-products-track" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;scroll-behavior:smooth">
+        ${renderCSSoldProductCards(_csRecentSoldProducts)}
+      </div>
+    </div>
+
     <!-- Main Studio Grid -->
     <div class="grid-2" style="gap:16px;align-items:start">
       
       <!-- Left Column: Form Editor -->
       <div class="card" style="padding:16px;border-radius:12px">
-        <div style="font-weight:800;font-size:15px;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:6px">
-          ✏️ ตัวแก้ไขเนื้อหา & รูปภาพ (Content Editor)
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-weight:800;font-size:15px;color:var(--text);display:flex;align-items:center;gap:6px">
+            ✏️ ตัวแก้ไขเนื้อหา & รูปภาพ (Content Editor)
+          </div>
+          <div id="cs-order-proof-badge" style="display:none;font-size:11.5px;font-weight:700;background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:12px;border:1px solid #86efac">
+            🛒 ดึงข้อมูลจาก Order แล้ว
+          </div>
+        </div>
+
+        <!-- Order Context Info Banner (เมื่อเลือกสินค้าจาก order) -->
+        <div id="cs-order-context-banner" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#1e40af">
+          <div style="font-weight:700;margin-bottom:2px" id="cs-order-context-title">📦 ข้อมูลจากออเดอร์จริง:</div>
+          <div id="cs-order-context-desc" style="color:#3b82f6;font-size:11.5px"></div>
         </div>
 
         <div class="form-group mb-3">
-          <label style="font-weight:700;font-size:12px">📦 เลือกสินค้าจากสต๊อก / แคตตาล็อก</label>
+          <label style="font-weight:700;font-size:12px">📦 เลือกสินค้า (จาก Order หรือ แคตตาล็อก)</label>
           <select id="cs-prod-sel" onchange="onSelectCSProduct(this.value)" style="width:100%;height:42px;font-size:13px;font-weight:600">
             <option value="">-- เลือกสินค้าที่ต้องการทำคอนเทนต์ --</option>
-            ${allProducts.slice(0, 150).map(p => `
-              <option value="${p.id}">${escapeHTML(p.name)} - ฿${fmt(p.sell_price||p.current_cost||0)}</option>
-            `).join('')}
+            ${_csRecentSoldProducts.length ? `
+              <optgroup label="🔥 สินค้าที่เพิ่งขายได้ใน Order ล่าสุด">
+                ${_csRecentSoldProducts.map(s => `
+                  <option value="sold_${s.product_id || s.name}">[ขายแล้ว ${s.totalQty} ชิ้น] ${escapeHTML(s.name)} - ฿${fmt(s.latestPrice||s.totalRev/s.totalQty||0)}</option>
+                `).join('')}
+              </optgroup>
+            ` : ''}
+            <optgroup label="📦 แคตตาล็อกสินค้าทั้งหมด">
+              ${allProducts.slice(0, 150).map(p => `
+                <option value="${p.id}">${escapeHTML(p.name)} - ฿${fmt(p.sell_price||p.current_cost||0)}</option>
+              `).join('')}
+            </optgroup>
           </select>
         </div>
 
         <div class="form-group mb-3">
           <label style="font-weight:700;font-size:12px">🎯 สไตล์ / โทนเนื้อหา (Angle / Tone)</label>
-          <select id="cs-tone" onchange="generateAIContentDraft()" style="width:100%;height:40px;font-size:13px">
+          <select id="cs-tone" onchange="generateAIContentDraft()" style="width:100%;height:40px;font-size:13px;font-weight:600">
+            <option value="order_proof">📦 ขอบคุณออเดอร์ & รีวิวจัดส่ง — ส่งของจริง ลูกค้าสั่งต่อเนื่อง</option>
+            <option value="bestseller_hot">🔥 สินค้าขายดีประจำร้าน — สั่งซื้อถล่มทลาย สต๊อกพร้อมส่ง</option>
+            <option value="customer_case">💡 แชร์เคสลูกค้าจริง — แก้ปัญหาน้ำมันรั่ว/ทนความร้อนตรงจุด</option>
             <option value="problem">🔧 ช่างบอกต่อ — แก้ปัญหาน้ำมันรั่วซึม & ทนความร้อนสูง</option>
             <option value="specs">🏆 เจาะลึกสเปกวัสดุ — NBR vs Viton vs PU เลือกแบบไหนทนสุด</option>
             <option value="dimension">📐 เทียบขนาดมิติ & เบอร์ซีล — มีขนาดพร้อมส่งทันที</option>
@@ -27897,7 +28131,7 @@ async function contentstudio() {
 
         <div class="form-group mb-3">
           <label style="font-weight:700;font-size:12px">📝 ข้อความแคปชั่นสำหรับโพสต์ (Social Caption)</label>
-          <textarea id="cs-caption" rows="9" oninput="updateCSLivePreview()" style="font-size:13px;line-height:1.6;font-family:inherit" placeholder="พิมพ์หรือแก้ไขเนื้อหาข้อความได้ตามใจชอบ..."></textarea>
+          <textarea id="cs-caption" rows="10" oninput="updateCSLivePreview()" style="font-size:13px;line-height:1.6;font-family:inherit" placeholder="พิมพ์หรือแก้ไขเนื้อหาข้อความได้ตามใจชอบ..."></textarea>
         </div>
 
         <div class="grid-2 mb-3" style="gap:10px">
@@ -27983,11 +28217,250 @@ async function contentstudio() {
     </div>
   `);
 
-  // Default load first item or preset
-  setQuickCSPreset('viton');
+  // Default load: if we have sold products, load the top sold product, else preset
+  if (_csRecentSoldProducts && _csRecentSoldProducts.length > 0) {
+    selectSoldProductForStudio(0);
+  } else {
+    setQuickCSPreset('viton');
+  }
+}
+
+function renderCSSoldProductCards(list) {
+  if (!list || !list.length) {
+    return '<div style="padding:16px;color:#64748b;font-size:12px">ยังไม่มีข้อมูลสินค้าที่ขายได้จากออเดอร์</div>';
+  }
+
+  return list.map((s, idx) => {
+    const chBadges = (s.channelsList || []).map(ch => {
+      let bg = '#e2e8f0', col = '#334155';
+      if (ch.toLowerCase().includes('shopee')) { bg = '#fee2e2'; col = '#dc2626'; }
+      else if (ch.toLowerCase().includes('lazada')) { bg = '#ffedd5'; col = '#ea580c'; }
+      else if (ch.toLowerCase().includes('line')) { bg = '#dcfce7'; col = '#15803d'; }
+      return `<span style="font-size:9.5px;padding:1px 5px;border-radius:4px;background:${bg};color:${col};font-weight:700">${escapeHTML(ch)}</span>`;
+    }).join(' ');
+
+    const img = s.image_url || 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
+    const priceDisplay = s.latestPrice ? `฿${fmt(s.latestPrice)}` : `฿${fmt(s.totalRev/s.totalQty||0)}`;
+
+    return `
+      <div class="cs-sold-card" onclick="selectSoldProductForStudio(${idx})" style="flex:0 0 240px;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:10px;cursor:pointer;transition:all 0.2s;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 4px rgba(0,0,0,0.04)" onmouseover="this.style.borderColor='#0284c7';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='#cbd5e1';this.style.transform='none'">
+        <div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+            <img src="${img}" alt="prod" style="width:42px;height:42px;border-radius:6px;object-fit:contain;background:#f8fafc;border:1px solid #e2e8f0;flex-shrink:0">
+            <div style="overflow:hidden">
+              <div style="font-weight:700;font-size:12px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHTML(s.name)}">${escapeHTML(s.name)}</div>
+              <div style="font-size:11px;font-family:var(--mono);color:#0284c7;font-weight:700">${priceDisplay}</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-size:10px;font-weight:700;background:#dbeafe;color:#1d4ed8;padding:1px 6px;border-radius:4px">🔥 ขายแล้ว ${s.totalQty} ชิ้น</span>
+            <span style="font-size:10px;font-weight:600;background:#f1f5f9;color:#475569;padding:1px 6px;border-radius:4px">${s.orderCount} ออเดอร์</span>
+          </div>
+          <div style="display:flex;gap:3px;flex-wrap:wrap;align-items:center">
+            ${chBadges}
+          </div>
+        </div>
+        <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #e2e8f0;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:10px;color:#94a3b8">ล่าสุด: ${s.latestOrderDate}</span>
+          <span style="font-size:11px;font-weight:700;color:#0284c7">✨ สร้างโพสต์ →</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function filterCSSoldProducts(type) {
+  _csSoldFilter = type;
+  const btns = ['all','top','shopee','lazada','line'];
+  btns.forEach(b => {
+    const el = document.getElementById('btn-cs-filter-' + b);
+    if (el) {
+      if (b === type) {
+        el.style.background = '#0284c7';
+        el.style.color = '#fff';
+      } else {
+        el.style.background = '#e2e8f0';
+        el.style.color = '#334155';
+      }
+    }
+  });
+
+  let filtered = [..._csRecentSoldProducts];
+  if (type === 'top') {
+    filtered = filtered.sort((a,b) => b.totalQty - a.totalQty).slice(0, 10);
+  } else if (type === 'shopee') {
+    filtered = filtered.filter(s => s.channelsList.some(c => c.toLowerCase().includes('shopee')));
+  } else if (type === 'lazada') {
+    filtered = filtered.filter(s => s.channelsList.some(c => c.toLowerCase().includes('lazada')));
+  } else if (type === 'line') {
+    filtered = filtered.filter(s => s.channelsList.some(c => c.toLowerCase().includes('line') || c.toLowerCase().includes('offline')));
+  }
+
+  const trackEl = document.getElementById('cs-sold-products-track');
+  if (trackEl) trackEl.innerHTML = renderCSSoldProductCards(filtered);
+}
+
+function selectSoldProductForStudio(idx) {
+  const item = _csRecentSoldProducts[idx];
+  if (!item) return;
+
+  const catalogProd = item.catalogProduct || (allProducts || []).find(p => (item.product_id && p.id === item.product_id) || (item.name && p.name === item.name)) || {
+    id: item.product_id || '',
+    name: item.name,
+    sku: item.sku,
+    sell_price: item.latestPrice,
+    image_url: item.image_url
+  };
+
+  _csSelectedProduct = catalogProd;
+  _csOrderContext = {
+    soldQty: item.totalQty,
+    orderCount: item.orderCount,
+    latestChannel: item.latestChannel,
+    latestOrderNo: item.latestOrderNo,
+    latestOrderDate: item.latestOrderDate,
+    latestPrice: item.latestPrice
+  };
+
+  const selEl = document.getElementById('cs-prod-sel');
+  if (selEl) {
+    selEl.value = 'sold_' + (item.product_id || item.name);
+  }
+
+  // Auto select order_proof tone when loading from real orders
+  const toneEl = document.getElementById('cs-tone');
+  if (toneEl) toneEl.value = 'order_proof';
+
+  populateCSProductForm(catalogProd);
+  showCSOrderContextBanner(_csOrderContext);
+  toast(`📦 โหลดข้อมูลสินค้า "${item.name}" จาก ${item.orderCount} ออเดอร์เรียบร้อยแล้วค่ะ ✓`, 'success');
+}
+
+function showCSOrderContextBanner(ctx) {
+  const banner = document.getElementById('cs-order-context-banner');
+  const badge = document.getElementById('cs-order-proof-badge');
+  const desc = document.getElementById('cs-order-context-desc');
+
+  if (ctx && banner && desc) {
+    banner.style.display = 'block';
+    if (badge) badge.style.display = 'inline-block';
+    desc.innerHTML = `🔥 สินค้านี้มียอดขายจริงแล้วรวม <b>${ctx.soldQty} ชิ้น</b> จาก <b>${ctx.orderCount} ออเดอร์</b> (ออเดอร์ล่าสุด ${ctx.latestOrderNo || ''} ทาง ${ctx.latestChannel || 'Shopee'} วันที่ ${ctx.latestOrderDate || ''})`;
+  } else {
+    if (banner) banner.style.display = 'none';
+    if (badge) badge.style.display = 'none';
+  }
+}
+
+// ── Global Helper: ส่งข้อมูลสร้างคอนเทนต์อัตโนมัติเมื่อสถานะออเดอร์เปลี่ยนเป็น "จัดส่งแล้ว" (shipped) ──
+async function triggerAutoContentOnOrderShipped(orderId, optOrder) {
+  try {
+    let ord = optOrder;
+    if (!ord || !ord.order_items || !ord.order_items.length) {
+      const { data } = await sb.from('orders')
+        .select('id,order_no,channel,shipping_status,total_amount,order_items(product_id,product_name,sku,qty,sell_price)')
+        .eq('id', orderId).single();
+      ord = data;
+    }
+    if (!ord || !ord.order_items || !ord.order_items.length) return;
+
+    // เลือกสินค้าหลักจากออเดอร์ (เรียงตามจำนวน)
+    const items = [...ord.order_items].sort((a, b) => (Number(b.qty) || 1) - (Number(a.qty) || 1));
+    const mainItem = items[0];
+    if (!mainItem) return;
+
+    const matchedProd = (allProducts || []).find(p => 
+      (mainItem.product_id && p.id === mainItem.product_id) || 
+      (mainItem.product_name && p.name === mainItem.product_name) ||
+      (mainItem.sku && p.sku === mainItem.sku)
+    );
+
+    const productName = mainItem.product_name || matchedProd?.name || 'สินค้าอุตสาหกรรม Sealthai';
+    const sku = mainItem.sku || matchedProd?.sku || '';
+    const qty = Number(mainItem.qty || 1);
+    const price = mainItem.sell_price ? `${Number(mainItem.sell_price).toLocaleString()} บาท` : (ord.total_amount ? `${Number(ord.total_amount).toLocaleString()} บาท` : '-');
+    const channel = ord.channel || 'Shopee';
+    const orderNo = ord.order_no || ('SO-' + orderId);
+    const imgUrl = matchedProd?.image_url || matchedProd?.image || 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
+
+    const blogTitle = `[รีวิวจัดส่ง] ${productName} - มาตรฐานโรงงาน พร้อมส่งด่วนทั่วไทย`;
+    const draftCaption = `🚀 ออเดอร์จัดส่งเรียบร้อยแล้วค่ะ! (${orderNo} ทางช่องทาง ${channel})\n\n` +
+      `📦 รายการสินค้า: ${productName} (${qty} ชิ้น)\n` +
+      `✨ สินค้าเกรดพรีเมียม มาตรฐานอุตสาหกรรม ทนความร้อน ทนน้ำมัน สารเคมี และแรงดันสูง เหมาะสำหรับงานซ่อมบำรุงและเครื่องจักรโรงงาน\n\n` +
+      `📍 สั่งซื้อออนไลน์หรือขอใบเสนอราคาได้ที่ sealthai.com หรือติดต่อสอบถามสเปกกับทีมงาน SEALTHAI ได้เลยค่ะ`;
+    
+    const hashtags = `#ซีลไฮดรอลิก #โอริง #Sealthai #อะไหล่อุตสาหกรรม #รีวิวจัดส่ง #จัดส่งด่วน`;
+
+    const payload = {
+      orderNo,
+      channel,
+      productName,
+      sku,
+      qty,
+      price,
+      title: blogTitle,
+      caption: draftCaption,
+      imageUrl: imgUrl,
+      hashtags
+    };
+
+    // ส่งไปยัง Sealthai AI Bot Server เพื่อแจ้งเตือนเข้า Telegram แอดมินพร้อมปุ่มอนุมัติ 1-Click โพสต์ลง Blog
+    fetch('https://sealthai.com/api/marketing/order-shipped-draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(async r => {
+      const res = await r.json().catch(() => ({}));
+      if (res.status === 'success') {
+        toast(`🚀 AI สร้างเนื้อหาและส่งขออนุมัติโพสต์ลง Website เข้า Telegram แอดมินเรียบร้อยแล้วค่ะ ✓`, 'success');
+      }
+    }).catch(err => {
+      console.log('Marketing bot draft notice:', err);
+    });
+
+  } catch(e) {
+    console.warn('triggerAutoContentOnOrderShipped error', e);
+  }
+}
+
+// ── Global Helper: เปิด AI Content Studio พร้อมส่งข้อมูลจาก Order ──
+function openContentStudioWithOrderItem(productId, productName, qty, channel, orderNo, price) {
+  let matched = null;
+  if (productId) matched = (allProducts || []).find(p => p.id === productId);
+  if (!matched && productName) matched = (allProducts || []).find(p => p.name === productName);
+  if (!matched) {
+    matched = {
+      id: productId || '',
+      name: productName || 'สินค้า SEALTHAI',
+      sell_price: price || 125,
+      image_url: 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80'
+    };
+  }
+
+  _csSelectedProduct = matched;
+  _csOrderContext = {
+    soldQty: Number(qty) || 1,
+    orderCount: 1,
+    latestChannel: channel || 'Shopee',
+    latestOrderNo: orderNo || '',
+    latestOrderDate: today(),
+    latestPrice: Number(price) || Number(matched.sell_price) || 0
+  };
+
+  showPage('contentstudio');
+
+  setTimeout(() => {
+    const toneEl = document.getElementById('cs-tone');
+    if (toneEl) toneEl.value = 'order_proof';
+    populateCSProductForm(matched);
+    showCSOrderContextBanner(_csOrderContext);
+    toast(`🎨 โหลดสินค้า "${matched.name}" จากออเดอร์ ${orderNo} สู่ AI Content Studio เรียบร้อยแล้วค่ะ`, 'success');
+  }, 200);
 }
 
 function setQuickCSPreset(type) {
+  _csOrderContext = null;
+  showCSOrderContextBanner(null);
+
   let matched = null;
   if (type === 'viton') {
     matched = allProducts.find(p => (p.name||'').toLowerCase().includes('viton') || (p.material||'').includes('FKM'));
@@ -28010,14 +28483,29 @@ function setQuickCSPreset(type) {
 }
 
 function pickRandomCSProduct() {
+  _csOrderContext = null;
+  showCSOrderContextBanner(null);
   if (!allProducts.length) return;
   const rand = allProducts[Math.floor(Math.random() * allProducts.length)];
   _csSelectedProduct = rand;
   populateCSProductForm(rand);
 }
 
-function onSelectCSProduct(prodId) {
-  const p = allProducts.find(x => x.id === prodId);
+function onSelectCSProduct(val) {
+  if (!val) return;
+  if (val.startsWith('sold_')) {
+    const rawKey = val.replace('sold_', '');
+    const soldItem = _csRecentSoldProducts.find(s => s.product_id === rawKey || s.name === rawKey);
+    if (soldItem) {
+      const idx = _csRecentSoldProducts.indexOf(soldItem);
+      selectSoldProductForStudio(idx);
+      return;
+    }
+  }
+
+  _csOrderContext = null;
+  showCSOrderContextBanner(null);
+  const p = allProducts.find(x => x.id === val);
   if (p) {
     _csSelectedProduct = p;
     populateCSProductForm(p);
@@ -28031,9 +28519,9 @@ function populateCSProductForm(p) {
   const shopeeEl = document.getElementById('cs-shopee-link');
   const selEl = document.getElementById('cs-prod-sel');
 
-  if (selEl && p.id) selEl.value = p.id;
+  if (selEl && p.id && !selEl.value.startsWith('sold_')) selEl.value = p.id;
   if (titleEl) titleEl.value = p.name || 'ซีลและโอริงมาตรฐานอุตสาหกรรม';
-  if (imgEl) imgEl.value = p.image_url || 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
+  if (imgEl) imgEl.value = p.image_url || p.image || p.cover_image || 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
   if (priceEl) priceEl.value = p.sell_price ? `฿${fmt(p.sell_price)}` : '฿125 - ฿318';
   if (shopeeEl) shopeeEl.value = 'https://shopee.co.th/product/161670256/58163711163';
 
@@ -28042,15 +28530,53 @@ function populateCSProductForm(p) {
 
 function generateAIContentDraft() {
   const p = _csSelectedProduct || {};
-  const tone = document.getElementById('cs-tone')?.value || 'problem';
+  const tone = document.getElementById('cs-tone')?.value || 'order_proof';
   const name = document.getElementById('cs-title')?.value || p.name || 'ออยซีลไวตัน FKM';
   const price = document.getElementById('cs-price')?.value || '฿125';
   const shipping = document.getElementById('cs-shipping')?.value || 'ส่งจันทร์-ศุกร์ ตัดรอบ 11:00 น. ถึงใน 1-2 วัน';
   const shopeeLink = document.getElementById('cs-shopee-link')?.value || 'https://shopee.co.th/product/161670256/58163711163';
 
+  const ctx = _csOrderContext;
+  const soldQtyText = ctx ? `เพิ่งปิดยอดสั่งซื้อไปอีก ${ctx.soldQty} ชิ้น` : 'ยอดสั่งซื้อต่อเนื่อง';
+  const chText = ctx?.latestChannel ? `ทาง ${ctx.latestChannel}` : '';
+
   let caption = '';
 
-  if (tone === 'problem') {
+  if (tone === 'order_proof') {
+    caption = `📦 ขอบคุณออเดอร์จากลูกค้า ${chText}! แพ็กจัดส่งเรียบร้อยแล้วค่ะ 🚚💨✨\n\n` +
+      `<b>${name}</b>\n` +
+      `รุ่นยอดนิยมที่ช่างโรงงานและงานซ่อมเครื่องจักรไว้วางใจ ${soldQtyText} สินค้าคุณภาพมาตรฐานอุตสาหกรรมแท้ 100%\n\n` +
+      `🔧 <b>จุดเด่นที่ลูกค้าเลือกใช้:</b>\n` +
+      `• เนื้อยางคุณภาพสูง ทนความร้อน ทนแรงดัน และทนน้ำมันกัดกร่อนได้ดีเยี่ยม\n` +
+      `• สเปกขอบสปริงรัดเพลาแน่นสนิท ไม่รั่วซึม ยืดอายุการใช้งานเครื่องจักร\n` +
+      `• สต๊อกแน่นในไทย พร้อมแพ็กส่งด่วนทันที ไม่ต้องรอนาน\n\n` +
+      `💰 <b>ราคา:</b> ${price} / ชิ้น\n` +
+      `🚚 <b>การจัดส่ง:</b> ${shipping}\n\n` +
+      `🛒 <b>สั่งซื้อผ่าน Shopee ได้ที่นี่:</b>\n${shopeeLink}\n\n` +
+      `💬 <b>หรือสั่งซื้อ/สอบถามเทียบเบอร์ซีลทาง LINE:</b>\n👉 https://lin.ee/sealthai`;
+  } else if (tone === 'bestseller_hot') {
+    caption = `🔥 สินค้าขายดีประจำสัปดาห์! อัปเดตยอดสั่งซื้อต่อเนื่อง 🚀✨\n\n` +
+      `<b>${name}</b>\n` +
+      `ล็อตนี้ยอดสั่งซื้อถล่มทลาย ${soldQtyText} สต๊อกในคลังเริ่มเหลือน้อย ช่างท่านไหนมีงานซ่อมด่วนต้องรีบจัดเลยค่ะ!\n\n` +
+      `⚙️ <b>การันตีคุณภาพงานช่าง:</b>\n` +
+      `• รองรับงานเพลาหมุนรอบสูง ปั๊มไฮดรอลิก มอเตอร์ และเครื่องจักรหนัก\n` +
+      `• ยางเหนียวทน ไม่แข็งกรอบ ไม่เปื่อยง่าย คุ้มค่าทุกชิ้น\n\n` +
+      `💰 <b>ราคาพิเศษ:</b> ${price}\n` +
+      `🚚 <b>รอบส่งด่วน:</b> ${shipping}\n\n` +
+      `🛒 <b>กดสั่งด่วนบน Shopee:</b>\n${shopeeLink}\n` +
+      `📞 <b>ติดต่อสั่งจำนวนมาก / ขอใบเสนอราคา LINE:</b> https://lin.ee/sealthai`;
+  } else if (tone === 'customer_case') {
+    caption = `💡 เคสจริงจากหน้างาน: ทำไมลูกค้าถึงเปลี่ยนมาใช้ <b>${name}</b>? ⚙️🛢️\n\n` +
+      `ลูกค้าหลายท่านเจอปัญหาน้ำมันรั่วซึม ซีลเดิมบวมหรือเปื่อยเร็วเพราะเจอความร้อนสูงและน้ำมันเคมีกัดกร่อน\n` +
+      `เปลี่ยนมาใช้รุ่นนี้ จบปัญหารั่วซึมตรงจุด เครื่องจักรทำงานลื่นไหล ไม่มีสะดุด 💯\n\n` +
+      `📐 <b>สเปกขนาดพร้อมส่ง:</b>\n` +
+      `• มิติตรงมาตรฐาน OEM ใส่พอดีแน่นสนิท\n` +
+      `• มีให้เลือกครบทุกไซส์ ทั้งยาง NBR, Viton (FKM), และ PU\n\n` +
+      `💰 <b>ราคา:</b> ${price}\n` +
+      `🚚 ${shipping}\n\n` +
+      `🛒 <b>ดูรายละเอียดและสั่งซื้อ:</b>\n${shopeeLink}\n` +
+      `💬 <b>แชตปรึกษาทีมช่าง SEALTHAI:</b> https://lin.ee/sealthai`;
+  } else if (tone === 'problem') {
     caption = `🔥 หมดปัญหาน้ำมันรั่วซึม เพลาหมุนเร็วเกิดความร้อนสูง! 🛢️✨\n\n` +
       `แนะนำ <b>${name}</b> คุณภาพระดับ OEM\n` +
       `เนื้อยาง FKM (Viton) แท้ ทนความร้อนสูงต่อเนื่องถึง 200°C และทนน้ำมันสังเคราะห์ สารเคมีกัดกร่อนได้ดีเยี่ยม ยางไม่แข็งกรอบ ไม่เปื่อยง่าย\n\n` +
@@ -28115,8 +28641,6 @@ function updateCSLivePreview() {
   if (btnEl) btnEl.href = shopeeLink;
 }
 
-
-
 function handleCSCustomImageUpload(event) {
   const file = event.target.files?.[0];
   if (!file) return;
@@ -28144,7 +28668,7 @@ function handleCSCustomImageUpload(event) {
 function clearCSCustomImage() {
   const input = document.getElementById('cs-image-url');
   if (_csSelectedProduct) {
-    input.value = _csSelectedProduct.image || _csSelectedProduct.cover_image || '';
+    input.value = _csSelectedProduct.image_url || _csSelectedProduct.image || _csSelectedProduct.cover_image || '';
   } else {
     input.value = 'https://cf.shopee.co.th/file/th-11134275-81ztk-mqgg3nnhpvdb80';
   }
@@ -28199,19 +28723,20 @@ async function viewProductInventoryPosting(productId) {
     const dimTxt = (prod.inner_diameter && prod.outer_diameter) ? ` · ขนาด: ${prod.inner_diameter}×${prod.outer_diameter}${prod.width ? '×'+prod.width : ''} ${prod.unit_dim||'mm'}` : '';
     if (subtitleEl) subtitleEl.textContent = `หมวดหมู่: ${prod.category || 'ทั่วไป'}${dimTxt} · ชั้นวาง: ${prod.location_shelf || 'ไม่ระบุ'}`;
 
-    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, order_items (ทั้ง product_id และ sku), goods_returns, purchase_orders
+    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, order_items (ทั้ง product_id และ sku), purchase_orders, goods_returns
     const prodSku = (prod.sku || '').trim();
-    const [movesRes, ordersRes, ordersBySkuRes, posRes, grsRes] = await Promise.all([
+    const [movesRes, ordersRes, ordersBySkuRes, posRes, posBySkuRes, grsRes] = await Promise.all([
       sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true }),
-      sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,orders(id,order_no,order_date,customer_name,status)').eq('product_id', productId),
-      prodSku ? sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,orders(id,order_no,order_date,customer_name,status)').eq('sku', prodSku) : Promise.resolve({ data: [] }),
-      sb.from('purchase_order_items').select('id,po_id,qty,unit_cost,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('product_id', productId),
+      sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,product_name,sku,orders(id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status)').eq('product_id', productId),
+      prodSku ? sb.from('order_items').select('id,order_id,qty,sell_price,cost_per_unit,product_name,sku,orders(id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status)').eq('sku', prodSku) : Promise.resolve({ data: [] }),
+      sb.from('purchase_order_items').select('id,po_id,qty,qty_ordered,qty_received,unit_cost,purchase_price,product_name,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('product_id', productId),
+      prodSku ? sb.from('purchase_order_items').select('id,po_id,qty,qty_ordered,qty_received,unit_cost,purchase_price,product_name,purchase_orders(id,po_no,po_date,supplier_name,status)').eq('sku', prodSku) : Promise.resolve({ data: [] }),
       sb.from('goods_return_items').select('id,gr_id,qty,goods_returns(id,gr_no,gr_date,customer_name)').eq('product_id', productId)
     ]);
 
     const rawMoves = movesRes.data || [];
     const orderItemsList = ordersRes.data || [];
-    const poItemsList = posRes.data || [];
+    const poItemsList = [...(posRes.data || []), ...(posBySkuRes?.data || [])];
     const grItemsList = grsRes.data || [];
 
     // สร้าง Unified Transaction Entries
@@ -28227,12 +28752,12 @@ async function viewProductInventoryPosting(productId) {
       const mType = (m.move_type || '').toLowerCase();
       const mNote = (m.note || '').toLowerCase();
 
-      if (mType === 'in' || mNote.includes('รับเข้า') || mNote.includes('ซื้อ') || mNote.includes('นำเข้า')) {
+      if (mType === 'in' || mNote.includes('รับเข้า') || mNote.includes('ซื้อ') || mNote.includes('นำเข้า') || m.po_id) {
         typeKey = 'in';
-        typeLabel = '🟢 รับเข้า';
+        typeLabel = '🟢 รับเข้าคลัง';
         badgeStyle = 'background:#dcfce7;color:#15803d';
         signedQty = Math.abs(signedQty);
-      } else if (mType === 'out' || mNote.includes('ขาย') || mNote.includes('จ่ายออก') || mNote.includes('เบิก')) {
+      } else if (mType === 'out' || mNote.includes('ขาย') || mNote.includes('จ่ายออก') || mNote.includes('เบิก') || m.order_id) {
         typeKey = 'out';
         typeLabel = '🔴 ตัดจ่ายออก';
         badgeStyle = 'background:#fee2e2;color:#b91c1c';
@@ -28243,13 +28768,13 @@ async function viewProductInventoryPosting(productId) {
         badgeStyle = 'background:#e0f2fe;color:#0369a1';
         signedQty = Math.abs(signedQty);
       } else if (signedQty < 0) {
-        typeKey = 'out';
-        typeLabel = '🔴 ปรับลดยอด';
-        badgeStyle = 'background:#fee2e2;color:#b91c1c';
+        typeKey = 'adjust';
+        typeLabel = '🟡 ปรับลดยอด';
+        badgeStyle = 'background:#fef3c7;color:#b45309';
       } else if (signedQty > 0) {
-        typeKey = 'in';
-        typeLabel = '🟢 ปรับเพิ่มยอด';
-        badgeStyle = 'background:#dcfce7;color:#15803d';
+        typeKey = 'adjust';
+        typeLabel = '🟡 ปรับเพิ่มยอด';
+        badgeStyle = 'background:#fef3c7;color:#b45309';
       }
 
       unifiedList.push({
@@ -28261,13 +28786,13 @@ async function viewProductInventoryPosting(productId) {
         badgeStyle: badgeStyle,
         qty: signedQty,
         unitCostPrice: Number(m.cost_per_unit) || Number(prod.current_cost) || 0,
-        refDoc: m.lot_name || (m.po_id ? 'PO Ref' : '-'),
+        refDoc: m.lot_name || (m.po_id ? 'PO Ref' : (m.order_id ? 'Order Ref' : '-')),
         note: m.note || m.lot_name || 'บันทึกสต๊อก',
         source: 'movement'
       });
     });
 
-    // B. เพิ่ม Order items (รวมทั้งจาก product_id และ SKU) ถ้าไม่มีใน stock_movements บันทึกไว้
+    // B. เพิ่ม Order items (เอกสารขาย - ทั้งจาก product_id และ SKU)
     const allOrderItems = [...orderItemsList, ...(ordersBySkuRes?.data || [])];
     const seenOrderIds = new Set();
 
@@ -28276,24 +28801,86 @@ async function viewProductInventoryPosting(productId) {
       seenOrderIds.add(oi.id);
 
       const ord = oi.orders;
-      if (!ord || ord.status === 'cancelled') return;
+      if (!ord || isOrderCancelled(ord)) return;
       const orderNo = ord.order_no || ('SO-' + ord.id);
       
-      // ตรวจสอบว่าใน stock_movements มี note อ้างถึง order_no นี้แล้วหรือยัง
-      const alreadyHasMove = rawMoves.some(m => (m.note && m.note.includes(orderNo)));
+      // ตรวจสอบว่าใน stock_movements มี note/order_id อ้างถึง order นี้แล้วหรือยัง
+      const alreadyHasMove = rawMoves.some(m => m.order_id === ord.id || (m.note && m.note.includes(orderNo)));
       if (!alreadyHasMove) {
+        const cust = ord.customer_name || ord.customer_social || 'ลูกค้าทั่วไป';
+        const ch = ord.channel ? ` [${ord.channel}]` : '';
         unifiedList.push({
           id: 'ord_' + oi.id,
           date: ord.order_date || today(),
           timestamp: ord.order_date || '',
           typeKey: 'out',
-          typeLabel: '🔴 ขายออเดอร์',
+          typeLabel: '🔴 ขายออเดอร์ (SO)',
           badgeStyle: 'background:#fee2e2;color:#b91c1c',
           qty: -(Number(oi.qty) || 1),
           unitCostPrice: Number(oi.sell_price) || Number(prod.sell_price) || 0,
           refDoc: orderNo,
-          note: `ขายให้: ${ord.customer_name || 'ลูกค้าทั่วไป'}`,
+          note: `ขายให้: ${cust}${ch}`,
           source: 'order'
+        });
+      }
+    });
+
+    // C. เพิ่ม Purchase Order items (เอกสารซื้อ / รับเข้าสินค้า)
+    const seenPOIds = new Set();
+    poItemsList.forEach(poi => {
+      if (seenPOIds.has(poi.id)) return;
+      seenPOIds.add(poi.id);
+
+      const po = poi.purchase_orders;
+      if (!po || po.status === 'cancelled' || po.status === 'draft') return;
+      const poNo = po.po_no || ('PO-' + po.id);
+      const recQty = Number(poi.qty_received) || Number(poi.qty_ordered) || Number(poi.qty) || 0;
+      if (recQty <= 0) return;
+
+      const alreadyHasMove = rawMoves.some(m => m.po_id === po.id || (m.note && m.note.includes(poNo)) || (m.lot_name && m.lot_name.includes(poNo)));
+      if (!alreadyHasMove) {
+        unifiedList.push({
+          id: 'po_' + poi.id,
+          date: po.po_date || today(),
+          timestamp: po.po_date || '',
+          typeKey: 'in',
+          typeLabel: '🟢 ซื้อเข้า (PO)',
+          badgeStyle: 'background:#dcfce7;color:#15803d',
+          qty: Math.abs(recQty),
+          unitCostPrice: Number(poi.unit_cost) || Number(poi.purchase_price) || Number(prod.purchase_price) || 0,
+          refDoc: poNo,
+          note: `สั่งซื้อจาก: ${po.supplier_name || 'ซัพพลายเออร์'}${po.status ? ' (' + po.status + ')' : ''}`,
+          source: 'po'
+        });
+      }
+    });
+
+    // D. เพิ่ม Goods Return items (รับคืนสินค้า)
+    const seenGRIds = new Set();
+    grItemsList.forEach(gri => {
+      if (seenGRIds.has(gri.id)) return;
+      seenGRIds.add(gri.id);
+
+      const gr = gri.goods_returns;
+      if (!gr) return;
+      const grNo = gr.gr_no || ('GR-' + gr.id);
+      const retQty = Number(gri.qty) || 0;
+      if (retQty <= 0) return;
+
+      const alreadyHasMove = rawMoves.some(m => (m.note && m.note.includes(grNo)));
+      if (!alreadyHasMove) {
+        unifiedList.push({
+          id: 'gr_' + gri.id,
+          date: gr.gr_date || today(),
+          timestamp: gr.gr_date || '',
+          typeKey: 'return',
+          typeLabel: '🔵 รับคืน (GR)',
+          badgeStyle: 'background:#e0f2fe;color:#0369a1',
+          qty: Math.abs(retQty),
+          unitCostPrice: Number(prod.current_cost) || 0,
+          refDoc: grNo,
+          note: `รับคืนจาก: ${gr.customer_name || 'ลูกค้า'}`,
+          source: 'gr'
         });
       }
     });
@@ -28503,8 +29090,18 @@ function renderInventoryPostingTableRows(list) {
         <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:12.5px;color:#64748b">
           ${fmtB(tx.unitCostPrice)}
         </td>
-        <td style="padding:9px 8px;font-size:12px;font-family:var(--mono);font-weight:600;color:#0284c7">
-          ${escapeHTML(tx.refDoc || '-')}
+        <td style="padding:9px 8px;font-size:12px;font-family:var(--mono)">
+          ${(()=>{
+            const doc = String(tx.refDoc || '-').trim();
+            if (!doc || doc === '-' || doc === 'Initial Setup') return `<span style="color:#64748b">${escapeHTML(doc)}</span>`;
+            if (tx.source === 'order' || doc.startsWith('SO') || doc.startsWith('ORD') || doc.startsWith('SHP') || doc.startsWith('LAZ')) {
+              return `<a href="javascript:void(0)" onclick="closeModal('modal-inventory-posting'); gotoOrder('${escapeHTML(doc)}')" style="color:#0284c7;text-decoration:underline;font-weight:700" title="คลิกเพื่อเปิดดูออเดอร์ขายนี้">${escapeHTML(doc)} 🔍</a>`;
+            }
+            if (tx.source === 'po' || doc.startsWith('PO')) {
+              return `<a href="javascript:void(0)" onclick="closeModal('modal-inventory-posting'); viewPONo('${escapeHTML(doc)}')" style="color:#16a34a;text-decoration:underline;font-weight:700" title="คลิกเพื่อเปิดดูใบสั่งซื้อ (PO) นี้">${escapeHTML(doc)} 🔍</a>`;
+            }
+            return `<span style="color:#0f172a;font-weight:600">${escapeHTML(doc)}</span>`;
+          })()}
         </td>
         <td style="padding:9px 8px;font-size:12px;color:#334155">
           ${escapeHTML(tx.note || '-')}
@@ -28735,7 +29332,25 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.72', date:'2026-08-31', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Smart Vendor Autocomplete & Historical Recall in Expense Form', items:[
+    { v:'1.92', date:'2026-09-12', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Search Orders by Product Name, SKU, and Part No', items:[
+      '🔍 <b>Smart Order Product Search:</b> ช่องค้นหาในหน้าบันทึกออเดอร์รองรับการค้นหาตาม <b>ชื่อสินค้า, รหัส SKU, Part No, Supplier Code และ Barcode</b> ได้อย่างแม่นยำ',
+      '📦 <b>Order Items Metadata Display:</b> แสดงป้ายรหัส [SKU] และ [#Part No] ควบคู่กับชื่อสินค้าในตารางรายการออเดอร์ทันที',
+      '⚡ <b>Instant Cache Purge:</b> เคลียร์แคช Service Worker เป็นเวอร์ชัน v1.92 เพื่อให้สามารถค้นหาสินค้าในออเดอร์ได้ทันที'
+    ]},
+    { v:'1.91', date:'2026-09-11', badge:'', color:'#be185d', bg:'#fdf2f8', title:'Update Employee Commission Standard to 15% of Profit After GP Platform', items:[
+      '👤 <b>Employee Commission 15%:</b> ปรับการแสดงผลและคำนวณค่าคอมมิชชั่นพนักงาน (นิติ บุญสายันต์) ใน Dashboard ภาพรวม และหน้ารายการออเดอร์ เป็น <b>15% ของกำไรหลังหัก GP Platform แล้ว</b>',
+      '🧹 <b>Instant Cache Purge:</b> เคลียร์แคช Service Worker เป็นเวอร์ชัน v1.91 เพื่ออัปเดตข้อมูลและสูตรคำนวณทันที'
+    ]},
+    { v:'1.90', date:'2026-09-08', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'AI Content Studio & Automatic Order Shipped Marketing Engine', items:[
+      '🎨 <b>AI Content Studio from Real Orders:</b> ดึงข้อมูลสินค้าที่ขายได้จริงจากคำสั่งซื้อ (Shopee, Lazada, หน้าร้าน) มาสร้างคอนเทนต์ขายดีและรีวิวออเดอร์ทันที',
+      '🚀 <b>Auto Marketing on Order Shipped:</b> เมื่อเปลี่ยนสถานะออเดอร์เป็น "จัดส่งแล้ว" ระบบ AI จะสร้างบทความ SEO Blog และส่งแจ้งเตือนเข้า Telegram แอดมินอัตโนมัติ',
+      '⚡ <b>1-Click Telegram Approval:</b> แอดมินสามารถกดปุ่มอนุมัติโพสต์ลงเว็บไซต์ sealthai.com/blog จาก Telegram ได้ทันทีเพียงคลิกเดียว'
+    ]},
+    { v:'1.87', date:'2026-09-06', badge:'', color:'#059669', bg:'#dcfce7', title:'Lock Employee Commission to 15% & Instant Cache Purge', items:[
+      '👤 <b>Employee Commission Standard 15%:</b> ปรับล็อกอัตราค่าคอมมิชชั่นพนักงาน (นิติ บุญสายันต์) เป็น 15% ของกำไรหลัง GP Platform ให้ตรงกับมาตรฐาน CFO (นันทนา 15%) ถาวร',
+      '🧹 <b>Cache Purge & Force Refresh:</b> ล้าง Cache Service Worker เก่า และบังคับอัปเดตระบบสู่เวอร์ชันล่าสุดทันที'
+    ]},
+    { v:'1.72', date:'2026-08-31', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Smart Vendor Autocomplete & Historical Recall in Expense Form', items:[
       '🏢 <b>Smart Vendor Recall:</b> แนะนำและดึงข้อมูลประวัติผู้ขาย/ผู้รับเงินเดิมที่เคยบันทึกไว้มาแสดงให้อัตโนมัติ',
       '⚡ <b>Auto-Fill Category & Details:</b> เมื่อเลือกผู้ขาย ระบบจะกรอกหมวดหมู่, หมวดย่อย, ช่องทาง และรอบบิลล่าสุดให้อัตโนมัติทันที',
       '🏷️ <b>Vendor Quick Chips:</b> เพิ่มปุ่มลัดเลือกผู้ขายที่ใช้บ่อยใต้ช่องกรอก สะดวกและรวดเร็ว'
