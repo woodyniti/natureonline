@@ -4,6 +4,14 @@
 
 ---
 
+## 🚀 [v1.97] — 2026-09-13
+### Universal PO Product Matcher & Pending Tracking for Inventory Posting List
+* **🛒 Universal PO Matcher:** ปรับระบบดึงและจับคู่รายการจากใบสั่งซื้อ PO (เช่น `PO-20260913-0002`) เข้าสู่ประวัติสต๊อกของสินค้าทั้งทาง Product ID, รหัสขนาดมิติ (เช่น `20X31X7`), และชื่อสินค้าที่ถูกตัด Tag `[SO: ...]` ออกอย่างสมบูรณ์แบบ
+* **⏳ Accurate Pending PO Display:** ดึงรายการค้างรับส่งมอบจาก PO แสดงในการ์ดสรุปยอดและตารางประวัติธุรกรรมสต๊อกได้ทันที 100%
+* **🧹 Cache Refresh (v1.97):** อัปเดต Service Worker Cache เป็น `sealthai-v1.97`
+
+---
+
 ## 🚀 [v1.96] — 2026-09-13
 ### Display Pending PO Quantities in Inventory Posting List & Stock Ledger
 * **⏳ Pending PO Tracking in Inventory Posting:** แสดงรายการสินค้าที่สั่งซื้อผ่าน PO แต่ยังค้างส่งมอบ (Pending In-Transit) ในหน้า **Inventory Posting List** พร้อมระบุจำนวนที่สั่ง, จำนวนที่รับแล้ว, และยอดคงเหลือรอรับ
