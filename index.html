@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v1.95';
+const CURRENT_APP_VERSION = 'sealthai-v1.96';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1267,6 +1267,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="display:flex;gap:6px;align-items:center">
         <select id="ipl-filter-type" onchange="filterInventoryPostingRows()" style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;font-size:12.5px;font-weight:600">
           <option value="all">🔍 ทุกประเภทธุรกรรม (All Postings)</option>
+          <option value="pending_po">⏳ รอเข้าจาก PO (Pending In-Transit)</option>
           <option value="in">🟢 รับเข้า / ซื้อเข้า (Stock In / Buy)</option>
           <option value="out">🔴 ขายออก / เบิกใช้ (Sales / Goods Issue)</option>
           <option value="adjust">🟡 ปรับยอดสต๊อก (Adjustment)</option>
@@ -28881,8 +28882,11 @@ async function viewProductInventoryPosting(productId) {
       }
     });
 
-    // C. เพิ่ม Purchase Order items (เอกสารซื้อ / รับเข้าสินค้า)
+    // C. เพิ่ม Purchase Order items (ทั้งสินค้าที่รับเข้าแล้ว และสินค้าที่ยังค้างรับ Pending จาก PO)
     const seenPOIds = new Set();
+    let totalPendingPOQty = 0;
+    let pendingPOCount = 0;
+
     poItemsList.forEach(poi => {
       if (seenPOIds.has(poi.id)) return;
       seenPOIds.add(poi.id);
@@ -28890,23 +28894,48 @@ async function viewProductInventoryPosting(productId) {
       const po = poi.purchase_orders;
       if (!po || po.status === 'cancelled' || po.status === 'draft') return;
       const poNo = po.po_no || ('PO-' + po.id);
-      const recQty = Number(poi.qty_received) || Number(poi.qty_ordered) || Number(poi.qty) || 0;
-      if (recQty <= 0) return;
+      const orderedQty = Number(poi.qty_ordered) || Number(poi.qty) || 0;
+      const receivedQty = Number(poi.qty_received) || 0;
+      const pendingQty = Math.max(0, orderedQty - receivedQty);
 
-      const alreadyHasMove = rawMoves.some(m => m.po_id === po.id || (m.note && m.note.includes(poNo)) || (m.lot_name && m.lot_name.includes(poNo)));
-      if (!alreadyHasMove) {
+      // C1. รายการที่รับเข้าคลังแล้ว (Received In)
+      if (receivedQty > 0) {
+        const alreadyHasMove = rawMoves.some(m => m.po_id === po.id || (m.note && m.note.includes(poNo)) || (m.lot_name && m.lot_name.includes(poNo)));
+        if (!alreadyHasMove) {
+          unifiedList.push({
+            id: 'po_in_' + poi.id,
+            date: po.po_date || today(),
+            timestamp: po.po_date || '',
+            typeKey: 'in',
+            typeLabel: '🟢 ซื้อเข้า (PO)',
+            badgeStyle: 'background:#dcfce7;color:#15803d',
+            qty: Math.abs(receivedQty),
+            isPending: false,
+            unitCostPrice: Number(poi.unit_cost) || Number(poi.purchase_price) || Number(prod.purchase_price) || 0,
+            refDoc: poNo,
+            note: `สั่งซื้อจาก: ${po.supplier_name || 'ซัพพลายเออร์'} (รับของแล้ว ${receivedQty}/${orderedQty} ชิ้น)`,
+            source: 'po'
+          });
+        }
+      }
+
+      // C2. รายการที่สั่งซื้อแล้ว แต่ยังค้างรับ (Pending PO / In-Transit)
+      if (pendingQty > 0 && po.status !== 'completed') {
+        totalPendingPOQty += pendingQty;
+        pendingPOCount += 1;
         unifiedList.push({
-          id: 'po_' + poi.id,
-          date: po.po_date || today(),
-          timestamp: po.po_date || '',
-          typeKey: 'in',
-          typeLabel: '🟢 ซื้อเข้า (PO)',
-          badgeStyle: 'background:#dcfce7;color:#15803d',
-          qty: Math.abs(recQty),
+          id: 'po_pending_' + poi.id,
+          date: po.expected_date || po.po_date || today(),
+          timestamp: po.expected_date || po.po_date || '',
+          typeKey: 'pending_po',
+          typeLabel: '⏳ รอเข้าจาก PO',
+          badgeStyle: 'background:#fef3c7;color:#b45309;border:1px solid #fde68a',
+          qty: pendingQty,
+          isPending: true,
           unitCostPrice: Number(poi.unit_cost) || Number(poi.purchase_price) || Number(prod.purchase_price) || 0,
           refDoc: poNo,
-          note: `สั่งซื้อจาก: ${po.supplier_name || 'ซัพพลายเออร์'}${po.status ? ' (' + po.status + ')' : ''}`,
-          source: 'po'
+          note: `⏳ สั่งซื้อแล้ว รอรับเข้าคลัง: ค้างส่ง ${pendingQty} ชิ้น (สั่ง ${orderedQty}, รับแล้ว ${receivedQty}) · ซัพพลายเออร์: ${po.supplier_name || 'ไม่ระบุ'}${po.status ? ' [' + po.status + ']' : ''}`,
+          source: 'po_pending'
         });
       }
     });
@@ -28977,10 +29006,15 @@ async function viewProductInventoryPosting(productId) {
       runningBal = currentActualStock;
     } else {
       unifiedList.forEach(tx => {
-        runningBal += tx.qty;
-        tx.runningBalance = runningBal;
-        if (tx.qty > 0) totalInQty += tx.qty;
-        else if (tx.qty < 0) totalOutQty += Math.abs(tx.qty);
+        if (tx.isPending) {
+          // รายการรอรับเข้า (Pending PO) ไม่บวกยอด On-Hand จริง แต่แสดงยอดคาดการณ์
+          tx.runningBalance = runningBal + tx.qty;
+        } else {
+          runningBal += tx.qty;
+          tx.runningBalance = runningBal;
+          if (tx.qty > 0) totalInQty += tx.qty;
+          else if (tx.qty < 0) totalOutQty += Math.abs(tx.qty);
+        }
       });
     }
 
@@ -29388,7 +29422,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'1.95', date:'2026-09-12', badge:'Latest', color:'#059669', bg:'#dcfce7', title:'Login Recovery & JavaScript Regex Syntax Repair', items:[
+    { v:'1.96', date:'2026-09-13', badge:'Latest', color:'#f59e0b', bg:'#fffbeb', title:'Display Pending PO Quantities in Inventory Posting List & Stock Ledger', items:[
+      '⏳ <b>Pending PO Tracking:</b> แสดงรายการและจำนวนสินค้าที่สั่งซื้อแล้วแต่ยังค้างรับ (Pending In-Transit) จากใบสั่งซื้อ PO ในหน้า Inventory Posting List ทันที',
+      '📊 <b>Projected Net Stock:</b> เพิ่มการ์ดสรุปยอดสินค้าที่รอเข้าจาก PO พร้อมคำนวณยอดสต๊อกคงเหลือคาดการณ์ (On-Hand + Pending PO)',
+      '🔍 <b>Pending Filter:</b> เพิ่มตัวกรองดูเฉพาะรายการที่รอส่งมอบจาก PO เพื่อความสะดวกในการติดตามของ'
+    ]},
+    { v:'1.95', date:'2026-09-12', badge:'', color:'#059669', bg:'#dcfce7', title:'Login Recovery & JavaScript Regex Syntax Repair', items:[
       '🐛 <b>Critical Regex Repair:</b> แก้ไขไวยากรณ์ Regular Expression ในฟังก์ชัน smartWildcardMatch ให้ทำงานราบรื่น 100%',
       '🔐 <b>Login Restoration:</b> กู้คืนระบบ Login (ทั้ง doLogin และ doDirectAdminLogin) ให้เข้าสู่ระบบได้ทันที',
       '🧹 <b>Cache Purge (v1.95):</b> ล้างแคช Service Worker และรีเฟรชระบบสู่เวอร์ชันล่าสุด'

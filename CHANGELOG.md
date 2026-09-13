@@ -4,6 +4,15 @@
 
 ---
 
+## 🚀 [v1.96] — 2026-09-13
+### Display Pending PO Quantities in Inventory Posting List & Stock Ledger
+* **⏳ Pending PO Tracking in Inventory Posting:** แสดงรายการสินค้าที่สั่งซื้อผ่าน PO แต่ยังค้างส่งมอบ (Pending In-Transit) ในหน้า **Inventory Posting List** พร้อมระบุจำนวนที่สั่ง, จำนวนที่รับแล้ว, และยอดคงเหลือรอรับ
+* **📊 5th KPI Card — Pending PO & Projected Stock:** เพิ่มการ์ดสรุปยอดสินค้าที่รอเข้าจาก PO พร้อมคำนวณยอดสต๊อกคงเหลือคาดการณ์สุทธิ (On-Hand + Pending PO)
+* **🔍 Filter by Pending PO:** เพิ่มตัวเลือกในตัวกรอง `⏳ รอเข้าจาก PO (Pending In-Transit)` เพื่อดูเฉพาะรายการที่อยู่ระหว่างรอรับเข้า
+* **🧹 Cache Refresh (v1.96):** อัปเดต Service Worker Cache เป็น `sealthai-v1.96`
+
+---
+
 ## 🚀 [v1.95] — 2026-09-12
 ### Login Recovery & JavaScript Regex Syntax Repair
 * **🐛 Critical Regex Syntax Repair:** แก้ไขไวยากรณ์ Regular Expression ในฟังก์ชัน `smartWildcardMatch` ให้ถูกต้องและโหลดบนเบราว์เซอร์ได้สมบูรณ์ 100%
