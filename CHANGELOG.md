@@ -2,6 +2,15 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v1.99] — 2026-09-13
+### Smart Inventory Matcher & Multi-Layer Document Viewer Modal
+* **🐛 Database Query Correction:** แก้ไขฟิลด์เรียกข้อมูลตาราง `purchase_order_items` ให้ตรงกับโครงสร้างฐานข้อมูล (ตัดฟิลด์ `qty` และ `purchase_price` ที่ไม่มีอยู่ออก) ทำให้ระบบดึงข้อมูล PO (เช่น `PO-20260913-0002`) และแสดงยอด `รอเข้าจาก PO (Pending)` ได้ครบถ้วน 100%
+* **🔍 Precision Product Matcher:** เพิ่มระบบตรวจสอบจับคู่สินค้าอย่างละเอียด ป้องกันการดึงสลับขนาดมิติ (`20x30x7` vs `20x31x7`) หรือสลับวัสดุ (`Viton` vs `NBR`)
+* **📑 Multi-Layer Document Viewer:** เมื่อคลิกที่เลขที่เอกสาร (`SO-...` หรือ `PO-...`) ในหน้า Inventory Posting List ระบบจะเปิดหน้าต่างรายละเอียดเอกสารซ้อนขึ้นมาทันที (Layered Modal) โดยไม่ต้องออกจากหน้าประวัติสต๊อก
+* **🧹 Cache Refresh (v1.99):** อัปเดต Service Worker Cache เป็น `sealthai-v1.99`
+
+---
+
 ## 🚀 [v1.98] — 2026-09-13
 ### Display Pending PO Quantities in Products Master Table, Mobile Cards & KPI Stats
 * **⏳ Pending PO Column in Products Table:** เพิ่มคอลัมน์ `⏳ รอเข้า (PO)` ในตารางรายการสินค้าหลัก (Desktop Table) พร้อมป้ายเตือนสีอำพัน `+จำนวน ⏳` และสามารถคลิกเพื่อเปิดดูรายละเอียดประวัติการสั่งซื้อ (Inventory Posting List) ได้ทันที
