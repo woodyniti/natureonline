@@ -2,6 +2,14 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v1.98] — 2026-09-13
+### Display Pending PO Quantities in Products Master Table, Mobile Cards & KPI Stats
+* **⏳ Pending PO Column in Products Table:** เพิ่มคอลัมน์ `⏳ รอเข้า (PO)` ในตารางรายการสินค้าหลัก (Desktop Table) พร้อมป้ายเตือนสีอำพัน `+จำนวน ⏳` และสามารถคลิกเพื่อเปิดดูรายละเอียดประวัติการสั่งซื้อ (Inventory Posting List) ได้ทันที
+* **📊 4th Stat KPI Card — Pending PO:** เพิ่มการ์ดสถิติ `⏳ รอรับเข้า (PO)` แสดงยอดรวมจำนวนชิ้นและจำนวนรายการสินค้าที่มี PO ค้างรับ พร้อมคลิกเพื่อกรองดูเฉพาะสินค้าที่มี PO รอเข้าได้ทันที
+* **📱 Mobile Product Cards:** แสดงจำนวนที่รอเข้าจาก PO ในการ์ดสินค้าบนสมาร์ทโฟน
+* **🔍 Sort & Filter by Pending PO:** รองรับการจัดเรียง (Sort) ตามจำนวน PO รอเข้า และตัวกรองสินค้าที่มี PO ค้างรับ
+* **🧹 Cache Refresh (v1.98):** อัปเดต Service Worker Cache เป็น `sealthai-v1.98`
+
 ---
 
 ## 🚀 [v1.97] — 2026-09-13
