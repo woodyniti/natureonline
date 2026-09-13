@@ -2,6 +2,16 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.01] — 2026-09-13
+### Display Pending PO & Pending SO (Unshipped Orders) in Products Master Table & KPI Cards
+* **📤 Pending SO Column in Products Table:** เพิ่มคอลัมน์ `📤 รอส่ง (SO)` ในตารางรายการสินค้าหลัก แสดงจำนวนสินค้าที่ลูกค้าเปิดออเดอร์สั่งซื้อแล้วแต่ยังรอจัดส่ง (`-จำนวน 📤` สีแดง) พร้อมคลิกเพื่อเปิดดูรายละเอียดใน Inventory Posting List ได้ทันที
+* **⏳ Pending PO Column:** แสดงจำนวนสินค้าที่สั่งซื้อจาก Supplier ผ่าน PO แล้วและรอรับเข้าคลัง (`+จำนวน ⏳` สีอำพัน)
+* **📊 5th Stat KPI Card — Pending SO:** เพิ่มการ์ดสถิติ `📤 รอจัดส่ง (SO)` ด้านบน แสดงยอดรวมสินค้าและจำนวนรายการที่รอส่ง พร้อมคลิกเพื่อกรองดูเฉพาะสินค้าที่ติดจอง/รอส่ง
+* **📱 Mobile Product Cards:** แสดงทั้งยอดรอเข้า (PO) และยอดรอส่ง (SO) ในการ์ดสินค้าบนสมาร์ทโฟน
+* **🧹 Cache Refresh (v2.01):** อัปเดต Service Worker Cache เป็น `sealthai-v2.01`
+
+---
+
 ## 🚀 [v2.00] — 2026-09-13
 ### Open Reference Documents in New Window & Interactive Document Viewer
 * **↗️ Open Documents in New Window (Popup / Tab ใหม่):** เมื่อคลิกที่เลขที่เอกสารอ้างอิง (เช่น `SO-20260906-0002` หรือ `PO-20260913-0002`) ในตารางประวัติสต๊อก (Inventory Posting List) ระบบจะเปิดเอกสารฉบับเต็ม (บิลเงินสด Cash Sale / ใบสั่งซื้อ Purchase Order A4) ในหน้าต่างใหม่ (`window.open` / New Tab) ทันที
