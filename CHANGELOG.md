@@ -2,6 +2,14 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.00] — 2026-09-13
+### Open Reference Documents in New Window & Interactive Document Viewer
+* **↗️ Open Documents in New Window (Popup / Tab ใหม่):** เมื่อคลิกที่เลขที่เอกสารอ้างอิง (เช่น `SO-20260906-0002` หรือ `PO-20260913-0002`) ในตารางประวัติสต๊อก (Inventory Posting List) ระบบจะเปิดเอกสารฉบับเต็ม (บิลเงินสด Cash Sale / ใบสั่งซื้อ Purchase Order A4) ในหน้าต่างใหม่ (`window.open` / New Tab) ทันที
+* **✏️ Quick Modal Edit Button:** เพิ่มปุ่มดินสอ `✏️` เล็กๆ ข้างเลขที่เอกสาร สำหรับเปิดหน้าต่างแก้ไขข้อมูลในระบบโดยไม่รบกวนหน้าต่างหลัก
+* **🧹 Cache Refresh (v2.00):** อัปเดต Service Worker Cache เป็น `sealthai-v2.00`
+
+---
+
 ## 🚀 [v1.99] — 2026-09-13
 ### Smart Inventory Matcher & Multi-Layer Document Viewer Modal
 * **🐛 Database Query Correction:** แก้ไขฟิลด์เรียกข้อมูลตาราง `purchase_order_items` ให้ตรงกับโครงสร้างฐานข้อมูล (ตัดฟิลด์ `qty` และ `purchase_price` ที่ไม่มีอยู่ออก) ทำให้ระบบดึงข้อมูล PO (เช่น `PO-20260913-0002`) และแสดงยอด `รอเข้าจาก PO (Pending)` ได้ครบถ้วน 100%
