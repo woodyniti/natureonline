@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.01';
-const DISPLAY_APP_VERSION = 'v2.01';
+const CURRENT_APP_VERSION = 'sealthai-v2.02';
+const DISPLAY_APP_VERSION = 'v2.02';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.01 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.02 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.01 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.02 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.01 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.02 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.01 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.02 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3016,7 +3016,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.01 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.02 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -9044,13 +9044,12 @@ async function loadProducts() {
   allCrossReferences = xrefRes?.data || [];
   if (supRes?.data) allSuppliers = supRes.data;
 
-  // คำนวณ Pending PO และ Pending SO (Universal Smart Matcher)
+  // คำนวณ Pending PO และ Pending SO (Strict Product Matcher)
   const activePOs = poRes?.data || [];
   const activeOrders = ordersRes?.data || [];
   const pendingPOItems = [];
   const pendingSOItems = [];
   const cleanItemName = (name) => String(name || '').replace(/\[SO:[^\]]*\]/gi, '').trim().toLowerCase();
-  const extractDimNums = (s) => (String(s || '').replace(/\[SO:[^\]]*\]/gi, '').match(/\d+(?:\.\d+)?/g) || []);
 
   activePOs.forEach(po => {
     (po.purchase_order_items || []).forEach(poi => {
@@ -9064,7 +9063,6 @@ async function loadProducts() {
           product_name: poi.product_name || '',
           clean_name: cName,
           norm_name: cName.replace(/[-*xX×/\s.]+/g, 'x'),
-          dim_nums: extractDimNums(cName),
           sku: String(poi.sku || '').trim().toLowerCase(),
           pending: pending,
           po_no: po.po_no
@@ -9083,7 +9081,6 @@ async function loadProducts() {
           product_name: oi.product_name || '',
           clean_name: cName,
           norm_name: cName.replace(/[-*xX×/\s.]+/g, 'x'),
-          dim_nums: extractDimNums(cName),
           sku: String(oi.sku || '').trim().toLowerCase(),
           qty: q,
           order_no: ord.order_no
@@ -9096,54 +9093,33 @@ async function loadProducts() {
     const pId = String(p.id);
     const pCleanName = String(p.name || '').trim().toLowerCase();
     const pNormName = pCleanName.replace(/[-*xX×/\s.]+/g, 'x');
-    const pDims = extractDimNums(pCleanName);
     const pSku = String(p.sku || p.supplier_sku || '').trim().toLowerCase();
-    const isVitonProd = pCleanName.includes('viton') || pCleanName.includes('fkm');
-    const isNbrProd = pCleanName.includes('nbr');
 
-    // 1. Pending PO (รอรับเข้า)
+    // 1. Strict Match PO
     let pPendingPO = 0;
     pendingPOItems.forEach(poi => {
       let isMatch = false;
-      if (poi.product_id && poi.product_id === pId) {
-        isMatch = true;
+      if (poi.product_id) {
+        if (poi.product_id === pId) isMatch = true;
       } else if (poi.clean_name) {
         if (poi.clean_name === pCleanName) isMatch = true;
         else if (pSku && (poi.clean_name === pSku || poi.sku === pSku)) isMatch = true;
         else if (poi.norm_name === pNormName) isMatch = true;
-        else if (pDims.length >= 2 && poi.dim_nums.length >= 2) {
-          if (pDims.join('x') === poi.dim_nums.join('x')) {
-            const isVitonIt = poi.clean_name.includes('viton') || poi.clean_name.includes('fkm');
-            const isNbrIt = poi.clean_name.includes('nbr');
-            if (!((isVitonProd && isNbrIt) || (isNbrProd && isVitonIt))) isMatch = true;
-          }
-        } else if (poi.clean_name.length >= 8 && (poi.clean_name.includes(pCleanName) || pCleanName.includes(poi.clean_name))) {
-          isMatch = true;
-        }
       }
       if (isMatch) pPendingPO += poi.pending;
     });
     p.pending_po = pPendingPO;
 
-    // 2. Pending SO (รอจัดส่ง)
+    // 2. Strict Match SO (รอส่ง)
     let pPendingSO = 0;
     pendingSOItems.forEach(soi => {
       let isMatch = false;
-      if (soi.product_id && soi.product_id === pId) {
-        isMatch = true;
+      if (soi.product_id) {
+        if (soi.product_id === pId) isMatch = true;
       } else if (soi.clean_name) {
         if (soi.clean_name === pCleanName) isMatch = true;
         else if (pSku && (soi.clean_name === pSku || soi.sku === pSku)) isMatch = true;
         else if (soi.norm_name === pNormName) isMatch = true;
-        else if (pDims.length >= 2 && soi.dim_nums.length >= 2) {
-          if (pDims.join('x') === soi.dim_nums.join('x')) {
-            const isVitonIt = soi.clean_name.includes('viton') || soi.clean_name.includes('fkm');
-            const isNbrIt = soi.clean_name.includes('nbr');
-            if (!((isVitonProd && isNbrIt) || (isNbrProd && isVitonIt))) isMatch = true;
-          }
-        } else if (soi.clean_name.length >= 8 && (soi.clean_name.includes(pCleanName) || pCleanName.includes(soi.clean_name))) {
-          isMatch = true;
-        }
       }
       if (isMatch) pPendingSO += soi.qty;
     });
@@ -28956,7 +28932,6 @@ async function viewProductInventoryPosting(productId) {
     if (subtitleEl) subtitleEl.textContent = `หมวดหมู่: ${prod.category || 'ทั่วไป'}${dimTxt} · ชั้นวาง: ${prod.location_shelf || 'ไม่ระบุ'}`;
 
     // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, purchase_orders, orders, goods_returns
-    // ปรับ query purchase_orders ให้เลือกฟิลด์ที่มีอยู่จริงใน DB (ไม่มี qty, ไม่มี purchase_price ใน purchase_order_items)
     const [movesRes, posRes, ordersRes, grsRes] = await Promise.all([
       sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true }),
       sb.from('purchase_orders').select('id,po_no,po_date,expected_date,supplier_name,status,note,purchase_order_items(id,po_id,product_id,product_name,qty_ordered,qty_received,unit_cost)').eq('shop_id', currentShop.id).neq('status', 'cancelled'),
@@ -28967,50 +28942,34 @@ async function viewProductInventoryPosting(productId) {
     const rawMoves = movesRes.data || [];
     const grItemsList = grsRes.data || [];
 
-    // Universal Smart Matcher: จับคู่สินค้ากับ PO items และ Order items อย่างแม่นยำ ไม่สับสนข้ามสเปก/มิติ/วัสดุ
+    // Strict Product Matcher: ยึด product_id เป็นหลัก 100% ป้องกันดึงสลับตัวสินค้า
     const cleanItemName = (name) => String(name || '').replace(/\[SO:[^\]]*\]/gi, '').trim().toLowerCase();
     const cleanProdName = String(prod.name || '').trim().toLowerCase();
     const cleanProdSku = String(prod.sku || prod.supplier_sku || '').trim().toLowerCase();
     const normProd = cleanProdName.replace(/[-*xX×/\s.]+/g, 'x');
-    const extractDimNums = (s) => (String(s || '').replace(/\[SO:[^\]]*\]/gi, '').match(/\d+(?:\.\d+)?/g) || []);
-    const prodDims = extractDimNums(cleanProdName);
-    const isVitonProd = cleanProdName.includes('viton') || cleanProdName.includes('fkm');
-    const isNbrProd = cleanProdName.includes('nbr');
 
     const isMatchProd = (it) => {
       if (!it) return false;
-      if (it.product_id && String(it.product_id) === String(prod.id)) return true;
+
+      // 1. ถ้ามี product_id บันทึกไว้ ต้องตรงกับ prod.id เท่านั้น
+      if (it.product_id) {
+        return String(it.product_id) === String(prod.id);
+      }
+
+      // 2. กรณีไม่มี product_id (เช่น รายการ ad-hoc หรือเปิด PO อิสระ)
       const itName = cleanItemName(it.product_name);
       if (!itName) return false;
 
-      // 1. Direct name match or SKU match
+      // ตรงกับชื่อสินค้า Master Product เป๊ะๆ
       if (itName === cleanProdName) return true;
+
+      // ตรงกับ SKU เป๊ะๆ
       if (cleanProdSku && (itName === cleanProdSku || String(it.sku||'').toLowerCase() === cleanProdSku)) return true;
 
-      // 2. Normalized dimension delimiters match (e.g. 20x31x7 vs 20*31*7)
+      // ตรงกับชื่อหลังแปลงตัวคั่นมิติ (*, -, x, space)
       const normIt = itName.replace(/[-*xX×/\s.]+/g, 'x');
       if (normIt === normProd) return true;
 
-      // 3. Dimension numbers matching
-      const itDims = extractDimNums(itName);
-      if (prodDims.length >= 2 && itDims.length >= 2) {
-        if (prodDims.join('x') === itDims.join('x')) {
-          const isVitonIt = itName.includes('viton') || itName.includes('fkm');
-          const isNbrIt = itName.includes('nbr');
-          if (!((isVitonProd && isNbrIt) || (isNbrProd && isVitonIt))) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      // 4. Substring inclusion if sufficiently long and specific
-      if (itName.length >= 8 && (itName.includes(cleanProdName) || cleanProdName.includes(itName))) {
-        return true;
-      }
-      if (normProd.length >= 8 && (normIt.includes(normProd) || normProd.includes(normIt))) {
-        return true;
-      }
       return false;
     };
 
@@ -29662,7 +29621,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.01', date:'2026-09-13', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Display Pending PO & Pending SO (Unshipped Orders) in Products Master Table & KPI Cards', items:[
+    { v:'2.02', date:'2026-09-14', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Strict Product Matcher & Fix Cross-Product Order Pollution', items:[
+      '🛡️ <b>Strict Product ID Matcher:</b> แก้ไขระบบจับคู่รายการธุรกรรม (Inventory Posting & Order Matcher) ให้ยึด product_id เป็นหลัก 100% ป้องกันไม่ให้ออเดอร์ของสินค้าตัวอื่นที่มีขนาดมิติเดียวกัน (เช่น ซีล NBR vs ซีล Viton) ดึงมาปนในประวัติของสินค้าตัวนี้',
+      '🔍 <b>Exact Fallback Matcher:</b> กรณีรายการที่ไม่มี product_id จะจับคู่เฉพาะชื่อและ SKU ที่ตรงกันอย่างสมบูรณ์แบบเท่านั้น (ไม่จับคู่ข้ามมิติ/วัสดุ)',
+      '🧹 <b>Cache Refresh (v2.02):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.02'
+    ]},
+    { v:'2.01', date:'2026-09-13', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Display Pending PO & Pending SO (Unshipped Orders) in Products Master Table & KPI Cards', items:[
       '📦 <b>Pending SO Tracking in Products Table:</b> เพิ่มคอลัมน์ "รอส่ง (SO)" ในตารางรายการสินค้าหลัก แสดงยอดสินค้าที่ลูกค้าสั่งซื้อแล้วแต่ยังรอจัดส่ง (-จำนวน 📤 สีแดง)',
       '⏳ <b>Pending PO Tracking:</b> แสดงยอดสินค้าที่สั่งซื้อผ่าน PO แล้วและรอรับเข้า (+จำนวน ⏳ สีอำพัน)',
       '📊 <b>5th Stat KPI Card — Pending SO:</b> เพิ่มการ์ดสรุปยอดรวมสินค้าที่รอจัดส่งจากออเดอร์ทั้งหมด พร้อมคลิกเพื่อกรองดูเฉพาะสินค้าที่ติดจอง/รอส่งได้ทันที',

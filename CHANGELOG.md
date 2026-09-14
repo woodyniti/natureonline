@@ -2,6 +2,14 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.02] — 2026-09-14
+### Strict Product Matcher & Fix Cross-Product Order Pollution
+* **🛡️ Strict Product ID Matcher:** ปรับปรุงระบบจับคู่ประวัติธุรกรรมสต๊อก (Inventory Posting List) และยอดค้างส่ง (Pending SO) ให้ยึด `product_id` เป็นเกณฑ์หลัก 100% ป้องกันไม่ให้ออเดอร์ของสินค้าตัวอื่นที่มีขนาดมิติเดียวกัน (เช่น ซีล NBR ปกติ vs ซีล Viton) ดึงมาปะปนในประวัติของสินค้ารายการนี้
+* **🔍 Exact Fallback Matching:** กรณีรายการที่ไม่มี `product_id` ระบบจะจับคู่เฉพาะชื่อสินค้า (`product_name`) และรหัส `SKU` ที่ตรงกันเป๊ะๆ เท่านั้น เพื่อความแม่นยำสูงสุด
+* **🧹 Cache Refresh (v2.02):** อัปเดต Service Worker Cache เป็น `sealthai-v2.02`
+
+---
+
 ## 🚀 [v2.01] — 2026-09-13
 ### Display Pending PO & Pending SO (Unshipped Orders) in Products Master Table & KPI Cards
 * **📤 Pending SO Column in Products Table:** เพิ่มคอลัมน์ `📤 รอส่ง (SO)` ในตารางรายการสินค้าหลัก แสดงจำนวนสินค้าที่ลูกค้าเปิดออเดอร์สั่งซื้อแล้วแต่ยังรอจัดส่ง (`-จำนวน 📤` สีแดง) พร้อมคลิกเพื่อเปิดดูรายละเอียดใน Inventory Posting List ได้ทันที
