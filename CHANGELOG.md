@@ -2,6 +2,15 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.03] — 2026-09-14
+### Clear Pending SO Breakdown in Inventory Posting List & Distinguish Pending vs Shipped Orders
+* **📤 Pending SO Breakdown in Stock Ledger:** แยกรายการออเดอร์ที่ยังไม่จัดส่ง (`shipping_status = pending`) ออกจากออเดอร์ที่จัดส่งเรียบร้อยแล้วอย่างชัดเจน พร้อมติดป้าย `📤 รอจัดส่ง (SO)` สีแดงเด่นชัด ช่วยให้ตรวจสอบได้ทันทีว่าออเดอร์ใบไหน (เช่น `SO-...`) ที่ทำให้สินค้าติดยอดรอส่ง
+* **🚀 Available Net Stock KPI Card:** เพิ่มการ์ดสรุปยอด `🚀 สต๊อกพร้อมขายสุทธิ` ในหน้าต่างประวัติสต๊อก (คำนวณจาก: สต๊อกจริงในคลัง + รอเข้าจาก PO - รอส่งมอบจาก SO)
+* **🔍 Pending SO Filter:** เพิ่มตัวเลือก `📤 รอจัดส่งจาก SO (Pending Outbound)` ในตัวกรองประเภทธุรกรรมเพื่อเรียกดูเฉพาะรายการรอส่งได้ทันที
+* **🧹 Cache Refresh (v2.03):** อัปเดต Service Worker Cache เป็น `sealthai-v2.03`
+
+---
+
 ## 🚀 [v2.02] — 2026-09-14
 ### Strict Product Matcher & Fix Cross-Product Order Pollution
 * **🛡️ Strict Product ID Matcher:** ปรับปรุงระบบจับคู่ประวัติธุรกรรมสต๊อก (Inventory Posting List) และยอดค้างส่ง (Pending SO) ให้ยึด `product_id` เป็นเกณฑ์หลัก 100% ป้องกันไม่ให้ออเดอร์ของสินค้าตัวอื่นที่มีขนาดมิติเดียวกัน (เช่น ซีล NBR ปกติ vs ซีล Viton) ดึงมาปะปนในประวัติของสินค้ารายการนี้

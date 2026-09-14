@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.02';
-const DISPLAY_APP_VERSION = 'v2.02';
+const CURRENT_APP_VERSION = 'sealthai-v2.03';
+const DISPLAY_APP_VERSION = 'v2.03';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.02 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.03 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.02 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.03 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.02 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.03 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.02 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.03 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1269,6 +1269,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <select id="ipl-filter-type" onchange="filterInventoryPostingRows()" style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;font-size:12.5px;font-weight:600">
           <option value="all">🔍 ทุกประเภทธุรกรรม (All Postings)</option>
           <option value="pending_po">⏳ รอเข้าจาก PO (Pending In-Transit)</option>
+          <option value="pending_so">📤 รอจัดส่งจาก SO (Pending Outbound)</option>
           <option value="in">🟢 รับเข้า / ซื้อเข้า (Stock In / Buy)</option>
           <option value="out">🔴 ขายออก / เบิกใช้ (Sales / Goods Issue)</option>
           <option value="adjust">🟡 ปรับยอดสต๊อก (Adjustment)</option>
@@ -3016,7 +3017,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.02 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.03 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -29027,30 +29028,58 @@ async function viewProductInventoryPosting(productId) {
       });
     });
 
-    // B. เพิ่ม Order items (เอกสารขาย)
+    // B. เพิ่ม Order items (เอกสารขาย ทั้งที่รอจัดส่ง Pending SO และที่จัดส่งแล้ว)
+    let totalPendingSOQty = 0;
+    let pendingSOCount = 0;
+
     (ordersRes.data || []).forEach(ord => {
       if (isOrderCancelled(ord)) return;
       const orderNo = ord.order_no || ('SO-' + ord.id);
+      const isPendingShip = (ord.shipping_status === 'pending' || !ord.shipping_status || (ord.shipping_status !== 'shipped' && ord.shipping_status !== 'delivered'));
+
       (ord.order_items || []).forEach(oi => {
         if (!isMatchProd(oi)) return;
-        const alreadyHasMove = rawMoves.some(m => m.order_id === ord.id || (m.note && m.note.includes(orderNo)));
-        if (!alreadyHasMove) {
-          const cust = ord.customer_name || ord.customer_social || 'ลูกค้าทั่วไป';
-          const ch = ord.channel ? ` [${ord.channel}]` : '';
+        const q = Number(oi.qty || 1);
+        const cust = ord.customer_name || ord.customer_social || 'ลูกค้าทั่วไป';
+        const ch = ord.channel ? ` [${ord.channel}]` : '';
+
+        if (isPendingShip) {
+          // ออเดอร์ที่ยังไม่จัดส่ง (Pending SO)
+          totalPendingSOQty += q;
+          pendingSOCount += 1;
           unifiedList.push({
-            id: 'ord_' + oi.id,
+            id: 'ord_pending_' + oi.id,
             date: ord.order_date || today(),
             timestamp: ord.order_date || '',
-            typeKey: 'out',
-            typeLabel: '🔴 ขายออเดอร์ (SO)',
-            badgeStyle: 'background:#fee2e2;color:#b91c1c',
-            qty: -(Number(oi.qty) || 1),
-            isPending: false,
+            typeKey: 'pending_so',
+            typeLabel: '📤 รอจัดส่ง (SO)',
+            badgeStyle: 'background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5',
+            qty: -q,
+            isPending: true,
             unitCostPrice: Number(oi.sell_price) || Number(prod.sell_price) || 0,
             refDoc: orderNo,
-            note: `ขายให้: ${cust}${ch}`,
+            note: `📤 รอจัดส่ง: ขายให้ ${cust}${ch} · สถานะจัดส่ง: รอส่ง (Pending)`,
             source: 'order'
           });
+        } else {
+          // ออเดอร์ที่จัดส่งเรียบร้อยแล้ว (Shipped / Delivered)
+          const alreadyHasMove = rawMoves.some(m => m.order_id === ord.id || (m.note && m.note.includes(orderNo)));
+          if (!alreadyHasMove) {
+            unifiedList.push({
+              id: 'ord_' + oi.id,
+              date: ord.order_date || today(),
+              timestamp: ord.order_date || '',
+              typeKey: 'out',
+              typeLabel: '🔴 ขายแล้ว (ส่งแล้ว)',
+              badgeStyle: 'background:#fee2e2;color:#b91c1c',
+              qty: -q,
+              isPending: false,
+              unitCostPrice: Number(oi.sell_price) || Number(prod.sell_price) || 0,
+              refDoc: orderNo,
+              note: `ขายแล้ว (จัดส่งแล้ว): ${cust}${ch}${ord.shipping_status ? ' [' + ord.shipping_status + ']' : ''}`,
+              source: 'order'
+            });
+          }
         }
       });
     });
@@ -29164,36 +29193,41 @@ async function viewProductInventoryPosting(productId) {
     const inhouseQty = Number(prod.stock_inhouse !== undefined && prod.stock_inhouse !== null ? prod.stock_inhouse : onHandQty);
     const ecosealQty = Number(prod.stock_ecoseal || 0);
     const totalCurrentStock = inhouseQty + ecosealQty;
-    const projectedNetStock = totalCurrentStock + totalPendingPOQty;
+    const availableNetStock = totalCurrentStock + totalPendingPOQty - totalPendingSOQty;
     const avgCost = Number(prod.current_cost) || 0;
     const totalVal = avgCost * inhouseQty;
 
     if (summaryEl) {
       summaryEl.innerHTML = `
         <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #0284c7;border-radius:10px;padding:12px">
-          <div style="font-size:11.5px;color:#64748b;font-weight:600">📦 สต๊อกคงเหลือปัจจุบัน</div>
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">📦 สต๊อกคงเหลือจริง (On-Hand)</div>
           <div style="font-size:20px;font-weight:800;color:#0f172a;font-family:var(--mono);margin:4px 0">${fmt(totalCurrentStock)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
           <div style="font-size:11px;color:#94a3b8">คลังร้าน: ${fmt(inhouseQty)} | Ecoseal: ${fmt(ecosealQty)}</div>
         </div>
         <div class="stat-card" style="background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:12px;cursor:pointer" onclick="document.getElementById('ipl-filter-type').value='pending_po';filterInventoryPostingRows()" title="คลิกเพื่อดูเฉพาะรายการที่รอเข้าจาก PO">
-          <div style="font-size:11.5px;color:#b45309;font-weight:600">⏳ รอเข้าจาก PO (Pending) 🔍</div>
+          <div style="font-size:11.5px;color:#b45309;font-weight:600">⏳ รอเข้าจาก PO (Inbound) 🔍</div>
           <div style="font-size:20px;font-weight:800;color:#d97706;font-family:var(--mono);margin:4px 0">+${fmt(totalPendingPOQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
-          <div style="font-size:11px;color:#92400e">${pendingPOCount} รายการ PO · สต๊อกคาดการณ์: <b>${fmt(projectedNetStock)} ชิ้น</b></div>
+          <div style="font-size:11px;color:#92400e">${pendingPOCount} รายการ PO รอรับเข้า</div>
+        </div>
+        <div class="stat-card" style="background:#fff;border:1px solid #fca5a5;border-left:4px solid #ef4444;border-radius:10px;padding:12px;cursor:pointer" onclick="document.getElementById('ipl-filter-type').value='pending_so';filterInventoryPostingRows()" title="คลิกเพื่อดูเฉพาะรายการออเดอร์ที่รอจัดส่ง (SO)">
+          <div style="font-size:11.5px;color:#b91c1c;font-weight:600">📤 รอส่งจาก SO (Outbound) 🔍</div>
+          <div style="font-size:20px;font-weight:800;color:#b91c1c;font-family:var(--mono);margin:4px 0">-${fmt(totalPendingSOQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
+          <div style="font-size:11px;color:#991b1b">${pendingSOCount} รายการออเดอร์รอจัดส่ง</div>
+        </div>
+        <div class="stat-card" style="background:#f0fdf4;border:1px solid #86efac;border-left:4px solid #16a34a;border-radius:10px;padding:12px">
+          <div style="font-size:11.5px;color:#15803d;font-weight:700">🚀 สต๊อกพร้อมขายสุทธิ</div>
+          <div style="font-size:20px;font-weight:800;color:${availableNetStock >= 0 ? '#15803d' : '#b91c1c'};font-family:var(--mono);margin:4px 0">${fmt(availableNetStock)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
+          <div style="font-size:10.5px;color:#166534">คงเหลือ ${fmt(totalCurrentStock)} + PO ${fmt(totalPendingPOQty)} - SO ${fmt(totalPendingSOQty)}</div>
         </div>
         <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #10b981;border-radius:10px;padding:12px">
-          <div style="font-size:11.5px;color:#64748b;font-weight:600">🟢 รวมรับเข้าทั้งหมด (+In)</div>
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">🟢 รวมรับเข้าจริง (+In)</div>
           <div style="font-size:20px;font-weight:800;color:#10b981;font-family:var(--mono);margin:4px 0">+${fmt(totalInQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
-          <div style="font-size:11px;color:#94a3b8">จาก PO & รับเข้าคลังจริง</div>
+          <div style="font-size:11px;color:#94a3b8">รับเข้าคลังเรียบร้อยแล้ว</div>
         </div>
-        <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #ef4444;border-radius:10px;padding:12px">
-          <div style="font-size:11.5px;color:#64748b;font-weight:600">🔴 รวมขาย / จ่ายออก (-Out)</div>
-          <div style="font-size:20px;font-weight:800;color:#ef4444;font-family:var(--mono);margin:4px 0">-${fmt(totalOutQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
-          <div style="font-size:11px;color:#94a3b8">จากออเดอร์ & จ่ายเบิกใช้</div>
-        </div>
-        <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #8b5cf6;border-radius:10px;padding:12px">
-          <div style="font-size:11.5px;color:#64748b;font-weight:600">💰 มูลค่าสต๊อก (ต้นทุนเฉลี่ย)</div>
-          <div style="font-size:20px;font-weight:800;color:#8b5cf6;font-family:var(--mono);margin:4px 0">${fmtB(totalVal)}</div>
-          <div style="font-size:11px;color:#94a3b8">ทุน/หน่วย: ${fmtB(avgCost)} | ขาย: ${fmtB(prod.sell_price||0)}</div>
+        <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #64748b;border-radius:10px;padding:12px">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600">🔴 รวมส่งแล้วจริง (-Out)</div>
+          <div style="font-size:20px;font-weight:800;color:#64748b;font-family:var(--mono);margin:4px 0">-${fmt(totalOutQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
+          <div style="font-size:11px;color:#94a3b8">ตัดจ่ายและจัดส่งแล้ว</div>
         </div>
       `;
     }
@@ -29360,7 +29394,7 @@ function renderInventoryPostingTableRows(list) {
           ${qtySign}
         </td>
         <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:13.5px;font-weight:800;color:#0f172a;background:#f0fdf4">
-          ${tx.isPending ? '<span style="color:#94a3b8;font-size:12px;font-weight:normal">(รอเข้า)</span>' : fmt(tx.runningBalance)}
+          ${tx.isPending ? (tx.typeKey === 'pending_so' ? '<span style="color:#b91c1c;font-size:11px;font-weight:700">(รอจัดส่ง)</span>' : '<span style="color:#d97706;font-size:11px;font-weight:700">(รอรับเข้า)</span>') : fmt(tx.runningBalance)}
         </td>
         <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:12.5px;color:#64748b">
           ${fmtB(tx.unitCostPrice)}
@@ -29621,7 +29655,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.02', date:'2026-09-14', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Strict Product Matcher & Fix Cross-Product Order Pollution', items:[
+    { v:'2.03', date:'2026-09-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Clear Pending SO Breakdown in Inventory Posting List & Distinguish Pending vs Shipped Orders', items:[
+      '📤 <b>Pending SO Breakdown in Stock Ledger:</b> แยกรายการออเดอร์ที่ยังไม่จัดส่ง (Pending SO) ออกจากออเดอร์ที่ส่งแล้วอย่างชัดเจน พร้อมติดป้าย "📤 รอจัดส่ง (SO)" สีแดงเด่นชัด เพื่อให้ทราบทันทีว่าออเดอร์ไหนที่ทำให้สินค้าติดสถานะรอส่ง',
+      '🚀 <b>Available Net Stock KPI Card:</b> เพิ่มการ์ดคำนวณ "สต๊อกพร้อมขายสุทธิ" (สต๊อกจริง + รอเข้า PO - รอส่ง SO) ในหน้าประวัติสต๊อกสินค้า',
+      '🔍 <b>Pending SO Filter:</b> เพิ่มตัวเลือกในตัวกรองเพื่อเรียกดูเฉพาะรายการออเดอร์ที่รอจัดส่ง (Pending Outbound)',
+      '🧹 <b>Cache Refresh (v2.03):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.03'
+    ]},
+    { v:'2.02', date:'2026-09-14', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Strict Product Matcher & Fix Cross-Product Order Pollution', items:[
       '🛡️ <b>Strict Product ID Matcher:</b> แก้ไขระบบจับคู่รายการธุรกรรม (Inventory Posting & Order Matcher) ให้ยึด product_id เป็นหลัก 100% ป้องกันไม่ให้ออเดอร์ของสินค้าตัวอื่นที่มีขนาดมิติเดียวกัน (เช่น ซีล NBR vs ซีล Viton) ดึงมาปนในประวัติของสินค้าตัวนี้',
       '🔍 <b>Exact Fallback Matcher:</b> กรณีรายการที่ไม่มี product_id จะจับคู่เฉพาะชื่อและ SKU ที่ตรงกันอย่างสมบูรณ์แบบเท่านั้น (ไม่จับคู่ข้ามมิติ/วัสดุ)',
       '🧹 <b>Cache Refresh (v2.02):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.02'
