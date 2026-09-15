@@ -2,6 +2,19 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.05] — 2026-09-15
+### Responsive PC Product Table (No Horizontal Scroll / Full Width View)
+* **🖥️ No Horizontal Scroll on PC View:** ปรับปรุงโครงสร้างตารางรายการสินค้าหลักบนหน้าจอคอมพิวเตอร์ (PC / Laptop) ให้แสดงผลเต็มความกว้าง 100% โดยไม่ต้องเลื่อนแถบ Scrollbar ซ้าย-ขวา (No horizontal scroll)
+* **📦 Smart Grouped Information:** รวมข้อมูลให้อ่านง่ายและกระชับในคอลัมน์สำคัญ:
+  - **สินค้า & รหัส:** ชื่อสินค้า, ป้ายหมวดหมู่, SKU, Supplier SKU, Part No, และตำแหน่งชั้นวาง
+  - **ราคา & กำไร:** ราคาขาย, กำไรต่อชิ้น, และราคาซื้อมาตรฐาน
+  - **สต๊อก & มูลค่า:** สต๊อกคงเหลือรวม (คลิกดูประวัติสต๊อกได้ทันที), แยกคลังร้าน, Ecoseal, และมูลค่าสต๊อก
+  - **รอเข้า (PO) & รอส่ง (SO):** ป้ายสถานะการเคลื่อนไหวสินค้าชัดเจน
+* **⚡ Compact Quick Actions:** ปุ่มจัดการสินค้า (`📜 สต๊อก`, `✏️ แก้ไข`, `🙈 ซ่อน`, `🗑️ ลบ`) ในขนาดกะทัดรัด
+* **🧹 Cache Refresh (v2.05):** อัปเดต Service Worker Cache เป็น `sealthai-v2.05`
+
+---
+
 ## 🚀 [v2.04] — 2026-09-15
 ### Pull Purchase Price (Not Average Cost) for Purchase Order Items & SKU Autocomplete
 * **🛒 Direct Purchase Price in PO:** ปรับระบบเลือกสินค้า/SKU ในการสร้างใบสั่งซื้อ (Purchase Order / PO) ให้ดึงราคาซื้อมาตรฐาน (`purchase_price`) จากฐานข้อมูลสินค้าโดยตรง ไม่ดึงราคาทุนเฉลี่ย (`current_cost`)
