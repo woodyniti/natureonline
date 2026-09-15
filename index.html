@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.07';
-const DISPLAY_APP_VERSION = 'v2.07';
+const CURRENT_APP_VERSION = 'sealthai-v2.08';
+const DISPLAY_APP_VERSION = 'v2.08';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.07 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.08 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.07 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.08 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.07 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.08 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.07 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.08 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2676,6 +2676,39 @@ async function dashboard() {
   const orderCount    = orders.length;
   const stockValue    = products.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
 
+  // คำนวณจำนวนวันจริงตามช่วงเวลาที่เลือก (Period Days)
+  let daysInPeriod = 1;
+  if (range === 'daily') {
+    daysInPeriod = 1;
+  } else if (range === 'weekly') {
+    daysInPeriod = 7;
+  } else if (range === '3month') {
+    const dStart = new Date(ms);
+    const dEnd = new Date(me);
+    daysInPeriod = Math.max(1, Math.round((dEnd - dStart) / 86400000) + 1);
+  } else if (range === 'yearly') {
+    const isCurrentYear = (selY === now.getFullYear());
+    if (isCurrentYear) {
+      const startYear = new Date(selY, 0, 1);
+      daysInPeriod = Math.max(1, Math.floor((now - startYear) / 86400000) + 1);
+    } else {
+      const isLeap = (selY % 4 === 0 && selY % 100 !== 0) || (selY % 400 === 0);
+      daysInPeriod = isLeap ? 366 : 365;
+    }
+  } else {
+    // monthly: ตรวจว่าเป็นเดือนปัจจุบันหรือไม่
+    const isCurrentMonth = (selY === now.getFullYear() && selM === (now.getMonth() + 1));
+    if (isCurrentMonth) {
+      // เดือนปัจจุบัน คิดตามจำนวนวันที่ดำเนินมาถึง (เช่น วันที่ 15)
+      daysInPeriod = Math.max(1, now.getDate());
+    } else {
+      // เดือนในอดีตหรือเดือนอื่น คิดตามจำนวนวันเต็มของเดือนนั้น (เช่น ส.ค. = 31 วัน)
+      const totalDaysInMonth = new Date(selY, selM, 0).getDate();
+      daysInPeriod = Math.max(1, totalDaysInMonth);
+    }
+  }
+  const avgSalesPerDay = daysInPeriod > 0 ? (totalRevenue / daysInPeriod) : 0;
+
   // ── Platform fees: Shopee ใช้ค่าจริงจาก export เมื่อจับคู่เลขออเดอร์ได้ ──
   const shopeeOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
   const lazadaOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
@@ -2998,7 +3031,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.07 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.08 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3105,8 +3138,8 @@ async function dashboard() {
       </div>` : ''; })()}
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">📊 ค่าเฉลี่ย/วัน <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
-        <div class="stat-value text-amber">${fmtB(totalRevenue/now.getDate())}</div>
-        <div class="stat-sub">เฉลี่ยยอดขายต่อวัน</div>
+        <div class="stat-value text-amber">${fmtB(avgSalesPerDay)}</div>
+        <div class="stat-sub">เฉลี่ยจาก ${daysInPeriod} วัน (${fmtB(totalRevenue)} ÷ ${daysInPeriod})</div>
       </div>
     </div>
 
@@ -29713,7 +29746,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.07', date:'2026-09-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix Syntax Quote in Product Table Image & Enhance Image URL Resolver', items:[
+    { v:'2.08', date:'2026-09-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Accurate Period-Based Daily Average Sales Calculation', items:[
+      '📊 <b>Smart Period-Aware Daily Average:</b> แก้ไขสูตรคำนวณ "ค่าเฉลี่ย/วัน" ให้หารตามจำนวนวันจริงของเดือนที่เลือกอย่างถูกต้อง (เช่น เมื่อเลือกดูเดือนสิงหาคมที่มี 31 วัน ระบบจะหารด้วย 31 วัน แทนที่จะหารด้วยวันที่ปัจจุบัน)',
+      '📅 <b>Clear Calculation Subtitle:</b> แสดงจำนวนวันและยอดคำนวณชัดเจนใต้การ์ดสถิติ (เช่น เฉลี่ยจาก 31 วัน ฿48,827.38 ÷ 31)',
+      '🧹 <b>Cache Refresh (v2.08):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.08'
+    ]},
+    { v:'2.07', date:'2026-09-15', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Fix Syntax Quote in Product Table Image & Enhance Image URL Resolver', items:[
       '🐛 <b>Syntax Error Repair:</b> แก้ไขเครื่องหมายคำพูด (Quote Syntax) ในแท็กรูปภาพตารางสินค้า ทำให้หน้าเว็บโหลดและล็อกอินได้สมบูรณ์แบบ 100%',
       '🖼️ <b>Universal Product Image Resolver:</b> ปรับปรุงฟังก์ชัน <code>getProductImageUrl</code> ให้รองรับทุกฟิลด์รูปภาพในฐานข้อมูล (<code>image_url, imageUrl, photo_url, image, cover_image, images</code>)',
       '📱 <b>Card Images:</b> แสดงรูปสินค้าจริงในการ์ดรายการสินค้าบนมือถือและหมวดหมู่',

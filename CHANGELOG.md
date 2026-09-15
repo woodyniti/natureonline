@@ -2,6 +2,17 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.08] — 2026-09-15
+### Accurate Period-Aware Daily Average Sales Calculation
+* **📊 Accurate Daily Average Sales Calculation:** ปรับปรุงสูตรคำนวณ "ค่าเฉลี่ย/วัน" ให้คิดตามจำนวนวันจริงของช่วงเวลาและเดือนที่เลือก:
+  - **เดือนที่เลือกในอดีต (เช่น สิงหาคม):** หารด้วยจำนวนวันเต็มของเดือนนั้น ($31$ วัน) $\rightarrow$ $\text{฿}48,827.38 \div 31 = \text{฿}1,575.08$/วัน (แก้ปัญหาการหารด้วยวันที่ 15 ของเดือนปัจจุบัน)
+  - **เดือนปัจจุบัน (กันยายน):** หารด้วยจำนวนวันที่ดำเนินมาถึง ($15$ วัน)
+  - **มุมมองราย 3 เดือน / รายปี:** คำนวณจำนวนวันจริงตามช่วงเวลา
+* **📅 Explicit Subtitle:** ระบุจำนวนวันและสูตรการหารอย่างชัดเจนใต้การ์ดสถิติ
+* **🧹 Cache Refresh (v2.08):** อัปเดต Service Worker Cache เป็น `sealthai-v2.08`
+
+---
+
 ## 🚀 [v2.07] — 2026-09-15
 ### Fix JavaScript Syntax & Universal Product Image Support
 * **🐛 Critical Syntax Fix (Unexpected Identifier 'none'):** แก้ไขเครื่องหมายคำพูด (Quote Escape) ในแท็กรูปภาพตารางสินค้า ทำให้ JavaScript ทำงานได้อย่างราบรื่นและสามารถล็อกอินเข้าสู่ระบบได้ทันที 100%
