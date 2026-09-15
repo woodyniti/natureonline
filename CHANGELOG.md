@@ -2,6 +2,14 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.07] — 2026-09-15
+### Fix JavaScript Syntax & Universal Product Image Support
+* **🐛 Critical Syntax Fix (Unexpected Identifier 'none'):** แก้ไขเครื่องหมายคำพูด (Quote Escape) ในแท็กรูปภาพตารางสินค้า ทำให้ JavaScript ทำงานได้อย่างราบรื่นและสามารถล็อกอินเข้าสู่ระบบได้ทันที 100%
+* **🖼️ Universal Product Image Support:** ปรับปรุงฟังก์ชัน `getProductImageUrl` ให้รองรับการดึงรูปภาพจากทุกฟิลด์ในฐานข้อมูล (`image_url`, `imageUrl`, `photo_url`, `image`, `cover_image`, `images`) พร้อมแสดงผลในการ์ดสินค้าและตาราง
+* **🧹 Cache Refresh (v2.07):** อัปเดต Service Worker Cache เป็น `sealthai-v2.07`
+
+---
+
 ## 🚀 [v2.06] — 2026-09-15
 ### Guaranteed Fast Login & Instant App Access
 * **⚡ Instant Login Transition:** ปรับปรุงขั้นตอนการเข้าสู่ระบบให้แสดงผลหน้าแดชบอร์ดทันที ไม่ติดค้างหน้าต่างเข้าสู่ระบบ แม้ในกรณีที่การเชื่อมต่อ Supabase ล่าช้า
