@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.03';
-const DISPLAY_APP_VERSION = 'v2.03';
+const CURRENT_APP_VERSION = 'sealthai-v2.04';
+const DISPLAY_APP_VERSION = 'v2.04';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.03 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.04 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.03 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.04 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.03 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.04 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.03 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.04 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3017,7 +3017,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.03 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.04 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -16788,17 +16788,26 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   const vatTypeEl = document.getElementById('po-vat-type');
   if (vatTypeEl) vatTypeEl.value = 'excluded';
 
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price,current_cost,stock_qty').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
 
   if (Array.isArray(prefilledItems) && prefilledItems.length > 0) {
-    poItems = prefilledItems.map(it => ({
-      product_id: it.product_id,
-      product_name: it.product_name || it.name,
-      sku: it.sku || '',
-      qty_ordered: Number(it.qty_ordered) || Number(it.qty) || 1,
-      unit_cost: Number(it.unit_cost) || Number(it.buy_price) || Number(it.purchase_price) || 0
-    }));
+    poItems = prefilledItems.map(it => {
+      // ดึงราคาซื้อ (purchase_price) ที่แท้จริงจากฐานข้อมูลสินค้า
+      const master = productList.find(p => p.id === it.product_id || (p.sku && p.sku === it.sku) || (p.name && p.name === it.product_name));
+      let buyPrice = master && master.purchase_price !== undefined && master.purchase_price !== null ? Number(master.purchase_price) : null;
+      if (buyPrice === null || isNaN(buyPrice)) {
+        buyPrice = Number(it.purchase_price !== undefined ? it.purchase_price : (it.buy_price !== undefined ? it.buy_price : (it.unit_cost || 0)));
+      }
+
+      return {
+        product_id: it.product_id || master?.id || null,
+        product_name: it.product_name || it.name || master?.name || '',
+        sku: it.sku || master?.sku || '',
+        qty_ordered: Number(it.qty_ordered) || Number(it.qty) || 1,
+        unit_cost: buyPrice
+      };
+    });
   }
 
   if (preferredSupplierId) {
@@ -16844,20 +16853,47 @@ function renderPOItems() {
       if(!res.length){dd.style.display='none';return;}
       res.forEach(p=>{
         const d=document.createElement('div');
-        d.style.cssText='padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0';
+        d.style.cssText='padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center';
+
+        const leftDiv = document.createElement('div');
+        leftDiv.style.cssText = 'min-width:0;flex:1';
+
         const skuSpan = document.createElement('span');
         skuSpan.textContent = p.sku || p.name;
-        skuSpan.style.fontWeight = '600';
-        d.appendChild(skuSpan);
-        const supplierSkuSpan = document.createElement('span');
-        supplierSkuSpan.textContent = ' · Supplier SKU: ' + (p.supplier_sku || '-');
-        supplierSkuSpan.style.cssText = 'color:var(--blue);font-size:11px';
-        d.appendChild(supplierSkuSpan);
+        skuSpan.style.fontWeight = '700';
+        skuSpan.style.color = '#0f172a';
+        leftDiv.appendChild(skuSpan);
+
+        if (p.name && p.name !== p.sku) {
+          const nameSpan = document.createElement('div');
+          nameSpan.textContent = p.name;
+          nameSpan.style.cssText = 'font-size:11.5px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+          leftDiv.appendChild(nameSpan);
+        }
+
+        const subInfo = document.createElement('div');
+        subInfo.style.cssText = 'font-size:11px;color:var(--text3);margin-top:2px';
+        subInfo.innerHTML = `${p.supplier_sku ? '<span style="color:var(--blue)">Supplier SKU: ' + escapeHTML(p.supplier_sku) + '</span> · ' : ''}คงเหลือ: ${fmt(p.stock_qty || 0)} ชิ้น`;
+        leftDiv.appendChild(subInfo);
+
+        d.appendChild(leftDiv);
+
+        // แสดงราคาซื้อ (purchase_price) อย่างชัดเจน ไม่ใช่ราคาทุนเฉลี่ย
+        const priceDiv = document.createElement('div');
+        priceDiv.style.cssText = 'text-align:right;margin-left:8px;flex-shrink:0';
+        const buyP = Number(p.purchase_price !== undefined && p.purchase_price !== null ? p.purchase_price : 0);
+        priceDiv.innerHTML = `
+          <div style="font-size:11.5px;color:#15803d;font-weight:700">ราคาซื้อ: ${fmtB(buyP)}</div>
+          ${p.current_cost ? `<div style="font-size:10px;color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(p.current_cost)})</div>` : ''}
+        `;
+        d.appendChild(priceDiv);
+
         d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
         d.onmousedown=e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
-          const cost = Number(p.purchase_price) || 0;
-          poItems[i]={product_id:p.id,product_name:p.name,qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:cost};
+          // ดึงราคาซื้อ (purchase_price) จากฐานข้อมูลสินค้า
+          const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null ? p.purchase_price : 0);
+          poItems[i]={product_id:p.id,product_name:p.name,sku:p.sku||'',qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:buyPrice};
           inp.value=p.sku||p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
         };
         dd.appendChild(d);
@@ -16907,11 +16943,13 @@ function renderPOItems() {
         if (matchedProd) {
           const productChanged = poItems[i].product_id !== matchedProd.id;
           if (productChanged) {
-            const cost = Number(matchedProd.purchase_price) || 0;
-            poItems[i].unit_cost = cost;
+            // ดึงราคาซื้อ (purchase_price) จากฐานข้อมูลสินค้า
+            const buyPrice = Number(matchedProd.purchase_price !== undefined && matchedProd.purchase_price !== null ? matchedProd.purchase_price : 0);
+            poItems[i].unit_cost = buyPrice;
           }
           poItems[i].product_id = matchedProd.id;
           poItems[i].product_name = matchedProd.name;
+          poItems[i].sku = matchedProd.sku || '';
           renderPOItems();
           calcPOTotal();
         } else {
@@ -16927,7 +16965,9 @@ function renderPOItems() {
     const statusHelp = document.createElement('div');
     statusHelp.style.cssText = 'font-size:11px;margin-top:3px;font-weight:500';
     if (it.product_id) {
-      statusHelp.innerHTML = '<span style="color:var(--blue)">Supplier SKU: '+escapeHTML(selectedProduct?.supplier_sku||'-')+'</span> <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>';
+      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null ? selectedProduct?.purchase_price : 0);
+      const avgCost = Number(selectedProduct?.current_cost || 0);
+      statusHelp.innerHTML = `<span style="color:#0f172a;font-weight:600">${escapeHTML(selectedProduct?.name||it.product_name)}</span> · <span style="color:var(--blue)">Supplier SKU: ${escapeHTML(selectedProduct?.supplier_sku||'-')}</span> · <span style="color:#15803d;font-weight:700">ราคาซื้อ: ${fmtB(buyPrice)}</span> ${avgCost ? `<span style="color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(avgCost)})</span>` : ''} <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>`;
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
     }
@@ -17213,7 +17253,7 @@ async function editPO(poId) {
   editingPOId = po.id;
   editingPONo = po.po_no;
   
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price,current_cost,stock_qty').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
 
   const titleEl = document.getElementById('po-modal-title');
@@ -29655,7 +29695,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.03', date:'2026-09-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Clear Pending SO Breakdown in Inventory Posting List & Distinguish Pending vs Shipped Orders', items:[
+    { v:'2.04', date:'2026-09-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Pull Purchase Price (Not Average Cost) for Purchase Order Items & SKU Autocomplete', items:[
+      '🛒 <b>Direct Purchase Price (ราคาซื้อ) in PO:</b> ปรับระบบเลือกสินค้า/SKU ในการเปิดใบสั่งซื้อ (PO) ให้ดึงราคาซื้อ (<code>purchase_price</code>) จากฐานข้อมูลสินค้าโดยตรง ไม่ดึงราคาทุนเฉลี่ย (<code>current_cost</code>)',
+      '🔍 <b>Enhanced PO Dropdown Info:</b> เมนูค้นหาและเลือก SKU ใน PO แสดงชื่อสินค้า, Supplier SKU, สต๊อกคงเหลือ และป้าย "ราคาซื้อ: ฿..." สีเขียวชัดเจน พร้อมระบุทุนเฉลี่ยเพื่อการเปรียบเทียบ',
+      '🏷️ <b>Link Status & Price Badge:</b> แถบสถานะใต้ช่อง SKU แสดงราคาซื้อมาตรฐานของสินค้าที่บันทึกไว้ในระบบทันทีที่เลือกสินค้า',
+      '🧹 <b>Cache Refresh (v2.04):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.04'
+    ]},
+    { v:'2.03', date:'2026-09-14', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Clear Pending SO Breakdown in Inventory Posting List & Distinguish Pending vs Shipped Orders', items:[
       '📤 <b>Pending SO Breakdown in Stock Ledger:</b> แยกรายการออเดอร์ที่ยังไม่จัดส่ง (Pending SO) ออกจากออเดอร์ที่ส่งแล้วอย่างชัดเจน พร้อมติดป้าย "📤 รอจัดส่ง (SO)" สีแดงเด่นชัด เพื่อให้ทราบทันทีว่าออเดอร์ไหนที่ทำให้สินค้าติดสถานะรอส่ง',
       '🚀 <b>Available Net Stock KPI Card:</b> เพิ่มการ์ดคำนวณ "สต๊อกพร้อมขายสุทธิ" (สต๊อกจริง + รอเข้า PO - รอส่ง SO) ในหน้าประวัติสต๊อกสินค้า',
       '🔍 <b>Pending SO Filter:</b> เพิ่มตัวเลือกในตัวกรองเพื่อเรียกดูเฉพาะรายการออเดอร์ที่รอจัดส่ง (Pending Outbound)',

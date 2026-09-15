@@ -2,6 +2,15 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.04] — 2026-09-15
+### Pull Purchase Price (Not Average Cost) for Purchase Order Items & SKU Autocomplete
+* **🛒 Direct Purchase Price in PO:** ปรับระบบเลือกสินค้า/SKU ในการสร้างใบสั่งซื้อ (Purchase Order / PO) ให้ดึงราคาซื้อมาตรฐาน (`purchase_price`) จากฐานข้อมูลสินค้าโดยตรง ไม่ดึงราคาทุนเฉลี่ย (`current_cost`)
+* **🔍 Enhanced PO Search & Autocomplete:** เมนูค้นหาและเลือก SKU ในฟอร์ม PO แสดงชื่อสินค้า, Supplier SKU, สต๊อกคงเหลือจริง และป้าย `ราคาซื้อ: ฿...` สีเขียวเด่นชัด พร้อมระบุทุนเฉลี่ยเพื่อการเปรียบเทียบ
+* **🏷️ Linked Product Price Badge:** แถบสถานะการเชื่อมโยงสินค้าใต้ช่อง SKU แสดงราคาซื้อมาตรฐานของสินค้าที่บันทึกไว้ในระบบทันทีที่เลือกสินค้า
+* **🧹 Cache Refresh (v2.04):** อัปเดต Service Worker Cache เป็น `sealthai-v2.04`
+
+---
+
 ## 🚀 [v2.03] — 2026-09-14
 ### Clear Pending SO Breakdown in Inventory Posting List & Distinguish Pending vs Shipped Orders
 * **📤 Pending SO Breakdown in Stock Ledger:** แยกรายการออเดอร์ที่ยังไม่จัดส่ง (`shipping_status = pending`) ออกจากออเดอร์ที่จัดส่งเรียบร้อยแล้วอย่างชัดเจน พร้อมติดป้าย `📤 รอจัดส่ง (SO)` สีแดงเด่นชัด ช่วยให้ตรวจสอบได้ทันทีว่าออเดอร์ใบไหน (เช่น `SO-...`) ที่ทำให้สินค้าติดยอดรอส่ง
