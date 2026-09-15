@@ -2,6 +2,18 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.10] — 2026-09-16
+### Instant Document Detail Viewer for Inventory Posting List (PO & SO Support)
+* **📜 Instant Document Viewer Modal (`modal-doc-viewer`):** เพิ่มหน้าต่างป๊อปอัปดูรายละเอียดเอกสารแบบรวดเร็ว เมื่อคลิกที่เลขที่เอกสารในหน้าต่าง **Inventory Posting List & ประวัติสต๊อก** สามารถเปิดดูข้อมูลฉบับเต็มได้ทันทีโดยไม่ต้องสลับหน้า:
+  - **🛒 Purchase Order (PO):** แสดงรายละเอียดใบสั่งซื้อครบถ้วน (ชื่อ Supplier, ผู้ติดต่อ, รายการสินค้า, จำนวนสั่ง, จำนวนรับแล้ว, ยอดค้างรับ, ราคาซื้อ, ยอดรวม) พร้อมปุ่ม `🖨️ พิมพ์ใบสั่งซื้อ (PO)` และ `✏️ ไปที่หน้า PO`
+  - **📄 Sale Order (SO):** แสดงรายละเอียดออเดอร์ขายครบถ้วน (ชื่อลูกค้า, เบอร์โทร, ที่อยู่จัดส่ง, ช่องทางขาย, Tracking, ส่วนลด, ยอดชำระสุทธิ) พร้อมปุ่ม `🖨️ พิมพ์บิลเงินสด (Cash Sale)` และ `✏️ ไปที่หน้าออเดอร์`
+  - **🔵 Goods Return (GR):** แสดงรายละเอียดใบคืนสินค้า
+* **🖨️ Quick Print Buttons:** เพิ่มปุ่มไอคอน `🖨️` ในแต่ละแถวของตารางเพื่อกดพิมพ์บิลเงินสด / ใบสั่งซื้อได้ทันที
+* **🐛 Print & ReferenceError Fix:** แก้ไขฟังก์ชัน `printPO` (กำหนดตัวแปร `shop` ให้ถูกต้อง) ป้องกันข้อผิดพลาด JavaScript เมื่อสั่งพิมพ์ใบสั่งซื้อ
+* **🧹 Cache Refresh (v2.10):** อัปเดต Service Worker Cache เป็น `sealthai-v2.10`
+
+---
+
 ## 🚀 [v2.09] — 2026-09-16
 ### Period-over-Period Growth Percentage Comparison Badges (▲ Green / ▼ Red)
 * **📊 Period-over-Period Growth Comparison:** เพิ่มป้ายแสดง `%` การเติบโตเปรียบเทียบกับรอบก่อนหน้าบนการ์ดสถิติ (Stat Cards) ทุกกล่องใน Dashboard ภาพรวม:

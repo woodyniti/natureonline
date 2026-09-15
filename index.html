@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.09';
-const DISPLAY_APP_VERSION = 'v2.09';
+const CURRENT_APP_VERSION = 'sealthai-v2.10';
+const DISPLAY_APP_VERSION = 'v2.10';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.09 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.10 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.09 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.10 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.09 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.10 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1307,6 +1307,14 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         💡 ระบบคำนวณยอดคงเหลือสะสม (Running Balance) เรียงตามลำดับเวลาการทำรายการจริง
       </div>
       <button class="btn btn-primary btn-sm" onclick="closeModal('modal-inventory-posting')">ตกลง</button>
+    </div>
+  </div>
+</div>
+<!-- ── Modal: แสดงรายละเอียดเอกสารแบบรวดเร็ว (Document Detail Viewer: SO / PO / GR) ── -->
+<div class="modal-overlay" id="modal-doc-viewer" style="z-index:1350">
+  <div class="modal" style="max-width:880px;width:95%;max-height:92vh;display:flex;flex-direction:column;padding:20px;background:#ffffff;box-shadow:0 25px 50px rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:12px">
+    <div id="doc-viewer-content" style="display:flex;flex-direction:column;flex:1;overflow:hidden">
+      <!-- Injected via JS -->
     </div>
   </div>
 </div>
@@ -3176,7 +3184,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.09 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.10 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -17552,11 +17560,32 @@ async function createAPFromPO(poId) {
 }
 
 async function printPO(poId) {
-  const [{data:po},{data:items}]=await Promise.all([
-    sb.from('purchase_orders').select('*').eq('id',poId).single(),
-    sb.from('purchase_order_items').select('*').eq('po_id',poId),
-  ]);
-  if(!po) return;
+  let poData = null;
+  let poItems = [];
+
+  if (poId && typeof poId === 'string' && !poId.startsWith('PO-')) {
+    const [{data:po},{data:items}]=await Promise.all([
+      sb.from('purchase_orders').select('*').eq('id',poId).maybeSingle(),
+      sb.from('purchase_order_items').select('*').eq('po_id',poId),
+    ]);
+    poData = po;
+    poItems = items || [];
+  }
+  if (!poData && poId) {
+    const {data:po} = await sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).eq('po_no', poId).maybeSingle();
+    if (po) {
+      const {data:items} = await sb.from('purchase_order_items').select('*').eq('po_id', po.id);
+      poData = po;
+      poItems = items || [];
+    }
+  }
+  if (!poData) {
+    toast('ไม่พบข้อมูลใบสั่งซื้อ', 'error');
+    return;
+  }
+  const po = poData;
+  const items = poItems;
+  const shop = currentShop || {};
   const skuMap = await loadPOSkuMap(items);
   const total=items.reduce((s,it)=>s+Number(it.qty_ordered)*Number(it.unit_cost||0),0);
   const bp=[];
@@ -17570,10 +17599,10 @@ async function printPO(poId) {
   bp.push('tbody td{border:1px solid #ccc;padding:5px 6px}.total-row{display:flex;justify-content:space-between;padding:8px 10px;font-size:15px;font-weight:700;background:#fff8e1;border:1px solid #ccc;border-top:none}');
   bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:40px}.sig-box{text-align:center;width:180px}.sig-line{border-top:1px solid #555;margin-bottom:6px}.sig-label{font-size:12px;color:#555}');
   bp.push('@media print{body{padding:10mm 12mm 8mm}@page{size:A4 portrait;margin:0}}</'+'style></head><body>');
-    let poShopName = (shop.name || 'sealthai').toUpperCase();
+  let poShopName = (shop.name || 'sealthai').toUpperCase();
   if (!poShopName.endsWith('.COM')) poShopName += '.COM';
   bp.push('<div class="hd"><div><div class="shop-name">' + poShopName + '</div>');
-  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(currentShop||{})+'</div></div>');
+  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(shop)+'</div></div>');
   bp.push('<div class="doc-type">ใบสั่งซื้อ / Purchase Order</div></div>');
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
@@ -29256,6 +29285,33 @@ async function viewProductInventoryPosting(productId) {
       const mType = (m.move_type || '').toLowerCase();
       const mNote = (m.note || '').toLowerCase();
 
+      let docType = null;
+      let docId = m.order_id || m.po_id || null;
+      let refDoc = m.lot_name || '-';
+
+      const soMatch = (m.note || '').match(/SO[-_0-9A-Za-z]+/i) || (m.lot_name || '').match(/SO[-_0-9A-Za-z]+/i);
+      const poMatch = (m.note || '').match(/PO[-_0-9A-Za-z]+/i) || (m.lot_name || '').match(/PO[-_0-9A-Za-z]+/i);
+      const grMatch = (m.note || '').match(/GR[-_0-9A-Za-z]+/i) || (m.lot_name || '').match(/GR[-_0-9A-Za-z]+/i);
+
+      if (m.order_id || soMatch || mType === 'out' || mNote.includes('ขาย')) {
+        docType = 'order';
+        if (soMatch) refDoc = soMatch[0];
+        else if (m.order_id) {
+          const matchedOrd = (ordersRes.data || []).find(o => o.id === m.order_id);
+          refDoc = matchedOrd?.order_no || ('SO-' + m.order_id.slice(0, 8));
+        }
+      } else if (m.po_id || poMatch || mType === 'in' || mNote.includes('รับเข้า') || mNote.includes('ซื้อ')) {
+        docType = 'po';
+        if (poMatch) refDoc = poMatch[0];
+        else if (m.po_id) {
+          const matchedPo = (posRes.data || []).find(p => p.id === m.po_id);
+          refDoc = matchedPo?.po_no || ('PO-' + m.po_id.slice(0, 8));
+        }
+      } else if (grMatch || mType === 'return' || mNote.includes('คืน')) {
+        docType = 'gr';
+        if (grMatch) refDoc = grMatch[0];
+      }
+
       if (mType === 'in' || mNote.includes('รับเข้า') || mNote.includes('ซื้อ') || mNote.includes('นำเข้า') || m.po_id) {
         typeKey = 'in';
         typeLabel = '🟢 รับเข้าคลัง';
@@ -29291,7 +29347,9 @@ async function viewProductInventoryPosting(productId) {
         qty: signedQty,
         isPending: false,
         unitCostPrice: Number(m.cost_per_unit) || Number(prod.current_cost) || 0,
-        refDoc: m.lot_name || (m.po_id ? 'PO Ref' : (m.order_id ? 'Order Ref' : '-')),
+        docType: docType,
+        docId: docId,
+        refDoc: refDoc,
         note: m.note || m.lot_name || 'บันทึกสต๊อก',
         source: 'movement'
       });
@@ -29326,6 +29384,8 @@ async function viewProductInventoryPosting(productId) {
             qty: -q,
             isPending: true,
             unitCostPrice: Number(oi.sell_price) || Number(prod.sell_price) || 0,
+            docType: 'order',
+            docId: ord.id,
             refDoc: orderNo,
             note: `📤 รอจัดส่ง: ขายให้ ${cust}${ch} · สถานะจัดส่ง: รอส่ง (Pending)`,
             source: 'order'
@@ -29344,6 +29404,8 @@ async function viewProductInventoryPosting(productId) {
               qty: -q,
               isPending: false,
               unitCostPrice: Number(oi.sell_price) || Number(prod.sell_price) || 0,
+              docType: 'order',
+              docId: ord.id,
               refDoc: orderNo,
               note: `ขายแล้ว (จัดส่งแล้ว): ${cust}${ch}${ord.shipping_status ? ' [' + ord.shipping_status + ']' : ''}`,
               source: 'order'
@@ -29380,6 +29442,8 @@ async function viewProductInventoryPosting(productId) {
               qty: Math.abs(receivedQty),
               isPending: false,
               unitCostPrice: Number(poi.unit_cost) || Number(prod.purchase_price) || 0,
+              docType: 'po',
+              docId: po.id,
               refDoc: poNo,
               note: `สั่งซื้อจาก: ${po.supplier_name || 'ซัพพลายเออร์'} (รับของแล้ว ${receivedQty}/${orderedQty} ชิ้น)`,
               source: 'po'
@@ -29401,6 +29465,8 @@ async function viewProductInventoryPosting(productId) {
             qty: pendingQty,
             isPending: true,
             unitCostPrice: Number(poi.unit_cost) || Number(prod.purchase_price) || 0,
+            docType: 'po',
+            docId: po.id,
             refDoc: poNo,
             note: `⏳ สั่งซื้อแล้ว รอรับเข้าคลัง: ค้างส่ง ${pendingQty} ชิ้น (สั่ง ${orderedQty}, รับแล้ว ${receivedQty}) · ซัพพลายเออร์: ${po.supplier_name || 'ไม่ระบุ'}${po.status ? ' [' + po.status + ']' : ''}`,
             source: 'po_pending'
@@ -29590,44 +29656,313 @@ function filterInventoryPostingRows() {
 }
 
 
-async function openOrderDocument(docNo) {
+// ── Document Viewer Engine สำหรับ Inventory Posting List (ดูได้ทั้ง PO, SO, และ GR) ──
+async function openInventoryDocViewer(params) {
+  const { docType, docId, docNo } = params || {};
+  const dNo = String(docNo || '').trim();
+  const dType = docType || (dNo.startsWith('PO') ? 'po' : (dNo.startsWith('GR') ? 'gr' : 'order'));
+  
+  openModal('modal-doc-viewer');
+  const container = document.getElementById('doc-viewer-content');
+  if (!container) return;
+  container.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b"><div class="spinner"></div> กำลังโหลดข้อมูลเอกสาร...</div>';
+
   try {
-    let { data: order } = await sb.from('orders').select('id,order_no').eq('shop_id', currentShop.id).eq('order_no', docNo).maybeSingle();
-    if (!order) {
-      const { data: o2 } = await sb.from('orders').select('id,order_no').eq('order_no', docNo).maybeSingle();
-      order = o2;
-    }
-    if (!order) {
-      const { data: o3 } = await sb.from('orders').select('id,order_no').eq('shop_id', currentShop.id).ilike('customer_social', `%${docNo}%`).maybeSingle();
-      order = o3;
-    }
-    if (order) {
-      printReceipt(order.id, true, true);
+    if (dType === 'po' || dNo.startsWith('PO')) {
+      // 🛒 Load PO Document Details
+      let po = null;
+      let items = [];
+      if (docId && !docId.startsWith('PO-')) {
+        const [{ data: pData }, { data: pItems }] = await Promise.all([
+          sb.from('purchase_orders').select('*').eq('id', docId).maybeSingle(),
+          sb.from('purchase_order_items').select('*').eq('po_id', docId)
+        ]);
+        po = pData;
+        items = pItems || [];
+      }
+      if (!po && dNo) {
+        const { data: pData } = await sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).eq('po_no', dNo).maybeSingle();
+        if (pData) {
+          po = pData;
+          const { data: pItems } = await sb.from('purchase_order_items').select('*').eq('po_id', po.id);
+          items = pItems || [];
+        }
+      }
+      if (!po && dNo) {
+        const rawNo = dNo.replace(/^PO-?/i, '');
+        const { data: pData } = await sb.from('purchase_orders').select('*').ilike('po_no', `%${rawNo}%`).maybeSingle();
+        if (pData) {
+          po = pData;
+          const { data: pItems } = await sb.from('purchase_order_items').select('*').eq('po_id', po.id);
+          items = pItems || [];
+        }
+      }
+
+      if (!po) {
+        container.innerHTML = `
+          <div style="padding:32px;text-align:center">
+            <div style="font-size:36px;margin-bottom:8px">❌</div>
+            <div style="font-size:16px;font-weight:700;color:#dc2626">ไม่พบข้อมูลใบสั่งซื้อ (${escapeHTML(dNo || docId || 'ไม่ระบุ')})</div>
+            <div style="font-size:13px;color:#64748b;margin-top:6px">อาจเป็นรายการบันทึกย้อนหลัง หรือถูกลบออกจากระบบแล้ว</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:16px" onclick="closeModal('modal-doc-viewer')">ปิด</button>
+          </div>
+        `;
+        return;
+      }
+
+      const totalAmt = items.reduce((s, it) => s + (Number(it.qty_ordered || 0) * Number(it.unit_cost || 0)), 0);
+      const totalRecvAmt = items.reduce((s, it) => s + (Number(it.qty_received || 0) * Number(it.unit_cost || 0)), 0);
+      const statusMap = {
+        draft: { label: 'ร่างเอกสาร', color: '#64748b', bg: '#f1f5f9' },
+        ordered: { label: 'สั่งซื้อแล้ว (รอรับ)', color: '#d97706', bg: '#fef3c7' },
+        partial: { label: 'รับแล้วบางส่วน', color: '#0284c7', bg: '#e0f2fe' },
+        completed: { label: 'รับครบแล้ว', color: '#16a34a', bg: '#dcfce7' },
+        cancelled: { label: 'ยกเลิก', color: '#dc2626', bg: '#fee2e2' }
+      };
+      const st = statusMap[po.status] || { label: po.status || 'สั่งซื้อแล้ว', color: '#0284c7', bg: '#e0f2fe' };
+
+      container.innerHTML = `
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #e2e8f0;padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px">🛒</span>
+              <span style="font-size:17px;font-weight:800;color:#0f172a">ใบสั่งซื้อ / Purchase Order</span>
+              <span style="background:#e0f2fe;color:#0284c7;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;font-family:var(--mono)">${escapeHTML(po.po_no || '-')}</span>
+              <span style="background:${st.bg};color:${st.color};font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">${st.label}</span>
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-top:4px">
+              วันที่สั่งซื้อ: <b>${po.po_date || '-'}</b> · กำหนดรับ: <b>${po.expected_date || '-'}</b>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-primary btn-sm" onclick="printPO('${po.id}')" style="background:#16a34a;border-color:#16a34a;display:inline-flex;align-items:center;gap:4px">🖨️ พิมพ์ใบสั่งซื้อ (PO)</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-doc-viewer');closeModal('modal-inventory-posting');showPage('purchase');setTimeout(()=>viewPO('${po.id}'),250)" style="display:inline-flex;align-items:center;gap:4px">✏️ ไปที่หน้า PO</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-doc-viewer')">✕ ปิด</button>
+          </div>
+        </div>
+
+        <!-- Supplier Details -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px">
+          <div><span style="color:#64748b">Supplier:</span> <strong style="color:#0f172a">${escapeHTML(po.supplier_name || 'ไม่ระบุ')}</strong></div>
+          <div><span style="color:#64748b">ผู้ติดต่อ/เบอร์:</span> <span style="color:#0f172a">${escapeHTML(po.supplier_contact || '-')}</span></div>
+          <div><span style="color:#64748b">หมายเหตุ:</span> <span style="color:#0f172a">${escapeHTML(po.note || '-')}</span></div>
+        </div>
+
+        <!-- Items Table -->
+        <div style="flex:1;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:2">
+                <th style="padding:8px 6px;text-align:center;width:36px">#</th>
+                <th style="padding:8px 6px;text-align:left">ชื่อสินค้า / SKU</th>
+                <th style="padding:8px 6px;text-align:right;width:85px">สั่งซื้อ</th>
+                <th style="padding:8px 6px;text-align:right;width:85px">รับแล้ว</th>
+                <th style="padding:8px 6px;text-align:right;width:85px">ค้างรับ</th>
+                <th style="padding:8px 6px;text-align:right;width:100px">ราคาซื้อ/หน่วย</th>
+                <th style="padding:8px 6px;text-align:right;width:110px">รวมเป็นเงิน</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((it, idx) => {
+                const ordQ = Number(it.qty_ordered || 0);
+                const recQ = Number(it.qty_received || 0);
+                const pendQ = Math.max(0, ordQ - recQ);
+                const rowTotal = ordQ * Number(it.unit_cost || 0);
+                return `
+                  <tr style="border-bottom:1px solid #f1f5f9">
+                    <td style="padding:7px 6px;text-align:center;color:#64748b">${idx + 1}</td>
+                    <td style="padding:7px 6px">
+                      <div style="font-weight:700;color:#0f172a">${escapeHTML(it.product_name || '-')}</div>
+                      ${it.sku ? `<div style="font-size:11px;color:#64748b;font-family:var(--mono)">SKU: ${escapeHTML(it.sku)}</div>` : ''}
+                    </td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700">${fmt(ordQ)}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#16a34a;font-weight:700">${fmt(recQ)}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:${pendQ > 0 ? '#d97706' : '#64748b'};font-weight:700">${fmt(pendQ)}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">${fmtB(it.unit_cost)}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:#0f172a">${fmtB(rowTotal)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Total summary -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#fff8e1;border:1.5px solid #fde68a;border-radius:8px;padding:10px 16px">
+          <div style="font-size:12.5px;color:#92400e;font-weight:600">รวมทั้งหมด ${items.length} รายการ</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:#78350f">ยอดรวมทั้งสิ้น:</span>
+            <span style="font-size:18px;font-weight:800;color:#b45309;font-family:var(--mono)">${fmtB(totalAmt)}</span>
+          </div>
+        </div>
+      `;
     } else {
-      toast('ไม่พบเอกสารออเดอร์ ' + docNo, 'error');
+      // 📄 Load Order / Sale Order (SO) Details
+      let order = null;
+      let items = [];
+      if (docId && !docId.startsWith('SO-')) {
+        const [{ data: oData }, { data: oItems }] = await Promise.all([
+          sb.from('orders').select('*').eq('id', docId).maybeSingle(),
+          sb.from('order_items').select('*').eq('order_id', docId)
+        ]);
+        order = oData;
+        items = oItems || [];
+      }
+      if (!order && dNo) {
+        const { data: oData } = await sb.from('orders').select('*').eq('shop_id', currentShop.id).eq('order_no', dNo).maybeSingle();
+        if (oData) {
+          order = oData;
+          const { data: oItems } = await sb.from('order_items').select('*').eq('order_id', order.id);
+          items = oItems || [];
+        }
+      }
+      if (!order && dNo) {
+        const rawNo = dNo.replace(/^(SO|ORD|SHP|LAZ)-?/i, '');
+        const { data: oData } = await sb.from('orders').select('*').or(`order_no.ilike.%${rawNo}%,customer_social.ilike.%${rawNo}%`).maybeSingle();
+        if (oData) {
+          order = oData;
+          const { data: oItems } = await sb.from('order_items').select('*').eq('order_id', order.id);
+          items = oItems || [];
+        }
+      }
+
+      if (!order) {
+        container.innerHTML = `
+          <div style="padding:32px;text-align:center">
+            <div style="font-size:36px;margin-bottom:8px">❌</div>
+            <div style="font-size:16px;font-weight:700;color:#dc2626">ไม่พบข้อมูลออเดอร์ (${escapeHTML(dNo || docId || 'ไม่ระบุ')})</div>
+            <div style="font-size:13px;color:#64748b;margin-top:6px">อาจเป็นรายการปรับยอดสต๊อก หรือไม่มีข้อมูลในตาราง Orders</div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:16px" onclick="closeModal('modal-doc-viewer')">ปิด</button>
+          </div>
+        `;
+        return;
+      }
+
+      const shipStatusMap = {
+        pending: { label: 'รอจัดส่ง (Pending)', color: '#b91c1c', bg: '#fee2e2' },
+        shipped: { label: 'จัดส่งแล้ว (Shipped)', color: '#0284c7', bg: '#e0f2fe' },
+        delivered: { label: 'ส่งถึงแล้ว (Delivered)', color: '#16a34a', bg: '#dcfce7' },
+        cancelled: { label: 'ยกเลิก (Cancelled)', color: '#dc2626', bg: '#fee2e2' }
+      };
+      const st = shipStatusMap[order.shipping_status] || { label: order.shipping_status || 'บันทึกแล้ว', color: '#0284c7', bg: '#e0f2fe' };
+
+      const subtotal = items.reduce((s, it) => s + (Number(it.qty || 1) * Number(it.sell_price || 0)), 0);
+      const billDisc = Number(order.bill_discount || 0);
+      const billDiscType = order.bill_discount_type || 'amount';
+      const billDiscAmt = billDiscType === 'percent' ? subtotal * billDisc / 100 : billDisc;
+      const shippingFee = Number(order.shipping_fee || 0);
+      const grandTotal = Number(order.total_amount || 0);
+
+      container.innerHTML = `
+        <!-- Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1.5px solid #e2e8f0;padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="font-size:20px">📄</span>
+              <span style="font-size:17px;font-weight:800;color:#0f172a">ออเดอร์ขาย / Sale Order (SO)</span>
+              <span style="background:#e0f2fe;color:#0284c7;font-size:12px;font-weight:800;padding:2px 8px;border-radius:6px;font-family:var(--mono)">${escapeHTML(order.order_no || '-')}</span>
+              <span style="background:${st.bg};color:${st.color};font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px">${st.label}</span>
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-top:4px">
+              วันที่: <b>${order.order_date || '-'}</b> · ช่องทาง: <b>${escapeHTML(order.channel || 'ทั่วไป')}</b>
+              ${order.customer_social ? ` · อ้างอิง: <b style="font-family:var(--mono)">${escapeHTML(order.customer_social)}</b>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-primary btn-sm" onclick="printReceipt('${order.id}', true, true)" style="background:#0284c7;border-color:#0284c7;display:inline-flex;align-items:center;gap:4px">🖨️ พิมพ์บิลเงินสด (Cash Sale)</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-doc-viewer');closeModal('modal-inventory-posting');showPage('orders');setTimeout(()=>viewOrder('${order.id}'),250)" style="display:inline-flex;align-items:center;gap:4px">✏️ ไปที่หน้าออเดอร์</button>
+            <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-doc-viewer')">✕ ปิด</button>
+          </div>
+        </div>
+
+        <!-- Customer Details -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px">
+          <div><span style="color:#64748b">ชื่อลูกค้า:</span> <strong style="color:#0f172a">${escapeHTML(order.customer_name || 'ลูกค้าทั่วไป')}</strong></div>
+          <div><span style="color:#64748b">เบอร์โทร/ผู้ติดต่อ:</span> <span style="color:#0f172a">${escapeHTML(order.customer_phone || order.customer_contact || '-')}</span></div>
+          <div><span style="color:#64748b">Tracking:</span> <span style="color:#0f172a;font-family:var(--mono)">${escapeHTML(order.tracking_no || '-')}</span></div>
+          ${order.customer_address ? `<div style="grid-column:1/-1"><span style="color:#64748b">ที่อยู่จัดส่ง:</span> <span style="color:#0f172a">${escapeHTML(order.customer_address)}</span></div>` : ''}
+        </div>
+
+        <!-- Items Table -->
+        <div style="flex:1;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;margin-bottom:14px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;position:sticky;top:0;z-index:2">
+                <th style="padding:8px 6px;text-align:center;width:36px">#</th>
+                <th style="padding:8px 6px;text-align:left">สินค้าที่ขาย</th>
+                <th style="padding:8px 6px;text-align:right;width:80px">จำนวน</th>
+                <th style="padding:8px 6px;text-align:right;width:95px">ราคา/ชิ้น</th>
+                <th style="padding:8px 6px;text-align:right;width:85px">ส่วนลด</th>
+                <th style="padding:8px 6px;text-align:right;width:110px">รวมเป็นเงิน</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map((it, idx) => {
+                const q = Number(it.qty || 1);
+                const pr = Number(it.sell_price || 0);
+                const gross = q * pr;
+                const disc = Number(it.discount || 0);
+                const net = it.discount_type === 'percent' ? Math.max(0, gross - gross * disc / 100) : Math.max(0, gross - disc);
+                return `
+                  <tr style="border-bottom:1px solid #f1f5f9">
+                    <td style="padding:7px 6px;text-align:center;color:#64748b">${idx + 1}</td>
+                    <td style="padding:7px 6px">
+                      <div style="font-weight:700;color:#0f172a">${escapeHTML(it.product_name || '-')}</div>
+                      ${it.product_id ? `<div style="font-size:11px;color:#64748b;font-family:var(--mono)">ID: ${escapeHTML(it.product_id)}</div>` : ''}
+                    </td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700">${fmt(q)}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">${fmtB(pr)}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#dc2626">${disc > 0 ? (it.discount_type === 'percent' ? '-' + disc + '%' : '-' + fmt(disc)) : '-'}</td>
+                    <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:#0f172a">${fmtB(net)}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Financial Summary -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:10px 16px">
+          <div style="font-size:12px;color:#166534">
+            ยอดรวม ${fmtB(subtotal)}${billDiscAmt > 0 ? ` · ส่วนลดท้ายบิล -${fmtB(billDiscAmt)}` : ''}${shippingFee > 0 ? ` · ค่าส่ง +${fmtB(shippingFee)}` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:13px;color:#15803d">ยอดชำระสุทธิ:</span>
+            <span style="font-size:18px;font-weight:800;color:#15803d;font-family:var(--mono)">${fmtB(grandTotal)}</span>
+          </div>
+        </div>
+      `;
     }
   } catch (err) {
-    console.error('openOrderDocument error:', err);
-    toast('เกิดข้อผิดพลาดในการเปิดเอกสารออเดอร์: ' + (err.message||err), 'error');
+    console.error('Error in openInventoryDocViewer:', err);
+    container.innerHTML = `
+      <div style="padding:32px;text-align:center">
+        <div style="font-size:36px;margin-bottom:8px">⚠️</div>
+        <div style="font-size:16px;font-weight:700;color:#dc2626">เกิดข้อผิดพลาดในการโหลดเอกสาร</div>
+        <div style="font-size:13px;color:#64748b;margin-top:6px">${escapeHTML(err.message || err)}</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:16px" onclick="closeModal('modal-doc-viewer')">ปิด</button>
+      </div>
+    `;
   }
 }
 
-async function openPODocument(docNo) {
-  try {
-    let { data: po } = await sb.from('purchase_orders').select('id,po_no').eq('shop_id', currentShop.id).eq('po_no', docNo).maybeSingle();
-    if (!po) {
-      const { data: p2 } = await sb.from('purchase_orders').select('id,po_no').eq('po_no', docNo).maybeSingle();
-      po = p2;
-    }
-    if (po) {
-      printPO(po.id);
-    } else {
-      toast('ไม่พบเอกสารใบสั่งซื้อ ' + docNo, 'error');
-    }
-  } catch (err) {
-    console.error('openPODocument error:', err);
-    toast('เกิดข้อผิดพลาดในการเปิดเอกสารใบสั่งซื้อ: ' + (err.message||err), 'error');
+async function openInventoryDocPrint(params) {
+  const { docType, docId, docNo } = params || {};
+  const dNo = String(docNo || '').trim();
+  if (docType === 'po' || dNo.startsWith('PO')) {
+    printPO(docId || dNo);
+  } else {
+    printReceipt(docId || dNo, true, true);
   }
+}
+
+async function openOrderDocument(docNo) {
+  openInventoryDocViewer({ docType: 'order', docNo });
+}
+
+async function openPODocument(docNo) {
+  openInventoryDocViewer({ docType: 'po', docNo });
 }
 
 function renderInventoryPostingTableRows(list) {
@@ -29646,6 +29981,7 @@ function renderInventoryPostingTableRows(list) {
     const isPlus = tx.qty > 0;
     const qtyColor = tx.isPending ? '#d97706' : (isPlus ? '#15803d' : '#b91c1c');
     const qtySign = isPlus ? `+${fmt(tx.qty)}` : `${fmt(tx.qty)}`;
+    const doc = String(tx.refDoc || '-').trim();
 
     return `
       <tr style="border-bottom:1px solid #f1f5f9;transition:background 0.15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
@@ -29670,25 +30006,38 @@ function renderInventoryPostingTableRows(list) {
         </td>
         <td style="padding:9px 8px;font-size:12px;font-family:var(--mono)">
           ${(()=>{
-            const doc = String(tx.refDoc || '-').trim();
             if (!doc || doc === '-' || doc === 'Initial Setup' || doc === 'Stock Adjustment') return `<span style="color:#64748b">${escapeHTML(doc)}</span>`;
-            if (tx.source === 'order' || doc.startsWith('SO') || doc.startsWith('ORD') || doc.startsWith('SHP') || doc.startsWith('LAZ')) {
+            
+            const isOrder = (tx.docType === 'order' || tx.source === 'order' || doc.startsWith('SO') || doc.startsWith('ORD') || doc.startsWith('SHP') || doc.startsWith('LAZ'));
+            const isPO = (tx.docType === 'po' || tx.source === 'po' || tx.source === 'po_pending' || doc.startsWith('PO'));
+            const isGR = (tx.docType === 'gr' || tx.source === 'gr' || doc.startsWith('GR'));
+
+            if (isOrder) {
               return `
                 <div style="display:inline-flex;align-items:center;gap:4px">
-                  <a href="javascript:void(0)" onclick="openOrderDocument('${escapeHTML(doc)}')" style="color:#0284c7;text-decoration:underline;font-weight:700;display:inline-flex;align-items:center;gap:2px;cursor:pointer" title="คลิกเพื่อเปิดเอกสารบิล/ออเดอร์ ${escapeHTML(doc)} ในหน้าต่างใหม่ (New Window/Tab) ↗">
-                    ${escapeHTML(doc)} <span style="font-size:11px">↗</span>
-                  </a>
-                  <button type="button" onclick="viewOrderNo('${escapeHTML(doc)}')" style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:1px 5px;font-size:10px;color:#475569;cursor:pointer" title="ดู/แก้ไขข้อมูลออเดอร์ในหน้าต่างนี้">✏️</button>
+                  <button type="button" onclick="openInventoryDocViewer({ docType:'order', docId:'${tx.docId||''}', docNo:'${escapeHTML(doc)}' })" style="background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;border-radius:6px;padding:2px 7px;font-size:11.5px;font-family:var(--mono);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px" title="คลิกเพื่อดูรายละเอียดออเดอร์ ${escapeHTML(doc)}">
+                    📄 ${escapeHTML(doc)}
+                  </button>
+                  <button type="button" onclick="printReceipt('${tx.docId || doc}', true, true)" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:2px 5px;font-size:10.5px;cursor:pointer" title="พิมพ์บิลเงินสด (Cash Sale) 🖨️">🖨️</button>
                 </div>
               `;
             }
-            if (tx.source === 'po' || tx.source === 'po_pending' || doc.startsWith('PO')) {
+            if (isPO) {
               return `
                 <div style="display:inline-flex;align-items:center;gap:4px">
-                  <a href="javascript:void(0)" onclick="openPODocument('${escapeHTML(doc)}')" style="color:#16a34a;text-decoration:underline;font-weight:700;display:inline-flex;align-items:center;gap:2px;cursor:pointer" title="คลิกเพื่อเปิดเอกสารใบสั่งซื้อ ${escapeHTML(doc)} ในหน้าต่างใหม่ (New Window/Tab) ↗">
-                    ${escapeHTML(doc)} <span style="font-size:11px">↗</span>
-                  </a>
-                  <button type="button" onclick="viewPONo('${escapeHTML(doc)}')" style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:1px 5px;font-size:10px;color:#475569;cursor:pointer" title="ดู/แก้ไขข้อมูลใบสั่งซื้อในหน้าต่างนี้">✏️</button>
+                  <button type="button" onclick="openInventoryDocViewer({ docType:'po', docId:'${tx.docId||''}', docNo:'${escapeHTML(doc)}' })" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;border-radius:6px;padding:2px 7px;font-size:11.5px;font-family:var(--mono);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px" title="คลิกเพื่อดูรายละเอียดใบสั่งซื้อ ${escapeHTML(doc)}">
+                    🛒 ${escapeHTML(doc)}
+                  </button>
+                  <button type="button" onclick="printPO('${tx.docId || doc}')" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:4px;padding:2px 5px;font-size:10.5px;cursor:pointer" title="พิมพ์ใบสั่งซื้อ (PO) 🖨️">🖨️</button>
+                </div>
+              `;
+            }
+            if (isGR) {
+              return `
+                <div style="display:inline-flex;align-items:center;gap:4px">
+                  <button type="button" onclick="openInventoryDocViewer({ docType:'gr', docId:'${tx.docId||''}', docNo:'${escapeHTML(doc)}' })" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;border-radius:6px;padding:2px 7px;font-size:11.5px;font-family:var(--mono);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px" title="คลิกเพื่อดูรายละเอียดใบคืนสินค้า ${escapeHTML(doc)}">
+                    🔵 ${escapeHTML(doc)}
+                  </button>
                 </div>
               `;
             }
@@ -29924,7 +30273,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.09', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Period-over-Period Growth Percentage Comparison Badges (▲ Green / ▼ Red)', items:[
+    { v:'2.10', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Instant Document Detail Viewer for Inventory Posting List (PO & SO Support)', items:[
+      '📜 <b>Instant Document Viewer Modal:</b> เพิ่มหน้าต่างดูเอกสารแบบรวดเร็ว (<code>modal-doc-viewer</code>) เมื่อคลิกที่เลขที่เอกสารใน Inventory Posting List & ประวัติสต๊อก สามารถเปิดดูข้อมูลฉบับเต็มได้ทันทีโดยไม่ต้องสลับหน้า',
+      '🛒 <b>Purchase Order (PO) Support:</b> แสดงรายละเอียดใบสั่งซื้อครบถ้วน (ชื่อ Supplier, ผู้ติดต่อ, รายการสินค้า, จำนวนสั่ง, จำนวนรับแล้ว, ยอดค้างรับ, ราคาซื้อ, ยอดรวม) พร้อมปุ่ม "🖨️ พิมพ์ใบสั่งซื้อ" และ "✏️ ไปที่หน้า PO"',
+      '📄 <b>Sale Order (SO) Support:</b> แสดงรายละเอียดออเดอร์ขายครบถ้วน (ชื่อลูกค้า, เบอร์โทร, ที่อยู่จัดส่ง, ช่องทางขาย, Tracking, ส่วนลด, ยอดชำระสุทธิ) พร้อมปุ่ม "🖨️ พิมพ์บิลเงินสด (Cash Sale)" และ "✏️ ไปที่หน้าออเดอร์"',
+      '🐛 <b>Print & Popup Blocker Fix:</b> แก้ไขฟังก์ชัน <code>printPO</code> (กำหนด <code>shop</code> ให้ถูกต้อง) และปรับปรุงระบบพิมพ์เอกสารให้ทำงานได้อย่างเสถียร 100%',
+      '🧹 <b>Cache Refresh (v2.10):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.10'
+    ]},
+    { v:'2.09', date:'2026-09-16', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Period-over-Period Growth Percentage Comparison Badges (▲ Green / ▼ Red)', items:[
       '📊 <b>Period-over-Period Growth Comparison:</b> เพิ่มป้ายแสดง % การเติบโตเปรียบเทียบกับรอบก่อนหน้าบนการ์ดสถิติ (Stat Cards) ทุกกล่องใน Dashboard ภาพรวม (เช่น รายเดือนเทียบเดือนก่อนหน้า, รายวันเทียบเมื่อวาน, รายปีเทียบปีก่อนหน้า, รายสัปดาห์เทียบสัปดาห์ก่อนหน้า)',
       '🟢 <b>Visual Trend Indicators:</b> แสดงลูกศรชี้ขึ้นสีเขียว <code>▲ +X.X%</code> เมื่อยอดเพิ่มขึ้น และลูกศรชี้ลงสีแดง <code>▼ -X.X%</code> เมื่อยอดย่อตัวลง เพื่อให้วิเคราะห์ทิศทางธุรกิจได้ทันที',
       '🎯 <b>Inverted Sentiment for Expenses & Cancellations:</b> หมวดค่าใช้จ่าย, สินน้ำใจ, Landed Cost และยอดออเดอร์ยกเลิก มีการสลับสีอัจฉริยะ (ลดลงเป็นสีเขียว / เพิ่มขึ้นเป็นสีแดง) เพื่อการติดตามสุขภาพทางการเงินที่ถูกต้อง',
