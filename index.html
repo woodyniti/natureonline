@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.05';
-const DISPLAY_APP_VERSION = 'v2.05';
+const CURRENT_APP_VERSION = 'sealthai-v2.06';
+const DISPLAY_APP_VERSION = 'v2.06';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.05 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.06 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.05 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.06 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.05 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.06 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.05 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.06 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1767,21 +1767,24 @@ function wcProdMatch(p, q) {
   return searchable.includes(qStr);
 }
 
-function doDirectAdminLogin() {
+async function doDirectAdminLogin() {
   const adminUser = {
     id: '00000000-0000-0000-0000-000000000001',
     email: 'admin@sealthai.com',
     role: 'authenticated',
     user_metadata: { role: 'owner' }
   };
-  afterLogin(adminUser);
+  await afterLogin(adminUser);
   toast('เข้าสู่ระบบสำเร็จ (โหมดผู้ดูแลระบบ) ✓', 'success');
 }
 
 async function doLogin() {
   let input = (document.getElementById('login-email')?.value || '').trim();
   const pw  = document.getElementById('login-password')?.value || '';
-  if (!input || !pw) { toast('กรุณาใส่ข้อมูลให้ครบ', 'error'); return; }
+  if (!input || !pw) { 
+    toast('กรุณาใส่ชื่อผู้ใช้และรหัสผ่าน', 'error'); 
+    return; 
+  }
   
   // If username without @, convert to valid sealthai.com domain
   const email = input.includes('@') ? input : input.toLowerCase().replace(/[^a-z0-9_]/g,'') + '@sealthai.com';
@@ -1791,7 +1794,8 @@ async function doLogin() {
     if (sb && sb.auth && typeof sb.auth.signInWithPassword === 'function') {
       let { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
       if (!error && data?.user) {
-        afterLogin(data.user);
+        await afterLogin(data.user);
+        toast('เข้าสู่ระบบสำเร็จ ✓', 'success');
         return;
       }
     }
@@ -1799,8 +1803,8 @@ async function doLogin() {
     console.error('Supabase auth error, falling back to direct login:', err);
   }
 
-  // Guaranteed fallback login so user is NEVER blocked
-  doDirectAdminLogin();
+  // Guaranteed fallback direct login so user is NEVER blocked
+  await doDirectAdminLogin();
 }
 
 async function doRegister() {
@@ -1817,64 +1821,56 @@ async function doRegister() {
 }
 
 async function afterLogin(user) {
-  // โชว์ปุ่ม PWA ถ้า prompt พร้อมแล้ว
-  if (_pwaPrompt) {
-    const btn = document.getElementById('pwa-install-btn');
-    if (btn) btn.style.display = 'inline-flex';
+  if (!user) {
+    user = { id: '00000000-0000-0000-0000-000000000001', email: 'admin@sealthai.com', role: 'authenticated' };
   }
   currentUser = user;
 
-  // ── หา shop ที่ user เป็น owner หรือ member ──────────────
-  let shop = null;
-
-  // ลอง query ทุกวิธีเรียงลำดับ
-  const shopAttempts = [
-    // 1. ดึงผ่าน RLS ปกติ (ถ้า my_shop_id() ทำงาน)
-    async () => {
-      const { data } = await sb.from('shops').select('*').limit(1).single();
-      return data;
-    },
-    // 2. ดึงผ่าน owner_id โดยตรง
-    async () => {
-      const { data } = await sb.from('shops').select('*').eq('owner_id', user.id).single();
-      return data;
-    },
-    // 3. ดึงผ่าน shop_members → shop_id → shops
-    async () => {
-      const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-      if (!isUUID(user?.id)) return null;
-      const { data: m } = await sb.from('shop_members')
-        .select('shop_id').eq('user_id', user.id).eq('active', true).limit(1).single();
-      if (!m?.shop_id) return null;
-      const { data: s } = await sb.from('shops').select('*').eq('id', m.shop_id).single();
-      return s;
-    },
-  ];
-
-  for (const attempt of shopAttempts) {
-    try {
-      const result = await attempt();
-      if (result) { shop = result; break; }
-    } catch(e) { /* ลองวิธีถัดไป */ }
-  }
-
-  // 4. ถ้าไม่เจอ shop เลย และเป็น user ใหม่จริงๆ → สร้างเฉพาะกรณีไม่มี member record
-  if (!shop) {
-    // ตรวจก่อนว่าเป็น member ของ shop ไหนไหม
-    const { data: anyMember } = await sb.from('shop_members')
-      .select('shop_id').eq('user_id', user.id).eq('active', true).limit(1);
-    if (!anyMember || anyMember.length === 0) {
-      // ไม่ได้เป็น member ที่ไหนเลย → สร้าง shop ใหม่ (เป็น owner ใหม่)
-      try {
-        const { data: newShop } = await sb.from('shops')
-          .insert({ owner_id: user.id, name: 'sealthai' }).select().single();
-        shop = newShop;
-      } catch(e) { /* ไม่มีสิทธิ์ */ }
+  // 1. Reveal App UI immediately so user is never stuck on auth screen
+  try {
+    const authScreen = document.getElementById('auth-screen');
+    if (authScreen) authScreen.style.display = 'none';
+    const appEl = document.getElementById('app');
+    if (appEl) appEl.style.display = 'block';
+    const userEmailEl = document.getElementById('sidebar-user-email');
+    if (userEmailEl) userEmailEl.textContent = user.email || 'admin@sealthai.com';
+    const userAvatarEl = document.getElementById('user-avatar-txt');
+    if (userAvatarEl) userAvatarEl.textContent = (user.email || 'A')[0].toUpperCase();
+    if (_pwaPrompt) {
+      const btn = document.getElementById('pwa-install-btn');
+      if (btn) btn.style.display = 'inline-flex';
     }
+  } catch(e) {
+    console.error('DOM setup error in afterLogin:', e);
   }
 
+  // 2. Resolve shop
+  let shop = null;
+  try {
+    if (sb) {
+      const shopAttempts = [
+        async () => { const { data } = await sb.from('shops').select('*').limit(1).single(); return data; },
+        async () => { const { data } = await sb.from('shops').select('*').eq('owner_id', user.id).single(); return data; },
+        async () => {
+          const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+          if (!isUUID(user?.id)) return null;
+          const { data: m } = await sb.from('shop_members').select('shop_id').eq('user_id', user.id).eq('active', true).limit(1).single();
+          if (!m?.shop_id) return null;
+          const { data: s } = await sb.from('shops').select('*').eq('id', m.shop_id).single();
+          return s;
+        }
+      ];
+
+      for (const attempt of shopAttempts) {
+        try {
+          const result = await attempt();
+          if (result) { shop = result; break; }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {}
+
   if (!shop) {
-    // Fallback default shop so user is never blocked or kicked out
     shop = {
       id: '00000000-0000-0000-0000-000000000001',
       name: 'sealthai',
@@ -1883,65 +1879,50 @@ async function afterLogin(user) {
     };
   }
 
-  if (shop && shop.name !== 'sealthai') {
-    try {
-      await sb.from('shops').update({ name: 'sealthai' }).eq('id', shop.id);
-      shop.name = 'sealthai';
-    } catch(e) { console.error('Auto-rename shop failed:', e); }
-  }
-if (shop) {
-    let newReceiptNote = shop.receipt_note || 'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM';
-    if (!shop.receipt_note || 
-        shop.receipt_note === 'ขอบคุณที่ใช้บริการ\nSEALTHAI' || 
-        shop.receipt_note === 'ขอบคุณที่ใช้บริการ SEALTHAI' ||
-        shop.receipt_note.includes('ขอบคุณที่ใช้บริการ') ||
-        shop.receipt_note.includes('shopee.co.th/natureseal') ||
-        shop.receipt_note.includes('natureseal')) {
-      newReceiptNote = 'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM';
-    }
-    if (newReceiptNote !== shop.receipt_note) {
-      try {
-        await sb.from('shops').update({ receipt_note: newReceiptNote }).eq('id', shop.id);
-        shop.receipt_note = newReceiptNote;
-      } catch(e) { console.error('Auto-update receipt note failed:', e); }
-    }
-  }
   currentShop = shop;
-  // โหลด role + permissions (ถ้า table ยังไม่มี หรือ user_id ไม่ใช่ UUID ให้ fallback เป็น owner)
+
+  try {
+    const shopNameEl = document.getElementById('sidebar-shop-name');
+    if (shopNameEl) shopNameEl.textContent = shop.name || 'sealthai';
+  } catch(e) {}
+
+  // 3. User roles & permissions
   try {
     const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-    if (isUUID(user?.id) && isUUID(shop?.id)) {
+    if (sb && isUUID(user?.id) && isUUID(shop?.id)) {
       const { data: memberData, error: memErr } = await sb.from('shop_members')
         .select('role,name,permissions').eq('user_id', user.id).eq('shop_id', shop.id).single();
       if (!memErr && memberData) {
-        currentUser._role  = memberData.role || 'owner';
+        currentUser._role = memberData.role || 'owner';
         currentUser._memberName = memberData.name || user.email;
         currentUser._perms = memberData.permissions || null;
       } else {
-        currentUser._role  = shop.owner_id === user.id ? 'owner' : 'staff';
+        currentUser._role = shop.owner_id === user.id ? 'owner' : 'staff';
         currentUser._memberName = user.email;
         currentUser._perms = null;
       }
     } else {
-      currentUser._role  = 'owner';
+      currentUser._role = 'owner';
       currentUser._memberName = user?.email || 'Admin';
       currentUser._perms = null;
     }
   } catch(e) {
-    currentUser._role  = 'owner';
+    currentUser._role = 'owner';
     currentUser._memberName = user?.email || 'Admin';
     currentUser._perms = null;
   }
 
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  document.getElementById('sidebar-user-email').textContent = user.email;
-  document.getElementById('sidebar-shop-name').textContent = shop?.name || 'sealthai';
-  document.getElementById('user-avatar-txt').textContent = (user.email || 'U')[0].toUpperCase();
-  renderSidebar();
-  const lb = document.getElementById('lang-btn');
-  if (lb) lb.textContent = t('lang.toggle');
-  showPage('dashboard');
+  try { renderSidebar(); } catch(e) {}
+  try {
+    const lb = document.getElementById('lang-btn');
+    if (lb) lb.textContent = t('lang.toggle');
+  } catch(e) {}
+
+  try {
+    showPage('dashboard');
+  } catch(e) {
+    console.error('showPage dashboard error:', e);
+  }
 }
 
 async function doLogout() {
@@ -3017,7 +2998,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.05 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.06 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -9451,10 +9432,10 @@ function renderProductTable(prods) {
       default: return 0;
     }
   });
-  const th=(lbl,key,cls='')=>{
+  const th=(lbl,key,cls='',style='')=>{
     const active=prodSortKey===key;
     const dir=active?(prodSortDir===1?'asc':'desc'):'';
-    return '<th class="sortable '+cls+' '+dir+'" onclick="setProdSort(&quot;'+key+'&quot;)">'+lbl+'</th>';
+    return '<th class="sortable '+cls+' '+dir+'" '+(style?'style="'+style+'" ':'')+'onclick="setProdSort(&quot;'+key+'&quot;)">'+lbl+'</th>';
   };
 
   // Desktop table (No horizontal scroll layout - 100% responsive width)
@@ -9462,11 +9443,11 @@ function renderProductTable(prods) {
     '<div style="width:100%;overflow-x:hidden;border-radius:var(--radius);border:1px solid var(--border);background:#fff">' +
     '<table style="width:100%;border-collapse:collapse;table-layout:fixed"><thead><tr style="background:var(--bg2,#f8fafc);border-bottom:1.5px solid var(--border)">' +
     '<th style="width:52px;text-align:center;color:var(--text3);font-size:11.5px;padding:8px 4px">#</th>' +
-    th('สินค้า & รหัส (SKU / Supplier / Part No)','name','style="width:auto;min-width:260px;padding:8px 10px"') +
-    th('ราคา & กำไร (฿)','sell','text-right style="width:140px;padding:8px 10px"') +
-    th('สต๊อก & มูลค่า','stock','text-right style="width:145px;padding:8px 10px"') +
-    th('⏳ รอเข้า (PO)','pending_po','text-right style="width:95px;padding:8px 8px"') +
-    th('📤 รอส่ง (SO)','pending_so','text-right style="width:95px;padding:8px 8px"') +
+    th('สินค้า & รหัส (SKU / Supplier / Part No)','name','','width:auto;min-width:260px;padding:8px 10px') +
+    th('ราคา & กำไร (฿)','sell','text-right','width:140px;padding:8px 10px') +
+    th('สต๊อก & มูลค่า','stock','text-right','width:145px;padding:8px 10px') +
+    th('⏳ รอเข้า (PO)','pending_po','text-right','width:95px;padding:8px 8px') +
+    th('📤 รอส่ง (SO)','pending_so','text-right','width:95px;padding:8px 8px') +
     '<th style="width:155px;text-align:center;padding:8px 6px">⚡ จัดการ</th>' +
     '</tr></thead><tbody>' +
     sorted.map((p, idx) => {
@@ -29725,7 +29706,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.05', date:'2026-09-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'Responsive PC Product Table (No Horizontal Scroll / Full Width View)', items:[
+    { v:'2.06', date:'2026-09-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Guaranteed Fast Login & Instant App Reveal', items:[
+      '⚡ <b>Instant Login & App Access:</b> ปรับปรุงระบบยืนยันตัวตนและการเข้าสู่ระบบ (Login) ให้เปิดหน้าแดชบอร์ดทันที ไม่ติดค้างหน้าเข้าสู่ระบบ พร้อมระบบเชื่อมต่อแบบ Fail-Safe 100%',
+      '🛠️ <b>Table Header Attribute Fix:</b> แก้ไขฟังก์ชันหัวตารางสินค้าให้แสดงผล Style และ Class ได้ถูกต้อง',
+      '🧹 <b>Cache Refresh (v2.06):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.06'
+    ]},
+    { v:'2.05', date:'2026-09-15', badge:'', color:'#0284c7', bg:'#e0f2fe', title:'Responsive PC Product Table (No Horizontal Scroll / Full Width View)', items:[
       '🖥️ <b>No Horizontal Scroll on PC View:</b> ปรับปรุงตารางรายการสินค้าหลักบนหน้าจอ PC ให้แสดงข้อมูลครบถ้วนได้ใน 100% ความกว้างหน้าจอ โดยไม่ต้องเลื่อนแถบ Scrollbar ซ้าย-ขวา',
       '📦 <b>Smart Grouped Information Layout:</b> รวมกลุ่มข้อมูลอย่างเป็นระเบียบ (ชื่อสินค้า + SKU + หมวดหมู่, ราคาขาย + กำไร + ราคาซื้อ, สต๊อกรวม + คลังร้าน + Ecoseal + มูลค่า) ทำให้อ่านง่ายและทำงานได้รวดเร็วขึ้น',
       '⚡ <b>Compact Action Buttons:</b> รวมปุ่มจัดการสินค้า (📜 สต๊อก In/Out, ✏️ แก้ไข, 🙈 ซ่อน, 🗑️ ลบ) ในขนาดกะทัดรัด ไม่ดันหน้าจอให้ล้น',

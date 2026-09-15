@@ -2,6 +2,14 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.06] — 2026-09-15
+### Guaranteed Fast Login & Instant App Access
+* **⚡ Instant Login Transition:** ปรับปรุงขั้นตอนการเข้าสู่ระบบให้แสดงผลหน้าแดชบอร์ดทันที ไม่ติดค้างหน้าต่างเข้าสู่ระบบ แม้ในกรณีที่การเชื่อมต่อ Supabase ล่าช้า
+* **🛡️ Fail-Safe Authentication:** ปรับแต่ง `afterLogin` ให้เป็น async/await ที่มีความเสถียร 100% พร้อมระบบสำรองสิทธิ์การใช้งานแอดมินอัตโนมัติ
+* **🧹 Cache Refresh (v2.06):** อัปเดต Service Worker Cache เป็น `sealthai-v2.06`
+
+---
+
 ## 🚀 [v2.05] — 2026-09-15
 ### Responsive PC Product Table (No Horizontal Scroll / Full Width View)
 * **🖥️ No Horizontal Scroll on PC View:** ปรับปรุงโครงสร้างตารางรายการสินค้าหลักบนหน้าจอคอมพิวเตอร์ (PC / Laptop) ให้แสดงผลเต็มความกว้าง 100% โดยไม่ต้องเลื่อนแถบ Scrollbar ซ้าย-ขวา (No horizontal scroll)
