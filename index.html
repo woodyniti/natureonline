@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.10';
-const DISPLAY_APP_VERSION = 'v2.10';
+const CURRENT_APP_VERSION = 'sealthai-v2.11';
+const DISPLAY_APP_VERSION = 'v2.11';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.10 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.11 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.10 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.11 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.10 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.11 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2025,6 +2025,10 @@ function isOrderCancelled(order) {
 
 const SHOPEE_GP_FALLBACK_PCT = 30.53;
 const LAZADA_GP_FALLBACK_PCT = 30;
+const DEFAULT_EMP_NAME = 'นิติ บุญสายันต์';
+const DEFAULT_EMP_COMM_PCT = 15;
+const CFO_NAME = 'นันทนา';
+const CFO_WAGE_PCT = 15;
 let _shopeeFeeLoadPromise = null;
 let _shopeeFeeLoadAttempted = false;
 
@@ -3184,7 +3188,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.10 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.11 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -19729,93 +19733,96 @@ function getDashDateRange() {
 let _ownerHistData = null;
 
 async function loadDashData() {
-  const {from, to} = getDashDateRange();
-  const now = new Date();
-  const formatLocalDate = (d) => {
-    const yy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yy}-${mm}-${dd}`;
-  };
-  const histStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-  const histStartStr = formatLocalDate(histStart);
-  const histEndStr = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+  const statsEl = document.getElementById('dash-stats');
+  if (statsEl) statsEl.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3)"><div class="spinner"></div> กำลังโหลดข้อมูลกระดานผู้บริหาร...</div>';
 
-  const [ordRes, prodRes, expRes, apRes, empRes, landedRes, otherIncomeRes, poRes, histOrdersRes, histExpRes, histLandedRes, histIncomeRes] = await Promise.all([
-    sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id)
-      .gte('order_date', from).lte('order_date', to).order('order_date'),
-    sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true),
-    sb.from('expenses').select('*').eq('shop_id', currentShop.id)
-      .gte('expense_date', from).lte('expense_date', to),
-    sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id).neq('status', 'paid'),
-    sb.from('employees').select('*').eq('shop_id', currentShop.id).eq('active', true),
-    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id)
-      .gte('move_date', from).lte('move_date', to),
-    sb.from('other_income').select('*').eq('shop_id', currentShop.id)
-      .gte('income_date', from).lte('income_date', to),
-    sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id)
-      .gte('po_date', from).lte('po_date', to),
-    sb.from('orders').select('id,order_no,order_date,total_amount,doc_status,channel,shipping_status,order_items(product_id,qty,cost_per_unit)')
-      .eq('shop_id', currentShop.id).gte('order_date', histStartStr).lte('order_date', histEndStr),
-    sb.from('expenses').select('id,expense_date,amount,include_in_profit,category,standardized_category')
-      .eq('shop_id', currentShop.id).gte('expense_date', histStartStr).lte('expense_date', histEndStr),
-    sb.from('landed_costs').select('id,move_date,type,amount')
-      .eq('shop_id', currentShop.id).gte('move_date', histStartStr).lte('move_date', histEndStr),
-    sb.from('other_income').select('id,income_date,realized_profit')
-      .eq('shop_id', currentShop.id).gte('income_date', histStartStr).lte('income_date', histEndStr),
-    ensureShopeeFeeData()
-  ]);
+  try {
+    const {from, to} = getDashDateRange();
+    const now = new Date();
+    const formatLocalDate = (d) => {
+      const yy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yy}-${mm}-${dd}`;
+    };
+    const histStart = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    const histStartStr = formatLocalDate(histStart);
+    const histEndStr = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  const rawOrders = ordRes.data || [];
-  const orders   = rawOrders.filter(o => !isOrderCancelled(o)); // กรองออเดอร์ยกเลิกออกตรงกับ Dashboard ภาพรวม
-  const products = prodRes.data || [];
-  const expenses = expRes.data  || [];
-  const ap       = apRes.data   || [];
-  const emps     = empRes.data  || [];
-  const landed   = landedRes?.data || [];
-  const otherIncomes = otherIncomeRes?.data || [];
-  const pos      = poRes?.data || [];
+    const [ordRes, prodRes, expRes, apRes, empRes, landedRes, otherIncomeRes, poRes, histOrdersRes, histExpRes, histLandedRes, histIncomeRes] = await Promise.all([
+      sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id)
+        .gte('order_date', from).lte('order_date', to).order('order_date'),
+      sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true),
+      sb.from('expenses').select('*').eq('shop_id', currentShop.id)
+        .gte('expense_date', from).lte('expense_date', to),
+      sb.from('ap_invoices').select('*').eq('shop_id', currentShop.id).neq('status', 'paid'),
+      sb.from('employees').select('*').eq('shop_id', currentShop.id).eq('active', true),
+      sb.from('landed_costs').select('*').eq('shop_id', currentShop.id)
+        .gte('move_date', from).lte('move_date', to),
+      sb.from('other_income').select('*').eq('shop_id', currentShop.id)
+        .gte('income_date', from).lte('income_date', to),
+      sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id)
+        .gte('po_date', from).lte('po_date', to),
+      sb.from('orders').select('id,order_no,order_date,total_amount,doc_status,channel,shipping_status,order_items(product_id,qty,cost_per_unit)')
+        .eq('shop_id', currentShop.id).gte('order_date', histStartStr).lte('order_date', histEndStr),
+      sb.from('expenses').select('id,expense_date,amount,include_in_profit,category,standardized_category')
+        .eq('shop_id', currentShop.id).gte('expense_date', histStartStr).lte('expense_date', histEndStr),
+      sb.from('landed_costs').select('id,move_date,type,amount')
+        .eq('shop_id', currentShop.id).gte('move_date', histStartStr).lte('move_date', histEndStr),
+      sb.from('other_income').select('id,income_date,realized_profit')
+        .eq('shop_id', currentShop.id).gte('income_date', histStartStr).lte('income_date', histEndStr),
+      ensureShopeeFeeData()
+    ]);
 
-  // fallback ต้นทุน: ถ้า order_item ขายก่อนรับเข้า (cost_per_unit=0) ให้ใช้ current_cost ของสินค้าแทน
-  const _prodCostMap = {};
-  products.forEach(p => { if (p.id) _prodCostMap[p.id] = Number(p.current_cost || 0); });
-  const _orderCost = (o) => (o.order_items || []).reduce((s, it) => {
-    const c = Number(it.cost_per_unit || 0);
-    return s + Number(it.qty || 0) * (c > 0 ? c : Number(_prodCostMap[it.product_id] || 0));
-  }, 0);
+    const rawOrders = ordRes.data || [];
+    const orders   = rawOrders.filter(o => !isOrderCancelled(o)); // กรองออเดอร์ยกเลิกออกตรงกับ Dashboard ภาพรวม
+    const products = prodRes.data || [];
+    const expenses = expRes.data  || [];
+    const ap       = apRes.data   || [];
+    const emps     = empRes.data  || [];
+    const landed   = landedRes?.data || [];
+    const otherIncomes = otherIncomeRes?.data || [];
+    const pos      = poRes?.data || [];
 
-  const sales    = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
-  const costSum  = orders.reduce((s, o) => s + _orderCost(o), 0);
-  const expSum   = expenses.reduce((s, e) => s + expenseProfitAmount(e), 0);
-  const platformFee = orders.reduce((sum, o) => sum + getOrderPlatformFeeInfo(o).fee, 0);
-  const handlingCost = landed.filter(l => l.type === 'ค่าจัดการ').reduce((s, l) => s + Number(l.amount || 0), 0);
-  const shippingCostGR = landed.filter(l => l.type === 'ค่าขนส่ง').reduce((s, l) => s + Number(l.amount || 0), 0);
-  const totalOtherIncome = otherIncomes.reduce((s, e) => s + Number(e.realized_profit || 0), 0);
+    // fallback ต้นทุน: ถ้า order_item ขายก่อนรับเข้า (cost_per_unit=0) ให้ใช้ current_cost ของสินค้าแทน
+    const _prodCostMap = {};
+    products.forEach(p => { if (p.id) _prodCostMap[p.id] = Number(p.current_cost || 0); });
+    const _orderCost = (o) => (o.order_items || []).reduce((s, it) => {
+      const c = Number(it.cost_per_unit || 0);
+      return s + Number(it.qty || 0) * (c > 0 ? c : Number(_prodCostMap[it.product_id] || 0));
+    }, 0);
 
-  // ── Supplier Weekly Expense ──
-  const supWeeklyInfo = calculatePeriodSupplierWeeklyExpenses(pos || []);
-  const totalSupWeeklyExp = supWeeklyInfo.total;
+    const sales    = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+    const costSum  = orders.reduce((s, o) => s + _orderCost(o), 0);
+    const expSum   = expenses.reduce((s, e) => s + expenseProfitAmount(e), 0);
+    const platformFee = orders.reduce((sum, o) => sum + getOrderPlatformFeeInfo(o).fee, 0);
+    const handlingCost = landed.filter(l => l.type === 'ค่าจัดการ').reduce((s, l) => s + Number(l.amount || 0), 0);
+    const shippingCostGR = landed.filter(l => l.type === 'ค่าขนส่ง').reduce((s, l) => s + Number(l.amount || 0), 0);
+    const totalOtherIncome = otherIncomes.reduce((s, e) => s + Number(e.realized_profit || 0), 0);
 
-  // ── Net Profit Base (กำไรหลัง GP Platform) ───────────────
-  const grossProfit   = sales - costSum;
-  const profitAfterPlatform = grossProfit - platformFee;
-  const commBase      = Math.max(0, profitAfterPlatform);   // ขาดทุนไม่คิดคอม
+    // ── Supplier Weekly Expense ──
+    const supWeeklyInfo = calculatePeriodSupplierWeeklyExpenses(pos || []);
+    const totalSupWeeklyExp = supWeeklyInfo.total;
 
-  // ── Employee Commission & CFO Wage (15% กำไรหลัง GP Platform) ──
-  const DEFAULT_EMP_NAME = 'นิติ บุญสายันต์';
-  const DEFAULT_EMP_COMM_PCT = 15;
-  const CFO_NAME = 'นันทนา';
-  const totalEmpComm = (emps.length > 0
-    ? emps.reduce((s, e) => {
-        let r = Number(e.commission_rate || DEFAULT_EMP_COMM_PCT);
-        if (!r || r === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) r = DEFAULT_EMP_COMM_PCT;
-        return s + (commBase * r / 100);
-      }, 0)
-    : (commBase * DEFAULT_EMP_COMM_PCT / 100));
-  const cfoWage = commBase * CFO_WAGE_PCT / 100;   // นันทนา 15%
+    // ── Net Profit Base (กำไรหลัง GP Platform) ───────────────
+    const grossProfit   = sales - costSum;
+    const profitAfterPlatform = grossProfit - platformFee;
+    const commBase      = Math.max(0, profitAfterPlatform);   // ขาดทุนไม่คิดคอม
 
-  // ── Net Profit สุทธิทางบัญชี (ซิงค์ตรง 100% กับ Dashboard ภาพรวม) ──
-  const netProfit   = profitAfterPlatform - expSum - handlingCost - shippingCostGR - totalSupWeeklyExp - totalEmpComm - cfoWage + totalOtherIncome;
+    // ── Employee Commission & CFO Wage (15% กำไรหลัง GP Platform) ──
+    const _cfoWagePct = typeof CFO_WAGE_PCT !== 'undefined' ? CFO_WAGE_PCT : 15;
+    const _empCommPct = typeof DEFAULT_EMP_COMM_PCT !== 'undefined' ? DEFAULT_EMP_COMM_PCT : 15;
+    const totalEmpComm = (emps.length > 0
+      ? emps.reduce((s, e) => {
+          let r = Number(e.commission_rate || _empCommPct);
+          if (!r || r === 20 || (e.name && (e.name.includes('นิติ') || e.name.toLowerCase().includes('niti')))) r = _empCommPct;
+          return s + (commBase * r / 100);
+        }, 0)
+      : (commBase * _empCommPct / 100));
+    const cfoWage = commBase * _cfoWagePct / 100;   // นันทนา 15%
+
+    // ── Net Profit สุทธิทางบัญชี (ซิงค์ตรง 100% กับ Dashboard ภาพรวม) ──
+    const netProfit   = profitAfterPlatform - expSum - handlingCost - shippingCostGR - totalSupWeeklyExp - totalEmpComm - cfoWage + totalOtherIncome;
   const totalIncome = sales + totalOtherIncome;
   const netPct      = totalIncome > 0 ? (netProfit / totalIncome * 100).toFixed(1) : '0.0';
   const grossPct    = sales > 0 ? (grossProfit / sales * 100).toFixed(1) : '0.0';
@@ -20034,6 +20041,13 @@ async function loadDashData() {
           '<td style="padding:5px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">'+fmtB(e.eComm)+'</td>'+
           '</tr>'
         ).join('')+'</tbody></table>';
+  }
+  } catch (err) {
+    console.error('Error loading Owner Dashboard data:', err);
+    const statsEl = document.getElementById('dash-stats');
+    if (statsEl) {
+      statsEl.innerHTML = `<div style="grid-column:1/-1;padding:24px;text-align:center;color:#dc2626;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px">เกิดข้อผิดพลาดในการโหลดข้อมูลกระดานผู้บริหาร: ${escapeHTML(err.message||err)}</div>`;
+    }
   }
 }
 // ══════════════════════════════════════════════════════════
@@ -30273,7 +30287,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.10', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Instant Document Detail Viewer for Inventory Posting List (PO & SO Support)', items:[
+    { v:'2.11', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix Owner Dashboard Loading & CFO Wage Variable Scope', items:[
+      '🏠 <b>Owner Dashboard Restored:</b> แก้ไขข้อผิดพลาดตัวแปร <code>CFO_WAGE_PCT</code> ในกระดานผู้บริหาร (<code>ownerDashboard</code>) ทำให้แสดงผลยอดขายรวม, ต้นทุน, กำไรสุทธิ, กราฟแท่งเปรียบเทียบรายเดือน, กราฟกำไรสะสม, ออเดอร์ล่าสุด, สต๊อกต่ำ, สินค้าขายดี และ KPI พนักงาน ได้สมบูรณ์ 100%',
+      '🛡️ <b>Global Executive Constants & Fail-Safe:</b> ประกาศตัวแปรค่าแรง CFO และอัตราคอมมิชชั่นในระดับ Global Scope พร้อมเพิ่มระบบตรวจจับข้อผิดพลาด (<code>try/catch</code>) ที่ครอบคลุม',
+      '🧹 <b>Cache Refresh (v2.11):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.11'
+    ]},
+    { v:'2.10', date:'2026-09-16', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Instant Document Detail Viewer for Inventory Posting List (PO & SO Support)', items:[
       '📜 <b>Instant Document Viewer Modal:</b> เพิ่มหน้าต่างดูเอกสารแบบรวดเร็ว (<code>modal-doc-viewer</code>) เมื่อคลิกที่เลขที่เอกสารใน Inventory Posting List & ประวัติสต๊อก สามารถเปิดดูข้อมูลฉบับเต็มได้ทันทีโดยไม่ต้องสลับหน้า',
       '🛒 <b>Purchase Order (PO) Support:</b> แสดงรายละเอียดใบสั่งซื้อครบถ้วน (ชื่อ Supplier, ผู้ติดต่อ, รายการสินค้า, จำนวนสั่ง, จำนวนรับแล้ว, ยอดค้างรับ, ราคาซื้อ, ยอดรวม) พร้อมปุ่ม "🖨️ พิมพ์ใบสั่งซื้อ" และ "✏️ ไปที่หน้า PO"',
       '📄 <b>Sale Order (SO) Support:</b> แสดงรายละเอียดออเดอร์ขายครบถ้วน (ชื่อลูกค้า, เบอร์โทร, ที่อยู่จัดส่ง, ช่องทางขาย, Tracking, ส่วนลด, ยอดชำระสุทธิ) พร้อมปุ่ม "🖨️ พิมพ์บิลเงินสด (Cash Sale)" และ "✏️ ไปที่หน้าออเดอร์"',

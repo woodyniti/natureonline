@@ -2,6 +2,15 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.11] — 2026-09-16
+### Fix Owner Dashboard Loading & CFO Wage Variable Scope
+* **🏠 Owner Dashboard Data Display Restored:** แก้ไขปัญหาข้อมูลใน **กระดานผู้บริหาร (Owner Dashboard)** ไม่แสดงผล โดยแก้ไขตัวแปร `CFO_WAGE_PCT` (อัตราค่าแรง CFO 15%) ให้เข้าถึงได้ทั่วทั้งระบบในระดับ Global Scope
+* **📊 Complete Executive Metrics:** แสดงผลข้อมูลครบถ้วนทั้ง ยอดขายรวม, ต้นทุนสินค้า (COGS), ค่าใช้จ่ายดำเนินงาน, กำไรสุทธิทางบัญชี, กราฟแท่งเปรียบเทียบยอดขาย vs ต้นทุน vs กำไรสุทธิย้อนหลัง (6/12 เดือน), กราฟกำไรสะสม, การแจ้งเตือนสต๊อก, ออเดอร์ล่าสุด, และ KPI พนักงาน
+* **🛡️ Fail-Safe Try/Catch Wrapper:** เพิ่มระบบดักจับข้อผิดพลาดใน `loadDashData` พร้อมข้อความแจ้งเตือนที่ชัดเจนหากเกิดปัญหาการเชื่อมต่อ
+* **🧹 Cache Refresh (v2.11):** อัปเดต Service Worker Cache เป็น `sealthai-v2.11`
+
+---
+
 ## 🚀 [v2.10] — 2026-09-16
 ### Instant Document Detail Viewer for Inventory Posting List (PO & SO Support)
 * **📜 Instant Document Viewer Modal (`modal-doc-viewer`):** เพิ่มหน้าต่างป๊อปอัปดูรายละเอียดเอกสารแบบรวดเร็ว เมื่อคลิกที่เลขที่เอกสารในหน้าต่าง **Inventory Posting List & ประวัติสต๊อก** สามารถเปิดดูข้อมูลฉบับเต็มได้ทันทีโดยไม่ต้องสลับหน้า:
