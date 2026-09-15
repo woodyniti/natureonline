@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.08';
-const DISPLAY_APP_VERSION = 'v2.08';
+const CURRENT_APP_VERSION = 'sealthai-v2.09';
+const DISPLAY_APP_VERSION = 'v2.09';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.08 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.09 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.08 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.09 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.08 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.09 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2579,10 +2579,20 @@ async function dashboard() {
   const range = window._currentDashboardRange;
   let ms, me, rangeLabel;
 
+  let prevMs, prevMe, prevPeriodLabel, prevDaysInPeriod = 1;
+
   if (range === 'daily') {
     ms = formatLocalDate(now);
     me = formatLocalDate(now);
     rangeLabel = now.toLocaleDateString('th-TH', { year:'numeric', month:'long', day:'numeric' });
+    
+    // รอบก่อนหน้า = เมื่อวาน
+    const prevDateObj = new Date(now);
+    prevDateObj.setDate(prevDateObj.getDate() - 1);
+    prevMs = formatLocalDate(prevDateObj);
+    prevMe = formatLocalDate(prevDateObj);
+    prevPeriodLabel = 'เมื่อวาน (' + prevDateObj.toLocaleDateString('th-TH', { day:'numeric', month:'short' }) + ')';
+    prevDaysInPeriod = 1;
   } else if (range === 'weekly') {
     const startOfWeek = new Date(now);
     const day = startOfWeek.getDay();
@@ -2594,25 +2604,67 @@ async function dashboard() {
     ms = formatLocalDate(startOfWeek);
     me = formatLocalDate(endOfWeek);
     rangeLabel = startOfWeek.toLocaleDateString('th-TH', { month:'short', day:'numeric' }) + ' - ' + endOfWeek.toLocaleDateString('th-TH', { year:'numeric', month:'short', day:'numeric' });
+    
+    // รอบก่อนหน้า = สัปดาห์ก่อน
+    const prevWeekStart = new Date(startOfWeek);
+    prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+    const prevWeekEnd = new Date(endOfWeek);
+    prevWeekEnd.setDate(prevWeekEnd.getDate() - 7);
+    prevMs = formatLocalDate(prevWeekStart);
+    prevMe = formatLocalDate(prevWeekEnd);
+    prevPeriodLabel = 'สัปดาห์ก่อน (' + prevWeekStart.toLocaleDateString('th-TH', { day:'numeric', month:'short' }) + ' - ' + prevWeekEnd.toLocaleDateString('th-TH', { day:'numeric', month:'short' }) + ')';
+    prevDaysInPeriod = 7;
   } else if (range === '3month') {
     const start3M = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    const end3M = new Date(now.getFullYear(), now.getMonth() + 1, 0);
     ms = formatLocalDate(start3M);
-    me = formatLocalDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    me = formatLocalDate(end3M);
     rangeLabel = start3M.toLocaleDateString('th-TH', { month:'long' }) + ' - ' + now.toLocaleDateString('th-TH', { year:'numeric', month:'long' });
+    
+    // รอบก่อนหน้า = 3 เดือนก่อนหน้า
+    const prevStart3M = new Date(start3M.getFullYear(), start3M.getMonth() - 3, 1);
+    const prevEnd3M = new Date(start3M.getFullYear(), start3M.getMonth(), 0);
+    prevMs = formatLocalDate(prevStart3M);
+    prevMe = formatLocalDate(prevEnd3M);
+    prevPeriodLabel = '3 เดือนก่อนหน้า (' + prevStart3M.toLocaleDateString('th-TH', { month:'short' }) + ' - ' + prevEnd3M.toLocaleDateString('th-TH', { month:'short' }) + ')';
+    prevDaysInPeriod = Math.max(1, Math.round((prevEnd3M - prevStart3M) / 86400000) + 1);
   } else if (range === 'yearly') {
     ms = `${selY}-01-01`;
     me = `${selY}-12-31`;
     rangeLabel = 'ปี ' + (selY + 543);
+    
+    // รอบก่อนหน้า = ปีก่อน
+    const prevYear = selY - 1;
+    prevMs = `${prevYear}-01-01`;
+    prevMe = `${prevYear}-12-31`;
+    prevPeriodLabel = 'ปี ' + (prevYear + 543);
+    const isPrevLeap = (prevYear % 4 === 0 && prevYear % 100 !== 0) || (prevYear % 400 === 0);
+    prevDaysInPeriod = isPrevLeap ? 366 : 365;
   } else {
     // monthly — ใช้เดือน/ปีที่เลือก
     ms = monthStart(selY, selM);
     me = formatLocalDate(new Date(selY, selM, 0));
     rangeLabel = new Date(selY, selM-1, 1).toLocaleDateString('th-TH', { year:'numeric', month:'long' });
+    
+    // รอบก่อนหน้า = เดือนก่อน
+    let prevM = selM - 1;
+    let prevY = selY;
+    if (prevM < 1) {
+      prevM = 12;
+      prevY = selY - 1;
+    }
+    prevMs = monthStart(prevY, prevM);
+    prevMe = formatLocalDate(new Date(prevY, prevM, 0));
+    prevPeriodLabel = new Date(prevY, prevM - 1, 1).toLocaleDateString('th-TH', { month:'long', year:'numeric' });
+    prevDaysInPeriod = new Date(prevY, prevM, 0).getDate();
   }
 
   setContent(`<div class="loading"><div class="spinner"></div> กำลังโหลด...</div>`);
 
-  const [ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes, _shopeeReady, otherIncomeRes, allOtherIncomeRes, arRes, arPayRes] = await Promise.all([
+  const [
+    ordRes, expRes, prodRes, empRes, poRes, repeatRes, landedRes, allExpRes, allLandedRes, _shopeeReady, otherIncomeRes, allOtherIncomeRes, arRes, arPayRes,
+    prevOrdRes, prevExpRes, prevPoRes, prevOtherIncomeRes, prevArPayRes, prevLandedRes
+  ] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
     sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
@@ -2628,7 +2680,14 @@ async function dashboard() {
     sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',ms).lte('income_date',me),
     sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).limit(10000),
     sb.from('ar_invoices').select('id, ar_no, total_amount, paid_amount, status, ar_date').eq('shop_id', currentShop.id),
-    sb.from('ar_payments').select('id, amount, pay_date, ar_id').eq('shop_id', currentShop.id).gte('pay_date', ms).lte('pay_date', me)
+    sb.from('ar_payments').select('id, amount, pay_date, ar_id').eq('shop_id', currentShop.id).gte('pay_date', ms).lte('pay_date', me),
+    // Previous period queries สำหรับคำนวณ % เติบโต
+    sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date', prevMs).lte('order_date', prevMe),
+    sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date', prevMs).lte('expense_date', prevMe),
+    sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date', prevMs).lte('po_date', prevMe),
+    sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date', prevMs).lte('income_date', prevMe),
+    sb.from('ar_payments').select('id, amount, pay_date, ar_id').eq('shop_id', currentShop.id).gte('pay_date', prevMs).lte('pay_date', prevMe),
+    sb.from('landed_costs').select('*').eq('shop_id', currentShop.id).gte('move_date', prevMs).lte('move_date', prevMe)
   ]);
 
   const allOrdersForRepeat = (repeatRes.data || []).filter(o => !isOrderCancelled(o));
@@ -2787,6 +2846,92 @@ async function dashboard() {
   const netProfit   = profitAfterPlatform - totalExpenses - handlingCost - shippingCostGR - totalSupplierWeeklyExpense - totalEmpComm - cfoWage + totalOtherIncome;
   const totalIncome = totalRevenue + totalOtherIncome;
   const netPct      = totalIncome > 0 ? (netProfit/totalIncome*100).toFixed(1) : '0.0';
+
+  // ── คำนวณยอดสรุปรอบก่อนหน้า (Previous Period Metrics) ──
+  const prevAllOrders = prevOrdRes?.data || [];
+  const prevCancelledOrders = prevAllOrders.filter(isOrderCancelled);
+  const prevOrders = prevAllOrders.filter(o => !isOrderCancelled(o));
+  const prevTotalRevenue = prevOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
+  const prevTotalCost = prevOrders.reduce((s,o) => s + orderCostWithFallback(o), 0);
+  const prevExpenses = prevExpRes?.data || [];
+  const prevTotalExpenses = prevExpenses.reduce((s,e) => s + expenseProfitAmount(e), 0);
+  const prevTotalOtherIncome = (prevOtherIncomeRes?.data || []).reduce((s,e) => s + Number(e.realized_profit||0), 0);
+  const prevPeriodPayments = prevArPayRes?.data || [];
+  const prevTotalARPaidPeriod = prevPeriodPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
+  const prevCancelledOrderTotal = prevCancelledOrders.reduce((sum,o) => sum + Number(o.total_amount||0), 0);
+  const prevAvgSalesPerDay = prevDaysInPeriod > 0 ? (prevTotalRevenue / prevDaysInPeriod) : 0;
+
+  const prevShopeeOrders = prevOrders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
+  const prevLazadaOrders = prevOrders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
+  const prevShopeeFee = prevShopeeOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const prevLazadaFee = prevLazadaOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const prevTotalPlatformFee = prevShopeeFee + prevLazadaFee;
+
+  const prevGrossProfit = prevTotalRevenue - prevTotalCost;
+  const prevProfitAfterPlatform = prevGrossProfit - prevTotalPlatformFee;
+  const prevCommBase = Math.max(0, prevProfitAfterPlatform);
+  const prevTotalEmpComm = prevCommBase * (DEFAULT_EMP_COMM_PCT / 100);
+  const prevCfoWage = prevCommBase * (CFO_WAGE_PCT / 100);
+
+  const prevPos = prevPoRes?.data || [];
+  const prevActivePOs = prevPos.filter(p => p.status !== 'cancelled' && p.status !== 'draft');
+  const prevPurchaseTotals = prevActivePOs.reduce((totals, po) => {
+    const amounts = getPOPurchaseAmounts(po);
+    totals.beforeVat += amounts.beforeVat;
+    totals.vat += amounts.vat;
+    totals.totalWithVat += amounts.totalWithVat;
+    return totals;
+  }, { beforeVat:0, vat:0, totalWithVat:0 });
+  const prevTotalPurchaseBeforeVat = prevPurchaseTotals.beforeVat;
+
+  const prevLanded = prevLandedRes?.data || [];
+  const prevTotalLandedCost = prevLanded.reduce((sum,l) => sum + Number(l.amount||0), 0);
+  const prevHandlingCost = prevLanded.filter(l => l.type === 'ค่าจัดการ').reduce((s,l)=>s+Number(l.amount||0),0);
+  const prevShippingCostGR = prevLanded.filter(l => l.type === 'ค่าขนส่ง').reduce((s,l)=>s+Number(l.amount||0),0);
+
+  const prevSupplierWeeklyExpInfo = calculatePeriodSupplierWeeklyExpenses(prevPos);
+  const prevTotalSupplierWeeklyExpense = prevSupplierWeeklyExpInfo.total;
+
+  const prevNetProfit = prevProfitAfterPlatform - prevTotalExpenses - prevHandlingCost - prevShippingCostGR - prevTotalSupplierWeeklyExpense - prevTotalEmpComm - prevCfoWage + prevTotalOtherIncome;
+
+  // ฟังก์ชันแสดงป้าย Trend % เปรียบเทียบกับรอบก่อนหน้า (▲ เขียว / ▼ แดง)
+  const renderTrendBadge = (current, previous, invertColor = false) => {
+    if (previous === undefined || previous === null || isNaN(previous)) return '';
+    const cur = Number(current || 0);
+    const prev = Number(previous || 0);
+    if (prev === 0 && cur === 0) {
+      return `<span style="font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono)" title="เทียบ ${prevPeriodLabel}: ${fmtB(prev)} → ${fmtB(cur)}">0.0%</span>`;
+    }
+    if (prev === 0 && cur !== 0) {
+      const isUp = cur > 0;
+      let color = isUp ? '#16a34a' : '#dc2626';
+      let bg = isUp ? '#dcfce7' : '#fee2e2';
+      let border = isUp ? '#86efac' : '#fca5a5';
+      if (invertColor) {
+        color = isUp ? '#dc2626' : '#16a34a';
+        bg = isUp ? '#fee2e2' : '#dcfce7';
+        border = isUp ? '#fca5a5' : '#86efac';
+      }
+      return `<span style="font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:4px;background:${bg};color:${color};border:1px solid ${border};white-space:nowrap;font-family:var(--mono)" title="เทียบ ${prevPeriodLabel}: ${fmtB(prev)} → ${fmtB(cur)}">${isUp?'▲ +100%':'▼ -100%'}</span>`;
+    }
+    const diff = cur - prev;
+    const pct = (diff / Math.abs(prev)) * 100;
+    if (Math.abs(pct) < 0.05) {
+      return `<span style="font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:4px;background:var(--bg3);color:var(--text3);border:1px solid var(--border);white-space:nowrap;font-family:var(--mono)" title="เทียบ ${prevPeriodLabel}: ${fmtB(prev)} → ${fmtB(cur)}">0.0%</span>`;
+    }
+    const isUp = pct > 0;
+    let color = isUp ? '#16a34a' : '#dc2626';
+    let bg = isUp ? '#dcfce7' : '#fee2e2';
+    let border = isUp ? '#86efac' : '#fca5a5';
+    if (invertColor) {
+      color = isUp ? '#dc2626' : '#16a34a';
+      bg = isUp ? '#fee2e2' : '#dcfce7';
+      border = isUp ? '#fca5a5' : '#86efac';
+    }
+    const arrow = isUp ? '▲' : '▼';
+    const sign = isUp ? '+' : '';
+    return `<span style="font-size:10.5px;font-weight:700;padding:1px 5px;border-radius:4px;background:${bg};color:${color};border:1px solid ${border};white-space:nowrap;font-family:var(--mono);display:inline-flex;align-items:center;gap:2px" title="เทียบ ${prevPeriodLabel}: ${fmtB(prev)} → ${fmtB(cur)}">${arrow} ${sign}${pct.toFixed(1)}%</span>`;
+  };
 
   // กำไรสุทธิสะสมตลอดอายุร้าน สำหรับ Profit Journey (ไม่เปลี่ยนตามตัวกรอง Dashboard)
   const lifetimeOrders = allOrdersForRepeat;
@@ -3031,7 +3176,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.08 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.09 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3068,17 +3213,26 @@ async function dashboard() {
 
     <div class="stat-grid">
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">💰 ยอดขาย (ไม่รวมยกเลิก) <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>💰 ยอดขาย (ไม่รวมยกเลิก) <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></span>
+          ${renderTrendBadge(totalRevenue, prevTotalRevenue)}
+        </div>
         <div class="stat-value text-accent">${fmtB(totalRevenue)}</div>
-        <div class="stat-sub">${orderCount} ออเดอร์</div>
+        <div class="stat-sub">${orderCount} ออเดอร์ ${renderTrendBadge(orderCount, prevOrders.length)}</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--green)" onclick="showPage('finance')" title="คลิกดูรายได้อื่นและเงินลงทุน">
-        <div class="stat-label">📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></span>
+          ${renderTrendBadge(totalOtherIncome, prevTotalOtherIncome)}
+        </div>
         <div class="stat-value ${totalOtherIncome>=0?'text-green':'text-red'}">${fmtB(totalOtherIncome)}</div>
         <div class="stat-sub">รับรู้จริง · ไม่รวมเงินต้นคืน</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--green)" onclick="showPage('arinvoice')" title="คลิกดูรายการ AR Invoice">
-        <div class="stat-label">💵 รับเงินแล้ว (ช่วงนี้) <span style="font-size:10px;color:var(--green)">→ ดู AR</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>💵 รับเงินแล้ว (ช่วงนี้) <span style="font-size:10px;color:var(--green)">→ ดู AR</span></span>
+          ${renderTrendBadge(totalARPaidPeriod, prevTotalARPaidPeriod)}
+        </div>
         <div class="stat-value text-green">${fmtB(totalARPaidPeriod)}</div>
         <div class="stat-sub">${periodPayCount} รายการรับเงินตามวันที่รับจริง</div>
       </div>
@@ -3088,40 +3242,61 @@ async function dashboard() {
         <div class="stat-sub">${arPendingCount} ใบแจ้งหนี้ที่ยังค้างชำระ</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="drillCancelledOrders('dashboard')" title="คลิกดูรายการออเดอร์ยกเลิก">
-        <div class="stat-label">❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></span>
+          ${renderTrendBadge(cancelledOrders.length, prevCancelledOrders.length, true)}
+        </div>
         <div class="stat-value text-red">${cancelledOrders.length} ใบ</div>
-        <div class="stat-sub">ยอดเงินรวม ${fmtB(cancelledOrderTotal)}</div>
+        <div class="stat-sub">ยอดเงินรวม ${fmtB(cancelledOrderTotal)} ${renderTrendBadge(cancelledOrderTotal, prevCancelledOrderTotal, true)}</div>
         <div class="stat-sub">${cancelledOrderRate.toFixed(1)}% ของออเดอร์ทั้งหมด</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashPurchases()" title="คลิกดูใบสั่งซื้อ (PO) ในช่วงนี้">
-        <div class="stat-label">🛒 ยอดซื้อก่อน VAT <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>🛒 ยอดซื้อก่อน VAT <span style="font-size:10px;color:#7c3aed">→ ดู PO</span></span>
+          ${renderTrendBadge(totalPurchaseBeforeVat, prevTotalPurchaseBeforeVat)}
+        </div>
         <div class="stat-value" style="color:#7c3aed">${fmtB(totalPurchaseBeforeVat)}</div>
         <div class="stat-sub">VAT ${fmtB(totalPurchaseVat)} · <strong style="color:var(--text2)">ยอดรวม VAT ${fmtB(totalPurchaseWithVat)}</strong></div>
         <div class="stat-sub">${activePOs.length} ใบสั่งซื้อ${totalRevenue>0?' · '+(totalPurchaseWithVat/totalRevenue*100).toFixed(0)+'% ของยอดขาย':''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">📈 กำไรหลัง GP Platform <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>📈 กำไรหลัง GP Platform <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></span>
+          ${renderTrendBadge(profitAfterPlatform, prevProfitAfterPlatform)}
+        </div>
         <div class="stat-value ${profitAfterPlatform>=0?'text-green':'text-red'}">${fmtB(profitAfterPlatform)}</div>
         <div class="stat-sub">${totalRevenue>0?(profitAfterPlatform/totalRevenue*100).toFixed(1)+'% margin · ':''}หลังหักต้นทุนและค่าธรรมเนียม</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">✨ กำไรสุทธิ <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>✨ กำไรสุทธิ <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></span>
+          ${renderTrendBadge(netProfit, prevNetProfit)}
+        </div>
         <div class="stat-value ${netProfit>=0?'text-green':'text-red'}">${fmtB(netProfit)}</div>
         <div class="stat-sub">${totalIncome>0?(netProfit/totalIncome*100).toFixed(1)+'% · ':''}รวมรายได้อื่นที่รับรู้แล้ว</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillDashExpenses()" title="คลิกดูรายการค่าใช้จ่าย">
-        <div class="stat-label">💸 ค่าใช้จ่าย <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>💸 ค่าใช้จ่าย <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></span>
+          ${renderTrendBadge(totalExpenses, prevTotalExpenses, true)}
+        </div>
         <div class="stat-value text-red">${fmtB(totalExpenses)}</div>
         <div class="stat-sub">${expenses.length} รายการ</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid #0891b2" onclick="drillLandedCost()" title="คลิกดูรายการ Landed Cost ทั้งหมด">
-        <div class="stat-label">🚢 Landed Cost <span style="font-size:10px;color:#0891b2">→ ดูรายการ</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>🚢 Landed Cost <span style="font-size:10px;color:#0891b2">→ ดูรายการ</span></span>
+          ${renderTrendBadge(totalLandedCost, prevTotalLandedCost, true)}
+        </div>
         <div class="stat-value" style="color:#0891b2">${fmtB(totalLandedCost)}</div>
         <div class="stat-sub">${landed.length} รายการ · ${Object.keys(landedTypeTotals).length} ประเภท</div>
         <div class="stat-sub" style="line-height:1.45">${Object.entries(landedTypeTotals).sort((a,b)=>b[1]-a[1]).map(([type,amount])=>escapeHTML(type)+' '+fmtB(amount)).join(' · ')||'ยังไม่มีรายการในช่วงนี้'}</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid #db2777" onclick="showPage('supplierWeeklyExpense')" title="คลิกดูรายละเอียดค่าสินน้ำใจ Supplier รายสัปดาห์">
-        <div class="stat-label">🎁 สินน้ำใจ Supplier <span style="font-size:10px;color:#db2777">→ ดูรายการ</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>🎁 สินน้ำใจ Supplier <span style="font-size:10px;color:#db2777">→ ดูรายการ</span></span>
+          ${renderTrendBadge(totalSupplierWeeklyExpense, prevTotalSupplierWeeklyExpense, true)}
+        </div>
         <div class="stat-value" style="color:#db2777">${fmtB(totalSupplierWeeklyExpense)}</div>
         <div class="stat-sub">${supplierWeeklyExpInfo.activeCount} Supplier มียอดคำนวณ · Progressive & Top Up</div>
       </div>
@@ -3137,7 +3312,10 @@ async function dashboard() {
         <div class="stat-sub">stock < 5 ชิ้น</div>
       </div>` : ''; })()}
       <div class="stat-card" style="cursor:pointer" onclick="drillDashOrders()" title="คลิกดูรายการออเดอร์">
-        <div class="stat-label">📊 ค่าเฉลี่ย/วัน <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></div>
+        <div class="stat-label" style="display:flex;justify-content:space-between;align-items:center;gap:4px">
+          <span>📊 ค่าเฉลี่ย/วัน <span style="font-size:10px;color:var(--accent)">→ ดูออเดอร์</span></span>
+          ${renderTrendBadge(avgSalesPerDay, prevAvgSalesPerDay)}
+        </div>
         <div class="stat-value text-amber">${fmtB(avgSalesPerDay)}</div>
         <div class="stat-sub">เฉลี่ยจาก ${daysInPeriod} วัน (${fmtB(totalRevenue)} ÷ ${daysInPeriod})</div>
       </div>
@@ -29746,7 +29924,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.08', date:'2026-09-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Accurate Period-Based Daily Average Sales Calculation', items:[
+    { v:'2.09', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Period-over-Period Growth Percentage Comparison Badges (▲ Green / ▼ Red)', items:[
+      '📊 <b>Period-over-Period Growth Comparison:</b> เพิ่มป้ายแสดง % การเติบโตเปรียบเทียบกับรอบก่อนหน้าบนการ์ดสถิติ (Stat Cards) ทุกกล่องใน Dashboard ภาพรวม (เช่น รายเดือนเทียบเดือนก่อนหน้า, รายวันเทียบเมื่อวาน, รายปีเทียบปีก่อนหน้า, รายสัปดาห์เทียบสัปดาห์ก่อนหน้า)',
+      '🟢 <b>Visual Trend Indicators:</b> แสดงลูกศรชี้ขึ้นสีเขียว <code>▲ +X.X%</code> เมื่อยอดเพิ่มขึ้น และลูกศรชี้ลงสีแดง <code>▼ -X.X%</code> เมื่อยอดย่อตัวลง เพื่อให้วิเคราะห์ทิศทางธุรกิจได้ทันที',
+      '🎯 <b>Inverted Sentiment for Expenses & Cancellations:</b> หมวดค่าใช้จ่าย, สินน้ำใจ, Landed Cost และยอดออเดอร์ยกเลิก มีการสลับสีอัจฉริยะ (ลดลงเป็นสีเขียว / เพิ่มขึ้นเป็นสีแดง) เพื่อการติดตามสุขภาพทางการเงินที่ถูกต้อง',
+      '🧹 <b>Cache Refresh (v2.09):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.09'
+    ]},
+    { v:'2.08', date:'2026-09-15', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Accurate Period-Based Daily Average Sales Calculation', items:[
       '📊 <b>Smart Period-Aware Daily Average:</b> แก้ไขสูตรคำนวณ "ค่าเฉลี่ย/วัน" ให้หารตามจำนวนวันจริงของเดือนที่เลือกอย่างถูกต้อง (เช่น เมื่อเลือกดูเดือนสิงหาคมที่มี 31 วัน ระบบจะหารด้วย 31 วัน แทนที่จะหารด้วยวันที่ปัจจุบัน)',
       '📅 <b>Clear Calculation Subtitle:</b> แสดงจำนวนวันและยอดคำนวณชัดเจนใต้การ์ดสถิติ (เช่น เฉลี่ยจาก 31 วัน ฿48,827.38 ÷ 31)',
       '🧹 <b>Cache Refresh (v2.08):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.08'
