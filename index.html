@@ -37,7 +37,7 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.14';
+const CURRENT_APP_VERSION = 'sealthai-v2.15';
 const DISPLAY_APP_VERSION = 'v2.14';
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -4872,8 +4872,349 @@ async function drillMonthlyOtherIncome() {
   }
 }
 
+
+function isGratuityExpense(e) {
+  const cat = (effectiveExpenseCategory(e) || '').toLowerCase();
+  const sub = (e.subcategory || '').toLowerCase();
+  const note = (e.note || '').toLowerCase();
+  return cat.includes('สินน้ำใจ') || sub.includes('สินน้ำใจ') || note.includes('สินน้ำใจ') || (e.note || '').includes('[gratuity]');
+}
+
+function isWageExpense(e) {
+  const cat = (effectiveExpenseCategory(e) || '').toLowerCase();
+  const sub = (e.subcategory || '').toLowerCase();
+  const note = (e.note || '').toLowerCase();
+  return cat.includes('บุคลากร') || cat.includes('ค่าจ้าง') || cat.includes('เงินเดือน') || cat.includes('ค่าแรง') || sub.includes('ค่าแรง') || sub.includes('เงินเดือน') || note.includes('ค่าแรง') || note.includes('เงินเดือน');
+}
+
+async function drillDailyWage(dateStr, cfoWageAmt, manualWageAmt) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">💼 รายละเอียดค่าแรง วันที่ ${dateStr}</div>
+      <div id="daily-wage-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: expenses, error } = await sb.from('expenses')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .eq('expense_date', dateStr)
+      .order('id');
+    
+    if (error) throw error;
+    const wageExpenses = (expenses || []).filter(isWageExpense);
+    const totalWage = Number(cfoWageAmt || 0) + Number(manualWageAmt || 0);
+    const contentEl = document.getElementById('daily-wage-modal-content');
+    if (!contentEl) return;
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">รวมค่าแรงและเงินเดือนวันที่ ${dateStr} ทั้งสิ้น ${fmtB(totalWage)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">ประเภท</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด / สูตรคำนวณ</th>
+          <th style="text-align:right;padding:6px 8px">จำนวนเงิน (฿)</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:7px 8px"><span class="badge" style="background:#f3e8ff;color:#9333ea;font-size:11px;font-weight:700">💼 ค่าแรง CFO / บัญชี</span></td>
+            <td style="padding:7px 8px">
+              <div style="color:var(--text);font-weight:600">นันทนา (CFO 15%)</div>
+              <div style="font-size:11.5px;color:var(--text3)">15% × กำไรหลังหัก GP Platform ประจำวัน</div>
+            </td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#9333ea">${fmtB(cfoWageAmt)}</td>
+          </tr>
+          ${wageExpenses.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px"><span class="badge badge-gray" style="font-size:11px">🏢 ${escapeHTML(effectiveExpenseCategory(e))}</span></td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
+                ${e.vendor ? `<div style="font-size:11px;color:var(--text3)">ผู้รับเงิน/พนักงาน: ${escapeHTML(e.vendor)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red)">${fmtB(expenseProfitAmount(e))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="2" style="padding:8px">รวมค่าแรงวันที่ ${dateStr}</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:#9333ea">${fmtB(totalWage)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillDailyWage error:', err);
+    const contentEl = document.getElementById('daily-wage-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
+async function drillMonthlyWage() {
+  const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
+  if (!dateFrom) return;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">💼 รายละเอียดค่าแรงรวมประจำงวด</div>
+      <div id="monthly-wage-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: expenses, error } = await sb.from('expenses')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .gte('expense_date', dateFrom).lte('expense_date', dateTo)
+      .order('expense_date', { ascending: false });
+    if (error) throw error;
+    const wageExpenses = (expenses || []).filter(isWageExpense);
+    const manualWageTotal = wageExpenses.reduce((s, e) => s + expenseProfitAmount(e), 0);
+    const cfoWageTotal = Number(window._monthlyCfoWageTotal || 0);
+    const totalWage = cfoWageTotal + manualWageTotal;
+
+    const contentEl = document.getElementById('monthly-wage-modal-content');
+    if (!contentEl) return;
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">📅 ${periodLabel} · รวมค่าแรงทั้งสิ้น ${fmtB(totalWage)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">วันที่</th>
+          <th style="text-align:left;padding:6px 8px">ประเภท / พนักงาน</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด</th>
+          <th style="text-align:right;padding:6px 8px">จำนวนเงิน (฿)</th>
+        </tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border);background:#faf5ff">
+            <td style="padding:7px 8px;color:var(--text2)">ทั้งงวด</td>
+            <td style="padding:7px 8px"><span class="badge" style="background:#f3e8ff;color:#9333ea;font-size:11px;font-weight:700">💼 CFO นันทนา 15%</span></td>
+            <td style="padding:7px 8px;font-size:12px;color:var(--text2)">15% ของกำไรหลังหัก GP Platform งวด ${periodLabel}</td>
+            <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#9333ea">${fmtB(cfoWageTotal)}</td>
+          </tr>
+          ${wageExpenses.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px;color:var(--text2)">${escapeHTML(e.expense_date||'-')}</td>
+              <td style="padding:7px 8px"><span class="badge badge-gray" style="font-size:11px">🏢 ${escapeHTML(effectiveExpenseCategory(e))}</span></td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
+                ${e.vendor ? `<div style="font-size:11px;color:var(--text3)">ผู้รับเงิน/พนักงาน: ${escapeHTML(e.vendor)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red)">${fmtB(expenseProfitAmount(e))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="3" style="padding:8px">รวมค่าแรงทั้งหมด</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:#9333ea">${fmtB(totalWage)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillMonthlyWage error:', err);
+    const contentEl = document.getElementById('monthly-wage-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
+async function drillDailyCommission(dateStr, empCommAmt) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">👤 รายละเอียดค่าคอมมิชชั่น วันที่ ${dateStr}</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">พนักงานฝ่ายขาย: <b>นิติ บุญสายันต์ (15%)</b></div>
+      <div style="background:#fdf2f8;border:1.5px solid #fbcfe8;border-radius:8px;padding:14px;margin-bottom:14px">
+        <div style="font-size:13px;color:#be185d;font-weight:700">สูตรการคิดค่าคอมมิชชั่น:</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">15% × กำไรหลังหัก GP Platform ประจำวัน (ยอดขาย − ต้นทุนสินค้า − ค่า GP Platform)</div>
+        <div style="font-size:22px;font-weight:800;color:#be185d;font-family:var(--mono);margin-top:8px">${fmtB(empCommAmt)}</div>
+      </div>
+      <div style="text-align:right">
+        <button class="btn btn-secondary btn-sm" onclick="drillMonthlyDay('${dateStr}');this.closest('[style*=fixed]').remove()">🛒 ดูรายการออเดอร์ของวันนี้</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function drillMonthlyCommission() {
+  const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
+  const totComm = Number(window._monthlyEmpCommTotal || 0);
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">👤 รายละเอียดค่าคอมมิชชั่นพนักงานรวมประจำงวด</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">📅 ${periodLabel} · พนักงาน: <b>นิติ บุญสายันต์ (15%)</b></div>
+      <div style="background:#fdf2f8;border:1.5px solid #fbcfe8;border-radius:8px;padding:16px;margin-bottom:14px">
+        <div style="font-size:13px;color:#be185d;font-weight:700">เกณฑ์คำนวณค่าคอมมิชชั่น:</div>
+        <div style="font-size:12.5px;color:var(--text2);margin-top:4px">15% × กำไรหลังหัก GP Platform งวด ${periodLabel}</div>
+        <div style="font-size:24px;font-weight:800;color:#be185d;font-family:var(--mono);margin-top:8px">${fmtB(totComm)}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3)">💡 สามารถดูรายงานคอมมิชชั่นฉบับเต็มและตั้งค่ารายชื่อพนักงานได้ที่เมนู <b>👥 พนักงาน</b></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function drillDailyGratuity(dateStr) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">🎁 รายละเอียดค่าสินน้ำใจ วันที่ ${dateStr}</div>
+      <div id="daily-grat-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: expenses, error } = await sb.from('expenses')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .eq('expense_date', dateStr)
+      .order('id');
+    
+    if (error) throw error;
+    const rows = (expenses || []).filter(isGratuityExpense);
+    const totGrat = rows.reduce((s, e) => s + expenseProfitAmount(e), 0);
+    const contentEl = document.getElementById('daily-grat-modal-content');
+    if (!contentEl) return;
+
+    if (!rows.length) {
+      contentEl.outerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)">ไม่มีรายการค่าสินน้ำใจในวันนี้</div>';
+      return;
+    }
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${rows.length} รายการ · รวม ${fmtB(totGrat)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">ประเภท / ผู้รับ</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด / หมายเหตุ</th>
+          <th style="text-align:right;padding:6px 8px">จำนวนเงิน</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px">
+                <span class="badge" style="background:#fef3c7;color:#b45309;font-size:11px;font-weight:700">🎁 ${escapeHTML(e.subcategory || effectiveExpenseCategory(e))}</span>
+                ${e.vendor ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${escapeHTML(e.vendor)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#d97706">${fmtB(expenseProfitAmount(e))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="2" style="padding:8px">รวมค่าสินน้ำใจวันที่ ${dateStr}</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:#d97706">${fmtB(totGrat)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillDailyGratuity error:', err);
+    const contentEl = document.getElementById('daily-grat-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
+async function drillMonthlyGratuity() {
+  const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
+  if (!dateFrom) return;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">🎁 รายละเอียดค่าสินน้ำใจรวมประจำงวด</div>
+      <div id="monthly-grat-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: expenses, error } = await sb.from('expenses')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .gte('expense_date', dateFrom).lte('expense_date', dateTo)
+      .order('expense_date', { ascending: false });
+    if (error) throw error;
+    const rows = (expenses || []).filter(isGratuityExpense);
+    const totGrat = rows.reduce((s, e) => s + expenseProfitAmount(e), 0);
+
+    const contentEl = document.getElementById('monthly-grat-modal-content');
+    if (!contentEl) return;
+
+    if (!rows.length) {
+      contentEl.outerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)">ไม่มีรายการค่าสินน้ำใจในช่วงเวลานี้</div>';
+      return;
+    }
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">📅 ${periodLabel} · ${rows.length} รายการ · รวม ${fmtB(totGrat)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">วันที่</th>
+          <th style="text-align:left;padding:6px 8px">ประเภท / ผู้รับ</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด</th>
+          <th style="text-align:right;padding:6px 8px">จำนวนเงิน (฿)</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px;color:var(--text2)">${escapeHTML(e.expense_date||'-')}</td>
+              <td style="padding:7px 8px">
+                <span class="badge" style="background:#fef3c7;color:#b45309;font-size:11px;font-weight:700">🎁 ${escapeHTML(e.subcategory || effectiveExpenseCategory(e))}</span>
+                ${e.vendor ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">${escapeHTML(e.vendor)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#d97706">${fmtB(expenseProfitAmount(e))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="3" style="padding:8px">รวมค่าสินน้ำใจทั้งหมด</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:#d97706">${fmtB(totGrat)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillMonthlyGratuity error:', err);
+    const contentEl = document.getElementById('monthly-grat-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
 async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
-  const [ordRes, expRes, incRes, prodRes, _shopeeReady] = await Promise.all([
+  const [ordRes, expRes, incRes, prodRes, empRes, _shopeeReady] = await Promise.all([
     sb.from('orders').select('id,order_no,order_date,channel,customer_social,total_amount,total_cost,doc_status,shipping_status,order_items(product_id,qty,cost_per_unit)')
       .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo),
     sb.from('expenses').select('*')
@@ -4881,6 +5222,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     sb.from('other_income').select('income_date,realized_profit')
       .eq('shop_id', currentShop.id).gte('income_date', dateFrom).lte('income_date', dateTo),
     sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id).eq('active', true),
+    sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active', true),
     ensureShopeeFeeData()
   ]);
 
@@ -4889,6 +5231,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   const expenses = expRes.data || [];
   const otherIncome = incRes.data || [];
   const products = prodRes.data || [];
+  const employees = empRes.data || [];
 
   // fallback ต้นทุน
   const prodCostMap = {};
@@ -4904,7 +5247,10 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   orders.forEach(o => {
     const d = o.order_date;
     if (!d) return;
-    if (!dateMap[d]) dateMap[d] = {rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0, other:0, cost:0, exp:0, cnt:0};
+    if (!dateMap[d]) dateMap[d] = {
+      rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0,
+      other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, cnt:0
+    };
     
     const rev = Number(o.total_amount || 0);
     const ch = String(o.channel || '').toLowerCase();
@@ -4932,20 +5278,33 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   expenses.forEach(e => {
     const d = e.expense_date;
     if (!d) return;
-    if (!dateMap[d]) dateMap[d] = {rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0, other:0, cost:0, exp:0, cnt:0};
-    dateMap[d].exp += expenseProfitAmount(e);
+    if (!dateMap[d]) dateMap[d] = {
+      rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0,
+      other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, cnt:0
+    };
+    const amt = expenseProfitAmount(e);
+    if (isGratuityExpense(e)) {
+      dateMap[d].gratuity += amt;
+    } else if (isWageExpense(e)) {
+      dateMap[d].manualWage += amt;
+    } else {
+      dateMap[d].exp += amt;
+    }
   });
 
   otherIncome.forEach(e => {
     const d = e.income_date;
     if (!d) return;
-    if (!dateMap[d]) dateMap[d] = {rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0, other:0, cost:0, exp:0, cnt:0};
+    if (!dateMap[d]) dateMap[d] = {
+      rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0,
+      other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, cnt:0
+    };
     dateMap[d].other += Number(e.realized_profit || 0);
   });
 
   const days = Object.keys(dateMap).sort();
   let totRev=0, totShopeeRev=0, totLazadaRev=0, totShopeeFee=0, totLazadaFee=0, totPlatformFee=0;
-  let totOther=0, totCost=0, totExp=0;
+  let totOther=0, totCost=0, totExp=0, totWage=0, totCfoWage=0, totManualWage=0, totEmpComm=0, totGratuity=0;
   let cum=0;
   const rows=[]; const chartLabels=[]; const chartCum=[];
   const chartRev=[]; const chartCost=[]; const chartNet=[];
@@ -4955,7 +5314,6 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   const getChartKey = (d) => {
     if (period === 'year')    return d.slice(0,7);          // YYYY-MM
     if (period === 'quarter') {
-      // group by week (Mon)
       const dt = new Date(d);
       dt.setDate(dt.getDate() - ((dt.getDay()+6)%7));
       return dt.toISOString().slice(0,10);
@@ -4973,7 +5331,18 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
 
   days.forEach(d => {
     const dd = dateMap[d];
-    const profit = dd.rev + dd.other - dd.cost - dd.platformFee - dd.exp;
+    const dailyProfitAfterPlatform = Math.max(0, dd.rev - dd.cost - dd.platformFee);
+    
+    // 💼 ค่าแรง CFO (15%) + ค่าแรงพนักงานที่บันทึก
+    dd.cfoWage = dailyProfitAfterPlatform * 0.15;
+    dd.wage = dd.cfoWage + dd.manualWage;
+
+    // 👤 ค่าคอมพนักงาน Sales (15%)
+    dd.empComm = dailyProfitAfterPlatform * 0.15;
+
+    // ✨ กำไรสุทธิของวัน
+    const profit = dd.rev + dd.other - dd.cost - dd.platformFee - dd.exp - dd.wage - dd.empComm - dd.gratuity;
+
     totRev += dd.rev;
     totShopeeRev += dd.shopeeRev;
     totLazadaRev += dd.lazadaRev;
@@ -4983,6 +5352,12 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     totOther += dd.other;
     totCost += dd.cost;
     totExp += dd.exp;
+    totCfoWage += dd.cfoWage;
+    totManualWage += dd.manualWage;
+    totWage += dd.wage;
+    totEmpComm += dd.empComm;
+    totGratuity += dd.gratuity;
+
     cum += profit;
     rows.push({d, ...dd, profit, cum});
     chartCum.push(cum);
@@ -4990,7 +5365,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     const ck = getChartKey(d);
     if (!chartGroupMap[ck]) chartGroupMap[ck] = {rev:0, cost:0, fee:0, net:0};
     chartGroupMap[ck].rev  += dd.rev;
-    chartGroupMap[ck].cost += (dd.cost + dd.platformFee + dd.exp);
+    chartGroupMap[ck].cost += (dd.cost + dd.platformFee + dd.exp + dd.wage + dd.empComm + dd.gratuity);
     chartGroupMap[ck].fee  += dd.platformFee;
     chartGroupMap[ck].net  += profit;
   });
@@ -5002,13 +5377,17 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     chartCost.push(chartGroupMap[k].cost);
     chartNet.push(chartGroupMap[k].net);
   });
-  const netProfit = totRev + totOther - totCost - totPlatformFee - totExp;
+  const netProfit = totRev + totOther - totCost - totPlatformFee - totExp - totWage - totEmpComm - totGratuity;
 
   window._monthlyDates = { dateFrom, dateTo, periodLabel };
+  window._monthlyCfoWageTotal = totCfoWage;
+  window._monthlyEmpCommTotal = totEmpComm;
+  window._monthlyGratuityTotal = totGratuity;
+
   const el = document.getElementById('monthly-content');
   el.innerHTML = `
     <div style="font-size:12px;color:var(--text3);margin-bottom:12px">📅 ${periodLabel}</div>
-    <div class="stat-grid mb-4">
+    <div class="stat-grid mb-4" style="grid-template-columns:repeat(auto-fit, minmax(180px, 1fr))">
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyRevenue()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">💰 ยอดขายรวม <span style="font-size:10px;color:var(--accent)">→ ดูรายการ</span></div>
         <div class="stat-value text-accent">${fmtB(totRev)}</div>
@@ -5024,25 +5403,40 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
         <div class="stat-value" style="color:#ea580c">${fmtB(totPlatformFee)}</div>
         <div class="stat-sub">Shopee: <b style="color:#ea580c">${fmtB(totShopeeFee)}</b> · Lazada: <b style="color:#0284c7">${fmtB(totLazadaFee)}</b></div>
       </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #9333ea" onclick="drillMonthlyWage()" title="คลิกดูรายละเอียดค่าแรงและเงินเดือน">
+        <div class="stat-label">💼 ค่าแรงรวม <span style="font-size:10px;color:#9333ea">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#9333ea">${fmtB(totWage)}</div>
+        <div class="stat-sub">CFO (15%): <b>${fmtB(totCfoWage)}</b>${totManualWage>0?` · เงินเดือน ${fmtB(totManualWage)}`:''}</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #be185d" onclick="drillMonthlyCommission()" title="คลิกดูรายละเอียดค่าคอมมิชชั่นพนักงาน">
+        <div class="stat-label">👤 ค่าคอมพนักงาน <span style="font-size:10px;color:#be185d">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#be185d">${fmtB(totEmpComm)}</div>
+        <div class="stat-sub">Sales (นิติ 15%): <b>${fmtB(totEmpComm)}</b></div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #d97706" onclick="drillMonthlyGratuity()" title="คลิกดูรายละเอียดค่าสินน้ำใจ & เงินพิเศษ">
+        <div class="stat-label">🎁 ค่าสินน้ำใจ <span style="font-size:10px;color:#d97706">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#d97706">${fmtB(totGratuity)}</div>
+        <div class="stat-sub">Gratuity & Top Up พิเศษ</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyExpenses()" title="คลิกดูค่าใช้จ่ายดำเนินงาน">
+        <div class="stat-label">💸 ค่าใช้จ่ายดำเนินงาน <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
+        <div class="stat-value text-red">${fmtB(totExp)}</div>
+        <div class="stat-sub">ค่าใช้จ่ายทั่วไปของร้าน</div>
+      </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyOtherIncome()" title="คลิกดูรายได้อื่นและเงินลงทุน">
         <div class="stat-label">📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></div>
         <div class="stat-value ${totOther>=0?'text-green':'text-red'}">${fmtB(totOther)}</div>
         <div class="stat-sub">ไม่รวมเงินต้นคืน</div>
       </div>
-      <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyExpenses()" title="คลิกดูค่าใช้จ่าย">
-        <div class="stat-label">💸 ค่าใช้จ่ายรวม <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
-        <div class="stat-value text-red">${fmtB(totExp)}</div>
-        <div class="stat-sub">${expenses.length} รายการ</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">✨ กำไรสุทธิ (หัก GP & ค่าใช้จ่าย)</div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)">
+        <div class="stat-label">✨ กำไรสุทธิ (หลังหักครบทุกส่วน)</div>
         <div class="stat-value ${netProfit>=0?'text-green':'text-red'}">${fmtB(netProfit)}</div>
         <div class="stat-sub">${totRev>0?(netProfit/totRev*100).toFixed(1)+'% Net Margin':''}</div>
       </div>
     </div>
     ${rows.length ? `
     <div class="card mb-4">
-      <div class="card-title" style="margin-bottom:12px">📊 ยอดขาย / ต้นทุน+GP+ค่าใช้จ่าย / กำไรสุทธิ</div>
+      <div class="card-title" style="margin-bottom:12px">📊 ยอดขาย / ต้นทุน+GP+ค่าใช้จ่าย+ค่าแรง / กำไรสุทธิ</div>
       <div class="chart-box" style="height:260px"><canvas id="ch-monthly-bar"></canvas></div>
     </div>
     <div class="card mb-4">
@@ -5052,63 +5446,84 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     <div class="card">
       <div class="card-title flex-between" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
         <div style="font-size:15px;font-weight:700">📋 รายละเอียดประจำงวด (${periodLabel})</div>
-        <div style="font-size:12px;color:var(--text3);font-weight:400">แสดงยอดขาย, GP Shopee, GP Lazada, รวม GP Platform, ต้นทุน, ค่าใช้จ่าย และกำไรสุทธิ</div>
+        <div style="font-size:12px;color:var(--text3);font-weight:400">แสดงยอดขาย, GP Platform, ต้นทุน, ค่าแรง, ค่าคอมพนักงาน, ค่าสินน้ำใจ, ค่าใช้จ่าย และกำไรสุทธิ</div>
       </div>
       <div class="table-wrap desktop-only" style="overflow-x:auto">
-        <table style="width:100%;font-size:12.5px">
+        <table style="width:100%;font-size:12px">
           <thead><tr style="border-bottom:2px solid var(--border);background:var(--bg2)">
-            <th style="padding:8px 6px;text-align:left">วันที่</th>
-            <th style="padding:8px 6px;text-align:center;color:#0284c7">📑 จำนวนบิล</th>
-            <th style="padding:8px 6px;text-align:right">💰 ยอดขาย</th>
-            <th style="padding:8px 6px;text-align:right;color:#ea580c">🟠 GP Shopee</th>
-            <th style="padding:8px 6px;text-align:right;color:#0284c7">🔵 GP Lazada</th>
-            <th style="padding:8px 6px;text-align:right;color:#ea580c">💸 รวม GP Plat.</th>
-            <th style="padding:8px 6px;text-align:right;color:var(--amber)">📦 ต้นทุน</th>
-            <th style="padding:8px 6px;text-align:right;color:var(--red)">💸 ค่าใช้จ่าย</th>
-            <th style="padding:8px 6px;text-align:right;color:var(--green)">📈 รายได้อื่น</th>
-            <th style="padding:8px 6px;text-align:right;color:var(--accent)">✨ กำไรสุทธิ</th>
-            <th style="padding:8px 6px;text-align:right">📈 กำไรสะสม</th>
+            <th style="padding:8px 5px;text-align:left;min-width:75px">วันที่</th>
+            <th style="padding:8px 4px;text-align:center;color:#0284c7;min-width:65px">📑 บิล</th>
+            <th style="padding:8px 5px;text-align:right">💰 ยอดขาย</th>
+            <th style="padding:8px 5px;text-align:right;color:#ea580c">🟠 GP Shp</th>
+            <th style="padding:8px 5px;text-align:right;color:#0284c7">🔵 GP Laz</th>
+            <th style="padding:8px 5px;text-align:right;color:#ea580c">💸 GP รวม</th>
+            <th style="padding:8px 5px;text-align:right;color:var(--amber)">📦 ต้นทุน</th>
+            <th style="padding:8px 5px;text-align:right;color:#9333ea">💼 ค่าแรง</th>
+            <th style="padding:8px 5px;text-align:right;color:#be185d">👤 ค่าคอม</th>
+            <th style="padding:8px 5px;text-align:right;color:#d97706">🎁 สินน้ำใจ</th>
+            <th style="padding:8px 5px;text-align:right;color:var(--red)">💸 ค่าใช้จ่าย</th>
+            <th style="padding:8px 5px;text-align:right;color:var(--green)">📈 รายได้อื่น</th>
+            <th style="padding:8px 5px;text-align:right;color:var(--accent)">✨ กำไรสุทธิ</th>
+            <th style="padding:8px 5px;text-align:right">📈 กำไรสะสม</th>
           </tr></thead>
           <tbody>
             ${rows.map(r=>`<tr>
-              <td style="padding:7px 6px">${r.cnt > 0 ? `<a href="javascript:void(0)" onclick="drillMonthlyDay('${r.d}')" style="color:var(--accent);font-weight:700;text-decoration:underline" title="คลิกดู ${r.cnt} ออเดอร์ของวันนี้">${r.d}</a>` : r.d}</td>
-              <td style="padding:7px 6px;text-align:center">
-                ${r.cnt > 0 ? `<span class="badge" style="background:#e0f2fe;color:#0284c7;font-weight:700;font-family:var(--mono);cursor:pointer;padding:2px 8px;border-radius:6px;border:1px solid #bae6fd;display:inline-flex;align-items:center;gap:3px" onclick="drillMonthlyDay('${r.d}')" title="คลิกดูรายการออเดอร์ของวันนี้">🛒 ${r.cnt} บิล</span>` : '<span style="color:var(--text3);font-family:var(--mono)">0</span>'}
+              <td style="padding:6px 5px">${r.cnt > 0 ? `<a href="javascript:void(0)" onclick="drillMonthlyDay('${r.d}')" style="color:var(--accent);font-weight:700;text-decoration:underline" title="คลิกดู ${r.cnt} ออเดอร์ของวันนี้">${r.d}</a>` : r.d}</td>
+              <td style="padding:6px 4px;text-align:center">
+                ${r.cnt > 0 ? `<span class="badge" style="background:#e0f2fe;color:#0284c7;font-weight:700;font-family:var(--mono);cursor:pointer;padding:1px 6px;border-radius:6px;border:1px solid #bae6fd;display:inline-flex;align-items:center;gap:2px" onclick="drillMonthlyDay('${r.d}')" title="คลิกดูรายการออเดอร์ของวันนี้">🛒 ${r.cnt}</span>` : '<span style="color:var(--text3);font-family:var(--mono)">0</span>'}
               </td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--accent)">${fmtB(r.rev)}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${r.shopeeFee > 0 ? fmtB(r.shopeeFee) : '-'}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#0284c7">${r.lazadaFee > 0 ? fmtB(r.lazadaFee) : '-'}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:600;color:#ea580c">${r.platformFee > 0 ? fmtB(r.platformFee) : '-'}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(r.cost)}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">
-                ${r.exp > 0 ? `<a href="javascript:void(0)" onclick="drillDailyExpenses('${r.d}')" style="color:var(--red);font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการค่าใช้จ่ายวันที่ ${r.d}">${fmtB(r.exp)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--accent)">${fmtB(r.rev)}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);color:#ea580c">${r.shopeeFee > 0 ? fmtB(r.shopeeFee) : '-'}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);color:#0284c7">${r.lazadaFee > 0 ? fmtB(r.lazadaFee) : '-'}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);font-weight:600;color:#ea580c">${r.platformFee > 0 ? fmtB(r.platformFee) : '-'}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(r.cost)}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono)">
+                ${r.wage > 0 ? `<a href="javascript:void(0)" onclick="drillDailyWage('${r.d}', ${r.cfoWage}, ${r.manualWage})" style="color:#9333ea;font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดค่าแรง">${fmtB(r.wage)}</a>` : '<span style="color:var(--text3)">-</span>'}
               </td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">
-                ${r.other !== 0 ? `<a href="javascript:void(0)" onclick="drillDailyOtherIncome('${r.d}')" style="color:${r.other>=0?'var(--green)':'var(--red)'};font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการรายได้อื่นวันที่ ${r.d}">${fmtB(r.other)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono)">
+                ${r.empComm > 0 ? `<a href="javascript:void(0)" onclick="drillDailyCommission('${r.d}', ${r.empComm})" style="color:#be185d;font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดค่าคอม">${fmtB(r.empComm)}</a>` : '<span style="color:var(--text3)">-</span>'}
               </td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:${r.profit>=0?'var(--green)':'var(--red)'}">${fmtB(r.profit)}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:${r.cum>=0?'var(--green)':'var(--red)'}">${fmtB(r.cum)}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono)">
+                ${r.gratuity > 0 ? `<a href="javascript:void(0)" onclick="drillDailyGratuity('${r.d}')" style="color:#d97706;font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดค่าสินน้ำใจ">${fmtB(r.gratuity)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              </td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono)">
+                ${r.exp > 0 ? `<a href="javascript:void(0)" onclick="drillDailyExpenses('${r.d}')" style="color:var(--red);font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการค่าใช้จ่าย">${fmtB(r.exp)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              </td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono)">
+                ${r.other !== 0 ? `<a href="javascript:void(0)" onclick="drillDailyOtherIncome('${r.d}')" style="color:${r.other>=0?'var(--green)':'var(--red)'};font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการรายได้อื่น">${fmtB(r.other)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              </td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);font-weight:700;color:${r.profit>=0?'var(--green)':'var(--red)'}">${fmtB(r.profit)}</td>
+              <td style="padding:6px 5px;text-align:right;font-family:var(--mono);color:${r.cum>=0?'var(--green)':'var(--red)'}">${fmtB(r.cum)}</td>
             </tr>`).join('')}
           </tbody>
           <tfoot>
             <tr style="border-top:2.5px solid var(--border);font-weight:800;background:var(--bg2)">
-              <td style="padding:9px 6px">รวมทั้งสิ้น</td>
-              <td style="padding:9px 6px;text-align:center">
-                <span class="badge" style="background:#e0f2fe;color:#0284c7;font-weight:800;font-size:12px;padding:3px 10px;border-radius:6px;border:1px solid #bae6fd">${orders.length} บิล</span>
+              <td style="padding:9px 5px">รวมทั้งสิ้น</td>
+              <td style="padding:9px 4px;text-align:center">
+                <span class="badge" style="background:#e0f2fe;color:#0284c7;font-weight:800;font-size:11.5px;padding:2px 8px;border-radius:6px;border:1px solid #bae6fd">${orders.length} บิล</span>
               </td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--accent)">${fmtB(totRev)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totShopeeFee)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#0284c7">${fmtB(totLazadaFee)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totPlatformFee)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(totCost)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:var(--accent)">${fmtB(totRev)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totShopeeFee)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:#0284c7">${fmtB(totLazadaFee)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totPlatformFee)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(totCost)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono)">
+                <a href="javascript:void(0)" onclick="drillMonthlyWage()" style="color:#9333ea;font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดค่าแรงทั้งหมด">${fmtB(totWage)}</a>
+              </td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono)">
+                <a href="javascript:void(0)" onclick="drillMonthlyCommission()" style="color:#be185d;font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดค่าคอมทั้งหมด">${fmtB(totEmpComm)}</a>
+              </td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono)">
+                <a href="javascript:void(0)" onclick="drillMonthlyGratuity()" style="color:#d97706;font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดค่าสินน้ำใจทั้งหมด">${fmtB(totGratuity)}</a>
+              </td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono)">
                 <a href="javascript:void(0)" onclick="drillMonthlyExpenses()" style="color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดค่าใช้จ่ายทั้งหมด">${fmtB(totExp)}</a>
               </td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono)">
                 <a href="javascript:void(0)" onclick="drillMonthlyOtherIncome()" style="color:${totOther>=0?'var(--green)':'var(--red)'};font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดรายได้อื่นทั้งหมด">${fmtB(totOther)}</a>
               </td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtB(netProfit)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${cum>=0?'var(--green)':'var(--red)'}">${fmtB(cum)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtB(netProfit)}</td>
+              <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:${cum>=0?'var(--green)':'var(--red)'}">${fmtB(cum)}</td>
             </tr>
           </tfoot>
         </table>
@@ -5123,10 +5538,13 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
                 ${r.cnt > 0 ? `<span class="badge" style="background:#e0f2fe;color:#0284c7;font-size:11px;font-weight:700;padding:1px 7px;border-radius:6px;border:1px solid #bae6fd">🛒 ${r.cnt} บิล</span>` : ''}
               </div>
               <div style="font-size:11px;color:var(--text3);margin-top:3px">
-                GP รวม: <span style="color:#ea580c;font-weight:600">${fmtB(r.platformFee)}</span>
-                ${r.shopeeFee > 0 ? ` (Shp ${fmtB(r.shopeeFee)})` : ''}${r.lazadaFee > 0 ? ` (Laz ${fmtB(r.lazadaFee)})` : ''}
+                GP รวม: <span style="color:#ea580c;font-weight:600">${fmtB(r.platformFee)}</span> · ต้นทุน ${fmtB(r.cost)}
               </div>
-              <div style="font-size:11px;color:var(--text3)">ต้นทุน ${fmtB(r.cost)} · ค่าใช้จ่าย ${fmtB(r.exp)}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:1px">
+                💼 ค่าแรง <span style="color:#9333ea;font-weight:600">${fmtB(r.wage)}</span> · 👤 คอม <span style="color:#be185d;font-weight:600">${fmtB(r.empComm)}</span>
+                ${r.gratuity > 0 ? ` · 🎁 สินน้ำใจ <span style="color:#d97706;font-weight:600">${fmtB(r.gratuity)}</span>` : ''}
+              </div>
+              <div style="font-size:11px;color:var(--text3)">ค่าใช้จ่ายร้าน ${fmtB(r.exp)}</div>
             </div>
             <div style="text-align:right">
               <div class="font-mono text-accent" style="font-size:14px;font-weight:700">${fmtB(r.rev)}</div>
@@ -5136,6 +5554,8 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
         ${!rows.length?'<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่มีข้อมูลในช่วงนี้</div></div>':''}
       </div>
     </div>`;
+}
+
 
   // ── Bar Chart: Revenue / Cost / Net ──
   if (rows.length && document.getElementById('ch-monthly-bar')) {
@@ -30678,7 +31098,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.14', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Interactive Daily Drilldowns for Expenses & Other Income in Monthly Details Table', items:[
+    { v:'2.15', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Monthly Summary: Staff Wages, Commissions & Gratuity in Details Table', items:[
+      '💼 <b>คอลัมน์ค่าแรง (Staff Wages):</b> แสดงค่าแรง CFO (15% ของกำไรหลังหัก GP Platform) และค่าแรง/เงินเดือนพนักงานในตารางรายละเอียดรายวัน พร้อมป๊อปอัปดูที่มาการคำนวณและรายการบิล',
+      '👤 <b>คอลัมน์ค่าคอมพนักงาน (Sales Commission):</b> แสดงค่าคอมมิชชั่นฝ่ายขาย (นิติ บุญสายันต์ 15%) ในแต่ละวันอย่างโปร่งใส พร้อมปุ่มกดดูสูตรและฐานกำไร',
+      '🎁 <b>คอลัมน์ค่าสินน้ำใจ (Gratuity & Top Up):</b> แสดงค่าสินน้ำใจและเงินพิเศษ Supplier แยกต่างหากอย่างชัดเจน พร้อมคลิกดูรายละเอียดได้',
+      '📊 <b>Stat Cards ใหม่ด้านบน:</b> เพิ่มการ์ดสรุปยอดรวม ค่าแรง, ค่าคอมพนักงาน, ค่าสินน้ำใจ ครบถ้วน',
+      '✨ <b>สูตรกำไรสุทธิสมบูรณ์ 100%:</b> หักยอดต้นทุนสินค้า, GP Platform, ค่าแรง, ค่าคอม, สินน้ำใจ และค่าใช้จ่ายดำเนินงาน สอดคล้องตรงกับภาพรวมบัญชี',
+      '🧹 <b>Cache Refresh (v2.15):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.15'
+    ]},
+    { v:'2.14', date:'2026-09-16', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Interactive Daily Drilldowns for Expenses & Other Income in Monthly Details Table', items:[
       '💸 <b>Daily Expense Drilldown:</b> ตัวเลขในคอลัมน์ <b>"💸 ค่าใช้จ่าย"</b> สามารถคลิกเข้าไปดูรายการย่อยในวันนั้นได้ทันที (หมวดหมู่, รายละเอียด, ผู้รับเงิน/ร้านค้า, ยอดเงิน)',
       '📈 <b>Daily Other Income Drilldown:</b> ตัวเลขในคอลัมน์ <b>"📈 รายได้อื่น"</b> สามารถคลิกเข้าไปดูรายการย่อยในวันนั้นได้ทันที (ประเภทรายได้, รายละเอียด, กำไรที่รับรู้จริง)',
       '🔍 <b>Full Period Summary Drilldown:</b> ยอดรวมท้ายตาราง (<code>tfoot</code>) ของทั้งสองคอลัมน์สามารถคลิกเปิดดูสรุปทุกรายการตลอดทั้งงวดได้ทันที',
