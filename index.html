@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.13';
-const DISPLAY_APP_VERSION = 'v2.13';
+const CURRENT_APP_VERSION = 'sealthai-v2.14';
+const DISPLAY_APP_VERSION = 'v2.14';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.13 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.14 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.13 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.14 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.13 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.14 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3188,7 +3188,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.13 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.14 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -4670,6 +4670,208 @@ async function drillMonthlyPlatformFee() {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
+async function drillDailyExpenses(dateStr) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">💸 รายละเอียดค่าใช้จ่าย วันที่ ${dateStr}</div>
+      <div id="daily-exp-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: expenses, error } = await sb.from('expenses')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .eq('expense_date', dateStr)
+      .order('id');
+    
+    if (error) throw error;
+    const rows = expenses || [];
+    const totExp = rows.reduce((s, e) => s + expenseProfitAmount(e), 0);
+    const contentEl = document.getElementById('daily-exp-modal-content');
+    if (!contentEl) return;
+
+    if (!rows.length) {
+      contentEl.outerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)">ไม่มีรายการค่าใช้จ่ายในวันนี้</div>';
+      return;
+    }
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${rows.length} รายการ · รวม ${fmtB(totExp)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">หมวดหมู่</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด / ผู้รับเงิน</th>
+          <th style="text-align:right;padding:6px 8px">จำนวนเงิน</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px"><span class="badge badge-gray" style="font-size:11px">${escapeHTML(effectiveExpenseCategory(e))}</span></td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
+                ${e.vendor ? `<div style="font-size:11px;color:var(--text3)">ผู้รับเงิน/ร้าน: ${escapeHTML(e.vendor)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--red)">${e.include_in_profit === false ? '—' : fmtB(expenseProfitAmount(e))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="2" style="padding:8px">รวมค่าใช้จ่ายวันที่ ${dateStr}</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:var(--red)">${fmtB(totExp)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillDailyExpenses error:', err);
+    const contentEl = document.getElementById('daily-exp-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
+async function drillDailyOtherIncome(dateStr) {
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">📈 รายละเอียดรายได้อื่น/กำไรลงทุน วันที่ ${dateStr}</div>
+      <div id="daily-income-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: incomes, error } = await sb.from('other_income')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .eq('income_date', dateStr)
+      .order('id');
+    
+    if (error) throw error;
+    const rows = incomes || [];
+    const totIncome = rows.reduce((s, e) => s + Number(e.realized_profit || 0), 0);
+    const contentEl = document.getElementById('daily-income-modal-content');
+    if (!contentEl) return;
+
+    if (!rows.length) {
+      contentEl.outerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)">ไม่มีรายการรายได้อื่นในวันนี้</div>';
+      return;
+    }
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${rows.length} รายการ · รวมกำไรรับรู้จริง ${fmtB(totIncome)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">ประเภท / ช่องทาง</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด / หมายเหตุ</th>
+          <th style="text-align:right;padding:6px 8px">กำไรรับรู้จริง (฿)</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px"><span class="badge" style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700">${escapeHTML(e.income_type || e.category || 'รายได้อื่น')}</span></td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.title || e.description || e.note || '-')}</div>
+                ${e.note && e.note !== e.title ? `<div style="font-size:11px;color:var(--text3)">${escapeHTML(e.note)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:${Number(e.realized_profit)>=0?'var(--green)':'var(--red)'}">${fmtB(Number(e.realized_profit||0))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="2" style="padding:8px">รวมรายได้อื่นวันที่ ${dateStr}</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:${totIncome>=0?'var(--green)':'var(--red)'}">${fmtB(totIncome)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillDailyOtherIncome error:', err);
+    const contentEl = document.getElementById('daily-income-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
+async function drillMonthlyOtherIncome() {
+  const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
+  if (!dateFrom) return;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">📈 รายละเอียดรายได้อื่น/กำไรลงทุน</div>
+      <div id="monthly-income-modal-content" style="min-height:100px;display:flex;align-items:center;justify-content:center">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: incomes, error } = await sb.from('other_income')
+      .select('*')
+      .eq('shop_id', currentShop.id)
+      .gte('income_date', dateFrom).lte('income_date', dateTo)
+      .order('income_date', { ascending: false });
+    
+    if (error) throw error;
+    const rows = incomes || [];
+    const totIncome = rows.reduce((s, e) => s + Number(e.realized_profit || 0), 0);
+    const contentEl = document.getElementById('monthly-income-modal-content');
+    if (!contentEl) return;
+
+    if (!rows.length) {
+      contentEl.outerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)">ไม่มีรายการรายได้อื่นในช่วงเวลานี้</div>';
+      return;
+    }
+
+    contentEl.outerHTML = `
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">📅 ${periodLabel} · ${rows.length} รายการ · รวมกำไรรับรู้จริง ${fmtB(totIncome)}</div>
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">วันที่</th>
+          <th style="text-align:left;padding:6px 8px">ประเภท / ช่องทาง</th>
+          <th style="text-align:left;padding:6px 8px">รายละเอียด / หมายเหตุ</th>
+          <th style="text-align:right;padding:6px 8px">กำไรรับรู้จริง (฿)</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(e => `
+            <tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:7px 8px;color:var(--text2)">${escapeHTML(e.income_date||'-')}</td>
+              <td style="padding:7px 8px"><span class="badge" style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700">${escapeHTML(e.income_type || e.category || 'รายได้อื่น')}</span></td>
+              <td style="padding:7px 8px">
+                <div style="color:var(--text);font-weight:600">${escapeHTML(e.title || e.description || e.note || '-')}</div>
+                ${e.note && e.note !== e.title ? `<div style="font-size:11px;color:var(--text3)">${escapeHTML(e.note)}</div>` : ''}
+              </td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:${Number(e.realized_profit)>=0?'var(--green)':'var(--red)'}">${fmtB(Number(e.realized_profit||0))}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="3" style="padding:8px">รวมรายได้อื่นทั้งหมด</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:${totIncome>=0?'var(--green)':'var(--red)'}">${fmtB(totIncome)}</td>
+        </tr></tfoot>
+      </table></div>
+    `;
+  } catch (err) {
+    console.error('drillMonthlyOtherIncome error:', err);
+    const contentEl = document.getElementById('monthly-income-modal-content');
+    if (contentEl) contentEl.innerHTML = `<div style="color:var(--red);padding:20px">เกิดข้อผิดพลาด: ${escapeHTML(err.message||err)}</div>`;
+  }
+}
+
 async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
   const [ordRes, expRes, incRes, prodRes, _shopeeReady] = await Promise.all([
     sb.from('orders').select('id,order_no,order_date,channel,customer_social,total_amount,total_cost,doc_status,shipping_status,order_items(product_id,qty,cost_per_unit)')
@@ -4822,7 +5024,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
         <div class="stat-value" style="color:#ea580c">${fmtB(totPlatformFee)}</div>
         <div class="stat-sub">Shopee: <b style="color:#ea580c">${fmtB(totShopeeFee)}</b> · Lazada: <b style="color:#0284c7">${fmtB(totLazadaFee)}</b></div>
       </div>
-      <div class="stat-card" style="cursor:pointer" onclick="showPage('finance')" title="คลิกดูรายได้อื่นและเงินลงทุน">
+      <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyOtherIncome()" title="คลิกดูรายได้อื่นและเงินลงทุน">
         <div class="stat-label">📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></div>
         <div class="stat-value ${totOther>=0?'text-green':'text-red'}">${fmtB(totOther)}</div>
         <div class="stat-sub">ไม่รวมเงินต้นคืน</div>
@@ -4878,8 +5080,12 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
               <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#0284c7">${r.lazadaFee > 0 ? fmtB(r.lazadaFee) : '-'}</td>
               <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:600;color:#ea580c">${r.platformFee > 0 ? fmtB(r.platformFee) : '-'}</td>
               <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(r.cost)}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--red)">${fmtB(r.exp)}</td>
-              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:${r.other>=0?'var(--green)':'var(--red)'}">${r.other!==0?fmtB(r.other):'-'}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">
+                ${r.exp > 0 ? `<a href="javascript:void(0)" onclick="drillDailyExpenses('${r.d}')" style="color:var(--red);font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการค่าใช้จ่ายวันที่ ${r.d}">${fmtB(r.exp)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              </td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">
+                ${r.other !== 0 ? `<a href="javascript:void(0)" onclick="drillDailyOtherIncome('${r.d}')" style="color:${r.other>=0?'var(--green)':'var(--red)'};font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการรายได้อื่นวันที่ ${r.d}">${fmtB(r.other)}</a>` : '<span style="color:var(--text3)">-</span>'}
+              </td>
               <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:${r.profit>=0?'var(--green)':'var(--red)'}">${fmtB(r.profit)}</td>
               <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:${r.cum>=0?'var(--green)':'var(--red)'}">${fmtB(r.cum)}</td>
             </tr>`).join('')}
@@ -4895,8 +5101,12 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
               <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#0284c7">${fmtB(totLazadaFee)}</td>
               <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totPlatformFee)}</td>
               <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(totCost)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--red)">${fmtB(totExp)}</td>
-              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${totOther>=0?'var(--green)':'var(--red)'}">${fmtB(totOther)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">
+                <a href="javascript:void(0)" onclick="drillMonthlyExpenses()" style="color:var(--red);font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดค่าใช้จ่ายทั้งหมด">${fmtB(totExp)}</a>
+              </td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">
+                <a href="javascript:void(0)" onclick="drillMonthlyOtherIncome()" style="color:${totOther>=0?'var(--green)':'var(--red)'};font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดรายได้อื่นทั้งหมด">${fmtB(totOther)}</a>
+              </td>
               <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtB(netProfit)}</td>
               <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${cum>=0?'var(--green)':'var(--red)'}">${fmtB(cum)}</td>
             </tr>
@@ -30468,7 +30678,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.13', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Monthly Summary: Prominent Daily Bill / Order Count Column in Details Table', items:[
+    { v:'2.14', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Interactive Daily Drilldowns for Expenses & Other Income in Monthly Details Table', items:[
+      '💸 <b>Daily Expense Drilldown:</b> ตัวเลขในคอลัมน์ <b>"💸 ค่าใช้จ่าย"</b> สามารถคลิกเข้าไปดูรายการย่อยในวันนั้นได้ทันที (หมวดหมู่, รายละเอียด, ผู้รับเงิน/ร้านค้า, ยอดเงิน)',
+      '📈 <b>Daily Other Income Drilldown:</b> ตัวเลขในคอลัมน์ <b>"📈 รายได้อื่น"</b> สามารถคลิกเข้าไปดูรายการย่อยในวันนั้นได้ทันที (ประเภทรายได้, รายละเอียด, กำไรที่รับรู้จริง)',
+      '🔍 <b>Full Period Summary Drilldown:</b> ยอดรวมท้ายตาราง (<code>tfoot</code>) ของทั้งสองคอลัมน์สามารถคลิกเปิดดูสรุปทุกรายการตลอดทั้งงวดได้ทันที',
+      '🧹 <b>Cache Refresh (v2.14):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.14'
+    ]},
+    { v:'2.13', date:'2026-09-16', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Monthly Summary: Prominent Daily Bill / Order Count Column in Details Table', items:[
       '📑 <b>Prominent Daily Bill Count Column:</b> เพิ่มคอลัมน์ <b>"📑 จำนวนบิล"</b> เด่นชัดติดกับวันที่และยอดขายในตาราง 📋 รายละเอียด ของหน้าสรุปยอดขายรายเดือน (<code>monthly</code>) พร้อมป้าย <code>🛒 X บิล</code> สีฟ้าสดใสที่สามารถคลิกเปิดดูรายการออเดอร์ของวันนั้นได้ทันที',
       '🔢 <b>Period Summary Badge:</b> แสดงยอดรวมจำนวนบิลทั้งหมดของเดือน/งวดที่เลือกในแถวสรุปรวมท้ายตาราง (<code>tfoot</code>)',
       '📱 <b>Enhanced Mobile View:</b> แสดงป้ายจำนวนบิล <code>🛒 X บิล</code> เคียงคู่กับวันที่ในมุมมองมือถือ ให้อ่านง่ายและชัดเจนยิ่งขึ้น',
