@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.11';
-const DISPLAY_APP_VERSION = 'v2.11';
+const CURRENT_APP_VERSION = 'sealthai-v2.12';
+const DISPLAY_APP_VERSION = 'v2.12';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.11 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.12 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.11 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.12 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.11 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.12 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3188,7 +3188,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.11 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.12 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -4597,35 +4597,153 @@ async function drillMonthlyExpenses() {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 
+async function drillMonthlyPlatformFee() {
+  const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
+  if (!dateFrom) return;
+  await ensureShopeeFeeData();
+  const { data: orders } = await sb.from('orders')
+    .select('order_no,order_date,channel,customer_name,customer_social,total_amount,doc_status,shipping_status')
+    .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo)
+    .order('order_date', { ascending: false });
+  const rows = (orders || []).filter(o => !isOrderCancelled(o));
+  const shopeeRows = rows.filter(o => (o.channel || '').toLowerCase().includes('shopee'));
+  const lazadaRows = rows.filter(o => (o.channel || '').toLowerCase().includes('lazada'));
+  
+  const shopeeFeeTotal = shopeeRows.reduce((s, o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const lazadaFeeTotal = lazadaRows.reduce((s, o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const totFee = shopeeFeeTotal + lazadaFeeTotal;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:880px;position:relative">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">💸 รายละเอียด GP Platform (Shopee / Lazada)</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">📅 ${periodLabel} · รวมค่าธรรมเนียม GP ${fmtB(totFee)}</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:12px">
+          <div style="font-size:12px;color:#c2410c;font-weight:600">🟠 Shopee Fee (${shopeeRows.length} ออเดอร์)</div>
+          <div style="font-size:20px;font-weight:800;color:#ea580c;font-family:var(--mono);margin-top:4px">${fmtB(shopeeFeeTotal)}</div>
+        </div>
+        <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:12px">
+          <div style="font-size:12px;color:#0369a1;font-weight:600">🔵 Lazada Fee (${lazadaRows.length} ออเดอร์)</div>
+          <div style="font-size:20px;font-weight:800;color:#0284c7;font-family:var(--mono);margin-top:4px">${fmtB(lazadaFeeTotal)}</div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <thead><tr style="border-bottom:2px solid var(--border)">
+          <th style="text-align:left;padding:6px 8px">เลขออเดอร์</th>
+          <th style="text-align:left;padding:6px 8px">วันที่</th>
+          <th style="text-align:left;padding:6px 8px">ช่องทาง</th>
+          <th style="text-align:left;padding:6px 8px">เลขอ้างอิง</th>
+          <th style="text-align:right;padding:6px 8px">ยอดขาย</th>
+          <th style="text-align:right;padding:6px 8px">ค่า GP Platform</th>
+          <th style="text-align:right;padding:6px 8px">% GP</th>
+        </tr></thead>
+        <tbody>
+          ${[...shopeeRows, ...lazadaRows].map(o => {
+            const feeInfo = getOrderPlatformFeeInfo(o);
+            const isShopee = (o.channel||'').toLowerCase().includes('shopee');
+            const color = isShopee ? '#ea580c' : '#0284c7';
+            return `<tr style="border-bottom:1px solid var(--border)">
+              <td style="padding:6px 8px;font-family:var(--mono);font-size:12px;color:var(--blue)">${o.order_no||'-'}</td>
+              <td style="padding:6px 8px;color:var(--text2)">${o.order_date||'-'}</td>
+              <td style="padding:6px 8px">${channelBadge(o.channel)}</td>
+              <td style="padding:6px 8px;font-family:var(--mono);font-size:11.5px;color:var(--text3)">${o.customer_social||'-'}</td>
+              <td style="padding:6px 8px;text-align:right;font-family:var(--mono)">${fmtB(o.total_amount)}</td>
+              <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:${color}">${fmtB(feeInfo.fee)}</td>
+              <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:11.5px;color:${color}">${feeInfo.pct ? feeInfo.pct.toFixed(1)+'%' : '-'}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
+          <td colspan="5" style="padding:8px">รวมค่าธรรมเนียม Platform ทั้งหมด</td>
+          <td style="padding:8px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totFee)}</td>
+          <td></td>
+        </tr></tfoot>
+      </table></div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
 async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
-  const [ordRes, expRes, incRes] = await Promise.all([
-    sb.from('orders').select('order_date,total_amount,total_cost').eq('shop_id', currentShop.id).gte('order_date',dateFrom).lte('order_date',dateTo),
-    sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',dateFrom).lte('expense_date',dateTo),
-    sb.from('other_income').select('income_date,realized_profit').eq('shop_id', currentShop.id).gte('income_date',dateFrom).lte('income_date',dateTo)
+  const [ordRes, expRes, incRes, prodRes, _shopeeReady] = await Promise.all([
+    sb.from('orders').select('id,order_no,order_date,channel,customer_social,total_amount,total_cost,doc_status,shipping_status,order_items(product_id,qty,cost_per_unit)')
+      .eq('shop_id', currentShop.id).gte('order_date', dateFrom).lte('order_date', dateTo),
+    sb.from('expenses').select('*')
+      .eq('shop_id', currentShop.id).gte('expense_date', dateFrom).lte('expense_date', dateTo),
+    sb.from('other_income').select('income_date,realized_profit')
+      .eq('shop_id', currentShop.id).gte('income_date', dateFrom).lte('income_date', dateTo),
+    sb.from('products').select('id,current_cost').eq('shop_id', currentShop.id).eq('active', true),
+    ensureShopeeFeeData()
   ]);
-  const orders   = ordRes.data || [];
+
+  const rawOrders = ordRes.data || [];
+  const orders   = rawOrders.filter(o => !isOrderCancelled(o)); // ไม่รวมออเดอร์ยกเลิก
   const expenses = expRes.data || [];
   const otherIncome = incRes.data || [];
+  const products = prodRes.data || [];
+
+  // fallback ต้นทุน
+  const prodCostMap = {};
+  products.forEach(p => { if (p.id) prodCostMap[p.id] = Number(p.current_cost || 0); });
+  const orderCostWithFallback = (o) => (o.order_items || []).reduce((s, it) => {
+    const c = Number(it.cost_per_unit || 0);
+    const unitCost = c > 0 ? c : Number(prodCostMap[it.product_id] || 0);
+    return s + Number(it.qty || 0) * unitCost;
+  }, 0);
 
   // Group by date
   const dateMap = {};
   orders.forEach(o => {
-    if (!dateMap[o.order_date]) dateMap[o.order_date] = {rev:0,other:0,cost:0,exp:0,cnt:0};
-    dateMap[o.order_date].rev  += Number(o.total_amount||0);
-    dateMap[o.order_date].cost += Number(o.total_cost||0);
-    dateMap[o.order_date].cnt++;
+    const d = o.order_date;
+    if (!d) return;
+    if (!dateMap[d]) dateMap[d] = {rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0, other:0, cost:0, exp:0, cnt:0};
+    
+    const rev = Number(o.total_amount || 0);
+    const ch = String(o.channel || '').toLowerCase();
+    const feeInfo = getOrderPlatformFeeInfo(o);
+    const fee = feeInfo.fee;
+    const c = (o.order_items && o.order_items.length > 0) ? orderCostWithFallback(o) : Number(o.total_cost || 0);
+
+    dateMap[d].rev  += rev;
+    dateMap[d].cost += c;
+    dateMap[d].cnt++;
+
+    if (ch.includes('shopee')) {
+      dateMap[d].shopeeRev += rev;
+      dateMap[d].shopeeFee += fee;
+      dateMap[d].platformFee += fee;
+    } else if (ch.includes('lazada')) {
+      dateMap[d].lazadaRev += rev;
+      dateMap[d].lazadaFee += fee;
+      dateMap[d].platformFee += fee;
+    } else if (fee > 0) {
+      dateMap[d].platformFee += fee;
+    }
   });
+
   expenses.forEach(e => {
-    if (!dateMap[e.expense_date]) dateMap[e.expense_date] = {rev:0,other:0,cost:0,exp:0,cnt:0};
-    dateMap[e.expense_date].exp += expenseProfitAmount(e);
+    const d = e.expense_date;
+    if (!d) return;
+    if (!dateMap[d]) dateMap[d] = {rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0, other:0, cost:0, exp:0, cnt:0};
+    dateMap[d].exp += expenseProfitAmount(e);
   });
-  otherIncome.forEach(e=>{
-    if(!dateMap[e.income_date]) dateMap[e.income_date]={rev:0,other:0,cost:0,exp:0,cnt:0};
-    dateMap[e.income_date].other+=Number(e.realized_profit||0);
+
+  otherIncome.forEach(e => {
+    const d = e.income_date;
+    if (!d) return;
+    if (!dateMap[d]) dateMap[d] = {rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0, other:0, cost:0, exp:0, cnt:0};
+    dateMap[d].other += Number(e.realized_profit || 0);
   });
 
   const days = Object.keys(dateMap).sort();
-  let totRev=0, totOther=0, totCost=0, totExp=0;
+  let totRev=0, totShopeeRev=0, totLazadaRev=0, totShopeeFee=0, totLazadaFee=0, totPlatformFee=0;
+  let totOther=0, totCost=0, totExp=0;
   let cum=0;
   const rows=[]; const chartLabels=[]; const chartCum=[];
   const chartRev=[]; const chartCost=[]; const chartNet=[];
@@ -4653,15 +4771,25 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
 
   days.forEach(d => {
     const dd = dateMap[d];
-    const profit = dd.rev + dd.other - dd.cost - dd.exp;
-    totRev+=dd.rev; totOther+=dd.other; totCost+=dd.cost; totExp+=dd.exp; cum+=profit;
+    const profit = dd.rev + dd.other - dd.cost - dd.platformFee - dd.exp;
+    totRev += dd.rev;
+    totShopeeRev += dd.shopeeRev;
+    totLazadaRev += dd.lazadaRev;
+    totShopeeFee += dd.shopeeFee;
+    totLazadaFee += dd.lazadaFee;
+    totPlatformFee += dd.platformFee;
+    totOther += dd.other;
+    totCost += dd.cost;
+    totExp += dd.exp;
+    cum += profit;
     rows.push({d, ...dd, profit, cum});
     chartCum.push(cum);
 
     const ck = getChartKey(d);
-    if (!chartGroupMap[ck]) chartGroupMap[ck] = {rev:0,cost:0,net:0};
+    if (!chartGroupMap[ck]) chartGroupMap[ck] = {rev:0, cost:0, fee:0, net:0};
     chartGroupMap[ck].rev  += dd.rev;
-    chartGroupMap[ck].cost += dd.cost;
+    chartGroupMap[ck].cost += (dd.cost + dd.platformFee + dd.exp);
+    chartGroupMap[ck].fee  += dd.platformFee;
     chartGroupMap[ck].net  += profit;
   });
 
@@ -4672,7 +4800,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     chartCost.push(chartGroupMap[k].cost);
     chartNet.push(chartGroupMap[k].net);
   });
-  const netProfit = totRev + totOther - totCost - totExp;
+  const netProfit = totRev + totOther - totCost - totPlatformFee - totExp;
 
   window._monthlyDates = { dateFrom, dateTo, periodLabel };
   const el = document.getElementById('monthly-content');
@@ -4682,10 +4810,17 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyRevenue()" title="คลิกดูรายการออเดอร์">
         <div class="stat-label">💰 ยอดขายรวม <span style="font-size:10px;color:var(--accent)">→ ดูรายการ</span></div>
         <div class="stat-value text-accent">${fmtB(totRev)}</div>
+        <div class="stat-sub">${orders.length} ออเดอร์ (ไม่รวมยกเลิก)</div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyCost()" title="คลิกดูต้นทุนรายออเดอร์">
-        <div class="stat-label">📦 ต้นทุนรวม <span style="font-size:10px;color:var(--amber)">→ ดูรายการ</span></div>
+        <div class="stat-label">📦 ต้นทุนรวม (COGS) <span style="font-size:10px;color:var(--amber)">→ ดูรายการ</span></div>
         <div class="stat-value text-amber">${fmtB(totCost)}</div>
+        <div class="stat-sub">${totRev>0?(totCost/totRev*100).toFixed(1)+'% ของยอดขาย':''}</div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid #f97316" onclick="drillMonthlyPlatformFee()" title="คลิกดูรายละเอียดค่าธรรมเนียม GP Platform">
+        <div class="stat-label">💸 GP Platform <span style="font-size:10px;color:#ea580c">→ ดูรายการ</span></div>
+        <div class="stat-value" style="color:#ea580c">${fmtB(totPlatformFee)}</div>
+        <div class="stat-sub">Shopee: <b style="color:#ea580c">${fmtB(totShopeeFee)}</b> · Lazada: <b style="color:#0284c7">${fmtB(totLazadaFee)}</b></div>
       </div>
       <div class="stat-card" style="cursor:pointer" onclick="showPage('finance')" title="คลิกดูรายได้อื่นและเงินลงทุน">
         <div class="stat-label">📈 รายได้อื่น/กำไรลงทุน <span style="font-size:10px;color:var(--green)">→ ดูรายการ</span></div>
@@ -4695,13 +4830,17 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       <div class="stat-card" style="cursor:pointer" onclick="drillMonthlyExpenses()" title="คลิกดูค่าใช้จ่าย">
         <div class="stat-label">💸 ค่าใช้จ่ายรวม <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div>
         <div class="stat-value text-red">${fmtB(totExp)}</div>
+        <div class="stat-sub">${expenses.length} รายการ</div>
       </div>
-      <div class="stat-card"><div class="stat-label">✨ กำไร/ขาดทุนสุทธิ</div>
-        <div class="stat-value ${netProfit>=0?'text-green':'text-red'}">${fmtB(netProfit)}</div></div>
+      <div class="stat-card">
+        <div class="stat-label">✨ กำไรสุทธิ (หัก GP & ค่าใช้จ่าย)</div>
+        <div class="stat-value ${netProfit>=0?'text-green':'text-red'}">${fmtB(netProfit)}</div>
+        <div class="stat-sub">${totRev>0?(netProfit/totRev*100).toFixed(1)+'% Net Margin':''}</div>
+      </div>
     </div>
     ${rows.length ? `
     <div class="card mb-4">
-      <div class="card-title" style="margin-bottom:12px">📊 ยอดขาย / ต้นทุน / กำไรสุทธิ</div>
+      <div class="card-title" style="margin-bottom:12px">📊 ยอดขาย / ต้นทุน+GP+ค่าใช้จ่าย / กำไรสุทธิ</div>
       <div class="chart-box" style="height:260px"><canvas id="ch-monthly-bar"></canvas></div>
     </div>
     <div class="card mb-4">
@@ -4709,27 +4848,55 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       <div class="chart-box" style="height:180px"><canvas id="ch-monthly-line"></canvas></div>
     </div>` : ''}
     <div class="card">
-      <div class="card-title">📋 รายละเอียด</div>
-      <div class="table-wrap desktop-only">
-        <table>
-          <thead><tr>
-            <th>วันที่</th><th class="text-right">ยอดขาย</th>
-            <th class="text-right">รายได้อื่น</th><th class="text-right">ค่าใช้จ่าย</th><th class="text-right">ออเดอร์</th>
-            <th class="text-right">ต้นทุน</th><th class="text-right">กำไรสุทธิ</th>
-            <th class="text-right">กำไรสะสม</th>
+      <div class="card-title flex-between" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:700">📋 รายละเอียดประจำงวด (${periodLabel})</div>
+        <div style="font-size:12px;color:var(--text3);font-weight:400">แสดงยอดขาย, GP Shopee, GP Lazada, รวม GP Platform, ต้นทุน, ค่าใช้จ่าย และกำไรสุทธิ</div>
+      </div>
+      <div class="table-wrap desktop-only" style="overflow-x:auto">
+        <table style="width:100%;font-size:12.5px">
+          <thead><tr style="border-bottom:2px solid var(--border);background:var(--bg2)">
+            <th style="padding:8px 6px;text-align:left">วันที่</th>
+            <th style="padding:8px 6px;text-align:right">💰 ยอดขาย</th>
+            <th style="padding:8px 6px;text-align:right;color:#ea580c">🟠 GP Shopee</th>
+            <th style="padding:8px 6px;text-align:right;color:#0284c7">🔵 GP Lazada</th>
+            <th style="padding:8px 6px;text-align:right;color:#ea580c">💸 รวม GP Plat.</th>
+            <th style="padding:8px 6px;text-align:right;color:var(--amber)">📦 ต้นทุน</th>
+            <th style="padding:8px 6px;text-align:right;color:var(--red)">💸 ค่าใช้จ่าย</th>
+            <th style="padding:8px 6px;text-align:right;color:var(--green)">📈 รายได้อื่น</th>
+            <th style="padding:8px 6px;text-align:right">🛒 ออเดอร์</th>
+            <th style="padding:8px 6px;text-align:right;color:var(--accent)">✨ กำไรสุทธิ</th>
+            <th style="padding:8px 6px;text-align:right">📈 กำไรสะสม</th>
           </tr></thead>
           <tbody>
             ${rows.map(r=>`<tr>
-              <td>${r.cnt > 0 ? `<a href="javascript:void(0)" onclick="drillMonthlyDay('${r.d}')" style="color:var(--accent);font-weight:600;text-decoration:underline">${r.d}</a>` : r.d}</td>
-              <td class="text-right font-mono text-accent">${fmtB(r.rev)}</td>
-              <td class="text-right font-mono ${r.other>=0?'text-green':'text-red'}">${fmtB(r.other)}</td>
-              <td class="text-right font-mono text-red">${fmtB(r.exp)}</td>
-              <td class="text-right">${r.cnt}</td>
-              <td class="text-right font-mono">${fmtB(r.cost)}</td>
-              <td class="text-right font-mono ${r.profit>=0?'text-green':'text-red'}">${fmtB(r.profit)}</td>
-              <td class="text-right font-mono ${r.cum>=0?'text-green':'text-red'}">${fmtB(r.cum)}</td>
+              <td style="padding:7px 6px">${r.cnt > 0 ? `<a href="javascript:void(0)" onclick="drillMonthlyDay('${r.d}')" style="color:var(--accent);font-weight:700;text-decoration:underline" title="คลิกดูออเดอร์ของวันนี้">${r.d}</a>` : r.d}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--accent)">${fmtB(r.rev)}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${r.shopeeFee > 0 ? fmtB(r.shopeeFee) : '-'}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:#0284c7">${r.lazadaFee > 0 ? fmtB(r.lazadaFee) : '-'}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:600;color:#ea580c">${r.platformFee > 0 ? fmtB(r.platformFee) : '-'}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(r.cost)}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:var(--red)">${fmtB(r.exp)}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:${r.other>=0?'var(--green)':'var(--red)'}">${r.other!==0?fmtB(r.other):'-'}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono)">${r.cnt}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);font-weight:700;color:${r.profit>=0?'var(--green)':'var(--red)'}">${fmtB(r.profit)}</td>
+              <td style="padding:7px 6px;text-align:right;font-family:var(--mono);color:${r.cum>=0?'var(--green)':'var(--red)'}">${fmtB(r.cum)}</td>
             </tr>`).join('')}
           </tbody>
+          <tfoot>
+            <tr style="border-top:2.5px solid var(--border);font-weight:800;background:var(--bg2)">
+              <td style="padding:9px 6px">รวมทั้งสิ้น</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--accent)">${fmtB(totRev)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totShopeeFee)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#0284c7">${fmtB(totLazadaFee)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:#ea580c">${fmtB(totPlatformFee)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--amber)">${fmtB(totCost)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--red)">${fmtB(totExp)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${totOther>=0?'var(--green)':'var(--red)'}">${fmtB(totOther)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">${orders.length}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtB(netProfit)}</td>
+              <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:${cum>=0?'var(--green)':'var(--red)'}">${fmtB(cum)}</td>
+            </tr>
+          </tfoot>
         </table>
       </div>
       <!-- Mobile -->
@@ -4737,12 +4904,16 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
         ${rows.map(r=>`
           <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;${r.cnt > 0 ? 'cursor:pointer' : ''}" ${r.cnt > 0 ? `onclick="drillMonthlyDay('${r.d}')"` : ''}>
             <div>
-              <div style="font-size:13px;font-weight:600">${r.d}</div>
-              <div style="font-size:11px;color:var(--text3)">${r.cnt} ออเดอร์ · รายได้อื่น ${fmtB(r.other)} · ค่าใช้จ่าย ${fmtB(r.exp)}</div>
+              <div style="font-size:13px;font-weight:700">${r.d}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px">
+                ${r.cnt} ออเดอร์ · GP รวม: <span style="color:#ea580c;font-weight:600">${fmtB(r.platformFee)}</span>
+                ${r.shopeeFee > 0 ? ` (Shp ${fmtB(r.shopeeFee)})` : ''}${r.lazadaFee > 0 ? ` (Laz ${fmtB(r.lazadaFee)})` : ''}
+              </div>
+              <div style="font-size:11px;color:var(--text3)">ต้นทุน ${fmtB(r.cost)} · ค่าใช้จ่าย ${fmtB(r.exp)}</div>
             </div>
             <div style="text-align:right">
-              <div class="font-mono text-accent" style="font-size:14px;font-weight:600">${fmtB(r.rev)}</div>
-              <div class="font-mono ${r.profit>=0?'text-green':'text-red'}" style="font-size:12px">${fmtB(r.profit)}</div>
+              <div class="font-mono text-accent" style="font-size:14px;font-weight:700">${fmtB(r.rev)}</div>
+              <div class="font-mono ${r.profit>=0?'text-green':'text-red'}" style="font-size:12px;font-weight:700">${fmtB(r.profit)}</div>
             </div>
           </div>`).join('')}
         ${!rows.length?'<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่มีข้อมูลในช่วงนี้</div></div>':''}
@@ -4871,17 +5042,20 @@ function drillMonthlyDay(date) {
         return;
       }
       
-      const totalRev = orders.reduce((s,o)=>s+Number(o.total_amount||0),0);
-      const totalCost = orders.reduce((s,o)=>s+Number(o.total_cost||0),0);
-      const totalProfit = totalRev - totalCost;
+      const validOrders = orders.filter(o => !isOrderCancelled(o));
+      const totalRev = validOrders.reduce((s,o)=>s+Number(o.total_amount||0),0);
+      const totalCost = validOrders.reduce((s,o)=>s+Number(o.total_cost||0),0);
+      const totalPlatFee = validOrders.reduce((s,o)=>s+getOrderPlatformFeeInfo(o).fee, 0);
+      const totalProfit = totalRev - totalCost - totalPlatFee;
       const margin = totalRev > 0 ? (totalProfit/totalRev*100).toFixed(1) : '0.0';
       
       let ordersTableHtml = `
         <div style="width:100%">
-          <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
-            <div class="stat-card" style="padding:10px"><div class="stat-label">💰 ยอดขาย</div><div class="stat-value text-accent" style="font-size:18px">${fmtB(totalRev)}</div></div>
-            <div class="stat-card" style="padding:10px"><div class="stat-label">📦 ต้นทุน</div><div class="stat-value text-amber" style="font-size:18px">${fmtB(totalCost)}</div></div>
-            <div class="stat-card" style="padding:10px"><div class="stat-label">📈 กำไรขั้นต้น</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}" style="font-size:18px">${fmtB(totalProfit)} <span style="font-size:12px">(${margin}%)</span></div></div>
+          <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:14px">
+            <div class="stat-card" style="padding:10px"><div class="stat-label">💰 ยอดขาย</div><div class="stat-value text-accent" style="font-size:17px">${fmtB(totalRev)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">📦 ต้นทุน</div><div class="stat-value text-amber" style="font-size:17px">${fmtB(totalCost)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">💸 GP Platform</div><div class="stat-value" style="font-size:17px;color:#ea580c">${fmtB(totalPlatFee)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">✨ กำไรหลังหัก GP</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}" style="font-size:17px">${fmtB(totalProfit)} <span style="font-size:11px">(${margin}%)</span></div></div>
           </div>
           <div class="table-wrap" style="max-height:50vh;overflow-y:auto">
             <table>
@@ -30287,7 +30461,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.11', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix Owner Dashboard Loading & CFO Wage Variable Scope', items:[
+    { v:'2.12', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Monthly Summary Page: Shopee & Lazada Platform GP Fee Breakdown in Detail Table', items:[
+      '📊 <b>GP Platform Breakdown in Monthly Details:</b> เพิ่มคอลัมน์แสดงค่าธรรมเนียม GP Platform ในตาราง "📋 รายละเอียด" ของหน้าสรุปยอดขายรายเดือน (<code>monthly</code>) ครบทั้ง <b>🟠 GP Shopee</b>, <b>🔵 GP Lazada</b>, และ <b>💸 รวม GP Platform</b> ในแต่ละวัน',
+      '📈 <b>Comprehensive Daily Net Profit Formula:</b> ปรับสูตรคำนวณกำไรสุทธิรายวันและยอดรวมงวด ให้หักค่าธรรมเนียม GP Platform อัตโนมัติ ซิงค์ตรงกับระบบบัญชีและ Dashboard ภาพรวม 100%',
+      '🔍 <b>Interactive Platform GP Drilldown Modal:</b> เพิ่มการ์ดสถิติ "💸 GP Platform" ด้านบนพร้อมฟังก์ชันคลิกดูรายการออเดอร์ Shopee / Lazada ที่ถูกหักค่าธรรมเนียมในหน้านั้นได้ทันที',
+      '🧹 <b>Cache Refresh (v2.12):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.12'
+    ]},
+    { v:'2.11', date:'2026-09-16', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Fix Owner Dashboard Loading & CFO Wage Variable Scope', items:[
       '🏠 <b>Owner Dashboard Restored:</b> แก้ไขข้อผิดพลาดตัวแปร <code>CFO_WAGE_PCT</code> ในกระดานผู้บริหาร (<code>ownerDashboard</code>) ทำให้แสดงผลยอดขายรวม, ต้นทุน, กำไรสุทธิ, กราฟแท่งเปรียบเทียบรายเดือน, กราฟกำไรสะสม, ออเดอร์ล่าสุด, สต๊อกต่ำ, สินค้าขายดี และ KPI พนักงาน ได้สมบูรณ์ 100%',
       '🛡️ <b>Global Executive Constants & Fail-Safe:</b> ประกาศตัวแปรค่าแรง CFO และอัตราคอมมิชชั่นในระดับ Global Scope พร้อมเพิ่มระบบตรวจจับข้อผิดพลาด (<code>try/catch</code>) ที่ครอบคลุม',
       '🧹 <b>Cache Refresh (v2.11):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.11'

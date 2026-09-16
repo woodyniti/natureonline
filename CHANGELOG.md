@@ -2,6 +2,18 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.12] — 2026-09-16
+### Monthly Summary Page: Shopee & Lazada Platform GP Fee Breakdown in Detail Table
+* **📊 Platform GP Fee Columns in Monthly Details Table:** เพิ่มคอลัมน์แสดงค่าธรรมเนียม GP Platform ในตาราง **📋 รายละเอียด** ของหน้าสรุปยอดขายรายเดือน (`monthly`) อย่างละเอียด:
+  - 🟠 **GP Shopee:** แสดงยอดค่าธรรมเนียม Shopee ในแต่ละวัน
+  - 🔵 **GP Lazada:** แสดงยอดค่า GP Lazada ในแต่ละวัน
+  - 💸 **รวม GP Platform:** รวมยอดค่าธรรมเนียม Platform ทั้งหมดในแต่ละวัน
+* **📈 Enhanced Daily Net Profit Formula:** ปรับปรุงสูตรคำนวณกำไรสุทธิรายวันและกำไรสะสม ให้หักค่าธรรมเนียม GP Platform (Shopee/Lazada) ครบถ้วนตรงตามหลักบัญชีจริง
+* **🔍 Interactive Platform GP Drilldown Modal:** เพิ่มการ์ดสถิติ `💸 GP Platform` ด้านบน พร้อมฟังก์ชันคลิกดูรายการออเดอร์ Shopee / Lazada ที่ถูกหักค่าธรรมเนียมรายรายการ
+* **🧹 Cache Refresh (v2.12):** อัปเดต Service Worker Cache เป็น `sealthai-v2.12`
+
+---
+
 ## 🚀 [v2.11] — 2026-09-16
 ### Fix Owner Dashboard Loading & CFO Wage Variable Scope
 * **🏠 Owner Dashboard Data Display Restored:** แก้ไขปัญหาข้อมูลใน **กระดานผู้บริหาร (Owner Dashboard)** ไม่แสดงผล โดยแก้ไขตัวแปร `CFO_WAGE_PCT` (อัตราค่าแรง CFO 15%) ให้เข้าถึงได้ทั่วทั้งระบบในระดับ Global Scope
