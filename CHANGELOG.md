@@ -2,6 +2,15 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.13] — 2026-09-16
+### Monthly Summary: Prominent Daily Bill / Order Count Column in Details Table
+* **📑 Prominent Daily Bill Count Column:** เพิ่มคอลัมน์ **"📑 จำนวนบิล"** ในตำแหน่งเด่นชัดถัดจากวันที่ในตาราง **📋 รายละเอียด** ของหน้าสรุปยอดขายรายเดือน (`monthly`) พร้อมป้าย `🛒 X บิล` สีฟ้าสดใสที่สามารถคลิกเพื่อเปิดดูรายการออเดอร์ของวันนั้นๆ ได้ทันที
+* **🔢 Monthly Order Summary Badge:** แสดงยอดรวมจำนวนบิลทั้งหมดของเดือน/งวดที่เลือกในแถวสรุปรวมท้ายตาราง (`tfoot`)
+* **📱 Enhanced Mobile Daily Overview:** แสดงป้าย `🛒 X บิล` เคียงคู่กับวันที่ในมุมมองมือถือ ช่วยให้ตรวจสอบจำนวนออเดอร์ในแต่ละวันได้อย่างรวดเร็ว
+* **🧹 Cache Refresh (v2.13):** อัปเดต Service Worker Cache เป็น `sealthai-v2.13`
+
+---
+
 ## 🚀 [v2.12] — 2026-09-16
 ### Monthly Summary Page: Shopee & Lazada Platform GP Fee Breakdown in Detail Table
 * **📊 Platform GP Fee Columns in Monthly Details Table:** เพิ่มคอลัมน์แสดงค่าธรรมเนียม GP Platform ในตาราง **📋 รายละเอียด** ของหน้าสรุปยอดขายรายเดือน (`monthly`) อย่างละเอียด:
