@@ -2,7 +2,19 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
-## 🚀 [v2.15] — 2026-09-16
+## 🚀 [v2.16] — 2026-09-17
+### Customer Database & Auto-Sync from Orders (ระบบจัดการฐานข้อมูลลูกค้าจากออเดอร์)
+* **📥 One-Click Customer Sync (`syncCustomersFromOrders`):** เพิ่มฟีเจอร์และปุ่ม **"📥 ดึงลูกค้าจากออเดอร์"** ในหน้ารายชื่อลูกค้า (`customers`) ทั้งใน Top Toolbar, Card Header และ Empty State:
+  - สแกนข้อมูลประวัติออเดอร์ทั้งหมดในระบบ
+  - จัดกลุ่มและรวมข้อมูลลูกค้าอัตโนมัติตามชื่อ เบอร์โทรศัพท์ และเลขผู้เสียภาษี
+  - จำแนกประเภทลูกค้าอัจฉริยะ (🏢 นิติบุคคล/บริษัท หรือ 👤 บุคคลธรรมดา)
+  - ดึงข้อมูลเบอร์โทร, ที่อยู่จัดส่ง, ช่องทางการสั่งซื้อ, ยอดใช้จ่ายรวม, และจำนวนออเดอร์
+  - บันทึกลงในตารางฐานข้อมูล `customers` บน Supabase แบบ Upsert ถาวร เพื่อใช้ค้นหา วิเคราะห์ และใช้งานในอนาคต
+* **⚡ Real-time Order Auto-Sync (`autoSyncCustomerFromOrder`):** เมื่อมีการสร้างออเดอร์ใหม่ (`saveOrder`) หรือแก้ไขออเดอร์ (`saveOrderEdit`) ระบบจะทำการบันทึก/อัปเดตข้อมูลลูกค้าลงฐานข้อมูล `customers` ให้แบบอัตโนมัติทันที
+* **🔍 Seamless Search & 360° Profile:** ค้นหาลูกค้าได้ง่าย รวดเร็ว พร้อมเชื่อมโยงประวัติคำสั่งซื้อทั้งหมดของลูกค้าในหน้าต่าง Customer 360° Profile (`openCustomerProfileModal`) ทั้งจาก `customer_id` และ `customer_name`
+* **🧹 Cache Refresh (v2.16):** อัปเดต Service Worker Cache เป็น `sealthai-v2.16`
+
+---
 ### Monthly Summary: Staff Wages, Commissions & Gratuity in Details Table
 * **💼 คอลัมน์ค่าแรง (Staff Wages):** เพิ่มคอลัมน์ **"💼 ค่าแรง"** ในตาราง **📋 รายละเอียด** ของหน้าสรุปยอดขายรายเดือน (`monthly`):
   - คำนวณค่าแรง CFO (นันทนา 15% ของกำไรหลังหัก GP Platform) รายวัน

@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.15';
-const DISPLAY_APP_VERSION = 'v2.15';
+const CURRENT_APP_VERSION = 'sealthai-v2.16';
+const DISPLAY_APP_VERSION = 'v2.16';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.15 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.16 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.15 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.16 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.15 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.16 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3202,7 +3202,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.15 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.16 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7432,6 +7432,11 @@ async function saveOrder() {
   }));
 
   await sb.from('order_items').insert(items);
+
+  // Auto-sync customer to database in background
+  if (orderPayload.customer_name && currentShop?.id) {
+    autoSyncCustomerFromOrder(orderPayload, order.id).catch(()=>{});
+  }
 
   if (orderSourceQuoteId) {
     await sb.from('quotations').update({status:'converted',converted_order_id:order.id}).eq('id',orderSourceQuoteId);
@@ -25831,9 +25836,264 @@ function getCustomerTierBadge(tierKey) {
   return `<span class="${t.badgeClass}" style="font-size:11px;font-weight:600">${t.label.split(' ')[0]}</span>`;
 }
 
+
+// ─── CRM & CUSTOMER DATABASE AUTO-SYNC (v2.16) ─────────────────────
+async function autoSyncCustomerFromOrder(orderPayload, orderId) {
+  try {
+    const rawName = (orderPayload.customer_name || '').trim();
+    if (!rawName || rawName === '-' || rawName === 'ลูกค้าทั่วไป') return;
+
+    const { data: existing } = await sb.from('customers')
+      .select('id, name, phone, tax_id, billing_address, shipping_address')
+      .eq('shop_id', currentShop.id)
+      .ilike('name', rawName)
+      .limit(1)
+      .maybeSingle();
+
+    if (!existing) {
+      const isCompany = /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด|co\.,\s*ltd|corp|inc|ร้าน|อู่|การช่าง/i.test(rawName) || ((orderPayload.tax_id||'').length === 13);
+      const { data: newCust } = await sb.from('customers').insert({
+        shop_id: currentShop.id,
+        name: rawName,
+        customer_type: isCompany ? 'company' : 'individual',
+        customer_tier: orderPayload.customer_tier || 'retail',
+        tax_id: orderPayload.tax_id || null,
+        branch_code: orderPayload.branch_code || '00000',
+        phone: orderPayload.customer_phone || null,
+        billing_address: orderPayload.billing_address || orderPayload.customer_address || null,
+        shipping_address: orderPayload.customer_address || orderPayload.billing_address || null,
+        notes: orderPayload.channel ? `ช่องทาง: ${orderPayload.channel}` : null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).select().single();
+
+      if (newCust && orderId) {
+        await sb.from('orders').update({ customer_id: newCust.id }).eq('id', orderId);
+      }
+    } else {
+      const updates = {};
+      if (!existing.phone && orderPayload.customer_phone) updates.phone = orderPayload.customer_phone;
+      if (!existing.billing_address && orderPayload.billing_address) updates.billing_address = orderPayload.billing_address;
+      if (!existing.shipping_address && orderPayload.customer_address) updates.shipping_address = orderPayload.customer_address;
+      if (Object.keys(updates).length > 0) {
+        updates.updated_at = new Date().toISOString();
+        await sb.from('customers').update(updates).eq('id', existing.id);
+      }
+      if (orderId) {
+        await sb.from('orders').update({ customer_id: existing.id }).eq('id', orderId);
+      }
+    }
+  } catch(err) {
+    console.warn('autoSyncCustomerFromOrder background error:', err);
+  }
+}
+
+async function syncCustomersFromOrders(isManual = true) {
+  if (!currentShop?.id) { toast('กรุณาเข้าสู่ระบบร้านค้าก่อนทำรายการ', 'error'); return; }
+  
+  if (isManual) {
+    if (!confirm('📥 ระบบจะดึงข้อมูลลูกค้าทั้งหมดจากประวัติคำสั่งซื้อ (Orders) มาจัดเก็บลงในฐานข้อมูลลูกค้า (Customer Database) เพื่อให้ค้นหา ตรวจสอบประวัติ และนำไปใช้ออกบิลได้สะดวกรวดเร็ว\n\nต้องการเริ่มการซิงค์ข้อมูลใช่หรือไม่?')) return;
+  }
+
+  if (isManual) toast('⏳ กำลังดึงและวิเคราะห์ข้อมูลลูกค้าจากประวัติคำสั่งซื้อ...', 'info', 10000);
+
+  try {
+    // 1. Fetch all orders & existing customers
+    const [ordersRes, existingCustRes] = await Promise.all([
+      sb.from('orders')
+        .select('id, order_no, customer_name, customer_username, customer_social, customer_contact, customer_phone, customer_address, billing_address, tax_id, branch_code, channel, total_amount, order_date, customer_id')
+        .eq('shop_id', currentShop.id)
+        .order('order_date', { ascending: false }),
+      sb.from('customers').select('*').eq('shop_id', currentShop.id)
+    ]);
+
+    if (ordersRes.error) throw ordersRes.error;
+
+    const orders = (ordersRes.data || []).filter(o => !isOrderCancelled(o));
+    const existingCustomers = existingCustRes.data || [];
+    
+    // Map existing customers by normalized name and ID
+    const custMapByName = new Map();
+    const custMapById = new Map();
+    existingCustomers.forEach(c => {
+      if (c.name) custMapByName.set(c.name.trim().toLowerCase(), c);
+      if (c.id) custMapById.set(c.id, c);
+    });
+
+    // 2. Aggregate customers from orders
+    const orderCustMap = new Map();
+
+    orders.forEach(o => {
+      let rawName = (o.customer_name || '').trim();
+      let username = (o.customer_username || '').trim();
+      let social = (o.customer_social || '').trim();
+      let phone = (o.customer_phone || '').trim();
+      let contact = (o.customer_contact || '').trim();
+      let addr = (o.customer_address || '').trim();
+      let billing = (o.billing_address || '').trim();
+      let taxId = (o.tax_id || '').trim();
+      let branch = (o.branch_code || '00000').trim();
+      let channel = (o.channel || '').trim();
+      let amount = Number(o.total_amount || 0);
+      let date = o.order_date;
+
+      // Primary identifier: Name -> Username -> Social/Phone
+      let displayName = rawName || username || social || (phone ? `ลูกค้า ${phone}` : '');
+      if (!displayName || displayName === '-' || displayName === 'ลูกค้าทั่วไป') {
+        if (!phone && !username && !social) return; // Skip empty rows
+        displayName = username ? `@${username}` : (phone ? `ลูกค้า ${phone}` : 'ลูกค้าไม่ระบุชื่อ');
+      }
+
+      const key = displayName.toLowerCase();
+
+      if (!orderCustMap.has(key)) {
+        const isCompany = /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด|co\.,\s*ltd|corp|inc|ร้าน|อู่|การช่าง/i.test(displayName) || (taxId && taxId.length === 13);
+        
+        orderCustMap.set(key, {
+          name: displayName,
+          customer_type: isCompany ? 'company' : 'individual',
+          customer_tier: 'retail',
+          tax_id: taxId || null,
+          branch_code: branch || '00000',
+          phone: phone || null,
+          email: null,
+          contact_name: contact || null,
+          billing_address: billing || addr || null,
+          shipping_address: addr || billing || null,
+          channel: channel || 'Direct',
+          username: username || null,
+          social: social || null,
+          notes: channel ? `ช่องทางหลัก: ${channel}${username ? ` (@${username})` : ''}` : null,
+          total_spend: 0,
+          order_count: 0,
+          last_order_date: null,
+          order_ids: []
+        });
+      }
+
+      const entry = orderCustMap.get(key);
+      entry.total_spend += amount;
+      entry.order_count += 1;
+      entry.order_ids.push(o.id);
+      if (!entry.last_order_date || date > entry.last_order_date) {
+        entry.last_order_date = date;
+      }
+      // Fill missing details from subsequent orders
+      if (!entry.phone && phone) entry.phone = phone;
+      if (!entry.contact_name && contact) entry.contact_name = contact;
+      if (!entry.tax_id && taxId) entry.tax_id = taxId;
+      if (!entry.shipping_address && addr) entry.shipping_address = addr;
+      if (!entry.billing_address && billing) entry.billing_address = billing;
+      if (!entry.username && username) entry.username = username;
+      if (!entry.social && social) entry.social = social;
+    });
+
+    let insertedCount = 0;
+    let updatedCount = 0;
+    const ordersToLink = [];
+
+    // 3. Save to database
+    for (const [key, cData] of orderCustMap.entries()) {
+      let targetCust = custMapByName.get(key);
+      
+      if (!targetCust) {
+        const insertPayload = {
+          shop_id: currentShop.id,
+          name: cData.name,
+          customer_type: cData.customer_type,
+          customer_tier: cData.customer_tier,
+          tax_id: cData.tax_id,
+          branch_code: cData.branch_code,
+          phone: cData.phone,
+          billing_address: cData.billing_address,
+          shipping_address: cData.shipping_address,
+          notes: cData.notes,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        const { data: newCust, error: insErr } = await sb.from('customers').insert(insertPayload).select().single();
+        if (!insErr && newCust) {
+          insertedCount++;
+          targetCust = newCust;
+          custMapByName.set(key, newCust);
+          custMapById.set(newCust.id, newCust);
+        }
+      } else {
+        const updatePayload = {};
+        if (!targetCust.phone && cData.phone) updatePayload.phone = cData.phone;
+        if (!targetCust.tax_id && cData.tax_id) updatePayload.tax_id = cData.tax_id;
+        if (!targetCust.billing_address && cData.billing_address) updatePayload.billing_address = cData.billing_address;
+        if (!targetCust.shipping_address && cData.shipping_address) updatePayload.shipping_address = cData.shipping_address;
+
+        if (Object.keys(updatePayload).length > 0) {
+          updatePayload.updated_at = new Date().toISOString();
+          const { error: upErr } = await sb.from('customers').update(updatePayload).eq('id', targetCust.id);
+          if (!upErr) updatedCount++;
+        }
+      }
+
+      if (targetCust && targetCust.id) {
+        cData.order_ids.forEach(orderId => {
+          ordersToLink.push({ orderId, customerId: targetCust.id });
+        });
+      }
+    }
+
+    // Link customer_id in orders (batch chunks of 25)
+    for (let i = 0; i < ordersToLink.length; i += 25) {
+      const chunk = ordersToLink.slice(i, i + 25);
+      await Promise.all(chunk.map(item =>
+        sb.from('orders').update({ customer_id: item.customerId }).eq('id', item.orderId).is('customer_id', null).catch(()=>{})
+      ));
+    }
+
+    await loadCRMData(true);
+    await loadOrderCustomerList(true);
+
+    if (isManual) {
+      showDynamicModal('🎉 ซิงค์ฐานข้อมูลลูกค้าจากออเดอร์สำเร็จ!', `
+        <div style="text-align:center;padding:10px 0">
+          <div style="font-size:48px;margin-bottom:10px">👥✨</div>
+          <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px">นำเข้าและอัปเดตข้อมูลลูกค้าลง Database เรียบร้อยแล้ว</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+            ระบบได้ตรวจพบและประมวลผลข้อมูลจากประวัติคำสั่งซื้อทั้งหมด <b>${orders.length} ออเดอร์</b>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;margin-bottom:20px">
+            <div style="background:var(--bg3);border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:11.5px;color:var(--text3)">ลูกค้าทั้งหมดที่พบ</div>
+              <div style="font-size:20px;font-weight:800;color:var(--blue);margin-top:4px">${orderCustMap.size} ราย</div>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:11.5px;color:#166534">เพิ่มลูกค้าใหม่ลง DB</div>
+              <div style="font-size:20px;font-weight:800;color:#16a34a;margin-top:4px">+${insertedCount} ราย</div>
+            </div>
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:11.5px;color:#1e40af">อัปเดตข้อมูลเพิ่มเติม</div>
+              <div style="font-size:20px;font-weight:800;color:#2563eb;margin-top:4px">${updatedCount} ราย</div>
+            </div>
+          </div>
+          <div style="font-size:12px;color:var(--text3);text-align:left;background:var(--bg3);padding:12px;border-radius:8px;border:1px solid var(--border);line-height:1.6">
+            💡 <b>พร้อมใช้งาน:</b> ข้อมูลลูกค้าทั้งหมดถูกจัดเก็บบนคลาวด์เรียบร้อยแล้ว ท่านสามารถค้นหาชื่อ เบอร์โทร หรือที่อยู่ ได้ทันทีในหน้านี้ และเวลาเปิดออเดอร์ใหม่ระบบจะช่วยเติมข้อมูลให้อัตโนมัติค่ะ
+          </div>
+        </div>
+      `, `<button class="btn btn-primary" onclick="closeModal('modal-dynamic')">ตกลง</button>`);
+    } else {
+      toast(`ซิงค์ข้อมูลลูกค้าเรียบร้อย (ใหม่ +${insertedCount}) ✓`, 'success');
+    }
+
+  } catch(err) {
+    console.error('syncCustomersFromOrders error:', err);
+    if (isManual) {
+      toast('ซิงค์ข้อมูลลูกค้าไม่สำเร็จ: ' + (err.message || err), 'error');
+    }
+  }
+}
+
 async function customers() {
   document.getElementById('topbar-actions').innerHTML = `
     <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="syncCustomersFromOrders(true)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700" title="ดึงข้อมูลลูกค้าจากประวัติคำสั่งซื้อทั้งหมดมาบันทึกลง Database อัตโนมัติ">📥 ดึงลูกค้าจากออเดอร์</button>
       <button class="btn btn-secondary btn-sm" onclick="loadCRMData(true)">🔄 รีเฟรช</button>
       <button class="btn btn-primary btn-sm" onclick="openNewCustomerModal()">+ เพิ่มลูกค้าใหม่</button>
     </div>
@@ -25860,7 +26120,10 @@ async function customers() {
             <div class="card-title">👥 ทะเบียนลูกค้าองค์กร & บุคคล (Customer Master)</div>
             <div class="card-subtitle">จัดการข้อมูลลูกค้า เลขผู้เสียภาษี สาขา เครดิตเทอม วงเงิน และประวัติการสั่งซื้อ</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="openNewCustomerModal()">+ เพิ่มลูกค้า</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="syncCustomersFromOrders(true)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700" title="ดึงข้อมูลลูกค้าจากออเดอร์ทั้งหมดมาจัดเก็บบน Database">📥 ดึงลูกค้าจากออเดอร์</button>
+            <button class="btn btn-primary btn-sm" onclick="openNewCustomerModal()">+ เพิ่มลูกค้า</button>
+          </div>
         </div>
 
         <div class="filter-bar" style="border:none;padding:0 0 12px 0;flex-wrap:wrap;gap:8px">
@@ -26075,7 +26338,20 @@ function filterCustomerList() {
   if (!wrap) return;
 
   if (!filtered.length) {
-    wrap.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">ไม่พบรายชื่อลูกค้าที่ตรงกับเงื่อนไข</div></div>';
+    if (!_allCustomers.length) {
+      wrap.innerHTML = `
+        <div class="empty" style="padding:40px 20px;text-align:center">
+          <div class="empty-icon" style="font-size:48px">👥</div>
+          <div class="empty-text" style="font-size:16px;font-weight:700;color:var(--text);margin-top:8px">ยังไม่มีข้อมูลในทะเบียนลูกค้า (Customer Database)</div>
+          <div style="font-size:13px;color:var(--text3);margin-top:4px;margin-bottom:18px">ท่านสามารถดึงประวัติลูกค้าจากรายการออเดอร์ทั้งหมดที่มีอยู่แล้วเข้ามาจัดเก็บเป็นฐานข้อมูลอัตโนมัติได้ทันที</div>
+          <button class="btn btn-primary" onclick="syncCustomersFromOrders(true)" style="padding:10px 20px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:6px">
+            📥 ดึงข้อมูลลูกค้าจากประวัติออเดอร์ทั้งหมด
+          </button>
+        </div>
+      `;
+    } else {
+      wrap.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div class="empty-text">ไม่พบรายชื่อลูกค้าที่ตรงกับเงื่อนไขการค้นหา</div></div>';
+    }
     return;
   }
 
@@ -26276,7 +26552,7 @@ async function openCustomerProfileModal(id) {
 
   // Fetch recent orders & quotations for this customer
   const [ordersRes, qtRes] = await Promise.all([
-    sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id).eq('customer_id', id).order('order_date', { ascending: false }).limit(10),
+    sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id).or(`customer_id.eq.${id},customer_name.eq.${c.name}`).order('order_date', { ascending: false }).limit(20),
     sb.from('quotations').select('*').eq('shop_id', currentShop.id).eq('customer_id', id).order('created_at', { ascending: false }).limit(10)
   ]);
 
@@ -31110,7 +31386,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.15', date:'2026-09-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Monthly Summary: Staff Wages, Commissions & Gratuity in Details Table', items:[
+    { v:'2.16', date:'2026-09-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Customer Database & Automatic Order Sync (ทะเบียนลูกค้า & ซิงค์ข้อมูลอัตโนมัติ)', items:[
+      '📥 <b>ดึงข้อมูลลูกค้าจากออเดอร์ (Sync Customers from Orders):</b> ปุ่มคลิกเดียวดึงประวัติลูกค้าจากคำสั่งซื้อทั้งหมด แปลงเป็นฐานข้อมูลลูกค้า (Customer Master Database) พร้อมแยกประเภทบุคคล/นิติบุคคล, เบอร์โทร, Tax ID, ที่อยู่ออกบิล และยอดซื้อสะสมอัตโนมัติ',
+      '⚡ <b>บันทึกลูกค้าอัตโนมัติทุกครั้งที่เปิดออเดอร์:</b> เมื่อมีการบันทึกหรือแก้ไขออเดอร์ ระบบจะนำชื่อลูกค้า เบอร์โทร และที่อยู่ ไปอัปเดตลงในฐานข้อมูลลูกค้าทันทีโดยอัตโนมัติ',
+      '🔍 <b>ค้นหาและเติมข้อมูลอัจฉริยะ (Smart Autocomplete):</b> ค้นหาลูกค้าเดิมได้ทั้งจากชื่อ, เบอร์โทร, username, หรือที่อยู่ เพื่อกรอกข้อมูลลงในฟอร์มออเดอร์/ใบเสนอราคาแบบคลิกเดียว',
+      '👤 <b>Customer 360° Profile:</b> ดูประวัติคำสั่งซื้อทั้งหมด ยอดซื้อสะสม และสถานะเครดิตของลูกค้าแต่ละรายได้อย่างครบถ้วน',
+      '🧹 <b>Cache Refresh (v2.16):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.16'
+    ]},
+    { v:'2.15', date:'2026-09-16', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Monthly Summary: Staff Wages, Commissions & Gratuity in Details Table', items:[
       '💼 <b>คอลัมน์ค่าแรง (Staff Wages):</b> แสดงค่าแรง CFO (15% ของกำไรหลังหัก GP Platform) และค่าแรง/เงินเดือนพนักงานในตารางรายละเอียดรายวัน พร้อมป๊อปอัปดูที่มาการคำนวณและรายการบิล',
       '👤 <b>คอลัมน์ค่าคอมพนักงาน (Sales Commission):</b> แสดงค่าคอมมิชชั่นฝ่ายขาย (นิติ บุญสายันต์ 15%) ในแต่ละวันอย่างโปร่งใส พร้อมปุ่มกดดูสูตรและฐานกำไร',
       '🎁 <b>คอลัมน์ค่าสินน้ำใจ (Gratuity & Top Up):</b> แสดงค่าสินน้ำใจและเงินพิเศษ Supplier แยกต่างหากอย่างชัดเจน พร้อมคลิกดูรายละเอียดได้',
