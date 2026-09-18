@@ -2,6 +2,19 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.17] — 2026-09-18
+### Purchase Order: Use Supplier Quoted Purchase Price (Not Average Cost)
+* **🛒 Direct Purchase Price Priority (ราคาซื้อเข้าจาก Supplier):** ปรับปรุงระบบดึงราคาในใบสั่งซื้อ (Purchase Order / PO) ทุกฟังก์ชัน ให้ดึง **"ราคาซื้อเข้า" (`purchase_price` / `buy_price`)** ที่ตั้งไว้สำหรับอ้างอิงกับซัพพลายเออร์โดยตรง โดยไม่ดึงราคาทุนเฉลี่ยในคลัง (`current_cost`):
+  - **เปิดใบสั่งซื้อใหม่ (`openNewPO`):** ดึง `purchase_price` จากฐานข้อมูลสินค้าสำหรับรายการสินค้าที่เลือก
+  - **ระบบค้นหา & Autocomplete (`renderPOItems`):** แสดงป้ายราคา `ราคาซื้อเข้า: ฿...` อย่างเด่นชัด พร้อมใส่ราคาซื้อเข้าลงในช่องราคาอัตโนมัติเมื่อเลือกสินค้า
+  - **สร้าง PO รวมจากออเดอร์ขาย (`openBatchSOtoPOModal`):** ดึงราคาซื้อเข้าของสินค้าที่อ้างอิงจาก Supplier เป็นหลัก (เช่น `OIL SEAL NBR 9X16X4` ราคาซื้อเข้า = ฿9)
+  - **สั่งซื้อสินค้าซื้อซ้ำ (`createPOFromSelectedRepeat`):** ดึงราคาซื้อเข้าที่ตั้งไว้โดยตรง
+  - **สั่งซื้อจาก Stock Planning (`createPOFromSelectedPlanning`):** ดึงราคาซื้อเข้าที่ตั้งไว้
+* **🎯 Accurate Supplier Pricing:** รองรับการอ้างอิงราคาซื้อเข้าของซีลและอะไหล่ทุกขนาดตรงตามราคาต้นทางจาก Supplier 100%
+* **🧹 Cache Refresh (v2.17):** อัปเดต Service Worker Cache เป็น `sealthai-v2.17`
+
+---
+
 ## 🚀 [v2.16] — 2026-09-17
 ### Customer Database & Auto-Sync from Orders (ระบบจัดการฐานข้อมูลลูกค้าจากออเดอร์)
 * **📥 One-Click Customer Sync (`syncCustomersFromOrders`):** เพิ่มฟีเจอร์และปุ่ม **"📥 ดึงลูกค้าจากออเดอร์"** ในหน้ารายชื่อลูกค้า (`customers`) ทั้งใน Top Toolbar, Card Header และ Empty State:

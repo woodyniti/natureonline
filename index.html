@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.16';
-const DISPLAY_APP_VERSION = 'v2.16';
+const CURRENT_APP_VERSION = 'sealthai-v2.17';
+const DISPLAY_APP_VERSION = 'v2.17';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.16 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.17 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.16 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.17 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.16 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.17 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3202,7 +3202,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.16 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.17 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3735,10 +3735,9 @@ async function createPOFromSelectedRepeat() {
     // Suggest reorder quantity (e.g. recent repeat sales quantity or pack size)
     const suggestedQty = Math.max(1, Math.min(100, Number(cb.getAttribute('data-qty')) || Number(prod.moq) || 10));
     
-    // ดึงราคาซื้อตามลำดับ: purchase_price -> current_cost -> repeatData cost -> 0
-    let cost = Number(prod?.purchase_price || 0);
-    if (cost <= 0) cost = Number(prod?.current_cost || 0);
-    if (cost <= 0) cost = Number(repeatData?.cost_per_unit || 0);
+    // ดึงราคาซื้อเข้า (purchase_price) จาก Supplier โดยตรง ไม่ใช้ราคาทุนเฉลี่ย
+    let cost = Number(prod?.purchase_price !== undefined && prod?.purchase_price !== null && Number(prod?.purchase_price) > 0 ? prod.purchase_price : (prod?.buy_price !== undefined && prod?.buy_price !== null && Number(prod?.buy_price) > 0 ? prod.buy_price : 0));
+    if (cost <= 0) cost = Number(prod?.current_cost || repeatData?.cost_per_unit || 0);
 
     itemsToOrder.push({
       product_id: pid,
@@ -17855,16 +17854,25 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   const vatTypeEl = document.getElementById('po-vat-type');
   if (vatTypeEl) vatTypeEl.value = 'excluded';
 
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price,current_cost,stock_qty').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,item_no,purchase_price,buy_price,cost_price,current_cost,stock_qty').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
 
   if (Array.isArray(prefilledItems) && prefilledItems.length > 0) {
     poItems = prefilledItems.map(it => {
-      // ดึงราคาซื้อ (purchase_price) ที่แท้จริงจากฐานข้อมูลสินค้า
-      const master = productList.find(p => p.id === it.product_id || (p.sku && p.sku === it.sku) || (p.name && p.name === it.product_name));
-      let buyPrice = master && master.purchase_price !== undefined && master.purchase_price !== null ? Number(master.purchase_price) : null;
+      // ดึงราคาซื้อ (purchase_price) ที่แท้จริงจากฐานข้อมูลสินค้าเป็นอันดับแรก (ราคาอ้างอิงจาก Supplier ไม่ใช่ราคาทุนเฉลี่ย)
+      const master = productList.find(p => p.id === it.product_id || (p.sku && p.sku === it.sku) || (p.name && p.name === it.product_name) || (p.name && wcSearch(p.name, it.product_name || it.name)));
+      let buyPrice = master && master.purchase_price !== undefined && master.purchase_price !== null && Number(master.purchase_price) > 0 ? Number(master.purchase_price) : null;
+      if (buyPrice === null && master && master.buy_price !== undefined && master.buy_price !== null && Number(master.buy_price) > 0) {
+        buyPrice = Number(master.buy_price);
+      }
+      if (buyPrice === null && it.purchase_price !== undefined && it.purchase_price !== null && Number(it.purchase_price) > 0) {
+        buyPrice = Number(it.purchase_price);
+      }
+      if (buyPrice === null && it.buy_price !== undefined && it.buy_price !== null && Number(it.buy_price) > 0) {
+        buyPrice = Number(it.buy_price);
+      }
       if (buyPrice === null || isNaN(buyPrice)) {
-        buyPrice = Number(it.purchase_price !== undefined ? it.purchase_price : (it.buy_price !== undefined ? it.buy_price : (it.unit_cost || 0)));
+        buyPrice = Number(it.unit_cost || (master && (master.purchase_price || master.buy_price || master.current_cost)) || 0);
       }
 
       return {
@@ -17945,12 +17953,12 @@ function renderPOItems() {
 
         d.appendChild(leftDiv);
 
-        // แสดงราคาซื้อ (purchase_price) อย่างชัดเจน ไม่ใช่ราคาทุนเฉลี่ย
+        // แสดงราคาซื้อเข้า (purchase_price) จาก Supplier อย่างชัดเจน ไม่ใช่ราคาทุนเฉลี่ย
         const priceDiv = document.createElement('div');
         priceDiv.style.cssText = 'text-align:right;margin-left:8px;flex-shrink:0';
-        const buyP = Number(p.purchase_price !== undefined && p.purchase_price !== null ? p.purchase_price : 0);
+        const buyP = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
         priceDiv.innerHTML = `
-          <div style="font-size:11.5px;color:#15803d;font-weight:700">ราคาซื้อ: ${fmtB(buyP)}</div>
+          <div style="font-size:11.5px;color:#15803d;font-weight:700">ราคาซื้อเข้า: ${fmtB(buyP)}</div>
           ${p.current_cost ? `<div style="font-size:10px;color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(p.current_cost)})</div>` : ''}
         `;
         d.appendChild(priceDiv);
@@ -17958,8 +17966,8 @@ function renderPOItems() {
         d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
         d.onmousedown=e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
-          // ดึงราคาซื้อ (purchase_price) จากฐานข้อมูลสินค้า
-          const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null ? p.purchase_price : 0);
+          // ดึงราคาซื้อเข้า (purchase_price / buy_price) จากฐานข้อมูลสินค้าโดยตรง
+          const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
           poItems[i]={product_id:p.id,product_name:p.name,sku:p.sku||'',qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:buyPrice};
           inp.value=p.sku||p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
         };
@@ -18005,13 +18013,14 @@ function renderPOItems() {
           x.name.toLowerCase() === val.toLowerCase() || 
           (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
           (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
+          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase()) ||
+          wcProdMatch(x, val)
         );
         if (matchedProd) {
           const productChanged = poItems[i].product_id !== matchedProd.id;
-          if (productChanged) {
-            // ดึงราคาซื้อ (purchase_price) จากฐานข้อมูลสินค้า
-            const buyPrice = Number(matchedProd.purchase_price !== undefined && matchedProd.purchase_price !== null ? matchedProd.purchase_price : 0);
+          if (productChanged || !poItems[i].unit_cost) {
+            // ดึงราคาซื้อเข้า (purchase_price / buy_price) จากฐานข้อมูลสินค้าโดยตรง
+            const buyPrice = Number(matchedProd.purchase_price !== undefined && matchedProd.purchase_price !== null && matchedProd.purchase_price !== '' ? matchedProd.purchase_price : (matchedProd.buy_price !== undefined && matchedProd.buy_price !== null ? matchedProd.buy_price : (matchedProd.cost_price || 0)));
             poItems[i].unit_cost = buyPrice;
           }
           poItems[i].product_id = matchedProd.id;
@@ -18032,9 +18041,9 @@ function renderPOItems() {
     const statusHelp = document.createElement('div');
     statusHelp.style.cssText = 'font-size:11px;margin-top:3px;font-weight:500';
     if (it.product_id) {
-      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null ? selectedProduct?.purchase_price : 0);
+      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : (selectedProduct?.cost_price || 0)));
       const avgCost = Number(selectedProduct?.current_cost || 0);
-      statusHelp.innerHTML = `<span style="color:#0f172a;font-weight:600">${escapeHTML(selectedProduct?.name||it.product_name)}</span> · <span style="color:var(--blue)">Supplier SKU: ${escapeHTML(selectedProduct?.supplier_sku||'-')}</span> · <span style="color:#15803d;font-weight:700">ราคาซื้อ: ${fmtB(buyPrice)}</span> ${avgCost ? `<span style="color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(avgCost)})</span>` : ''} <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>`;
+      statusHelp.innerHTML = `<span style="color:#0f172a;font-weight:600">${escapeHTML(selectedProduct?.name||it.product_name)}</span> · <span style="color:var(--blue)">Supplier SKU: ${escapeHTML(selectedProduct?.supplier_sku||'-')}</span> · <span style="color:#15803d;font-weight:700">ราคาซื้อเข้า: ${fmtB(buyPrice)}</span> ${avgCost ? `<span style="color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(avgCost)})</span>` : ''} <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>`;
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
     }
@@ -18320,7 +18329,7 @@ async function editPO(poId) {
   editingPOId = po.id;
   editingPONo = po.po_no;
   
-  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,purchase_price,current_cost,stock_qty').eq('shop_id', currentShop.id).eq('active',true).order('name');
+  const {data}=await sb.from('products').select('id,name,sku,supplier_sku,part_no,item_no,purchase_price,buy_price,cost_price,current_cost,stock_qty').eq('shop_id', currentShop.id).eq('active',true).order('name');
   productList=data||[];
 
   const titleEl = document.getElementById('po-modal-title');
@@ -23180,15 +23189,14 @@ async function openBatchSOtoPOModal() {
       const sku = prod?.sku || prod?.supplier_sku || prod?.item_no || itSKU || '';
       const pName = itProdName || prod?.name || 'สินค้า';
 
-      // ── ดึงราคาซื้อ / ต้นทุน อย่างชาญฉลาดตามลำดับความสำคัญ (Intelligent Fallback) ──
-      // 1. ลองใช้ purchase_price ของสินค้าในคลัง
-      let buyPrice = Number(prod?.purchase_price || 0);
-      // 2. ถ้าเป็น 0 ให้ใช้ current_cost ของสินค้าในคลัง (ต้นทุนสินค้าปัจจุบัน)
-      if (buyPrice <= 0) buyPrice = Number(prod?.current_cost || 0);
-      // 3. ถ้ายังเป็น 0 ให้ใช้ cost_per_unit จากรายการออเดอร์ขาย
-      if (buyPrice <= 0) buyPrice = Number(it.cost_per_unit || 0);
-      // 4. ถ้ายังเป็น 0 ให้ใช้ purchase_price / unit_cost ของ order item
-      if (buyPrice <= 0) buyPrice = Number(it.purchase_price || it.buy_price || 0);
+      // ── ดึงราคาซื้อ / ราคาซื้อเข้า (Purchase Price) ที่ตั้งไว้สำหรับอ้างอิง Supplier โดยตรง ──
+      // 1. ดึง purchase_price หรือ buy_price ที่ตั้งไว้ในฐานข้อมูลสินค้า (เช่น ราคาซื้อเข้า = 9)
+      let buyPrice = Number(prod?.purchase_price !== undefined && prod?.purchase_price !== null && Number(prod?.purchase_price) > 0 ? prod.purchase_price : (prod?.buy_price !== undefined && prod?.buy_price !== null && Number(prod?.buy_price) > 0 ? prod.buy_price : (prod?.cost_price || 0)));
+      // 2. ถ้าสินค้าในคลังยังไม่ได้ระบุราคาซื้อเข้า (> 0) แต่ในรายการออเดอร์มีระบุ purchase_price / buy_price
+      if (buyPrice <= 0 && it.purchase_price && Number(it.purchase_price) > 0) buyPrice = Number(it.purchase_price);
+      if (buyPrice <= 0 && it.buy_price && Number(it.buy_price) > 0) buyPrice = Number(it.buy_price);
+      // 3. ถ้าไม่มีราคาซื้อเข้าที่ตั้งไว้เลย จึงใช้ต้นทุนปัจจุบัน (current_cost) หรือ cost_per_unit เป็น fallback
+      if (buyPrice <= 0) buyPrice = Number(prod?.current_cost || it.cost_per_unit || 0);
 
       const qtySold = Number(it.qty || 1);
 
@@ -31386,7 +31394,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.16', date:'2026-09-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Customer Database & Automatic Order Sync (ทะเบียนลูกค้า & ซิงค์ข้อมูลอัตโนมัติ)', items:[
+    { v:'2.17', date:'2026-09-18', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order: ใช้ราคาซื้อเข้า (Purchase Price) จาก Supplier โดยตรง ไม่ดึงราคาทุนเฉลี่ย', items:[
+      '🛒 <b>Direct Purchase Price Priority:</b> ปรับระบบดึงราคาในใบสั่งซื้อ (Purchase Order / PO) ทุกช่องทาง (ทั้งการเปิด PO เดี่ยว, การเลือก SKU Autocomplete, การสร้าง Batch PO จากออเดอร์ขาย, การสั่งซื้อจาก Stock Planning, และ Repeat Orders) ให้ดึง <b>"ราคาซื้อเข้า" (purchase_price / buy_price)</b> ที่ตั้งไว้สำหรับอ้างอิง Supplier เป็นหลัก โดยไม่ดึงราคาทุนเฉลี่ย (current_cost)',
+      '🎯 <b>Accurate Supplier Quoted Price:</b> แก้ไขปัญหารายการสินค้าเช่น <code>OIL SEAL NBR 9X16X4</code> ให้ดึงราคาซื้อเข้า ฿9 ตามที่ตั้งไว้กับ Supplier อย่างถูกต้องและแม่นยำ 100%',
+      '🔍 <b>Enhanced SKU & Dimensions Autocomplete:</b> อัปเกรดระบบค้นหาในฟอร์ม PO ให้รองรับทั้ง SKU, Supplier SKU, Part No, ขนาดมิติซีล, และชื่อสินค้าแบบยืดหยุ่น พร้อมแสดงป้าย <code>ราคาซื้อเข้า: ฿...</code> อย่างชัดเจน',
+      '🧹 <b>Cache Refresh (v2.17):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.17'
+    ]},
+    { v:'2.16', date:'2026-09-17', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Database & Automatic Order Sync (ทะเบียนลูกค้า & ซิงค์ข้อมูลอัตโนมัติ)', items:[
       '📥 <b>ดึงข้อมูลลูกค้าจากออเดอร์ (Sync Customers from Orders):</b> ปุ่มคลิกเดียวดึงประวัติลูกค้าจากคำสั่งซื้อทั้งหมด แปลงเป็นฐานข้อมูลลูกค้า (Customer Master Database) พร้อมแยกประเภทบุคคล/นิติบุคคล, เบอร์โทร, Tax ID, ที่อยู่ออกบิล และยอดซื้อสะสมอัตโนมัติ',
       '⚡ <b>บันทึกลูกค้าอัตโนมัติทุกครั้งที่เปิดออเดอร์:</b> เมื่อมีการบันทึกหรือแก้ไขออเดอร์ ระบบจะนำชื่อลูกค้า เบอร์โทร และที่อยู่ ไปอัปเดตลงในฐานข้อมูลลูกค้าทันทีโดยอัตโนมัติ',
       '🔍 <b>ค้นหาและเติมข้อมูลอัจฉริยะ (Smart Autocomplete):</b> ค้นหาลูกค้าเดิมได้ทั้งจากชื่อ, เบอร์โทร, username, หรือที่อยู่ เพื่อกรอกข้อมูลลงในฟอร์มออเดอร์/ใบเสนอราคาแบบคลิกเดียว',
