@@ -8203,29 +8203,59 @@ function openReceiptOptions(orderId) {
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '320';
   modal.innerHTML = `
-    <div class="modal" style="max-width:440px">
+    <div class="modal" style="max-width:460px">
       <div class="modal-title">🖨️ ตัวเลือกการพิมพ์บิล</div>
       <div style="padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:14px">
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="checkbox" id="receipt-show-discount" checked style="width:18px;height:18px;margin-top:2px">
-          <span><strong>แสดงส่วนลดในบิล</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: แสดงยอดก่อนหักส่วนลด</span></span>
-        </label>
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-          <input type="checkbox" id="receipt-show-signature" checked style="width:18px;height:18px;margin-top:2px">
-          <span><strong>พิมพ์ลายเซ็นผู้รับเงิน</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัล · ปิด: เว้นช่องไว้สำหรับเซ็นด้วยมือ</span></span>
-        </label>
+        <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">📄 ประเภทเอกสารที่ต้องการพิมพ์</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+            <input type="radio" name="receipt-doc-copy" value="original" checked style="width:18px;height:18px">
+            <div>
+              <div style="font-weight:600;font-size:13px">🌟 ต้นฉบับเท่านั้น (ORIGINAL)</div>
+              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 1 ใบ สำหรับมอบให้ลูกค้า</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+            <input type="radio" name="receipt-doc-copy" value="copy" style="width:18px;height:18px">
+            <div>
+              <div style="font-weight:600;font-size:13px">📑 สำเนาเท่านั้น (COPY)</div>
+              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 1 ใบ สำหรับเก็บเข้าแฟ้มบัญชี/ร้านค้า</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1.5px solid #00a882">
+            <input type="radio" name="receipt-doc-copy" value="both" style="width:18px;height:18px">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#008768">✨ พิมพ์เป็นชุด (ต้นฉบับ + สำเนา)</div>
+              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 2 หน้า A4 ต่อกันในครั้งเดียว (ประหยัดเวลา)</div>
+            </div>
+          </label>
+        </div>
+
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+            <input type="checkbox" id="receipt-show-discount" checked style="width:18px;height:18px;margin-top:2px">
+            <span><strong>แสดงส่วนลดในบิล</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: แสดงยอดก่อนหักส่วนลด</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <input type="checkbox" id="receipt-show-signature" checked style="width:18px;height:18px;margin-top:2px">
+            <span><strong>พิมพ์ลายเซ็นผู้รับเงิน</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัลสีน้ำเงิน · ปิด: เว้นช่องไว้สำหรับเซ็นด้วยมือ</span></span>
+          </label>
+        </div>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่งและหมายเหตุจะแสดงในบิลอัตโนมัติเมื่อมีข้อมูล</div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
-        <button class="btn btn-primary" onclick="printReceipt('${orderId}',document.getElementById('receipt-show-discount').checked,document.getElementById('receipt-show-signature').checked)">🖨️ พิมพ์บิล</button>
+        <button class="btn btn-primary" onclick="
+          const docCopy = document.querySelector('input[name=\\'receipt-doc-copy\\']:checked')?.value || 'original';
+          printReceipt('${orderId}', document.getElementById('receipt-show-discount').checked, document.getElementById('receipt-show-signature').checked, docCopy);
+        ">🖨️ พิมพ์บิล</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
 }
 
-async function printReceipt(orderId, showDiscount=true, showSignature=true) {
+async function printReceipt(orderId, showDiscount=true, showSignature=true, docCopyType='original') {
   const { data: order } = await sb.from('orders').select('*,order_items(*,products(name))').eq('id',orderId).single();
   if (!order) { toast('ไม่พบออเดอร์','error'); return; }
 
@@ -8284,6 +8314,18 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
       : '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>'
   ).join('');
 
+  let billShopName = (shop.name || 'sealthai').toUpperCase();
+  if (!billShopName.endsWith('.COM')) billShopName += '.COM';
+  const shopAddr = getShopAddress(shop).split('\n').join('<br>');
+  const _billAddr = order.billing_address || order.customer_address;   // บิลใช้ที่อยู่ออกบิลก่อน ถ้าว่างค่อยใช้ที่อยู่จัดส่ง
+
+  // รายการชุดเอกสารที่ต้องพิมพ์ (ต้นฉบับ / สำเนา / ทั้งคู่)
+  const copies = docCopyType === 'both'
+    ? [{ label: 'ต้นฉบับ / ORIGINAL', isCopy: false }, { label: 'สำเนา / COPY', isCopy: true }]
+    : docCopyType === 'copy'
+      ? [{ label: 'สำเนา / COPY', isCopy: true }]
+      : [{ label: 'ต้นฉบับ / ORIGINAL', isCopy: false }];
+
   // ──────── HTML บิล ────────
   // ── สร้าง HTML บิลด้วย array เพื่อป้องกัน browser parser ──────
   const billParts = [];
@@ -8293,7 +8335,8 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   billParts.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
   billParts.push('<' + 'style>');
   billParts.push('* { box-sizing:border-box; margin:0; padding:0; }');
-  billParts.push('body { font-family:\'Sarabun\',sans-serif; font-size:13px; color:#000; background:#fff; width:210mm; min-height:297mm; padding:10mm; margin:0 auto; }');
+  billParts.push('body { font-family:\'Sarabun\',sans-serif; font-size:13px; color:#000; background:#eaedf2; padding:15px 0; margin:0; }');
+  billParts.push('.bill-page { width:210mm; min-height:297mm; padding:10mm; margin:0 auto 20px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.08); box-sizing:border-box; }');
   billParts.push('.page-border { border:2px solid #1e3a5f; border-radius:4px; padding:12mm 12mm 10mm; min-height:273mm; position:relative; }');
   billParts.push('.corner-tl,.corner-tr,.corner-bl,.corner-br { position:absolute; width:12px; height:12px; }');
   billParts.push('.corner-tl { top:3px; left:3px; border-top:3px solid #00a882; border-left:3px solid #00a882; }');
@@ -8305,6 +8348,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   billParts.push('.shop-name { font-size:20px; font-weight:700; margin-bottom:3px; }');
   billParts.push('.shop-info { font-size:11.5px; color:#1a1a1a; line-height:1.65; }');
   billParts.push('.bill-type { border:2.5px solid #00a882; color:#00a882; font-weight:700; font-size:15px; padding:6px 18px; border-radius:6px; white-space:nowrap; text-align:center; line-height:1.3; }');
+  billParts.push('.bill-type.copy { border:2.5px solid #475569; color:#334155; }');
   billParts.push('.bill-type .doc-sub { font-size:11px; font-weight:700; letter-spacing:0.5px; opacity:0.95; margin-top:2px; }');
   billParts.push('.info-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }');
   billParts.push('.info-box { border:1.5px solid #333; border-radius:4px; padding:8px 10px; }');
@@ -8331,80 +8375,84 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   billParts.push('.sig-line { border-top:1.5px solid #1d4ed8; margin-bottom:6px; }');
   billParts.push('.sig-label { font-size:12px; color:#1d4ed8; font-weight:700; }');
   billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
-  billParts.push('@media print { body { padding:10mm 12mm 8mm; } @page { size:A4 portrait; margin:0; } }');
+  billParts.push('@media print { body { background:#fff; padding:0; margin:0; } .bill-page { box-shadow:none; padding:10mm 12mm 8mm; margin:0; page-break-after:always; break-after:page; } .bill-page:last-child { page-break-after:avoid; break-after:avoid; } @page { size:A4 portrait; margin:0; } }');
   billParts.push('</' + 'style></head><body>');
 
-  // Header
-  billParts.push('<div class="hd">');
-  billParts.push('<div class="hd-left">');
-  // Logo inline base64
-  billParts.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
-    let billShopName = (shop.name || 'sealthai').toUpperCase();
-  if (!billShopName.endsWith('.COM')) billShopName += '.COM';
-  billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
-  billParts.push('<div class="shop-info">' + getShopAddress(shop).split('\n').join('<br>'));
-  billParts.push('<br>Line OA: @sealthai');
-  if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
-  if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
-  billParts.push('</div></div></div>');
-  billParts.push('<div class="bill-type"><div>บิลเงินสด / Cash Sale</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div>');
-  billParts.push('</div>');
+  // Loop render each page (Original / Copy)
+  copies.forEach(cp => {
+    billParts.push('<div class="bill-page"><div class="page-border">');
+    billParts.push('<div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>');
 
-  // Info boxes
-  billParts.push('<div class="info-row">');
-  billParts.push('<div class="info-box">');
-  billParts.push('<div class="info-label">\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / Customer:</div>');
-  billParts.push('<div class="info-val">' + (order.customer_name||'-') + '</div>');
-  if (order.customer_contact) billParts.push('<div class="info-sub">\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d: ' + order.customer_contact + '</div>');
-  if (order.customer_phone) billParts.push('<div class="info-sub">\u0e42\u0e17\u0e23: ' + order.customer_phone + '</div>');
-  const _billAddr = order.billing_address || order.customer_address;   // บิลใช้ที่อยู่ออกบิลก่อน ถ้าว่างค่อยใช้ที่อยู่จัดส่ง
-  if (_billAddr) billParts.push('<div class="info-sub" style="margin-top:4px">' + _billAddr.split('\n').join('<br>') + '</div>');
-  billParts.push('</div>');
-  billParts.push('<div class="info-box" style="text-align:right">');
-  billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.</span>&nbsp;&nbsp;<strong>' + (order.customer_social||order.order_no||'-') + '</strong></div>');
-  billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date</span>&nbsp;&nbsp;<strong>' + thDate + '</strong></div>');
-  billParts.push('<div><span style="font-size:11px;color:#1a1a1a">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel</span>&nbsp;&nbsp;<strong>' + (order.channel||'-') + '</strong></div>');
-  if (order.customer_social) billParts.push('<div style="margin-top:5px"><span style="font-size:11px;color:#1a1a1a">\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 / Ref</span>&nbsp;&nbsp;<strong>' + order.customer_social + '</strong></div>');
-  if (order.tracking_no) billParts.push('<div style="margin-top:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking</span>&nbsp;&nbsp;<strong>' + order.tracking_no + '</strong></div>');
-  billParts.push('</div></div>');
+    // Header
+    billParts.push('<div class="hd">');
+    billParts.push('<div class="hd-left">');
+    billParts.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
+    billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
+    billParts.push('<div class="shop-info">' + shopAddr);
+    billParts.push('<br>Line OA: @sealthai');
+    if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
+    if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
+    billParts.push('</div></div></div>');
+    billParts.push('<div class="bill-type' + (cp.isCopy ? ' copy' : '') + '"><div>บิลเงินสด / Cash Sale</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
+    billParts.push('</div>');
 
-  // Table
-  billParts.push('<table><thead><tr>');
-  billParts.push('<th style="width:36px">\u0e25\u0e33\u0e14\u0e31\u0e1a<br><small>Item</small></th>');
-  billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>Descriptions</small></th>');
-  billParts.push('<th style="width:50px">\u0e08\u0e33\u0e19\u0e27\u0e19<br><small>Qty</small></th>');
-  billParts.push('<th class="right" style="width:68px">\u0e23\u0e32\u0e04\u0e32/\u0e0a\u0e34\u0e49\u0e19<br><small>Unit Price</small></th>');
-  if (showDiscount) billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
-  billParts.push('<th class="right" style="width:85px">\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19<br><small>Amount</small></th>');
-  billParts.push('</tr></thead><tbody>');
-  billParts.push(itemRows.join(''));
-  billParts.push(emptyRows);
-  billParts.push('</tbody></table>');
+    // Info boxes
+    billParts.push('<div class="info-row">');
+    billParts.push('<div class="info-box">');
+    billParts.push('<div class="info-label">\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / Customer:</div>');
+    billParts.push('<div class="info-val">' + (order.customer_name||'-') + '</div>');
+    if (order.customer_contact) billParts.push('<div class="info-sub">\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d: ' + order.customer_contact + '</div>');
+    if (order.customer_phone) billParts.push('<div class="info-sub">\u0e42\u0e17\u0e23: ' + order.customer_phone + '</div>');
+    if (_billAddr) billParts.push('<div class="info-sub" style="margin-top:4px">' + _billAddr.split('\n').join('<br>') + '</div>');
+    billParts.push('</div>');
+    billParts.push('<div class="info-box" style="text-align:right">');
+    billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.</span>&nbsp;&nbsp;<strong>' + (order.customer_social||order.order_no||'-') + '</strong></div>');
+    billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date</span>&nbsp;&nbsp;<strong>' + thDate + '</strong></div>');
+    billParts.push('<div><span style="font-size:11px;color:#1a1a1a">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel</span>&nbsp;&nbsp;<strong>' + (order.channel||'-') + '</strong></div>');
+    if (order.customer_social) billParts.push('<div style="margin-top:5px"><span style="font-size:11px;color:#1a1a1a">\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 / Ref</span>&nbsp;&nbsp;<strong>' + order.customer_social + '</strong></div>');
+    if (order.tracking_no) billParts.push('<div style="margin-top:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking</span>&nbsp;&nbsp;<strong>' + order.tracking_no + '</strong></div>');
+    billParts.push('</div></div>');
 
-  // Totals
-  billParts.push('<div class="total-wrap">');
-  billParts.push('<div class="total-row"><span>\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21 / Subtotal</span><span>' + fmt(subtotal) + '</span></div>');
-  if (showDiscount && billDiscAmt > 0) {
-    billParts.push('<div class="total-row disc"><span>\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14 / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
-  }
-  if (shippingFee > 0) billParts.push('<div class="total-row"><span>ค่าขนส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
-  billParts.push('<div class="total-row grand"><span>\u0e23\u0e27\u0e21\u0e40\u0e07\u0e34\u0e19 / Total</span><span>' + fmt(grandTotal) + '</span></div>');
-  billParts.push('</div>');
-  billParts.push('<div class="baht-text">\u0e15\u0e31\u0e27\u0e2d\u0e31\u0e01\u0e29\u0e23 / In Words &nbsp; <strong>( ' + bahtText(grandTotal) + ' )</strong></div>');
-  if (displayNote) billParts.push('<div class="note-box"><strong>หมายเหตุ / Note:</strong><br>' + escapeHTML(displayNote).replace(/\n/g,'<br>') + '</div>');
+    // Table
+    billParts.push('<table><thead><tr>');
+    billParts.push('<th style="width:36px">\u0e25\u0e33\u0e14\u0e31\u0e1a<br><small>Item</small></th>');
+    billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>Descriptions</small></th>');
+    billParts.push('<th style="width:50px">\u0e08\u0e33\u0e19\u0e27\u0e19<br><small>Qty</small></th>');
+    billParts.push('<th class="right" style="width:68px">\u0e23\u0e32\u0e04\u0e32/\u0e0a\u0e34\u0e49\u0e19<br><small>Unit Price</small></th>');
+    if (showDiscount) billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
+    billParts.push('<th class="right" style="width:85px">\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19<br><small>Amount</small></th>');
+    billParts.push('</tr></thead><tbody>');
+    billParts.push(itemRows.join(''));
+    billParts.push(emptyRows);
+    billParts.push('</tbody></table>');
 
-  // Signature
-  billParts.push('<div class="sig-area"><div class="sig-box">');
-  if (showSignature) {
-    billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ลายเซ็นผู้รับเงิน"></div>');
-  } else {
-    billParts.push('<div class="sig-space"></div>');
-  }
-  billParts.push('<div class="sig-line"></div>');
-  billParts.push('<div class="sig-label">\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19 / Received By</div>');
-billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM') + '</div>');
-  billParts.push('</div></div>');
-  billParts.push('</div>');  // close page-border
+    // Totals
+    billParts.push('<div class="total-wrap">');
+    billParts.push('<div class="total-row"><span>\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21 / Subtotal</span><span>' + fmt(subtotal) + '</span></div>');
+    if (showDiscount && billDiscAmt > 0) {
+      billParts.push('<div class="total-row disc"><span>\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14 / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
+    }
+    if (shippingFee > 0) billParts.push('<div class="total-row"><span>ค่าขนส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
+    billParts.push('<div class="total-row grand"><span>\u0e23\u0e27\u0e21\u0e40\u0e07\u0e34\u0e19 / Total</span><span>' + fmt(grandTotal) + '</span></div>');
+    billParts.push('</div>');
+    billParts.push('<div class="baht-text">\u0e15\u0e31\u0e27\u0e2d\u0e31\u0e01\u0e29\u0e23 / In Words &nbsp; <strong>( ' + bahtText(grandTotal) + ' )</strong></div>');
+    if (displayNote) billParts.push('<div class="note-box"><strong>หมายเหตุ / Note:</strong><br>' + escapeHTML(displayNote).replace(/\n/g,'<br>') + '</div>');
+
+    // Signature
+    billParts.push('<div class="sig-area"><div class="sig-box">');
+    if (showSignature) {
+      billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ลายเซ็นผู้รับเงิน"></div>');
+    } else {
+      billParts.push('<div class="sig-space"></div>');
+    }
+    billParts.push('<div class="sig-line"></div>');
+    billParts.push('<div class="sig-label">\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19 / Received By</div>');
+    billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM') + '</div>');
+    billParts.push('</div></div>');
+
+    billParts.push('</div></div>'); // close page-border & bill-page
+  });
+
   billParts.push('<' + 'script>window.onload=function(){window.print();};</' + 'script>');
 
   const html = billParts.join('\n');
