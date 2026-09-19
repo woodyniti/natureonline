@@ -8304,7 +8304,8 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   billParts.push('.hd-left { display:flex; align-items:center; gap:14px; }');
   billParts.push('.shop-name { font-size:20px; font-weight:700; margin-bottom:3px; }');
   billParts.push('.shop-info { font-size:11.5px; color:#1a1a1a; line-height:1.65; }');
-  billParts.push('.bill-type { border:2.5px solid #00a882; color:#00a882; font-weight:700; font-size:15px; padding:8px 22px; border-radius:6px; white-space:nowrap; }');
+  billParts.push('.bill-type { border:2.5px solid #00a882; color:#00a882; font-weight:700; font-size:15px; padding:6px 18px; border-radius:6px; white-space:nowrap; text-align:center; line-height:1.3; }');
+  billParts.push('.bill-type .doc-sub { font-size:11px; font-weight:700; letter-spacing:0.5px; opacity:0.95; margin-top:2px; }');
   billParts.push('.info-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }');
   billParts.push('.info-box { border:1.5px solid #333; border-radius:4px; padding:8px 10px; }');
   billParts.push('.info-label { font-size:10.5px; color:#1a1a1a; font-weight:600; margin-bottom:2px; }');
@@ -8325,10 +8326,10 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:36px; }');
   billParts.push('.sig-box { text-align:center; width:200px; }');
   billParts.push('.sig-image-wrap { height:48px; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; margin-bottom:2px; }');
-  billParts.push('.sig-image { display:block; max-width:170px; max-height:48px; object-fit:contain; }');
+  billParts.push('.sig-image { display:block; max-width:170px; max-height:48px; object-fit:contain; filter:brightness(0) saturate(100%) invert(20%) sepia(90%) saturate(3000%) hue-rotate(220deg) brightness(95%) contrast(105%); }');
   billParts.push('.sig-space { height:44px; }');
-  billParts.push('.sig-line { border-top:1.5px solid #333; margin-bottom:6px; }');
-  billParts.push('.sig-label { font-size:12px; color:#000; font-weight:600; }');
+  billParts.push('.sig-line { border-top:1.5px solid #1d4ed8; margin-bottom:6px; }');
+  billParts.push('.sig-label { font-size:12px; color:#1d4ed8; font-weight:700; }');
   billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
   billParts.push('@media print { body { padding:10mm 12mm 8mm; } @page { size:A4 portrait; margin:0; } }');
   billParts.push('</' + 'style></head><body>');
@@ -8346,7 +8347,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true) {
   if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
   if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
   billParts.push('</div></div></div>');
-  billParts.push('<div class="bill-type">บิลเงินสด / Cash Sale</div>');
+  billParts.push('<div class="bill-type"><div>บิลเงินสด / Cash Sale</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div>');
   billParts.push('</div>');
 
   // Info boxes
@@ -15562,7 +15563,7 @@ async function printQuote(qtId) {
   bp.push('*{box-sizing:border-box;margin:0;padding:0}body{font-family:Sarabun,sans-serif;font-size:13px;color:#111;width:210mm;min-height:297mm;padding:14mm;margin:0 auto}');
   bp.push('.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}');
   bp.push('.shop-name{font-size:20px;font-weight:700;margin-bottom:3px}.shop-info{font-size:11px;color:#555;line-height:1.65}');
-  bp.push('.doc-type{border:2.5px solid #1e3a5f;color:#1e3a5f;font-weight:700;font-size:15px;padding:8px 22px;border-radius:6px}');
+  bp.push('.doc-type{border:2.5px solid #1e3a5f;color:#1e3a5f;font-weight:700;font-size:15px;padding:6px 18px;border-radius:6px;text-align:center;line-height:1.3}.doc-type .doc-sub{font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.95;margin-top:2px}');
   bp.push('.info-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}');
   bp.push('.info-box{border:1px solid #bbb;border-radius:4px;padding:8px 10px}');
   bp.push('.info-label{font-size:10px;color:#777;margin-bottom:2px}');
@@ -15576,7 +15577,7 @@ async function printQuote(qtId) {
   bp.push('.bank-box{margin-top:10px;border:1.5px solid #138f2d;border-radius:6px;padding:10px 12px;background:#f3fbf5;display:flex;justify-content:space-between;align-items:center;gap:16px}');
   bp.push('.bank-title{font-size:13px;font-weight:700;color:#0d6f23;margin-bottom:3px}.bank-name{font-size:12px;font-weight:700;color:#111}.bank-detail{font-size:11.5px;color:#333;line-height:1.65}.bank-account{font-family:monospace;font-size:17px;font-weight:700;color:#0d6f23;letter-spacing:.5px;white-space:nowrap}');
   bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:40px}');
-  bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:48px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;margin-bottom:2px}.sig-image{display:block;max-width:170px;max-height:48px;object-fit:contain}.sig-space{height:48px}.sig-line{border-top:1px solid #555;margin-bottom:6px}.sig-label{font-size:12px;color:#555}');
+  bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:48px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;margin-bottom:2px}.sig-image{display:block;max-width:170px;max-height:48px;object-fit:contain;filter:brightness(0) saturate(100%) invert(20%) sepia(90%) saturate(3000%) hue-rotate(220deg) brightness(95%) contrast(105%)}.sig-space{height:48px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:6px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
   bp.push('@media print{body{padding:10mm 12mm 8mm}@page{size:A4 portrait;margin:0}}');
   bp.push('</'+'style></head><body>');
   // header
@@ -15587,7 +15588,7 @@ async function printQuote(qtId) {
   if (!qtShopName.endsWith('.COM')) qtShopName += '.COM';
   bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
   bp.push('<div class="shop-info">'+getShopAddress(shop)+'</div></div></div>');
-  bp.push('<div class="doc-type">ใบเสนอราคา</div></div>');
+  bp.push('<div class="doc-type"><div>ใบเสนอราคา / Quotation</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div></div>');
   // info
   bp.push('<div class="info-row"><div class="info-box"><div class="info-label">ลูกค้า / Customer</div><div style="font-weight:600">'+(qt.customer_name||'-')+'</div>');
   if(qt.customer_contact) bp.push('<div style="font-size:11px">'+qt.customer_contact+'</div>');
@@ -18495,16 +18496,16 @@ async function printPO(poId) {
   bp.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
   bp.push('<'+'style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Sarabun,sans-serif;font-size:13px;color:#111;width:210mm;min-height:297mm;padding:14mm;margin:0 auto}');
   bp.push('.hd{display:flex;justify-content:space-between;margin-bottom:14px}.shop-name{font-size:20px;font-weight:700}');
-  bp.push('.doc-type{border:2.5px solid #1e3a5f;color:#1e3a5f;font-weight:700;font-size:15px;padding:8px 22px;border-radius:6px}');
+  bp.push('.doc-type{border:2.5px solid #1e3a5f;color:#1e3a5f;font-weight:700;font-size:15px;padding:6px 18px;border-radius:6px;text-align:center;line-height:1.3}.doc-type .doc-sub{font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.95;margin-top:2px}');
   bp.push('table{width:100%;border-collapse:collapse}thead th{background:#1e3a5f;color:#fff;padding:7px 6px;text-align:center;border:1px solid #1e3a5f}');
   bp.push('tbody td{border:1px solid #ccc;padding:5px 6px}.total-row{display:flex;justify-content:space-between;padding:8px 10px;font-size:15px;font-weight:700;background:#fff8e1;border:1px solid #ccc;border-top:none}');
-  bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:40px}.sig-box{text-align:center;width:180px}.sig-line{border-top:1px solid #555;margin-bottom:6px}.sig-label{font-size:12px;color:#555}');
+  bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:40px}.sig-box{text-align:center;width:180px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:6px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
   bp.push('@media print{body{padding:10mm 12mm 8mm}@page{size:A4 portrait;margin:0}}</'+'style></head><body>');
   let poShopName = (shop.name || 'sealthai').toUpperCase();
   if (!poShopName.endsWith('.COM')) poShopName += '.COM';
   bp.push('<div class="hd"><div><div class="shop-name">' + poShopName + '</div>');
   bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(shop)+'</div></div>');
-  bp.push('<div class="doc-type">ใบสั่งซื้อ / Purchase Order</div></div>');
+  bp.push('<div class="doc-type"><div>ใบสั่งซื้อ / Purchase Order</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div></div>');
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px;text-align:right">');
