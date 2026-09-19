@@ -2,6 +2,16 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.18] — 2026-09-19
+### Product Search: Top-Positioned Results Layout (ย้ายผลการค้นหาขึ้นด้านบนทันที ทั้ง Mobile & PC)
+* **🔍 Instant Top-Positioned Results:** ปรับเปลี่ยนเลย์เอาต์หน้าสินค้า (Products) ให้ตารางรายการสินค้า (PC) และการ์ดสินค้า (Mobile) แสดงผล **ด้านบนสุด** ติดกับกล่องค้นหาทันทีที่ผู้ใช้พิมพ์ค้นหาหรือเลือกตัวกรอง ช่วยให้ค้นหาและมองเห็นข้อมูลสินค้าได้ทันทีโดยไม่ต้องเลื่อนหน้าจอ (Zero Scroll)
+* **📱 Clean & Focused Mobile/Desktop View:** ระหว่างที่พิมพ์ค้นหาหรือเปิดฟิลเตอร์ ระบบจะซ่อนส่วนสถิติและ Category Dashboard ชั่วคราว เพื่อเปิดพื้นที่หน้าจอให้แสดงรายการสินค้าที่ตรงกับคำค้นหาได้อย่างเต็มที่
+* **🏷️ Active Search Banner:** เพิ่มแถบแสดงสถานะผลการค้นหา `🔍 ผลการค้นหา: "..." (พบ X รายการ)` พร้อมปุ่ม `✕ ล้างการค้นหา` เพื่อสลับกลับไปดูภาพรวมหมวดหมู่ทั้งหมดได้ในคลิกเดียว
+* **⚡ 1-Tap Quick Filters at Top:** ปุ่มลัดตัวกรอง (TC, O-Ring, Viton, PU, สต๊อก=0, รอเข้า PO, รอส่ง SO) จะแสดงผลการกรองที่ด้านบนทันที
+* **🧹 Cache Refresh (v2.18):** อัปเดต Service Worker Cache เป็น `sealthai-v2.18`
+
+---
+
 ## 🚀 [v2.17] — 2026-09-18
 ### Purchase Order: Use Supplier Quoted Purchase Price (Not Average Cost)
 * **🛒 Direct Purchase Price Priority (ราคาซื้อเข้าจาก Supplier):** ปรับปรุงระบบดึงราคาในใบสั่งซื้อ (Purchase Order / PO) ทุกฟังก์ชัน ให้ดึง **"ราคาซื้อเข้า" (`purchase_price` / `buy_price`)** ที่ตั้งไว้สำหรับอ้างอิงกับซัพพลายเออร์โดยตรง โดยไม่ดึงราคาทุนเฉลี่ยในคลัง (`current_cost`):

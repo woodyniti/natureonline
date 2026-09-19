@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.17';
-const DISPLAY_APP_VERSION = 'v2.17';
+const CURRENT_APP_VERSION = 'sealthai-v2.18';
+const DISPLAY_APP_VERSION = 'v2.18';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.17 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.18 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.17 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.18 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.17 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.18 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3202,7 +3202,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.17 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.18 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -9881,7 +9881,7 @@ async function products() {
 
   setContent(`
     <!-- Prominent High-Contrast Product Search Box -->
-    <div class="prod-search-card mb-4" style="background:#fff;border:2px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,168,130,0.12)">
+    <div class="prod-search-card mb-3" style="background:#fff;border:2px solid var(--accent);border-radius:12px;padding:12px 14px;box-shadow:0 4px 16px rgba(0,168,130,0.12)">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <div style="position:relative;flex:1;min-width:240px">
           <input type="text" id="prod-search" placeholder="🔍 ค้นหาสินค้า / ขนาด / SKU / Wildcard (* เช่น 35*50*8, TC*35*50, viton)..." oninput="onProdSearchInput(this.value)" title="รองรับ * เช่น 35*50*8 หรือหลายคำเว้นวรรค" 
@@ -9900,22 +9900,47 @@ async function products() {
         <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickProdSearch('Viton')" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">🔥 ไวตัน (FKM)</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="setQuickProdSearch('PU')" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">💧 ไฮดรอลิก PU</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="filterZeroStock()" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;color:var(--red);font-weight:600">⚠️ สต๊อก = 0</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="filterPendingPOStock()" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;color:#d97706;font-weight:600">⏳ รอเข้า PO</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="filterPendingSOStock()" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;color:#2563eb;font-weight:600">📤 รอส่ง SO</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="clearProductSearch()" style="font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap;font-weight:600">📋 ดูทั้งหมด</button>
       </div>
     </div>
-    <div class="stat-grid mb-4" id="prod-stats"></div>
 
-    <!-- Product Dashboard -->
-    <div id="prod-dashboard" style="margin-bottom:16px"></div>
+    <!-- Active Search / Filter Status Banner (Appears on search/filter) -->
+    <div id="prod-search-banner" style="display:none;margin-bottom:12px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:10px 14px;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">🔍</span>
+        <div>
+          <div style="font-weight:700;font-size:13.5px;color:#166534" id="prod-search-banner-title">ผลการค้นหาสินค้า</div>
+          <div style="font-size:11.5px;color:#15803d" id="prod-search-banner-sub">แสดงรายการสินค้าที่ตรงกับคำค้นหา</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="clearProductSearch()" style="background:#fff;border-color:#86efac;color:#166534;font-size:11.5px;font-weight:700">✕ ล้างการค้นหา</button>
+      </div>
+    </div>
 
-    <div class="cat-dash-grid" id="cat-dashboard"></div>
-    <div class="card">
+    <!-- MAIN PRODUCT LIST (TABLE & MOBILE CARDS) — POSITIONED DIRECTLY AT THE TOP! -->
+    <div class="card mb-4" id="prod-main-card">
       <div class="card-title flex-between">
-        <span>รายการสินค้า</span>
-        <span id="prod-count" style="font-size:12px;color:var(--text3)"></span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span>📦 รายการสินค้า</span>
+          <span id="prod-search-active-tag" class="badge badge-blue" style="display:none;font-size:11px;font-weight:700">ผลการค้นหา</span>
+        </div>
+        <span id="prod-count" style="font-size:12px;color:var(--text3);font-weight:600"></span>
       </div>
       <div class="table-wrap desktop-only" id="prod-table"></div>
       <div class="mobile-only" id="prod-cards"></div>
+    </div>
+
+    <!-- Overview Section (Stat Cards, Insights & Category Cards) — Placed neatly below product list or hidden during active search -->
+    <div id="prod-overview-section">
+      <div class="stat-grid mb-4" id="prod-stats"></div>
+      <div id="prod-dashboard" style="margin-bottom:16px"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px;color:var(--text)">📁 มูลค่าสต๊อกแยกตามหมวดหมู่ (Category Overview)</div>
+      </div>
+      <div class="cat-dash-grid" id="cat-dashboard"></div>
     </div>
 
     <div class="modal-overlay" id="modal-product">
@@ -10285,6 +10310,26 @@ function onProdSearchInput(val) {
   filterProducts();
 }
 
+function updateProdSearchBanner(isSearching, title = '', sub = '') {
+  const banner = document.getElementById('prod-search-banner');
+  const tag = document.getElementById('prod-search-active-tag');
+  const overview = document.getElementById('prod-overview-section');
+  const titleEl = document.getElementById('prod-search-banner-title');
+  const subEl = document.getElementById('prod-search-banner-sub');
+  
+  if (isSearching) {
+    if (banner) banner.style.display = 'flex';
+    if (tag) tag.style.display = 'inline-block';
+    if (overview) overview.style.display = 'none';
+    if (titleEl && title) titleEl.innerHTML = title;
+    if (subEl && sub) subEl.textContent = sub;
+  } else {
+    if (banner) banner.style.display = 'none';
+    if (tag) tag.style.display = 'none';
+    if (overview) overview.style.display = 'block';
+  }
+}
+
 function clearProductSearch() {
   const el = document.getElementById('prod-search');
   if (el) el.value = '';
@@ -10292,6 +10337,7 @@ function clearProductSearch() {
   if (clearBtn) clearBtn.style.display = 'none';
   const cf = document.getElementById('prod-cat-filter');
   if (cf) cf.value = '';
+  updateProdSearchBanner(false);
   filterProducts();
 }
 
@@ -10392,6 +10438,26 @@ function filterProducts() {
     }
   }
   if (catF) filtered = filtered.filter(p => (p.category||'').trim() === catF.trim());
+  
+  const isSearching = !!(q || catF);
+  if (isSearching) {
+    let title = '🔍 ผลการค้นหาสินค้า';
+    let sub = `พบ ${filtered.length} รายการ`;
+    if (q && catF) {
+      title = `🔍 ค้นหา "${escapeHTML(q)}" ในหมวด "${escapeHTML(catF)}"`;
+      sub = `พบ ${filtered.length} รายการที่ตรงกับเงื่อนไข`;
+    } else if (q) {
+      title = `🔍 ผลการค้นหา: "<strong>${escapeHTML(q)}</strong>"`;
+      sub = `พบสินค้า ${filtered.length} รายการที่ตรงกับคำค้นหา`;
+    } else if (catF) {
+      title = `📁 หมวดหมู่: "<strong>${escapeHTML(catF)}</strong>"`;
+      sub = `พบสินค้าในหมวดหมู่นี้ ${filtered.length} รายการ`;
+    }
+    updateProdSearchBanner(true, title, sub);
+  } else {
+    updateProdSearchBanner(false);
+  }
+
   renderProductTable(filtered);
 }
 
@@ -10409,7 +10475,6 @@ function filterByCat(cat) {
   const cf = document.getElementById('prod-cat-filter');
   if (cf) cf.value = cat;
   filterProducts();
-  document.getElementById('prod-table')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function filterZeroStock() {
@@ -10417,10 +10482,9 @@ function filterZeroStock() {
   if (el) el.value = '';
   const cf = document.getElementById('prod-cat-filter');
   if (cf) cf.value = '';
-  renderProductTable(allProducts.filter(p => Number(p.stock_qty||0) === 0));
-  const cnt = document.getElementById('prod-count');
-  if (cnt) cnt.textContent = 'สินค้าสต๊อก 0';
-  document.getElementById('prod-table')?.scrollIntoView({behavior:'smooth',block:'start'});
+  const filtered = allProducts.filter(p => Number(p.stock_qty||0) === 0);
+  renderProductTable(filtered);
+  updateProdSearchBanner(true, '⚠️ สินค้าสต๊อก = 0 (สินค้าหมด)', `พบสินค้าที่สต๊อกหมด ${filtered.length} รายการ`);
 }
 
 function filterPendingPOStock() {
@@ -10430,9 +10494,7 @@ function filterPendingPOStock() {
   if (cf) cf.value = '';
   const pendingList = allProducts.filter(p => Number(p.pending_po||0) > 0);
   renderProductTable(pendingList);
-  const cnt = document.getElementById('prod-count');
-  if (cnt) cnt.textContent = `สินค้าที่มี PO รอรับเข้า (${pendingList.length} รายการ)`;
-  document.getElementById('prod-table')?.scrollIntoView({behavior:'smooth',block:'start'});
+  updateProdSearchBanner(true, '⏳ สินค้าที่มี PO รอรับเข้า', `พบสินค้าที่มีใบสั่งซื้อรอรับเข้า ${pendingList.length} รายการ`);
 }
 
 function filterPendingSOStock() {
@@ -10442,9 +10504,7 @@ function filterPendingSOStock() {
   if (cf) cf.value = '';
   const pendingList = allProducts.filter(p => Number(p.pending_so||0) > 0);
   renderProductTable(pendingList);
-  const cnt = document.getElementById('prod-count');
-  if (cnt) cnt.textContent = `สินค้าที่มีออเดอร์รอจัดส่ง (${pendingList.length} รายการ)`;
-  document.getElementById('prod-table')?.scrollIntoView({behavior:'smooth',block:'start'});
+  updateProdSearchBanner(true, '📤 สินค้าที่มีออเดอร์รอจัดส่ง', `พบสินค้าที่มีคำสั่งซื้อรอจัดส่ง ${pendingList.length} รายการ`);
 }
 
 function renderProductTable(prods) {
@@ -31394,7 +31454,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.17', date:'2026-09-18', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order: ใช้ราคาซื้อเข้า (Purchase Price) จาก Supplier โดยตรง ไม่ดึงราคาทุนเฉลี่ย', items:[
+    { v:'2.18', date:'2026-09-19', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Product Search: ย้ายผลการค้นหาขึ้นด้านบนทันที ทั้ง Mobile & PC', items:[
+      '🔍 <b>Instant Top-Positioned Search Results:</b> ปรับเลย์เอาต์หน้าสินค้า (Products) ให้ตารางและรายการการ์ดสินค้าแสดงผล <b>ด้านบนสุด</b> ติดกับกล่องค้นหาทันที เมื่อพิมพ์ค้นหาหรือเลือกหมวดหมู่ ทำให้มองเห็นผลลัพธ์ได้ทันทีโดยไม่ต้องเลื่อนหน้าจอลงด้านล่าง',
+      '📱 <b>Seamless Mobile & PC Experience:</b> ซ่อนส่วนสถิติและ Category Overview ชั่วคราวระหว่างค้นหา เพื่อเปิดพื้นที่ให้แสดงผลการค้นหาสินค้าได้เต็มหน้าจอทั้งบนมือถือและคอมพิวเตอร์',
+      '🏷️ <b>Active Search Status Banner:</b> เพิ่มแถบแจ้งสถานะคำค้นหา <code>🔍 ผลการค้นหา: "..." (พบ X รายการ)</code> พร้อมปุ่ม <code>✕ ล้างการค้นหา</code> แบบ 1-Tap ที่สะดวก รวดเร็ว',
+      '⚡ <b>Quick Filter Optimization:</b> ปุ่มลัดตัวกรอง (TC, O-Ring, Viton, PU, สต๊อก=0, รอเข้า PO, รอส่ง SO) จะแสดงผลลัพธ์ที่ด้านบนทันที',
+      '🧹 <b>Cache Refresh (v2.18):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.18'
+    ]},
+    { v:'2.17', date:'2026-09-18', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order: ใช้ราคาซื้อเข้า (Purchase Price) จาก Supplier โดยตรง ไม่ดึงราคาทุนเฉลี่ย', items:[
       '🛒 <b>Direct Purchase Price Priority:</b> ปรับระบบดึงราคาในใบสั่งซื้อ (Purchase Order / PO) ทุกช่องทาง (ทั้งการเปิด PO เดี่ยว, การเลือก SKU Autocomplete, การสร้าง Batch PO จากออเดอร์ขาย, การสั่งซื้อจาก Stock Planning, และ Repeat Orders) ให้ดึง <b>"ราคาซื้อเข้า" (purchase_price / buy_price)</b> ที่ตั้งไว้สำหรับอ้างอิง Supplier เป็นหลัก โดยไม่ดึงราคาทุนเฉลี่ย (current_cost)',
       '🎯 <b>Accurate Supplier Quoted Price:</b> แก้ไขปัญหารายการสินค้าเช่น <code>OIL SEAL NBR 9X16X4</code> ให้ดึงราคาซื้อเข้า ฿9 ตามที่ตั้งไว้กับ Supplier อย่างถูกต้องและแม่นยำ 100%',
       '🔍 <b>Enhanced SKU & Dimensions Autocomplete:</b> อัปเกรดระบบค้นหาในฟอร์ม PO ให้รองรับทั้ง SKU, Supplier SKU, Part No, ขนาดมิติซีล, และชื่อสินค้าแบบยืดหยุ่น พร้อมแสดงป้าย <code>ราคาซื้อเข้า: ฿...</code> อย่างชัดเจน',
