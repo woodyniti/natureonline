@@ -438,24 +438,36 @@ app.post('/api/marketing/order-shipped-draft', async (req, res) => {
       return res.status(200).json({ status: 'success', message: 'No Telegram bot credentials configured' });
     }
 
-    const previewMsg = `🚀 <b>[AI Marketing] ออเดอร์ ${orderNo || ''} จัดส่งแล้ว (${channel || 'Shopee'})</b>\n\n` +
-      `📦 <b>สินค้า:</b> ${productName || ''} (${qty || 1} ชิ้น)\n` +
-      `💰 <b>ราคา:</b> ${price || '-'}\n\n` +
-      `📝 <b>ดราฟต์แคปชั่น / บทความเว็บไซต์:</b>\n` +
-      `${(caption || '').slice(0, 450)}...\n\n` +
-      `#️⃣ ${hashtags || ''}\n\n` +
-      `กดปุ่มด้านล่างเพื่ออนุมัติเผยแพร่ขึ้นเว็บไซต์ทันที:`;
+    const htmlContent = caption.split('\n\n').map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 
-    const draftKey = Buffer.from(JSON.stringify({ orderNo, productName, title: (title||'').slice(0,30) })).toString('base64').slice(0, 24);
-    await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, previewMsg, [
-      [
-        { text: '🌐 ✅ อนุมัติโพสต์ลง Website (SEO Blog)', callback_data: `APPROVE_BLOG:${draftKey}` }
-      ],
-      [
-        { text: '📱 📋 เปิดใน AI Content Studio', url: 'https://natureonline.app/dashboard' },
-        { text: '❌ ข้าม', callback_data: `REJECT_BLOG:${draftKey}` }
-      ]
-    ]);
+    try {
+      const publishRes = await axios.post('https://sealthai.com/api-ai-blog.php', {
+        token: 'SEALTHAI_AI_PUBLISHER_SECRET_123!',
+        title: title || `[รีวิวจัดส่ง] ${productName}`,
+        excerpt: (caption || '').slice(0, 200) + '...',
+        content: htmlContent,
+        imageUrl: imageUrl,
+        cat: 'รีวิวจัดส่งสินค้า'
+      });
+
+      if (publishRes.data && publishRes.data.success) {
+        const notifyMsg = `✅ <b>[AI Auto-Publisher] บทความ SEO เผยแพร่สำเร็จ!</b>\n\n` +
+          `📦 <b>สินค้า:</b> ${productName || ''} (${qty || 1} ชิ้น)\n` +
+          `🚀 <b>ออเดอร์:</b> ${orderNo || ''} (${channel || 'Shopee'})\n\n` +
+          `🔗 <b>เปิดดูบทความ:</b> <a href="${publishRes.data.url}">${publishRes.data.url}</a>`;
+
+        await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, notifyMsg);
+      } else {
+        throw new Error('Failed to publish');
+      }
+    } catch (publishErr) {
+      console.error('Publish error:', publishErr.message);
+      // Fallback: Just notify that the draft was created but publishing failed
+      const previewMsg = `⚠️ <b>[AI Marketing] สร้างดราฟต์สำหรับออเดอร์ ${orderNo || ''} แล้ว แต่เผยแพร่อัตโนมัติไม่สำเร็จ</b>\n\n` +
+        `📦 <b>สินค้า:</b> ${productName || ''} (${qty || 1} ชิ้น)\n` +
+        `📝 <b>ดราฟต์:</b>\n${(caption || '').slice(0, 450)}...\n\n<i>${publishErr.message}</i>`;
+      await sendTelegramMessage(TELEGRAM_ADMIN_CHAT_ID, previewMsg);
+    }
 
     return res.status(200).json({ status: 'success', message: 'Sent draft to Telegram' });
   } catch (err) {
