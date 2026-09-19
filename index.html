@@ -8369,9 +8369,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=true, docC
   billParts.push('.note-box { border:1px solid #777; border-top:none; padding:7px 10px; font-size:12px; line-height:1.55; background:#fffdf2; }');
   billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:36px; }');
   billParts.push('.sig-box { text-align:center; width:200px; }');
-  billParts.push('.sig-image-wrap { height:48px; display:flex; align-items:flex-end; justify-content:center; overflow:hidden; margin-bottom:2px; }');
-  billParts.push('.sig-image { display:block; max-width:170px; max-height:48px; object-fit:contain; filter:brightness(0) saturate(100%) invert(20%) sepia(90%) saturate(3000%) hue-rotate(220deg) brightness(95%) contrast(105%); }');
-  billParts.push('.sig-space { height:44px; }');
+  billParts.push('.sig-image-wrap { height:52px; display:flex; align-items:flex-end; justify-content:center; overflow:visible; margin-bottom:2px; }');
+  billParts.push('.sig-image { display:block; max-width:165px; max-height:50px; object-fit:contain; }');
+  billParts.push('.sig-space { height:48px; }');
   billParts.push('.sig-line { border-top:1.5px solid #1d4ed8; margin-bottom:6px; }');
   billParts.push('.sig-label { font-size:12px; color:#1d4ed8; font-weight:700; }');
   billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
@@ -15625,7 +15625,7 @@ async function printQuote(qtId) {
   bp.push('.bank-box{margin-top:10px;border:1.5px solid #138f2d;border-radius:6px;padding:10px 12px;background:#f3fbf5;display:flex;justify-content:space-between;align-items:center;gap:16px}');
   bp.push('.bank-title{font-size:13px;font-weight:700;color:#0d6f23;margin-bottom:3px}.bank-name{font-size:12px;font-weight:700;color:#111}.bank-detail{font-size:11.5px;color:#333;line-height:1.65}.bank-account{font-family:monospace;font-size:17px;font-weight:700;color:#0d6f23;letter-spacing:.5px;white-space:nowrap}');
   bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:40px}');
-  bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:48px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;margin-bottom:2px}.sig-image{display:block;max-width:170px;max-height:48px;object-fit:contain;filter:brightness(0) saturate(100%) invert(20%) sepia(90%) saturate(3000%) hue-rotate(220deg) brightness(95%) contrast(105%)}.sig-space{height:48px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:6px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
+  bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:52px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;margin-bottom:2px}.sig-image{display:block;max-width:165px;max-height:50px;object-fit:contain}.sig-space{height:48px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:6px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
   bp.push('@media print{body{padding:10mm 12mm 8mm}@page{size:A4 portrait;margin:0}}');
   bp.push('</'+'style></head><body>');
   // header
