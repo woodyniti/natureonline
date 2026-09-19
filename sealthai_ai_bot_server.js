@@ -10,6 +10,8 @@
 require('dotenv').config();
 const express = require('express');
 const axios = require('axios');
+const sqlite3 = require('sqlite3').verbose();
+const db = new sqlite3.Database('./sealthai_catalog.db');
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
@@ -315,10 +317,22 @@ app.post('/webhook/telegram', async (req, res) => {
           { text: '🔴 ปิดระบบ', callback_data: 'SET_MODE:OFF' }
         ]
       ]);
+
+    } else if (!text.startsWith('/')) {
+      // Catalog Search
+      try {
+        const searchResult = await searchCatalogDatabase(text);
+        if (searchResult) {
+          await sendTelegramMessage(chatId, searchResult);
+        }
+      } catch (err) {
+        console.error("Search DB Error:", err);
+      }
     }
   }
 
   // Handle Telegram Inline Keyboard Buttons
+
   if (update.callback_query) {
     const cb = update.callback_query;
     const data = cb.data || '';
@@ -522,6 +536,77 @@ async function sendTelegramApprovalRequest(userId, reqSpec, subName, notes) {
     }
   });
 }
+
+
+// ── 5. Catalog Search (Admin) ─────────────────────────────────────────
+function formatNum(val) {
+  return Number(val);
+}
+
+function searchCatalogDatabase(queryText) {
+  return new Promise((resolve, reject) => {
+    const cleanQuery = queryText.replace(/[xX*×]/g, ' ');
+    const parts = cleanQuery.trim().split(/\s+/);
+    
+    let reqModel = '';
+    let nums = [];
+    
+    parts.forEach(p => {
+      if (!isNaN(p)) nums.push(parseFloat(p));
+      else reqModel = p.toUpperCase();
+    });
+
+    if (nums.length < 2) {
+      return resolve(null); 
+    }
+
+    const d_id = nums[0];
+    const d_od = nums[1];
+
+    const sql = `SELECT * FROM supplier_catalogs WHERE d_id = ? AND d_od = ?`;
+    
+    db.all(sql, [d_id, d_od], (err, rows) => {
+      if (err) return reject(err);
+      if (!rows || rows.length === 0) return resolve(`❌ ไม่พบข้อมูลซีลขนาด ${formatNum(d_id)} x ${formatNum(d_od)} ในแคตตาล็อกครับ`);
+
+      let exactMatches = [];
+      let otherMatches = [];
+
+      rows.forEach(r => {
+        if (reqModel && r.model_code.toUpperCase().includes(reqModel)) {
+          exactMatches.push(r);
+        } else {
+          otherMatches.push(r);
+        }
+      });
+
+      let replyMessage = `🔍 ผลการค้นหาขนาด: ${formatNum(d_id)} x ${formatNum(d_od)}\n\n`;
+
+      if (exactMatches.length > 0) {
+        replyMessage += `✅ ตรงรุ่นที่หา (${reqModel}):\n`;
+        exactMatches.forEach(item => {
+          let thk = formatNum(item.b_thk);
+          let shortModel = item.model_code.includes('(') ? item.model_code.split('(')[1].replace(')', '') : reqModel;
+          replyMessage += `• ${item.model_code} | หนา ${thk} | วัสดุ ${item.material} | (อ้างอิง ${item.ref_page})\n`;
+          replyMessage += `${shortModel} OIL SEAL NBR ${formatNum(d_id)}x${formatNum(d_od)}x${thk}\n\n`;
+        });
+      }
+
+      if (otherMatches.length > 0) {
+        replyMessage += `💡 รุ่นอื่นที่มีขนาดเดียวกัน (เสนอเป็นตัวเลือกได้):\n`;
+        otherMatches.forEach(item => {
+          let thk = formatNum(item.b_thk);
+          let shortModel = item.model_code.includes('(') ? item.model_code.split('(')[1].replace(')', '') : item.model_code;
+          replyMessage += `• ${item.model_code} | หนา ${thk} | วัสดุ ${item.material} | (อ้างอิง ${item.ref_page})\n`;
+          replyMessage += `${shortModel} OIL SEAL NBR ${formatNum(d_id)}x${formatNum(d_od)}x${thk}\n\n`;
+        });
+      }
+
+      resolve(replyMessage);
+    });
+  });
+}
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Sealthai AI Bot Server is running on port ${PORT}`);
