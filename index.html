@@ -6962,7 +6962,7 @@ function handleOrderProdBlur(rowIdx, val) {
     } else {
       const prods = (productList && productList.length) ? productList : (allProducts || []);
       const matched = prods.find(x =>
-        x.name.toLowerCase() === v.toLowerCase() ||
+        (x.name && x.name.toLowerCase() === v.toLowerCase()) ||
         (x.sku && x.sku.toLowerCase() === v.toLowerCase()) ||
         (x.supplier_sku && x.supplier_sku.toLowerCase() === v.toLowerCase()) ||
         (x.part_no && x.part_no.toLowerCase() === v.toLowerCase())
@@ -15303,7 +15303,7 @@ function renderQuoteItems() {
       const val=inp.value.trim();
       if(!val){ quoteItems[i].product_id=null; renderQuoteItems(); return; }
       const matched=productList.find(x=>
-        x.name.toLowerCase()===val.toLowerCase()||
+        (x.name && x.name.toLowerCase()===val.toLowerCase())||
         (x.sku&&x.sku.toLowerCase()===val.toLowerCase())||
         (x.supplier_sku&&x.supplier_sku.toLowerCase()===val.toLowerCase())||
         (x.part_no&&x.part_no.toLowerCase()===val.toLowerCase())
@@ -18119,11 +18119,10 @@ function renderPOItems() {
           return;
         }
         const matchedProd = productList.find(x => 
-          x.name.toLowerCase() === val.toLowerCase() || 
+          (x.name && x.name.toLowerCase() === val.toLowerCase()) || 
           (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
           (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase()) ||
-          wcProdMatch(x, val)
+          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
         );
         if (matchedProd) {
           const productChanged = poItems[i].product_id !== matchedProd.id;
