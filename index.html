@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.19';
-const DISPLAY_APP_VERSION = 'v2.19';
+const CURRENT_APP_VERSION = 'sealthai-v2.20';
+const DISPLAY_APP_VERSION = 'v2.20';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.19 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.20 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.19 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.20 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.19 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.20 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3202,7 +3202,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.19 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.20 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -18122,7 +18122,8 @@ function renderPOItems() {
           (x.name && x.name.toLowerCase() === val.toLowerCase()) || 
           (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
           (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase())
+          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase()) ||
+          wcProdMatch(x, val)
         );
         if (matchedProd) {
           const productChanged = poItems[i].product_id !== matchedProd.id;
@@ -31507,7 +31508,7 @@ function openChangelogModal() {
       '📱 <b>Seamless Mobile & PC Experience:</b> ซ่อนส่วนสถิติและ Category Overview ชั่วคราวระหว่างค้นหา เพื่อเปิดพื้นที่ให้แสดงผลการค้นหาสินค้าได้เต็มหน้าจอทั้งบนมือถือและคอมพิวเตอร์',
       '🏷️ <b>Active Search Status Banner:</b> เพิ่มแถบแจ้งสถานะคำค้นหา <code>🔍 ผลการค้นหา: "..." (พบ X รายการ)</code> พร้อมปุ่ม <code>✕ ล้างการค้นหา</code> แบบ 1-Tap ที่สะดวก รวดเร็ว',
       '⚡ <b>Quick Filter Optimization:</b> ปุ่มลัดตัวกรอง (TC, O-Ring, Viton, PU, สต๊อก=0, รอเข้า PO, รอส่ง SO) จะแสดงผลลัพธ์ที่ด้านบนทันที',
-      '🧹 <b>Cache Refresh (v2.18):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.19'
+      '🧹 <b>Cache Refresh (v2.18):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.20'
     ]},
     { v:'2.17', date:'2026-09-18', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order: ใช้ราคาซื้อเข้า (Purchase Price) จาก Supplier โดยตรง ไม่ดึงราคาทุนเฉลี่ย', items:[
       '🛒 <b>Direct Purchase Price Priority:</b> ปรับระบบดึงราคาในใบสั่งซื้อ (Purchase Order / PO) ทุกช่องทาง (ทั้งการเปิด PO เดี่ยว, การเลือก SKU Autocomplete, การสร้าง Batch PO จากออเดอร์ขาย, การสั่งซื้อจาก Stock Planning, และ Repeat Orders) ให้ดึง <b>"ราคาซื้อเข้า" (purchase_price / buy_price)</b> ที่ตั้งไว้สำหรับอ้างอิง Supplier เป็นหลัก โดยไม่ดึงราคาทุนเฉลี่ย (current_cost)',
