@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.29';
-const DISPLAY_APP_VERSION = 'v2.29';
+const CURRENT_APP_VERSION = 'sealthai-v2.30';
+const DISPLAY_APP_VERSION = 'v2.30';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -6907,7 +6907,8 @@ function searchOrderProduct(rowIdx, q) {
         const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
 
         return `
-          <div onclick="selectNewOrderProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
+          <div onmousedown="event.preventDefault(); window._orderAutocompleteClicking = true; selectNewOrderProductById(${rowIdx}, '${p.id}');"
+            onclick="selectNewOrderProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
             style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
             onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
             <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
@@ -6976,6 +6977,10 @@ function handleOrderProdBlur(rowIdx, val) {
   setTimeout(() => {
     const dd = document.getElementById('o-prod-dd-' + rowIdx);
     if (dd) dd.style.display = 'none';
+    if (window._orderAutocompleteClicking) {
+      window._orderAutocompleteClicking = false;
+      return;
+    }
     const v = (val || '').trim();
     if (!v) {
       if (orderItems[rowIdx]) {
@@ -18110,7 +18115,8 @@ function searchPOProduct(rowIdx, q) {
         const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
 
         return `
-          <div onclick="selectNewPOProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
+          <div onmousedown="event.preventDefault(); window._poAutocompleteClicking = true; selectNewPOProductById(${rowIdx}, '${p.id}');"
+            onclick="selectNewPOProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
             style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
             onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
             <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
@@ -18124,7 +18130,8 @@ function searchPOProduct(rowIdx, q) {
 
     // Quick Add Button inside dropdown
     const quickAddHtml = `
-      <div onclick="openQuickProductModal('po', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+      <div onmousedown="event.preventDefault(); window._poAutocompleteClicking = true; openQuickProductModal('po', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none';"
+        onclick="openQuickProductModal('po', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
         style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
         onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
         <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
@@ -18179,6 +18186,12 @@ function handlePOProdBlur(rowIdx, val) {
   setTimeout(() => {
     const dd = document.getElementById('po-prod-dd-' + rowIdx);
     if (dd) dd.style.display = 'none';
+
+    if (window._poAutocompleteClicking) {
+      window._poAutocompleteClicking = false;
+      return;
+    }
+
     const v = (val || '').trim();
     if (!v) {
       if (poItems[rowIdx]) {
@@ -18187,12 +18200,16 @@ function handlePOProdBlur(rowIdx, val) {
       }
     } else {
       const prods = (productList && productList.length) ? productList : (allProducts || []);
+      const currentProd = poItems[rowIdx]?.product_id ? prods.find(x => x.id === poItems[rowIdx].product_id) : null;
+      if (currentProd && (currentProd.name.toLowerCase() === v.toLowerCase() || (currentProd.sku && currentProd.sku.toLowerCase() === v.toLowerCase()))) {
+        return;
+      }
+
       const matched = prods.find(x =>
         (x.name && x.name.toLowerCase() === v.toLowerCase()) ||
         (x.sku && x.sku.toLowerCase() === v.toLowerCase()) ||
         (x.supplier_sku && x.supplier_sku.toLowerCase() === v.toLowerCase()) ||
-        (x.part_no && x.part_no.toLowerCase() === v.toLowerCase()) ||
-        wcProdMatch(x, v)
+        (x.part_no && x.part_no.toLowerCase() === v.toLowerCase())
       );
       if (matched && poItems[rowIdx]) {
         const buyPrice = Number(matched.purchase_price !== undefined && matched.purchase_price !== null && matched.purchase_price !== '' ? matched.purchase_price : (matched.buy_price !== undefined && matched.buy_price !== null ? matched.buy_price : (matched.cost_price || 0)));
