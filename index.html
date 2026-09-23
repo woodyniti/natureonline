@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.35';
-const DISPLAY_APP_VERSION = 'v2.35';
+const CURRENT_APP_VERSION = 'sealthai-v2.36';
+const DISPLAY_APP_VERSION = 'v2.36';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.35)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.35 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.36 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.35)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.35 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.36 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.35)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.35 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.36 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.35)">v2.35 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.36)">v2.36 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -18136,25 +18136,57 @@ async function loadPOs() {
     '<th>วันที่</th><th>เลขที่ PO</th><th>Supplier</th>'+
     '<th class="text-right">ยอดรวม</th><th>สถานะ</th><th>คาดรับ</th><th></th>'+
     '</tr></thead><tbody>'+
-    rows.map((po, idx)=>'<tr style="cursor:pointer" onclick="viewPO(&quot;'+po.id+'&quot;)">'+
-      '<td style="text-align:center;font-weight:700;color:var(--text3);font-family:var(--mono);font-size:12px">'+(idx+1)+'</td>'+
-      '<td>'+po.po_date+'</td>'+
-      '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+'</td>'+
-      '<td style="font-weight:500">'+(po.supplier_name||'-')+'</td>'+
-      '<td class="text-right font-mono text-amber">'+fmtB(po.total_amount)+'</td>'+
-      '<td>'+poBadge(po.status)+'</td>'+
-      '<td style="font-size:12px;color:var(--text3)">'+(po.expected_date||'-')+'</td>'+
-      '<td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewPO(&quot;'+po.id+'&quot;)">ดู</button></td>'+
-    '</tr>').join('')+
+    rows.map((po, idx)=>{
+      let isUSD = false;
+      let poRate = 35.00;
+      const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
+      if (po.currency === 'USD' || usdMatch) {
+        isUSD = true;
+        if (usdMatch && usdMatch[1]) poRate = Number(usdMatch[1]) || 35.00;
+        else if (po.exchange_rate) poRate = Number(po.exchange_rate) || 35.00;
+      }
+      const rawTHB = Number(po.total_amount || 0);
+      const usdTotal = isUSD && poRate > 0 ? (rawTHB / poRate) : 0;
+      const amtDisplay = isUSD
+        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(rawTHB)})</div>`
+        : fmtB(rawTHB);
+
+      return '<tr style="cursor:pointer" onclick="viewPO(&quot;'+po.id+'&quot;)">'+
+        '<td style="text-align:center;font-weight:700;color:var(--text3);font-family:var(--mono);font-size:12px">'+(idx+1)+'</td>'+
+        '<td>'+po.po_date+'</td>'+
+        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+'</td>'+
+        '<td style="font-weight:500">'+(po.supplier_name||'-')+'</td>'+
+        '<td class="text-right font-mono text-amber">'+amtDisplay+'</td>'+
+        '<td>'+poBadge(po.status)+'</td>'+
+        '<td style="font-size:12px;color:var(--text3)">'+(po.expected_date||'-')+'</td>'+
+        '<td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewPO(&quot;'+po.id+'&quot;)">ดู</button></td>'+
+      '</tr>';
+    }).join('')+
     '</tbody></table></div>'+
     '<div class="mobile-only">'+
-    rows.map((po, idx)=>'<div class="order-card" onclick="viewPO(&quot;'+po.id+'&quot;)" style="cursor:pointer">'+
-      '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'+
-        '<div><div style="font-weight:600">'+(po.supplier_name||'-')+'</div>'+
-        '<div style="font-size:11px;color:var(--text3)"><span style="font-weight:700;color:var(--accent);margin-right:4px">#'+(idx+1)+'</span> · '+po.po_date+' · '+(po.po_no||'-')+'</div></div>'+
-        '<div class="font-mono text-amber" style="font-size:15px;font-weight:700">'+fmtB(po.total_amount)+'</div>'+
-      '</div>'+
-      poBadge(po.status)+'</div>').join('')+
+    rows.map((po, idx)=>{
+      let isUSD = false;
+      let poRate = 35.00;
+      const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
+      if (po.currency === 'USD' || usdMatch) {
+        isUSD = true;
+        if (usdMatch && usdMatch[1]) poRate = Number(usdMatch[1]) || 35.00;
+        else if (po.exchange_rate) poRate = Number(po.exchange_rate) || 35.00;
+      }
+      const rawTHB = Number(po.total_amount || 0);
+      const usdTotal = isUSD && poRate > 0 ? (rawTHB / poRate) : 0;
+      const amtMobile = isUSD
+        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:11px;color:var(--text3);font-weight:normal">(${fmtB(rawTHB)})</div>`
+        : fmtB(rawTHB);
+
+      return '<div class="order-card" onclick="viewPO(&quot;'+po.id+'&quot;)" style="cursor:pointer">'+
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'+
+          '<div><div style="font-weight:600">'+(po.supplier_name||'-')+'</div>'+
+          '<div style="font-size:11px;color:var(--text3)"><span style="font-weight:700;color:var(--accent);margin-right:4px">#'+(idx+1)+'</span> · '+po.po_date+' · '+(po.po_no||'-')+'</div></div>'+
+          '<div class="font-mono text-amber" style="font-size:15px;font-weight:700;text-align:right">'+amtMobile+'</div>'+
+        '</div>'+
+        poBadge(po.status)+'</div>';
+    }).join('')+
     '</div>';
 }
 
@@ -18851,13 +18883,28 @@ async function viewPO(poId) {
     if (_seenPO.has(k)) return true; _seenPO.add(k); return false;
   });
 
-  const totalOrdered=items.reduce((s,it)=>s+Number(it.qty_ordered||0)*Number(it.unit_cost||0),0);
+  let isUSD = false;
+  let poRate = 35.00;
+  const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
+  if (po.currency === 'USD' || usdMatch) {
+    isUSD = true;
+    if (usdMatch && usdMatch[1]) poRate = Number(usdMatch[1]) || 35.00;
+    else if (po.exchange_rate) poRate = Number(po.exchange_rate) || 35.00;
+  }
+
+  const totalOrderedTHB = items.reduce((s,it)=>s+Number(it.qty_ordered||0)*Number(it.unit_cost||0),0);
+  const totalOrderedUSD = isUSD && poRate > 0 ? (totalOrderedTHB / poRate) : 0;
+  const vatTHB = Number(po.vat_amount || 0);
+  const vatUSD = isUSD && poRate > 0 ? (vatTHB / poRate) : 0;
+  const grandTotalTHB = Number(po.total_amount || (totalOrderedTHB + vatTHB));
+  const grandTotalUSD = isUSD && poRate > 0 ? (grandTotalTHB / poRate) : 0;
 
   el.innerHTML=
     '<div class="modal-title" style="margin-bottom:12px">🛒 '+( po.po_no||'-')+' · '+po.supplier_name+'</div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'+
       poBadge(po.status)+
       (po.expected_date?'<span style="font-size:12px;color:var(--text3)">คาดรับ '+po.expected_date+'</span>':'')+
+      (isUSD ? `<span style="background:#f0fdf4;color:#166534;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #86efac">💵 USD (1 USD = ฿${poRate.toFixed(2)})</span>` : '')+
     '</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">'+
       '<div><span style="color:var(--text3)">Supplier</span><div style="font-weight:600">'+po.supplier_name+'</div>'+
@@ -18869,12 +18916,25 @@ async function viewPO(poId) {
     '<div class="table-wrap"><table><thead><tr>'+
       '<th>#</th><th class="left">SKU</th><th class="left">Supplier SKU</th>'+
       '<th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>'+
-      '<th class="right">ราคาซื้อ/ชิ้น</th><th class="right">รวม</th>'+
+      '<th class="right">'+(isUSD ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น')+'</th>'+
+      '<th class="right">'+(isUSD ? 'รวม (USD / THB)' : 'รวม')+'</th>'+
     '</tr></thead><tbody>'+
     (items||[]).map((it,i)=>{
       const product = skuMap[it.product_id] || {};
       const pending=Number(it.qty_ordered)-Number(it.qty_received||0);
-      const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
+      const thbCost = Number(it.unit_cost || 0);
+      const usdCost = isUSD && poRate > 0 ? (thbCost / poRate) : 0;
+      const thbAmt = Number(it.qty_ordered)*thbCost;
+      const usdAmt = isUSD && poRate > 0 ? (thbAmt / poRate) : 0;
+
+      const unitCostDisplay = isUSD
+        ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(thbCost)})</div>`
+        : fmtB(thbCost);
+
+      const amtDisplay = isUSD
+        ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(thbAmt)})</div>`
+        : fmtB(thbAmt);
+
       let displayName = it.product_name || product.sku || '-';
       let soBadgeHTML = '';
       const soMatch = displayName.match(/\[SO:\s*([^\]]+)\]/i);
@@ -18888,24 +18948,26 @@ async function viewPO(poId) {
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
         '<td style="text-align:right;color:var(--accent)">'+fmt(it.qty_received||0)+'</td>'+
         '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
-        '<td style="text-align:right">'+fmtB(it.unit_cost)+'</td>'+
-        '<td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>';
+        '<td style="text-align:right font-mono">'+unitCostDisplay+'</td>'+
+        '<td style="text-align:right;font-weight:600" class="font-mono text-amber">'+amtDisplay+'</td></tr>';
     }).join('')+
     '</tbody></table></div>'+
     '<div style="border-top:1px solid var(--border);margin-top:8px;padding:10px 0">'+
       '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px">'+
         '<span style="color:var(--text3)">ยอดก่อน VAT</span>'+
-        '<span class="font-mono">'+fmtB(totalOrdered)+'</span>'+
+        '<span class="font-mono">'+(isUSD ? `$${totalOrderedUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:11px;color:var(--text3)">(${fmtB(totalOrderedTHB)})</span>` : fmtB(totalOrderedTHB))+'</span>'+
       '</div>'+
-      (po.vat_amount>0 ?
+      (vatTHB>0 ?
         '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px">'+
           '<span style="color:var(--text3)">VAT 7% ('+( po.vat_type==='excluded'?'แยกออก':'รวมใน')+')' +'</span>'+
-          '<span class="font-mono text-accent">'+fmtB(po.vat_amount)+'</span>'+
+          '<span class="font-mono text-accent">'+(isUSD ? `$${vatUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:11px;color:var(--text3)">(${fmtB(vatTHB)})</span>` : fmtB(vatTHB))+'</span>'+
         '</div>' : ''
       )+
       '<div style="display:flex;justify-content:flex-end;align-items:center;gap:12px">'+
         '<span style="font-size:13px;color:var(--text3);font-weight:600">ยอดรวมสุทธิ</span>'+
-        '<span class="font-mono text-amber" style="font-size:20px;font-weight:700">'+fmtB(po.total_amount||totalOrdered+(po.vat_amount||0))+'</span>'+
+        '<span class="font-mono text-amber" style="font-size:20px;font-weight:700">'+
+          (isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:14px;font-weight:normal;color:var(--text2)">(${fmtB(grandTotalTHB)})</span>` : fmtB(grandTotalTHB))+
+        '</span>'+
       '</div>'+
     '</div>'+
     (po.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px">'+po.note+'</div>':'');
@@ -19094,7 +19156,20 @@ async function printPO(poId) {
   const items = poItems;
   const shop = currentShop || {};
   const skuMap = await loadPOSkuMap(items);
-  const total=items.reduce((s,it)=>s+Number(it.qty_ordered)*Number(it.unit_cost||0),0);
+  let isUSD = false;
+  let poRate = 35.00;
+  const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
+  if (po.currency === 'USD' || usdMatch) {
+    isUSD = true;
+    if (usdMatch && usdMatch[1]) poRate = Number(usdMatch[1]) || 35.00;
+    else if (po.exchange_rate) poRate = Number(po.exchange_rate) || 35.00;
+  }
+
+  const totalTHB = items.reduce((s,it)=>s+Number(it.qty_ordered)*Number(it.unit_cost||0),0);
+  const totalUSD = isUSD && poRate > 0 ? (totalTHB / poRate) : 0;
+  const grandTotalTHB = Number(po.total_amount || totalTHB);
+  const grandTotalUSD = isUSD && poRate > 0 ? (grandTotalTHB / poRate) : 0;
+
   const bp=[];
   bp.push('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
   bp.push('<title>PO '+(po.po_no||'')+'</title>');
@@ -19117,12 +19192,25 @@ async function printPO(poId) {
   bp.push('<div><span style="color:#777;font-size:11px">เลขที่ PO</span>&nbsp;&nbsp;<strong>'+(po.po_no||'-')+'</strong></div>');
   bp.push('<div><span style="color:#777;font-size:11px">วันที่</span>&nbsp;&nbsp;<strong>'+po.po_date+'</strong></div>');
   if(po.expected_date) bp.push('<div><span style="color:#777;font-size:11px">คาดว่าจะรับ</span>&nbsp;&nbsp;<strong>'+po.expected_date+'</strong></div>');
+  if(isUSD) bp.push('<div><span style="color:#15803d;font-size:11px;font-weight:700">สกุลเงิน: USD</span>&nbsp;&nbsp;<span style="color:#555;font-size:10.5px">(1 USD = ฿'+poRate.toFixed(2)+')</span></div>');
   bp.push('</div></div>');
-  bp.push('<table><thead><tr><th style="width:36px">#</th><th style="text-align:left">SKU</th><th style="text-align:left">Supplier SKU</th><th style="width:60px">จำนวน</th><th style="width:80px;text-align:right">ราคาซื้อ/ชิ้น</th><th style="width:80px;text-align:right">รวม</th></tr></thead><tbody>');
+  bp.push('<table><thead><tr><th style="width:36px">#</th><th style="text-align:left">SKU</th><th style="text-align:left">Supplier SKU</th><th style="width:60px">จำนวน</th><th style="width:100px;text-align:right">ราคาซื้อ/ชิ้น'+(isUSD?' (USD)':'')+'</th><th style="width:110px;text-align:right">รวม'+(isUSD?' (USD / THB)':'')+'</th></tr></thead><tbody>');
   const MIN=10; const empties=Math.max(0,MIN-(items||[]).length);
   (items||[]).forEach((it,i)=>{
     const product = skuMap[it.product_id] || {};
-    const amt=Number(it.qty_ordered)*Number(it.unit_cost||0);
+    const thbCost = Number(it.unit_cost||0);
+    const usdCost = isUSD && poRate > 0 ? (thbCost / poRate) : 0;
+    const thbAmt=Number(it.qty_ordered)*thbCost;
+    const usdAmt = isUSD && poRate > 0 ? (thbAmt / poRate) : 0;
+
+    const unitCostText = isUSD
+      ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`
+      : fmtB(thbCost);
+
+    const amtText = isUSD
+      ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:9.5px;color:#555">(${fmtB(thbAmt)})</div>`
+      : fmtB(thbAmt);
+
     let displayName = product.sku || it.product_name || '-';
     let soPrintHTML = '';
     const soMatch = (it.product_name || '').match(/\[SO:\s*([^\]]+)\]/i);
@@ -19130,11 +19218,11 @@ async function printPO(poId) {
       soPrintHTML = '<div style="font-size:10px;color:#1e40af;font-weight:600;margin-top:2px">📄 SO: '+escapeHTML(soMatch[1])+'</div>';
       displayName = displayName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
     }
-    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(displayName)+soPrintHTML+'</td><td>'+escapeHTML(product.supplier_sku||'-')+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+fmtB(it.unit_cost)+'</td><td style="text-align:right;font-weight:600">'+fmtB(amt)+'</td></tr>');
+    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(displayName)+soPrintHTML+'</td><td>'+escapeHTML(product.supplier_sku||'-')+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+unitCostText+'</td><td style="text-align:right;font-weight:600">'+amtText+'</td></tr>');
   });
   for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
   bp.push('</tbody></table>');
-  bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+fmtB(total)+'</span></div>');
+  bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+(isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:13px;font-weight:normal;color:#444">(${fmtB(grandTotalTHB)})</span>` : fmtB(grandTotalTHB))+'</span></div>');
   if(po.note) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+po.note+'</div>');
   bp.push('<div class="sig-area">');
   bp.push('<div class="sig-box"><div style="height:44px"></div><div class="sig-line"></div><div class="sig-label">ผู้สั่งซื้อ</div></div>');
@@ -32853,7 +32941,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.35', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
+    { v:'2.36', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order USD & THB Dual Currency Display', items:[
+      '💵 <b>แสดงยอดเงินคู่ USD และ (THB):</b> หาก PO เป็นสกุลเงิน USD จะแสดงยอดราคา/ชิ้น, ยอดรวมรายการ, และยอดรวมสุทธิทั้งในหน่วย USD และแปลงเป็น (฿THB) ควบคู่กันทั้งในตาราง, หน้ารายละเอียด และหน้าพิมพ์เอกสาร',
+      '🧹 <b>Cache Refresh (v2.36):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
+    ]},
+    { v:'2.35', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
       '📅 <b>เรียงเอกสาร PO ตามวันที่ล่าสุด:</b> ตั้งค่าเริ่มต้นของตาราง Purchase Orders ให้เรียงตามวันที่ล่าสุด (ใหม่ → เก่า) เสมอ พร้อมแสดงเลขลำดับแถว (#)',
       '📋 <b>จัดเรียงรายการสินค้าในเอกสาร PO (1-10):</b> รายการสินค้าในใบสั่งซื้อ (ทั้งหน้าสร้าง, แก้ไข, ดูรายละเอียด และพิมพ์ PO) จัดเรียงตามเลขลำดับ 1-10 ชัดเจน',
       '🧹 <b>Cache Refresh (v2.35):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.35'
