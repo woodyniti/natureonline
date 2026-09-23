@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.36';
-const DISPLAY_APP_VERSION = 'v2.36';
+const CURRENT_APP_VERSION = 'sealthai-v2.37';
+const DISPLAY_APP_VERSION = 'v2.37';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.36 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.37 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.36 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.37 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.36 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.37 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.36)">v2.36 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.37)">v2.37 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -29365,14 +29365,27 @@ async function openARPickerForReturn() {
 
   try {
     const { data: arList, error } = await sb.from('ar_invoices')
-      .select('*, orders(id, order_no, total_amount, doc_status)')
+      .select('*')
       .eq('shop_id', currentShop.id)
       .neq('status', 'cancelled')
       .order('created_at', { ascending: false })
       .limit(100);
 
     if (error) throw error;
-    _cachedARListForReturn = arList || [];
+
+    const orderIds = [...new Set((arList || []).map(a => a.order_id).filter(Boolean))];
+    const orderMap = {};
+    if (orderIds.length > 0) {
+      const { data: ordersData } = await sb.from('orders')
+        .select('id, order_no, total_amount, doc_status')
+        .in('id', orderIds);
+      (ordersData || []).forEach(o => { orderMap[o.id] = o; });
+    }
+
+    _cachedARListForReturn = (arList || []).map(ar => ({
+      ...ar,
+      orders: ar.order_id ? (orderMap[ar.order_id] || null) : null
+    }));
     renderARPickerList(_cachedARListForReturn);
   } catch (err) {
     console.error(err);
@@ -29445,7 +29458,7 @@ function renderARPickerList(list) {
 async function openReturnFromAR(arId) {
   if (!arId) return;
   const { data: ar, error } = await sb.from('ar_invoices')
-    .select('*, orders(*, order_items(*))')
+    .select('*')
     .eq('id', arId)
     .single();
 
@@ -29455,8 +29468,14 @@ async function openReturnFromAR(arId) {
   }
 
   // If linked to an order with items, open the order return dialog with AR linked
-  if (ar.order_id && ar.orders && ar.orders.order_items?.length) {
-    return openReturnFromOrder(ar.order_id, ar.id);
+  if (ar.order_id) {
+    const [{ data: order }, { data: orderItems }] = await Promise.all([
+      sb.from('orders').select('*').eq('id', ar.order_id).maybeSingle(),
+      sb.from('order_items').select('*').eq('order_id', ar.order_id)
+    ]);
+    if (order && orderItems && orderItems.length > 0) {
+      return openReturnFromOrder(ar.order_id, ar.id);
+    }
   }
 
   // Standalone AR Invoice (no order items)
@@ -32941,9 +32960,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.36', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order USD & THB Dual Currency Display', items:[
+    { v:'2.37', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix AR Invoice Return Relationship Query', items:[
+      '🛠️ <b>แก้ไขการดึงข้อมูล AR Invoice สำหรับรับคืนสินค้า:</b> ปรับการ Query ข้อมูล AR Invoice และ Sales Orders แยกตาราง ป้องกันข้อผิดพลาด schema cache relationship',
+      '🧹 <b>Cache Refresh (v2.37):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
+    ]},
+    { v:'2.36', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order USD & THB Dual Currency Display', items:[
       '💵 <b>แสดงยอดเงินคู่ USD และ (THB):</b> หาก PO เป็นสกุลเงิน USD จะแสดงยอดราคา/ชิ้น, ยอดรวมรายการ, และยอดรวมสุทธิทั้งในหน่วย USD และแปลงเป็น (฿THB) ควบคู่กันทั้งในตาราง, หน้ารายละเอียด และหน้าพิมพ์เอกสาร',
-      '🧹 <b>Cache Refresh (v2.36):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
+      '🧹 <b>Cache Refresh (v2.37):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
     ]},
     { v:'2.35', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
       '📅 <b>เรียงเอกสาร PO ตามวันที่ล่าสุด:</b> ตั้งค่าเริ่มต้นของตาราง Purchase Orders ให้เรียงตามวันที่ล่าสุด (ใหม่ → เก่า) เสมอ พร้อมแสดงเลขลำดับแถว (#)',
