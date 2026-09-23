@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.23';
-const DISPLAY_APP_VERSION = 'v2.23';
+const CURRENT_APP_VERSION = 'sealthai-v2.26';
+const DISPLAY_APP_VERSION = 'v2.26';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.23 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.25 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.23 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.25 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v1.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.23 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.25 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1334,7 +1334,7 @@ const I18N = {
     'nav.dashboard':'ภาพรวม','nav.monthly':'สรุปรายเดือน','nav.quotations':'ใบเสนอราคา',
     'nav.orders':'ออเดอร์','nav.expenses':'ค่าใช้จ่าย','nav.products':'สินค้า',
     'nav.stock':'รับสินค้าเข้า','nav.employees':'พนักงาน','nav.settings_p':'ตั้งค่า',
-    'nav.stock_planning':'วางแผนสต๊อก','nav.import':'นำเข้าสินค้า (China Import)','nav.purchase':'จัดซื้อ','nav.suppliers':'Supplier','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'รับคืนสินค้า',
+    'nav.stock_planning':'วางแผนสต๊อก','nav.import':'นำเข้าสินค้า (China Import)','nav.purchase':'จัดซื้อ','nav.suppliers':'Supplier','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'ออกใบลดหนี้ (CN)',
     'lang.toggle':'TH',
   },
   en: {
@@ -1343,7 +1343,7 @@ const I18N = {
     'nav.dashboard':'Dashboard','nav.monthly':'Monthly Summary','nav.quotations':'Quotations',
     'nav.orders':'Orders','nav.expenses':'Expenses','nav.products':'Products',
     'nav.stock':'Goods Receipt','nav.employees':'Employees','nav.settings_p':'Settings',
-    'nav.stock_planning':'Stock Planning','nav.import':'China Import','nav.purchase':'Purchase','nav.suppliers':'Suppliers','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'Goods Return',
+    'nav.stock_planning':'Stock Planning','nav.import':'China Import','nav.purchase':'Purchase','nav.suppliers':'Suppliers','nav.po':'Purchase Order','nav.grpo':'Goods Receipt','nav.ap':'AP Invoice','nav.ar':'AR Invoice','nav.goodsreturn':'Credit Note (CN)',
     'lang.toggle':'EN',
   }
 };
@@ -1394,8 +1394,8 @@ function renderSidebar() {
     {page:'quotations',  icon:'📋', label: 'ใบเสนอราคา (QT)'},
     {page:'orders',      icon:'🛒', label: 'ออเดอร์ (SO)'},
     {page:'arinvoice',   icon:'💰', label: 'AR Invoice'},
+    {page:'goodsreturn', icon:'🧾', label: 'ออกใบลดหนี้ / Credit Note (CN)'},
     {page:'marketplace', icon:'🛍️', label: 'มาร์เก็ตเพลส (Marketplace Hub)'},
-    {page:'goodsreturn', icon:'🔄', label: 'รับคืนสินค้า'},
     {page:'expenses',    icon:'💸', label: t('nav.expenses')},
     {page:'finance',     icon:'📈', label: 'รายได้อื่น & เงินลงทุน'},
 
@@ -3202,7 +3202,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v1.98)">v2.23 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.25)">v2.25 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3735,9 +3735,9 @@ async function createPOFromSelectedRepeat() {
     // Suggest reorder quantity (e.g. recent repeat sales quantity or pack size)
     const suggestedQty = Math.max(1, Math.min(100, Number(cb.getAttribute('data-qty')) || Number(prod.moq) || 10));
     
-    // ดึงราคาซื้อเข้า (purchase_price) จาก Supplier โดยตรง ไม่ใช้ราคาทุนเฉลี่ย
+    // ดึงราคาซื้อเข้า (purchase_price) จาก Supplier เท่านั้น ไม่ดึงราคาทุนเฉลี่ย
     let cost = Number(prod?.purchase_price !== undefined && prod?.purchase_price !== null && Number(prod?.purchase_price) > 0 ? prod.purchase_price : (prod?.buy_price !== undefined && prod?.buy_price !== null && Number(prod?.buy_price) > 0 ? prod.buy_price : 0));
-    if (cost <= 0) cost = Number(prod?.current_cost || repeatData?.cost_per_unit || 0);
+    if (cost <= 0) cost = Number(repeatData?.cost_per_unit || 0); // ไม่ใช้ current_cost เพื่อทำ PO
 
     itemsToOrder.push({
       product_id: pid,
@@ -8025,6 +8025,7 @@ async function viewOrder(orderId) {
   document.getElementById('order-detail-footer').innerHTML =
     `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">ปิด</button>` +
     `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>` +
+    `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700">🖨️ พิมพ์บิล</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
@@ -17842,6 +17843,16 @@ async function purchase() {
             <input type="hidden" id="po-supplier-name">
           </div>
           <div class="form-group"><label>เบอร์ติดต่อ</label><input type="text" id="po-sup-phone" placeholder="เบอร์โทร"></div>
+          <div class="form-group"><label>สกุลเงิน</label>
+            <select id="po-currency" onchange="togglePoCurrency()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:14px">
+              <option value="THB">THB (บาท)</option>
+              <option value="USD">USD (ดอลลาร์)</option>
+            </select>
+          </div>
+          <div class="form-group" id="po-exrate-div" style="display:none">
+            <label>อัตราแลกเปลี่ยน (THB/USD)</label>
+            <input type="number" id="po-exrate" value="35.00" step="0.01" oninput="calcPOTotal(); renderPOItems();">
+          </div>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;flex-wrap:wrap;gap:8px">
           <div style="font-weight:600;font-size:14px">รายการ SKU ที่สั่งซื้อ</div>
@@ -17981,7 +17992,7 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
         buyPrice = Number(it.buy_price);
       }
       if (buyPrice === null || isNaN(buyPrice)) {
-        buyPrice = Number(it.unit_cost || (master && (master.purchase_price || master.buy_price || master.current_cost)) || 0);
+        buyPrice = Number(it.unit_cost || (master && (master.purchase_price || master.buy_price)) || 0);
       }
 
       return {
@@ -18012,6 +18023,14 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   // โหลด supplier dropdown หลัง modal เปิด
   await loadSupplierDropdown('po-supplier-sel', null);
 }
+
+window.togglePoCurrency = function() {
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const exDiv = document.getElementById('po-exrate-div');
+  if (exDiv) exDiv.style.display = cur === 'USD' ? 'block' : 'none';
+  renderPOItems();
+  calcPOTotal();
+};
 
 function renderPOItems() {
   const el=document.getElementById('po-items');
@@ -18076,8 +18095,8 @@ function renderPOItems() {
         d.onmousedown=e=>{e.preventDefault();
           window._poAutocompleteClicking = true;
           // ดึงราคาซื้อเข้า (purchase_price / buy_price) จากฐานข้อมูลสินค้าโดยตรง
-          const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
-          poItems[i]={product_id:p.id,product_name:p.name,sku:p.sku||'',qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:buyPrice};
+        const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : 0));
+        poItems[i]={product_id:p.id,product_name:p.name,sku:p.sku||'',qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:buyPrice};
           inp.value=p.sku||p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
         };
         dd.appendChild(d);
@@ -18129,7 +18148,7 @@ function renderPOItems() {
           const productChanged = poItems[i].product_id !== matchedProd.id;
           if (productChanged || !poItems[i].unit_cost) {
             // ดึงราคาซื้อเข้า (purchase_price / buy_price) จากฐานข้อมูลสินค้าโดยตรง
-            const buyPrice = Number(matchedProd.purchase_price !== undefined && matchedProd.purchase_price !== null && matchedProd.purchase_price !== '' ? matchedProd.purchase_price : (matchedProd.buy_price !== undefined && matchedProd.buy_price !== null ? matchedProd.buy_price : (matchedProd.cost_price || 0)));
+            const buyPrice = Number(matchedProd.purchase_price !== undefined && matchedProd.purchase_price !== null && matchedProd.purchase_price !== '' ? matchedProd.purchase_price : (matchedProd.buy_price !== undefined && matchedProd.buy_price !== null ? matchedProd.buy_price : 0));
             poItems[i].unit_cost = buyPrice;
           }
           poItems[i].product_id = matchedProd.id;
@@ -18150,7 +18169,7 @@ function renderPOItems() {
     const statusHelp = document.createElement('div');
     statusHelp.style.cssText = 'font-size:11px;margin-top:3px;font-weight:500';
     if (it.product_id) {
-      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : (selectedProduct?.cost_price || 0)));
+      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : 0));
       const avgCost = Number(selectedProduct?.current_cost || 0);
       statusHelp.innerHTML = `<span style="color:#0f172a;font-weight:600">${escapeHTML(selectedProduct?.name||it.product_name)}</span> · <span style="color:var(--blue)">Supplier SKU: ${escapeHTML(selectedProduct?.supplier_sku||'-')}</span> · <span style="color:#15803d;font-weight:700">ราคาซื้อเข้า: ${fmtB(buyPrice)}</span> ${avgCost ? `<span style="color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(avgCost)})</span>` : ''} <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>`;
     } else {
@@ -18177,13 +18196,21 @@ function renderPOItems() {
       n.style.cssText='width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
       n.oninput=()=>{onch(+n.value);calcPOTotal();}; w.appendChild(l); w.appendChild(n); return w;
     }
+    const cur = document.getElementById('po-currency')?.value || 'THB';
+    const rate = Number(document.getElementById('po-exrate')?.value || 35);
     r2.appendChild(nf(it.qty_ordered||1,'จำนวน',v=>poItems[i].qty_ordered=v));
-    r2.appendChild(nf(it.unit_cost||0,'ราคาซื้อ/ชิ้น',v=>poItems[i].unit_cost=v));
+    r2.appendChild(nf(it.unit_cost||0, cur === 'USD' ? 'ราคา/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น',v=>poItems[i].unit_cost=v));
     const tw=document.createElement('div'); tw.style.cssText='text-align:right;padding-bottom:8px';
     const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวมรายการ';
     const tv=document.createElement('div'); tv.className='font-mono text-amber'; tv.style.cssText='font-size:14px;font-weight:700';
     tv.id='po-item-total-'+i;
-    tv.textContent=fmtB(Number(it.qty_ordered??1)*Number(it.unit_cost||0));
+    
+    const rowTotal = Number(it.qty_ordered??1)*Number(it.unit_cost||0);
+    if (cur === 'USD') {
+      tv.innerHTML = `$${rowTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3)">≈ ${fmtB(rowTotal * rate)}</div>`;
+    } else {
+      tv.textContent=fmtB(rowTotal);
+    }
     tw.appendChild(tl); tw.appendChild(tv); r2.appendChild(tw);
     card.appendChild(r2); el.appendChild(card);
   });
@@ -18195,16 +18222,33 @@ function renderPOItems() {
 function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:0});renderPOItems();}
 
 function calcPOTotal(){
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+  let rawSubtotal = 0;
+
   poItems.forEach((it,i)=>{
-    const lineEl=document.getElementById('po-item-total-'+i);
-    if(lineEl) lineEl.textContent=fmtB(Number(it.qty_ordered??1)*Number(it.unit_cost||0));
+    const rowRaw = Number(it.qty_ordered??1)*Number(it.unit_cost||0);
+    rawSubtotal += rowRaw;
+    const lineEl = document.getElementById('po-item-total-'+i);
+    if(lineEl) {
+      if (cur === 'USD') {
+        lineEl.innerHTML = `$${rowRaw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3)">≈ ${fmtB(rowRaw * rate)}</div>`;
+      } else {
+        lineEl.textContent = fmtB(rowRaw);
+      }
+    }
   });
-  const subtotal = poItems.reduce((s,it)=>s+Number(it.qty_ordered??1)*Number(it.unit_cost||0),0);
+
+  const subtotal = cur === 'USD' ? rawSubtotal * rate : rawSubtotal;
   const vatOn   = document.getElementById('po-vat-on')?.checked || false;
   const vatType = document.getElementById('po-vat-type')?.value || 'excluded';
   const vatAmt  = vatOn ? (vatType==='excluded' ? subtotal*0.07 : subtotal-subtotal/1.07) : 0;
   const total   = vatType==='excluded' ? subtotal+vatAmt : subtotal;
-  const stEl=document.getElementById('po-subtotal'); if(stEl) stEl.textContent=fmtB(subtotal);
+
+  const stEl=document.getElementById('po-subtotal'); 
+  if(stEl) {
+    stEl.innerHTML = cur === 'USD' ? `${fmtB(subtotal)} <div style="font-size:10px;color:var(--text3)">($${rawSubtotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</div>` : fmtB(subtotal);
+  }
   const vaEl=document.getElementById('po-vat-amt');  if(vaEl) vaEl.textContent=fmtB(vatAmt);
   const vrEl=document.getElementById('po-vat-row');  if(vrEl) vrEl.style.display=vatOn?'flex':'none';
   const tEl =document.getElementById('po-total');    if(tEl)  tEl.textContent=fmtB(total);
@@ -18222,6 +18266,17 @@ async function savePO(status) {
     : '';
   if(!supplierName){toast('กรุณาเลือก Supplier','error');return;}
   if (_poSaving) return;   // กันกดบันทึก/ส่งซ้ำ → รายการสินค้าซ้ำ
+  
+  if (!poItems || poItems.length === 0) {
+    toast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+  const missingCode = poItems.some(it => !it.sku || it.sku.trim() === '' || !it.product_id);
+  if (missingCode) {
+    toast('พบรายการสินค้าที่ Item code ว่าง โปรดตรวจสอบก่อนบันทึก', 'error');
+    return;
+  }
+  
   _poSaving = true;
 
   let poNo = editingPONo;
@@ -18229,11 +18284,19 @@ async function savePO(status) {
     poNo = await generatePONo(date);
   }
   
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
   const vatOn   = document.getElementById('po-vat-on')?.checked || false;
   const vatType = document.getElementById('po-vat-type')?.value || 'excluded';
-  const subtotalForSave = poItems.reduce((s,it)=>s+Number(it.qty_ordered||0)*Number(it.unit_cost||0),0);
+  const rawSubtotalForSave = poItems.reduce((s,it)=>s+Number(it.qty_ordered||0)*Number(it.unit_cost||0),0);
+  const subtotalForSave = cur === 'USD' ? rawSubtotalForSave * rate : rawSubtotalForSave;
   const vatAmtSave = vatOn ? (vatType==='excluded' ? subtotalForSave*0.07 : subtotalForSave-subtotalForSave/1.07) : 0;
   const total = vatType==='excluded' ? subtotalForSave+vatAmtSave : subtotalForSave;
+  
+  let finalNote = document.getElementById('po-note').value;
+  if (cur === 'USD') {
+    finalNote = (finalNote ? finalNote + '\n' : '') + `[สกุลเงิน: USD, อัตราแลกเปลี่ยน: ${rate}]`;
+  }
   
   let po, error;
   const payload = {
@@ -18242,7 +18305,7 @@ async function savePO(status) {
     supplier_id:supplierId,
     supplier_name:supplierName,
     supplier_contact:document.getElementById('po-sup-phone').value,
-    note:document.getElementById('po-note').value,
+    note:finalNote,
     status, total_amount:total,
     vat_amount: Math.round(vatAmtSave*100)/100,
     vat_type: vatOn ? vatType : null,
@@ -18269,7 +18332,7 @@ async function savePO(status) {
   if(poItems.length){
     const items=poItems.filter(it=>it.product_name).map(it=>({
       po_id:po.id, product_id:it.product_id||null, product_name:it.product_name,
-      qty_ordered:it.qty_ordered, qty_received:0, unit_cost:it.unit_cost,
+      qty_ordered:it.qty_ordered, qty_received:0, unit_cost: cur === 'USD' ? Number(it.unit_cost)*rate : it.unit_cost,
     }));
     if(items.length) {
       const { error: itemsErr } = await sb.from('purchase_order_items').insert(items);
@@ -18412,6 +18475,9 @@ async function viewPO(poId) {
     }
     if(po.status!=='received'&&po.status!=='cancelled'&&po.status!=='draft')
       btns+='<button class="btn btn-primary btn-sm" onclick="openGoodsReceipt(&quot;'+poId+'&quot;)">📦 รับสินค้า</button>';
+    if (po.status === 'partial') {
+      btns += '<button class="btn btn-success btn-sm" onclick="if(confirm(\'ยืนยันปิดใบสั่งซื้อที่ค้างรับ (ไม่ต้องรับสินค้าเข้าเพิ่ม)?\')) updatePOStatus(&quot;'+poId+'&quot;,&quot;received&quot;)">✔ ปิดค้างรับ</button>';
+    }
     if(['received','partial'].includes(po.status)) {
       const {data:existAP} = await sb.from('ap_invoices').select('id').eq('po_id',poId).limit(1);
       if (existAP && existAP.length > 0) {
@@ -22773,7 +22839,8 @@ async function openARDetail(arId) {
 
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
-        ${!isCancelled ? `<button class="btn btn-danger" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">🧾 ออกใบลดหนี้ (CN) / ยกเลิก</button>` : ''}
+        ${!isCancelled && sourceOrder ? `<button class="btn btn-danger" style="background:#fff1f2;color:#be123c;border-color:#fecdd3" onclick="openReturnFromOrder('${sourceOrder.id}', '${arId}')">🧾 รับคืนสินค้า (CN)</button>` : ''}
+        ${!isCancelled && !sourceOrder ? `<button class="btn btn-danger" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">🧾 ออกใบลดหนี้ (CN) / ยกเลิก</button>` : ''}
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -22881,7 +22948,7 @@ async function goodsreturn() {
       <button class="btn btn-secondary btn-sm" onclick="loadGoodsReturn()">🔍 ค้นหา</button>
     </div>
     <div class="card">
-      <div class="card-title">รายการรับคืนสินค้า</div>
+      <div class="card-title">ประวัติการออกใบลดหนี้ / รับคืนสินค้า (CN)</div>
       <div class="table-wrap" id="grt-table"><div class="loading"><div class="spinner"></div></div></div>
     </div>
   `);
@@ -23304,8 +23371,8 @@ async function openBatchSOtoPOModal() {
       // 2. ถ้าสินค้าในคลังยังไม่ได้ระบุราคาซื้อเข้า (> 0) แต่ในรายการออเดอร์มีระบุ purchase_price / buy_price
       if (buyPrice <= 0 && it.purchase_price && Number(it.purchase_price) > 0) buyPrice = Number(it.purchase_price);
       if (buyPrice <= 0 && it.buy_price && Number(it.buy_price) > 0) buyPrice = Number(it.buy_price);
-      // 3. ถ้าไม่มีราคาซื้อเข้าที่ตั้งไว้เลย จึงใช้ต้นทุนปัจจุบัน (current_cost) หรือ cost_per_unit เป็น fallback
-      if (buyPrice <= 0) buyPrice = Number(prod?.current_cost || it.cost_per_unit || 0);
+      // 3. ไม่ใช้ราคาทุนเฉลี่ย (current_cost) เป็น fallback ในการทำ PO ป้องกัน PO ผิดพลาด
+      if (buyPrice <= 0) buyPrice = Number(it.cost_per_unit || 0);
 
       const qtySold = Number(it.qty || 1);
 
@@ -28570,6 +28637,233 @@ async function saveEditARPayment(payId, arId) {
   loadAR();
 }
 
+// ── Return / Credit Note (CN) System from Order ──────────────────────
+async function openReturnFromOrder(orderId, arId) {
+  if (arId === 'undefined') arId = null;
+  const { data: order, error } = await sb.from('orders').select('*,order_items(*)').eq('id', orderId).single();
+  if (error || !order) { toast('ไม่สามารถโหลดข้อมูล Order ได้', 'error'); return; }
+
+  const defaultCnNo = 'CN-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+  const items = order.order_items || [];
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '400';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:700px">
+      <div class="modal-title">🧾 รับคืนสินค้า / ออกใบลดหนี้ (CN) จากยอดขาย</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>อ้างอิง Order: <b class="font-mono text-blue">${escapeHTML(order.order_no)}</b></div>
+        <div>ลูกค้า: <b>${escapeHTML(order.customer_name)}</b></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group"><label>เลขที่ CN (Goods Return)</label>
+          <input type="text" id="ro-cn-no" class="font-mono" value="${defaultCnNo}">
+        </div>
+        <div class="form-group"><label>วันที่รับคืน</label><input type="date" id="ro-date" value="${today()}"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>สาเหตุ</label>
+          <input type="text" id="ro-reason" placeholder="สินค้าชำรุด / ผิดสเปก / ลูกค้าขอยกเลิก">
+        </div>
+        <div class="form-group"><label>อ้างอิง Shopee/Lazada</label>
+          <input type="text" id="ro-ref" placeholder="เช่น หมายเลขคืนสินค้าในแอป">
+        </div>
+      </div>
+
+      <div style="font-weight:600;font-size:13px;margin:16px 0 8px">รายการสินค้าที่คืนได้</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>สินค้า</th>
+              <th class="text-right">ราคา/หน่วย</th>
+              <th class="text-right">จำนวนซื้อ</th>
+              <th class="text-right" style="width:100px;background:#fef2f2;color:#b91c1c">จำนวนที่คืน</th>
+            </tr>
+          </thead>
+          <tbody id="ro-items-body">
+            ${items.map((it, idx) => `
+              <tr>
+                <td style="font-size:12px">${escapeHTML(it.product_name)}
+                  <input type="hidden" id="ro-prod-id-${idx}" value="${it.product_id}">
+                  <input type="hidden" id="ro-prod-name-${idx}" value="${escapeHTML(it.product_name)}">
+                  <input type="hidden" id="ro-price-${idx}" value="${it.sell_price ?? it.unit_price}">
+                  <input type="hidden" id="ro-cost-${idx}" value="${it.cost_per_unit || 0}">
+                  <input type="hidden" id="ro-item-id-${idx}" value="${it.id}">
+                </td>
+                <td class="text-right font-mono">${fmtB(it.sell_price ?? it.unit_price)}</td>
+                <td class="text-right font-mono">${fmt(it.qty)}<input type="hidden" id="ro-max-qty-${idx}" value="${it.qty}"></td>
+                <td><input type="number" id="ro-qty-${idx}" value="0" min="0" max="${it.qty}" step="any" style="width:100%;text-align:right;border:1px solid #fca5a5;border-radius:4px;padding:4px"></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:8px;padding:10px;font-size:12px;margin-top:12px">
+        ⚠️ <b>ผลกระทบ:</b> การรับคืนจะดึงสินค้ากลับเข้าสต๊อก และ<b>ลดยอดขาย</b>ในบิลเดิม รวมทั้งลดยอดหนี้ใน Invoice (ถ้ามี)
+      </div>
+
+      <div class="modal-footer" style="margin-top:16px">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-danger" onclick="processOrderReturn('${orderId}', ${arId ? `'${arId}'` : 'null'}, ${items.length}, event)">💾 ยืนยันการรับคืน / อัปเดตยอดขาย</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+async function processOrderReturn(orderId, arId, itemCount, event) {
+  const cnNo = document.getElementById('ro-cn-no')?.value.trim();
+  const cnDate = document.getElementById('ro-date')?.value || today();
+  const reason = document.getElementById('ro-reason')?.value.trim() || 'รับคืนสินค้าจากระบบ CN';
+  const ref = document.getElementById('ro-ref')?.value.trim() || '';
+  const finalReason = ref ? `${reason} (อ้างอิง: ${ref})` : reason;
+
+  if (!cnNo) { toast('กรุณาระบุเลขที่ CN', 'error'); return; }
+
+  const returnItems = [];
+  let totalReturnAmt = 0;
+
+  for (let i = 0; i < itemCount; i++) {
+    const qtyInput = document.getElementById('ro-qty-'+i);
+    if (!qtyInput) continue;
+    const rQty = Number(qtyInput.value) || 0;
+    if (rQty <= 0) continue;
+
+    const maxQty = Number(document.getElementById('ro-max-qty-'+i).value);
+    if (rQty > maxQty) {
+      toast('จำนวนคืนเกินกว่าที่ซื้อ', 'error'); return;
+    }
+
+    const prodId = document.getElementById('ro-prod-id-'+i).value;
+    const prodName = document.getElementById('ro-prod-name-'+i).value;
+    const price = Number(document.getElementById('ro-price-'+i).value);
+    const cost = Number(document.getElementById('ro-cost-'+i).value);
+    const itemId = document.getElementById('ro-item-id-'+i).value;
+
+    returnItems.push({
+      item_id: itemId,
+      product_id: prodId,
+      product_name: prodName,
+      qty: rQty,
+      unit_price: price,
+      cost_per_unit: cost,
+      amount: rQty * price,
+      remain_qty: maxQty - rQty
+    });
+    totalReturnAmt += (rQty * price);
+  }
+
+  if (returnItems.length === 0) {
+    toast('กรุณาระบุจำนวนสินค้าที่ต้องการคืนอย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+
+  if (!confirm('ยืนยันการรับคืนสินค้า?\\nยอดรวมลดลง: ' + fmtB(totalReturnAmt) + ' บาท')) return;
+
+  const btn = event.currentTarget;
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ กำลังประมวลผล...';
+
+  try {
+    const [{data: order, error: orderErr}, arRes] = await Promise.all([
+      sb.from('orders').select('*').eq('id', orderId).single(),
+      arId && arId !== 'null' ? sb.from('ar_invoices').select('*').eq('id', arId).single() : Promise.resolve({data: null})
+    ]);
+    if (orderErr) throw new Error('โหลด Order ไม่สำเร็จ');
+    const ar = arRes.data;
+
+    const grPayload = {
+      shop_id: currentShop.id, gr_no: cnNo, gr_date: cnDate,
+      return_type: 'sale', reason: finalReason + ` [Ref: ${order.order_no}]`, 
+      total_amount: totalReturnAmt, status: 'done',
+      customer_name: order.customer_name
+    };
+    const { data: gr, error: grErr } = await sb.from('goods_returns').insert(grPayload).select().single();
+    if (grErr) throw new Error('บันทึก Goods Return ไม่สำเร็จ');
+
+    const grItemsPayload = returnItems.map(it => ({
+      gr_id: gr.id, product_id: it.product_id, product_name: it.product_name,
+      qty: it.qty, unit_price: it.unit_price, amount: it.amount
+    }));
+    await sb.from('goods_return_items').insert(grItemsPayload);
+
+    const stockPayload = returnItems.map(it => ({
+      shop_id: currentShop.id, product_id: it.product_id,
+      lot_name: cnNo + ' (คืนจาก ' + order.order_no + ')',
+      move_type: 'in', qty: it.qty,
+      cost_per_unit: it.cost_per_unit, other_cost: 0, move_date: cnDate
+    }));
+    if (stockPayload.length > 0) {
+      await sb.from('stock_movements').insert(stockPayload);
+      await recalcStockQty(returnItems.map(it => it.product_id));
+    }
+
+    for (const it of returnItems) {
+      await sb.from('order_items').update({ qty: it.remain_qty }).eq('id', it.item_id);
+    }
+
+    const newOrderTotal = Math.max(0, Number(order.total_amount) - totalReturnAmt);
+    let docStatus = order.doc_status;
+    let shippingStatus = order.shipping_status;
+    if (newOrderTotal <= 0 && returnItems.every(it => it.remain_qty === 0)) {
+       docStatus = 'cancelled';
+       shippingStatus = 'cancelled';
+    }
+    const newNote = `[CN: ${cnNo}] ${reason}\n` + (order.note || '');
+
+    await sb.from('orders').update({
+      total_amount: newOrderTotal,
+      doc_status: docStatus,
+      shipping_status: shippingStatus,
+      note: newNote
+    }).eq('id', orderId);
+
+    if (ar) {
+      const newArTotal = Math.max(0, Number(ar.total_amount) - totalReturnAmt);
+      let arStatus = ar.status;
+      if (newArTotal <= 0) arStatus = 'cancelled';
+      else if (Number(ar.paid_amount) >= newArTotal) arStatus = 'paid';
+      
+      const arNote = `[CN: ${cnNo}] ${reason}\n` + (ar.note || '');
+      await sb.from('ar_invoices').update({
+        total_amount: newArTotal,
+        status: arStatus,
+        note: arNote
+      }).eq('id', ar.id);
+
+      const paid = Number(ar.paid_amount || 0);
+      if (paid > newArTotal) {
+        const overpaid = paid - newArTotal;
+        await sb.from('ar_payments').insert({
+          ar_id: ar.id, shop_id: currentShop.id, pay_date: cnDate,
+          amount: -overpaid, method: 'Credit Note (Refund)', ref: cnNo,
+          note: 'คืนเงินส่วนเกินจากการลดหนี้'
+        });
+        await sb.from('ar_invoices').update({ paid_amount: newArTotal }).eq('id', ar.id);
+      }
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+    toast('บันทึกรับคืนและอัปเดตยอดเรียบร้อย ✓', 'success');
+
+    if (typeof loadOrders === 'function' && document.getElementById('orders-table')) loadOrders();
+    if (typeof loadAR === 'function' && document.getElementById('art-table')) loadAR();
+    if (document.getElementById('dash-stats') && typeof loadDashData === 'function') loadDashData();
+
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
 // ── AR Invoice: Credit Note (CN) Modal ──────────────────────
 function openCreditNoteModal(arId, arNo, totalAmount, paidAmount) {
   const defaultCnNo = 'CN-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
@@ -28590,6 +28884,10 @@ function openCreditNoteModal(arId, arNo, totalAmount, paidAmount) {
       <div class="form-group">
         <label>วันที่ออกใบลดหนี้</label>
         <input type="date" id="cn-date" value="${today()}">
+      </div>
+      <div class="form-group">
+        <label>อ้างอิงจาก Shopee/Lazada (ถ้ามี)</label>
+        <input type="text" id="cn-ref" placeholder="Order ID หรือหมายเลขติดตามอ้างอิง">
       </div>
       <div class="form-group">
         <label>สาเหตุการออกใบลดหนี้ (CN Reason)</label>
@@ -28625,6 +28923,7 @@ async function confirmSaveCreditNote(arId) {
   const cnDate  = document.getElementById('cn-date')?.value || today();
   const reason  = document.getElementById('cn-reason')?.value || '';
   const notes   = document.getElementById('cn-notes')?.value.trim() || '';
+  const ref     = document.getElementById('cn-ref')?.value.trim() || '';
 
   if (!cnNo) { toast('กรุณาระบุเลขที่ใบลดหนี้ CN', 'error'); return; }
 
@@ -28638,7 +28937,8 @@ async function confirmSaveCreditNote(arId) {
 
   const received = Math.max(0, (payments||[]).reduce((s,p) => s + Number(p.amount||0), 0));
   const oldNote = ar.note || '';
-  const cancelNote = `[CN:${cnNo}] ${reason} ${notes} ${oldNote}`.trim();
+  const refText = ref ? ` [อ้างอิง: ${ref}]` : '';
+  const cancelNote = `[CN:${cnNo}]${refText} ${reason} ${notes} ${oldNote}`.trim();
 
   const { error: cancelError } = await sb.from('ar_invoices').update({
     status: 'cancelled',
