@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.31';
-const DISPLAY_APP_VERSION = 'v2.31';
+const CURRENT_APP_VERSION = 'sealthai-v2.32';
+const DISPLAY_APP_VERSION = 'v2.32';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.31)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.31 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.32)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.32 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.31)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.31 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.32)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.32 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.31)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.31 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.32)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.32 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.31)">v2.31 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.32)">v2.32 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -17995,6 +17995,16 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   document.getElementById('po-expected').value = '';
   document.getElementById('po-note').value = '';
   document.getElementById('po-sup-phone').value = '';
+  const curEl = document.getElementById('po-currency');
+  if (curEl) curEl.value = 'THB';
+  const exDiv = document.getElementById('po-exrate-div');
+  if (exDiv) exDiv.style.display = 'none';
+  const exRateEl = document.getElementById('po-exrate');
+  if (exRateEl) exRateEl.value = '35.00';
+  if (!preferredSupplierId) {
+    const nameEl = document.getElementById('po-supplier-name');
+    if (nameEl) nameEl.value = '';
+  }
   const vatOnEl = document.getElementById('po-vat-on');
   if (vatOnEl) vatOnEl.checked = true;   // default: ติ๊ก VAT 7%
   const vatRowEl = document.getElementById('po-vat-row');
@@ -18452,9 +18462,12 @@ async function savePO(status) {
   if(!date){toast('กรุณาระบุวันที่','error');return;}
   const supSel = document.getElementById('po-supplier-sel');
   const supplierId = supSel?.value||null;
-  const supplierName = supplierId
+  let supplierName = supplierId
     ? (allSuppliers.find(s=>s.id===supplierId)?.name||'')
     : '';
+  if(!supplierName){
+    supplierName = document.getElementById('po-supplier-name')?.value || '';
+  }
   if(!supplierName){toast('กรุณาเลือก Supplier','error');return;}
   if (_poSaving) return;   // กันกดบันทึก/ส่งซ้ำ → รายการสินค้าซ้ำ
   
@@ -18501,9 +18514,11 @@ async function savePO(status) {
   const vatAmtSave = vatOn ? (vatType==='excluded' ? subtotalForSave*0.07 : subtotalForSave-subtotalForSave/1.07) : 0;
   const total = vatType==='excluded' ? subtotalForSave+vatAmtSave : subtotalForSave;
   
-  let finalNote = document.getElementById('po-note').value;
+  let rawNoteVal = (document.getElementById('po-note')?.value || '').trim();
+  rawNoteVal = rawNoteVal.replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '').trim();
+  let finalNote = rawNoteVal;
   if (cur === 'USD') {
-    finalNote = (finalNote ? finalNote + '\n' : '') + `[สกุลเงิน: USD, อัตราแลกเปลี่ยน: ${rate}]`;
+    finalNote = (rawNoteVal ? rawNoteVal + '\n' : '') + `[สกุลเงิน: USD, อัตราแลกเปลี่ยน: ${rate}]`;
   }
   
   let po, error;
@@ -18707,7 +18722,10 @@ async function editPO(poId) {
     sb.from('purchase_orders').select('*').eq('id',poId).single(),
     sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
   ]);
-  if(!po) return;
+  if(!po) {
+    toast('ไม่พบข้อมูล Purchase Order', 'error');
+    return;
+  }
   
   editingPOId = po.id;
   editingPONo = po.po_no;
@@ -18716,14 +18734,42 @@ async function editPO(poId) {
   productList=data||[];
 
   const titleEl = document.getElementById('po-modal-title');
-  if (titleEl) titleEl.textContent = '✏️ แก้ไขแบบร่าง Purchase Order';
+  if (titleEl) titleEl.textContent = '✏️ แก้ไขแบบร่าง Purchase Order' + (po.po_no ? ' (' + po.po_no + ')' : '');
   
-  document.getElementById('po-date').value = po.po_date;
+  document.getElementById('po-date').value = po.po_date || today();
   document.getElementById('po-expected').value = po.expected_date || '';
-  document.getElementById('po-note').value = po.note || '';
   document.getElementById('po-sup-phone').value = po.supplier_contact || '';
+  const supNameInp = document.getElementById('po-supplier-name');
+  if (supNameInp) supNameInp.value = po.supplier_name || '';
   
-  const vatOn = po.vat_amount > 0 || po.vat_type !== null;
+  // ── ดึงข้อมูลสกุลเงิน (Currency) และอัตราแลกเปลี่ยน (Exchange Rate) ──
+  let poCurrency = po.currency || 'THB';
+  let poExRate = Number(po.exchange_rate) || 35.00;
+  let rawNote = po.note || '';
+
+  const usdMatch = rawNote.match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
+  if (usdMatch || poCurrency === 'USD') {
+    poCurrency = 'USD';
+    if (usdMatch && usdMatch[1]) {
+      poExRate = Number(usdMatch[1]) || 35.00;
+    }
+  }
+
+  // แยก Tag สกุลเงินออกจากข้อความหมายเหตุ เพื่อให้แสดงผลสะอาดตา
+  const cleanNote = rawNote
+    .replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '')
+    .trim();
+  document.getElementById('po-note').value = cleanNote;
+
+  const curEl = document.getElementById('po-currency');
+  if (curEl) curEl.value = poCurrency;
+  const exRateEl = document.getElementById('po-exrate');
+  if (exRateEl) exRateEl.value = poExRate;
+  const exDiv = document.getElementById('po-exrate-div');
+  if (exDiv) exDiv.style.display = poCurrency === 'USD' ? 'block' : 'none';
+  
+  // ── VAT ──
+  const vatOn = po.vat_amount > 0 || (po.vat_type !== null && po.vat_type !== undefined);
   const vatOnEl = document.getElementById('po-vat-on');
   if (vatOnEl) {
     vatOnEl.checked = vatOn;
@@ -18736,18 +18782,32 @@ async function editPO(poId) {
     vatTypeEl.value = po.vat_type || 'excluded';
   }
   
-  poItems = (items||[]).map(it => ({
-    product_id: it.product_id,
-    product_name: it.product_name,
-    qty_ordered: it.qty_ordered,
-    unit_cost: it.unit_cost
-  }));
-  
-  renderPOItems();
-  calcPOTotal();
+  // ── รายการสินค้า (แปลง unit_cost กลับเป็นหน่วยสกุลเงินเดิม เช่น USD) ──
+  poItems = (items||[]).map(it => {
+    let unitCost = Number(it.unit_cost || 0);
+    if (poCurrency === 'USD' && poExRate > 0) {
+      unitCost = +(unitCost / poExRate).toFixed(4);
+    }
+    const matchedMaster = productList.find(p => p.id === it.product_id || (p.sku && p.sku === it.product_name));
+    return {
+      product_id: it.product_id || (matchedMaster?.id) || null,
+      product_name: it.product_name || (matchedMaster?.name) || '',
+      sku: (matchedMaster?.sku) || it.product_name || '',
+      qty_ordered: Number(it.qty_ordered) || 1,
+      unit_cost: unitCost
+    };
+  });
   
   openModal('modal-po');
   await loadSupplierDropdown('po-supplier-sel', po.supplier_id);
+  const supSel = document.getElementById('po-supplier-sel');
+  if (supSel && po.supplier_id) {
+    supSel.value = po.supplier_id;
+  }
+  if (supNameInp) supNameInp.value = po.supplier_name || (allSuppliers.find(s=>s.id===po.supplier_id)?.name || '');
+  
+  renderPOItems();
+  calcPOTotal();
 }
 
 async function updatePOStatus(poId, status) {
@@ -32570,7 +32630,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.31', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order (PO) Save & Draft Validation', items:[
+    { v:'2.32', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix PO Draft Edit & Currency Persistence', items:[
+      '💵 <b>ดึงข้อมูลสกุลเงินถูกต้อง:</b> แก้ไขการกดแก้ไขแบบร่าง (Draft PO) ให้โหลดสกุลเงิน (USD/THB), อัตราแลกเปลี่ยน, ข้อมูลผู้ขาย และราคาต่อหน่วยในสกุลเงินเดิมครบถ้วนแม่นยำ',
+      '🛡️ <b>Clean Note:</b> แยกแท็กสกุลเงินออกจากข้อความหมายเหตุ ไม่ให้แสดงซ้ำซ้อนตอนบันทึกร่างใหม่',
+      '🧹 <b>Cache Refresh (v2.32):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.32'
+    ]},
+    { v:'2.31', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order (PO) Save & Draft Validation', items:[
       '🛡️ <b>Clean Validation:</b> แก้ไขการบันทึกแบบร่าง (Draft PO) และส่ง PO ไม่ให้ติดปัญหา "Item code ว่าง"',
       '🏷️ <b>Auto-fill SKU:</b> ดึงรหัสและชื่อสินค้าอัตโนมัติจากฐานข้อมูล ป้องกันข้อผิดพลาดตอนบันทึก',
       '🧹 <b>Cache Refresh (v2.31):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.31'
