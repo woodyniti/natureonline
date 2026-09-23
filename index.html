@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.34';
-const DISPLAY_APP_VERSION = 'v2.34';
+const CURRENT_APP_VERSION = 'sealthai-v2.35';
+const DISPLAY_APP_VERSION = 'v2.35';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.34)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.34 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.35)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.35 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.34)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.34 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.35)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.35 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.34)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.34 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.35)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.35 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.34)">v2.34 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.35)">v2.35 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -17979,10 +17979,10 @@ async function purchase() {
         ${PO_STATUSES.map(s=>'<option value="'+s.key+'">'+s.th+'</option>').join('')}
       </select>
       <select id="po-sort" onchange="loadPOs()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px">
-        <option value="po_no_asc">🔢 เรียงตามเลขที่ PO (1 → 10)</option>
-        <option value="po_no_desc">🔢 เลขที่ PO (มาก → น้อย)</option>
-        <option value="date_desc">📅 วันที่ล่าสุด (ใหม่ → เก่า)</option>
+        <option value="date_desc" selected>📅 วันที่ล่าสุด (ใหม่ → เก่า)</option>
         <option value="date_asc">📅 วันที่ (เก่า → ใหม่)</option>
+        <option value="po_no_asc">🔢 เลขที่ PO (1 → 10)</option>
+        <option value="po_no_desc">🔢 เลขที่ PO (มาก → น้อย)</option>
         <option value="amount_desc">💰 ยอดสั่งซื้อสูงสุด</option>
         <option value="amount_asc">💰 ยอดสั่งซื้อต่ำสุด</option>
       </select>
@@ -18076,7 +18076,7 @@ async function purchase() {
 function clearPOFilter() {
   ['po-from','po-to','po-status','po-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sortEl = document.getElementById('po-sort');
-  if (sortEl) sortEl.value = 'po_no_asc';
+  if (sortEl) sortEl.value = 'date_desc';
   loadPOs();
 }
 
@@ -18085,7 +18085,7 @@ async function loadPOs() {
   const to=document.getElementById('po-to')?.value||'';
   const st=document.getElementById('po-status')?.value||'';
   const search=(document.getElementById('po-search')?.value||'').trim().toLowerCase();
-  const sortMode=document.getElementById('po-sort')?.value||'po_no_asc';
+  const sortMode=document.getElementById('po-sort')?.value||'date_desc';
 
   let q=sb.from('purchase_orders').select('*').eq('shop_id',currentShop.id);
   if(from) q=q.gte('po_date',from);
@@ -19073,7 +19073,7 @@ async function printPO(poId) {
   if (poId && typeof poId === 'string' && !poId.startsWith('PO-')) {
     const [{data:po},{data:items}]=await Promise.all([
       sb.from('purchase_orders').select('*').eq('id',poId).maybeSingle(),
-      sb.from('purchase_order_items').select('*').eq('po_id',poId),
+      sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id', {ascending:true}),
     ]);
     poData = po;
     poItems = items || [];
@@ -19081,7 +19081,7 @@ async function printPO(poId) {
   if (!poData && poId) {
     const {data:po} = await sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).eq('po_no', poId).maybeSingle();
     if (po) {
-      const {data:items} = await sb.from('purchase_order_items').select('*').eq('po_id', po.id);
+      const {data:items} = await sb.from('purchase_order_items').select('*').eq('po_id', po.id).order('id', {ascending:true});
       poData = po;
       poItems = items || [];
     }
@@ -32853,7 +32853,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.34', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Goods Receipt Currency & Exchange Rate Support', items:[
+    { v:'2.35', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
+      '📅 <b>เรียงเอกสาร PO ตามวันที่ล่าสุด:</b> ตั้งค่าเริ่มต้นของตาราง Purchase Orders ให้เรียงตามวันที่ล่าสุด (ใหม่ → เก่า) เสมอ พร้อมแสดงเลขลำดับแถว (#)',
+      '📋 <b>จัดเรียงรายการสินค้าในเอกสาร PO (1-10):</b> รายการสินค้าในใบสั่งซื้อ (ทั้งหน้าสร้าง, แก้ไข, ดูรายละเอียด และพิมพ์ PO) จัดเรียงตามเลขลำดับ 1-10 ชัดเจน',
+      '🧹 <b>Cache Refresh (v2.35):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.35'
+    ]},
+    { v:'2.34', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Goods Receipt Currency & Exchange Rate Support', items:[
       '💱 <b>เพิ่มช่องอัตราแลกเปลี่ยนในหน้ารับสินค้า:</b> รองรับการเลือกสกุลเงิน USD พร้อมระบุอัตราแลกเปลี่ยนเพื่อแปลงต้นทุนเป็นเงินบาทอัตโนมัติ',
       '📦 <b>Auto-detect USD จาก PO:</b> เมื่อโหลดรายการจาก PO ที่เป็น USD ระบบจะดึงอัตราแลกเปลี่ยนและแปลงราคาทุนต่อหน่วย USD ให้อัตโนมัติ',
       '🧹 <b>Cache Refresh (v2.34):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.34'
