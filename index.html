@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.27';
-const DISPLAY_APP_VERSION = 'v2.27';
+const CURRENT_APP_VERSION = 'sealthai-v2.28';
+const DISPLAY_APP_VERSION = 'v2.28';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -18032,191 +18032,342 @@ window.togglePoCurrency = function() {
   calcPOTotal();
 };
 
-function renderPOItems() {
-  const el=document.getElementById('po-items');
-  if(!el) return;
-  el.innerHTML='';
-  poItems.forEach((it,i)=>{
-    const selectedProduct = productList.find(p=>p.id===it.product_id);
-    const card=document.createElement('div');
-    card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px';
-    const r1=document.createElement('div'); r1.style.cssText='display:flex;gap:8px;align-items:start;margin-bottom:10px';
-    const pw=document.createElement('div'); pw.style.cssText='flex:1;min-width:0';
-    const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500'; pl.textContent='SKU';
-    pw.appendChild(pl);
-    const wrap=document.createElement('div'); wrap.style.position='relative';
-    const inp=document.createElement('input'); inp.type='text'; inp.autocomplete='off';
-    inp.placeholder='SKU / Supplier SKU / *ค้นหา*'; inp.value=selectedProduct?.sku||it.product_name||'';
-    inp.style.cssText='width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;box-sizing:border-box';
-    const dd=document.createElement('div'); dd.style.cssText='display:none;position:absolute;top:100%;left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.12)';
-    function srch(q){
-      const ql=q.trim();
-      const res=ql?productList.filter(p=>wcProdMatch(p,ql)):productList.slice(0,30);
-      dd.innerHTML='';
-      if(!res.length){dd.style.display='none';return;}
-      res.forEach(p=>{
-        const d=document.createElement('div');
-        d.style.cssText='padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f0f0f0;display:flex;justify-content:space-between;align-items:center';
+function newPOProdSearch(rowIdx) {
+  const pid = 'po-prod-inp-' + rowIdx;
+  const ddid = 'po-prod-dd-' + rowIdx;
+  const it = poItems[rowIdx];
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const linkedProd = it?.product_id && it.product_id !== '__custom__' ? prods.find(p => p.id === it.product_id) : null;
+  const val = (linkedProd?.name || it?.product_name || '').replace(/"/g, '&quot;');
 
-        const leftDiv = document.createElement('div');
-        leftDiv.style.cssText = 'min-width:0;flex:1';
+  return `
+    <div style="position:relative;flex:2;min-width:140px">
+      <input id="${pid}" type="text" autocomplete="off" value="${val}"
+        placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / Supplier SKU / ขนาด..."
+        style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box"
+        oninput="searchPOProduct(${rowIdx}, this.value)"
+        onfocus="searchPOProduct(${rowIdx}, this.value)"
+        onblur="handlePOProdBlur(${rowIdx}, this.value)">
+      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:900;
+        background:#fff;border:1.5px solid var(--border2);border-radius:8px;max-height:260px;overflow-y:auto;
+        box-shadow:0 8px 24px rgba(0,0,0,0.18)"></div>
+    </div>`;
+}
 
-        const skuSpan = document.createElement('span');
-        skuSpan.textContent = p.sku || p.name;
-        skuSpan.style.fontWeight = '700';
-        skuSpan.style.color = '#0f172a';
-        leftDiv.appendChild(skuSpan);
+let _poSearchTimer = null;
 
-        if (p.name && p.name !== p.sku) {
-          const nameSpan = document.createElement('div');
-          nameSpan.textContent = p.name;
-          nameSpan.style.cssText = 'font-size:11.5px;color:var(--text2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-          leftDiv.appendChild(nameSpan);
-        }
+function searchPOProduct(rowIdx, q) {
+  const ddid = 'po-prod-dd-' + rowIdx;
+  const dd = document.getElementById(ddid);
+  if (!dd) return;
 
-        const subInfo = document.createElement('div');
-        subInfo.style.cssText = 'font-size:11px;color:var(--text3);margin-top:2px';
-        subInfo.innerHTML = `${p.supplier_sku ? '<span style="color:var(--blue)">Supplier SKU: ' + escapeHTML(p.supplier_sku) + '</span> · ' : ''}คงเหลือ: ${fmt(p.stock_qty || 0)} ชิ้น`;
-        leftDiv.appendChild(subInfo);
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const ql = (q || '').trim();
 
-        d.appendChild(leftDiv);
+  function renderRows(results) {
+    if (!results.length) {
+      dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--text3);text-align:center">
+        ${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '"' : 'พิมพ์เพื่อค้นหาสินค้า'}
+      </div>`;
+    } else {
+      dd.innerHTML = results.map(p => {
+        const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+        const stockBadge = stockVal > 0
+          ? `<span style="background:#dcfce7;color:#15803d;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
+          : `<span style="background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
 
-        // แสดงราคาซื้อเข้า (purchase_price) จาก Supplier อย่างชัดเจน ไม่ใช่ราคาทุนเฉลี่ย
-        const priceDiv = document.createElement('div');
-        priceDiv.style.cssText = 'text-align:right;margin-left:8px;flex-shrink:0';
-        const buyP = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
-        priceDiv.innerHTML = `
-          <div style="font-size:11.5px;color:#15803d;font-weight:700">ราคาซื้อเข้า: ${fmtB(buyP)}</div>
-          ${p.current_cost ? `<div style="font-size:10px;color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(p.current_cost)})</div>` : ''}
-        `;
-        d.appendChild(priceDiv);
+        const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
 
-        d.onmouseover=()=>d.style.background='#f0f7ff'; d.onmouseout=()=>d.style.background='';
-        d.onmousedown=e=>{e.preventDefault();
-          window._poAutocompleteClicking = true;
-          // ดึงราคาซื้อเข้า (purchase_price / buy_price) จากฐานข้อมูลสินค้าโดยตรง
-        const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : 0));
-        poItems[i]={product_id:p.id,product_name:p.name,sku:p.sku||'',qty_ordered:poItems[i]?.qty_ordered||1,unit_cost:buyPrice};
-          inp.value=p.sku||p.name; dd.style.display='none'; calcPOTotal(); renderPOItems();
-        };
-        dd.appendChild(d);
-      });
+        const codes = [];
+        if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
+        if (p.supplier_sku || p.supplier_code) codes.push('Supplier SKU: ' + escapeHTML(p.supplier_sku || p.supplier_code));
+        if (p.part_no) codes.push('Part: ' + escapeHTML(p.part_no));
+        codes.push('ราคาซื้อ: ' + fmtB(buyPrice));
+        if (p.current_cost) codes.push('ทุนเฉลี่ย: ' + fmtB(p.current_cost));
+        const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
 
-      // Quick Add Button inside PO dropdown
-      const poQuickAddDiv = document.createElement('div');
-      poQuickAddDiv.style.cssText = 'padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between;transition:background 0.15s';
-      poQuickAddDiv.innerHTML = `<span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span><span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>`;
-      poQuickAddDiv.onmouseover = () => poQuickAddDiv.style.background = '#dcfce7';
-      poQuickAddDiv.onmouseout = () => poQuickAddDiv.style.background = '#f0fdf4';
-      poQuickAddDiv.onmousedown = e => {
-        e.preventDefault();
-        window._poAutocompleteClicking = true;
-        dd.style.display = 'none';
-        openQuickProductModal('po', i, ql);
-      };
-      dd.appendChild(poQuickAddDiv);
-      dd.style.display='block';
+        return `
+          <div onclick="selectNewPOProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
+            style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
+            onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+            <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+              <div style="font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
+              ${codeHtml}
+            </div>
+            ${stockBadge}
+          </div>`;
+      }).join('');
     }
-    inp.oninput=()=>{
-      poItems[i].product_id = null;
-      poItems[i].product_name = inp.value;
-      srch(inp.value);
-    };
-    inp.onfocus=()=>srch(inp.value);
-    inp.onblur=()=>{
-      setTimeout(()=>{
-        dd.style.display='none';
-        if (window._poAutocompleteClicking) {
-          window._poAutocompleteClicking = false;
-          return;
-        }
-        const val = inp.value.trim();
-        if (!val) {
-          poItems[i].product_id = null;
-          renderPOItems();
-          calcPOTotal();
-          return;
-        }
-        const matchedProd = productList.find(x => 
-          (x.name && x.name.toLowerCase() === val.toLowerCase()) || 
-          (x.sku && x.sku.toLowerCase() === val.toLowerCase()) || 
-          (x.supplier_sku && x.supplier_sku.toLowerCase() === val.toLowerCase()) ||
-          (x.part_no && x.part_no.toLowerCase() === val.toLowerCase()) ||
-          wcProdMatch(x, val)
-        );
-        if (matchedProd) {
-          const productChanged = poItems[i].product_id !== matchedProd.id;
-          if (productChanged || !poItems[i].unit_cost) {
-            // ดึงราคาซื้อเข้า (purchase_price / buy_price) จากฐานข้อมูลสินค้าโดยตรง
-            const buyPrice = Number(matchedProd.purchase_price !== undefined && matchedProd.purchase_price !== null && matchedProd.purchase_price !== '' ? matchedProd.purchase_price : (matchedProd.buy_price !== undefined && matchedProd.buy_price !== null ? matchedProd.buy_price : 0));
-            poItems[i].unit_cost = buyPrice;
-          }
-          poItems[i].product_id = matchedProd.id;
-          poItems[i].product_name = matchedProd.name;
-          poItems[i].sku = matchedProd.sku || '';
-          renderPOItems();
-          calcPOTotal();
-        } else {
-          poItems[i].product_id = null;
-          poItems[i].product_name = val;
-          renderPOItems();
-          calcPOTotal();
-        }
-      }, 250);
-    };
-    wrap.appendChild(inp); wrap.appendChild(dd); pw.appendChild(wrap);
 
+    // Quick Add Button inside dropdown
+    const quickAddHtml = `
+      <div onclick="openQuickProductModal('po', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+        style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
+        onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+        <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
+        <span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>
+      </div>`;
+    dd.innerHTML += quickAddHtml;
+    dd.style.display = 'block';
+  }
+
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
+    : prods.slice(0, 30);
+  
+  renderRows(localFiltered);
+
+  // 2. Server-side async fallback search
+  if (ql.length >= 2) {
+    if (_poSearchTimer) clearTimeout(_poSearchTimer);
+    _poSearchTimer = setTimeout(async () => {
+      try {
+        const { data } = await sb.from('products')
+          .select('*')
+          .eq('shop_id', currentShop.id)
+          .eq('active', true)
+          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .limit(40);
+        
+        if (data && data.length) {
+          data.forEach(dp => {
+            if (!productList.some(ep => ep.id === dp.id)) productList.push(dp);
+            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
+          });
+          const updated = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+          renderRows(updated);
+        }
+      } catch(e) {}
+    }, 250);
+  }
+
+  // Close on outside click
+  const close = e => {
+    if (!dd.contains(e.target) && e.target.id !== ('po-prod-inp-' + rowIdx)) {
+      dd.style.display = 'none';
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 100);
+}
+
+function handlePOProdBlur(rowIdx, val) {
+  setTimeout(() => {
+    const dd = document.getElementById('po-prod-dd-' + rowIdx);
+    if (dd) dd.style.display = 'none';
+    const v = (val || '').trim();
+    if (!v) {
+      if (poItems[rowIdx]) {
+        poItems[rowIdx].product_id = null;
+        poItems[rowIdx].product_name = '';
+      }
+    } else {
+      const prods = (productList && productList.length) ? productList : (allProducts || []);
+      const matched = prods.find(x =>
+        (x.name && x.name.toLowerCase() === v.toLowerCase()) ||
+        (x.sku && x.sku.toLowerCase() === v.toLowerCase()) ||
+        (x.supplier_sku && x.supplier_sku.toLowerCase() === v.toLowerCase()) ||
+        (x.part_no && x.part_no.toLowerCase() === v.toLowerCase()) ||
+        wcProdMatch(x, v)
+      );
+      if (matched && poItems[rowIdx]) {
+        const buyPrice = Number(matched.purchase_price !== undefined && matched.purchase_price !== null && matched.purchase_price !== '' ? matched.purchase_price : (matched.buy_price !== undefined && matched.buy_price !== null ? matched.buy_price : (matched.cost_price || 0)));
+        poItems[rowIdx].product_id = matched.id;
+        poItems[rowIdx].product_name = matched.name;
+        poItems[rowIdx].sku = matched.sku || '';
+        if (!poItems[rowIdx].unit_cost) poItems[rowIdx].unit_cost = buyPrice;
+      } else if (poItems[rowIdx]) {
+        poItems[rowIdx].product_name = v;
+        if (!poItems[rowIdx].product_id) poItems[rowIdx].product_id = '__custom__';
+      }
+    }
+    renderPOItems();
+    calcPOTotal();
+  }, 250);
+}
+
+function selectNewPOProductById(rowIdx, productId) {
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === productId);
+  if (!p || !poItems[rowIdx]) return;
+
+  const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+
+  poItems[rowIdx] = {
+    product_id: p.id,
+    product_name: p.name,
+    sku: p.sku || '',
+    qty_ordered: poItems[rowIdx]?.qty_ordered || 1,
+    unit_cost: buyPrice
+  };
+
+  const dd = document.getElementById('po-prod-dd-' + rowIdx);
+  if (dd) dd.style.display = 'none';
+
+  renderPOItems();
+  calcPOTotal();
+}
+
+function renderPOItems() {
+  const el = document.getElementById('po-items');
+  if (!el) return;
+  if (!poItems.length) {
+    el.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:13px;text-align:center">กด "+ เพิ่มรายการสินค้า" เพื่อเพิ่มรายการสั่งซื้อ</div>';
+    calcPOTotal();
+    return;
+  }
+
+  el.innerHTML = '';
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+
+  poItems.forEach((it, i) => {
+    const selectedProduct = it.product_id && it.product_id !== '__custom__' 
+      ? prods.find(p => p.id === it.product_id) 
+      : null;
+    const stockVal = selectedProduct 
+      ? Number(selectedProduct.stock_inhouse !== undefined && selectedProduct.stock_inhouse !== null ? selectedProduct.stock_inhouse : (selectedProduct.stock_qty || 0)) 
+      : null;
+
+    const card = document.createElement('div');
+    card.style.cssText = 'background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;position:relative';
+
+    // ── Row 1: Product Search + Delete Button ──
+    const r1 = document.createElement('div');
+    r1.style.cssText = 'display:flex;gap:8px;align-items:start;margin-bottom:10px';
+
+    const pw = document.createElement('div');
+    pw.style.cssText = 'display:flex;flex-direction:column;flex:1;min-width:0';
+
+    const prodLabel = document.createElement('div');
+    prodLabel.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:3px';
+    prodLabel.innerHTML = '<span style="font-size:11px;color:var(--text);font-weight:700">📦 1. สินค้าในคลัง (สำหรับรับเข้าคลังจริง):</span>';
+    pw.appendChild(prodLabel);
+
+    if (it.product_id === '__custom__') {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.value = it.product_name || ''; inp.placeholder = 'ชื่อสินค้า / รายละเอียดสั่งซื้อ';
+      inp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box';
+      inp.oninput = () => poItems[i].product_name = inp.value;
+      pw.appendChild(inp);
+    } else {
+      const searchBox = document.createElement('div');
+      searchBox.innerHTML = newPOProdSearch(i);
+      pw.appendChild(searchBox.firstElementChild);
+    }
+
+    // Status / Stock / Supplier SKU Badge
     const statusHelp = document.createElement('div');
-    statusHelp.style.cssText = 'font-size:11px;margin-top:3px;font-weight:500';
-    if (it.product_id) {
-      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : 0));
+    statusHelp.style.cssText = 'font-size:11.5px;margin-top:4px;margin-bottom:6px;font-weight:500;display:flex;align-items:center;flex-wrap:wrap;gap:6px';
+    if (it.product_id && it.product_id !== '__custom__') {
+      const stockBadge = stockVal !== null
+        ? (stockVal > 0 
+            ? `<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:4px">📦 คงเหลือ: <b>${fmt(stockVal)}</b> ชิ้น</span>` 
+            : `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:4px">⚠️ สต๊อกหมด (0)</span>`)
+        : '';
+      
+      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : (selectedProduct?.cost_price || 0)));
       const avgCost = Number(selectedProduct?.current_cost || 0);
-      statusHelp.innerHTML = `<span style="color:#0f172a;font-weight:600">${escapeHTML(selectedProduct?.name||it.product_name)}</span> · <span style="color:var(--blue)">Supplier SKU: ${escapeHTML(selectedProduct?.supplier_sku||'-')}</span> · <span style="color:#15803d;font-weight:700">ราคาซื้อเข้า: ${fmtB(buyPrice)}</span> ${avgCost ? `<span style="color:#94a3b8">(ทุนเฉลี่ย: ${fmtB(avgCost)})</span>` : ''} <span style="color:#10b981">· ✓ เชื่อมโยงคลังสินค้า</span>`;
+
+      statusHelp.innerHTML = `
+        <span style="color:#10b981;font-weight:600">✓ เชื่อมโยงคลัง</span> 
+        ${stockBadge}
+        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600">🏷️ ราคาซื้อเข้า: ฿${fmtB(buyPrice)}</span>
+        ${avgCost ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:12px;border:1px solid #bfdbfe;font-size:11px">ทุนเฉลี่ย: ฿${fmtB(avgCost)}</span>` : ''}
+        ${selectedProduct?.supplier_sku ? `<span style="color:var(--blue);font-size:11px">Supplier SKU: <b>${escapeHTML(selectedProduct.supplier_sku)}</b></span>` : ''}
+      `;
     } else {
       statusHelp.innerHTML = '<span style="color:#f59e0b">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
     }
     pw.appendChild(statusHelp);
+
     if (selectedProduct) {
       const copyWrap = document.createElement('div');
-      copyWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;margin-top:7px';
+      copyWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px';
       copyWrap.innerHTML = poCopyButton(selectedProduct.sku, 'SKU') + poCopyButton(selectedProduct.supplier_sku, 'Supplier SKU');
       if (copyWrap.innerHTML) pw.appendChild(copyWrap);
     }
 
-    const del=document.createElement('button'); del.textContent='✕';
-    del.style.cssText='background:rgba(220,38,38,.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;margin-top:18px;flex-shrink:0';
-    del.onclick=()=>{poItems.splice(i,1);renderPOItems();calcPOTotal();};
-    r1.appendChild(pw); r1.appendChild(del); card.appendChild(r1);
-    // Row 2: qty / unit_cost / total
-    const r2=document.createElement('div'); r2.style.cssText='display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end';
-    function nf(val,label,onch){
-      const w=document.createElement('div');
-      const l=document.createElement('div'); l.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500'; l.textContent=label;
-      const n=document.createElement('input'); n.type='number'; n.value=val; n.min='0'; n.step='any';
-      n.style.cssText='width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
-      n.oninput=()=>{onch(+n.value);calcPOTotal();}; w.appendChild(l); w.appendChild(n); return w;
-    }
-    const cur = document.getElementById('po-currency')?.value || 'THB';
-    const rate = Number(document.getElementById('po-exrate')?.value || 35);
-    r2.appendChild(nf(it.qty_ordered||1,'จำนวน',v=>poItems[i].qty_ordered=v));
-    r2.appendChild(nf(it.unit_cost||0, cur === 'USD' ? 'ราคา/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น',v=>poItems[i].unit_cost=v));
-    const tw=document.createElement('div'); tw.style.cssText='text-align:right;padding-bottom:8px';
-    const tl=document.createElement('div'); tl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px'; tl.textContent='รวมรายการ';
-    const tv=document.createElement('div'); tv.className='font-mono text-amber'; tv.style.cssText='font-size:14px;font-weight:700';
-    tv.id='po-item-total-'+i;
+    // Custom Document Display Text
+    const customNameWrap = document.createElement('div');
+    customNameWrap.style.cssText = 'margin-top:2px;display:flex;flex-direction:column;gap:2px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:6px 8px';
+    const customNameLabel = document.createElement('div');
+    customNameLabel.style.cssText = 'font-size:11px;color:#15803d;font-weight:700;display:flex;justify-content:space-between;align-items:center';
+    customNameLabel.innerHTML = '<span>🏷️ 2. ข้อความพิมพ์ในเอกสาร PO / สเปกส่ง Supplier (เว้นว่างได้):</span><span style="font-size:9.5px;color:#16a34a;font-weight:normal">เฉพาะข้อความบนเอกสาร</span>';
     
-    const rowTotal = Number(it.qty_ordered??1)*Number(it.unit_cost||0);
+    const customNameInp = document.createElement('input');
+    customNameInp.type = 'text';
+    customNameInp.value = it.product_name || '';
+    customNameInp.placeholder = 'เว้นว่างไว้จะใช้ชื่อคลัง | หรือพิมพ์ข้อความสเปกเฉพาะเพื่อส่งให้ Supplier';
+    customNameInp.style.cssText = 'width:100%;background:#ffffff;border:1px solid #86efac;border-radius:5px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box';
+    customNameInp.oninput = () => {
+      poItems[i].product_name = customNameInp.value;
+    };
+    customNameWrap.appendChild(customNameLabel);
+    customNameWrap.appendChild(customNameInp);
+    pw.appendChild(customNameWrap);
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '✕';
+    delBtn.style.cssText = 'background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;flex-shrink:0;margin-top:18px';
+    delBtn.onclick = () => { poItems.splice(i, 1); renderPOItems(); calcPOTotal(); };
+
+    r1.appendChild(pw);
+    r1.appendChild(delBtn);
+    card.appendChild(r1);
+
+    // ── Row 2: Qty | Unit Cost | Line Total ──
+    const r2 = document.createElement('div');
+    r2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end';
+
+    function nf(val, labelTxt, onch) {
+      const w = document.createElement('div');
+      const l = document.createElement('div');
+      l.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500';
+      l.textContent = labelTxt;
+      const n = document.createElement('input');
+      n.type = 'number'; n.value = val; n.min = '0'; n.step = 'any';
+      n.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
+      n.oninput = () => { onch(+n.value); calcPOTotal(); };
+      w.appendChild(l); w.appendChild(n);
+      return w;
+    }
+
+    r2.appendChild(nf(it.qty_ordered || 1, 'จำนวนสั่งซื้อ', v => poItems[i].qty_ordered = v));
+    r2.appendChild(nf(it.unit_cost || 0, cur === 'USD' ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น (บาท)', v => poItems[i].unit_cost = v));
+
+    const tw = document.createElement('div');
+    tw.style.cssText = 'text-align:right;padding-bottom:8px';
+    const tl = document.createElement('div');
+    tl.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px';
+    tl.textContent = 'รวมราคาซื้อ';
+    const tv = document.createElement('div');
+    tv.className = 'font-mono text-amber';
+    tv.style.cssText = 'font-size:15px;font-weight:700';
+    tv.id = 'po-item-total-' + i;
+    
+    const rowTotal = Number(it.qty_ordered ?? 1) * Number(it.unit_cost || 0);
     if (cur === 'USD') {
       tv.innerHTML = `$${rowTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3)">≈ ${fmtB(rowTotal * rate)}</div>`;
     } else {
-      tv.textContent=fmtB(rowTotal);
+      tv.textContent = fmtB(rowTotal);
     }
-    tw.appendChild(tl); tw.appendChild(tv); r2.appendChild(tw);
-    card.appendChild(r2); el.appendChild(card);
+    tw.appendChild(tl);
+    tw.appendChild(tv);
+    r2.appendChild(tw);
+
+    card.appendChild(r2);
+    el.appendChild(card);
   });
-  const ab=document.createElement('button'); ab.textContent='+ เพิ่ม SKU';
-  ab.style.cssText='width:100%;background:#f0f9f5;border:1px solid var(--accent);border-radius:8px;padding:10px;color:var(--accent);cursor:pointer;font-size:14px;font-weight:600;margin-top:4px';
-  ab.onclick=addPOItem; el.appendChild(ab);
+
+  const ab = document.createElement('button');
+  ab.type = 'button';
+  ab.innerHTML = '+ เพิ่มรายการสินค้า (SKU)';
+  ab.style.cssText = 'width:100%;background:#f0fdf4;border:1px dashed #16a34a;border-radius:8px;padding:10px;color:#15803d;cursor:pointer;font-size:14px;font-weight:700;margin-top:4px';
+  ab.onclick = addPOItem;
+  el.appendChild(ab);
 }
 
 function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:0});renderPOItems();}
@@ -23450,8 +23601,11 @@ async function openBatchSOtoPOModal() {
             <input type="checkbox" id="bpo-group-toggle" ${_batchPOGroupBySKU?'checked':''} onchange="toggleBatchPOGrouping(this.checked)"> 🔄 รวมจำนวนตามรหัส SKU / สินค้าเดียวกัน
           </label>
         </div>
-        <div style="font-size:12px;color:var(--text3)">
-          เลือกแล้ว <b id="bpo-selected-count" style="color:var(--accent)">0</b> รายการ
+        <div style="display:flex;align-items:center;gap:10px">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openAddProductToBatchPOModal()" style="font-size:12px;padding:4px 10px;background:#fff;border-color:var(--border2);color:#15803d;font-weight:700;display:inline-flex;align-items:center;gap:4px">➕ เพิ่มสินค้า / SKU ใน PO นี้</button>
+          <div style="font-size:12px;color:var(--text3)">
+            เลือกแล้ว <b id="bpo-selected-count" style="color:var(--accent)">0</b> รายการ
+          </div>
         </div>
       </div>
 
@@ -23625,6 +23779,117 @@ function renderBatchPOItemsTable() {
   }).join('');
 
   calcBatchPOTotals();
+}
+
+function openAddProductToBatchPOModal() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '500';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:550px">
+      <div class="modal-title">➕ เพิ่มสินค้า / SKU ในใบสั่งซื้อ (PO)</div>
+      <div class="form-group">
+        <label>ค้นหาสินค้าในคลัง <span style="color:var(--red)">*</span></label>
+        <div style="position:relative">
+          <input type="text" id="bpo-add-search" placeholder="🔍 พิมพ์ชื่อ / SKU / Supplier SKU / ขนาด..."
+            style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px"
+            oninput="searchBatchPOAddProd(this.value)">
+          <div id="bpo-add-dd" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.15)"></div>
+        </div>
+      </div>
+      <div id="bpo-add-selected-info" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:12px">
+        <div style="font-weight:700;color:#166534" id="bpo-add-pname">-</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px" id="bpo-add-pmeta">-</div>
+      </div>
+      <input type="hidden" id="bpo-add-pid">
+      <input type="hidden" id="bpo-add-psku">
+      <div class="grid-2">
+        <div class="form-group"><label>จำนวนสั่งซื้อ (ชิ้น)</label>
+          <input type="number" id="bpo-add-qty" value="1" min="1" step="1" style="font-weight:700">
+        </div>
+        <div class="form-group"><label>ราคาซื้อ/หน่วย (บาท)</label>
+          <input type="number" id="bpo-add-cost" value="0" min="0" step="0.01" style="font-weight:700">
+        </div>
+      </div>
+      <div class="modal-footer" style="margin-top:14px">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="confirmAddProductToBatchPO()">➕ เพิ่มลงใน PO</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+function searchBatchPOAddProd(q) {
+  const dd = document.getElementById('bpo-add-dd');
+  if (!dd) return;
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const ql = (q || '').trim();
+  const res = ql ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 30) : prods.slice(0, 20);
+  
+  if (!res.length) {
+    dd.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3);text-align:center">ไม่พบสินค้า</div>';
+    dd.style.display = 'block';
+    return;
+  }
+
+  dd.innerHTML = res.map(p => {
+    const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+    return `
+      <div onclick="selectBatchPOAddProd('${p.id}')" style="padding:8px 10px;border-bottom:1px solid #f1f5f9;cursor:pointer;font-size:12px" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+        <div style="font-weight:700;color:#0f172a">${escapeHTML(p.name)}</div>
+        <div style="font-size:11px;color:var(--text3)">SKU: ${escapeHTML(p.sku||'-')} · ราคาซื้อ: ฿${fmtB(buyPrice)} · คงเหลือ: ${fmt(p.stock_qty||0)}</div>
+      </div>
+    `;
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function selectBatchPOAddProd(pid) {
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === pid);
+  if (!p) return;
+
+  const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+
+  document.getElementById('bpo-add-pid').value = p.id;
+  document.getElementById('bpo-add-psku').value = p.sku || '';
+  document.getElementById('bpo-add-pname').textContent = p.name;
+  document.getElementById('bpo-add-pmeta').textContent = `SKU: ${p.sku || '-'} | คงเหลือในคลัง: ${fmt(p.stock_qty || 0)} ชิ้น`;
+  document.getElementById('bpo-add-cost').value = buyPrice;
+  document.getElementById('bpo-add-selected-info').style.display = 'block';
+  document.getElementById('bpo-add-dd').style.display = 'none';
+  document.getElementById('bpo-add-search').value = p.name;
+}
+
+function confirmAddProductToBatchPO() {
+  const pid = document.getElementById('bpo-add-pid')?.value;
+  const pname = document.getElementById('bpo-add-search')?.value.trim();
+  const sku = document.getElementById('bpo-add-psku')?.value || '';
+  const qty = Number(document.getElementById('bpo-add-qty')?.value || 1);
+  const cost = Number(document.getElementById('bpo-add-cost')?.value || 0);
+
+  if (!pname) { toast('กรุณาระบุสินค้า', 'error'); return; }
+
+  _batchPOItems.push({
+    id: 'bpoi_' + Math.random().toString(36).slice(2, 9),
+    order_id: null,
+    order_no: 'เพิ่มพิเศษ (Manual)',
+    order_date: today(),
+    customer_name: 'สั่งเพิ่มใน PO',
+    product_id: pid || null,
+    product_name: pname,
+    sku: sku,
+    qty_sold: 0,
+    qty_po: Math.max(1, qty),
+    unit_cost: cost,
+    selected: true
+  });
+
+  document.querySelectorAll('.modal-overlay[style*="z-index: 500"], .modal-overlay[style*="z-index:500"]').forEach(m => m.remove());
+  toast(`เพิ่ม "${pname}" ลงในรายการ PO เรียบร้อย ✓`, 'success');
+  renderBatchPOItemsTable();
 }
 
 function onToggleBatchPOItem(key, checked) {
