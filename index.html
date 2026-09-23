@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.26';
-const DISPLAY_APP_VERSION = 'v2.26';
+const CURRENT_APP_VERSION = 'sealthai-v2.27';
+const DISPLAY_APP_VERSION = 'v2.27';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -22837,10 +22837,10 @@ async function openARDetail(arId) {
         <button class="btn btn-primary" style="width:100%" onclick="saveARPayment('${arId}', ${ar.total_amount})">✅ บันทึกรับเงิน</button>
       </div>` : (!isCancelled ? '<div style="background:#e8fdf0;border-radius:10px;padding:12px;text-align:center;color:var(--green);font-weight:600">✅ ชำระครบแล้ว</div>' : '')}
 
-      <div class="modal-footer">
+      <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
-        ${!isCancelled && sourceOrder ? `<button class="btn btn-danger" style="background:#fff1f2;color:#be123c;border-color:#fecdd3" onclick="openReturnFromOrder('${sourceOrder.id}', '${arId}')">🧾 รับคืนสินค้า (CN)</button>` : ''}
-        ${!isCancelled && !sourceOrder ? `<button class="btn btn-danger" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">🧾 ออกใบลดหนี้ (CN) / ยกเลิก</button>` : ''}
+        ${!isCancelled ? `<button class="btn btn-danger" style="background:#fff1f2;color:#be123c;border-color:#fecdd3" onclick="openReturnFromAR('${arId}')">🧾 รับคืนสินค้า (CN)</button>` : ''}
+        ${!isCancelled && !sourceOrder ? `<button class="btn btn-secondary" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">ใบลดหนี้ / ยกเลิกบิล</button>` : ''}
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -22933,7 +22933,10 @@ async function cancelARInvoice(arId) {
 // ══════════════════════════════════════════════════════════
 async function goodsreturn() {
   document.getElementById('topbar-actions').innerHTML =
-    '<button class="btn btn-primary btn-sm" onclick="openNewGR()">+ บันทึกรับคืน</button>';
+    '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<button class="btn btn-secondary btn-sm" onclick="openARPickerForReturn()">📥 ดึงข้อมูลจาก AR Invoice</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="openNewGR()">+ บันทึกรับคืน</button>' +
+    '</div>';
 
   setContent(`
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
@@ -22998,6 +23001,10 @@ function openNewGR() {
   modal.innerHTML = `
     <div class="modal" style="max-width:640px">
       <div class="modal-title">🔄 บันทึกรับคืนสินค้า</div>
+      <div style="background:#eef6ff;border:1px dashed #60a5fa;border-radius:8px;padding:10px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <div style="font-size:12px;color:#1e40af">💡 ต้องการรับคืนจาก <b>AR Invoice</b> หรือ <b>Sales Order</b> เดิม?</div>
+        <button type="button" class="btn btn-secondary btn-sm" style="font-size:12px;padding:4px 10px;background:#fff;border-color:#93c5fd;color:#1d4ed8" onclick="this.closest('.modal-overlay').remove();openARPickerForReturn()">📥 ดึงจาก AR Invoice</button>
+      </div>
       <div class="grid-2">
         <div class="form-group"><label>เลขที่</label>
           <input type="text" id="gri-no" value="GR-${today().replace(/-/g,'')}-${String(Date.now()).slice(-4)}">
@@ -28635,6 +28642,365 @@ async function saveEditARPayment(payId, arId) {
   toast('แก้ไขวันที่รับเงินเรียบร้อย ✓', 'success');
   openARDetail(arId);
   loadAR();
+}
+
+// ── AR Invoice Picker for Returns (Credit Note) ──────────────────────
+let _cachedARListForReturn = [];
+
+async function openARPickerForReturn() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '350';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:800px;width:95vw">
+      <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
+        <span>📥 เลือก AR Invoice สำหรับรับคืนสินค้า / ออกใบลดหนี้ (CN)</span>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕ ปิด</button>
+      </div>
+      <div style="margin-bottom:12px">
+        <input type="text" id="ar-return-picker-search" placeholder="🔍 ค้นหาเลขที่ Invoice (AR), เลขที่ Order (SO), หรือชื่อลูกค้า..." 
+          oninput="filterARListForReturn()" 
+          style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px">
+      </div>
+      <div id="ar-return-picker-list" style="max-height:60vh;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+        <div style="padding:24px;text-align:center;color:var(--text3)"><div class="spinner"></div><div style="margin-top:8px">กำลังโหลดรายการ AR Invoice...</div></div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+
+  try {
+    const { data: arList, error } = await sb.from('ar_invoices')
+      .select('*, orders(id, order_no, total_amount, doc_status)')
+      .eq('shop_id', currentShop.id)
+      .neq('status', 'cancelled')
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+    _cachedARListForReturn = arList || [];
+    renderARPickerList(_cachedARListForReturn);
+  } catch (err) {
+    console.error(err);
+    const container = document.getElementById('ar-return-picker-list');
+    if (container) container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--red)">เกิดข้อผิดพลาดในการโหลดข้อมูล: ${escapeHTML(err.message)}</div>`;
+  }
+}
+
+function filterARListForReturn() {
+  const q = (document.getElementById('ar-return-picker-search')?.value || '').toLowerCase().trim();
+  if (!q) {
+    renderARPickerList(_cachedARListForReturn);
+    return;
+  }
+  const filtered = _cachedARListForReturn.filter(ar => {
+    const arNo = (ar.ar_no || '').toLowerCase();
+    const cust = (ar.customer_name || '').toLowerCase();
+    const soNo = (ar.orders?.order_no || '').toLowerCase();
+    return arNo.includes(q) || cust.includes(q) || soNo.includes(q);
+  });
+  renderARPickerList(filtered);
+}
+
+function renderARPickerList(list) {
+  const container = document.getElementById('ar-return-picker-list');
+  if (!container) return;
+  if (!list.length) {
+    container.innerHTML = '<div style="padding:30px;text-align:center;color:var(--text3)">ไม่พบรายการ AR Invoice ที่ตรงกับคำค้นหา</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:var(--bg3);border-bottom:1px solid var(--border);text-align:left">
+          <th style="padding:10px 12px">เลขที่ AR</th>
+          <th style="padding:10px 12px">วันที่ / กำหนด</th>
+          <th style="padding:10px 12px">ลูกค้า</th>
+          <th style="padding:10px 12px">Sales Order</th>
+          <th style="padding:10px 12px;text-align:right">ยอดรวม</th>
+          <th style="padding:10px 12px;text-align:right">ค้างรับ</th>
+          <th style="padding:10px 12px;text-align:center">ดำเนินการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.map(ar => {
+          const remain = Math.max(0, Number(ar.total_amount || 0) - Number(ar.paid_amount || 0));
+          return `
+            <tr style="border-bottom:1px solid var(--border);transition:background 0.15s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+              <td style="padding:10px 12px" class="font-mono font-bold text-blue">${escapeHTML(ar.ar_no || '-')}</td>
+              <td style="padding:10px 12px;color:var(--text2);font-size:12px">${escapeHTML(ar.ar_date || '-')}</td>
+              <td style="padding:10px 12px;font-weight:500">${escapeHTML(ar.customer_name || '-')}</td>
+              <td style="padding:10px 12px">
+                ${ar.orders?.order_no ? `<span class="badge badge-blue font-mono" style="font-size:11px">${escapeHTML(ar.orders.order_no)}</span>` : '<span style="color:var(--text3);font-size:11px">- ไม่ระบุ SO -</span>'}
+              </td>
+              <td style="padding:10px 12px;text-align:right" class="font-mono font-bold">${fmtB(ar.total_amount)}</td>
+              <td style="padding:10px 12px;text-align:right" class="font-mono ${remain > 0 ? 'text-red' : 'text-green'}">${fmtB(remain)}</td>
+              <td style="padding:10px 12px;text-align:center">
+                <button class="btn btn-danger btn-sm" style="font-size:12px;padding:4px 10px" onclick="document.querySelectorAll('.modal-overlay').forEach(m=>m.remove());openReturnFromAR('${ar.id}')">🧾 รับคืนสินค้า (CN)</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── Open Return Directly from AR Invoice ─────────────────────────────
+async function openReturnFromAR(arId) {
+  if (!arId) return;
+  const { data: ar, error } = await sb.from('ar_invoices')
+    .select('*, orders(*, order_items(*))')
+    .eq('id', arId)
+    .single();
+
+  if (error || !ar) {
+    toast('ไม่สามารถโหลดข้อมูล AR Invoice ได้', 'error');
+    return;
+  }
+
+  // If linked to an order with items, open the order return dialog with AR linked
+  if (ar.order_id && ar.orders && ar.orders.order_items?.length) {
+    return openReturnFromOrder(ar.order_id, ar.id);
+  }
+
+  // Standalone AR Invoice (no order items)
+  const defaultCnNo = 'CN-' + today().replace(/-/g, '') + '-' + String(Date.now()).slice(-4);
+  const remain = Math.max(0, Number(ar.total_amount || 0) - Number(ar.paid_amount || 0));
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '400';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:700px">
+      <div class="modal-title">🧾 รับคืนสินค้า / ออกใบลดหนี้ (CN) จาก AR Invoice</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--bg3);padding:10px;border-radius:8px">
+        <div>อ้างอิง AR: <b class="font-mono text-blue">${escapeHTML(ar.ar_no || '-')}</b></div>
+        <div>ลูกค้า: <b>${escapeHTML(ar.customer_name || '-')}</b></div>
+        <div>ยอดรวม Invoice: <b class="font-mono">${fmtB(ar.total_amount)}</b></div>
+        <div>ยอดค้างชำระ: <b class="font-mono ${remain > 0 ? 'text-red' : 'text-green'}">${fmtB(remain)}</b></div>
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group"><label>เลขที่ CN (Goods Return)</label>
+          <input type="text" id="ar-cn-no" class="font-mono" value="${defaultCnNo}">
+        </div>
+        <div class="form-group"><label>วันที่รับคืน</label><input type="date" id="ar-cn-date" value="${today()}"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>สาเหตุ</label>
+          <input type="text" id="ar-cn-reason" placeholder="สินค้าชำรุด / ผิดสเปก / ลูกค้าขอยกเลิก">
+        </div>
+        <div class="form-group"><label>อ้างอิงเอกสารเพิ่มเติม (ถ้ามี)</label>
+          <input type="text" id="ar-cn-ref" placeholder="เช่น หมายเลขใบลดหนี้ลูกค้า / Ref อื่นๆ">
+        </div>
+      </div>
+
+      <div style="font-weight:600;font-size:13px;margin:16px 0 8px">รายการสินค้าที่รับคืน (ดึงเข้าสต๊อกและลดยอดหนี้)</div>
+      <div id="ar-return-items-wrap"></div>
+      <button type="button" onclick="addARReturnRow()" style="background:#fff;border:1px dashed var(--accent);border-radius:6px;padding:6px 12px;color:var(--accent);cursor:pointer;font-size:12px;width:100%;margin-bottom:12px">+ เพิ่มรายการสินค้าที่รับคืน</button>
+
+      <div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:8px;padding:10px;font-size:12px;margin-top:12px">
+        ⚠️ <b>ผลกระทบ:</b> การรับคืนจะดึงสินค้ากลับเข้าคลังสต๊อก และ<b>ลดยอดหนี้คงค้าง</b>ใน AR Invoice นี้ทันที (หากชำระเกินจะบันทึกคืนเงินส่วนเกิน)
+      </div>
+
+      <div class="modal-footer" style="margin-top:16px">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-danger" onclick="processARDirectReturn('${arId}', event)">💾 ยืนยันการรับคืน / อัปเดต AR Invoice</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  addARReturnRow();
+}
+
+let _arReturnRowIdx = 0;
+function addARReturnRow() {
+  const container = document.getElementById('ar-return-items-wrap');
+  if (!container) return;
+  const idx = _arReturnRowIdx++;
+  const pOpts = (typeof allProducts !== 'undefined' ? allProducts : []).map(p => `<option value="${p.id}" data-name="${escapeHTML(p.name)}" data-price="${p.sell_price || 0}" data-cost="${p.cost_price || p.current_cost || 0}">${escapeHTML(p.name)} (${fmtB(p.sell_price || 0)})</option>`).join('');
+
+  const row = document.createElement('div');
+  row.id = 'ar-ret-row-' + idx;
+  row.style.cssText = 'display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px;align-items:end;margin-bottom:8px';
+  row.innerHTML = `
+    <div>
+      <label style="font-size:11px;color:var(--text3)">สินค้า</label>
+      <select id="ar-ret-prod-${idx}" onchange="setARReturnProdData(${idx})" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px">
+        <option value="">-- เลือกสินค้า --</option>
+        ${pOpts}
+      </select>
+    </div>
+    <div>
+      <label style="font-size:11px;color:var(--text3)">จำนวนที่คืน</label>
+      <input type="number" id="ar-ret-qty-${idx}" placeholder="จำนวน" min="0.001" step="any" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px;text-align:right">
+    </div>
+    <div>
+      <label style="font-size:11px;color:var(--text3)">ราคาคืน/หน่วย</label>
+      <input type="number" id="ar-ret-price-${idx}" placeholder="ราคา" min="0" step="any" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px;text-align:right">
+    </div>
+    <div style="padding-bottom:6px">
+      <button type="button" onclick="document.getElementById('ar-ret-row-${idx}').remove()" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:18px;padding:0 4px">✕</button>
+    </div>
+    <input type="hidden" id="ar-ret-cost-${idx}" value="0">
+    <input type="hidden" id="ar-ret-pname-${idx}" value="">
+  `;
+  container.appendChild(row);
+}
+
+function setARReturnProdData(idx) {
+  const sel = document.getElementById('ar-ret-prod-' + idx);
+  const priceEl = document.getElementById('ar-ret-price-' + idx);
+  const costEl = document.getElementById('ar-ret-cost-' + idx);
+  const nameEl = document.getElementById('ar-ret-pname-' + idx);
+  if (sel && priceEl) {
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value) {
+      priceEl.value = opt.dataset.price || '0';
+      if (costEl) costEl.value = opt.dataset.cost || '0';
+      if (nameEl) nameEl.value = opt.dataset.name || opt.text;
+    }
+  }
+}
+
+async function processARDirectReturn(arId, event) {
+  const cnNo = document.getElementById('ar-cn-no')?.value.trim();
+  const cnDate = document.getElementById('ar-cn-date')?.value || today();
+  const reason = document.getElementById('ar-cn-reason')?.value.trim() || 'รับคืนสินค้าจาก AR Invoice';
+  const ref = document.getElementById('ar-cn-ref')?.value.trim() || '';
+  const finalReason = ref ? `${reason} (อ้างอิง: ${ref})` : reason;
+
+  if (!cnNo) { toast('กรุณาระบุเลขที่ CN', 'error'); return; }
+
+  const returnItems = [];
+  let totalReturnAmt = 0;
+
+  for (let i = 0; i < _arReturnRowIdx; i++) {
+    const row = document.getElementById('ar-ret-row-' + i);
+    if (!row) continue;
+    const prodId = document.getElementById('ar-ret-prod-' + i)?.value;
+    const prodName = document.getElementById('ar-ret-pname-' + i)?.value || 'สินค้า';
+    const qty = Number(document.getElementById('ar-ret-qty-' + i)?.value || 0);
+    const price = Number(document.getElementById('ar-ret-price-' + i)?.value || 0);
+    const cost = Number(document.getElementById('ar-ret-cost-' + i)?.value || 0);
+
+    if (!prodId || qty <= 0) continue;
+
+    returnItems.push({
+      product_id: prodId,
+      product_name: prodName,
+      qty,
+      unit_price: price,
+      cost_per_unit: cost,
+      amount: qty * price
+    });
+    totalReturnAmt += (qty * price);
+  }
+
+  if (returnItems.length === 0) {
+    toast('กรุณาเลือกสินค้าและระบุจำนวนที่ต้องการคืนอย่างน้อย 1 รายการ', 'error');
+    return;
+  }
+
+  if (!confirm(`ยืนยันการรับคืนสินค้าจาก AR Invoice?\nยอดรวมที่ลดลง: ${fmtB(totalReturnAmt)} บาท`)) return;
+
+  const btn = event.currentTarget;
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ กำลังประมวลผล...';
+
+  try {
+    const { data: ar, error: arErr } = await sb.from('ar_invoices').select('*').eq('id', arId).single();
+    if (arErr || !ar) throw new Error('โหลดข้อมูล AR Invoice ไม่สำเร็จ');
+
+    // 1. Insert goods_returns
+    const grPayload = {
+      shop_id: currentShop.id,
+      gr_no: cnNo,
+      gr_date: cnDate,
+      return_type: 'sale',
+      reason: finalReason + ` [Ref AR: ${ar.ar_no}]`,
+      total_amount: totalReturnAmt,
+      status: 'done',
+      customer_name: ar.customer_name
+    };
+    const { data: gr, error: grErr } = await sb.from('goods_returns').insert(grPayload).select().single();
+    if (grErr) throw new Error('บันทึก Goods Return ไม่สำเร็จ: ' + grErr.message);
+
+    // 2. Insert goods_return_items
+    const grItemsPayload = returnItems.map(it => ({
+      gr_id: gr.id,
+      product_id: it.product_id,
+      product_name: it.product_name,
+      qty: it.qty,
+      unit_price: it.unit_price,
+      amount: it.amount
+    }));
+    await sb.from('goods_return_items').insert(grItemsPayload);
+
+    // 3. Stock Movement In
+    const stockPayload = returnItems.map(it => ({
+      shop_id: currentShop.id,
+      product_id: it.product_id,
+      lot_name: cnNo + ' (คืนจาก ' + ar.ar_no + ')',
+      move_type: 'in',
+      qty: it.qty,
+      cost_per_unit: it.cost_per_unit,
+      other_cost: 0,
+      move_date: cnDate
+    }));
+    if (stockPayload.length > 0) {
+      await sb.from('stock_movements').insert(stockPayload);
+      await recalcStockQty(returnItems.map(it => it.product_id));
+    }
+
+    // 4. Update AR Invoice total and status
+    const newArTotal = Math.max(0, Number(ar.total_amount || 0) - totalReturnAmt);
+    let arStatus = ar.status;
+    if (newArTotal <= 0) arStatus = 'cancelled';
+    else if (Number(ar.paid_amount || 0) >= newArTotal) arStatus = 'paid';
+
+    const arNote = `[CN: ${cnNo}] ${reason}
+` + (ar.note || '');
+    await sb.from('ar_invoices').update({
+      total_amount: newArTotal,
+      status: arStatus,
+      note: arNote
+    }).eq('id', ar.id);
+
+    // Handle refund if paid > new total
+    const paid = Number(ar.paid_amount || 0);
+    if (paid > newArTotal) {
+      const overpaid = paid - newArTotal;
+      await sb.from('ar_payments').insert({
+        ar_id: ar.id,
+        shop_id: currentShop.id,
+        pay_date: cnDate,
+        amount: -overpaid,
+        method: 'Credit Note (Refund)',
+        ref: cnNo,
+        note: 'คืนเงินส่วนเกินจากการลดหนี้'
+      });
+      await sb.from('ar_invoices').update({ paid_amount: newArTotal }).eq('id', ar.id);
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(m => m.remove());
+    toast('บันทึกรับคืนและปรับลดยอด AR Invoice เรียบร้อย ✓', 'success');
+
+    if (typeof loadGoodsReturn === 'function' && document.getElementById('grt-table')) loadGoodsReturn();
+    if (typeof loadAR === 'function' && document.getElementById('art-table')) loadAR();
+    if (document.getElementById('dash-stats') && typeof loadDashData === 'function') loadDashData();
+
+  } catch (err) {
+    console.error(err);
+    toast(err.message, 'error');
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
 }
 
 // ── Return / Credit Note (CN) System from Order ──────────────────────

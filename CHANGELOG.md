@@ -2,6 +2,24 @@
 
 เอกสารบันทึกประวัติการพัฒนาและอัปเกรดระบบ SEALTHAI Shop Dashboard & AI Operations
 
+## 🚀 [v2.27] — 2026-09-23
+### Goods Return & Credit Note (CN): Direct Integration from AR Invoice (รับคืนสินค้าโดยดึงข้อมูลจาก AR Invoice)
+* **📥 ระบบเลือกดึงข้อมูลจาก AR Invoice (`openARPickerForReturn`):**
+  - เพิ่มปุ่ม **"📥 ดึงข้อมูลจาก AR Invoice"** ในหน้า **รับคืนสินค้า / Credit Note (CN)** และหน้าต่างบันทึกรับคืนใหม่ (`openNewGR`)
+  - หน้าต่างค้นหา AR Invoice แบบ Real-time รองรับการค้นหาตามเลขที่ Invoice (AR), เลขที่คำสั่งขาย (SO), หรือชื่อลูกค้า พร้อมแสดงยอดหนี้คงค้างและปุ่มคลิกรับคืนสินค้าได้ทันที
+* **🧾 รองรับการรับคืนทั้งแบบมี SO และ Standalone Invoice (`openReturnFromAR`):**
+  - **Invoice ที่ผูกกับ Sales Order:** ดึงรายการสินค้า, ราคาขาย, จำนวนที่ซื้อมาให้อัตโนมัติ เลือกระบุจำนวนที่ต้องการรับคืนได้
+  - **Invoice ทั่วไป (Standalone):** สามารถเลือกสินค้าจากคลัง ระบุจำนวน และราคาคืนได้สะดวกรวดเร็ว
+* **📦 สต๊อกและการเงินอัปเดตอัตโนมัติครบวงจร:**
+  - เพิ่มสต๊อกสินค้ากลับเข้าคลังอัตโนมัติ (`stock_movements` [move_type: in] พร้อมรัน `recalcStockQty`)
+  - บันทึกประวัติการรับคืนใน `goods_returns` และ `goods_return_items`
+  - ปรับลดยอดรวมและยอดค้างชำระใน `ar_invoices` (หากชำระเงินมาแล้วเกินยอดหลังหักคืน จะบันทึกคืนเงินส่วนเกินใน `ar_payments` อัตโนมัติ)
+  - ปรับปรุงสถานะคำสั่งขาย (`orders`) และรายการสินค้า (`order_items`) ที่เกี่ยวข้อง
+* **⚡ เพิ่มปุ่ม "🧾 รับคืนสินค้า (CN)" ในหน้าต่างรายละเอียด AR Invoice (`openARDetail`):** รองรับการคลิกรับคืนสินค้าได้โดยตรงจากทุก Invoice
+* **🧹 Cache Refresh (v2.27):** อัปเดต Service Worker Cache เป็น `sealthai-v2.27`
+
+---
+
 ## 🚀 [v2.20] — 2026-09-19
 ### Print Options Modal: Original, Copy & Dual Batch Printing (เลือกพิมพ์ ต้นฉบับ / สำเนา / เป็นชุด 2 หน้า)
 * **🖨️ ตัวเลือกประเภทเอกสารในหน้าต่างพิมพ์บิล (`openReceiptOptions`):**
