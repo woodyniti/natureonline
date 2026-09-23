@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.28';
-const DISPLAY_APP_VERSION = 'v2.28';
+const CURRENT_APP_VERSION = 'sealthai-v2.29';
+const DISPLAY_APP_VERSION = 'v2.29';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -1149,17 +1149,40 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         </div>
         <div id="qp-cat-chips" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"></div>
       </div>
+      <div class="form-group" style="grid-column:1/-1;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <label style="font-weight:700;font-size:12px;color:#0f172a;margin:0">💵 สกุลเงินของราคา (Currency)</label>
+            <div style="font-size:11px;color:var(--text3)">เลือกเป็น USD ได้ หากต้องการระบุราคาเป็นดอลลาร์ (ค่าเริ่มต้น: THB ฿)</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <select id="qp-currency" onchange="toggleQPCurrency()" style="background:#fff;border:1.5px solid #93c5fd;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:700;color:#0f172a">
+              <option value="THB" selected>฿ THB (บาทไทย - ค่าเริ่มต้น)</option>
+              <option value="USD">$ USD (ดอลลาร์สหรัฐ)</option>
+            </select>
+          </div>
+        </div>
+        <div id="qp-exrate-wrap" style="display:none;margin-top:6px;padding-top:6px;border-top:1px dashed #cbd5e1;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <label style="font-size:11.5px;font-weight:600;color:#475569;margin:0">อัตราแลกเปลี่ยน (THB / 1 USD):</label>
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" id="qp-exrate" value="35.00" step="0.01" style="width:85px;padding:4px 6px;font-size:12.5px;text-align:right;font-weight:700;background:#fff;border:1px solid #93c5fd;border-radius:6px" oninput="calcQPConvertedPreview()">
+            <span style="font-size:11.5px;color:var(--text3)">บาท</span>
+          </div>
+        </div>
+      </div>
       <div class="form-group">
         <label style="font-weight:700;font-size:12px">สต๊อกเริ่มต้น (Initial Qty)</label>
         <input type="number" id="qp-stock" value="0" min="0">
       </div>
       <div class="form-group">
-        <label style="font-weight:700;font-size:12px">💰 ราคาขาย (฿ / ชิ้น) <span style="color:var(--red)">*</span></label>
-        <input type="number" id="qp-sell" placeholder="0.00" step="0.01" style="font-weight:700;color:#047857">
+        <label id="qp-sell-label" style="font-weight:700;font-size:12px">💰 ราคาขาย (฿ / ชิ้น) <span style="color:var(--red)">*</span></label>
+        <input type="number" id="qp-sell" placeholder="0.00" step="0.01" style="font-weight:700;color:#047857" oninput="calcQPConvertedPreview()">
+        <div id="qp-sell-preview" style="display:none;font-size:11px;color:#047857;font-weight:600;margin-top:2px"></div>
       </div>
       <div class="form-group">
-        <label style="font-weight:700;font-size:12px">💵 ราคาต้นทุน / ซื้อ (฿ / ชิ้น)</label>
-        <input type="number" id="qp-cost" placeholder="0.00" step="0.01" style="font-weight:700;color:#b45309">
+        <label id="qp-cost-label" style="font-weight:700;font-size:12px">💵 ราคาต้นทุน / ซื้อ (฿ / ชิ้น)</label>
+        <input type="number" id="qp-cost" placeholder="0.00" step="0.01" style="font-weight:700;color:#b45309" oninput="calcQPConvertedPreview()">
+        <div id="qp-cost-preview" style="display:none;font-size:11px;color:#b45309;font-weight:600;margin-top:2px"></div>
       </div>
     </div>
 
@@ -32213,6 +32236,60 @@ function renderInventoryPostingTableRows(list) {
   }).join('');
 }
 
+function toggleQPCurrency() {
+  const curr = document.getElementById('qp-currency')?.value || 'THB';
+  const exWrap = document.getElementById('qp-exrate-wrap');
+  const sellLbl = document.getElementById('qp-sell-label');
+  const costLbl = document.getElementById('qp-cost-label');
+  const sellPrev = document.getElementById('qp-sell-preview');
+  const costPrev = document.getElementById('qp-cost-preview');
+
+  if (curr === 'USD') {
+    if (exWrap) exWrap.style.display = 'flex';
+    if (sellLbl) sellLbl.innerHTML = '💰 ราคาขาย ($ USD / ชิ้น) <span style="color:var(--red)">*</span>';
+    if (costLbl) costLbl.innerHTML = '💵 ราคาต้นทุน / ซื้อ ($ USD / ชิ้น)';
+    if (sellPrev) sellPrev.style.display = 'block';
+    if (costPrev) costPrev.style.display = 'block';
+
+    const poExRate = document.getElementById('po-exrate')?.value;
+    const qpExRate = document.getElementById('qp-exrate');
+    if (poExRate && qpExRate && Number(poExRate) > 0) {
+      qpExRate.value = poExRate;
+    }
+  } else {
+    if (exWrap) exWrap.style.display = 'none';
+    if (sellLbl) sellLbl.innerHTML = '💰 ราคาขาย (฿ / ชิ้น) <span style="color:var(--red)">*</span>';
+    if (costLbl) costLbl.innerHTML = '💵 ราคาต้นทุน / ซื้อ (฿ / ชิ้น)';
+    if (sellPrev) sellPrev.style.display = 'none';
+    if (costPrev) costPrev.style.display = 'none';
+  }
+  calcQPConvertedPreview();
+}
+
+function calcQPConvertedPreview() {
+  const curr = document.getElementById('qp-currency')?.value || 'THB';
+  const sellPrev = document.getElementById('qp-sell-preview');
+  const costPrev = document.getElementById('qp-cost-preview');
+  if (curr !== 'USD') {
+    if (sellPrev) sellPrev.style.display = 'none';
+    if (costPrev) costPrev.style.display = 'none';
+    return;
+  }
+
+  const rate = Number(document.getElementById('qp-exrate')?.value || 35);
+  const sellUsd = Number(document.getElementById('qp-sell')?.value || 0);
+  const costUsd = Number(document.getElementById('qp-cost')?.value || 0);
+
+  if (sellPrev) {
+    sellPrev.style.display = 'block';
+    sellPrev.textContent = `≈ ฿${fmtB(sellUsd * rate)} (คิดเป็นเงินบาท)`;
+  }
+  if (costPrev) {
+    costPrev.style.display = 'block';
+    costPrev.textContent = `≈ ฿${fmtB(costUsd * rate)} (คิดเป็นเงินบาท)`;
+  }
+}
+
 async function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery = '') {
   _quickProdContext = { type: contextType, rowIdx: rowIdx };
 
@@ -32229,6 +32306,15 @@ async function openQuickProductModal(contextType = 'order', rowIdx = -1, initial
   const wEl = document.getElementById('qp-width');
   const matEl = document.getElementById('qp-material');
   const stEl = document.getElementById('qp-seal-type');
+  const currEl = document.getElementById('qp-currency');
+  const exRateEl = document.getElementById('qp-exrate');
+
+  // Default is THB
+  if (currEl) currEl.value = 'THB';
+  if (exRateEl) {
+    const poExRate = document.getElementById('po-exrate')?.value;
+    exRateEl.value = (poExRate && Number(poExRate) > 0) ? poExRate : '35.00';
+  }
 
   if (nameEl) nameEl.value = (initialQuery || '').trim();
   if (skuEl) {
@@ -32275,6 +32361,8 @@ async function openQuickProductModal(contextType = 'order', rowIdx = -1, initial
   if (matEl) matEl.value = '';
   if (stEl) stEl.value = '';
 
+  toggleQPCurrency();
+
   // Auto-detect dimensions and specs from initialQuery
   if (initialQuery) {
     onQPNameChange(initialQuery);
@@ -32302,9 +32390,16 @@ async function saveQuickProduct() {
 
   const supplier_sku = (document.getElementById('qp-supplier-sku')?.value || '').trim();
   const category = document.getElementById('qp-cat')?.value || 'Other';
-  const sell_price = Number(document.getElementById('qp-sell')?.value) || 0;
-  const current_cost = Number(document.getElementById('qp-cost')?.value) || 0;
+  const currency = document.getElementById('qp-currency')?.value || 'THB';
+  const exRate = Number(document.getElementById('qp-exrate')?.value || 35);
+
+  const rawSell = Number(document.getElementById('qp-sell')?.value) || 0;
+  const rawCost = Number(document.getElementById('qp-cost')?.value) || 0;
   const initialStock = Number(document.getElementById('qp-stock')?.value) || 0;
+
+  // Convert to THB for products database storage
+  const sell_price_thb = currency === 'USD' ? (rawSell * exRate) : rawSell;
+  const current_cost_thb = currency === 'USD' ? (rawCost * exRate) : rawCost;
 
   const numVal = id => {
     const v = document.getElementById(id)?.value;
@@ -32318,9 +32413,9 @@ async function saveQuickProduct() {
     supplier_sku: supplier_sku,
     name: name,
     category: category,
-    sell_price: sell_price,
-    purchase_price: current_cost,
-    current_cost: current_cost,
+    sell_price: sell_price_thb,
+    purchase_price: current_cost_thb,
+    current_cost: current_cost_thb,
     stock_qty: initialStock,
     active: true,
     inner_diameter: numVal('qp-id'),
@@ -32343,7 +32438,7 @@ async function saveQuickProduct() {
         product_id: newProd.id,
         movement_type: 'in',
         qty: initialStock,
-        cost_per_unit: current_cost,
+        cost_per_unit: current_cost_thb,
         note: 'สต๊อกตั้งต้นจากการสร้างสินค้าด่วน'
       });
     }
@@ -32368,8 +32463,8 @@ async function saveQuickProduct() {
           product_id: newProd.id,
           product_name: newProd.name,
           qty: orderItems[ctx.rowIdx].qty || 1,
-          sell_price: newProd.sell_price || sell_price,
-          cost_per_unit: newProd.current_cost || current_cost,
+          sell_price: newProd.sell_price || sell_price_thb,
+          cost_per_unit: newProd.current_cost || current_cost_thb,
           discount: orderItems[ctx.rowIdx].discount || 0,
           discount_type: orderItems[ctx.rowIdx].discount_type || 'amount'
         };
@@ -32378,8 +32473,8 @@ async function saveQuickProduct() {
           product_id: newProd.id,
           product_name: newProd.name,
           qty: 1,
-          sell_price: newProd.sell_price || sell_price,
-          cost_per_unit: newProd.current_cost || current_cost,
+          sell_price: newProd.sell_price || sell_price_thb,
+          cost_per_unit: newProd.current_cost || current_cost_thb,
           discount: 0,
           discount_type: 'amount'
         });
@@ -32395,14 +32490,21 @@ async function saveQuickProduct() {
         selectStockProduct(ctx.rowIdx, newProd.id, newProd.name);
       }
     } else if (ctx.type === 'po') {
-      const cost = Number(newProd.purchase_price) || Number(newProd.current_cost) || current_cost;
+      const poCur = document.getElementById('po-currency')?.value || 'THB';
+      let poUnitCost = current_cost_thb;
+      if (poCur === 'USD') {
+        poUnitCost = (currency === 'USD') ? rawCost : (current_cost_thb / exRate);
+      } else {
+        poUnitCost = (currency === 'USD') ? current_cost_thb : rawCost;
+      }
+
       if (ctx.rowIdx >= 0 && poItems[ctx.rowIdx]) {
         poItems[ctx.rowIdx] = {
           product_id: newProd.id,
           product_name: newProd.name,
           sku: newProd.sku || '',
           qty_ordered: poItems[ctx.rowIdx].qty_ordered || 1,
-          unit_cost: cost
+          unit_cost: poUnitCost
         };
       } else {
         poItems.push({
@@ -32410,7 +32512,7 @@ async function saveQuickProduct() {
           product_name: newProd.name,
           sku: newProd.sku || '',
           qty_ordered: 1,
-          unit_cost: cost
+          unit_cost: poUnitCost
         });
       }
       renderPOItems();
