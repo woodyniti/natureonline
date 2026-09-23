@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.25 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.31)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.31 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.25 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.31)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.31 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.25 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.31)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.31 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.25)">v2.25 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.31)">v2.31 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -32570,7 +32570,28 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.22', date:'2026-09-21', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Emergency Encoding Fix & PO Bug Fixes', items:[
+    { v:'2.31', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order (PO) Save & Draft Validation', items:[
+      '🛡️ <b>Clean Validation:</b> แก้ไขการบันทึกแบบร่าง (Draft PO) และส่ง PO ไม่ให้ติดปัญหา "Item code ว่าง"',
+      '🏷️ <b>Auto-fill SKU:</b> ดึงรหัสและชื่อสินค้าอัตโนมัติจากฐานข้อมูล ป้องกันข้อผิดพลาดตอนบันทึก',
+      '🧹 <b>Cache Refresh (v2.31):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.31'
+    ]},
+    { v:'2.30', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Fix PO & Order Dropdown Selection', items:[
+      '🎯 <b>Selection Fix:</b> แก้ไขปัญหาคลิกเลือกสินค้าในดรอปดาวน์แล้วเด้งกลับไปเลือกรายการแรก',
+      '⚡ <b>Event Optimization:</b> ป้องกัน Blur Event ตัดจังหวะการคลิกเลือกสินค้า'
+    ]},
+    { v:'2.29', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quick Product USD Currency Support', items:[
+      '💵 <b>ตัวเลือกสกุลเงิน:</b> รองรับการสร้างสินค้าด่วนด้วยหน่วยเงิน USD (ดอลลาร์สหรัฐ) โดยตั้งค่าเริ่มต้นเป็น THB (บาทไทย)',
+      '💱 <b>คำนวณอัตราแลกเปลี่ยน:</b> มีช่องระบุอัตราแลกเปลี่ยนและแสดงพรีวิวเงินบาทแบบ Real-time'
+    ]},
+    { v:'2.28', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order SKU Management (เหมือนหน้าออเดอร์)', items:[
+      '🛒 <b>Smart PO Search:</b> ค้นหาสินค้าได้ทั้งชื่อ, SKU, Supplier SKU และขนาด พร้อมแสดงสถานะสต๊อกและราคาซื้อเข้า',
+      '➕ <b>เพิ่มสินค้าใน Batch PO:</b> สามารถกดเพิ่มสินค้า/SKU อื่นๆ นอกเหนือจากออเดอร์ขายได้ทันที'
+    ]},
+    { v:'2.27', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Goods Return & CN from AR Invoice', items:[
+      '📥 <b>ดึงข้อมูลจาก AR Invoice:</b> หน้ารับคืนสินค้าสามารถดึงข้อมูลจาก AR Invoice หรือ Sales Order ได้โดยตรง',
+      '🧾 <b>ออกใบลดหนี้ (CN):</b> ตัดสต๊อกคืนคลังและปรับลดยอดหนี้ใน AR Invoice อัตโนมัติ'
+    ]},
+    { v:'2.22', date:'2026-09-21', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Emergency Encoding Fix & PO Bug Fixes', items:[
       '🐛 <b>Encoding Fix:</b> กู้คืนภาษาไทยและ Emoji ในระบบกลับมาเป็นปกติ',
       '🐛 <b>PO Autocomplete Partial Match:</b> ระบบค้นหาสินค้าบางส่วนและสแกนบาร์โค้ดใน PO กลับมาใช้งานได้ (รองรับ wcProdMatch)',
       '🐛 <b>API Fix:</b> แก้ไขข้อผิดพลาด HTTP 400 ที่ทำให้โหลดข้อมูลสินค้าในใบ PO ไม่ขึ้น โดยปรับ Query ให้รองรับโครงสร้าง Database ปัจจุบัน',
