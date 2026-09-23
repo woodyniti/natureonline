@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.37';
-const DISPLAY_APP_VERSION = 'v2.37';
+const CURRENT_APP_VERSION = 'sealthai-v2.38';
+const DISPLAY_APP_VERSION = 'v2.38';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.37 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.38 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.37 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.38 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.37 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.38 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.37)">v2.37 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.38)">v2.38 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -16040,9 +16040,12 @@ async function loadGRPO() {
       const totalOrdered  = items.reduce((s,i)=>s+Number(i.qty_ordered||0),0);
       const totalReceived = items.reduce((s,i)=>s+Number(i.qty_received||0),0);
       const pending = totalOrdered - totalReceived;
+      const supRef = getPOSupplierRef(po);
       return '<tr>' +
         '<td>'+po.po_date+'</td>' +
-        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+'</td>' +
+        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+
+          (supRef ? '<div style="font-size:10.5px;color:var(--blue);font-weight:600">🏷️ '+escapeHTML(supRef)+'</div>' : '')+
+        '</td>' +
         '<td style="font-weight:500">'+(po.supplier_name||'-')+'</td>' +
         '<td class="text-right font-mono">'+fmt(totalOrdered)+'</td>' +
         '<td class="text-right font-mono text-accent">'+fmt(totalReceived)+'</td>' +
@@ -16066,7 +16069,7 @@ async function loadGRPO() {
         '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">' +
           '<div>' +
             '<div style="font-weight:600">'+(po.supplier_name||'-')+'</div>' +
-            '<div style="font-size:11px;color:var(--text3)">'+po.po_date+' · '+(po.po_no||'-')+'</div>' +
+            '<div style="font-size:11px;color:var(--text3)">'+po.po_date+' · '+(po.po_no||'-')+(getPOSupplierRef(po) ? ' · <span style="color:var(--blue);font-weight:600">Ref: '+escapeHTML(getPOSupplierRef(po))+'</span>' : '')+'</div>' +
           '</div>' +
           poBadge(po.status) +
         '</div>' +
@@ -17965,6 +17968,23 @@ async function deleteShipment(id) {
   loadChinaShipments();
 }
 
+function getPOSupplierRef(po) {
+  if (!po) return '';
+  if (po.supplier_ref) return String(po.supplier_ref).trim();
+  if (po.supplier_ref_no) return String(po.supplier_ref_no).trim();
+  if (po.ref_no) return String(po.ref_no).trim();
+  const match = (po.note || '').match(/\[(?:Supplier\s*Ref|Ref\s*No|Supplier\s*Ref\s*No|Ref):\s*([^\]]+)\]/i);
+  return match ? match[1].trim() : '';
+}
+
+function getCleanPONote(note) {
+  if (!note) return '';
+  return note
+    .replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '')
+    .replace(/\[(?:Supplier\s*Ref|Ref\s*No|Supplier\s*Ref\s*No|Ref):[^\]]+\]/gi, '')
+    .trim();
+}
+
 async function purchase() {
   document.getElementById('topbar-actions').innerHTML =
     '<button class="btn btn-primary btn-sm" onclick="openNewPO()">+ Purchase Order</button>';
@@ -18009,6 +18029,7 @@ async function purchase() {
             <input type="hidden" id="po-supplier-name">
           </div>
           <div class="form-group"><label>เบอร์ติดต่อ</label><input type="text" id="po-sup-phone" placeholder="เบอร์โทร"></div>
+          <div class="form-group"><label>Ref No ของ Supplier</label><input type="text" id="po-supplier-ref" placeholder="เช่น PO/INV/QT ของ Supplier"></div>
           <div class="form-group"><label>สกุลเงิน</label>
             <select id="po-currency" onchange="togglePoCurrency()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:14px">
               <option value="THB">THB (บาท)</option>
@@ -18099,6 +18120,8 @@ async function loadPOs() {
     rows = rows.filter(po => 
       smartWildcardMatch(po.po_no, search) ||
       smartWildcardMatch(po.supplier_name, search) ||
+      smartWildcardMatch(getPOSupplierRef(po), search) ||
+      smartWildcardMatch(getCleanPONote(po.note), search) ||
       smartWildcardMatch(po.note, search) ||
       smartWildcardMatch(po.supplier_contact, search)
     );
@@ -18151,10 +18174,13 @@ async function loadPOs() {
         ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(rawTHB)})</div>`
         : fmtB(rawTHB);
 
+      const supRef = getPOSupplierRef(po);
       return '<tr style="cursor:pointer" onclick="viewPO(&quot;'+po.id+'&quot;)">'+
         '<td style="text-align:center;font-weight:700;color:var(--text3);font-family:var(--mono);font-size:12px">'+(idx+1)+'</td>'+
         '<td>'+po.po_date+'</td>'+
-        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+'</td>'+
+        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+
+          (supRef ? '<div style="font-size:10.5px;color:var(--blue);font-weight:600" title="Ref No ของ Supplier">🏷️ '+escapeHTML(supRef)+'</div>' : '')+
+        '</td>'+
         '<td style="font-weight:500">'+(po.supplier_name||'-')+'</td>'+
         '<td class="text-right font-mono text-amber">'+amtDisplay+'</td>'+
         '<td>'+poBadge(po.status)+'</td>'+
@@ -18179,10 +18205,11 @@ async function loadPOs() {
         ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:11px;color:var(--text3);font-weight:normal">(${fmtB(rawTHB)})</div>`
         : fmtB(rawTHB);
 
+      const supRef = getPOSupplierRef(po);
       return '<div class="order-card" onclick="viewPO(&quot;'+po.id+'&quot;)" style="cursor:pointer">'+
         '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'+
           '<div><div style="font-weight:600">'+(po.supplier_name||'-')+'</div>'+
-          '<div style="font-size:11px;color:var(--text3)"><span style="font-weight:700;color:var(--accent);margin-right:4px">#'+(idx+1)+'</span> · '+po.po_date+' · '+(po.po_no||'-')+'</div></div>'+
+          '<div style="font-size:11px;color:var(--text3)"><span style="font-weight:700;color:var(--accent);margin-right:4px">#'+(idx+1)+'</span> · '+po.po_date+' · '+(po.po_no||'-')+(supRef ? ' · <span style="color:var(--blue);font-weight:600">Ref: '+escapeHTML(supRef)+'</span>' : '')+'</div></div>'+
           '<div class="font-mono text-amber" style="font-size:15px;font-weight:700;text-align:right">'+amtMobile+'</div>'+
         '</div>'+
         poBadge(po.status)+'</div>';
@@ -18202,6 +18229,8 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   document.getElementById('po-expected').value = '';
   document.getElementById('po-note').value = '';
   document.getElementById('po-sup-phone').value = '';
+  const refEl = document.getElementById('po-supplier-ref');
+  if (refEl) refEl.value = '';
   const curEl = document.getElementById('po-currency');
   if (curEl) curEl.value = 'THB';
   const exDiv = document.getElementById('po-exrate-div');
@@ -18769,11 +18798,18 @@ async function savePO(status) {
   const vatAmtSave = vatOn ? (vatType==='excluded' ? subtotalForSave*0.07 : subtotalForSave-subtotalForSave/1.07) : 0;
   const total = vatType==='excluded' ? subtotalForSave+vatAmtSave : subtotalForSave;
   
-  let rawNoteVal = (document.getElementById('po-note')?.value || '').trim();
-  rawNoteVal = rawNoteVal.replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '').trim();
+  const supplierRef = (document.getElementById('po-supplier-ref')?.value || '').trim();
+  let rawNoteVal = getCleanPONote(document.getElementById('po-note')?.value || '');
   let finalNote = rawNoteVal;
+  const noteTags = [];
+  if (supplierRef) {
+    noteTags.push(`[Supplier Ref: ${supplierRef}]`);
+  }
   if (cur === 'USD') {
-    finalNote = (rawNoteVal ? rawNoteVal + '\n' : '') + `[สกุลเงิน: USD, อัตราแลกเปลี่ยน: ${rate}]`;
+    noteTags.push(`[สกุลเงิน: USD, อัตราแลกเปลี่ยน: ${rate}]`);
+  }
+  if (noteTags.length) {
+    finalNote = (rawNoteVal ? rawNoteVal + '\n' : '') + noteTags.join('\n');
   }
   
   let po, error;
@@ -18898,6 +18934,8 @@ async function viewPO(poId) {
   const vatUSD = isUSD && poRate > 0 ? (vatTHB / poRate) : 0;
   const grandTotalTHB = Number(po.total_amount || (totalOrderedTHB + vatTHB));
   const grandTotalUSD = isUSD && poRate > 0 ? (grandTotalTHB / poRate) : 0;
+  const supRef = getPOSupplierRef(po);
+  const cleanNote = getCleanPONote(po.note);
 
   el.innerHTML=
     '<div class="modal-title" style="margin-bottom:12px">🛒 '+( po.po_no||'-')+' · '+po.supplier_name+'</div>'+
@@ -18910,7 +18948,9 @@ async function viewPO(poId) {
       '<div><span style="color:var(--text3)">Supplier</span><div style="font-weight:600">'+po.supplier_name+'</div>'+
         (po.supplier_contact?'<div style="font-size:12px;color:var(--text2)">'+po.supplier_contact+'</div>':'')+
       '</div>'+
-      '<div><span style="color:var(--text3)">วันที่สั่ง</span><div>'+po.po_date+'</div></div>'+
+      '<div><span style="color:var(--text3)">วันที่สั่ง</span><div>'+po.po_date+'</div>'+
+        (supRef ? '<div style="font-size:12px;margin-top:2px"><span style="color:var(--text3)">Ref ของ Supplier:</span> <b style="color:var(--blue)">'+escapeHTML(supRef)+'</b></div>' : '')+
+      '</div>'+
     '</div>'+
     '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการ SKU'+(hasDupItems?' <span style="color:var(--red);font-weight:400;font-size:11px">⚠️ พบรายการซ้ำ — กดปุ่ม "🧹 ลบรายการซ้ำ" ด้านล่าง</span>':'')+'</div>'+
     '<div class="table-wrap"><table><thead><tr>'+
@@ -18970,7 +19010,7 @@ async function viewPO(poId) {
         '</span>'+
       '</div>'+
     '</div>'+
-    (po.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px">'+po.note+'</div>':'');
+    (cleanNote?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px">'+cleanNote+'</div>':'');
 
   // Footer
   const footer=document.getElementById('po-detail-footer');
@@ -19040,10 +19080,12 @@ async function editPO(poId) {
     }
   }
 
-  // แยก Tag สกุลเงินออกจากข้อความหมายเหตุ เพื่อให้แสดงผลสะอาดตา
-  const cleanNote = rawNote
-    .replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '')
-    .trim();
+  // ดึง Ref No ของ Supplier และแยก Tag ออกจากข้อความหมายเหตุ
+  const supRef = getPOSupplierRef(po);
+  const supRefInp = document.getElementById('po-supplier-ref');
+  if (supRefInp) supRefInp.value = supRef;
+
+  const cleanNote = getCleanPONote(rawNote);
   document.getElementById('po-note').value = cleanNote;
 
   const curEl = document.getElementById('po-currency');
@@ -19189,7 +19231,10 @@ async function printPO(poId) {
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px;text-align:right">');
+  const supRef = getPOSupplierRef(po);
+  const cleanNote = getCleanPONote(po.note);
   bp.push('<div><span style="color:#777;font-size:11px">เลขที่ PO</span>&nbsp;&nbsp;<strong>'+(po.po_no||'-')+'</strong></div>');
+  if(supRef) bp.push('<div><span style="color:#777;font-size:11px">Ref No Supplier</span>&nbsp;&nbsp;<strong>'+escapeHTML(supRef)+'</strong></div>');
   bp.push('<div><span style="color:#777;font-size:11px">วันที่</span>&nbsp;&nbsp;<strong>'+po.po_date+'</strong></div>');
   if(po.expected_date) bp.push('<div><span style="color:#777;font-size:11px">คาดว่าจะรับ</span>&nbsp;&nbsp;<strong>'+po.expected_date+'</strong></div>');
   if(isUSD) bp.push('<div><span style="color:#15803d;font-size:11px;font-weight:700">สกุลเงิน: USD</span>&nbsp;&nbsp;<span style="color:#555;font-size:10.5px">(1 USD = ฿'+poRate.toFixed(2)+')</span></div>');
@@ -19223,7 +19268,7 @@ async function printPO(poId) {
   for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
   bp.push('</tbody></table>');
   bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+(isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:13px;font-weight:normal;color:#444">(${fmtB(grandTotalTHB)})</span>` : fmtB(grandTotalTHB))+'</span></div>');
-  if(po.note) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+po.note+'</div>');
+  if(cleanNote) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+cleanNote+'</div>');
   bp.push('<div class="sig-area">');
   bp.push('<div class="sig-box"><div style="height:44px"></div><div class="sig-line"></div><div class="sig-label">ผู้สั่งซื้อ</div></div>');
   bp.push('<div class="sig-box"><div style="height:44px"></div><div class="sig-line"></div><div class="sig-label">ผู้อนุมัติ</div></div>');
@@ -32960,13 +33005,18 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.37', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix AR Invoice Return Relationship Query', items:[
+    { v:'2.38', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Supplier Ref No Support', items:[
+      '🏷️ <b>เพิ่มช่อง Ref No ของ Supplier ในใบสั่งซื้อ (PO):</b> รองรับการบันทึกเลขที่อ้างอิงใบเสนอราคา/ใบแจ้งหนี้/PO ของ Supplier ทั้งในหน้าสร้าง PO ใหม่ และหน้าแก้ไขแบบร่าง',
+      '🔍 <b>แสดงและค้นหาด้วย Ref No:</b> แสดงเลข Ref No ในตารางรายการ PO, รายละเอียด PO, หน้าพิมพ์เอกสาร PO (Print), และหน้าบันทึกรับสินค้าเข้าสต๊อก (Goods Receipt) พร้อมระบบค้นหาอัจฉริยะ',
+      '🧹 <b>Cache Refresh (v2.38):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.38'
+    ]},
+    { v:'2.37', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Fix AR Invoice Return Relationship Query', items:[
       '🛠️ <b>แก้ไขการดึงข้อมูล AR Invoice สำหรับรับคืนสินค้า:</b> ปรับการ Query ข้อมูล AR Invoice และ Sales Orders แยกตาราง ป้องกันข้อผิดพลาด schema cache relationship',
-      '🧹 <b>Cache Refresh (v2.37):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
+      '🧹 <b>Cache Refresh (v2.38):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
     ]},
     { v:'2.36', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order USD & THB Dual Currency Display', items:[
       '💵 <b>แสดงยอดเงินคู่ USD และ (THB):</b> หาก PO เป็นสกุลเงิน USD จะแสดงยอดราคา/ชิ้น, ยอดรวมรายการ, และยอดรวมสุทธิทั้งในหน่วย USD และแปลงเป็น (฿THB) ควบคู่กันทั้งในตาราง, หน้ารายละเอียด และหน้าพิมพ์เอกสาร',
-      '🧹 <b>Cache Refresh (v2.37):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
+      '🧹 <b>Cache Refresh (v2.38):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
     ]},
     { v:'2.35', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
       '📅 <b>เรียงเอกสาร PO ตามวันที่ล่าสุด:</b> ตั้งค่าเริ่มต้นของตาราง Purchase Orders ให้เรียงตามวันที่ล่าสุด (ใหม่ → เก่า) เสมอ พร้อมแสดงเลขลำดับแถว (#)',
