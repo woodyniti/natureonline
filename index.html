@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.30';
-const DISPLAY_APP_VERSION = 'v2.30';
+const CURRENT_APP_VERSION = 'sealthai-v2.31';
+const DISPLAY_APP_VERSION = 'v2.31';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -18237,7 +18237,7 @@ function selectNewPOProductById(rowIdx, productId) {
   poItems[rowIdx] = {
     product_id: p.id,
     product_name: p.name,
-    sku: p.sku || '',
+    sku: p.sku || p.supplier_sku || p.name || '',
     qty_ordered: poItems[rowIdx]?.qty_ordered || 1,
     unit_cost: buyPrice
   };
@@ -18458,15 +18458,32 @@ async function savePO(status) {
   if(!supplierName){toast('กรุณาเลือก Supplier','error');return;}
   if (_poSaving) return;   // กันกดบันทึก/ส่งซ้ำ → รายการสินค้าซ้ำ
   
+  // Clean up completely empty rows (e.g. user clicked + เพิ่ม SKU without selecting)
+  poItems = poItems.filter(it => (it.product_name && it.product_name.trim() !== '') || it.product_id || (it.sku && it.sku.trim() !== ''));
   if (!poItems || poItems.length === 0) {
     toast('กรุณาเพิ่มรายการสินค้าอย่างน้อย 1 รายการ', 'error');
     return;
   }
-  const missingCode = poItems.some(it => !it.sku || it.sku.trim() === '' || !it.product_id);
-  if (missingCode) {
-    toast('พบรายการสินค้าที่ Item code ว่าง โปรดตรวจสอบก่อนบันทึก', 'error');
-    return;
-  }
+
+  // Auto-fill SKU and Product Name for any valid items
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  poItems.forEach(it => {
+    if (it.product_id && it.product_id !== '__custom__') {
+      const p = prods.find(x => x.id === it.product_id);
+      if (p) {
+        if (!it.sku || it.sku.trim() === '') it.sku = p.sku || p.supplier_sku || p.name || '';
+        if (!it.product_name || it.product_name.trim() === '') it.product_name = p.name || it.sku;
+      }
+    }
+    if (!it.sku || it.sku.trim() === '') {
+      it.sku = it.product_name || 'ITEM';
+    }
+    if (!it.product_name || it.product_name.trim() === '') {
+      it.product_name = it.sku;
+    }
+    it.qty_ordered = Math.max(0.001, Number(it.qty_ordered) || 1);
+    it.unit_cost = Number(it.unit_cost) || 0;
+  });
   
   _poSaving = true;
 
