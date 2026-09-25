@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.38';
-const DISPLAY_APP_VERSION = 'v2.38';
+const CURRENT_APP_VERSION = 'sealthai-v2.39';
+const DISPLAY_APP_VERSION = 'v2.39';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.38 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.39)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.39 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.38 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.39)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.39 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.38 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.39)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.39 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.38)">v2.38 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.39)">v2.39 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -4604,11 +4604,14 @@ async function drillMonthlyExpenses() {
     <div style="font-weight:700;font-size:16px;margin-bottom:4px">💸 ค่าใช้จ่ายรวม</div>
     <div style="font-size:12px;color:var(--text3);margin-bottom:12px">📅 ${periodLabel} · ${rows.length} รายการ · รวม ${fmtB(totExp)}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-      ${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>
-        `<div style="background:var(--bg3);border-radius:8px;padding:6px 12px;font-size:12px">
-          <span style="color:var(--text2)">${cat}</span>
-          <span style="font-family:var(--mono);font-weight:600;margin-left:8px;color:var(--red)">${fmtB(amt)}</span>
-        </div>`).join('')}
+      ${Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([cat,amt], idx)=>{
+        const pct = totExp > 0 ? ((amt / totExp) * 100).toFixed(1) : '0.0';
+        return `<div style="background:var(--bg3);border-radius:8px;padding:6px 12px;font-size:12px;display:flex;align-items:center;gap:6px">
+          <span style="color:var(--text2);font-weight:${idx===0?'700':'500'}">${idx===0?'🥇 ':''}${escapeHTML(cat)}</span>
+          <span style="font-family:var(--mono);font-weight:700;color:var(--red)">${fmtB(amt)}</span>
+          <span style="font-size:11px;font-weight:700;color:var(--blue);background:#eff6ff;padding:1px 5px;border-radius:4px;border:1px solid #bfdbfe">${pct}%</span>
+        </div>`;
+      }).join('')}
     </div>
     <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
       <thead><tr style="border-bottom:2px solid var(--border)">
@@ -8674,7 +8677,18 @@ async function expenses() {
     <div id="exp-quality"></div>
     <div class="grid-2 mb-4">
       <div class="card"><div class="card-title">📈 แนวโน้มค่าใช้จ่าย 12 เดือน</div><div class="chart-box" style="height:240px"><canvas id="ch-exp-trend"></canvas></div></div>
-      <div class="card"><div class="card-title">🗂️ ค่าใช้จ่ายตามหมวด</div><div class="chart-box" style="height:240px"><canvas id="ch-exp-cat"></canvas></div></div>
+      <div class="card" id="card-exp-cat">
+        <div class="card-title flex-between" style="flex-wrap:wrap;gap:6px">
+          <span>🗂️ ค่าใช้จ่ายตามหมวด</span>
+          <span id="exp-top-cat-badge" style="font-size:11.5px;font-weight:700"></span>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+          <div class="chart-box" style="height:220px;flex:1;min-width:180px;position:relative">
+            <canvas id="ch-exp-cat"></canvas>
+          </div>
+          <div id="exp-cat-breakdown" style="flex:1.2;min-width:220px;max-height:220px;overflow-y:auto;padding-right:4px"></div>
+        </div>
+      </div>
     </div>
     <div class="grid-2 mb-4">
       <div class="card"><div class="card-title">🏪 แยกตามช่องทาง/หน่วยงาน</div><div class="chart-box" style="height:220px"><canvas id="ch-exp-channel"></canvas></div></div>
@@ -9908,13 +9922,134 @@ function renderExpenseTable(rows) {
 
 function renderExpenseCharts(rows) {
   ['expTrend','expCat','expChannel'].forEach(k=>{if(charts[k]){charts[k].destroy();delete charts[k];}});
-  const catMap={}, chMap={}; rows.forEach(e=>{const a=expenseProfitAmount(e),c=effectiveExpenseCategory(e),ch=e.channel||'ไม่ระบุ';catMap[c]=(catMap[c]||0)+a;chMap[ch]=(chMap[ch]||0)+a;});
-  const colors=['#4f9cf9','#f97316','#22c55e','#a78bfa','#f5a623','#00d4a8','#f05252','#e879f9','#64748b','#0ea5e9','#84cc16','#fb7185'];
-  const trend={}; expenseDashboardRows.forEach(e=>{const key=(e.expense_date||'').slice(0,7);trend[key]=(trend[key]||0)+expenseProfitAmount(e);});
-  const labels=[]; const ym=document.getElementById('exp-month').value,[yy,mm]=ym.split('-').map(Number); for(let i=11;i>=0;i--){const d=new Date(yy,mm-1-i,1);labels.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);}
-  const trendCanvas=document.getElementById('ch-exp-trend'); if(trendCanvas) charts.expTrend=new Chart(trendCanvas,{type:'bar',data:{labels:labels.map(x=>{const [a,b]=x.split('-');return new Date(+a,+b-1,1).toLocaleDateString('th-TH',{month:'short',year:'2-digit'});}),datasets:[{label:'ค่าใช้จ่าย',data:labels.map(x=>trend[x]||0),backgroundColor:'#f05252',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
-  const catCanvas=document.getElementById('ch-exp-cat'); if(catCanvas) charts.expCat=new Chart(catCanvas,{type:'doughnut',data:{labels:Object.keys(catMap),datasets:[{data:Object.values(catMap),backgroundColor:colors,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}}}}});
-  const chCanvas=document.getElementById('ch-exp-channel'); if(chCanvas) charts.expChannel=new Chart(chCanvas,{type:'bar',data:{labels:Object.keys(chMap),datasets:[{data:Object.values(chMap),backgroundColor:'#4f9cf9',borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+  const catMap={}, chMap={};
+  let totalExpenseForCat = 0;
+  rows.forEach(e=>{
+    const a = expenseProfitAmount(e);
+    const c = effectiveExpenseCategory(e);
+    const ch = e.channel || 'ไม่ระบุ';
+    catMap[c] = (catMap[c] || 0) + a;
+    chMap[ch] = (chMap[ch] || 0) + a;
+    if (a > 0) totalExpenseForCat += a;
+  });
+
+  const colors = ['#f05252','#f97316','#f5a623','#22c55e','#00d4a8','#4f9cf9','#0ea5e9','#a78bfa','#e879f9','#fb7185','#84cc16','#64748b'];
+
+  // 1. 12-Month Trend Chart
+  const trend={};
+  expenseDashboardRows.forEach(e=>{const key=(e.expense_date||'').slice(0,7);trend[key]=(trend[key]||0)+expenseProfitAmount(e);});
+  const labels=[]; const ym=document.getElementById('exp-month').value,[yy,mm]=ym.split('-').map(Number);
+  for(let i=11;i>=0;i--){const d=new Date(yy,mm-1-i,1);labels.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`);}
+  const trendCanvas=document.getElementById('ch-exp-trend');
+  if(trendCanvas) charts.expTrend=new Chart(trendCanvas,{type:'bar',data:{labels:labels.map(x=>{const [a,b]=x.split('-');return new Date(+a,+b-1,1).toLocaleDateString('th-TH',{month:'short',year:'2-digit'});}),datasets:[{label:'ค่าใช้จ่าย',data:labels.map(x=>trend[x]||0),backgroundColor:'#f05252',borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+
+  // 2. Expense by Category with % and Sorted Highest to Lowest
+  const sortedCatEntries = Object.entries(catMap)
+    .filter(([_, amt]) => amt > 0)
+    .sort((a, b) => b[1] - a[1]);
+
+  const sortedCatLabels = sortedCatEntries.map(([c, amt]) => {
+    const pct = totalExpenseForCat > 0 ? ((amt / totalExpenseForCat) * 100).toFixed(1) : '0.0';
+    return `${c} (${pct}%)`;
+  });
+  const sortedCatValues = sortedCatEntries.map(([_, amt]) => amt);
+
+  const catCanvas = document.getElementById('ch-exp-cat');
+  if (catCanvas) {
+    if (sortedCatEntries.length === 0) {
+      catCanvas.style.display = 'none';
+      if (catCanvas.parentElement) {
+        catCanvas.parentElement.innerHTML = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px">ไม่มีข้อมูลค่าใช้จ่าย</div>';
+      }
+    } else {
+      charts.expCat = new Chart(catCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: sortedCatLabels,
+          datasets: [{
+            data: sortedCatValues,
+            backgroundColor: sortedCatValues.map((_, i) => colors[i % colors.length]),
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) {
+                  const val = ctx.raw || 0;
+                  const pct = totalExpenseForCat > 0 ? ((val / totalExpenseForCat) * 100).toFixed(1) : '0.0';
+                  const catName = sortedCatEntries[ctx.dataIndex] ? sortedCatEntries[ctx.dataIndex][0] : ctx.label;
+                  return ` ${catName}: ${fmtB(val)} (${pct}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+  }
+
+  // 3. Render Ranked Category List with Percentage & Progress Bars
+  const catBreakdownEl = document.getElementById('exp-cat-breakdown');
+  const topCatBadgeEl = document.getElementById('exp-top-cat-badge');
+  if (catBreakdownEl) {
+    if (sortedCatEntries.length === 0) {
+      catBreakdownEl.innerHTML = '<div style="color:var(--text3);font-size:12px;text-align:center;padding:20px">ไม่มีรายการค่าใช้จ่าย</div>';
+      if (topCatBadgeEl) topCatBadgeEl.innerHTML = '';
+    } else {
+      const topCat = sortedCatEntries[0];
+      const topPct = totalExpenseForCat > 0 ? ((topCat[1] / totalExpenseForCat) * 100).toFixed(1) : '0.0';
+      
+      if (topCatBadgeEl) {
+        topCatBadgeEl.innerHTML = `<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:12px;border:1px solid #fca5a5;font-size:11px">🔥 มากที่สุด: <b>${escapeHTML(topCat[0])}</b> (${topPct}%)</span>`;
+      }
+
+      catBreakdownEl.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:7px">
+          ${sortedCatEntries.map(([cat, amt], idx) => {
+            const pctNum = totalExpenseForCat > 0 ? (amt / totalExpenseForCat) * 100 : 0;
+            const pctStr = pctNum.toFixed(1);
+            const color = colors[idx % colors.length];
+            const isTop = idx === 0;
+
+            return `
+              <div style="background:${isTop ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg3)'};border:1px solid ${isTop ? '#fca5a5' : 'var(--border)'};border-radius:8px;padding:6px 10px;cursor:pointer;transition:background 0.15s"
+                onclick="document.getElementById('exp-filter-cat').value='${escapeHTML(cat)}'; renderExpenseView();"
+                title="คลิกเพื่อกรองเฉพาะหมวด ${escapeHTML(cat)}"
+                onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='${isTop ? '#fca5a5' : 'var(--border)'}'">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px">
+                  <div style="display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden">
+                    <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0"></span>
+                    <span style="font-weight:${isTop ? '700' : '600'};color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                      ${isTop ? '🥇 ' : `<span style="color:var(--text3);font-size:11px">#${idx+1}</span> `}${escapeHTML(cat)}
+                    </span>
+                  </div>
+                  <div style="display:flex;align-items:baseline;gap:6px;flex-shrink:0">
+                    <span style="font-weight:700;color:${isTop ? 'var(--red)' : 'var(--text)'};font-family:var(--mono);font-size:12.5px">${fmtB(amt)}</span>
+                    <span style="font-weight:800;font-size:11px;color:${isTop ? 'var(--red)' : 'var(--blue)'};background:${isTop ? '#fee2e2' : '#eff6ff'};padding:1px 5px;border-radius:4px;border:1px solid ${isTop ? '#fca5a5' : '#bfdbfe'}">${pctStr}%</span>
+                  </div>
+                </div>
+                <div style="width:100%;height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+                  <div style="width:${Math.max(1, pctNum)}%;height:100%;background:${color};border-radius:3px;transition:width 0.3s ease"></div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+  }
+
+  // 4. Expense by Channel Chart
+  const chCanvas=document.getElementById('ch-exp-channel');
+  if(chCanvas) charts.expChannel=new Chart(chCanvas,{type:'bar',data:{labels:Object.keys(chMap),datasets:[{data:Object.values(chMap),backgroundColor:'#4f9cf9',borderRadius:5}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
 }
 
 function renderExpenseInsights(rows,total,budget) {
@@ -33005,18 +33140,23 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.38', date:'2026-09-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Supplier Ref No Support', items:[
+    { v:'2.39', date:'2026-09-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Expense Category Percentage & Top Expense Analysis', items:[
+      '📊 <b>แสดงสัดส่วน % ค่าใช้จ่ายตามหมวด:</b> เพิ่มการคำนวณและแสดงสัดส่วนเปอร์เซ็นต์ (%) ของแต่ละหมวดหมู่ค่าใช้จ่าย พร้อมแถบ Progress Bar และป้ายกำกับลำดับความสำคัญ',
+      '🥇 <b>ไฮไลท์หมวดค่าใช้จ่ายที่มากที่สุด:</b> แสดงหมวดที่เป็นค่าใช้จ่ายสูงสุด (อันดับ 1) ไฮไลท์สีแดงเด่นชัด พร้อม Tooltip และการคลิกเพื่อกรองหมวดหมู่ทันที',
+      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.39'
+    ]},
+    { v:'2.38', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Supplier Ref No Support', items:[
       '🏷️ <b>เพิ่มช่อง Ref No ของ Supplier ในใบสั่งซื้อ (PO):</b> รองรับการบันทึกเลขที่อ้างอิงใบเสนอราคา/ใบแจ้งหนี้/PO ของ Supplier ทั้งในหน้าสร้าง PO ใหม่ และหน้าแก้ไขแบบร่าง',
       '🔍 <b>แสดงและค้นหาด้วย Ref No:</b> แสดงเลข Ref No ในตารางรายการ PO, รายละเอียด PO, หน้าพิมพ์เอกสาร PO (Print), และหน้าบันทึกรับสินค้าเข้าสต๊อก (Goods Receipt) พร้อมระบบค้นหาอัจฉริยะ',
-      '🧹 <b>Cache Refresh (v2.38):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.38'
+      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.38'
     ]},
     { v:'2.37', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Fix AR Invoice Return Relationship Query', items:[
       '🛠️ <b>แก้ไขการดึงข้อมูล AR Invoice สำหรับรับคืนสินค้า:</b> ปรับการ Query ข้อมูล AR Invoice และ Sales Orders แยกตาราง ป้องกันข้อผิดพลาด schema cache relationship',
-      '🧹 <b>Cache Refresh (v2.38):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
+      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
     ]},
     { v:'2.36', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order USD & THB Dual Currency Display', items:[
       '💵 <b>แสดงยอดเงินคู่ USD และ (THB):</b> หาก PO เป็นสกุลเงิน USD จะแสดงยอดราคา/ชิ้น, ยอดรวมรายการ, และยอดรวมสุทธิทั้งในหน่วย USD และแปลงเป็น (฿THB) ควบคู่กันทั้งในตาราง, หน้ารายละเอียด และหน้าพิมพ์เอกสาร',
-      '🧹 <b>Cache Refresh (v2.38):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
+      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
     ]},
     { v:'2.35', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
       '📅 <b>เรียงเอกสาร PO ตามวันที่ล่าสุด:</b> ตั้งค่าเริ่มต้นของตาราง Purchase Orders ให้เรียงตามวันที่ล่าสุด (ใหม่ → เก่า) เสมอ พร้อมแสดงเลขลำดับแถว (#)',
