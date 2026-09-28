@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.40';
-const DISPLAY_APP_VERSION = 'v2.40';
+const CURRENT_APP_VERSION = 'sealthai-v2.41';
+const DISPLAY_APP_VERSION = 'v2.41';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.40)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.40 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.41)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.41 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.40)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.40 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.41)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.41 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.40)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.40 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.41)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.41 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.40)">v2.40 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.41)">v2.41 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6873,9 +6873,9 @@ function newOrderProdSearch(rowIdx) {
         oninput="searchOrderProduct(${rowIdx}, this.value)"
         onfocus="searchOrderProduct(${rowIdx}, this.value)"
         onblur="handleOrderProdBlur(${rowIdx}, this.value)">
-      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:900;
-        background:#fff;border:1.5px solid var(--border2);border-radius:8px;max-height:260px;overflow-y:auto;
-        box-shadow:0 8px 24px rgba(0,0,0,0.18)"></div>
+      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:380px;max-width:min(580px,90vw);width:max-content;
+        background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;
+        box-shadow:0 12px 32px rgba(0,0,0,0.22)"></div>
     </div>`;
 }
 
@@ -6896,29 +6896,29 @@ function searchOrderProduct(rowIdx, q) {
       </div>`;
     } else {
       dd.innerHTML = results.map(p => {
-        
         const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
         const stockBadge = stockVal > 0
-          ? `<span style="background:#dcfce7;color:#15803d;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
-          : `<span style="background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
+          ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`
+          : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">⚠️ หมด (0)</span>`;
 
-        const codes = [];
-        if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
-        if (p.supplier_sku || p.supplier_code) codes.push('Code: ' + escapeHTML(p.supplier_sku || p.supplier_code));
-        if (p.part_no) codes.push('Part: ' + escapeHTML(p.part_no));
-        if (p.sell_price) codes.push('฿' + fmtB(p.sell_price));
-        const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
+        const badges = [];
+        if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
+        if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
+        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
+        if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
+        const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
 
         return `
           <div onmousedown="event.preventDefault(); window._orderAutocompleteClicking = true; selectNewOrderProductById(${rowIdx}, '${p.id}');"
             onclick="selectNewOrderProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
-            style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
+            style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:background 0.12s ease"
             onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
-            <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-              <div style="font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
-              ${codeHtml}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:#0f172a;font-size:13px;line-height:1.4;white-space:normal;word-break:break-word">${escapeHTML(p.name)}</div>
+              ${badgeHtml}
             </div>
-            ${stockBadge}
+            <div style="margin-top:2px;flex-shrink:0">${stockBadge}</div>
           </div>`;
       }).join('');
     }
@@ -7574,6 +7574,8 @@ async function loadEditProdList() {
   editProdList = data || [];
 }
 
+let _editOrderSearchTimer = null;
+
 function renderEditProdSearch(rowIdx) {
   const wrapId = 'ep-wrap-'+rowIdx;
   const inpId  = 'ep-inp-'+rowIdx;
@@ -7600,9 +7602,9 @@ function renderEditProdSearch(rowIdx) {
     '<input id="'+inpId+'" type="text" autocomplete="off" value="'+stockProdName+'" placeholder="ค้นหาสินค้าคลัง / SKU..."' +
     ' style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:5px;padding:4px 7px;color:var(--text);font-size:12px;box-sizing:border-box"' +
     ' oninput="searchEditProd('+rowIdx+',this.value)" onfocus="searchEditProd('+rowIdx+',this.value)">' +
-    '<div id="'+ddId+'" style="display:none;position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:500;' +
-    'background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:180px;overflow-y:auto;' +
-    'box-shadow:0 6px 20px rgba(0,0,0,0.12)"></div>' +
+    '<div id="'+ddId+'" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;' +
+    'min-width:380px;max-width:min(580px,90vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;' +
+    'box-shadow:0 12px 32px rgba(0,0,0,0.22)"></div>' +
     '<div style="font-size:10px;margin-top:2px;margin-bottom:4px;color:'+statusColor+';font-weight:600">'+statusText+'</div>' +
     poBadgeHtml +
     '<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:5px;padding:4px 6px;margin-top:4px">' +
@@ -7622,56 +7624,86 @@ function searchEditProd(rowIdx, q) {
   if (!dd) return;
 
   const prods = (editProdList && editProdList.length) ? editProdList : ((allProducts && allProducts.length) ? allProducts : (productList || []));
-  const ql = (q || '').trim().toLowerCase();
+  const ql = (q || '').trim();
 
-  const filtered = ql
-    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
-    : prods.slice(0, 40);
+  function renderEditRows(results) {
+    let html = '';
+    if (!results.length) {
+      html = `<div style="padding:12px 14px;font-size:12.5px;color:var(--text3);text-align:center">
+        ${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '"' : 'พิมพ์เพื่อค้นหาสินค้า'}
+      </div>`;
+    } else {
+      html = results.map(p => {
+        const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+        const stockBadge = stockVal > 0
+          ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`
+          : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">⚠️ หมด (0)</span>`;
 
-  let html = '';
-  if (!filtered.length) {
-    html = `<div style="padding:10px 12px;font-size:12px;color:var(--text3);text-align:center">
-      ${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '"' : 'พิมพ์เพื่อค้นหาสินค้า'}
-    </div>`;
-  } else {
-    html = filtered.map(p => {
-      const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
-      const stockBadge = stockVal > 0
-        ? `<span style="background:#dcfce7;color:#15803d;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
-        : `<span style="background:#fee2e2;color:#b91c1c;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
+        const badges = [];
+        if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
+        if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
+        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
+        if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
+        const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
 
-      const codes = [];
-      if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
-      if (p.supplier_sku || p.supplier_code) codes.push('Code: ' + escapeHTML(p.supplier_sku || p.supplier_code));
-      if (p.part_no) codes.push('Part: ' + escapeHTML(p.part_no));
-      if (p.sell_price) codes.push('฿' + fmtB(p.sell_price));
-      const codeHtml = codes.length ? `<div style="font-size:10px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
+        return `
+          <div onclick="selectEditProd(${rowIdx}, '${p.id}'); event.stopPropagation();"
+            style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:background 0.12s ease"
+            onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:#0f172a;font-size:13px;line-height:1.4;white-space:normal;word-break:break-word">${escapeHTML(p.name)}</div>
+              ${badgeHtml}
+            </div>
+            <div style="margin-top:2px;flex-shrink:0">${stockBadge}</div>
+          </div>`;
+      }).join('');
+    }
 
-      return `
-        <div onclick="selectEditProd(${rowIdx}, '${p.id}'); event.stopPropagation();"
-          style="padding:7px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
-          onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
-          <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-            <div style="font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
-            ${codeHtml}
-          </div>
-          ${stockBadge}
-        </div>`;
-    }).join('');
+    // Quick Add Button inside dropdown
+    const quickAddHtml = `
+      <div onclick="openQuickProductModal('edit_order', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+        style="padding:10px 12px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 8px 8px"
+        onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
+        <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
+        <span style="font-size:10.5px;background:#dcfce7;padding:3px 8px;border-radius:5px;border:1px solid #86efac">กดสร้าง</span>
+      </div>`;
+    html += quickAddHtml;
+
+    dd.innerHTML = html;
+    dd.style.display = 'block';
   }
 
-  // Quick Add Button inside dropdown
-  const quickAddHtml = `
-    <div onclick="openQuickProductModal('edit_order', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
-      style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:11.5px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
-      onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
-      <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
-      <span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>
-    </div>`;
-  html += quickAddHtml;
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40)
+    : prods.slice(0, 40);
 
-  dd.innerHTML = html;
-  dd.style.display = 'block';
+  renderEditRows(localFiltered);
+
+  // 2. Server-side async fallback search
+  if (ql.length >= 2) {
+    if (_editOrderSearchTimer) clearTimeout(_editOrderSearchTimer);
+    _editOrderSearchTimer = setTimeout(async () => {
+      try {
+        const { data } = await sb.from('products')
+          .select('*')
+          .eq('shop_id', currentShop.id)
+          .eq('active', true)
+          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .limit(40);
+        
+        if (data && data.length) {
+          data.forEach(dp => {
+            if (!editProdList.some(ep => ep.id === dp.id)) editProdList.push(dp);
+            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
+          });
+          const updated = editProdList.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40);
+          renderEditRows(updated);
+        }
+      } catch(e) {}
+    }, 250);
+  }
 
   // Safe outside click dismissal
   const close = e => {
@@ -33354,7 +33386,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.40', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Supplier Weekly Expense DB Sync & Paid Status Fix', items:[
+    { v:'2.41', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Order Edit & New Order Product Search Visibility Fix', items:[
+      '🔍 <b>แสดงชื่อสินค้าเต็มในแถบค้นหา (หน้าแก้ไข/สร้างออเดอร์):</b> ปรับขนาดกล่องผลลัพธ์การค้นหาสินค้าให้กว้างขึ้นและลอยเด่น (Floating Dropdown) ไม่ถูกบีบด้วยความกว้างของคอลัมน์ตาราง',
+      '🏷️ <b>แสดงชื่อสินค้าชัดเจน ไม่ถูกตัดทอน (...):</b> จัดวางชื่อสินค้าตัวหนาขนาดชัดเจนให้อยู่แถวบนสุด ตัดขึ้นบรรทัดใหม่อัตโนมัติ (Word Wrap) พร้อมป้าย หมวดหมู่, SKU, รหัสสินค้า, Part No, ราคาขาย และป้ายสต๊อกคงเหลือ',
+      '⚡ <b>ค้นหาแบบ Real-time เชื่อมต่อฐานข้อมูล:</b> เพิ่มระบบค้นหาคำค้นล่วงหน้าและดึงข้อมูลจากเซิร์ฟเวอร์แบบ Debounce ทันทีเมื่อพิมพ์ค้นหา',
+      '🧹 <b>Cache Refresh (v2.41):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.41'
+    ]},
+    { v:'2.40', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Supplier Weekly Expense DB Sync & Paid Status Fix', items:[
       '💰 <b>เชื่อมต่อสถานะจ่ายเงินกับฐานข้อมูลจริง (DB Sync):</b> ดึงข้อมูลรายการค่าใช้จ่ายจากตาราง expenses มาจับคู่กับรอบสัปดาห์ Supplier อัตโนมัติ ทำให้ทราบทันทีว่าสัปดาห์ไหนบันทึกแล้ว หรือจ่ายเงินแล้ว',
       '🏷️ <b>แสดงสถานะชัดเจนทุกอุปกรณ์:</b> แสดงป้าย 💰 จ่ายแล้ว (Paid), ✅ บันทึกแล้ว (รอจ่าย), หรือ 🧮 ยังไม่ได้บันทึก พร้อมวันที่จ่าย และล็อคยอดไม่ให้คำนวณทับซ้ำซ้อน',
       '🗑️ <b>ปุ่มยกเลิกการบันทึก:</b> เพิ่มตัวเลือกยกเลิก/ลบรายการค่าใช้จ่ายออกจากระบบบัญชี เพื่อให้ระบบกลับมาคำนวณสดใหม่ได้ตามต้องการ',
