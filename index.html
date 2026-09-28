@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.41';
-const DISPLAY_APP_VERSION = 'v2.41';
+const CURRENT_APP_VERSION = 'sealthai-v2.42';
+const DISPLAY_APP_VERSION = 'v2.42';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.41)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.41 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.42 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.41)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.41 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.42 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.41)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.41 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.42 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.41)">v2.41 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.42)">v2.42 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -27130,8 +27130,11 @@ let _crmTab = 'directory';
 let _allCustomers = [];
 let _allTierPricings = [];
 let _allQuotationsCRM = [];
+let _allOrdersWithItems = [];
 let _editingCustomerId = null;
 let _selectedCustomerDetails = null;
+let _crmPurchaseViewMode = 'cards';
+let _expandedCustomerIds = new Set();
 
 const CUSTOMER_TIERS = [
   { key: 'retail', label: 'บุคคลทั่วไป / ปลีก (Retail)', badgeClass: 'seal-badge-abc-c', discount: 0 },
@@ -27413,6 +27416,7 @@ async function customers() {
     <!-- Tabs Header -->
     <div class="tab-btn-row" id="crm-tabs">
       <button class="tab-btn active" id="tab-crm-directory" onclick="switchCRMTab('directory')">👥 ทะเบียนลูกค้า & CRM (<span id="crm-cust-count">0</span>)</button>
+      <button class="tab-btn" id="tab-crm-purchases" onclick="switchCRMTab('purchases')">🛍️ แดชบอร์ด & รายการซื้อตามลูกค้า (<span id="crm-purchases-count">0</span>)</button>
       <button class="tab-btn" id="tab-crm-pricing" onclick="switchCRMTab('pricing')">🏷️ ราคาส่งตามกลุ่ม & จำนวน (Tier Pricing)</button>
       <button class="tab-btn" id="tab-crm-pipeline" onclick="switchCRMTab('pipeline')">📋 ติดตามใบเสนอราคา (Quotation Pipeline)</button>
       <button class="tab-btn" id="tab-crm-credit" onclick="switchCRMTab('credit')">💳 ตรวจสอบวงเงินเครดิต & AR Monitor</button>
@@ -27455,7 +27459,93 @@ async function customers() {
       </div>
     </div>
 
-    <!-- PANE 2: Multi-Tier & Volume Pricing -->
+    <!-- PANE 2: Customer Purchases & Product Breakdown Dashboard -->
+    <div id="pane-crm-purchases" class="crm-pane" style="display:none">
+      <!-- KPI Stats Grid -->
+      <div class="stat-grid mb-4" id="crm-purchases-kpis">
+        <div class="stat-card"><div class="stat-label">กำลังโหลดข้อมูลการซื้อ...</div></div>
+      </div>
+
+      <!-- Top Insights & Leaderboards (Top Customers & Top Products) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:14px;margin-bottom:16px" id="crm-purchases-insights">
+        <!-- Top Customers Leaderboard -->
+        <div class="card" style="padding:14px;background:#fff;margin-bottom:0">
+          <div style="font-size:13.5px;font-weight:700;color:var(--text);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="display:flex;align-items:center;gap:6px">🥇 5 อันดับลูกค้ายอดซื้อสูงสุด (Top Spenders)</span>
+            <span class="badge" style="background:#e0f2fe;color:#0284c7;font-size:11px;font-weight:700">Lifetime Spend</span>
+          </div>
+          <div id="crm-top-customers-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">กำลังประมวลผล...</div>
+          </div>
+        </div>
+
+        <!-- Top Products Leaderboard -->
+        <div class="card" style="padding:14px;background:#fff;margin-bottom:0">
+          <div style="font-size:13.5px;font-weight:700;color:var(--text);display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <span style="display:flex;align-items:center;gap:6px">🏆 5 อันดับสินค้าที่ลูกค้าซื้อมากที่สุด (Top Products)</span>
+            <span class="badge" style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700">Total Units</span>
+          </div>
+          <div id="crm-top-products-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="font-size:12px;color:var(--text3);text-align:center;padding:12px">กำลังประมวลผล...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Customer Purchase Breakdown Card -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="card-title">🛍️ รายการสินค้าที่ลูกค้าแต่ละคนเคยสั่งซื้อ (Customer Product Breakdown)</div>
+            <div class="card-subtitle">เจาะลึกประวัติการซื้อสินค้าของลูกค้าแต่ละราย จำนวนสะสม ยอดรวม ราคาเฉลี่ย และวันที่ซื้อล่าสุด</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-secondary btn-sm" onclick="toggleAllCustomerPurchases(true)" style="background:#f8fafc;font-weight:600">🔽 ขยายทั้งหมด</button>
+            <button class="btn btn-secondary btn-sm" onclick="toggleAllCustomerPurchases(false)" style="background:#f8fafc;font-weight:600">🔼 ยุบทั้งหมด</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportCustomerPurchasesCSV()" style="background:#f0fdf4;color:#166534;border-color:#bbf7d0;font-weight:700">📥 ส่งออก CSV</button>
+          </div>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="filter-bar" style="border:none;padding:0 0 12px 0;flex-wrap:wrap;gap:8px;align-items:center">
+          <input type="text" id="crm-purchase-search" placeholder="🔍 ค้นหาชื่อลูกค้า, เบอร์โทร, ชื่อสินค้า, หรือ SKU..." oninput="renderCustomerPurchasesDashboard()" style="flex:2;min-width:240px">
+          
+          <select id="crm-purchase-date" onchange="renderCustomerPurchasesDashboard()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="all">📅 ข้อมูลตลอดกาล (All-Time)</option>
+            <option value="this_month">📅 เดือนนี้ (This Month)</option>
+            <option value="last_3_months">📅 3 เดือนล่าสุด (90 วัน)</option>
+            <option value="this_year">📅 ปีนี้ (This Year)</option>
+          </select>
+
+          <select id="crm-purchase-tier" onchange="renderCustomerPurchasesDashboard()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="all">ทุกกลุ่มลูกค้า / ทุกประเภท</option>
+            <option value="company">🏢 เฉพาะบริษัท / โรงงาน (Company)</option>
+            <option value="individual">👤 เฉพาะบุคคล / อู่ / ช่าง (Individual)</option>
+            ${CUSTOMER_TIERS.map(t => `<option value="${t.key}">${t.label}</option>`).join('')}
+          </select>
+
+          <select id="crm-purchase-sort" onchange="renderCustomerPurchasesDashboard()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="spend_desc">💰 ยอดซื้อสูงสุด (Top Spender)</option>
+            <option value="orders_desc">📦 จำนวนบิลมากสุด (Most Orders)</option>
+            <option value="units_desc">🔢 จำนวนชิ้นสินค้ามากสุด (Most Units)</option>
+            <option value="products_desc">🛍️ ซื้อสินค้าหลากหลายที่สุด (Product Types)</option>
+            <option value="date_desc">🕒 สั่งซื้อล่าสุด (Recent Purchase)</option>
+            <option value="name_asc">🔤 ชื่อลูกค้า (A-Z / ก-ฮ)</option>
+          </select>
+
+          <div style="display:inline-flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden;background:#fff">
+            <button id="btn-view-cards" onclick="setCustomerPurchaseViewMode('cards')" style="padding:6px 12px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer" title="มุมมองการ์ดสรุป">🗂️ การ์ด</button>
+            <button id="btn-view-table" onclick="setCustomerPurchaseViewMode('table')" style="padding:6px 12px;border:none;background:#fff;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer" title="มุมมองตาราง">📑 ตาราง</button>
+          </div>
+        </div>
+
+        <!-- Result Container -->
+        <div id="crm-purchases-container">
+          <div class="loading"><div class="spinner"></div> กำลังประมวลผลข้อมูลการซื้อของลูกค้า...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANE 3: Multi-Tier & Volume Pricing -->
     <div id="pane-crm-pricing" class="crm-pane" style="display:none">
       <div class="card">
         <div class="card-header" style="flex-wrap:wrap;gap:12px">
@@ -27538,7 +27628,7 @@ async function customers() {
 
 function switchCRMTab(tab) {
   _crmTab = tab;
-  ['directory', 'pricing', 'pipeline', 'credit'].forEach(t => {
+  ['directory', 'purchases', 'pricing', 'pipeline', 'credit'].forEach(t => {
     const btn = document.getElementById('tab-crm-' + t);
     const pane = document.getElementById('pane-crm-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
@@ -27546,6 +27636,7 @@ function switchCRMTab(tab) {
   });
 
   if (tab === 'directory') filterCustomerList();
+  if (tab === 'purchases') renderCustomerPurchasesDashboard();
   if (tab === 'pricing') renderTierPricingTable();
   if (tab === 'pipeline') renderQuotationPipeline();
   if (tab === 'credit') renderCreditReport();
@@ -27559,17 +27650,18 @@ async function loadCRMData(force = false) {
       sb.from('customers').select('*').eq('shop_id', currentShop.id).order('name'),
       sb.from('customer_tier_pricing').select('*, products(id, name, sku, sale_price, current_cost)').eq('shop_id', currentShop.id),
       sb.from('quotations').select('*, customer:customers(name, customer_tier)').eq('shop_id', currentShop.id).order('created_at', { ascending: false }),
-      sb.from('orders').select('id, order_no, customer_name, customer_id, total_amount, profit, status, payment_method, order_date').eq('shop_id', currentShop.id),
-      sb.from('products').select('id, name, sku, sale_price, current_cost, stock_qty').eq('shop_id', currentShop.id).eq('active', true)
+      sb.from('orders').select('id, order_no, customer_name, customer_username, customer_social, customer_phone, customer_id, total_amount, profit, status, payment_method, order_date, channel, order_items(id, product_id, product_name, qty, sell_price, cost_per_unit, total_price)').eq('shop_id', currentShop.id).order('order_date', { ascending: false }).limit(5000),
+      sb.from('products').select('id, name, sku, category, sale_price, current_cost, stock_qty').eq('shop_id', currentShop.id).eq('active', true)
     ]);
 
     _allCustomers = custRes.data || [];
     _allTierPricings = tierRes.data || [];
     _allQuotationsCRM = qtRes.data || [];
+    _allOrdersWithItems = ordersRes.data || [];
     allProducts = prodsRes.data || [];
 
     // Calculate customer metrics (Total Spend, Outstanding AR, Orders count)
-    const orders = ordersRes.data || [];
+    const orders = _allOrdersWithItems || [];
     _allCustomers.forEach(c => {
       const cOrders = orders.filter(o => (o.customer_id === c.id) || (o.customer_name && o.customer_name.trim().toLowerCase() === c.name.trim().toLowerCase()));
       c.totalSpend = cOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
@@ -27586,6 +27678,7 @@ async function loadCRMData(force = false) {
 
     renderCRMStats();
     filterCustomerList();
+    renderCustomerPurchasesDashboard();
     renderTierPricingTable();
     renderQuotationPipeline();
     renderCreditReport();
@@ -27723,6 +27816,651 @@ function filterCustomerList() {
 }
 
 // ── Customer Modal (Create / Edit) ──────────────────────────
+
+// ── Customer Purchase Analytics & Product Breakdown Dashboard ───────────
+function buildCustomerPurchaseAnalytics(orders, customers, prods) {
+  const custMap = new Map();
+
+  // Initialize with registered customers
+  customers.forEach(c => {
+    const cKey = (c.id || c.name || '').toLowerCase().trim();
+    custMap.set(cKey, {
+      customer: c,
+      orders: [],
+      productsMap: new Map(),
+      totalSpend: 0,
+      orderCount: 0,
+      totalUnits: 0,
+      lastOrderDate: null,
+      firstOrderDate: null
+    });
+  });
+
+  // Process orders
+  orders.forEach(o => {
+    if (typeof isOrderCancelled === 'function' && isOrderCancelled(o)) return;
+
+    let target = null;
+    if (o.customer_id) {
+      const byIdKey = o.customer_id.toLowerCase().trim();
+      if (custMap.has(byIdKey)) target = custMap.get(byIdKey);
+    }
+    if (!target && o.customer_name) {
+      const byNameKey = o.customer_name.toLowerCase().trim();
+      for (const [k, v] of custMap.entries()) {
+        if (v.customer && v.customer.name && v.customer.name.toLowerCase().trim() === byNameKey) {
+          target = v;
+          break;
+        }
+      }
+    }
+
+    // Guest / Unregistered Order entry
+    if (!target) {
+      const guestDisplayName = (o.customer_name || o.customer_username || (o.customer_phone ? `ลูกค้า ${o.customer_phone}` : 'ลูกค้าทั่วไป')).trim();
+      const guestKey = 'guest_' + guestDisplayName.toLowerCase();
+      if (!custMap.has(guestKey)) {
+        custMap.set(guestKey, {
+          customer: {
+            id: null,
+            name: guestDisplayName,
+            customer_type: /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด/i.test(guestDisplayName) ? 'company' : 'individual',
+            customer_tier: 'retail',
+            phone: o.customer_phone || null,
+            billing_address: o.customer_address || null,
+            tax_id: o.tax_id || null,
+            isGuest: true
+          },
+          orders: [],
+          productsMap: new Map(),
+          totalSpend: 0,
+          orderCount: 0,
+          totalUnits: 0,
+          lastOrderDate: null,
+          firstOrderDate: null
+        });
+      }
+      target = custMap.get(guestKey);
+    }
+
+    target.orders.push(o);
+    const amount = Number(o.total_amount || 0);
+    target.totalSpend += amount;
+    target.orderCount += 1;
+
+    if (o.order_date) {
+      if (!target.lastOrderDate || o.order_date > target.lastOrderDate) target.lastOrderDate = o.order_date;
+      if (!target.firstOrderDate || o.order_date < target.firstOrderDate) target.firstOrderDate = o.order_date;
+    }
+
+    // Process order items
+    const items = o.order_items || [];
+    items.forEach(it => {
+      const pName = (it.product_name || 'ไม่ระบุชื่อสินค้า').trim();
+      const pKey = (it.product_id || pName).toLowerCase();
+      const qty = Number(it.qty || 0);
+      const price = Number(it.sell_price || (qty > 0 ? (Number(it.total_price || 0) / qty) : 0));
+      const totalPrice = Number(it.total_price !== undefined && it.total_price !== null ? it.total_price : (qty * price));
+
+      target.totalUnits += qty;
+
+      if (!target.productsMap.has(pKey)) {
+        const matchedProd = prods ? prods.find(p => p.id === it.product_id || (p.name && p.name.trim().toLowerCase() === pName.toLowerCase())) : null;
+        target.productsMap.set(pKey, {
+          product_id: it.product_id || null,
+          product_name: pName,
+          sku: it.sku || matchedProd?.sku || null,
+          category: matchedProd?.category || null,
+          total_qty: 0,
+          total_spend: 0,
+          orders_count: 0,
+          last_bought_date: o.order_date,
+          history: []
+        });
+      }
+
+      const pEntry = target.productsMap.get(pKey);
+      pEntry.total_qty += qty;
+      pEntry.total_spend += totalPrice;
+      pEntry.orders_count += 1;
+      if (!pEntry.last_bought_date || (o.order_date && o.order_date > pEntry.last_bought_date)) {
+        pEntry.last_bought_date = o.order_date;
+      }
+      pEntry.history.push({
+        order_id: o.id,
+        order_no: o.order_no,
+        order_date: o.order_date,
+        qty,
+        sell_price: price,
+        total_price: totalPrice
+      });
+    });
+  });
+
+  return Array.from(custMap.entries()).map(([cKey, item]) => {
+    const products = Array.from(item.productsMap.values()).map(p => ({
+      ...p,
+      avg_price: p.total_qty > 0 ? (p.total_spend / p.total_qty) : 0
+    })).sort((a, b) => b.total_spend - a.total_spend);
+
+    return {
+      ...item,
+      cKey,
+      products,
+      uniqueProductCount: products.length,
+      aov: item.orderCount > 0 ? (item.totalSpend / item.orderCount) : 0
+    };
+  });
+}
+
+function setCustomerPurchaseViewMode(mode) {
+  _crmPurchaseViewMode = mode;
+  const btnCards = document.getElementById('btn-view-cards');
+  const btnTable = document.getElementById('btn-view-table');
+  if (btnCards && btnTable) {
+    if (mode === 'cards') {
+      btnCards.style.background = 'var(--accent)';
+      btnCards.style.color = '#fff';
+      btnTable.style.background = '#fff';
+      btnTable.style.color = 'var(--text2)';
+    } else {
+      btnTable.style.background = 'var(--accent)';
+      btnTable.style.color = '#fff';
+      btnCards.style.background = '#fff';
+      btnCards.style.color = 'var(--text2)';
+    }
+  }
+  renderCustomerPurchasesDashboard();
+}
+
+function toggleCustomerPurchaseExpand(cKey) {
+  if (_expandedCustomerIds.has(cKey)) {
+    _expandedCustomerIds.delete(cKey);
+  } else {
+    _expandedCustomerIds.add(cKey);
+  }
+  renderCustomerPurchasesDashboard();
+}
+
+function toggleAllCustomerPurchases(expand) {
+  if (expand) {
+    const analytics = buildCustomerPurchaseAnalytics(_allOrdersWithItems, _allCustomers, allProducts);
+    analytics.forEach(item => _expandedCustomerIds.add(item.cKey));
+  } else {
+    _expandedCustomerIds.clear();
+  }
+  renderCustomerPurchasesDashboard();
+}
+
+function renderCustomerPurchasesDashboard() {
+  const container = document.getElementById('crm-purchases-container');
+  if (!container) return;
+
+  const orders = _allOrdersWithItems || [];
+  const prods = allProducts || [];
+  const customers = _allCustomers || [];
+
+  // 1. Date Filter
+  const dateFilter = document.getElementById('crm-purchase-date')?.value || 'all';
+  let filteredOrders = orders;
+  const now = new Date();
+
+  if (dateFilter === 'this_month') {
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const prefix = `${yyyy}-${mm}`;
+    filteredOrders = orders.filter(o => o.order_date && o.order_date.startsWith(prefix));
+  } else if (dateFilter === 'last_3_months') {
+    const d90 = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    const d90Str = d90.toISOString().slice(0, 10);
+    filteredOrders = orders.filter(o => o.order_date && o.order_date >= d90Str);
+  } else if (dateFilter === 'this_year') {
+    const yyyy = String(now.getFullYear());
+    filteredOrders = orders.filter(o => o.order_date && o.order_date.startsWith(yyyy));
+  }
+
+  // 2. Build Aggregates
+  const analytics = buildCustomerPurchaseAnalytics(filteredOrders, customers, prods);
+
+  // 3. Search & Tier Filter
+  const q = (document.getElementById('crm-purchase-search')?.value || '').trim().toLowerCase();
+  const tierFilter = document.getElementById('crm-purchase-tier')?.value || 'all';
+  const sortFilter = document.getElementById('crm-purchase-sort')?.value || 'spend_desc';
+
+  let list = analytics.filter(item => {
+    const c = item.customer || {};
+    // Only show customers with at least 1 order or if searching
+    if (!q && item.orderCount === 0) return false;
+
+    // Tier filter
+    if (tierFilter === 'company' && c.customer_type !== 'company') return false;
+    if (tierFilter === 'individual' && c.customer_type !== 'individual') return false;
+    if (tierFilter !== 'all' && tierFilter !== 'company' && tierFilter !== 'individual') {
+      if (c.customer_tier !== tierFilter) return false;
+    }
+
+    // Search query matches customer or products
+    if (q) {
+      const matchCustomer = `${c.name||''} ${c.phone||''} ${c.tax_id||''} ${c.billing_address||''}`.toLowerCase().includes(q);
+      const matchProduct = item.products.some(p => `${p.product_name} ${p.sku||''} ${p.category||''}`.toLowerCase().includes(q));
+      if (!matchCustomer && !matchProduct) return false;
+    }
+
+    return true;
+  });
+
+  // 4. Sorting
+  if (sortFilter === 'spend_desc') {
+    list.sort((a, b) => b.totalSpend - a.totalSpend);
+  } else if (sortFilter === 'orders_desc') {
+    list.sort((a, b) => b.orderCount - a.orderCount || b.totalSpend - a.totalSpend);
+  } else if (sortFilter === 'units_desc') {
+    list.sort((a, b) => b.totalUnits - a.totalUnits);
+  } else if (sortFilter === 'products_desc') {
+    list.sort((a, b) => b.uniqueProductCount - a.uniqueProductCount);
+  } else if (sortFilter === 'date_desc') {
+    list.sort((a, b) => (b.lastOrderDate || '').localeCompare(a.lastOrderDate || ''));
+  } else if (sortFilter === 'name_asc') {
+    list.sort((a, b) => (a.customer.name || '').localeCompare(b.customer.name || '', 'th'));
+  }
+
+  // Update badge count
+  const badgeCount = document.getElementById('crm-purchases-count');
+  if (badgeCount) badgeCount.textContent = list.length;
+
+  // 5. Render KPI Cards
+  const kpisGrid = document.getElementById('crm-purchases-kpis');
+  if (kpisGrid) {
+    const totalActiveBuyers = list.filter(i => i.orderCount > 0).length;
+    const totalRevenue = list.reduce((s, i) => s + i.totalSpend, 0);
+    const totalOrdersCount = list.reduce((s, i) => s + i.orderCount, 0);
+    const totalUnitsSold = list.reduce((s, i) => s + i.totalUnits, 0);
+    const avgSpendPerBuyer = totalActiveBuyers > 0 ? (totalRevenue / totalActiveBuyers) : 0;
+
+    kpisGrid.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid var(--blue)">
+        <div class="stat-label">👥 ลูกค้าที่สั่งซื้อ (Active Buyers)</div>
+        <div class="stat-value text-blue">${fmt(totalActiveBuyers)} <span style="font-size:13px;font-weight:400;color:var(--text3)">ราย</span></div>
+        <div class="stat-sub">จากทะเบียนลูกค้าทั้งหมด ${_allCustomers.length} ราย</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--accent)">
+        <div class="stat-label">💰 ยอดซื้อสะสมรวม (Total Revenue)</div>
+        <div class="stat-value text-accent">฿${fmtB(totalRevenue)}</div>
+        <div class="stat-sub">เฉลี่ย <b>฿${fmtB(avgSpendPerBuyer)}</b> / ราย</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--purple)">
+        <div class="stat-label">📦 จำนวนคำสั่งซื้อ (Total Orders)</div>
+        <div class="stat-value text-purple">${fmt(totalOrdersCount)} <span style="font-size:13px;font-weight:400;color:var(--text3)">บิล</span></div>
+        <div class="stat-sub">เฉลี่ย ${totalActiveBuyers>0?(totalOrdersCount/totalActiveBuyers).toFixed(1):0} บิล / ลูกค้า</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--amber)">
+        <div class="stat-label">🛍️ ชิ้นสินค้าที่จำหน่าย (Units Sold)</div>
+        <div class="stat-value text-amber">${fmt(totalUnitsSold)} <span style="font-size:13px;font-weight:400;color:var(--text3)">ชิ้น</span></div>
+        <div class="stat-sub">จากรายการสินค้าทุกคำสั่งซื้อ</div>
+      </div>
+    `;
+  }
+
+  // 6. Render Leaderboards (Top 5 Customers & Top 5 Products)
+  const topCustList = document.getElementById('crm-top-customers-list');
+  if (topCustList) {
+    const top5Cust = [...analytics].filter(i => i.totalSpend > 0).sort((a, b) => b.totalSpend - a.totalSpend).slice(0, 5);
+    if (!top5Cust.length) {
+      topCustList.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px">ไม่มีข้อมูลยอดซื้อ</div>';
+    } else {
+      topCustList.innerHTML = top5Cust.map((item, idx) => {
+        const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+        const c = item.customer;
+        const topProd = item.products[0]?.product_name || 'ไม่มีสินค้า';
+        return `
+          <div onclick="document.getElementById('crm-purchase-search').value='${escapeHTML(c.name)}'; renderCustomerPurchasesDashboard();"
+            style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer;font-size:12px"
+            onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='#f8fafc'">
+            <div style="display:flex;align-items:center;gap:8px;overflow:hidden">
+              <span style="font-weight:700;font-size:13px;width:18px">${medals[idx]}</span>
+              <div style="overflow:hidden">
+                <div style="font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(c.name)}</div>
+                <div style="font-size:10.5px;color:var(--text3)">สินค้าหลัก: ${escapeHTML(topProd)}</div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:8px">
+              <div style="font-weight:700;color:var(--accent);font-family:var(--mono)">฿${fmtB(item.totalSpend)}</div>
+              <div style="font-size:10.5px;color:var(--text3)">${item.orderCount} บิล</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  const topProdList = document.getElementById('crm-top-products-list');
+  if (topProdList) {
+    // Global product aggregation
+    const prodAgg = new Map();
+    analytics.forEach(item => {
+      item.products.forEach(p => {
+        const key = p.product_name.toLowerCase();
+        if (!prodAgg.has(key)) {
+          prodAgg.set(key, { name: p.product_name, sku: p.sku, qty: 0, spend: 0, custCount: 0 });
+        }
+        const pa = prodAgg.get(key);
+        pa.qty += p.total_qty;
+        pa.spend += p.total_spend;
+        pa.custCount += 1;
+      });
+    });
+    const top5Prods = Array.from(prodAgg.values()).sort((a, b) => b.qty - a.qty).slice(0, 5);
+    if (!top5Prods.length) {
+      topProdList.innerHTML = '<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px">ไม่มีข้อมูลสินค้า</div>';
+    } else {
+      topProdList.innerHTML = top5Prods.map((p, idx) => {
+        const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+        return `
+          <div onclick="document.getElementById('crm-purchase-search').value='${escapeHTML(p.name)}'; renderCustomerPurchasesDashboard();"
+            style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:6px;background:#f8fafc;border:1px solid #e2e8f0;cursor:pointer;font-size:12px"
+            onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#f8fafc'">
+            <div style="display:flex;align-items:center;gap:8px;overflow:hidden">
+              <span style="font-weight:700;font-size:13px;width:18px">${medals[idx]}</span>
+              <div style="overflow:hidden">
+                <div style="font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
+                <div style="font-size:10.5px;color:var(--text3)">ซื้อโดย ${p.custCount} ลูกค้า ${p.sku ? '· SKU: ' + escapeHTML(p.sku) : ''}</div>
+              </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;margin-left:8px">
+              <div style="font-weight:700;color:var(--blue);font-family:var(--mono)">${fmt(p.qty)} ชิ้น</div>
+              <div style="font-size:10.5px;color:var(--accent)">฿${fmtB(p.spend)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  // 7. Render Customer Cards / Table
+  if (!list.length) {
+    container.innerHTML = `
+      <div class="empty" style="padding:40px 20px;text-align:center">
+        <div class="empty-icon" style="font-size:48px">🛍️</div>
+        <div class="empty-text" style="font-size:16px;font-weight:700;color:var(--text);margin-top:8px">ไม่พบข้อมูลการซื้อสินค้าของลูกค้าที่ตรงกับเงื่อนไข</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:4px">ลองปรับเปลี่ยนคำค้นหา หรือช่วงเวลาที่ต้องการดูข้อมูล</div>
+      </div>
+    `;
+    return;
+  }
+
+  if (_crmPurchaseViewMode === 'cards') {
+    container.innerHTML = list.map(item => {
+      const c = item.customer || {};
+      const isExpanded = _expandedCustomerIds.has(item.cKey);
+      const isCompany = c.customer_type === 'company';
+      const avatarBg = isCompany ? '#e0f2fe' : '#fef3c7';
+      const avatarColor = isCompany ? '#0369a1' : '#b45309';
+      const avatarIcon = isCompany ? '🏢' : '👤';
+
+      return `
+        <div style="border:1px solid #e2e8f0;border-radius:10px;background:#fff;margin-bottom:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05);transition:all 0.15s ease">
+          <!-- Header Bar -->
+          <div onclick="toggleCustomerPurchaseExpand('${item.cKey}')"
+            style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:14px;background:#fafbfe;border-bottom:1px solid #edf2f7;user-select:none"
+            onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background='#fafbfe'">
+            <!-- Left Info -->
+            <div style="flex:1;min-width:0;display:flex;align-items:flex-start;gap:12px">
+              <div style="width:42px;height:42px;border-radius:10px;background:${avatarBg};color:${avatarColor};display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">
+                ${avatarIcon}
+              </div>
+              <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                  <span style="font-size:15px;font-weight:700;color:var(--text)">${escapeHTML(c.name)}</span>
+                  ${getCustomerTierBadge(c.customer_tier)}
+                  <span class="badge" style="background:#f1f5f9;color:#475569;font-size:11px">${isCompany ? '🏢 องค์กร/โรงงาน' : '👤 บุคคล/ช่าง'}</span>
+                  ${c.isGuest ? '<span class="badge" style="background:#fffbeb;color:#b45309;font-size:10.5px;border:1px solid #fde68a">ยังไม่ได้บันทึกลง CRM</span>' : ''}
+                </div>
+                <div style="font-size:12px;color:var(--text3);margin-top:3px;display:flex;gap:12px;flex-wrap:wrap">
+                  ${c.phone ? `<span>📞 <b>${escapeHTML(c.phone)}</b></span>` : ''}
+                  ${c.tax_id ? `<span>🔢 Tax ID: <b>${escapeHTML(c.tax_id)}</b></span>` : ''}
+                  ${c.billing_address ? `<span style="max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">📍 ${escapeHTML(c.billing_address)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Metrics -->
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:flex-end">
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--text3)">ยอดซื้อสะสม</div>
+                <div style="font-size:16px;font-weight:800;color:var(--accent);font-family:var(--mono)">฿${fmtB(item.totalSpend)}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--text3)">จำนวนออเดอร์</div>
+                <div style="font-size:14px;font-weight:700;color:var(--blue)">${fmt(item.orderCount)} บิล</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--text3)">ชนิดสินค้า</div>
+                <div style="font-size:14px;font-weight:700;color:var(--purple)">${fmt(item.products.length)} รายการ</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-size:11px;color:var(--text3)">จำนวนชิ้นรวม</div>
+                <div style="font-size:14px;font-weight:700;color:var(--amber)">${fmt(item.totalUnits)} ชิ้น</div>
+              </div>
+              <div style="font-size:16px;color:var(--text3);font-weight:800;margin-left:4px;padding:4px 8px;border-radius:6px;background:var(--bg3)">
+                ${isExpanded ? '▲ ซ่อน' : '▼ ดูสินค้า (' + item.products.length + ')'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Preview Chips (Always visible) -->
+          <div style="padding:8px 16px;background:#fff;border-bottom:${isExpanded ? '1px solid #e2e8f0' : 'none'};display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11.5px;font-weight:700;color:var(--text2)">🏆 สินค้าที่ซื้อ:</span>
+            ${item.products.slice(0, 4).map(p => `
+              <span style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:2px 8px;font-size:11.5px;color:var(--text);display:inline-flex;align-items:center;gap:4px">
+                <b>${escapeHTML(p.product_name)}</b>
+                <span style="color:var(--accent);font-weight:700">x${fmt(p.total_qty)}</span>
+                <span style="color:var(--text3);font-size:10.5px">(฿${fmtB(p.total_spend)})</span>
+              </span>
+            `).join('')}
+            ${item.products.length > 4 ? `<span style="font-size:11px;color:var(--text3)">+ อีก ${item.products.length - 4} รายการ</span>` : ''}
+            <div style="margin-left:auto;font-size:11.5px;color:var(--text3)">
+              🕒 ซื้อล่าสุด: <b>${item.lastOrderDate || '-'}</b>
+            </div>
+          </div>
+
+          <!-- Expanded Product Table Accordion -->
+          ${isExpanded ? `
+            <div style="padding:14px 16px;background:#ffffff">
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+                <span>📦 รายการสินค้าทั้งหมดที่ลูกค้ารายนี้เคยซื้อ (${item.products.length} รายการ)</span>
+                <span style="font-size:12px;color:var(--text3)">ยอดซื้อเฉลี่ยต่อบิล: <b>฿${fmtB(item.aov)}</b></span>
+              </div>
+              <div class="table-wrap" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+                <table style="width:100%;font-size:12.5px">
+                  <thead>
+                    <tr style="background:#f8fafc">
+                      <th style="width:40px;text-align:center">#</th>
+                      <th>สินค้า & SKU</th>
+                      <th class="text-right" style="width:100px">จำนวนรวม</th>
+                      <th class="text-right" style="width:110px">ราคาเฉลี่ย/ชิ้น</th>
+                      <th class="text-right" style="width:120px">ยอดเงินรวม</th>
+                      <th class="text-center" style="width:110px">ซื้อล่าสุด</th>
+                      <th>ประวัติบิลที่ซื้อ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${item.products.map((p, pIdx) => `
+                      <tr>
+                        <td style="text-align:center;color:var(--text3)">${pIdx + 1}</td>
+                        <td>
+                          <div style="font-weight:700;color:#0f172a">${escapeHTML(p.product_name)}</div>
+                          <div style="display:flex;gap:6px;margin-top:2px;flex-wrap:wrap">
+                            ${p.sku ? `<span style="background:#eff6ff;color:#1d4ed8;font-size:10.5px;padding:1px 5px;border-radius:4px;border:1px solid #bfdbfe;font-family:var(--mono)">SKU: ${escapeHTML(p.sku)}</span>` : ''}
+                            ${p.category ? `<span style="background:#f1f5f9;color:#475569;font-size:10.5px;padding:1px 5px;border-radius:4px;border:1px solid #cbd5e1">📁 ${escapeHTML(p.category)}</span>` : ''}
+                            <span style="font-size:10.5px;color:var(--text3)">ซื้อใน ${p.orders_count} บิล</span>
+                          </div>
+                        </td>
+                        <td class="text-right font-mono" style="font-weight:700;font-size:13px;color:var(--text)">
+                          ${fmt(p.total_qty)}
+                        </td>
+                        <td class="text-right font-mono" style="color:var(--text2)">
+                          ฿${fmtB(p.avg_price)}
+                        </td>
+                        <td class="text-right font-mono" style="font-weight:700;color:var(--accent);font-size:13px">
+                          ฿${fmtB(p.total_spend)}
+                        </td>
+                        <td class="text-center" style="font-size:11.5px;color:var(--text3)">
+                          ${p.last_bought_date || '-'}
+                        </td>
+                        <td>
+                          <div style="display:flex;gap:4px;flex-wrap:wrap;max-width:320px">
+                            ${p.history.slice(0, 5).map(h => `
+                              <span onclick="viewOrder('${h.order_id}'); event.stopPropagation();"
+                                title="คลิกดูคำสั่งซื้อ ${h.order_no || ''} (${h.order_date || ''})"
+                                style="background:#f0f7ff;color:#1e40af;border:1px solid #bfdbfe;padding:2px 6px;border-radius:4px;font-size:11px;font-family:var(--mono);cursor:pointer"
+                                onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#f0f7ff'">
+                                ${escapeHTML(h.order_no || 'SO')} (${fmt(h.qty)})
+                              </span>
+                            `).join('')}
+                            ${p.history.length > 5 ? `<span style="font-size:10.5px;color:var(--text3)">+${p.history.length - 5}</span>` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Quick Action Buttons for this customer -->
+              <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+                ${c.id ? `
+                  <button class="btn btn-secondary btn-sm" onclick="openCustomerProfileModal('${c.id}'); event.stopPropagation();" style="display:inline-flex;align-items:center;gap:4px">
+                    👤 ดูโปรไฟล์ลูกค้า 360°
+                  </button>
+                ` : ''}
+                <button class="btn btn-primary btn-sm" onclick="showPage('orders'); setTimeout(()=>openNewOrder(), 200); event.stopPropagation();" style="display:inline-flex;align-items:center;gap:4px">
+                  🛒 เปิดบิลใหม่ให้ลูกค้ารายนี้
+                </button>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  } else {
+    // Dense Table View Mode
+    container.innerHTML = `
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:40px;text-align:center">#</th>
+              <th>ชื่อลูกค้า / บริษัท</th>
+              <th>กลุ่มราคา</th>
+              <th class="text-right">จำนวนบิล</th>
+              <th class="text-right">ชนิดสินค้า</th>
+              <th class="text-right">จำนวนชิ้นรวม</th>
+              <th class="text-right">ยอดซื้อสะสม</th>
+              <th>สินค้าที่ซื้อเด่น</th>
+              <th class="text-center">ซื้อล่าสุด</th>
+              <th style="text-align:center">จัดการ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map((item, idx) => {
+              const c = item.customer || {};
+              const topProd = item.products.slice(0, 2).map(p => `${escapeHTML(p.product_name)} (${fmt(p.total_qty)})`).join(', ');
+              return `
+                <tr>
+                  <td style="text-align:center;color:var(--text3)">${idx + 1}</td>
+                  <td>
+                    <div style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(c.name)}</div>
+                    <div style="font-size:11px;color:var(--text3)">${c.phone ? '📞 ' + escapeHTML(c.phone) : (c.customer_type === 'company' ? '🏢 นิติบุคคล' : '👤 บุคคล')}</div>
+                  </td>
+                  <td>${getCustomerTierBadge(c.customer_tier)}</td>
+                  <td class="text-right font-mono" style="font-weight:600">${fmt(item.orderCount)}</td>
+                  <td class="text-right font-mono" style="font-weight:600;color:var(--purple)">${fmt(item.products.length)}</td>
+                  <td class="text-right font-mono" style="font-weight:600;color:var(--amber)">${fmt(item.totalUnits)}</td>
+                  <td class="text-right font-mono" style="font-weight:700;color:var(--accent);font-size:13px">฿${fmtB(item.totalSpend)}</td>
+                  <td style="font-size:11.5px;max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(topProd)}">
+                    ${topProd || '-'}
+                  </td>
+                  <td class="text-center font-mono" style="font-size:11.5px;color:var(--text3)">${item.lastOrderDate || '-'}</td>
+                  <td style="text-align:center;white-space:nowrap">
+                    <button class="btn btn-secondary btn-sm" onclick="setCustomerPurchaseViewMode('cards'); toggleCustomerPurchaseExpand('${item.cKey}');" title="ดูรายละเอียดสินค้า">🛍️ สินค้า (${item.products.length})</button>
+                    ${c.id ? `<button class="btn btn-secondary btn-sm" onclick="openCustomerProfileModal('${c.id}')" title="โปรไฟล์ 360">👤</button>` : ''}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+}
+
+function exportCustomerPurchasesCSV() {
+  const orders = _allOrdersWithItems || [];
+  const prods = allProducts || [];
+  const customers = _allCustomers || [];
+  const analytics = buildCustomerPurchaseAnalytics(orders, customers, prods);
+
+  if (!analytics.length) {
+    toast('ไม่มีข้อมูลสำหรับส่งออก', 'error');
+    return;
+  }
+
+  const rows = [
+    ['Customer Name', 'Customer Type', 'Tier', 'Phone', 'Tax ID', 'Total Spend (THB)', 'Total Orders', 'Total Units', 'Product Name', 'SKU', 'Category', 'Product Total Qty', 'Avg Unit Price (THB)', 'Product Total Spend (THB)', 'Last Bought Date']
+  ];
+
+  analytics.forEach(item => {
+    const c = item.customer || {};
+    if (item.products.length === 0) {
+      rows.push([
+        c.name || '',
+        c.customer_type || '',
+        c.customer_tier || '',
+        c.phone || '',
+        c.tax_id || '',
+        item.totalSpend,
+        item.orderCount,
+        item.totalUnits,
+        '-', '-', '-', 0, 0, 0,
+        item.lastOrderDate || ''
+      ]);
+    } else {
+      item.products.forEach(p => {
+        rows.push([
+          c.name || '',
+          c.customer_type || '',
+          c.customer_tier || '',
+          c.phone || '',
+          c.tax_id || '',
+          item.totalSpend,
+          item.orderCount,
+          item.totalUnits,
+          p.product_name,
+          p.sku || '',
+          p.category || '',
+          p.total_qty,
+          p.avg_price.toFixed(2),
+          p.total_spend,
+          p.last_bought_date || ''
+        ]);
+      });
+    }
+  });
+
+  const csvContent = '﻿' + rows.map(r => r.map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `customer_purchases_report_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  toast('ส่งออกรายงาน CSV สำเร็จ ✓', 'success');
+}
+
+
 function openNewCustomerModal() {
   _editingCustomerId = null;
   renderCustomerModal('👥 เพิ่มลูกค้าใหม่', {});
@@ -27862,12 +28600,44 @@ async function openCustomerProfileModal(id) {
 
   // Fetch recent orders & quotations for this customer
   const [ordersRes, qtRes] = await Promise.all([
-    sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id).or(`customer_id.eq.${id},customer_name.eq.${c.name}`).order('order_date', { ascending: false }).limit(20),
-    sb.from('quotations').select('*').eq('shop_id', currentShop.id).eq('customer_id', id).order('created_at', { ascending: false }).limit(10)
+    sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id).or(`customer_id.eq.${id},customer_name.eq.${c.name}`).order('order_date', { ascending: false }).limit(50),
+    sb.from('quotations').select('*').eq('shop_id', currentShop.id).eq('customer_id', id).order('created_at', { ascending: false }).limit(20)
   ]);
 
   const orders = ordersRes.data || [];
   const qts = qtRes.data || [];
+
+  // Aggregate products bought by this customer
+  const prodMap = new Map();
+  let totalUnits = 0;
+  orders.forEach(o => {
+    (o.order_items || []).forEach(it => {
+      const pName = (it.product_name || 'ไม่ระบุ').trim();
+      const pKey = (it.product_id || pName).toLowerCase();
+      const qty = Number(it.qty || 0);
+      const price = Number(it.sell_price || (qty > 0 ? (Number(it.total_price || 0) / qty) : 0));
+      const total = Number(it.total_price !== undefined && it.total_price !== null ? it.total_price : (qty * price));
+      totalUnits += qty;
+
+      if (!prodMap.has(pKey)) {
+        prodMap.set(pKey, {
+          name: pName,
+          sku: it.sku || (allProducts.find(p => p.id === it.product_id)?.sku) || null,
+          totalQty: 0,
+          totalSpend: 0,
+          orderCount: 0,
+          lastBought: o.order_date
+        });
+      }
+      const entry = prodMap.get(pKey);
+      entry.totalQty += qty;
+      entry.totalSpend += total;
+      entry.orderCount += 1;
+      if (o.order_date && (!entry.lastBought || o.order_date > entry.lastBought)) entry.lastBought = o.order_date;
+    });
+  });
+
+  const purchasedProducts = Array.from(prodMap.values()).sort((a, b) => b.totalSpend - a.totalSpend);
 
   showDynamicModal(`👤 ข้อมูลลูกค้า 360°: ${escapeHTML(c.name)}`, `
     <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
@@ -27882,32 +28652,67 @@ async function openCustomerProfileModal(id) {
         </div>
       </div>
       <div style="flex:1;min-width:200px;background:var(--bg3);padding:14px;border-radius:8px;border:1px solid var(--border)">
-        <div style="font-size:13px;font-weight:700;margin-bottom:8px">💳 สถานะเครดิต & ยอดเงิน</div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:8px">💳 สถานะเครดิต & ยอดการซื้อ</div>
         <div style="font-size:12px;line-height:1.8">
           <div><b>เครดิตเทอม:</b> <span class="seal-badge-mat">${c.credit_term_days} วัน</span></div>
           <div><b>วงเงินสินเชื่อ:</b> ${c.credit_limit > 0 ? fmtB(c.credit_limit) : 'ไม่จำกัด'}</div>
           <div><b>ยอดค้างชำระ:</b> <span style="font-weight:700;color:${c.isCreditExceeded?'var(--red)':'var(--amber)'}">${fmtB(c.outstandingAR)}</span></div>
-          <div><b>ยอดซื้อสะสมทั้งหมด:</b> <b style="color:var(--accent)">${fmtB(c.totalSpend)}</b> (${c.orderCount} บิล)</div>
+          <div><b>ยอดซื้อสะสม:</b> <b style="color:var(--accent)">${fmtB(c.totalSpend)}</b> (${orders.length} บิล · ${purchasedProducts.length} ชนิด · ${fmt(totalUnits)} ชิ้น)</div>
         </div>
         <div style="margin-top:10px;display:flex;gap:6px">
-          <button class="btn btn-primary btn-sm" onclick="closeModal('modal-dynamic'); showPage('orders'); setTimeout(()=>openNewOrderForCustomer('${c.id}'), 200);">🛒 เปิดบิลใหม่</button>
-          <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-dynamic'); showPage('quotations'); setTimeout(()=>openNewQuotationForCustomer('${c.id}'), 200);">📋 เสนอราคา</button>
+          <button class="btn btn-primary btn-sm" onclick="closeModal('modal-dynamic'); showPage('orders'); setTimeout(()=>openNewOrder(), 200);">🛒 เปิดบิลใหม่</button>
+          <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-dynamic'); switchCRMTab('purchases'); setTimeout(()=>{ document.getElementById('crm-purchase-search').value='${escapeHTML(c.name)}'; renderCustomerPurchasesDashboard(); }, 200);">🛍️ แดชบอร์ดซื้อ</button>
         </div>
       </div>
     </div>
 
-    <!-- Recent Orders -->
-    <div style="font-size:13px;font-weight:700;margin-bottom:6px">📦 ประวัติคำสั่งซื้อล่าสุด (Recent Orders)</div>
-    <div class="table-wrap mb-4" style="max-height:200px;overflow-y:auto">
+    <!-- Purchased Products Breakdown -->
+    <div style="font-size:13.5px;font-weight:700;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+      <span>🛍️ สรุปรายการสินค้าที่ลูกค้าเคยซื้อทั้งหมด (${purchasedProducts.length} รายการ)</span>
+      <span style="font-size:12px;color:var(--text3)">รวม ${fmt(totalUnits)} ชิ้น</span>
+    </div>
+    <div class="table-wrap mb-4" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
       <table>
-        <thead><tr><th>วันที่</th><th>เลขที่บิล</th><th>รายการสินค้า</th><th class="text-right">ยอดรวม</th><th>สถานะ</th></tr></thead>
+        <thead>
+          <tr style="background:#f8fafc">
+            <th style="width:36px;text-align:center">#</th>
+            <th>ชื่อสินค้า</th>
+            <th class="text-right" style="width:90px">จำนวนรวม</th>
+            <th class="text-right" style="width:100px">ราคาเฉลี่ย</th>
+            <th class="text-right" style="width:110px">ยอดรวม</th>
+            <th class="text-center" style="width:100px">ซื้อล่าสุด</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${purchasedProducts.length ? purchasedProducts.map((p, idx) => `
+            <tr>
+              <td style="text-align:center;color:var(--text3)">${idx + 1}</td>
+              <td>
+                <div style="font-weight:700">${escapeHTML(p.name)}</div>
+                ${p.sku ? `<div style="font-family:var(--mono);font-size:10.5px;color:var(--blue)">SKU: ${escapeHTML(p.sku)}</div>` : ''}
+              </td>
+              <td class="text-right font-mono" style="font-weight:700">${fmt(p.totalQty)}</td>
+              <td class="text-right font-mono">฿${fmtB(p.totalQty > 0 ? (p.totalSpend / p.totalQty) : 0)}</td>
+              <td class="text-right font-mono" style="font-weight:700;color:var(--accent)">฿${fmtB(p.totalSpend)}</td>
+              <td class="text-center font-mono" style="font-size:11.5px;color:var(--text3)">${p.lastBought || '-'}</td>
+            </tr>
+          `).join('') : '<tr><td colspan="6" style="text-align:center;color:var(--text3)">ยังไม่มีประวัติการซื้อสินค้า</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recent Orders -->
+    <div style="font-size:13.5px;font-weight:700;margin-bottom:6px">📦 ประวัติคำสั่งซื้อ (${orders.length} บิล)</div>
+    <div class="table-wrap mb-4" style="max-height:180px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+      <table>
+        <thead><tr style="background:#f8fafc"><th>วันที่</th><th>เลขที่บิล</th><th>รายการสินค้า</th><th class="text-right">ยอดรวม</th><th>สถานะ</th></tr></thead>
         <tbody>
           ${orders.length ? orders.map(o => `
-            <tr>
+            <tr onclick="viewOrder('${o.id}')" style="cursor:pointer" title="คลิกเพื่อดูออเดอร์">
               <td style="font-size:12px">${o.order_date}</td>
               <td style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue)">${o.order_no || '-'}</td>
               <td style="font-size:12px">${(o.order_items||[]).map(i => `${i.qty}x ${escapeHTML(i.product_name)}`).join(', ')}</td>
-              <td class="text-right font-mono" style="font-weight:700">${fmtB(o.total_amount)}</td>
+              <td class="text-right font-mono" style="font-weight:700">฿${fmtB(o.total_amount)}</td>
               <td><span class="seal-badge-mat">${o.status}</span></td>
             </tr>
           `).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--text3)">ยังไม่มีประวัติการสั่งซื้อ</td></tr>'}
@@ -33386,7 +34191,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.41', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Order Edit & New Order Product Search Visibility Fix', items:[
+    { v:'2.42', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics & Product Breakdown Dashboard', items:[
+      '🛍️ <b>แดชบอร์ดวิเคราะห์ประวัติการซื้อรายลูกค้า (Customer Purchase Dashboard):</b> เพิ่มแท็บใหม่ในหน้า Customers รวบรวมข้อมูลประวัติการสั่งซื้อ ยอดซื้อสะสม และสถิติการสั่งซื้อของลูกค้าแต่ละคนอย่างครบถ้วน',
+      '📦 <b>แจกแจงรายการสินค้าที่ลูกค้าแต่ละคนเคยซื้อ (Product Breakdown):</b> แสดงรายการสินค้าทั้งหมดที่ลูกค้าแต่ละคนเคยสั่งซื้อ พร้อมจำนวนชิ้นรวม (Total Qty), ราคาเฉลี่ยต่อชิ้น (Avg Price), ยอดเงินรวม (Total Spend), วันที่ซื้อล่าสุด และลิงก์ประวัติบิลคำสั่งซื้อ',
+      '🥇 <b>กระดานอันดับ Top 5 ลูกค้ายอดซื้อสูงสุด & Top 5 สินค้ายอดนิยม:</b> สรุปลูกค้าที่มียอดซื้อสะสมสูงสุด และสินค้าที่ถูกสั่งซื้อมากที่สุดในระบบ พร้อมตัวกรองค้นหาอัจฉริยะ',
+      '🔍 <b>ค้นหาและกรองข้อมูลยืดหยุ่น:</b> ค้นหาตามชื่อลูกค้า, เบอร์โทร, ชื่อสินค้า, หรือ SKU และกรองตามช่วงเวลา (เดือนนี้, 3 เดือน, ปีนี้) และกลุ่มลูกค้า (Tier / องค์กร / บุคคล)',
+      '📥 <b>ส่งออกรายงาน CSV:</b> รองรับการดาวน์โหลดไฟล์รายงานประวัติการซื้อสินค้าของลูกค้าแบบครบถ้วน',
+      '🧹 <b>Cache Refresh (v2.42):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.42'
+    ]},
+    { v:'2.41', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Order Edit & New Order Product Search Visibility Fix', items:[
       '🔍 <b>แสดงชื่อสินค้าเต็มในแถบค้นหา (หน้าแก้ไข/สร้างออเดอร์):</b> ปรับขนาดกล่องผลลัพธ์การค้นหาสินค้าให้กว้างขึ้นและลอยเด่น (Floating Dropdown) ไม่ถูกบีบด้วยความกว้างของคอลัมน์ตาราง',
       '🏷️ <b>แสดงชื่อสินค้าชัดเจน ไม่ถูกตัดทอน (...):</b> จัดวางชื่อสินค้าตัวหนาขนาดชัดเจนให้อยู่แถวบนสุด ตัดขึ้นบรรทัดใหม่อัตโนมัติ (Word Wrap) พร้อมป้าย หมวดหมู่, SKU, รหัสสินค้า, Part No, ราคาขาย และป้ายสต๊อกคงเหลือ',
       '⚡ <b>ค้นหาแบบ Real-time เชื่อมต่อฐานข้อมูล:</b> เพิ่มระบบค้นหาคำค้นล่วงหน้าและดึงข้อมูลจากเซิร์ฟเวอร์แบบ Debounce ทันทีเมื่อพิมพ์ค้นหา',
