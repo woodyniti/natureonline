@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.42';
-const DISPLAY_APP_VERSION = 'v2.42';
+const CURRENT_APP_VERSION = 'sealthai-v2.43';
+const DISPLAY_APP_VERSION = 'v2.43';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.42 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.43 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.42 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.43 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.42 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.43 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.42)">v2.42 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.43)">v2.43 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -27646,19 +27646,62 @@ async function loadCRMData(force = false) {
   if (!currentShop?.id) return;
 
   try {
-    const [custRes, tierRes, qtRes, ordersRes, prodsRes] = await Promise.all([
+    // 1. Fetch CRM data and products in parallel
+    const [custRes, tierRes, qtRes, prodsRes] = await Promise.all([
       sb.from('customers').select('*').eq('shop_id', currentShop.id).order('name'),
       sb.from('customer_tier_pricing').select('*, products(id, name, sku, sale_price, current_cost)').eq('shop_id', currentShop.id),
       sb.from('quotations').select('*, customer:customers(name, customer_tier)').eq('shop_id', currentShop.id).order('created_at', { ascending: false }),
-      sb.from('orders').select('id, order_no, customer_name, customer_username, customer_social, customer_phone, customer_id, total_amount, profit, status, payment_method, order_date, channel, order_items(id, product_id, product_name, qty, sell_price, cost_per_unit, total_price)').eq('shop_id', currentShop.id).order('order_date', { ascending: false }).limit(5000),
       sb.from('products').select('id, name, sku, category, sale_price, current_cost, stock_qty').eq('shop_id', currentShop.id).eq('active', true)
     ]);
 
     _allCustomers = custRes.data || [];
     _allTierPricings = tierRes.data || [];
     _allQuotationsCRM = qtRes.data || [];
-    _allOrdersWithItems = ordersRes.data || [];
     allProducts = prodsRes.data || [];
+
+    // 2. Fetch orders with order_items with automatic fallback
+    let ordersData = [];
+    try {
+      const ordersRes = await sb.from('orders')
+        .select('id, order_no, customer_name, customer_username, customer_social, customer_phone, customer_id, total_amount, profit, status, shipping_status, doc_status, payment_method, order_date, channel, order_items(*)')
+        .eq('shop_id', currentShop.id)
+        .order('order_date', { ascending: false })
+        .limit(5000);
+
+      if (!ordersRes.error && ordersRes.data) {
+        ordersData = ordersRes.data;
+      } else {
+        throw ordersRes.error || new Error('Query error');
+      }
+    } catch (orderErr) {
+      console.warn('Nested orders query failed, fetching orders & order_items separately:', orderErr);
+      const { data: plainOrders } = await sb.from('orders')
+        .select('*')
+        .eq('shop_id', currentShop.id)
+        .order('order_date', { ascending: false })
+        .limit(5000);
+
+      if (plainOrders && plainOrders.length) {
+        ordersData = plainOrders;
+        const orderIds = plainOrders.map(o => o.id);
+        const allItems = [];
+        for (let i = 0; i < orderIds.length; i += 100) {
+          const chunk = orderIds.slice(i, i + 100);
+          const { data: chunkItems } = await sb.from('order_items').select('*').in('order_id', chunk);
+          if (chunkItems && chunkItems.length) allItems.push(...chunkItems);
+        }
+        const itemMap = new Map();
+        allItems.forEach(it => {
+          if (!itemMap.has(it.order_id)) itemMap.set(it.order_id, []);
+          itemMap.get(it.order_id).push(it);
+        });
+        ordersData.forEach(o => {
+          o.order_items = itemMap.get(o.id) || [];
+        });
+      }
+    }
+
+    _allOrdersWithItems = ordersData || [];
 
     // Calculate customer metrics (Total Spend, Outstanding AR, Orders count)
     const orders = _allOrdersWithItems || [];
@@ -27823,7 +27866,7 @@ function buildCustomerPurchaseAnalytics(orders, customers, prods) {
 
   // Initialize with registered customers
   customers.forEach(c => {
-    const cKey = (c.id || c.name || '').toLowerCase().trim();
+    const cKey = String(c.id || c.name || '').toLowerCase().trim();
     custMap.set(cKey, {
       customer: c,
       orders: [],
@@ -27842,32 +27885,44 @@ function buildCustomerPurchaseAnalytics(orders, customers, prods) {
 
     let target = null;
     if (o.customer_id) {
-      const byIdKey = o.customer_id.toLowerCase().trim();
+      const byIdKey = String(o.customer_id).toLowerCase().trim();
       if (custMap.has(byIdKey)) target = custMap.get(byIdKey);
     }
     if (!target && o.customer_name) {
-      const byNameKey = o.customer_name.toLowerCase().trim();
+      const byNameKey = String(o.customer_name).toLowerCase().trim();
       for (const [k, v] of custMap.entries()) {
-        if (v.customer && v.customer.name && v.customer.name.toLowerCase().trim() === byNameKey) {
+        if (v.customer && v.customer.name && String(v.customer.name).toLowerCase().trim() === byNameKey) {
           target = v;
           break;
+        }
+      }
+    }
+    if (!target && o.customer_phone) {
+      const byPhoneKey = String(o.customer_phone).replace(/\D/g, '');
+      if (byPhoneKey.length >= 8) {
+        for (const [k, v] of custMap.entries()) {
+          const cPhone = String(v.customer?.phone || '').replace(/\D/g, '');
+          if (cPhone && cPhone === byPhoneKey) {
+            target = v;
+            break;
+          }
         }
       }
     }
 
     // Guest / Unregistered Order entry
     if (!target) {
-      const guestDisplayName = (o.customer_name || o.customer_username || (o.customer_phone ? `ลูกค้า ${o.customer_phone}` : 'ลูกค้าทั่วไป')).trim();
+      const guestDisplayName = (o.customer_name || o.customer_username || (o.customer_phone ? `ลูกค้า ${o.customer_phone}` : (o.customer_social ? `@${o.customer_social}` : 'ลูกค้าทั่วไป'))).trim();
       const guestKey = 'guest_' + guestDisplayName.toLowerCase();
       if (!custMap.has(guestKey)) {
         custMap.set(guestKey, {
           customer: {
             id: null,
             name: guestDisplayName,
-            customer_type: /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด/i.test(guestDisplayName) ? 'company' : 'individual',
+            customer_type: /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด|co\.,|ltd/i.test(guestDisplayName) ? 'company' : 'individual',
             customer_tier: 'retail',
             phone: o.customer_phone || null,
-            billing_address: o.customer_address || null,
+            billing_address: o.customer_address || o.billing_address || null,
             tax_id: o.tax_id || null,
             isGuest: true
           },
@@ -27895,46 +27950,72 @@ function buildCustomerPurchaseAnalytics(orders, customers, prods) {
 
     // Process order items
     const items = o.order_items || [];
-    items.forEach(it => {
-      const pName = (it.product_name || 'ไม่ระบุชื่อสินค้า').trim();
-      const pKey = (it.product_id || pName).toLowerCase();
-      const qty = Number(it.qty || 0);
-      const price = Number(it.sell_price || (qty > 0 ? (Number(it.total_price || 0) / qty) : 0));
-      const totalPrice = Number(it.total_price !== undefined && it.total_price !== null ? it.total_price : (qty * price));
-
-      target.totalUnits += qty;
-
+    if (!items.length) {
+      // If order has no discrete items recorded, record a placeholder item so it still shows under customer
+      const pKey = 'general_order_' + (o.order_no || o.id);
       if (!target.productsMap.has(pKey)) {
-        const matchedProd = prods ? prods.find(p => p.id === it.product_id || (p.name && p.name.trim().toLowerCase() === pName.toLowerCase())) : null;
         target.productsMap.set(pKey, {
-          product_id: it.product_id || null,
-          product_name: pName,
-          sku: it.sku || matchedProd?.sku || null,
-          category: matchedProd?.category || null,
-          total_qty: 0,
-          total_spend: 0,
-          orders_count: 0,
+          product_id: null,
+          product_name: `คำสั่งซื้อ #${o.order_no || 'SO'} (ยอดรวม)`,
+          sku: null,
+          category: 'ทั่วไป',
+          total_qty: 1,
+          total_spend: amount,
+          orders_count: 1,
           last_bought_date: o.order_date,
-          history: []
+          history: [{
+            order_id: o.id,
+            order_no: o.order_no,
+            order_date: o.order_date,
+            qty: 1,
+            sell_price: amount,
+            total_price: amount
+          }]
         });
+        target.totalUnits += 1;
       }
+    } else {
+      items.forEach(it => {
+        const pName = (it.product_name || 'ไม่ระบุชื่อสินค้า').trim();
+        const pKey = (it.product_id || pName).toLowerCase();
+        const qty = Number(it.qty || 1);
+        const price = Number(it.sell_price !== undefined && it.sell_price !== null ? it.sell_price : (it.price || (qty > 0 ? (Number(it.total_price || 0) / qty) : 0)));
+        const totalPrice = Number(it.total_price !== undefined && it.total_price !== null ? it.total_price : (qty * price));
 
-      const pEntry = target.productsMap.get(pKey);
-      pEntry.total_qty += qty;
-      pEntry.total_spend += totalPrice;
-      pEntry.orders_count += 1;
-      if (!pEntry.last_bought_date || (o.order_date && o.order_date > pEntry.last_bought_date)) {
-        pEntry.last_bought_date = o.order_date;
-      }
-      pEntry.history.push({
-        order_id: o.id,
-        order_no: o.order_no,
-        order_date: o.order_date,
-        qty,
-        sell_price: price,
-        total_price: totalPrice
+        target.totalUnits += qty;
+
+        if (!target.productsMap.has(pKey)) {
+          const matchedProd = prods ? prods.find(p => p.id === it.product_id || (p.name && p.name.trim().toLowerCase() === pName.toLowerCase())) : null;
+          target.productsMap.set(pKey, {
+            product_id: it.product_id || null,
+            product_name: pName,
+            sku: it.sku || matchedProd?.sku || null,
+            category: matchedProd?.category || null,
+            total_qty: 0,
+            total_spend: 0,
+            orders_count: 0,
+            last_bought_date: o.order_date,
+            history: []
+          });
+        }
+
+        const pEntry = target.productsMap.get(pKey);
+        pEntry.total_qty += qty;
+        pEntry.total_spend += totalPrice;
+        pEntry.orders_count += 1;
+        if (!pEntry.last_bought_date || (o.order_date && o.order_date > pEntry.last_bought_date)) {
+          pEntry.last_bought_date = o.order_date;
+        }
+        pEntry.history.push({
+          order_id: o.id,
+          order_no: o.order_no,
+          order_date: o.order_date,
+          qty,
+          sell_price: price,
+          total_price: totalPrice
+        });
       });
-    });
+    }
   });
 
   return Array.from(custMap.entries()).map(([cKey, item]) => {
@@ -28598,14 +28679,30 @@ async function openCustomerProfileModal(id) {
   const c = _allCustomers.find(x => x.id === id);
   if (!c) return;
 
-  // Fetch recent orders & quotations for this customer
-  const [ordersRes, qtRes] = await Promise.all([
-    sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id).or(`customer_id.eq.${id},customer_name.eq.${c.name}`).order('order_date', { ascending: false }).limit(50),
-    sb.from('quotations').select('*').eq('shop_id', currentShop.id).eq('customer_id', id).order('created_at', { ascending: false }).limit(20)
-  ]);
+  // Fetch recent orders & quotations for this customer with resilient fallback
+  let orders = [];
+  let qts = [];
+  try {
+    const qtRes = await sb.from('quotations').select('*').eq('shop_id', currentShop.id).eq('customer_id', id).order('created_at', { ascending: false }).limit(20);
+    qts = qtRes.data || [];
 
-  const orders = ordersRes.data || [];
-  const qts = qtRes.data || [];
+    let ordQuery = sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id);
+    if (id) {
+      ordQuery = ordQuery.eq('customer_id', id);
+    } else {
+      ordQuery = ordQuery.eq('customer_name', c.name);
+    }
+    const ordRes = await ordQuery.order('order_date', { ascending: false }).limit(50);
+    if (!ordRes.error && ordRes.data && ordRes.data.length) {
+      orders = ordRes.data;
+    } else {
+      // Fallback query matching by customer name
+      const { data: nameOrders } = await sb.from('orders').select('*, order_items(*)').eq('shop_id', currentShop.id).ilike('customer_name', c.name).order('order_date', { ascending: false }).limit(50);
+      if (nameOrders) orders = nameOrders;
+    }
+  } catch (err) {
+    console.warn('openCustomerProfileModal orders fetch error:', err);
+  }
 
   // Aggregate products bought by this customer
   const prodMap = new Map();
@@ -34191,7 +34288,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.42', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics & Product Breakdown Dashboard', items:[
+    { v:'2.43', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
+      '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
+      '👥 <b>จัดกลุ่มข้อมูลลูกค้าและสินค้าอัตโนมัติ:</b> จับคู่คำสั่งซื้อเข้ากับลูกค้าทั้งจาก Customer ID, ชื่อลูกค้า, เบอร์โทรศัพท์ และช่องทาง Social อัตโนมัติ พร้อมแสดงรายการสินค้าครบทุกออเดอร์',
+      '🧹 <b>Cache Refresh (v2.43):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.43'
+    ]},
+    { v:'2.42', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics & Product Breakdown Dashboard', items:[
       '🛍️ <b>แดชบอร์ดวิเคราะห์ประวัติการซื้อรายลูกค้า (Customer Purchase Dashboard):</b> เพิ่มแท็บใหม่ในหน้า Customers รวบรวมข้อมูลประวัติการสั่งซื้อ ยอดซื้อสะสม และสถิติการสั่งซื้อของลูกค้าแต่ละคนอย่างครบถ้วน',
       '📦 <b>แจกแจงรายการสินค้าที่ลูกค้าแต่ละคนเคยซื้อ (Product Breakdown):</b> แสดงรายการสินค้าทั้งหมดที่ลูกค้าแต่ละคนเคยสั่งซื้อ พร้อมจำนวนชิ้นรวม (Total Qty), ราคาเฉลี่ยต่อชิ้น (Avg Price), ยอดเงินรวม (Total Spend), วันที่ซื้อล่าสุด และลิงก์ประวัติบิลคำสั่งซื้อ',
       '🥇 <b>กระดานอันดับ Top 5 ลูกค้ายอดซื้อสูงสุด & Top 5 สินค้ายอดนิยม:</b> สรุปลูกค้าที่มียอดซื้อสะสมสูงสุด และสินค้าที่ถูกสั่งซื้อมากที่สุดในระบบ พร้อมตัวกรองค้นหาอัจฉริยะ',
