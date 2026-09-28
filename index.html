@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.39';
-const DISPLAY_APP_VERSION = 'v2.39';
+const CURRENT_APP_VERSION = 'sealthai-v2.40';
+const DISPLAY_APP_VERSION = 'v2.40';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.39)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.39 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.40)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.40 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.39)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.39 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.40)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.40 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.39)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.39 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.40)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.40 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.39)">v2.39 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.40)">v2.40 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -19599,11 +19599,10 @@ async function supplierWeeklyExpense() {
         <div style="display:flex;gap:6px;flex:1 1 240px;min-width:0">
           <select id="sw-filter-status" onchange="renderWeeklySupplierView()" style="flex:1;min-width:0;padding:6px 8px;font-size:12.5px">
             <option value="">ทุกสถานะ</option>
-            <option value="calculated">🧮 คำนวณแล้ว</option>
-            <option value="approved">✅ อนุมัติแล้ว (Approved)</option>
             <option value="paid">💰 จ่ายแล้ว (Paid)</option>
+            <option value="approved">✅ บันทึกแล้ว / รอจ่าย (Approved)</option>
+            <option value="calculated">🧮 คำนวณแล้ว (ยังไม่บันทึก)</option>
             <option value="no_agreement">⚪ ไม่มีข้อตกลง</option>
-            <option value="draft">📝 Draft</option>
           </select>
           <select id="sw-filter-supplier" onchange="renderWeeklySupplierView()" style="flex:1;min-width:0;padding:6px 8px;font-size:12.5px">
             <option value="">ทุก Supplier</option>
@@ -19750,7 +19749,7 @@ async function loadWeeklySupplierExpenses() {
   const cycle = getSupplierExpenseWeekCycle();
   const tiers = getSupplierProgressiveTiers();
 
-  // Load POs
+  // 1. Load POs
   let poQuery = sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).neq('status', 'cancelled');
   if (ym) {
     const [y, m] = ym.split('-').map(Number);
@@ -19758,14 +19757,50 @@ async function loadWeeklySupplierExpenses() {
     const mEnd = monthEnd(y, m);
     poQuery = poQuery.gte('po_date', mStart).lte('po_date', mEnd);
   }
+
+  // 2. Load Recorded Expenses from Supabase (Source of Truth for Recorded/Paid state)
+  let expQuery = sb.from('expenses')
+    .select('id, expense_date, category, standardized_category, subcategory, vendor_name, document_no, amount, base_amount, paid_amount, payment_status, payment_date, payment_method, note, receipt_path, created_at')
+    .eq('shop_id', currentShop.id);
+
+  if (ym) {
+    const [y, m] = ym.split('-').map(Number);
+    const dStart = new Date(y, m - 1, 1);
+    dStart.setDate(dStart.getDate() - 7);
+    const dEnd = new Date(y, m, 0);
+    dEnd.setDate(dEnd.getDate() + 7);
+    expQuery = expQuery.gte('expense_date', localDateString(dStart)).lte('expense_date', localDateString(dEnd));
+  }
   
-  const { data: pos, error } = await poQuery.order('po_date', { ascending: false }).limit(2000);
-  if (error) {
-    toast('โหลดข้อมูล PO ไม่สำเร็จ: ' + error.message, 'error');
+  const [{ data: pos, error: poErr }, { data: dbExpenses, error: expErr }] = await Promise.all([
+    poQuery.order('po_date', { ascending: false }).limit(2000),
+    expQuery.order('expense_date', { ascending: false }).limit(2000)
+  ]);
+
+  if (poErr) {
+    toast('โหลดข้อมูล PO ไม่สำเร็จ: ' + poErr.message, 'error');
     return;
   }
 
-  // Load Saved Weekly Records & Expenses
+  // Build index of recorded expenses from database
+  const expByWeeklyId = new Map();
+  const expBySupWeek = new Map();
+  (dbExpenses || []).forEach(exp => {
+    const noteStr = exp.note || '';
+    const tagMatch = noteStr.match(/\[supplier_weekly_id:([^\]]+)\]/i);
+    if (tagMatch && tagMatch[1]) {
+      expByWeeklyId.set(tagMatch[1].trim(), exp);
+    }
+    const isGratuity = (exp.category === 'ค่าสินน้ำใจ' || exp.standardized_category === 'ค่าสินน้ำใจ' || (exp.subcategory || '').includes('Supplier') || (exp.document_no || '').startsWith('SW-') || noteStr.includes('[gratuity]'));
+    if (isGratuity && exp.vendor_name && exp.expense_date) {
+      const vName = exp.vendor_name.trim().toLowerCase();
+      const expWeek = getWeekRange(exp.expense_date, cycle);
+      const key = `${vName}_${expWeek.week_key}`;
+      if (!expBySupWeek.has(key)) expBySupWeek.set(key, exp);
+    }
+  });
+
+  // Load Saved Weekly Records (localStorage fallback)
   const savedRecordsKey = 'supplier_weekly_records_' + (currentShop?.id || 'default');
   let savedRecords = {};
   try {
@@ -19792,19 +19827,10 @@ async function loadWeeklySupplierExpenses() {
         gross_amount: 0,
         discount_amount: 0,
         vat_amount: 0,
-        net_purchase_amount: 0,
-        top_up_amount: 0,
-        top_up_reason: 'Extra Support',
-        top_up_note: '',
-        status: 'calculated',
-        paid_date: null,
-        payment_method: null,
-        calculation_snapshot: null,
-        created_at: new Date().toISOString()
+        net_purchase_amount: 0
       };
     }
 
-    // Net purchase amount for this PO = Subtotal - Discount (Excluding VAT and Shipping)
     const poSubtotal = Number(po.subtotal || (po.vat_type === 'included' ? (Number(po.total_amount||0)/1.07) : Number(po.total_amount||0)));
     const poDiscount = Number(po.discount_amount || 0);
     const poNet = Math.max(0, poSubtotal - poDiscount);
@@ -19827,26 +19853,71 @@ async function loadWeeklySupplierExpenses() {
     groups[groupKey].net_purchase_amount += poNet;
   });
 
-  // Calculate Progressive & Merge Saved States (Per-Supplier Enabled Check)
+  // Calculate Progressive & Sync with Database Expenses (Single Source of Truth)
   weeklySupplierData = Object.values(groups).map(g => {
     const saved = savedRecords[g.id] || {};
     const isAgreementEnabled = isSupplierWeeklyExpenseEnabled(g.supplier_id, g.supplier_name);
-    const effectiveTiers = saved.calculation_snapshot || tiers;
     
-    // If supplier is NOT enabled for weekly expense, calculation is 0
+    // Find linked DB expense
+    const vKey = `${(g.supplier_name || '').trim().toLowerCase()}_${g.id.split('_').slice(1).join('_')}`;
+    const linkedExp = expByWeeklyId.get(g.id) || expBySupWeek.get(vKey) || null;
+
+    let effectiveTiers = saved.calculation_snapshot || tiers;
+    
+    // Parse Top Up from linked expense if available
+    let dbTopUp = 0;
+    let dbTopUpReason = '';
+    if (linkedExp && linkedExp.note) {
+      const topUpMatch = linkedExp.note.match(/Top Up:\s*฿?([\d,.]+)(?:\s*\(([^)]+)\))?/i);
+      if (topUpMatch) {
+        dbTopUp = Number(topUpMatch[1].replace(/,/g, '')) || 0;
+        dbTopUpReason = topUpMatch[2] || '';
+      }
+    }
+
     const calcResult = isAgreementEnabled 
       ? calculateProgressiveSupplierExpense(g.net_purchase_amount, effectiveTiers)
       : { total_expense: 0, tier_breakdown: [] };
     
-    const topUp = Number(saved.top_up_amount || 0);
+    const topUp = (dbTopUp > 0 ? dbTopUp : Number(saved.top_up_amount || 0));
+    const topUpReason = dbTopUpReason || saved.top_up_reason || 'Extra Support';
     const calculatedExpense = calcResult.total_expense;
-    const finalExpense = calculatedExpense + topUp;
 
-    let defaultStatus = 'draft';
-    if (!isAgreementEnabled && !topUp) {
-      defaultStatus = 'no_agreement';
-    } else if (calculatedExpense > 0 || topUp > 0) {
-      defaultStatus = 'calculated';
+    // Database expense amount takes precedence if recorded
+    let finalExpense = linkedExp ? Number(linkedExp.amount || linkedExp.base_amount || 0) : (calculatedExpense + topUp);
+
+    // Status logic synced directly from DB
+    let status = 'draft';
+    let isRecorded = false;
+    let isPaid = false;
+    let paidDate = null;
+    let paymentMethod = null;
+    let paidAmount = 0;
+
+    if (linkedExp) {
+      isRecorded = true;
+      paidAmount = Number(linkedExp.paid_amount || 0);
+      paidDate = linkedExp.payment_date || null;
+      paymentMethod = linkedExp.payment_method || null;
+      
+      if (linkedExp.payment_status === 'paid' || (paidAmount >= finalExpense && finalExpense > 0)) {
+        status = 'paid';
+        isPaid = true;
+      } else if (linkedExp.payment_status === 'partial' || paidAmount > 0) {
+        status = 'partial';
+      } else {
+        status = 'approved';
+      }
+    } else if (saved.status) {
+      status = saved.status;
+      if (status === 'paid') isPaid = true;
+      paidDate = saved.paid_date || null;
+    } else {
+      if (!isAgreementEnabled && !topUp) {
+        status = 'no_agreement';
+      } else if (calculatedExpense > 0 || topUp > 0) {
+        status = 'calculated';
+      }
     }
 
     return {
@@ -19856,13 +19927,64 @@ async function loadWeeklySupplierExpenses() {
       weekly_base_amount: g.net_purchase_amount,
       calculated_expense_amount: calculatedExpense,
       top_up_amount: topUp,
-      top_up_reason: saved.top_up_reason || 'Extra Support',
+      top_up_reason: topUpReason,
       top_up_note: saved.top_up_note || '',
       final_expense_amount: finalExpense,
       tier_breakdown: calcResult.tier_breakdown,
       is_agreement_enabled: isAgreementEnabled,
-      status: saved.status || defaultStatus
+      is_recorded_in_db: isRecorded,
+      is_paid_in_db: isPaid,
+      linked_expense: linkedExp,
+      expense_id: linkedExp ? linkedExp.id : (saved.expense_id || null),
+      paid_date: paidDate,
+      paid_amount: paidAmount,
+      payment_method: paymentMethod,
+      status: status
     };
+  });
+
+  // 3. Include Standalone DB Expenses (e.g. booked manually or with 0 POs in the period)
+  (dbExpenses || []).forEach(exp => {
+    const isGratuity = (exp.category === 'ค่าสินน้ำใจ' || exp.standardized_category === 'ค่าสินน้ำใจ' || (exp.subcategory || '').includes('Supplier') || (exp.document_no || '').startsWith('SW-') || (exp.note || '').includes('[gratuity]'));
+    if (!isGratuity) return;
+    
+    const tagMatch = (exp.note || '').match(/\[supplier_weekly_id:([^\]]+)\]/i);
+    const expWeek = getWeekRange(exp.expense_date, cycle);
+    const gId = tagMatch ? tagMatch[1].trim() : `${exp.vendor_name || 'unknown'}_${expWeek.week_key}`;
+
+    if (!weeklySupplierData.some(x => x.id === gId || (x.supplier_name === exp.vendor_name && x.week_start === expWeek.start_date))) {
+      const isPaid = exp.payment_status === 'paid';
+      weeklySupplierData.push({
+        id: gId,
+        supplier_id: exp.vendor_name,
+        supplier_name: exp.vendor_name || 'Supplier',
+        week_start: expWeek.start_date,
+        week_end: expWeek.end_date,
+        week_label: expWeek.label,
+        po_list: [],
+        po_count: 0,
+        gross_amount: 0,
+        discount_amount: 0,
+        vat_amount: 0,
+        net_purchase_amount: 0,
+        weekly_base_amount: 0,
+        calculated_expense_amount: 0,
+        top_up_amount: Number(exp.amount || 0),
+        top_up_reason: 'บันทึกผ่านระบบบัญชี',
+        top_up_note: exp.note || '',
+        final_expense_amount: Number(exp.amount || 0),
+        tier_breakdown: [],
+        is_agreement_enabled: true,
+        is_recorded_in_db: true,
+        is_paid_in_db: isPaid,
+        linked_expense: exp,
+        expense_id: exp.id,
+        paid_date: exp.payment_date || null,
+        paid_amount: Number(exp.paid_amount || 0),
+        payment_method: exp.payment_method || null,
+        status: isPaid ? 'paid' : 'approved'
+      });
+    }
   });
 
   // Sort by week_start descending, then supplier_name
@@ -19954,14 +20076,34 @@ function renderWeeklySupplierTable(rows) {
     return;
   }
 
-  const statusBadges = {
-    no_agreement: '<span class="badge badge-gray" style="background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;white-space:nowrap">⚪ ไม่มีข้อตกลง</span>',
-    draft: '<span class="badge badge-gray" style="white-space:nowrap">📝 Draft</span>',
-    calculated: '<span class="badge badge-blue" style="white-space:nowrap">🧮 คำนวณแล้ว</span>',
-    approved: '<span class="badge badge-amber" style="white-space:nowrap">✅ Approved</span>',
-    paid: '<span class="badge badge-green" style="white-space:nowrap">💰 จ่ายแล้ว</span>',
-    cancelled: '<span class="badge badge-red" style="white-space:nowrap">❌ ยกเลิก</span>'
-  };
+  function getSWStatusBadge(r) {
+    if (r.status === 'paid') {
+      return `<span class="badge badge-green" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-weight:800;white-space:nowrap;padding:3px 8px" title="ชำระเงินเรียบร้อยแล้ว">💰 จ่ายแล้ว ${r.paid_date ? '('+r.paid_date.slice(5)+')' : '✓'}</span>`;
+    }
+    if (r.status === 'approved') {
+      return `<span class="badge badge-amber" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-weight:800;white-space:nowrap;padding:3px 8px" title="บันทึกค่าใช้จ่ายในบัญชีแล้ว รอจ่ายเงิน">✅ บันทึกแล้ว (รอจ่าย)</span>`;
+    }
+    if (r.status === 'partial') {
+      return `<span class="badge badge-amber" style="white-space:nowrap;font-weight:800;padding:3px 8px">💳 จ่ายบางส่วน</span>`;
+    }
+    if (r.status === 'calculated') {
+      return `<span class="badge badge-blue" style="background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;white-space:nowrap;padding:3px 8px">🧮 ยังไม่ได้บันทึก</span>`;
+    }
+    return `<span class="badge badge-gray" style="background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;white-space:nowrap;padding:3px 8px">⚪ ไม่มีข้อตกลง</span>`;
+  }
+
+  function getSWActionButton(r) {
+    if (r.status === 'paid') {
+      return `<button class="btn btn-secondary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:4px 9px;color:#15803d;border-color:#86efac;background:#f0fdf4;font-weight:700">✓ ดูรายการจ่ายแล้ว</button>`;
+    }
+    if (r.status === 'approved') {
+      return `<button class="btn btn-warning btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:4px 9px;font-weight:700">💳 บันทึกชำระเงิน</button>`;
+    }
+    if (r.status === 'calculated') {
+      return `<button class="btn btn-primary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:4px 9px;font-weight:700">🔍 ตรวจสอบ & บันทึก</button>`;
+    }
+    return `<button class="btn btn-secondary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:4px 9px">🔍 รายละเอียด</button>`;
+  }
 
   // 1. Desktop Table View
   const desktopHtml = `
@@ -19980,8 +20122,10 @@ function renderWeeklySupplierTable(rows) {
           </tr>
         </thead>
         <tbody>
-          ${rows.map(r => `
-            <tr>
+          ${rows.map(r => {
+            const hasDiff = r.is_recorded_in_db && Math.abs(r.final_expense_amount - (r.calculated_expense_amount + r.top_up_amount)) > 1;
+            return `
+            <tr style="background:${r.status==='paid'?'rgba(240,253,244,0.3)':'inherit'}">
               <td style="white-space:nowrap;font-size:12px">
                 <b>${escapeHTML(r.week_label)}</b>
                 <div style="font-size:10px;color:var(--text3)">${r.week_start} ถึง ${r.week_end}</div>
@@ -19989,7 +20133,7 @@ function renderWeeklySupplierTable(rows) {
               <td>
                 <b style="font-size:13px;color:var(--text)">${escapeHTML(r.supplier_name)}</b>
                 <div style="font-size:10.5px;color:var(--text3);margin-top:2px">
-                  📦 ${r.po_count} บิล PO
+                  📦 ${r.po_count} บิล PO ${r.is_recorded_in_db ? '· <span style="color:#0284c7;font-weight:600">📌 บันทึกในบัญชีแล้ว</span>' : ''}
                 </div>
               </td>
               <td class="text-right font-mono" style="font-size:13px;font-weight:700">
@@ -20006,17 +20150,16 @@ function renderWeeklySupplierTable(rows) {
               </td>
               <td class="text-right font-mono" style="font-size:14.5px;font-weight:800;color:${r.status==='paid'?'#15803d':'#0f172a'}">
                 ${fmtB(r.final_expense_amount)}
+                ${hasDiff ? `<div style="font-size:9.5px;color:#d97706;font-weight:normal" title="ยอดในบัญชีล็อคตามที่บันทึกไว้">บันทึกไว้ ฿${fmt(r.final_expense_amount)}</div>` : ''}
               </td>
               <td>
-                ${statusBadges[r.status] || r.status}
+                ${getSWStatusBadge(r)}
               </td>
               <td style="white-space:nowrap;text-align:right">
-                <button class="btn btn-primary btn-sm" onclick="viewWeeklySupplierDetail('${r.id}')" style="font-size:11.5px;padding:4px 9px">
-                  🔍 รายละเอียด & Top Up
-                </button>
+                ${getSWActionButton(r)}
               </td>
             </tr>
-          `).join('')}
+          `}).join('')}
         </tbody>
       </table>
     </div>
@@ -20033,13 +20176,13 @@ function renderWeeklySupplierTable(rows) {
               <div style="font-size:12px;font-weight:700;color:#1e293b">📅 ${escapeHTML(r.week_label)}</div>
               <div style="font-size:10px;color:var(--text3)">${r.week_start} ถึง ${r.week_end}</div>
             </div>
-            <div>${statusBadges[r.status] || r.status}</div>
+            <div>${getSWStatusBadge(r)}</div>
           </div>
 
           <!-- Supplier Name & POs -->
           <div style="margin-bottom:10px">
             <div style="font-size:14.5px;font-weight:700;color:#0f172a">${escapeHTML(r.supplier_name)}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:1px">📦 รวม ${r.po_count} บิล PO</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">📦 รวม ${r.po_count} บิล PO ${r.is_recorded_in_db ? '· <span style="color:#0284c7;font-weight:600">📌 บันทึกในบัญชีแล้ว</span>' : ''}</div>
           </div>
 
           <!-- 3-Box Financial Grid -->
@@ -20067,9 +20210,11 @@ function renderWeeklySupplierTable(rows) {
           </div>
 
           <!-- Touch Action Button -->
-          <button class="btn btn-primary" onclick="viewWeeklySupplierDetail('${r.id}')" style="width:100%;min-height:38px;justify-content:center;font-size:12.5px;font-weight:700;border-radius:8px">
-            🔍 รายละเอียด & จัดการ Top Up
-          </button>
+          <div style="display:flex;gap:6px">
+            <button class="btn ${r.status==='paid'?'btn-secondary':(r.status==='approved'?'btn-warning':'btn-primary')}" onclick="viewWeeklySupplierDetail('${r.id}')" style="width:100%;min-height:38px;justify-content:center;font-size:12.5px;font-weight:700;border-radius:8px">
+              ${r.status==='paid' ? '✓ ดูรายการจ่ายแล้ว' : (r.status==='approved' ? '💳 บันทึกชำระเงิน' : '🔍 รายละเอียด & บันทึก')}
+            </button>
+          </div>
         </div>
       `).join('')}
     </div>
@@ -20191,6 +20336,38 @@ function viewWeeklySupplierDetail(id) {
     </div>`;
 
   contentEl.innerHTML = agreementBanner + `
+    <!-- Top Status Banner (Clear Paid / Approved / Calculated status) -->
+    ${row.status === 'paid' ? `
+      <div style="background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:800;font-size:14px;color:#166534">💰 สัปดาห์นี้ชำระเงินเรียบร้อยแล้ว (Paid)</div>
+          <div style="font-size:12px;color:#15803d;margin-top:3px">
+            วันที่ชำระ: <b>${row.paid_date || 'เรียบร้อย'}</b> · ยอดที่ชำระ: <b>฿${fmt(row.final_expense_amount)}</b>
+            ${row.payment_method ? ` · ช่องทาง: <b>${escapeHTML(row.payment_method)}</b>` : ''}
+          </div>
+        </div>
+        <span class="badge badge-green" style="font-size:12px;font-weight:800">PAID ✓</span>
+      </div>
+    ` : (row.status === 'approved' ? `
+      <div style="background:#fffbeb;border:2px solid #fcd34d;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:800;font-size:14px;color:#92400e">✅ บันทึกค่าใช้จ่ายเข้าระบบบัญชีแล้ว (Approved / รอจ่าย)</div>
+          <div style="font-size:12px;color:#b45309;margin-top:3px">
+            รหัสเอกสาร: <b>${escapeHTML(row.linked_expense?.document_no || 'SW')}</b> · ยอดในบัญชี: <b>฿${fmt(row.final_expense_amount)}</b>
+          </div>
+        </div>
+        <span class="badge badge-amber" style="font-size:12px;font-weight:800">APPROVED</span>
+      </div>
+    ` : `
+      <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:800;font-size:13.5px;color:#0369a1">🧮 คำนวณตามสูตรแล้ว (ยังไม่ได้บันทึกค่าใช้จ่าย)</div>
+          <div style="font-size:11.5px;color:#0284c7;margin-top:2px">สามารถตรวจสอบยอด ใส่ Top Up เพิ่มเติม แล้วกด "อนุมัติยอด" เพื่อบันทึกเข้าบัญชี</div>
+        </div>
+        <span class="badge badge-blue" style="font-size:12px;font-weight:700">CALCULATED</span>
+      </div>
+    `)}
+
     <!-- Top Summary Banner -->
     <div style="display:flex;justify-content:space-between;align-items:center;background:#f1f5f9;border-radius:8px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <div>
@@ -20198,8 +20375,8 @@ function viewWeeklySupplierDetail(id) {
         <div class="font-mono" style="font-size:20px;font-weight:800;color:#0284c7">${fmtB(row.weekly_base_amount)}</div>
       </div>
       <div style="text-align:right">
-        <div style="font-size:11px;color:var(--text3)">สถานะรายการ</div>
-        <div><span class="badge ${row.status==='paid'?'badge-green':(row.status==='approved'?'badge-amber':'badge-blue')}" style="font-size:12px;font-weight:700">${row.status.toUpperCase()}</span></div>
+        <div style="font-size:11px;color:var(--text3)">ยอดจ่ายสุทธิรอบนี้</div>
+        <div class="font-mono text-green" style="font-size:20px;font-weight:800">${fmtB(row.final_expense_amount)}</div>
       </div>
     </div>
 
@@ -20314,23 +20491,33 @@ function viewWeeklySupplierDetail(id) {
 
     <!-- Modal Footer Actions -->
     <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <button class="btn btn-secondary" onclick="closeModal('modal-sw-detail')">ปิดหน้าต่าง</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary" onclick="closeModal('modal-sw-detail')">ปิดหน้าต่าง</button>
+        ${(row.is_recorded_in_db || isApprovedOrPaid) ? `
+          <button class="btn btn-secondary btn-sm" onclick="cancelWeeklySupplierExpense('${row.id}')" style="color:#b91c1c;border-color:#fca5a5;font-size:11.5px" title="ลบรายการค่าใช้จ่ายในระบบบัญชีเพื่อให้ระบบกลับมาคำนวณใหม่">
+            🗑️ ยกเลิกการบันทึก (ให้คำนวณใหม่)
+          </button>
+        ` : ''}
+      </div>
       
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:8px;align-items:center">
         ${!isApprovedOrPaid ? `
           <button class="btn btn-secondary" onclick="saveWeeklySupplierTopUp('${row.id}')" style="color:#db2777;border-color:#fbcfe8;font-weight:700">
             💾 บันทึก Top Up
           </button>
           <button class="btn btn-primary" onclick="approveWeeklySupplierExpense('${row.id}')" style="background:#ea580c;border-color:#c2410c;font-weight:700">
-            ✅ อนุมัติยอด (Approve & Snapshot)
+            ✅ อนุมัติ & บันทึกเข้าบัญชี
           </button>
         ` : (row.status === 'approved' ? `
           <button class="btn btn-primary" onclick="markPaidWeeklySupplierExpense('${row.id}')" style="background:#16a34a;border-color:#15803d;font-weight:700">
-            💰 บันทึกจ่ายเงิน (Mark Paid)
+            💰 บันทึกชำระเงิน (Mark Paid)
           </button>
         ` : `
-          <span style="font-size:12px;color:#15803d;font-weight:700;padding:6px 12px;background:#f0fdf4;border-radius:6px">
-            ✓ รายการชำระเงินเรียบร้อยแล้ว
+          <button class="btn btn-secondary btn-sm" onclick="markPaidWeeklySupplierExpense('${row.id}')" style="color:#15803d;border-color:#86efac;font-weight:600">
+            ✏️ แก้ไขวันที่จ่าย
+          </button>
+          <span style="font-size:12px;color:#15803d;font-weight:700;padding:6px 12px;background:#f0fdf4;border-radius:6px;border:1px solid #86efac">
+            ✓ ชำระเงินเรียบร้อยแล้ว
           </span>
         `)}
       </div>
@@ -20451,24 +20638,51 @@ async function approveWeeklySupplierExpense(id) {
   await loadWeeklySupplierExpenses();
 }
 
-async function markPaidWeeklySupplierExpense(id) {
+async function cancelWeeklySupplierExpense(id) {
   const row = weeklySupplierData.find(x => x.id === id);
   if (!row) return;
 
-  if (!confirm(`ยืนยันบันทึกการชำระเงิน ${fmtB(row.final_expense_amount)} ให้แก่ Supplier "${row.supplier_name}" (วันที่จ่าย: วันนี้)?`)) {
+  if (!confirm(`ต้องการยกเลิกการบันทึกค่าใช้จ่ายรอบ ${row.week_label} ของ "${row.supplier_name}" ใช่หรือไม่?
+รายการค่าใช้จ่ายในระบบบัญชีจะถูกลบออก และระบบจะกลับมาคำนวณยอดสดใหม่อัตโนมัติ`)) {
     return;
+  }
+
+  const expId = row.expense_id || row.linked_expense?.id;
+  if (expId) {
+    const { error } = await sb.from('expenses').delete().eq('id', expId);
+    if (error) {
+      toast('ลบรายการค่าใช้จ่ายในระบบไม่สำเร็จ: ' + error.message, 'error');
+      return;
+    }
   }
 
   const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
   let savedRecords = {};
   try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+  delete savedRecords[id];
+  localStorage.setItem(key, JSON.stringify(savedRecords));
 
-  // Update linked expense if exists
-  const expId = savedRecords[id]?.expense_id;
+  toast('ยกเลิกการบันทึกเรียบร้อยแล้ว ระบบจะคำนวณยอดใหม่อัตโนมัติ ✓', 'success');
+  closeModal('modal-sw-detail');
+  await loadWeeklySupplierExpenses();
+}
+
+async function markPaidWeeklySupplierExpense(id) {
+  const row = weeklySupplierData.find(x => x.id === id);
+  if (!row) return;
+
+  const payDate = prompt(`ระบุวันที่ชำระเงินให้ Supplier "${row.supplier_name}" (YYYY-MM-DD):`, row.paid_date || today());
+  if (payDate === null) return;
+
+  const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+
+  const expId = row.expense_id || row.linked_expense?.id || savedRecords[id]?.expense_id;
   if (expId) {
     await sb.from('expenses').update({
       payment_status: 'paid',
-      payment_date: today(),
+      payment_date: payDate || today(),
       paid_amount: row.final_expense_amount,
       updated_at: new Date().toISOString()
     }).eq('id', expId);
@@ -20477,7 +20691,7 @@ async function markPaidWeeklySupplierExpense(id) {
   savedRecords[id] = {
     ...(savedRecords[id] || {}),
     status: 'paid',
-    paid_date: today(),
+    paid_date: payDate || today(),
     payment_method: 'โอนเงินธนาคาร',
     paid_by: currentUser?.id || 'admin'
   };
@@ -33140,23 +33354,29 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.39', date:'2026-09-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Expense Category Percentage & Top Expense Analysis', items:[
+    { v:'2.40', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Supplier Weekly Expense DB Sync & Paid Status Fix', items:[
+      '💰 <b>เชื่อมต่อสถานะจ่ายเงินกับฐานข้อมูลจริง (DB Sync):</b> ดึงข้อมูลรายการค่าใช้จ่ายจากตาราง expenses มาจับคู่กับรอบสัปดาห์ Supplier อัตโนมัติ ทำให้ทราบทันทีว่าสัปดาห์ไหนบันทึกแล้ว หรือจ่ายเงินแล้ว',
+      '🏷️ <b>แสดงสถานะชัดเจนทุกอุปกรณ์:</b> แสดงป้าย 💰 จ่ายแล้ว (Paid), ✅ บันทึกแล้ว (รอจ่าย), หรือ 🧮 ยังไม่ได้บันทึก พร้อมวันที่จ่าย และล็อคยอดไม่ให้คำนวณทับซ้ำซ้อน',
+      '🗑️ <b>ปุ่มยกเลิกการบันทึก:</b> เพิ่มตัวเลือกยกเลิก/ลบรายการค่าใช้จ่ายออกจากระบบบัญชี เพื่อให้ระบบกลับมาคำนวณสดใหม่ได้ตามต้องการ',
+      '🧹 <b>Cache Refresh (v2.40):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.40'
+    ]},
+    { v:'2.39', date:'2026-09-25', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Expense Category Percentage & Top Expense Analysis', items:[
       '📊 <b>แสดงสัดส่วน % ค่าใช้จ่ายตามหมวด:</b> เพิ่มการคำนวณและแสดงสัดส่วนเปอร์เซ็นต์ (%) ของแต่ละหมวดหมู่ค่าใช้จ่าย พร้อมแถบ Progress Bar และป้ายกำกับลำดับความสำคัญ',
       '🥇 <b>ไฮไลท์หมวดค่าใช้จ่ายที่มากที่สุด:</b> แสดงหมวดที่เป็นค่าใช้จ่ายสูงสุด (อันดับ 1) ไฮไลท์สีแดงเด่นชัด พร้อม Tooltip และการคลิกเพื่อกรองหมวดหมู่ทันที',
-      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.39'
+      '🧹 <b>Cache Refresh (v2.40):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.39'
     ]},
     { v:'2.38', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Supplier Ref No Support', items:[
       '🏷️ <b>เพิ่มช่อง Ref No ของ Supplier ในใบสั่งซื้อ (PO):</b> รองรับการบันทึกเลขที่อ้างอิงใบเสนอราคา/ใบแจ้งหนี้/PO ของ Supplier ทั้งในหน้าสร้าง PO ใหม่ และหน้าแก้ไขแบบร่าง',
       '🔍 <b>แสดงและค้นหาด้วย Ref No:</b> แสดงเลข Ref No ในตารางรายการ PO, รายละเอียด PO, หน้าพิมพ์เอกสาร PO (Print), และหน้าบันทึกรับสินค้าเข้าสต๊อก (Goods Receipt) พร้อมระบบค้นหาอัจฉริยะ',
-      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.38'
+      '🧹 <b>Cache Refresh (v2.40):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.38'
     ]},
     { v:'2.37', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Fix AR Invoice Return Relationship Query', items:[
       '🛠️ <b>แก้ไขการดึงข้อมูล AR Invoice สำหรับรับคืนสินค้า:</b> ปรับการ Query ข้อมูล AR Invoice และ Sales Orders แยกตาราง ป้องกันข้อผิดพลาด schema cache relationship',
-      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
+      '🧹 <b>Cache Refresh (v2.40):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.37'
     ]},
     { v:'2.36', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order USD & THB Dual Currency Display', items:[
       '💵 <b>แสดงยอดเงินคู่ USD และ (THB):</b> หาก PO เป็นสกุลเงิน USD จะแสดงยอดราคา/ชิ้น, ยอดรวมรายการ, และยอดรวมสุทธิทั้งในหน่วย USD และแปลงเป็น (฿THB) ควบคู่กันทั้งในตาราง, หน้ารายละเอียด และหน้าพิมพ์เอกสาร',
-      '🧹 <b>Cache Refresh (v2.39):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
+      '🧹 <b>Cache Refresh (v2.40):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.36'
     ]},
     { v:'2.35', date:'2026-09-23', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Purchase Order Sorting & Document Item Numbering', items:[
       '📅 <b>เรียงเอกสาร PO ตามวันที่ล่าสุด:</b> ตั้งค่าเริ่มต้นของตาราง Purchase Orders ให้เรียงตามวันที่ล่าสุด (ใหม่ → เก่า) เสมอ พร้อมแสดงเลขลำดับแถว (#)',
