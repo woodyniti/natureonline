@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.43';
-const DISPLAY_APP_VERSION = 'v2.43';
+const CURRENT_APP_VERSION = 'sealthai-v2.44';
+const DISPLAY_APP_VERSION = 'v2.44';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.43 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.44 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.43 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.44 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.43 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.44 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3225,7 +3225,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.43)">v2.43 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.44)">v2.44 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3237,7 +3237,8 @@ async function dashboard() {
     </div>
 
     ${(()=>{
-      const dashAlerts = getRecurringExpenseAlerts(allExpRes?.data || []);
+      const alertObj = getRecurringExpenseAlerts(allExpRes?.data || []);
+      const dashAlerts = alertObj.list || [];
       if (!dashAlerts.length) return '';
       const overdueCnt = dashAlerts.filter(a => a.diffDays < 0).length;
       const dueSoonCnt = dashAlerts.filter(a => a.diffDays >= 0).length;
@@ -9129,29 +9130,19 @@ async function editExpense(id) {
   document.getElementById('e-pay-method').value=e.payment_method||'';
   document.getElementById('e-pay-date').value=e.payment_date||'';
   document.getElementById('e-due-date').value=e.due_date||'';
-  const isExplicitYearly = e.recurrence === 'yearly' || 
-                           (e.note || '').includes('[recurrence:yearly]') || 
-                           (e.note || '').includes('[yearly]') || 
-                           (e.note || '').includes('รายปี');
-  const isExplicitMonthly = e.recurrence === 'monthly' || 
-                            (e.note || '').includes('[recurrence:monthly]') || 
-                            (e.note || '').includes('[monthly]') || 
-                            (e.note || '').includes('รายเดือน');
-
-  if (isExplicitYearly) {
-    document.getElementById('e-recur').value = 'yearly';
-  } else if (isExplicitMonthly || e.recurrence === 'recurring') {
-    document.getElementById('e-recur').value = 'monthly';
-  } else {
-    document.getElementById('e-recur').value = e.recurrence || 'one_time';
-  }
+  
+  // Detect recurrence with absolute priority for explicit tags
+  const detectedRecur = detectExpenseRecurrence(e);
+  document.getElementById('e-recur').value = detectedRecur;
 
   document.getElementById('e-vat-claim').checked=!!e.vat_claimable;
   document.getElementById('e-profit').checked=e.include_in_profit!==false;
   document.getElementById('e-dup').checked=!!e.duplicate_risk;
   
-  // Clean up tag from user-visible note input
-  const cleanNote = (e.note || '').replace(/\s*\[recurrence:[^\]]+\]/g, '').trim();
+  // Clean up all bracket tags from user-visible note input
+  const cleanNote = (e.note || '').replace(/\s*\[recurrence:[^\]]+\]/g, '')
+                                  .replace(/\s*\[(รายปี|รายเดือน|yearly|monthly|quarterly|weekly)\]/g, '')
+                                  .trim();
   document.getElementById('e-note').value = cleanNote;
   recalcExpenseAmounts();
   renderExpenseVendorChips();
@@ -9189,8 +9180,10 @@ async function saveExpense() {
   const rawRecur = document.getElementById('e-recur').value || 'one_time';
   
   let noteVal = (document.getElementById('e-note').value || '').trim();
-  // Clean up existing recurrence tags
-  noteVal = noteVal.replace(/\s*\[recurrence:[^\]]+\]/g, '').replace(/\s*\[(รายปี|รายเดือน|yearly|monthly)\]/g, '').trim();
+  // Clean up all existing recurrence tags
+  noteVal = noteVal.replace(/\s*\[recurrence:[^\]]+\]/g, '')
+                   .replace(/\s*\[(รายปี|รายเดือน|yearly|monthly|quarterly|weekly)\]/g, '')
+                   .trim();
 
   // Attach explicit recurrence tag to guarantee persistent Yearly vs Monthly classification
   if (rawRecur === 'yearly') {
@@ -9199,6 +9192,10 @@ async function saveExpense() {
     noteVal = noteVal ? `${noteVal} [recurrence:monthly]` : '[recurrence:monthly]';
   } else if (rawRecur === 'quarterly') {
     noteVal = noteVal ? `${noteVal} [recurrence:quarterly]` : '[recurrence:quarterly]';
+  } else if (rawRecur === 'weekly') {
+    noteVal = noteVal ? `${noteVal} [recurrence:weekly]` : '[recurrence:weekly]';
+  } else if (rawRecur === 'recurring') {
+    noteVal = noteVal ? `${noteVal} [recurrence:monthly]` : '[recurrence:monthly]';
   }
 
   const dbRecur = (rawRecur === 'one_time') ? 'one_time' : 'recurring';
@@ -9292,6 +9289,40 @@ async function delExpense(id) {
   loadExpenses();
 }
 
+function detectExpenseRecurrence(e) {
+  if (!e) return 'one_time';
+  const note = String(e.note || '');
+  const r = String(e.recurrence || '').toLowerCase();
+
+  // 1. Explicit tags take absolute highest priority
+  if (note.includes('[recurrence:monthly]')) return 'monthly';
+  if (note.includes('[recurrence:yearly]')) return 'yearly';
+  if (note.includes('[recurrence:quarterly]')) return 'quarterly';
+  if (note.includes('[recurrence:weekly]')) return 'weekly';
+  if (note.includes('[recurrence:one_time]')) return 'one_time';
+
+  // 2. Direct column values
+  if (r === 'monthly' || r === 'yearly' || r === 'quarterly' || r === 'weekly' || r === 'one_time') {
+    return r;
+  }
+
+  // 3. Bracket tags
+  if (note.includes('[monthly]')) return 'monthly';
+  if (note.includes('[yearly]')) return 'yearly';
+  if (note.includes('[quarterly]')) return 'quarterly';
+  if (note.includes('[weekly]')) return 'weekly';
+
+  // 4. If marked as recurring in DB, fallback to word check
+  if (r === 'recurring') {
+    if (note.includes('รายปี')) return 'yearly';
+    if (note.includes('รายเดือน')) return 'monthly';
+    if (note.includes('รายสัปดาห์')) return 'weekly';
+    return 'monthly';
+  }
+
+  return 'one_time';
+}
+
 function getRecurrenceLabel(r) {
   const map = {
     one_time: 'ครั้งเดียว',
@@ -9323,7 +9354,7 @@ function getRecurringExpenseAlerts(expensesList) {
     const dueDateStr = e.due_date || '';
     const expDateStr = e.expense_date || '';
     const baseAmt = Number(e.base_amount ?? e.amount ?? 0);
-    const recurKey = `${e.vendor_name || ''}_${effectiveExpenseCategory(e)}_${baseAmt}`;
+    const recurKey = `${(e.vendor_name || e.note || effectiveExpenseCategory(e)).trim().toLowerCase()}_${effectiveExpenseCategory(e)}`;
 
     if (isUnpaid && dueDateStr) {
       const dueDate = new Date(dueDateStr + 'T00:00:00');
@@ -9354,7 +9385,7 @@ function getRecurringExpenseAlerts(expensesList) {
         vendor: e.vendor_name || e.note || effectiveExpenseCategory(e),
         category: effectiveExpenseCategory(e),
         subcategory: e.subcategory || '',
-        recurrence: e.recurrence || 'one_time',
+        recurrence: detectExpenseRecurrence(e),
         amount: Math.max(0, baseAmt + Number(e.vat_amount || 0) - Number(e.withholding_tax || 0) - Number(e.paid_amount || 0)),
         total_amount: baseAmt,
         due_date: dueDateStr,
@@ -9371,15 +9402,15 @@ function getRecurringExpenseAlerts(expensesList) {
 
   // 2. Scan for recurring commitments
   expensesList.forEach(e => {
-    const isRecur = e.recurrence && e.recurrence !== 'one_time';
+    const recurType = detectExpenseRecurrence(e);
+    const isRecur = recurType !== 'one_time';
     if (!isRecur) return;
 
-    const baseAmt = Number(e.base_amount ?? e.amount ?? 0);
-    const recurKey = `${e.vendor_name || ''}_${effectiveExpenseCategory(e)}_${baseAmt}`;
+    const recurKey = `${(e.vendor_name || e.note || effectiveExpenseCategory(e)).trim().toLowerCase()}_${effectiveExpenseCategory(e)}`;
     
     if (recurringMap.has(recurKey)) {
       const existing = recurringMap.get(recurKey);
-      if (e.expense_date > existing.expense_date) recurringMap.set(recurKey, e);
+      if ((e.expense_date || '') > (existing.expense_date || '')) recurringMap.set(recurKey, e);
       return;
     }
     recurringMap.set(recurKey, e);
@@ -9393,7 +9424,8 @@ function getRecurringExpenseAlerts(expensesList) {
   recurringMap.forEach((e, recurKey) => {
     const dueDateStr = e.due_date || '';
     const expDateStr = e.expense_date || '';
-    const isYearly = e.recurrence === 'yearly' || (e.note || '').includes('[recurrence:yearly]') || (e.note || '').toLowerCase().includes('รายปี') || (e.note || '').toLowerCase().includes('[yearly]');
+    const recurType = detectExpenseRecurrence(e);
+    const isYearly = (recurType === 'yearly');
     
     let dueDay = 1;
     let dueMonth = curMonth;
@@ -9419,7 +9451,7 @@ function getRecurringExpenseAlerts(expensesList) {
       
       // Check if paid in this year
       const paidMatchYear = expensesList.find(other => {
-        const otherKey = `${other.vendor_name || ''}_${effectiveExpenseCategory(other)}_${Number(other.base_amount ?? other.amount ?? 0)}`;
+        const otherKey = `${(other.vendor_name || other.note || effectiveExpenseCategory(other)).trim().toLowerCase()}_${effectiveExpenseCategory(other)}`;
         return otherKey === recurKey &&
                (other.expense_date || '').startsWith(String(curYear)) &&
                (other.payment_status === 'paid');
@@ -9489,7 +9521,7 @@ function getRecurringExpenseAlerts(expensesList) {
       const diffDays = Math.round((targetDueDate - now) / (1000 * 60 * 60 * 24));
 
       const paidMatch = expensesList.find(other => {
-        const otherKey = `${other.vendor_name || ''}_${effectiveExpenseCategory(other)}_${Number(other.base_amount ?? other.amount ?? 0)}`;
+        const otherKey = `${(other.vendor_name || other.note || effectiveExpenseCategory(other)).trim().toLowerCase()}_${effectiveExpenseCategory(other)}`;
         return otherKey === recurKey &&
                (other.expense_date || '').startsWith(currentMonthPrefix) &&
                (other.payment_status === 'paid');
@@ -9926,7 +9958,12 @@ function renderExpenseTable(rows) {
     <td>
       <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
         ${getExpenseCategoryBadge(effectiveExpenseCategory(e))}
-        ${e.recurrence && e.recurrence !== 'one_time' ? `<span class="badge badge-blue" style="font-size:10px" title="ค่าใช้จ่ายประจำ">🔄 ${getRecurrenceLabel(e.recurrence)}</span>` : ''}
+        ${(() => {
+          const rc = detectExpenseRecurrence(e);
+          if (rc === 'one_time') return '';
+          const isYr = rc === 'yearly';
+          return `<span class="badge ${isYr ? 'badge-purple' : 'badge-blue'}" style="font-size:10px;font-weight:700" title="ค่าใช้จ่ายประจำ">${isYr ? '🗓️ รายปี' : '🔄 รายเดือน'}</span>`;
+        })()}
       </div>
       <div style="margin-top:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
         ${getExpenseTypeBadge(e.expense_type||'operating')}
@@ -34288,7 +34325,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.43', date:'2026-09-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
+    { v:'2.44', date:'2026-09-30', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
+      '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
+      '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
+      '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
+      '🧹 <b>Cache Refresh (v2.44):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+    ]},
+    { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
       '👥 <b>จัดกลุ่มข้อมูลลูกค้าและสินค้าอัตโนมัติ:</b> จับคู่คำสั่งซื้อเข้ากับลูกค้าทั้งจาก Customer ID, ชื่อลูกค้า, เบอร์โทรศัพท์ และช่องทาง Social อัตโนมัติ พร้อมแสดงรายการสินค้าครบทุกออเดอร์',
       '🧹 <b>Cache Refresh (v2.43):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.43'
