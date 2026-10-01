@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.44 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.45 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.08 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.45 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.44 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.45 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.44 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.45 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1564,7 +1564,8 @@ async function init() {
 
 // Immediate readyState Startup
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => { init(); });
+  document.addEventListener('DOMContentLoaded', () => {
+  syncAppVersionBadges(); init(); });
 } else {
   setTimeout(init, 0);
 }
@@ -1881,6 +1882,7 @@ async function afterLogin(user) {
     if (userEmailEl) userEmailEl.textContent = user.email || 'admin@sealthai.com';
     const userAvatarEl = document.getElementById('user-avatar-txt');
     if (userAvatarEl) userAvatarEl.textContent = (user.email || 'A')[0].toUpperCase();
+    if (typeof syncAppVersionBadges === 'function') syncAppVersionBadges();
     if (_pwaPrompt) {
       const btn = document.getElementById('pwa-install-btn');
       if (btn) btn.style.display = 'inline-flex';
@@ -3225,7 +3227,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.44)">v2.44 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.45)">v2.45 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -34577,6 +34579,20 @@ async function saveQuickProduct() {
   }
 }
 
+
+function syncAppVersionBadges() {
+  try {
+    const v = typeof DISPLAY_APP_VERSION !== 'undefined' ? DISPLAY_APP_VERSION : 'v2.45';
+    document.querySelectorAll('span[onclick*="openChangelogModal"]').forEach(el => {
+      if (el.textContent.includes('System Active')) {
+        el.textContent = v + ' 🚀 System Active';
+      } else if (el.textContent.includes('v2.') || el.textContent.includes('v1.')) {
+        el.textContent = v + ' 🚀';
+      }
+    });
+  } catch(e) {}
+}
+
 function openChangelogModal() {
   const modalId = 'modal-changelog-viewer';
   let modal = document.getElementById(modalId);
@@ -34599,7 +34615,7 @@ function openChangelogModal() {
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
-      '🧹 <b>Cache Refresh (v2.44):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+      '🧹 <b>Cache Refresh (v2.45):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
     ]},
     { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
@@ -35009,7 +35025,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v1.85</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v2.45</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
