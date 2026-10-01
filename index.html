@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.49';
-const DISPLAY_APP_VERSION = 'v2.49';
+const CURRENT_APP_VERSION = 'sealthai-v2.50';
+const DISPLAY_APP_VERSION = 'v2.50';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.49 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.50 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.49 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.50 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.49 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.50 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1386,6 +1386,7 @@ function canSee(page) {
   const perms = currentUser?._perms || {};
   if (page === 'aiIntelligence' || page === 'contentstudio') return true;
   if (page === 'stockPlanning' && perms?.products) return true;
+  if (page === 'employeeLoans' && (perms?.employees || perms?.expenses || perms?.finance || perms?.sales || perms?.orders)) return true;
   if (page === 'gratuity' && (perms?.expenses || perms?.finance || perms?.sales || perms?.orders)) return true;
   if (page === 'chinaImport' && perms?.purchase) return true;
   if (page === 'supplierWeeklyExpense' && (perms?.purchase || perms?.expenses || perms?.finance)) return true;
@@ -1437,6 +1438,7 @@ function renderSidebar() {
 
     {section: t('nav.team')},
     {page:'employees',  icon:'👥', label: t('nav.employees')},
+    {page:'employeeLoans', icon:'💳', label: 'เงินยืมพนักงาน & ดอกเบี้ย'},
 
     {section: t('nav.settings')},
     {page:'users',      icon:'👥', label: t('nav.users')},
@@ -1993,6 +1995,7 @@ const pageTitles = {
   products: 'สินค้า',
   stock: 'รับสินค้าเข้าสต๊อก',
   employees: 'พนักงาน + KPI',
+  employeeLoans: '💳 จัดการเงินยืมพนักงาน & อัตราดอกเบี้ย',
   quotations: 'ใบเสนอราคา',
   arinvoice: 'AR Invoice',
   goodsreturn: 'รับคืนสินค้า',
@@ -2028,7 +2031,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, suppliers, purchase, supplierWeeklyExpense, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
+  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, employeeLoans, suppliers, purchase, supplierWeeklyExpense, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
   if (pages[page]) pages[page]();
 }
 
@@ -3227,7 +3230,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.49)">v2.49 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.50)">v2.50 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -14680,6 +14683,1283 @@ function financeTypeOptions(map, selected='') {
 function financeSetupError(error) {
   const msg=String(error?.message||'').toLowerCase();
   return msg.includes('relation') || msg.includes('schema cache') || msg.includes('could not find');
+}
+
+
+
+// ─── PAGE: EMPLOYEE LOANS & INTEREST MANAGEMENT · v2.50 ──────────────
+let employeeLoansRows = [];
+let employeeLoanPaymentsRows = [];
+let editingLoanId = null;
+let loanActiveEmployees = [];
+let loanSchemaReady = null;
+
+async function checkLoanSchema() {
+  if (loanSchemaReady !== null) return loanSchemaReady;
+  try {
+    const { error } = await sb.from('employee_loans').select('id').limit(1);
+    if (error && (error.code === '42P01' || String(error.message||'').includes('relation') || String(error.message||'').includes('does not exist'))) {
+      loanSchemaReady = false;
+    } else {
+      loanSchemaReady = true;
+    }
+  } catch (err) {
+    loanSchemaReady = false;
+  }
+  return loanSchemaReady;
+}
+
+// Local Storage Fallback Cache helpers
+function getLocalLoans() {
+  try {
+    return JSON.parse(localStorage.getItem('sealthai_employee_loans_' + (currentShop?.id || 'default')) || '[]');
+  } catch(e) { return []; }
+}
+function saveLocalLoans(loans) {
+  try {
+    localStorage.setItem('sealthai_employee_loans_' + (currentShop?.id || 'default'), JSON.stringify(loans));
+  } catch(e){}
+}
+function getLocalLoanPayments() {
+  try {
+    return JSON.parse(localStorage.getItem('sealthai_employee_loan_payments_' + (currentShop?.id || 'default')) || '[]');
+  } catch(e) { return []; }
+}
+function saveLocalLoanPayments(payments) {
+  try {
+    localStorage.setItem('sealthai_employee_loan_payments_' + (currentShop?.id || 'default'), JSON.stringify(payments));
+  } catch(e){}
+}
+
+async function employeeLoans() {
+  const schemaOK = await checkLoanSchema();
+  
+  document.getElementById('topbar-actions').innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-secondary btn-sm" onclick="exportEmployeeLoansExcel()" style="padding:5px 9px;font-size:12px">📥 Export</button>
+      <button class="btn btn-primary btn-sm" onclick="openNewLoanModal()" style="padding:5px 12px;font-size:12.5px;font-weight:700">
+        <span class="btn-icon">＋</span> บันทึกสัญญาเงินกู้ใหม่
+      </button>
+    </div>
+  `;
+
+  setContent(`
+    <div id="employee-loans-page">
+      ${!schemaOK ? `
+        <div style="background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:12px 14px;border-radius:10px;margin-bottom:14px;font-size:12.5px;line-height:1.6">
+          <div style="font-weight:800;font-size:13px;margin-bottom:4px">⚠️ ยังไม่ได้สร้างตารางใน Supabase (ระบบกำลังใช้ Local Storage Auto-sync)</div>
+          เพื่อให้ระบบซิงค์ข้อมูลกับคลาวด์และใช้งานร่วมกันได้ทุกเครื่อง กรุณารันไฟล์ <b>supabase_employee_loans_migration.sql</b> ใน Supabase SQL Editor
+        </div>
+      ` : ''}
+
+      <!-- Filter Bar -->
+      <div class="filter-bar mb-4" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select id="ln-filter-status" onchange="renderEmployeeLoansView()" style="min-width:140px;padding:7px 10px;font-size:13px">
+          <option value="">ทุกสถานะสัญญา</option>
+          <option value="active" selected>🟢 กำลังผ่อนชำระ (Active)</option>
+          <option value="completed">✅ ปิดสัญญาแล้ว (Completed)</option>
+          <option value="cancelled">⚪ ยกเลิก (Cancelled)</option>
+        </select>
+        <select id="ln-filter-emp" onchange="renderEmployeeLoansView()" style="min-width:170px;padding:7px 10px;font-size:13px">
+          <option value="">ทุกพนักงาน</option>
+        </select>
+        <input id="ln-search" placeholder="🔍 ค้นหาเลขที่สัญญา / ชื่อพนักงาน / หมายเหตุ..." oninput="renderEmployeeLoansView()" style="flex:1 1 240px;min-width:180px;padding:7px 10px;font-size:13px">
+        <button class="btn btn-secondary btn-sm" onclick="loadEmployeeLoans()" style="padding:7px 11px" title="รีเฟรชข้อมูล"><span class="btn-icon">🔄</span></button>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="stat-grid mb-4" id="ln-stats" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px"></div>
+
+      <!-- Main Loan List Card -->
+      <div class="card" style="padding:16px">
+        <div class="card-title flex-between" style="flex-wrap:wrap;gap:8px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span>📋 ทะเบียนสัญญากู้ยืมเงินพนักงาน & การผ่อนชำระ</span>
+            <span id="ln-count-badge" class="badge badge-gray" style="font-size:11px"></span>
+          </div>
+          <div style="font-size:12px;color:var(--text3)">
+            💡 ดอกเบี้ยคำนวณแยกตามสัญญารายบุคคล ไม่กระทบต้นทุนขายของร้าน
+          </div>
+        </div>
+        <div class="table-wrap" id="ln-table-wrap">
+          <div class="loading"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: New/Edit Loan Contract -->
+    <div class="modal-overlay" id="modal-employee-loan">
+      <div class="modal" style="max-width:840px;max-height:92vh;display:flex;flex-direction:column">
+        <div class="modal-title" id="modal-ln-title">💳 บันทึกสัญญากู้ยืมเงินพนักงาน</div>
+        <div style="overflow-y:auto;padding-right:4px;flex:1">
+          <div class="grid-2" style="gap:12px">
+            <div class="form-group">
+              <label>พนักงานผู้ขอกู้ *</label>
+              <select id="ln-emp-select" onchange="onLoanEmployeeSelected()" style="font-weight:600">
+                <option value="">-- เลือกพนักงาน --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>เลขที่สัญญา (Auto / กำหนดเอง)</label>
+              <input type="text" id="ln-no" placeholder="เช่น LN2026-00001" style="font-family:var(--mono);font-weight:700">
+            </div>
+            <div class="form-group">
+              <label>วันที่ทำสัญญา / เริ่มกู้ *</label>
+              <input type="date" id="ln-start-date" value="${today()}" onchange="recalcLoanScheduleLive()">
+            </div>
+            <div class="form-group">
+              <label>วันครบกำหนดชำระงวดแรก *</label>
+              <input type="date" id="ln-first-due-date" onchange="recalcLoanScheduleLive()">
+            </div>
+            <div class="form-group">
+              <label>ยอดเงินต้นที่ขอกู้ (บาท) *</label>
+              <input type="number" id="ln-principal" min="0" step="100" placeholder="เช่น 10000" oninput="recalcLoanScheduleLive()" style="font-weight:700;font-size:15px;color:var(--text)">
+            </div>
+            <div class="form-group">
+              <label>ประเภทอัตราดอกเบี้ย *</label>
+              <select id="ln-interest-type" onchange="onLoanInterestTypeChanged()" style="font-weight:600">
+                <option value="none">0% ปลอดดอกเบี้ย (สวัสดิการร้าน)</option>
+                <option value="annual_flat">อัตราคงที่ % ต่อปี (Annual Flat Rate)</option>
+                <option value="monthly_flat">อัตราคงที่ % ต่อเดือน (Monthly Flat Rate)</option>
+              </select>
+            </div>
+            <div class="form-group" id="ln-rate-wrap" style="display:none">
+              <label id="ln-rate-label">อัตราดอกเบี้ย (% ต่อปี) *</label>
+              <div style="display:flex;align-items:center;gap:6px">
+                <input type="number" id="ln-interest-rate" min="0" max="100" step="0.1" value="0" oninput="recalcLoanScheduleLive()" style="font-weight:700">
+                <span style="font-weight:700;color:var(--text2)">%</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>จำนวนงวดที่ผ่อนชำระ (เดือน) *</label>
+              <input type="number" id="ln-term" min="1" max="120" step="1" value="6" oninput="recalcLoanScheduleLive()" style="font-weight:700">
+            </div>
+            <div class="form-group">
+              <label>วิธีการชำระเงินคืน *</label>
+              <select id="ln-repay-method">
+                <option value="payroll">หักจากเงินเดือนประจำงวด (Payroll Deduction)</option>
+                <option value="transfer">โอนเงินเข้าบัญชีบริษัท (Bank Transfer)</option>
+                <option value="cash">ชำระด้วยเงินสด (Cash)</option>
+                <option value="other">อื่นๆ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>สถานะสัญญา</label>
+              <select id="ln-status">
+                <option value="active">🟢 กำลังผ่อนชำระ (Active)</option>
+                <option value="completed">✅ ปิดสัญญาแล้ว (Completed)</option>
+                <option value="cancelled">⚪ ยกเลิกสัญญา (Cancelled)</option>
+              </select>
+            </div>
+            <div class="form-group" style="grid-column:1/-1">
+              <label>วัตถุประสงค์การกู้ / บันทึกข้อตกลง</label>
+              <textarea id="ln-notes" rows="2" placeholder="เช่น เงินกู้ยืมเพื่อการศึกษาบุตร / บันทึกข้อตกลงเพิ่มเติม..."></textarea>
+            </div>
+          </div>
+
+          <!-- Live Calculator Summary & Schedule Preview -->
+          <div style="margin-top:14px;background:var(--bg3);border:1.5px solid var(--border);border-radius:10px;padding:12px 14px">
+            <div style="font-weight:800;font-size:13px;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+              <span>🧮 สรุปยอดคำนวณค่างวด & ดอกเบี้ย</span>
+              <span id="ln-calc-rate-badge" class="badge badge-blue" style="font-size:11px"></span>
+            </div>
+            <div class="grid-4" style="gap:8px;margin-bottom:12px" id="ln-calc-summary-boxes">
+              <div style="background:#fff;border-radius:8px;padding:8px 10px;border:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--text3)">เงินต้น</div>
+                <div id="ln-calc-principal" style="font-weight:800;font-size:14px;color:var(--text);font-family:var(--mono)">฿0</div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px;border:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--text3)">ดอกเบี้ยรวม</div>
+                <div id="ln-calc-interest" style="font-weight:800;font-size:14px;color:var(--orange);font-family:var(--mono)">฿0</div>
+              </div>
+              <div style="background:#fff;border-radius:8px;padding:8px 10px;border:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--text3)">ยอดรวมทั้งสิ้น</div>
+                <div id="ln-calc-total" style="font-weight:800;font-size:14px;color:var(--accent);font-family:var(--mono)">฿0</div>
+              </div>
+              <div style="background:#eff6ff;border-radius:8px;padding:8px 10px;border:1.5px solid #bfdbfe">
+                <div style="font-size:11px;color:#1d4ed8;font-weight:700">ค่างวดต่องวด</div>
+                <div id="ln-calc-installment" style="font-weight:800;font-size:15px;color:#1d4ed8;font-family:var(--mono)">฿0</div>
+              </div>
+            </div>
+
+            <!-- Schedule Preview Table -->
+            <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--text2)">📅 ตารางงวดผ่อนชำระจำลอง (Amortization Schedule)</div>
+            <div style="max-height:170px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;background:#fff">
+              <table style="width:100%;font-size:11.5px;text-align:left;border-collapse:collapse">
+                <thead style="background:var(--bg2);position:sticky;top:0">
+                  <tr>
+                    <th style="padding:5px 8px">งวดที่</th>
+                    <th style="padding:5px 8px">กำหนดชำระ</th>
+                    <th style="padding:5px 8px;text-align:right">เงินต้น</th>
+                    <th style="padding:5px 8px;text-align:right">ดอกเบี้ย</th>
+                    <th style="padding:5px 8px;text-align:right">ค่างวด</th>
+                    <th style="padding:5px 8px;text-align:right">เงินต้นคงเหลือ</th>
+                  </tr>
+                </thead>
+                <tbody id="ln-calc-schedule-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="margin-top:12px;display:flex;justify-content:space-between;align-items:center">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-employee-loan')">ยกเลิก</button>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="btn btn-primary" onclick="saveEmployeeLoan()">💾 บันทึกสัญญา</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Record Repayment -->
+    <div class="modal-overlay" id="modal-loan-repayment">
+      <div class="modal" style="max-width:540px">
+        <div class="modal-title">💰 บันทึกรับชำระค่างวดเงินกู้</div>
+        <div id="pay-loan-info" style="background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12.5px"></div>
+        <div class="grid-2" style="gap:10px">
+          <div class="form-group">
+            <label>งวดที่ชำระ *</label>
+            <input type="number" id="pay-installment-no" min="1" step="1" value="1" oninput="onRepaymentInstallmentChanged()" style="font-weight:700">
+          </div>
+          <div class="form-group">
+            <label>วันที่รับชำระ *</label>
+            <input type="date" id="pay-date" value="${today()}">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>ยอดเงินที่รับชำระ (บาท) *</label>
+            <input type="number" id="pay-amount" min="0" step="0.01" oninput="onRepaymentAmountChanged()" style="font-weight:800;font-size:16px;color:var(--accent)">
+          </div>
+          <div class="form-group">
+            <label>ตัดเงินต้น (บาท)</label>
+            <input type="number" id="pay-principal-part" min="0" step="0.01" style="font-family:var(--mono);font-weight:600">
+          </div>
+          <div class="form-group">
+            <label>ตัดดอกเบี้ย (บาท)</label>
+            <input type="number" id="pay-interest-part" min="0" step="0.01" style="font-family:var(--mono);font-weight:600">
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>ช่องทางชำระ</label>
+            <select id="pay-method">
+              <option value="payroll">หักเงินเดือน (Payroll Deduction)</option>
+              <option value="transfer">โอนเงินเข้าบัญชี (Bank Transfer)</option>
+              <option value="cash">เงินสด (Cash)</option>
+              <option value="other">อื่นๆ</option>
+            </select>
+          </div>
+          <div class="form-group" style="grid-column:1/-1">
+            <label>หมายเหตุการรับเงิน</label>
+            <input type="text" id="pay-notes" placeholder="เช่น หักสลิปเงินเดือนประจำเดือน ต.ค.">
+          </div>
+        </div>
+        <div class="modal-footer" style="margin-top:14px">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-loan-repayment')">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" onclick="saveLoanPayment()">💾 ยืนยันบันทึกรับเงิน</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: View Full Loan Details & History -->
+    <div class="modal-overlay" id="modal-loan-detail">
+      <div class="modal" style="max-width:800px;max-height:90vh;display:flex;flex-direction:column">
+        <div class="modal-title flex-between">
+          <span id="dt-loan-title">📜 รายละเอียดสัญญาเงินกู้ & ประวัติการผ่อนชำระ</span>
+          <button class="btn btn-secondary btn-sm" id="dt-print-btn" onclick="printActiveLoanContract()">🖨️ พิมพ์สัญญา</button>
+        </div>
+        <div style="overflow-y:auto;flex:1;padding-right:4px" id="dt-loan-body"></div>
+        <div class="modal-footer" style="margin-top:12px">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('modal-loan-detail')">ปิด</button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  await loadLoanEmployees();
+  await loadEmployeeLoans();
+}
+
+async function loadLoanEmployees() {
+  try {
+    const { data, error } = await sb.from('employees').select('id,name,role').eq('shop_id', currentShop.id).order('name');
+    if (!error && data && data.length > 0) {
+      loanActiveEmployees = data;
+    } else {
+      loanActiveEmployees = [
+        { id: 'emp-1', name: 'พนักงานตัวอย่าง 1', role: 'Staff' },
+        { id: 'emp-2', name: 'พนักงานตัวอย่าง 2', role: 'Staff' }
+      ];
+    }
+  } catch(e) {
+    loanActiveEmployees = [];
+  }
+
+  // Populate employee filter
+  const filterEl = document.getElementById('ln-filter-emp');
+  if (filterEl) {
+    filterEl.innerHTML = '<option value="">ทุกพนักงาน</option>' + 
+      loanActiveEmployees.map(e => `<option value="${escapeHTML(e.id)}">${escapeHTML(e.name)}</option>`).join('');
+  }
+
+  // Populate employee modal select
+  const selectEl = document.getElementById('ln-emp-select');
+  if (selectEl) {
+    selectEl.innerHTML = '<option value="">-- เลือกพนักงาน --</option>' + 
+      loanActiveEmployees.map(e => `<option value="${escapeHTML(e.id)}" data-name="${escapeHTML(e.name)}">${escapeHTML(e.name)}${e.role ? ' ('+escapeHTML(e.role)+')' : ''}</option>`).join('');
+  }
+}
+
+async function loadEmployeeLoans() {
+  const schemaOK = await checkLoanSchema();
+  if (schemaOK) {
+    try {
+      const [loansRes, paymentsRes] = await Promise.all([
+        sb.from('employee_loans').select('*').eq('shop_id', currentShop.id).order('created_at', { ascending: false }),
+        sb.from('employee_loan_payments').select('*').eq('shop_id', currentShop.id).order('payment_date', { ascending: true })
+      ]);
+      if (!loansRes.error) {
+        employeeLoansRows = loansRes.data || [];
+        saveLocalLoans(employeeLoansRows);
+      } else {
+        employeeLoansRows = getLocalLoans();
+      }
+      if (!paymentsRes.error) {
+        employeeLoanPaymentsRows = paymentsRes.data || [];
+        saveLocalLoanPayments(employeeLoanPaymentsRows);
+      } else {
+        employeeLoanPaymentsRows = getLocalLoanPayments();
+      }
+    } catch(err) {
+      employeeLoansRows = getLocalLoans();
+      employeeLoanPaymentsRows = getLocalLoanPayments();
+    }
+  } else {
+    employeeLoansRows = getLocalLoans();
+    employeeLoanPaymentsRows = getLocalLoanPayments();
+  }
+
+  renderEmployeeLoansView();
+}
+
+function renderEmployeeLoansView() {
+  const statusFilter = document.getElementById('ln-filter-status')?.value || '';
+  const empFilter = document.getElementById('ln-filter-emp')?.value || '';
+  const search = (document.getElementById('ln-search')?.value || '').trim().toLowerCase();
+
+  let filtered = employeeLoansRows.filter(l => {
+    if (statusFilter && l.status !== statusFilter) return false;
+    if (empFilter && l.employee_id !== empFilter) return false;
+    if (search) {
+      const matchNo = (l.loan_no || '').toLowerCase().includes(search);
+      const matchName = (l.employee_name || '').toLowerCase().includes(search);
+      const matchNote = (l.notes || '').toLowerCase().includes(search);
+      if (!matchNo && !matchName && !matchNote) return false;
+    }
+    return true;
+  });
+
+  // Calculate Overall KPI
+  let totalDisbursedPrincipal = 0;
+  let totalExpectedInterest = 0;
+  let totalCollected = 0;
+  let totalOutstanding = 0;
+  const borrowerSet = new Set();
+
+  employeeLoansRows.forEach(l => {
+    if (l.status !== 'cancelled') {
+      totalDisbursedPrincipal += Number(l.principal_amount || 0);
+      totalExpectedInterest += Number(l.total_interest || 0);
+      totalCollected += Number(l.total_paid || 0);
+      totalOutstanding += Math.max(0, Number(l.remaining_balance || 0));
+      if (l.remaining_balance > 0 && l.status === 'active') {
+        borrowerSet.add(l.employee_id || l.employee_name);
+      }
+    }
+  });
+
+  // Render Stats
+  const statsEl = document.getElementById('ln-stats');
+  if (statsEl) {
+    statsEl.innerHTML = `
+      <div class="stat-card" style="border-left:4px solid var(--red)">
+        <div class="stat-label">💳 ยอดหนี้คงค้างรวม (Outstanding)</div>
+        <div class="stat-value" style="color:var(--red);font-family:var(--mono)">${fmtB(totalOutstanding)}</div>
+        <div class="stat-sub">เงินต้น+ดอกเบี้ยที่ยังไม่ได้รับชำระ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--accent)">
+        <div class="stat-label">💰 เงินต้นปล่อยกู้สะสม</div>
+        <div class="stat-value" style="color:var(--accent);font-family:var(--mono)">${fmtB(totalDisbursedPrincipal)}</div>
+        <div class="stat-sub">จากสัญญาทั้งหมด ${employeeLoansRows.length} ฉบับ</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--orange)">
+        <div class="stat-label">📈 ดอกเบี้ยคาดการณ์รวม</div>
+        <div class="stat-value" style="color:var(--orange);font-family:var(--mono)">${fmtB(totalExpectedInterest)}</div>
+        <div class="stat-sub">ผลตอบแทนดอกเบี้ยตามสัญญา</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--green)">
+        <div class="stat-label">💵 รับชำระคืนแล้วสะสม</div>
+        <div class="stat-value" style="color:var(--green);font-family:var(--mono)">${fmtB(totalCollected)}</div>
+        <div class="stat-sub">${totalDisbursedPrincipal+totalExpectedInterest > 0 ? (((totalCollected)/(totalDisbursedPrincipal+totalExpectedInterest))*100).toFixed(1)+'%' : '0%'} ของยอดรวม</div>
+      </div>
+      <div class="stat-card" style="border-left:4px solid var(--blue)">
+        <div class="stat-label">👥 พนักงานที่มียอดกู้</div>
+        <div class="stat-value" style="color:var(--blue);font-family:var(--mono)">${borrowerSet.size} <span style="font-size:14px;font-weight:400;color:var(--text3)">คน</span></div>
+        <div class="stat-sub">เฉพาะสัญญาที่มียอดค้าง</div>
+      </div>
+    `;
+  }
+
+  const badgeEl = document.getElementById('ln-count-badge');
+  if (badgeEl) badgeEl.textContent = `${filtered.length} รายการ`;
+
+  // Render Main Table
+  const tableWrap = document.getElementById('ln-table-wrap');
+  if (!tableWrap) return;
+
+  if (filtered.length === 0) {
+    tableWrap.innerHTML = `
+      <div class="empty">
+        <div class="empty-icon">💳</div>
+        <div class="empty-text">ยังไม่มีข้อมูลสัญญากู้ยืมเงินพนักงานตามเงื่อนไขที่เลือก<br><small>กดปุ่ม <b>+ บันทึกสัญญาเงินกู้ใหม่</b> เพื่อเริ่มต้น</small></div>
+      </div>
+    `;
+    return;
+  }
+
+  tableWrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>เลขที่สัญญา</th>
+          <th>พนักงาน</th>
+          <th>วันที่เริ่ม / กำหนดชำระ</th>
+          <th class="text-right">เงินต้น</th>
+          <th>อัตราดอกเบี้ย</th>
+          <th class="text-right">ค่างวด / เดือน</th>
+          <th class="text-right">ชำระแล้ว</th>
+          <th class="text-right">หนี้คงเหลือ</th>
+          <th class="text-center">สถานะ</th>
+          <th class="text-center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(l => {
+          const principal = Number(l.principal_amount || 0);
+          const totalInterest = Number(l.total_interest || 0);
+          const totalPayable = Number(l.total_payable || (principal + totalInterest));
+          const paid = Number(l.total_paid || 0);
+          const balance = Number(l.remaining_balance ?? (totalPayable - paid));
+          const pct = totalPayable > 0 ? Math.min(100, Math.round((paid / totalPayable) * 100)) : 0;
+
+          // Interest label
+          let rateText = '<span style="color:var(--text3)">0% (ปลอดดอกเบี้ย)</span>';
+          if (l.interest_type === 'annual_flat') {
+            rateText = `<span style="color:var(--orange);font-weight:700">${l.interest_rate}%</span> <small style="color:var(--text3)">/ปี</small>`;
+          } else if (l.interest_type === 'monthly_flat') {
+            rateText = `<span style="color:var(--orange);font-weight:700">${l.interest_rate}%</span> <small style="color:var(--text3)">/เดือน</small>`;
+          }
+
+          // Status Badge
+          let statusBadge = '<span class="badge badge-green">🟢 กำลังผ่อน</span>';
+          if (l.status === 'completed' || balance <= 0) {
+            statusBadge = '<span class="badge badge-blue" style="background:#dcfce7;color:#15803d;border:1px solid #86efac">✅ ปิดสัญญาแล้ว</span>';
+          } else if (l.status === 'cancelled') {
+            statusBadge = '<span class="badge badge-gray">⚪ ยกเลิก</span>';
+          }
+
+          return `
+            <tr>
+              <td>
+                <div style="font-family:var(--mono);font-weight:800;color:var(--accent);font-size:13px">${escapeHTML(l.loan_no || '-')}</div>
+                <div style="font-size:11px;color:var(--text3)">ผ่อน ${l.term_months || 1} งวด (${escapeHTML(l.repayment_method === 'payroll' ? 'หักเงินเดือน' : l.repayment_method === 'transfer' ? 'โอนเงิน' : 'เงินสด')})</div>
+              </td>
+              <td>
+                <div style="font-weight:700;color:var(--text);font-size:13px">${escapeHTML(l.employee_name || 'ไม่ระบุ')}</div>
+                ${l.notes ? `<div style="font-size:11px;color:var(--text3);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(l.notes)}</div>` : ''}
+              </td>
+              <td>
+                <div style="font-size:12px;font-weight:600">เริ่ม: ${escapeHTML(l.start_date || '-')}</div>
+                <div style="font-size:11px;color:var(--text3)">งวดแรก: ${escapeHTML(l.first_due_date || '-')}</div>
+              </td>
+              <td class="text-right" style="font-family:var(--mono);font-weight:700;font-size:13px">${fmtB(principal)}</td>
+              <td>${rateText}</td>
+              <td class="text-right" style="font-family:var(--mono);font-weight:700;color:var(--blue);font-size:13px">${fmtB(l.monthly_installment || 0)}</td>
+              <td class="text-right">
+                <div style="font-family:var(--mono);font-weight:700;color:var(--green);font-size:12.5px">${fmtB(paid)}</div>
+                <div style="font-size:10.5px;color:var(--text3)">${pct}% ของยอดรวม</div>
+                <div style="width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:2px;overflow:hidden">
+                  <div style="width:${pct}%;height:100%;background:var(--green)"></div>
+                </div>
+              </td>
+              <td class="text-right" style="font-family:var(--mono);font-weight:800;color:${balance > 0 ? 'var(--red)' : 'var(--text3)'};font-size:13.5px">${fmtB(balance)}</td>
+              <td class="text-center">${statusBadge}</td>
+              <td class="text-center">
+                <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
+                  ${balance > 0 && l.status === 'active' ? `
+                    <button class="btn btn-primary btn-sm" onclick="openLoanPaymentModal('${l.id}')" style="padding:3px 7px;font-size:11px;background:#16a34a" title="บันทึกชำระค่างวด">
+                      💰 จ่ายงวด
+                    </button>
+                  ` : ''}
+                  <button class="btn btn-secondary btn-sm" onclick="openLoanDetailModal('${l.id}')" style="padding:3px 7px;font-size:11px" title="ดูรายละเอียดและประวัติการชำระ">
+                    📜 รายละเอียด
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="printLoanContract('${l.id}')" style="padding:3px 6px;font-size:11px" title="พิมพ์สัญญากู้ยืมเงิน">
+                    🖨️
+                  </button>
+                  <button class="btn btn-secondary btn-sm" onclick="openNewLoanModal('${l.id}')" style="padding:3px 6px;font-size:11px" title="แก้ไขสัญญา">
+                    ✏️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ─── LOAN MODAL & LIVE SCHEDULE CALCULATOR ────────────────────────────
+function onLoanEmployeeSelected() {
+  const selectEl = document.getElementById('ln-emp-select');
+  const selectedOpt = selectEl.options[selectEl.selectedIndex];
+  if (selectedOpt && selectedOpt.value) {
+    const defaultDate = document.getElementById('ln-start-date').value || today();
+    // Default first due date to next month same day
+    const [y, m, d] = defaultDate.split('-').map(Number);
+    const nextMonth = new Date(y, m, d || 1);
+    const firstDueEl = document.getElementById('ln-first-due-date');
+    if (firstDueEl && !firstDueEl.value) {
+      firstDueEl.value = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth()+1).padStart(2,'0')}-${String(nextMonth.getDate()).padStart(2,'0')}`;
+    }
+  }
+  recalcLoanScheduleLive();
+}
+
+function onLoanInterestTypeChanged() {
+  const type = document.getElementById('ln-interest-type').value;
+  const rateWrap = document.getElementById('ln-rate-wrap');
+  const rateLabel = document.getElementById('ln-rate-label');
+  const rateInput = document.getElementById('ln-interest-rate');
+
+  if (type === 'none') {
+    rateWrap.style.display = 'none';
+    rateInput.value = 0;
+  } else {
+    rateWrap.style.display = 'block';
+    if (type === 'annual_flat') {
+      rateLabel.textContent = 'อัตราดอกเบี้ย (% ต่อปี) *';
+      if (!rateInput.value || Number(rateInput.value) === 0) rateInput.value = 5.0;
+    } else if (type === 'monthly_flat') {
+      rateLabel.textContent = 'อัตราดอกเบี้ย (% ต่อเดือน) *';
+      if (!rateInput.value || Number(rateInput.value) === 0) rateInput.value = 1.0;
+    }
+  }
+  recalcLoanScheduleLive();
+}
+
+function calculateLoanAmortization(principal, interestType, interestRate, termMonths, startDateStr, firstDueDateStr) {
+  principal = Math.max(0, Number(principal || 0));
+  termMonths = Math.max(1, parseInt(termMonths || 1, 10));
+  interestRate = Math.max(0, Number(interestRate || 0));
+
+  let totalInterest = 0;
+  if (interestType === 'annual_flat') {
+    totalInterest = principal * (interestRate / 100) * (termMonths / 12);
+  } else if (interestType === 'monthly_flat') {
+    totalInterest = principal * (interestRate / 100) * termMonths;
+  }
+  totalInterest = Math.round(totalInterest * 100) / 100;
+
+  const totalPayable = principal + totalInterest;
+  const monthlyInstallment = Math.round((totalPayable / termMonths) * 100) / 100;
+  const principalPerMonth = Math.round((principal / termMonths) * 100) / 100;
+  const interestPerMonth = Math.round((totalInterest / termMonths) * 100) / 100;
+
+  const schedule = [];
+  let remainingPrincipal = principal;
+
+  // Determine starting date for installments
+  let baseDate = firstDueDateStr ? new Date(firstDueDateStr) : (startDateStr ? new Date(startDateStr) : new Date());
+  if (isNaN(baseDate.getTime())) baseDate = new Date();
+
+  for (let i = 1; i <= termMonths; i++) {
+    const dueDate = new Date(baseDate.getFullYear(), baseDate.getMonth() + (firstDueDateStr ? (i - 1) : i), baseDate.getDate());
+    const dueDateStr = `${dueDate.getFullYear()}-${String(dueDate.getMonth()+1).padStart(2,'0')}-${String(dueDate.getDate()).padStart(2,'0')}`;
+    
+    // Adjust last month rounding
+    const pPortion = (i === termMonths) ? remainingPrincipal : principalPerMonth;
+    const iPortion = (i === termMonths) ? Math.max(0, totalInterest - (interestPerMonth * (termMonths - 1))) : interestPerMonth;
+    const inst = pPortion + iPortion;
+    remainingPrincipal = Math.max(0, remainingPrincipal - pPortion);
+
+    schedule.push({
+      installmentNo: i,
+      dueDate: dueDateStr,
+      principalPortion: pPortion,
+      interestPortion: iPortion,
+      installmentAmount: inst,
+      remainingPrincipal: remainingPrincipal
+    });
+  }
+
+  return {
+    principal,
+    interestType,
+    interestRate,
+    termMonths,
+    totalInterest,
+    totalPayable,
+    monthlyInstallment,
+    schedule
+  };
+}
+
+function recalcLoanScheduleLive() {
+  const principal = Number(document.getElementById('ln-principal')?.value || 0);
+  const interestType = document.getElementById('ln-interest-type')?.value || 'none';
+  const interestRate = Number(document.getElementById('ln-interest-rate')?.value || 0);
+  const termMonths = parseInt(document.getElementById('ln-term')?.value || 1, 10);
+  const startDate = document.getElementById('ln-start-date')?.value || today();
+  const firstDueDate = document.getElementById('ln-first-due-date')?.value || '';
+
+  const res = calculateLoanAmortization(principal, interestType, interestRate, termMonths, startDate, firstDueDate);
+
+  // Update Summary Boxes
+  const pEl = document.getElementById('ln-calc-principal');
+  const iEl = document.getElementById('ln-calc-interest');
+  const tEl = document.getElementById('ln-calc-total');
+  const mEl = document.getElementById('ln-calc-installment');
+  const rateBadge = document.getElementById('ln-calc-rate-badge');
+
+  if (pEl) pEl.textContent = fmtB(res.principal);
+  if (iEl) iEl.textContent = fmtB(res.totalInterest);
+  if (tEl) tEl.textContent = fmtB(res.totalPayable);
+  if (mEl) mEl.textContent = fmtB(res.monthlyInstallment) + ' / ด.';
+
+  if (rateBadge) {
+    if (interestType === 'none') {
+      rateBadge.textContent = '0% ปลอดดอกเบี้ย';
+      rateBadge.className = 'badge badge-green';
+    } else if (interestType === 'annual_flat') {
+      rateBadge.textContent = `ดอกเบี้ย ${interestRate}% ต่อปี (Flat Rate)`;
+      rateBadge.className = 'badge badge-blue';
+    } else if (interestType === 'monthly_flat') {
+      rateBadge.textContent = `ดอกเบี้ย ${interestRate}% ต่อเดือน (Flat Rate)`;
+      rateBadge.className = 'badge badge-orange';
+    }
+  }
+
+  // Update Schedule Tbody
+  const tbody = document.getElementById('ln-calc-schedule-tbody');
+  if (tbody) {
+    if (res.schedule.length === 0 || principal <= 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:12px;color:var(--text3)">กรอกยอดเงินต้นและจำนวนงวดเพื่อดูตารางผ่อนชำระ</td></tr>';
+    } else {
+      tbody.innerHTML = res.schedule.map(s => `
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="padding:4px 8px;font-weight:700">งวดที่ ${s.installmentNo}</td>
+          <td style="padding:4px 8px">${escapeHTML(s.dueDate)}</td>
+          <td style="padding:4px 8px;text-align:right;font-family:var(--mono)">${fmt(s.principalPortion)}</td>
+          <td style="padding:4px 8px;text-align:right;font-family:var(--mono);color:var(--orange)">${fmt(s.interestPortion)}</td>
+          <td style="padding:4px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--blue)">${fmt(s.installmentAmount)}</td>
+          <td style="padding:4px 8px;text-align:right;font-family:var(--mono)">${fmt(s.remainingPrincipal)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+}
+
+function generateLoanNumber() {
+  const curYear = new Date().getFullYear();
+  const yearPrefix = `LN${curYear}-`;
+  let maxSeq = 0;
+  employeeLoansRows.forEach(l => {
+    if (l.loan_no && l.loan_no.startsWith(yearPrefix)) {
+      const seq = parseInt(l.loan_no.slice(yearPrefix.length), 10);
+      if (!isNaN(seq) && seq > maxSeq) maxSeq = seq;
+    }
+  });
+  return `${yearPrefix}${String(maxSeq + 1).padStart(5, '0')}`;
+}
+
+async function openNewLoanModal(loanId = null) {
+  editingLoanId = loanId;
+  await loadLoanEmployees();
+
+  const titleEl = document.getElementById('modal-ln-title');
+  if (titleEl) titleEl.textContent = loanId ? '✏️ แก้ไขสัญญากู้ยืมเงินพนักงาน' : '💳 บันทึกสัญญากู้ยืมเงินพนักงานใหม่';
+
+  if (loanId) {
+    const l = employeeLoansRows.find(x => x.id === loanId);
+    if (!l) { toast('ไม่พบข้อมูลสัญญา', 'error'); return; }
+
+    document.getElementById('ln-emp-select').value = l.employee_id || '';
+    document.getElementById('ln-no').value = l.loan_no || '';
+    document.getElementById('ln-start-date').value = l.start_date || today();
+    document.getElementById('ln-first-due-date').value = l.first_due_date || '';
+    document.getElementById('ln-principal').value = l.principal_amount || 0;
+    document.getElementById('ln-interest-type').value = l.interest_type || 'none';
+    document.getElementById('ln-interest-rate').value = l.interest_rate || 0;
+    document.getElementById('ln-term').value = l.term_months || 1;
+    document.getElementById('ln-repay-method').value = l.repayment_method || 'payroll';
+    document.getElementById('ln-status').value = l.status || 'active';
+    document.getElementById('ln-notes').value = l.notes || '';
+  } else {
+    document.getElementById('ln-emp-select').value = '';
+    document.getElementById('ln-no').value = generateLoanNumber();
+    document.getElementById('ln-start-date').value = today();
+    
+    const now = new Date();
+    const nextM = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+    document.getElementById('ln-first-due-date').value = `${nextM.getFullYear()}-${String(nextM.getMonth()+1).padStart(2,'0')}-${String(nextM.getDate()).padStart(2,'0')}`;
+    
+    document.getElementById('ln-principal').value = '';
+    document.getElementById('ln-interest-type').value = 'none';
+    document.getElementById('ln-interest-rate').value = 0;
+    document.getElementById('ln-term').value = 6;
+    document.getElementById('ln-repay-method').value = 'payroll';
+    document.getElementById('ln-status').value = 'active';
+    document.getElementById('ln-notes').value = '';
+  }
+
+  onLoanInterestTypeChanged();
+  openModal('modal-employee-loan');
+}
+
+async function saveEmployeeLoan() {
+  const empSelect = document.getElementById('ln-emp-select');
+  const employeeId = empSelect.value;
+  const selectedOpt = empSelect.options[empSelect.selectedIndex];
+  const employeeName = selectedOpt?.dataset?.name || selectedOpt?.textContent?.split('(')[0]?.trim() || '';
+
+  if (!employeeId || !employeeName) {
+    toast('กรุณาเลือกพนักงานผู้ขอกู้', 'error');
+    return;
+  }
+
+  const loanNo = (document.getElementById('ln-no').value || '').trim() || generateLoanNumber();
+  const startDate = document.getElementById('ln-start-date').value || today();
+  const firstDueDate = document.getElementById('ln-first-due-date').value || startDate;
+  const principal = Number(document.getElementById('ln-principal').value || 0);
+  const interestType = document.getElementById('ln-interest-type').value || 'none';
+  const interestRate = Number(document.getElementById('ln-interest-rate').value || 0);
+  const termMonths = parseInt(document.getElementById('ln-term').value || 1, 10);
+  const repaymentMethod = document.getElementById('ln-repay-method').value || 'payroll';
+  const status = document.getElementById('ln-status').value || 'active';
+  const notes = (document.getElementById('ln-notes').value || '').trim();
+
+  if (principal <= 0) {
+    toast('กรุณาระบุยอดเงินต้นที่ขอกู้ให้ถูกต้อง', 'error');
+    return;
+  }
+  if (termMonths <= 0) {
+    toast('กรุณาระบุจำนวนงวดผ่อนชำระอย่างน้อย 1 งวด', 'error');
+    return;
+  }
+
+  const calc = calculateLoanAmortization(principal, interestType, interestRate, termMonths, startDate, firstDueDate);
+
+  const payload = {
+    shop_id: currentShop.id,
+    loan_no: loanNo,
+    employee_id: employeeId,
+    employee_name: employeeName,
+    principal_amount: calc.principal,
+    interest_rate: calc.interestRate,
+    interest_type: calc.interestType,
+    term_months: calc.termMonths,
+    start_date: startDate,
+    first_due_date: firstDueDate,
+    total_interest: calc.totalInterest,
+    total_payable: calc.totalPayable,
+    monthly_installment: calc.monthlyInstallment,
+    repayment_method: repaymentMethod,
+    status: status,
+    notes: notes,
+    updated_at: new Date().toISOString()
+  };
+
+  const schemaOK = await checkLoanSchema();
+
+  if (editingLoanId) {
+    // Editing existing loan
+    const existing = employeeLoansRows.find(x => x.id === editingLoanId);
+    const paid = Number(existing?.total_paid || 0);
+    payload.total_paid = paid;
+    payload.remaining_balance = Math.max(0, calc.totalPayable - paid);
+
+    if (schemaOK) {
+      const { error } = await sb.from('employee_loans').update(payload).eq('id', editingLoanId);
+      if (error) {
+        toast('บันทึกไม่สำเร็จ: ' + error.message, 'error');
+        return;
+      }
+    }
+    const idx = employeeLoansRows.findIndex(x => x.id === editingLoanId);
+    if (idx >= 0) employeeLoansRows[idx] = { ...employeeLoansRows[idx], ...payload };
+    saveLocalLoans(employeeLoansRows);
+    toast('แก้ไขสัญญาเงินกู้เรียบร้อย ✓', 'success');
+  } else {
+    // New Loan
+    payload.id = 'loan_' + Date.now();
+    payload.total_paid = 0;
+    payload.remaining_balance = calc.totalPayable;
+    payload.created_at = new Date().toISOString();
+
+    if (schemaOK) {
+      const { data, error } = await sb.from('employee_loans').insert({ ...payload, id: undefined }).select();
+      if (error) {
+        toast('บันทึกไม่สำเร็จ: ' + error.message, 'error');
+        return;
+      }
+      if (data && data[0]) payload.id = data[0].id;
+    }
+    employeeLoansRows.unshift(payload);
+    saveLocalLoans(employeeLoansRows);
+    toast('สร้างสัญญากู้ยืมเงินพนักงานสำเร็จ ✓', 'success');
+  }
+
+  closeModal('modal-employee-loan');
+  loadEmployeeLoans();
+}
+
+// ─── REPAYMENT RECORDING & REPAYMENT MODAL ────────────────────────────
+let activeRepayLoanId = null;
+
+function openLoanPaymentModal(loanId) {
+  activeRepayLoanId = loanId;
+  const l = employeeLoansRows.find(x => x.id === loanId);
+  if (!l) { toast('ไม่พบข้อมูลสัญญา', 'error'); return; }
+
+  // Determine next installment number
+  const existingPayments = employeeLoanPaymentsRows.filter(p => p.loan_id === loanId);
+  const nextNo = existingPayments.length + 1;
+
+  // Calculate default breakdown for this installment
+  const calc = calculateLoanAmortization(l.principal_amount, l.interest_type, l.interest_rate, l.term_months, l.start_date, l.first_due_date);
+  const schedItem = calc.schedule.find(s => s.installmentNo === nextNo) || calc.schedule[calc.schedule.length - 1];
+
+  const defaultAmt = schedItem ? schedItem.installmentAmount : (l.monthly_installment || 0);
+  const defaultP = schedItem ? schedItem.principalPortion : Math.round((l.principal_amount / l.term_months)*100)/100;
+  const defaultI = schedItem ? schedItem.interestPortion : Math.round((l.total_interest / l.term_months)*100)/100;
+
+  const infoEl = document.getElementById('pay-loan-info');
+  if (infoEl) {
+    infoEl.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-weight:800;color:var(--accent);font-size:13.5px">${escapeHTML(l.loan_no)} : ${escapeHTML(l.employee_name)}</span>
+        <span class="badge badge-blue">งวดที่ ${nextNo}/${l.term_months}</span>
+      </div>
+      <div style="display:flex;gap:12px;font-size:12px;color:var(--text2)">
+        <span>ยอดเงินต้น: <b>${fmtB(l.principal_amount)}</b></span>
+        <span>ชำระแล้ว: <b style="color:var(--green)">${fmtB(l.total_paid||0)}</b></span>
+        <span>คงเหลือ: <b style="color:var(--red)">${fmtB(l.remaining_balance||0)}</b></span>
+      </div>
+    `;
+  }
+
+  document.getElementById('pay-installment-no').value = nextNo;
+  document.getElementById('pay-date').value = today();
+  document.getElementById('pay-amount').value = defaultAmt;
+  document.getElementById('pay-principal-part').value = defaultP;
+  document.getElementById('pay-interest-part').value = defaultI;
+  document.getElementById('pay-method').value = l.repayment_method || 'payroll';
+  document.getElementById('pay-notes').value = `ชำระงวดที่ ${nextNo}/${l.term_months}`;
+
+  openModal('modal-loan-repayment');
+}
+
+function onRepaymentAmountChanged() {
+  const amt = Number(document.getElementById('pay-amount').value || 0);
+  const l = employeeLoansRows.find(x => x.id === activeRepayLoanId);
+  if (!l) return;
+
+  if (l.interest_type === 'none' || Number(l.total_interest || 0) === 0) {
+    document.getElementById('pay-principal-part').value = amt;
+    document.getElementById('pay-interest-part').value = 0;
+  } else {
+    // Ratio of interest to total
+    const totalP = Number(l.principal_amount || 0);
+    const totalI = Number(l.total_interest || 0);
+    const totalPay = totalP + totalI;
+    if (totalPay > 0) {
+      const iPart = Math.round((amt * (totalI / totalPay)) * 100) / 100;
+      const pPart = Math.round((amt - iPart) * 100) / 100;
+      document.getElementById('pay-principal-part').value = pPart;
+      document.getElementById('pay-interest-part').value = iPart;
+    }
+  }
+}
+
+function onRepaymentInstallmentChanged() {
+  const l = employeeLoansRows.find(x => x.id === activeRepayLoanId);
+  if (!l) return;
+  const no = parseInt(document.getElementById('pay-installment-no').value || 1, 10);
+  const calc = calculateLoanAmortization(l.principal_amount, l.interest_type, l.interest_rate, l.term_months, l.start_date, l.first_due_date);
+  const schedItem = calc.schedule.find(s => s.installmentNo === no);
+  if (schedItem) {
+    document.getElementById('pay-amount').value = schedItem.installmentAmount;
+    document.getElementById('pay-principal-part').value = schedItem.principalPortion;
+    document.getElementById('pay-interest-part').value = schedItem.interestPortion;
+  }
+}
+
+async function saveLoanPayment() {
+  const l = employeeLoansRows.find(x => x.id === activeRepayLoanId);
+  if (!l) { toast('ไม่พบสัญญาเงินกู้', 'error'); return; }
+
+  const installmentNo = parseInt(document.getElementById('pay-installment-no').value || 1, 10);
+  const payDate = document.getElementById('pay-date').value || today();
+  const amountPaid = Number(document.getElementById('pay-amount').value || 0);
+  const principalPaid = Number(document.getElementById('pay-principal-part').value || 0);
+  const interestPaid = Number(document.getElementById('pay-interest-part').value || 0);
+  const payMethod = document.getElementById('pay-method').value || 'payroll';
+  const notes = (document.getElementById('pay-notes').value || '').trim();
+
+  if (amountPaid <= 0) {
+    toast('กรุณาระบุยอดเงินที่รับชำระ', 'error');
+    return;
+  }
+
+  const currentPaid = Number(l.total_paid || 0);
+  const totalPayable = Number(l.total_payable || (Number(l.principal_amount||0) + Number(l.total_interest||0)));
+  const newTotalPaid = currentPaid + amountPaid;
+  const remainingAfter = Math.max(0, totalPayable - newTotalPaid);
+  const isComplete = remainingAfter <= 0;
+
+  const paymentPayload = {
+    id: 'pay_' + Date.now(),
+    loan_id: l.id,
+    shop_id: currentShop.id,
+    installment_no: installmentNo,
+    payment_date: payDate,
+    amount_paid: amountPaid,
+    principal_paid: principalPaid,
+    interest_paid: interestPaid,
+    remaining_after: remainingAfter,
+    payment_method: payMethod,
+    notes: notes,
+    recorded_by: currentUser?.name || 'Admin',
+    created_at: new Date().toISOString()
+  };
+
+  const schemaOK = await checkLoanSchema();
+
+  if (schemaOK) {
+    try {
+      const { error: pErr } = await sb.from('employee_loan_payments').insert({ ...paymentPayload, id: undefined });
+      if (pErr) {
+        toast('บันทึกรายการชำระไม่สำเร็จ: ' + pErr.message, 'error');
+        return;
+      }
+      // Update Loan Balance
+      await sb.from('employee_loans').update({
+        total_paid: newTotalPaid,
+        remaining_balance: remainingAfter,
+        status: isComplete ? 'completed' : l.status,
+        updated_at: new Date().toISOString()
+      }).eq('id', l.id);
+    } catch(e){}
+  }
+
+  // Update in-memory & local storage
+  employeeLoanPaymentsRows.push(paymentPayload);
+  saveLocalLoanPayments(employeeLoanPaymentsRows);
+
+  const loanIdx = employeeLoansRows.findIndex(x => x.id === l.id);
+  if (loanIdx >= 0) {
+    employeeLoansRows[loanIdx].total_paid = newTotalPaid;
+    employeeLoansRows[loanIdx].remaining_balance = remainingAfter;
+    if (isComplete) employeeLoansRows[loanIdx].status = 'completed';
+  }
+  saveLocalLoans(employeeLoansRows);
+
+  toast(`บันทึกรับชำระงวดที่ ${installmentNo} จำนวน ${fmtB(amountPaid)} เรียบร้อย ✓`, 'success');
+  closeModal('modal-loan-repayment');
+  renderEmployeeLoansView();
+}
+
+// ─── LOAN DETAIL MODAL & REPAYMENT HISTORY ───────────────────────────
+let activeDetailLoanId = null;
+
+function openLoanDetailModal(loanId) {
+  activeDetailLoanId = loanId;
+  const l = employeeLoansRows.find(x => x.id === loanId);
+  if (!l) { toast('ไม่พบสัญญาเงินกู้', 'error'); return; }
+
+  const calc = calculateLoanAmortization(l.principal_amount, l.interest_type, l.interest_rate, l.term_months, l.start_date, l.first_due_date);
+  const payments = employeeLoanPaymentsRows.filter(p => p.loan_id === loanId).sort((a,b) => a.installment_no - b.installment_no);
+
+  const titleEl = document.getElementById('dt-loan-title');
+  if (titleEl) titleEl.innerHTML = `📜 สัญญาเงินกู้ <span style="font-family:var(--mono);color:var(--accent)">${escapeHTML(l.loan_no)}</span> (${escapeHTML(l.employee_name)})`;
+
+  const bodyEl = document.getElementById('dt-loan-body');
+  if (bodyEl) {
+    const totalPayable = Number(l.total_payable || (Number(l.principal_amount||0) + Number(l.total_interest||0)));
+    const paid = Number(l.total_paid || 0);
+    const balance = Number(l.remaining_balance ?? (totalPayable - paid));
+    const pct = totalPayable > 0 ? Math.min(100, Math.round((paid / totalPayable) * 100)) : 0;
+
+    bodyEl.innerHTML = `
+      <!-- Loan Info Banner -->
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:14px">
+        <div class="grid-4" style="gap:10px;margin-bottom:10px">
+          <div>
+            <div style="font-size:11px;color:var(--text3)">พนักงานผู้กู้</div>
+            <div style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(l.employee_name)}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3)">วันที่ทำสัญญา</div>
+            <div style="font-weight:600;font-size:12.5px">${escapeHTML(l.start_date)}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3)">อัตราดอกเบี้ย</div>
+            <div style="font-weight:700;font-size:12.5px;color:var(--orange)">
+              ${l.interest_type === 'none' ? '0% ปลอดดอกเบี้ย' : `${l.interest_rate}% ${l.interest_type==='annual_flat'?'/ปี':'/เดือน'}`}
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3)">งวดการผ่อน</div>
+            <div style="font-weight:700;font-size:12.5px;color:var(--blue)">${l.term_months} งวด (${fmtB(l.monthly_installment)}/งวด)</div>
+          </div>
+        </div>
+        <div class="grid-3" style="gap:10px;background:#fff;border-radius:8px;padding:10px 12px;border:1px solid var(--border)">
+          <div>
+            <div style="font-size:11px;color:var(--text3)">ยอดเงินต้นรวมดอกเบี้ย</div>
+            <div style="font-weight:800;font-size:15px;color:var(--accent);font-family:var(--mono)">${fmtB(totalPayable)}</div>
+            <div style="font-size:10.5px;color:var(--text3)">(เงินต้น ${fmtB(l.principal_amount)} + ดอกเบี้ย ${fmtB(l.total_interest)})</div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3)">ชำระแล้วสะสม</div>
+            <div style="font-weight:800;font-size:15px;color:var(--green);font-family:var(--mono)">${fmtB(paid)} (${pct}%)</div>
+            <div style="width:100%;height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:var(--green)"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--text3)">หนี้คงเหลือ</div>
+            <div style="font-weight:800;font-size:16px;color:${balance>0?'var(--red)':'var(--green)'};font-family:var(--mono)">${fmtB(balance)}</div>
+            <div style="font-size:10.5px;color:var(--text3)">${balance <= 0 ? '✅ ชำระครบถ้วนแล้ว' : 'สถานะ: กำลังผ่อนชำระ'}</div>
+          </div>
+        </div>
+        ${l.notes ? `<div style="margin-top:8px;font-size:12px;color:var(--text2)"><b>หมายเหตุ:</b> ${escapeHTML(l.notes)}</div>` : ''}
+      </div>
+
+      <!-- Schedule vs Actual Payments Table -->
+      <div style="font-weight:700;font-size:13px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+        <span>📅 ตารางแผนการผ่อนชำระ & ประวัติการรับเงินจริง</span>
+        ${balance > 0 ? `<button class="btn btn-primary btn-sm" onclick="openLoanPaymentModal('${l.id}')" style="padding:4px 10px;font-size:12px;background:#16a34a">＋ บันทึกชำระงวด</button>` : ''}
+      </div>
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;background:#fff;margin-bottom:14px">
+        <table style="width:100%;font-size:12px;text-align:left;border-collapse:collapse">
+          <thead style="background:var(--bg2)">
+            <tr>
+              <th style="padding:8px 10px">งวดที่</th>
+              <th style="padding:8px 10px">กำหนดชำระ</th>
+              <th style="padding:8px 10px;text-align:right">ค่างวดตามแผน</th>
+              <th style="padding:8px 10px;text-align:right">เงินต้น</th>
+              <th style="padding:8px 10px;text-align:right">ดอกเบี้ย</th>
+              <th style="padding:8px 10px;text-align:center">สถานะการจ่าย</th>
+              <th style="padding:8px 10px;text-align:right">ยอดจ่ายจริง</th>
+              <th style="padding:8px 10px">วันที่ชำระ / หมายเหตุ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${calc.schedule.map(s => {
+              const matchedPayment = payments.find(p => p.installment_no === s.installmentNo);
+              const isPaid = !!matchedPayment;
+
+              return `
+                <tr style="border-bottom:1px solid var(--border);background:${isPaid ? 'rgba(34, 197, 94, 0.04)' : '#fff'}">
+                  <td style="padding:7px 10px;font-weight:700">งวดที่ ${s.installmentNo}</td>
+                  <td style="padding:7px 10px">${escapeHTML(s.dueDate)}</td>
+                  <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-weight:700;color:var(--blue)">${fmtB(s.installmentAmount)}</td>
+                  <td style="padding:7px 10px;text-align:right;font-family:var(--mono)">${fmtB(s.principalPortion)}</td>
+                  <td style="padding:7px 10px;text-align:right;font-family:var(--mono);color:var(--orange)">${fmtB(s.interestPortion)}</td>
+                  <td style="padding:7px 10px;text-align:center">
+                    ${isPaid ? '<span class="badge badge-green" style="font-size:10.5px">✓ ชำระแล้ว</span>' : '<span class="badge badge-gray" style="font-size:10.5px">รอดำเนินการ</span>'}
+                  </td>
+                  <td style="padding:7px 10px;text-align:right;font-family:var(--mono);font-weight:700;color:${isPaid?'var(--green)':'var(--text3)'}">
+                    ${isPaid ? fmtB(matchedPayment.amount_paid) : '-'}
+                  </td>
+                  <td style="padding:7px 10px;font-size:11.5px;color:var(--text2)">
+                    ${isPaid ? `<b>${escapeHTML(matchedPayment.payment_date)}</b> ${matchedPayment.notes ? `(${escapeHTML(matchedPayment.notes)})` : ''}` : '-'}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  openModal('modal-loan-detail');
+}
+
+function printActiveLoanContract() {
+  if (activeDetailLoanId) printLoanContract(activeDetailLoanId);
+}
+
+// ─── PRINT OFFICIAL LOAN CONTRACT TEMPLATE ────────────────────────────
+function printLoanContract(loanId) {
+  const l = employeeLoansRows.find(x => x.id === loanId);
+  if (!l) { toast('ไม่พบสัญญาเงินกู้', 'error'); return; }
+
+  const calc = calculateLoanAmortization(l.principal_amount, l.interest_type, l.interest_rate, l.term_months, l.start_date, l.first_due_date);
+  const shopAddr = getShopAddress();
+  const companyName = currentShop?.name || 'บริษัท ซีลไทย จำกัด (SEALTHAI)';
+  
+  let rateDescription = 'ปลอดอัตราดอกเบี้ย (0%) เพื่อเป็นสวัสดิการพนักงาน';
+  if (l.interest_type === 'annual_flat') {
+    rateDescription = `อัตราดอกเบี้ยคงที่ร้อยละ ${l.interest_rate}% ต่อปี (Annual Flat Rate) คิดเป็นดอกเบี้ยรวมทั้งสิ้น ${fmtB(l.total_interest)} บาท`;
+  } else if (l.interest_type === 'monthly_flat') {
+    rateDescription = `อัตราดอกเบี้ยคงที่ร้อยละ ${l.interest_rate}% ต่อเดือน (Monthly Flat Rate) คิดเป็นดอกเบี้ยรวมทั้งสิ้น ${fmtB(l.total_interest)} บาท`;
+  }
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+      <meta charset="utf-8">
+      <title>สัญญากู้ยืมเงินพนักงาน - ${escapeHTML(l.loan_no)}</title>
+      <style>
+        body { font-family: 'Sarabun', 'Segoe UI', Tahoma, sans-serif; font-size: 13.5px; line-height: 1.6; color: #111; margin: 0; padding: 25px 35px; }
+        .header { text-align: center; border-bottom: 2px solid #222; padding-bottom: 12px; margin-bottom: 16px; }
+        .company-title { font-size: 18px; font-weight: 800; }
+        .contract-title { font-size: 16px; font-weight: 700; margin-top: 6px; text-decoration: underline; }
+        .contract-meta { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 13px; }
+        .clause { margin-bottom: 10px; text-align: justify; text-indent: 24px; }
+        .highlight-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
+        th, td { border: 1px solid #94a3b8; padding: 5px 8px; text-align: left; }
+        th { background: #f1f5f9; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .signatures { display: flex; justify-content: space-between; margin-top: 40px; page-break-inside: avoid; }
+        .sig-block { text-align: center; width: 30%; }
+        .sig-line { border-bottom: 1px dotted #333; height: 40px; margin-bottom: 6px; }
+        @media print {
+          body { padding: 15px 25px; }
+          .no-print { display: none !important; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="no-print" style="margin-bottom:15px;text-align:right">
+        <button onclick="window.print()" style="padding:8px 18px;font-size:14px;font-weight:700;background:#0ea5e9;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨️ พิมพ์เอกสาร (Print)</button>
+      </div>
+
+      <div class="header">
+        <div class="company-title">${escapeHTML(companyName)}</div>
+        <div style="font-size:11.5px;color:#444">${escapeHTML(shopAddr)}</div>
+        <div style="font-size:11.5px;color:#444">Line OA : @sealthai | Website : www.sealthai.com</div>
+        <div class="contract-title">หนังสือสัญญากู้ยืมเงินพนักงาน (Employee Loan Agreement)</div>
+      </div>
+
+      <div class="contract-meta">
+        <div><b>เลขที่สัญญา (Contract No.):</b> ${escapeHTML(l.loan_no)}</div>
+        <div><b>วันที่ทำสัญญา:</b> ${escapeHTML(l.start_date)}</div>
+      </div>
+
+      <div class="clause">
+        สัญญานี้ทำขึ้นระหว่าง <b>${escapeHTML(companyName)}</b> โดยตัวแทนผู้มีอำนาจ ซึ่งต่อไปในสัญญานี้เรียกว่า <b>"ผู้ให้กู้"</b> ฝ่ายหนึ่ง กับ <b>${escapeHTML(l.employee_name)}</b> พนักงานในสังกัด ซึ่งต่อไปในสัญญานี้เรียกว่า <b>"ผู้กู้"</b> อีกฝ่ายหนึ่ง ทั้งสองฝ่ายได้ตกลงทำสัญญาเงินกู้ยืมไว้ต่อกันดังมีข้อความต่อไปนี้:
+      </div>
+
+      <div class="clause">
+        <b>ข้อ 1. จำนวนเงินกู้ยืม:</b> ผู้กู้ได้ขอกู้ยืมเงินจากผู้ให้กู้ และผู้ให้กู้ได้ส่งมอบเงินกู้จำนวน <b>${fmtB(l.principal_amount)} บาท (${fmt(l.principal_amount)} บาทถ้วน)</b> ให้แก่ผู้กู้เรียบร้อยแล้วในวันที่ทำสัญญานี้
+      </div>
+
+      <div class="clause">
+        <b>ข้อ 2. อัตราดอกเบี้ย:</b> ผู้กู้ตกลงยินยอมชำระดอกเบี้ยให้แก่ผู้ให้กู้ใน${rateDescription} รวมยอดเงินต้นและดอกเบี้ยที่ต้องชำระคืนทั้งสิ้น <b>${fmtB(l.total_payable || (l.principal_amount + l.total_interest))} บาท</b>
+      </div>
+
+      <div class="clause">
+        <b>ข้อ 3. กำหนดเวลาและเงื่อนไขการผ่อนชำระ:</b> ผู้กู้ตกลงจะผ่อนชำระคืนเงินกู้พร้อมดอกเบี้ยให้แก่ผู้ให้กู้เป็นรายเดือน จำนวนทั้งสิ้น <b>${l.term_months} งวด</b> งวดละ <b>${fmtB(l.monthly_installment)} บาท</b> โดยเริ่มชำระงวดแรกในวันที่ <b>${escapeHTML(l.first_due_date || l.start_date)}</b> และชำระงวดต่อไปในวันเดียวกันของทุกๆ เดือนถัดไปจนกว่าจะครบถ้วน
+      </div>
+
+      <div class="clause">
+        <b>ข้อ 4. การยินยอมให้หักเงินได้:</b> ผู้กู้ยินยอมให้ผู้ให้กู้หักเงินค่างวดดังกล่าวข้างต้นออกจากเงินเดือน ค่าจ้าง ค่าตอบแทน หรือเงินอื่นใดที่ผู้กู้พึงได้รับจากผู้ให้กู้ในแต่ละรอบการจ่ายเงินประจำเดือน จนกว่าหนี้เงินกู้ตามสัญญานี้จะได้รับการชำระเสร็จสิ้น
+      </div>
+
+      <div class="clause">
+        <b>ข้อ 5. การพ้นสภาพพนักงาน:</b> หากผู้กู้พ้นสภาพจากการเป็นพนักงานของผู้ให้กู้ไม่ว่าด้วยเหตุใดๆ ก่อนที่หนี้เงินกู้ตามสัญญานี้จะระงับ ผู้กู้ยินยอมให้ผู้ให้กู้หักเงินได้ เงินสะสม เงินชดเชย หรือสิทธิประโยชน์อื่นใดที่พึงได้รับเพื่อชำระหนี้คงค้างทั้งหมดทันที และหากยังไม่เพียงพอ ผู้กู้ตกลงจะนำเงินมาชำระส่วนที่เหลือให้เสร็จสิ้นภายใน 15 วัน
+      </div>
+
+      <div class="highlight-box">
+        <b>📅 ตารางแผนการผ่อนชำระเงินกู้ (Installment Schedule):</b>
+        <table>
+          <thead>
+            <tr>
+              <th class="text-center">งวดที่</th>
+              <th>กำหนดชำระ</th>
+              <th class="text-right">เงินต้น (บาท)</th>
+              <th class="text-right">ดอกเบี้ย (บาท)</th>
+              <th class="text-right">ค่างวด (บาท)</th>
+              <th class="text-right">เงินต้นคงเหลือ (บาท)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${calc.schedule.map(s => `
+              <tr>
+                <td class="text-center">${s.installmentNo}</td>
+                <td>${escapeHTML(s.dueDate)}</td>
+                <td class="text-right">${fmt(s.principalPortion)}</td>
+                <td class="text-right">${fmt(s.interestPortion)}</td>
+                <td class="text-right"><b>${fmt(s.installmentAmount)}</b></td>
+                <td class="text-right">${fmt(s.remainingPrincipal)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="clause">
+        สัญญานี้ทำขึ้นเป็นสองฉบับมีข้อความถูกต้องตรงกัน คู่สัญญาได้อ่านและเข้าใจข้อความโดยละเอียดตลอดแล้ว จึงได้ลงลายมือชื่อไว้เป็นหลักฐานต่อหน้าพยาน
+      </div>
+
+      <div class="signatures">
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div>ลงชื่อ..........................................................</div>
+          <div>( <b>${escapeHTML(l.employee_name)}</b> )</div>
+          <div><b>ผู้กู้ (Borrower)</b></div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div>ลงชื่อ..........................................................</div>
+          <div>( .......................................................... )</div>
+          <div><b>ผู้ให้กู้ / ตัวแทนบริษัท (Lender)</b></div>
+        </div>
+        <div class="sig-block">
+          <div class="sig-line"></div>
+          <div>ลงชื่อ..........................................................</div>
+          <div>( .......................................................... )</div>
+          <div><b>พยาน (Witness)</b></div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+}
+
+function exportEmployeeLoansExcel() {
+  if (employeeLoansRows.length === 0) {
+    toast('ไม่มีข้อมูลสำหรับส่งออก', 'warning');
+    return;
+  }
+  let csv = 'เลขที่สัญญา,ชื่อพนักงาน,วันที่เริ่มกู้,งวดแรก,เงินต้น,ประเภทดอกเบี้ย,อัตราดอกเบี้ย,ดอกเบี้ยรวม,ยอดรวมทั้งสิ้น,จำนวนงวด,ค่างวดต่องวด,ชำระแล้ว,หนี้คงเหลือ,สถานะ,วิธีชำระ,หมายเหตุ\n';
+  employeeLoansRows.forEach(l => {
+    csv += `"${l.loan_no}","${l.employee_name}","${l.start_date}","${l.first_due_date||''}","${l.principal_amount}","${l.interest_type}","${l.interest_rate}","${l.total_interest}","${l.total_payable}","${l.term_months}","${l.monthly_installment}","${l.total_paid||0}","${l.remaining_balance||0}","${l.status}","${l.repayment_method}","${(l.notes||'').replace(/"/g, '""')}"\n`;
+  });
+
+  const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `employee_loans_${today()}.csv`;
+  link.click();
+  toast('ส่งออกไฟล์ข้อมูลเรียบร้อย ✓', 'success');
 }
 
 
@@ -34924,39 +36204,46 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'2.50', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Employee Loan & Interest Management System (ระบบจัดการเงินยืมพนักงาน & ดอกเบี้ย)', items:[
+      '💳 <b>ระบบจัดการเงินยืมพนักงาน (Employee Loans):</b> เพิ่มเมนูบันทึกสัญญาเงินกู้ยืมพนักงาน พร้อมเชื่อมต่อรายชื่อพนักงานจากฐานข้อมูลจริง และระบบสร้าง Running Number สัญญาอัตโนมัติ (เช่น LN2026-00001)',
+      '📈 <b>เครื่องคิดคำนวณอัตราดอกเบี้ย (Interest Calculator):</b> รองรับ 0% ปลอดดอกเบี้ย (สวัสดิการ), ดอกเบี้ยคงที่ % ต่อปี (Annual Flat Rate), และดอกเบี้ยคงที่ % ต่อเดือน (Monthly Flat Rate) พร้อมแสดงตารางงวดผ่อนจำลอง (Amortization Schedule) แบบ Real-time',
+      '💰 <b>ระบบบันทึกรับชำระค่างวด & ตัดหนี้คงเหลือ:</b> บันทึกการจ่ายคืนแยกตัดเงินต้น/ดอกเบี้ย ตัดลดยอดหนี้คงเหลืออัตโนมัติ และปรับสถานะเป็นปิดสัญญาเมื่อชำระครบ',
+      '🖨️ <b>พิมพ์หนังสือสัญญากู้ยืมเงินพนักงาน:</b> พิมพ์เอกสารสัญญากู้ยืมเงินพนักงานฉบับมาตรฐานภาษาไทย พร้อมหัวบิลร้าน Sealthai เงื่อนไขดอกเบี้ย ตารางงวด และช่องลงนามคู่สัญญา',
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.50'
+    ]},
     { v:'2.49', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Real-Time Product Search Fix & Unified Master Product Catalog', items:[
       '🔍 <b>แก้ไขการค้นหาสินค้าในใบเสนอราคา:</b> แก้ไขการโหลดข้อมูลคลังสินค้าให้ดึงทุกคอลัมน์ที่ถูกต้อง ป้องกันข้อผิดพลาด HTTP 400 จากคอลัมน์ที่ไม่ตรงกับฐานข้อมูล พร้อมแสดงรายการสินค้าทันทีที่คลิกหรือพิมพ์ค้นหา',
       '⚡ <b>เชื่อมต่อสินค้าทั้งคลัง 100%:</b> ดึงข้อมูลสินค้าจากฐานข้อมูลกลาง (Master Products) พร้อมแสดงสต๊อก ราคา และข้อมูล SKU, Part No ครบถ้วนเหมือนหน้า Order',
-      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
     ]},
     { v:'2.48', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Master Product Search & Quick Product Integration + Custom Item Support', items:[
       '🔍 <b>ระบบค้นหาสินค้าจากฐานข้อมูล (Master Product Search):</b> หน้าใบเสนอราคาเชื่อมต่อฐานข้อมูลสินค้าและคลังสินค้าเหมือนหน้า Order ค้นหาได้ละเอียดทั้งชื่อ, SKU, Supplier Code, Part No และขนาด พร้อมแสดงป้ายหมวดหมู่ ราคา และจำนวนสต๊อกคงเหลือแบบ Real-time',
       '⚡ <b>สร้างสินค้าใหม่เข้าคลังได้ทันที (Quick Master Product):</b> มีปุ่มสร้างสินค้าใหม่ทั้งในเมนูดรอปดาวน์ค้นหา และปุ่มลัดด้านบน สามารถกรอกสเปก ขนาด ราคาขาย ราคาซื้อ และบันทึกลงคลังสินค้าหลัก พร้อมดึงมาใส่ในใบเสนอราคาอัตโนมัติ',
       '📝 <b>รองรับสินค้าชั่วคราว (Custom / Temporary Item):</b> ยังคงสามารถพิมพ์ชื่อสินค้าเฉพาะกิจหรือสินค้าชั่วคราวที่ยังไม่มีในระบบได้อย่างอิสระ โดยไม่บังคับรหัสสินค้า/SKU และไม่กระทบสต๊อกคลังสินค้า',
-      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
     ]},
     { v:'2.47', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Auto-Migrate Quotation Running Numbers to QT<YYYY>-<XXXXX>', items:[
       '🔄 <b>อัปเดตและแปลงเลขที่ใบเสนอราคาเดิมอัตโนมัติ:</b> แปลงเลขที่ใบเสนอราคาเดิมที่บันทึกไว้ในรูปแบบ <code>QT-20261001-0001</code> ให้กลายเป็น <b>QT2026-00001</b> ทันทีทั้งในตารางแสดงผลและอัปเดตลงฐานข้อมูลจริงอัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
     ]},
     { v:'2.46', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Numbering Format: QT<YYYY>-<XXXXX> (e.g. QT2026-00001)', items:[
       '🔢 <b>ปรับรูปแบบเลขที่ใบเสนอราคาใหม่ (QT2026-00001):</b> เปลี่ยนฟอร์แมตเลขที่ใบเสนอราคาเป็น <code>QT + ปี ค.ศ. (4 หลัก) - เลขรัน 5 หลัก</code> เช่น <b>QT2026-00001</b>, <b>QT2026-00002</b> ต่อเนื่องตลอดทั้งปี',
       '🛡️ <b>ระบบตรวจจับเลขล่าสุดอัตโนมัติ (Smart Max Sequence Detection):</b> ดึงเลขที่ใบเสนอราคาล่าสุดจากฐานข้อมูลจริง และเชื่อมต่อกับตาราง Sequence ป้องกันการเกิดเลขซ้ำ 100%',
       '🤖 <b>เชื่อมต่อระบบ AI Fast Quote:</b> ระบบสร้างใบเสนอราคาอัตโนมัติจากแชต AI ใช้ฟอร์แมตเลขที่เดียวกันอย่างสมบูรณ์แบบ',
-      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
     ]},
     { v:'2.45', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
       '💰 <b>เพิ่มช่องส่วนลดท้ายบิล & ค่าจัดส่ง ในใบเสนอราคา:</b> รองรับการใส่ส่วนลดท้ายบิล (เลือกได้ทั้งแบบบาท ฿ หรือ %) และค่าจัดส่ง ทั้งในหน้าสร้างใบเสนอราคาใหม่ และหน้าแก้ไขแบบร่าง พร้อมคำนวณยอดรวมสุทธิแบบ Real-time',
       '🖨️ <b>ตัวเลือกการพิมพ์ใบเสนอราคา (Print Options Modal):</b> เพิ่มหน้าต่างตัวเลือกพิมพ์ใบเสนอราคา สามารถเลือกพิมพ์ต้นฉบับ/สำเนา/พิมพ์เป็นชุด, เลือก <b>แสดง หรือ ซ่อนส่วนลด</b> และเลือกพิมพ์ลายเซ็นดิจิทัลได้เหมือนหน้าบิลออเดอร์',
       '🏬 <b>เพิ่ม Line OA & Website ในหัวกระดาษเอกสาร:</b> เพิ่มข้อความ <code>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</code> ใต้ที่อยู่ร้านค้าในหัวบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation) และเอกสารสั่งซื้อ (PO)',
       '🔄 <b>ส่งต่อยอดส่วนลดและค่าส่งเมื่อ Convert → Order:</b> เมื่อกดแปลงใบเสนอราคาเป็นคำสั่งซื้อ ระบบจะส่งต่อยอดส่วนลดท้ายบิลและค่าส่งเข้าสู่ออเดอร์ให้อัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
     ]},
     { v:'2.44', date:'2026-09-30', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
-      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+      '🧹 <b>Cache Refresh (v2.50):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
     ]},
     { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
