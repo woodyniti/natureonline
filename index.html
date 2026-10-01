@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.44';
-const DISPLAY_APP_VERSION = 'v2.44';
+const CURRENT_APP_VERSION = 'sealthai-v2.45';
+const DISPLAY_APP_VERSION = 'v2.45';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -8454,7 +8454,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
     billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
     billParts.push('<div class="shop-info">' + shopAddr);
-    billParts.push('<br>Line OA: @sealthai');
+    billParts.push('<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com');
     if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
     if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
     billParts.push('</div></div></div>');
@@ -15374,9 +15374,32 @@ async function quotations() {
         <div id="qt-items"></div>
 
         <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px">
-          <div style="display:flex;justify-content:flex-end;gap:12px;align-items:center">
-            <span style="font-size:13px;color:var(--text3)">ยอดรวม</span>
-            <span class="font-mono text-accent" style="font-size:18px;font-weight:700" id="qt-total">฿0</span>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:13px;color:var(--text3)">ยอดรวมสินค้า (Subtotal)</span>
+            <span class="font-mono" style="font-size:15px;font-weight:600" id="qt-subtotal">฿0</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+            <span style="font-size:13px;color:var(--text3)">ส่วนลดท้ายบิล</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="qt-bill-discount" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:100px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--red)">
+              <select id="qt-bill-discount-type" onchange="calcQuoteTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 6px;font-size:13px">
+                <option value="amount">฿</option>
+                <option value="percent">%</option>
+              </select>
+              <span id="qt-bill-discount-amt" class="font-mono" style="font-size:13px;color:var(--red);min-width:70px;text-align:right"></span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+            <span style="font-size:13px;color:var(--text3)">ค่าจัดส่ง (Shipping Fee)</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="qt-shipping-fee" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:100px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text)">
+              <span style="font-size:13px;color:var(--text3)">฿</span>
+              <span id="qt-shipping-fee-amt" class="font-mono" style="font-size:13px;color:var(--text);min-width:70px;text-align:right"></span>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
+            <span style="font-size:14px;font-weight:700;color:var(--text)">ยอดรวมสุทธิ (Grand Total)</span>
+            <span class="font-mono text-accent" style="font-size:20px;font-weight:700" id="qt-total">฿0</span>
           </div>
         </div>
         <div class="form-group" style="margin-top:10px"><label>หมายเหตุ</label><textarea id="qt-note" rows="2" placeholder="หมายเหตุ..."></textarea></div>
@@ -15505,6 +15528,27 @@ function _setQuoteFooter(mode) {
       '<button class="btn btn-primary" onclick="saveQuote(\'sent\')">📤 บันทึก + ส่งลูกค้า</button>';
 }
 
+function getQuoteMeta(qt) {
+  let billDisc = Number(qt?.bill_discount || 0);
+  let billDiscType = qt?.bill_discount_type || 'amount';
+  let shippingFee = Number(qt?.shipping_fee || 0);
+  let cleanNote = String(qt?.note || '');
+
+  if (cleanNote.includes('<!--QT_META:') || cleanNote.includes('[QT_META:')) {
+    try {
+      const match = cleanNote.match(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/);
+      if (match) {
+        const meta = JSON.parse(match[1]);
+        if (meta.bill_discount != null) billDisc = Number(meta.bill_discount);
+        if (meta.bill_discount_type) billDiscType = meta.bill_discount_type;
+        if (meta.shipping_fee != null) shippingFee = Number(meta.shipping_fee);
+        cleanNote = cleanNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
+      }
+    } catch(e) {}
+  }
+  return { bill_discount: billDisc, bill_discount_type: billDiscType, shipping_fee: shippingFee, note: cleanNote };
+}
+
 async function openNewQuote() {
   editingQuoteId = null; editingQuoteStatus = null;
   quoteItems = [];
@@ -15513,10 +15557,14 @@ async function openNewQuote() {
   set('qt-date', today());
   set('qt-valid', new Date(Date.now()+30*86400000).toISOString().slice(0,10));
   ['qt-cust','qt-ref','qt-contact','qt-phone','qt-address','qt-note'].forEach(id=>set(id,''));
+  set('qt-bill-discount', 0);
+  set('qt-bill-discount-type', 'amount');
+  set('qt-shipping-fee', 0);
   const t=document.getElementById('qt-modal-title'); if(t) t.textContent='📋 ใบเสนอราคาใหม่';
   _setQuoteFooter('new');
   await ensureQuoteProductList();
   renderQuoteItems();
+  calcQuoteTotal();
   await loadEmployeeOptions('qt-emp');
   loadOrderCustomerList();   // สำหรับ auto-fill ลูกค้าเดิม
   openModal('modal-quote');
@@ -15533,6 +15581,7 @@ async function openEditQuote(qtId) {
   closeModal('modal-quote-detail');
   editingQuoteId = qtId; editingQuoteStatus = qt.status;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=(v==null?'':v);};
+  const meta = getQuoteMeta(qt);
   set('qt-date', qt.quote_date||today());
   set('qt-valid', qt.valid_until||'');
   set('qt-cust', qt.customer_name);
@@ -15540,7 +15589,10 @@ async function openEditQuote(qtId) {
   set('qt-contact', qt.customer_contact);
   set('qt-phone', qt.customer_phone);
   set('qt-address', qt.customer_address);
-  set('qt-note', qt.note);
+  set('qt-note', meta.note);
+  set('qt-bill-discount', meta.bill_discount);
+  set('qt-bill-discount-type', meta.bill_discount_type);
+  set('qt-shipping-fee', meta.shipping_fee);
   quoteItems = (items||[]).map(it=>({
     product_id: it.product_id||null, product_name: it.product_name,
     qty: it.qty, sell_price: it.sell_price,
@@ -15551,6 +15603,7 @@ async function openEditQuote(qtId) {
   _setQuoteFooter('edit');
   await ensureQuoteProductList();
   renderQuoteItems();
+  calcQuoteTotal();
   await loadEmployeeOptions('qt-emp');
   const empSel=document.getElementById('qt-emp'); if(empSel) empSel.value = qt.employee_id||'';
   loadOrderCustomerList();
@@ -15681,20 +15734,42 @@ function renderQuoteItems() {
 function addQuoteItem(){quoteItems.push({product_id:null,product_name:'',qty:1,sell_price:0,discount:0,discount_type:'amount'});renderQuoteItems();}
 
 function calcQuoteTotal(){
-  const total=quoteItems.reduce((s,it)=>{
+  const subtotal = quoteItems.reduce((s,it)=>{
     const g=Number(it.qty||1)*Number(it.sell_price||0);
     const d=Number(it.discount||0);
     return s+(it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d));
   },0);
-  const el=document.getElementById('qt-total'); if(el) el.textContent=fmtB(total);
-  return total;
+  const billDisc = Number(document.getElementById('qt-bill-discount')?.value||0);
+  const billDiscType = document.getElementById('qt-bill-discount-type')?.value||'amount';
+  const shippingFee = Math.max(0, Number(document.getElementById('qt-shipping-fee')?.value||0));
+  const bd = billDiscType === 'percent' ? (subtotal * billDisc / 100) : billDisc;
+  const grand = Math.max(0, subtotal - bd) + shippingFee;
+
+  const subEl = document.getElementById('qt-subtotal');
+  if (subEl) subEl.textContent = fmtB(subtotal);
+  const bde = document.getElementById('qt-bill-discount-amt');
+  if (bde) bde.textContent = bd > 0 ? '- ' + fmtB(bd) : '';
+  const sfe = document.getElementById('qt-shipping-fee-amt');
+  if (sfe) sfe.textContent = shippingFee > 0 ? '+ ' + fmtB(shippingFee) : '';
+  const el = document.getElementById('qt-total');
+  if (el) el.textContent = fmtB(grand);
+  return grand;
 }
 
 async function saveQuote(status) {
   const date = document.getElementById('qt-date').value;
   if(!date){toast('กรุณาระบุวันที่','error');return;}
+  const billDiscount = Number(document.getElementById('qt-bill-discount')?.value||0);
+  const billDiscountType = document.getElementById('qt-bill-discount-type')?.value||'amount';
+  const shippingFee = Math.max(0, Number(document.getElementById('qt-shipping-fee')?.value||0));
   const total = calcQuoteTotal();
-  const payload = {
+
+  let rawNote = document.getElementById('qt-note')?.value || '';
+  rawNote = rawNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
+  const metaObj = { bill_discount: billDiscount, bill_discount_type: billDiscountType, shipping_fee: shippingFee };
+  const noteWithMeta = (rawNote ? rawNote + '\n' : '') + '<!--QT_META:' + JSON.stringify(metaObj) + '-->';
+
+  let payload = {
     quote_date:       date,
     valid_until:      document.getElementById('qt-valid').value||null,
     customer_name:    document.getElementById('qt-cust').value,
@@ -15703,7 +15778,10 @@ async function saveQuote(status) {
     customer_phone:   document.getElementById('qt-phone').value,
     customer_address: document.getElementById('qt-address').value,
     employee_id:      document.getElementById('qt-emp').value||null,
-    note:             document.getElementById('qt-note').value,
+    note:             noteWithMeta,
+    bill_discount:    billDiscount,
+    bill_discount_type: billDiscountType,
+    shipping_fee:     shippingFee,
     status,
     total_amount:     total,
   };
@@ -15718,7 +15796,15 @@ async function saveQuote(status) {
 
   // ── โหมดแก้ไข: อัพเดตใบเดิม + ลบ items เก่าแล้วใส่ใหม่ ──
   if (editingQuoteId) {
-    const { error } = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
+    let { error } = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
+    if (error && (error.message.includes('column') || error.code === 'PGRST204')) {
+      // Fallback: remove explicit columns and rely on noteWithMeta
+      delete payload.bill_discount;
+      delete payload.bill_discount_type;
+      delete payload.shipping_fee;
+      const retry = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
+      error = retry.error;
+    }
     if(error){toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
     const {error:delErr}=await sb.from('quotation_items').delete().eq('quotation_id', editingQuoteId);
     if(delErr){toast('อัพเดตรายการสินค้าไม่สำเร็จ: '+delErr.message,'error');return;}
@@ -15736,9 +15822,18 @@ async function saveQuote(status) {
 
   // ── โหมดสร้างใหม่ ──
   const quoteNo = await generateQuoteNo(date);
-  const {data:qt,error} = await sb.from('quotations')
-    .insert({ shop_id: currentShop.id, quote_no: quoteNo, ...payload })
+  let insertPayload = { shop_id: currentShop.id, quote_no: quoteNo, ...payload };
+  let {data:qt,error} = await sb.from('quotations')
+    .insert(insertPayload)
     .select().single();
+  if (error && (error.message.includes('column') || error.code === 'PGRST204')) {
+    delete insertPayload.bill_discount;
+    delete insertPayload.bill_discount_type;
+    delete insertPayload.shipping_fee;
+    const retry = await sb.from('quotations').insert(insertPayload).select().single();
+    qt = retry.data;
+    error = retry.error;
+  }
   if(error){toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
   const items = itemsFor(qt.id);
   if(items.length){
@@ -15757,16 +15852,21 @@ async function viewQuote(qtId) {
     sb.from('employees').select('id,name').eq('active',true),
   ]);
   if(!qt) return;
+  const meta = getQuoteMeta(qt);
   const empMap={}; (emps||[]).forEach(e=>empMap[e.id]=e.name);
-  const sStyle='width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box';
   const el=document.getElementById('qt-detail-content');
   if(!el) return;
 
-  // calc total
-  const total=(items||[]).reduce((s,it)=>{
+  // calc items subtotal
+  const subtotal=(items||[]).reduce((s,it)=>{
     const g=Number(it.qty||1)*Number(it.sell_price||0), d=Number(it.discount||0);
     return s+(it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d));
   },0);
+  const billDisc = Number(meta.bill_discount||0);
+  const billDiscType = meta.bill_discount_type||'amount';
+  const shippingFee = Number(meta.shipping_fee||0);
+  const billDiscAmt = billDiscType === 'percent' ? (subtotal * billDisc / 100) : billDisc;
+  const grandTotal = Math.max(0, subtotal - billDiscAmt) + shippingFee;
 
   el.innerHTML =
     '<div class="modal-title" style="margin-bottom:12px">📋 ใบเสนอราคา · '+(qt.quote_no||'-')+'</div>' +
@@ -15776,12 +15876,12 @@ async function viewQuote(qtId) {
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:14px">' +
       '<div><span style="color:var(--text3)">ลูกค้า</span><div style="font-weight:600">'+(qt.customer_name||'-')+'</div>' +
-        (qt.customer_contact?'<div style="font-size:12px;color:var(--text2)">'+qt.customer_contact+'</div>':'')+
-        (qt.customer_phone?'<div style="font-size:12px;color:var(--text2)">'+qt.customer_phone+'</div>':'')+
+        (qt.customer_contact?'<div style="font-size:12px;color:var(--text2)">'+escapeHTML(qt.customer_contact)+'</div>':'')+
+        (qt.customer_phone?'<div style="font-size:12px;color:var(--text2)">'+escapeHTML(qt.customer_phone)+'</div>':'')+
       '</div>' +
       '<div><span style="color:var(--text3)">พนักงาน</span><div>'+(empMap[qt.employee_id]||'-')+'</div></div>' +
       '<div><span style="color:var(--text3)">วันที่</span><div>'+qt.quote_date+'</div></div>' +
-      '<div><span style="color:var(--text3)">Ref</span><div>'+(qt.customer_social||'-')+'</div></div>' +
+      '<div><span style="color:var(--text3)">Ref</span><div>'+(qt.customer_social?escapeHTML(qt.customer_social):'-')+'</div></div>' +
     '</div>' +
     '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า</div>' +
     '<div class="table-wrap"><table><thead><tr>' +
@@ -15792,23 +15892,41 @@ async function viewQuote(qtId) {
       const net=it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d);
       const discStr=d>0?(it.discount_type==='percent'?d+'%':'฿'+fmt(d)):'-';
       return '<tr><td style="text-align:center">'+(i+1)+'</td>' +
-        '<td>'+it.product_name+'</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
+        '<td>'+escapeHTML(it.product_name)+'</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
         '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
         '<td style="text-align:right;color:var(--red)">'+discStr+'</td>' +
         '<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>';
     }).join('')+
     '</tbody></table></div>' +
-    '<div style="display:flex;justify-content:flex-end;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--border);margin-top:8px">' +
-      '<span style="font-size:13px;color:var(--text3)">ยอดรวม</span>' +
-      '<span class="font-mono text-accent" style="font-size:20px;font-weight:700">'+fmtB(total)+'</span>' +
+    '<div style="border-top:1px solid var(--border);padding:10px 0;margin-top:8px;font-size:13px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+        '<span style="color:var(--text3)">ยอดรวมสินค้า (Subtotal)</span>' +
+        '<span class="font-mono" style="font-weight:600">'+fmtB(subtotal)+'</span>' +
+      '</div>' +
+      (billDiscAmt > 0 ? (
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--red)">' +
+          '<span>ส่วนลดท้ายบิล' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span>' +
+          '<span class="font-mono">- '+fmtB(billDiscAmt)+'</span>' +
+        '</div>'
+      ) : '') +
+      (shippingFee > 0 ? (
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+          '<span style="color:var(--text3)">ค่าจัดส่ง</span>' +
+          '<span class="font-mono">+ '+fmtB(shippingFee)+'</span>' +
+        '</div>'
+      ) : '') +
+      '<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">' +
+        '<span style="font-weight:700;font-size:14px">ยอดรวมสุทธิ</span>' +
+        '<span class="font-mono text-accent" style="font-size:20px;font-weight:700">'+fmtB(grandTotal)+'</span>' +
+      '</div>' +
     '</div>' +
-    (qt.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px">'+qt.note+'</div>':'');
+    (meta.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px"><strong>หมายเหตุ:</strong> '+escapeHTML(meta.note)+'</div>':'');
 
   // Footer buttons
   const footer=document.getElementById('qt-detail-footer');
   if(footer){
     let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-quote-detail&quot;)">ปิด</button>';
-    btns+='<button class="btn btn-secondary btn-sm" onclick="printQuote(&quot;'+qtId+'&quot;)">🖨 พิมพ์</button>';
+    btns+='<button class="btn btn-secondary btn-sm" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;)">🖨 พิมพ์</button>';
     if(qt.status!=='converted') btns+='<button class="btn btn-secondary btn-sm" onclick="openEditQuote(&quot;'+qtId+'&quot;)">✏️ แก้ไข</button>';
     if(qt.status!=='converted') btns+='<button class="btn btn-danger btn-sm" onclick="deleteQuote(&quot;'+qtId+'&quot;)">🗑 ลบ</button>';
     if(qt.status==='draft') btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;sent&quot;)">📤 ส่งลูกค้า</button>';
@@ -15822,28 +15940,63 @@ async function viewQuote(qtId) {
   openModal('modal-quote-detail');
 }
 
-async function deleteQuote(qtId) {
-  const {data:qt,error:qErr}=await sb.from('quotations').select('quote_no,status').eq('id',qtId).single();
-  if(qErr||!qt){toast('ไม่พบใบเสนอราคา','error');return;}
-  if(qt.status==='converted'){toast('ลบไม่ได้ เพราะใบเสนอราคานี้แปลงเป็นออเดอร์แล้ว','error');return;}
-  if(!confirm('ยืนยันลบใบเสนอราคา '+(qt.quote_no||'')+'?\nการลบนี้ไม่สามารถย้อนกลับได้'))return;
-  // ลองลบหัวเอกสารก่อน (ฐานข้อมูลที่ตั้ง ON DELETE CASCADE จะลบรายการสินค้าให้อัตโนมัติ)
-  let {data:deleted,error}=await sb.from('quotations').delete().eq('id',qtId).select('id');
-  // ถ้า FK ไม่ได้ตั้ง cascade ค่อยลบรายการสินค้า แล้วลองลบหัวเอกสารอีกครั้ง
-  if(error?.code==='23503') {
-    const {error:itemErr}=await sb.from('quotation_items').delete().eq('quotation_id',qtId);
-    if(itemErr){toast('ลบรายการสินค้าไม่สำเร็จ: '+itemErr.message,'error');return;}
-    ({data:deleted,error}=await sb.from('quotations').delete().eq('id',qtId).select('id'));
-  }
-  if(error||!deleted?.length){toast('ลบใบเสนอราคาไม่สำเร็จ'+(error?': '+error.message:' (สิทธิ์ฐานข้อมูลไม่อนุญาต)'),'error');return;}
-  closeModal('modal-quote-detail');toast('ลบใบเสนอราคา '+(qt.quote_no||'')+' แล้ว','success');loadQuotes();
-}
+function openQuotePrintOptions(qtId) {
+  document.getElementById('quote-options-modal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'quote-options-modal';
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '320';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:460px">
+      <div class="modal-title">🖨️ ตัวเลือกการพิมพ์ใบเสนอราคา</div>
+      <div style="padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:14px">
+        <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">📄 ประเภทเอกสารที่ต้องการพิมพ์</div>
+        <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+            <input type="radio" name="quote-doc-copy" value="original" checked style="width:18px;height:18px">
+            <div>
+              <div style="font-weight:600;font-size:13px">🌟 ต้นฉบับเท่านั้น (ORIGINAL)</div>
+              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 1 ใบ สำหรับส่งให้ลูกค้าพิจารณา</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
+            <input type="radio" name="quote-doc-copy" value="copy" style="width:18px;height:18px">
+            <div>
+              <div style="font-weight:600;font-size:13px">📑 สำเนาเท่านั้น (COPY)</div>
+              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 1 ใบ สำหรับเก็บเข้าแฟ้มฝ่ายขาย/ร้านค้า</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1.5px solid #00a882">
+            <input type="radio" name="quote-doc-copy" value="both" style="width:18px;height:18px">
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#008768">✨ พิมพ์เป็นชุด (ต้นฉบับ + สำเนา)</div>
+              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 2 หน้า A4 ต่อกันในครั้งเดียว (ประหยัดเวลา)</div>
+            </div>
+          </label>
+        </div>
 
-async function updateQuoteStatus(qtId, status) {
-  await sb.from('quotations').update({status}).eq('id',qtId);
-  toast('อัพเดทสถานะ → '+(QUOTE_STATUSES.find(x=>x.key===status)?.th||status)+' ✓','success');
-  closeModal('modal-quote-detail');
-  loadQuotes();
+        <div style="border-top:1px solid var(--border);padding-top:12px">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+            <input type="checkbox" id="quote-show-discount" checked style="width:18px;height:18px;margin-top:2px">
+            <span><strong>แสดงส่วนลดในใบเสนอราคา</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: ซ่อนคอลัมน์ส่วนลด แสดงราคาเต็ม</span></span>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <input type="checkbox" id="quote-show-signature" checked style="width:18px;height:18px;margin-top:2px">
+            <span><strong>พิมพ์ลายเซ็นดิจิทัลผู้เสนอราคา</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัลสีน้ำเงิน · ปิด: เว้นช่องไว้เซ็นด้วยปากกา</span></span>
+          </label>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าจัดส่งและหมายเหตุจะแสดงในใบเสนอราคาอัตโนมัติเมื่อมีข้อมูล</div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-primary" onclick="
+          const docCopy = document.querySelector('input[name=\\'quote-doc-copy\\']:checked')?.value || 'original';
+          printQuote('${qtId}', document.getElementById('quote-show-discount').checked, document.getElementById('quote-show-signature').checked, docCopy);
+        ">🖨️ พิมพ์ใบเสนอราคา</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
 }
 
 async function convertToOrder(qtId) {
@@ -15854,22 +16007,28 @@ async function convertToOrder(qtId) {
     sb.from('quotation_items').select('*').eq('quotation_id',qtId),
   ]);
   if(!qt) return;
+  const meta = getQuoteMeta(qt);
 
   // สร้าง order
   const orderNo = await generateOrderNo(today());
-  const total=(items||[]).reduce((s,it)=>{
+  const itemDiscountedSubtotal=(items||[]).reduce((s,it)=>{
     const g=Number(it.qty||1)*Number(it.sell_price||0),d=Number(it.discount||0);
     return s+(it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d));
   },0);
+  const billDiscAmt = meta.bill_discount_type === 'percent' ? (itemDiscountedSubtotal * meta.bill_discount / 100) : meta.bill_discount;
+  const grandTotal = Math.max(0, itemDiscountedSubtotal - billDiscAmt) + meta.shipping_fee;
 
   const {data:order,error} = await sb.from('orders').insert({
     shop_id:currentShop.id, order_no:orderNo, order_date:today(),
     channel:'Offline', customer_name:qt.customer_name,
     customer_social:qt.customer_social, customer_contact:qt.customer_contact,
     customer_phone:qt.customer_phone, customer_address:qt.customer_address,
-    employee_id:qt.employee_id||null, note:'Convert จาก '+qt.quote_no,
+    employee_id:qt.employee_id||null, note:'Convert จาก '+qt.quote_no + (meta.note ? ' | ' + meta.note : ''),
+    bill_discount: meta.bill_discount,
+    bill_discount_type: meta.bill_discount_type,
+    shipping_fee: meta.shipping_fee,
     shipping_status:'pending', doc_status:'confirmed',
-    total_amount:total, total_cost:0,
+    total_amount:grandTotal, total_cost:0,
   }).select().single();
   if(error){toast('สร้าง Order ไม่สำเร็จ: '+error.message,'error');return;}
 
@@ -15909,96 +16068,200 @@ async function convertToOrder(qtId) {
   loadQuotes();
 }
 
-async function printQuote(qtId) {
+async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original') {
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
     sb.from('quotation_items').select('*').eq('quotation_id',qtId),
   ]);
   if(!qt) return;
+  const meta = getQuoteMeta(qt);
   const shop = currentShop||{};
   const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
-  const total=(items||[]).reduce((s,it)=>{
-    const g=Number(it.qty||1)*Number(it.sell_price||0),d=Number(it.discount||0);
-    return s+(it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d));
-  },0);
+
+  function itemNet(it) {
+    const gross = Number(it.qty||1) * Number(it.sell_price||0);
+    const disc  = Number(it.discount||0);
+    return it.discount_type==='percent'
+      ? Math.max(0, gross - gross*disc/100)
+      : Math.max(0, gross - disc);
+  }
+
+  const grossSubtotal = (items||[]).reduce((s,it) => s + Number(it.qty||1)*Number(it.sell_price||0), 0);
+  const discountedSubtotal = (items||[]).reduce((s,it) => s + itemNet(it), 0);
+  const billDisc     = Number(meta.bill_discount||0);
+  const billDiscType = meta.bill_discount_type || 'amount';
+  const billDiscAmt  = showDiscount ? (billDiscType==='percent' ? discountedSubtotal*billDisc/100 : billDisc) : 0;
+  const subtotal     = showDiscount ? discountedSubtotal : grossSubtotal;
+  const shippingFee  = Number(meta.shipping_fee||0);
+  const grandTotal   = Math.max(0, subtotal - billDiscAmt) + shippingFee;
+  const displayNote  = meta.note;
+
+  let qtShopName = (shop.name || 'sealthai').toUpperCase();
+  if (!qtShopName.endsWith('.COM')) qtShopName += '.COM';
+  const shopAddr = getShopAddress(shop).split('\n').join('<br>');
+
+  const copies = docCopyType === 'both'
+    ? [{ label: 'ต้นฉบับ / ORIGINAL', isCopy: false }, { label: 'สำเนา / COPY', isCopy: true }]
+    : docCopyType === 'copy'
+      ? [{ label: 'สำเนา / COPY', isCopy: true }]
+      : [{ label: 'ต้นฉบับ / ORIGINAL', isCopy: false }];
 
   const bp=[];
   bp.push('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
   bp.push('<title>ใบเสนอราคา '+(qt.quote_no||'')+'</title>');
-  bp.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">');
+  bp.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
   bp.push('<'+'style>');
-  bp.push('*{box-sizing:border-box;margin:0;padding:0}body{font-family:Sarabun,sans-serif;font-size:13px;color:#111;width:210mm;min-height:297mm;padding:14mm;margin:0 auto}');
-  bp.push('.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}');
-  bp.push('.shop-name{font-size:20px;font-weight:700;margin-bottom:3px}.shop-info{font-size:11px;color:#555;line-height:1.65}');
-  bp.push('.doc-type{border:2.5px solid #1e3a5f;color:#1e3a5f;font-weight:700;font-size:15px;padding:6px 18px;border-radius:6px;text-align:center;line-height:1.3}.doc-type .doc-sub{font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.95;margin-top:2px}');
-  bp.push('.info-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}');
-  bp.push('.info-box{border:1px solid #bbb;border-radius:4px;padding:8px 10px}');
-  bp.push('.info-label{font-size:10px;color:#777;margin-bottom:2px}');
+  bp.push('*{box-sizing:border-box;margin:0;padding:0}body{font-family:Sarabun,sans-serif;font-size:13px;color:#111;background:#eaedf2;padding:15px 0;margin:0 auto}');
+  bp.push('.qt-page{width:210mm;min-height:297mm;padding:10mm;margin:0 auto 20px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.08);box-sizing:border-box}');
+  bp.push('.page-border{border:2px solid #1e3a5f;border-radius:4px;padding:12mm 12mm 10mm;min-height:273mm;position:relative}');
+  bp.push('.corner-tl,.corner-tr,.corner-bl,.corner-br{position:absolute;width:12px;height:12px}');
+  bp.push('.corner-tl{top:3px;left:3px;border-top:3px solid #00a882;border-left:3px solid #00a882}');
+  bp.push('.corner-tr{top:3px;right:3px;border-top:3px solid #00a882;border-right:3px solid #00a882}');
+  bp.push('.corner-bl{bottom:3px;left:3px;border-bottom:3px solid #00a882;border-left:3px solid #00a882}');
+  bp.push('.corner-br{bottom:3px;right:3px;border-bottom:3px solid #00a882;border-right:3px solid #00a882}');
+  bp.push('.hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}');
+  bp.push('.hd-left{display:flex;align-items:center;gap:14px}');
+  bp.push('.shop-name{font-size:20px;font-weight:700;margin-bottom:3px}');
+  bp.push('.shop-info{font-size:11.5px;color:#1a1a1a;line-height:1.65}');
+  bp.push('.doc-type{border:2.5px solid #1e3a5f;color:#1e3a5f;font-weight:700;font-size:15px;padding:6px 18px;border-radius:6px;text-align:center;line-height:1.3;white-space:nowrap}');
+  bp.push('.doc-type.copy{border:2.5px solid #475569;color:#334155}');
+  bp.push('.doc-type .doc-sub{font-size:11px;font-weight:700;letter-spacing:.5px;opacity:.95;margin-top:2px}');
+  bp.push('.info-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}');
+  bp.push('.info-box{border:1.5px solid #333;border-radius:4px;padding:8px 10px}');
+  bp.push('.info-label{font-size:10.5px;color:#1a1a1a;font-weight:600;margin-bottom:2px}');
+  bp.push('.info-val{font-size:13px;font-weight:700;color:#000}');
+  bp.push('.info-sub{font-size:11.5px;color:#111;margin-top:2px}');
   bp.push('table{width:100%;border-collapse:collapse;font-size:12.5px}');
-  bp.push('thead th{background:#1e3a5f;color:#fff;padding:7px 6px;text-align:center;border:1px solid #1e3a5f}');
+  bp.push('thead th{background:#1e3a5f;color:#fff;padding:7px 6px;text-align:center;border:1px solid #1e3a5f;font-size:12px;font-weight:700}');
+  bp.push('thead th small{font-weight:600;opacity:0.92}');
   bp.push('thead th.left{text-align:left}thead th.right{text-align:right}');
-  bp.push('tbody td{border:1px solid #ccc;padding:5px 6px}');
-  bp.push('.total-wrap{border:1px solid #ccc;border-top:none}.total-row{display:flex;justify-content:space-between;padding:6px 10px;font-size:14px}');
-  bp.push('.grand{background:#e8f5f0;font-size:16px;font-weight:700;border-top:2.5px solid #00a882}');
-  bp.push('.validity{margin-top:10px;padding:8px 12px;background:#f9f9f9;border:1px solid #ddd;border-radius:4px;font-size:12px;color:#555}');
-  bp.push('.bank-box{margin-top:10px;border:1.5px solid #138f2d;border-radius:6px;padding:10px 12px;background:#f3fbf5;display:flex;justify-content:space-between;align-items:center;gap:16px}');
+  bp.push('tbody td{border:1px solid #555;padding:5px 6px;vertical-align:middle;font-size:12px;color:#000}');
+  bp.push('tbody tr:nth-child(even){background:#eef0f2}');
+  bp.push('.total-wrap{border:1px solid #555;border-top:none}');
+  bp.push('.total-row{display:flex;justify-content:space-between;padding:5px 10px;border-top:1px solid #555;font-size:13px;color:#000}');
+  bp.push('.total-row.disc{color:#cc0000}');
+  bp.push('.total-row.grand{background:#e8f5f0;font-size:15px;font-weight:700;border-top:2.5px solid #00a882}');
+  bp.push('.baht-text{background:#eef0f2;border:1px solid #555;border-top:none;padding:6px 10px;font-size:12px;color:#000}');
+  bp.push('.validity{margin-top:10px;padding:7px 10px;background:#f9f9f9;border:1px solid #bbb;border-radius:4px;font-size:12px;color:#333}');
+  bp.push('.bank-box{margin-top:10px;border:1.5px solid #138f2d;border-radius:6px;padding:9px 12px;background:#f3fbf5;display:flex;justify-content:space-between;align-items:center;gap:16px}');
   bp.push('.bank-title{font-size:13px;font-weight:700;color:#0d6f23;margin-bottom:3px}.bank-name{font-size:12px;font-weight:700;color:#111}.bank-detail{font-size:11.5px;color:#333;line-height:1.65}.bank-account{font-family:monospace;font-size:17px;font-weight:700;color:#0d6f23;letter-spacing:.5px;white-space:nowrap}');
-  bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:28px}');
-  bp.push('.sig-box{text-align:center;width:170px}.sig-image-wrap{height:26px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;margin-bottom:2px}.sig-image{display:block;max-width:72px;max-height:24px;object-fit:contain}.sig-space{height:26px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:5px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
-  bp.push('@media print{body{padding:10mm 12mm 8mm}@page{size:A4 portrait;margin:0}}');
+  bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:24px}');
+  bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:26px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;margin-bottom:2px}.sig-image{display:block;max-width:72px;max-height:24px;object-fit:contain}.sig-space{height:26px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:5px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
+  bp.push('@media print{body{background:#fff;padding:0;margin:0}.qt-page{box-shadow:none;padding:10mm 12mm 8mm;margin:0;page-break-after:always;break-after:page}.qt-page:last-child{page-break-after:avoid;break-after:avoid}@page{size:A4 portrait;margin:0}}');
   bp.push('</'+'style></head><body>');
-  // header
-  bp.push('<div class="hd"><div style="display:flex;align-items:center;gap:12px">');
-  const BILL_LOGO_QT = document.querySelector('img[style*="34px"]')?.src||'';
-  if(BILL_LOGO_QT) bp.push('<img src="'+BILL_LOGO_QT+'" style="width:56px;height:56px;object-fit:contain">');
-    let qtShopName = (shop.name || 'sealthai').toUpperCase();
-  if (!qtShopName.endsWith('.COM')) qtShopName += '.COM';
-  bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
-  bp.push('<div class="shop-info">'+getShopAddress(shop)+'</div></div></div>');
-  bp.push('<div class="doc-type"><div>ใบเสนอราคา / Quotation</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div></div>');
-  // info
-  bp.push('<div class="info-row"><div class="info-box"><div class="info-label">ลูกค้า / Customer</div><div style="font-weight:600">'+(qt.customer_name||'-')+'</div>');
-  if(qt.customer_contact) bp.push('<div style="font-size:11px">'+qt.customer_contact+'</div>');
-  if(qt.customer_phone)   bp.push('<div style="font-size:11px">'+qt.customer_phone+'</div>');
-  if(qt.customer_address) bp.push('<div style="font-size:11px">'+qt.customer_address+'</div>');
-  bp.push('</div><div class="info-box" style="text-align:right">');
-  bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#777">เลขที่ / No.</span>&nbsp;&nbsp;<strong>'+(qt.quote_no||'-')+'</strong></div>');
-  bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#777">วันที่</span>&nbsp;&nbsp;<strong>'+qt.quote_date+'</strong></div>');
-  if(qt.customer_social) bp.push('<div><span style="font-size:11px;color:#777">Ref</span>&nbsp;&nbsp;<strong>'+qt.customer_social+'</strong></div>');
-  bp.push('</div></div>');
-  // table
-  const MIN=10; const empties=Math.max(0,MIN-(items||[]).length);
-  bp.push('<table><thead><tr>');
-  bp.push('<th style="width:36px">ลำดับ</th><th class="left">รายการ</th>');
-  bp.push('<th style="width:50px">จำนวน</th><th class="right" style="width:68px">ราคา/ชิ้น</th>');
-  bp.push('<th class="right" style="width:68px">ส่วนลด</th><th class="right" style="width:72px">ยอดเงิน</th>');
-  bp.push('</tr></thead><tbody>');
-  (items||[]).forEach((it,i)=>{
-    const g=Number(it.qty||1)*Number(it.sell_price||0),d=Number(it.discount||0);
-    const net=it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d);
-    const dc=d>0?(it.discount_type==='percent'?'- '+fmt(g-net)+' ('+d+'%)':'- '+fmt(d)):'-';
-    bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+it.product_name+'</td>');
-    bp.push('<td style="text-align:center">'+fmt(it.qty)+'</td>');
-    bp.push('<td style="text-align:right">'+fmt(it.sell_price)+'</td>');
-    bp.push('<td style="text-align:right;color:#c00">'+dc+'</td>');
-    bp.push('<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>');
+
+  const MIN_ROWS = 10;
+  const emptyCount = Math.max(0, MIN_ROWS - (items||[]).length);
+  const emptyRows = Array(emptyCount).fill(
+    showDiscount
+      ? '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
+      : '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>'
+  ).join('');
+
+  copies.forEach(cp => {
+    bp.push('<div class="qt-page"><div class="page-border">');
+    bp.push('<div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>');
+
+    // Header
+    bp.push('<div class="hd">');
+    bp.push('<div class="hd-left">');
+    bp.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
+    bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
+    bp.push('<div class="shop-info">'+shopAddr);
+    bp.push('<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com');
+    if (shop.phone) bp.push('<br>โทร: ' + shop.phone);
+    if (shop.tax_id) bp.push(' &nbsp;|&nbsp; เลขผู้เสียภาษี: ' + shop.tax_id);
+    bp.push('</div></div></div>');
+    bp.push('<div class="doc-type' + (cp.isCopy ? ' copy' : '') + '"><div>ใบเสนอราคา / Quotation</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
+    bp.push('</div>');
+
+    // Customer / Document Info
+    bp.push('<div class="info-row">');
+    bp.push('<div class="info-box">');
+    bp.push('<div class="info-label">ลูกค้า / Customer:</div>');
+    bp.push('<div class="info-val">'+(qt.customer_name||'-')+'</div>');
+    if(qt.customer_contact) bp.push('<div class="info-sub">ผู้ติดต่อ: '+escapeHTML(qt.customer_contact)+'</div>');
+    if(qt.customer_phone)   bp.push('<div class="info-sub">โทร: '+escapeHTML(qt.customer_phone)+'</div>');
+    if(qt.customer_address) bp.push('<div class="info-sub" style="margin-top:4px">'+escapeHTML(qt.customer_address).split('\n').join('<br>')+'</div>');
+    bp.push('</div>');
+    bp.push('<div class="info-box" style="text-align:right">');
+    bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">เลขที่ / No.</span>&nbsp;&nbsp;<strong>'+(qt.quote_no||'-')+'</strong></div>');
+    bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">วันที่ / Date</span>&nbsp;&nbsp;<strong>'+qt.quote_date+'</strong></div>');
+    if(qt.valid_until) bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">ใช้ได้ถึง / Valid Until</span>&nbsp;&nbsp;<strong>'+qt.valid_until+'</strong></div>');
+    if(qt.customer_social) bp.push('<div><span style="font-size:11px;color:#1a1a1a">Ref / Social</span>&nbsp;&nbsp;<strong>'+escapeHTML(qt.customer_social)+'</strong></div>');
+    bp.push('</div></div>');
+
+    // Items Table
+    bp.push('<table><thead><tr>');
+    bp.push('<th style="width:36px">ลำดับ<br><small>Item</small></th>');
+    bp.push('<th class="left">รายการ<br><small>Descriptions</small></th>');
+    bp.push('<th style="width:50px">จำนวน<br><small>Qty</small></th>');
+    bp.push('<th class="right" style="width:68px">ราคา/ชิ้น<br><small>Unit Price</small></th>');
+    if (showDiscount) bp.push('<th class="right" style="width:68px">ส่วนลด<br><small>Discount</small></th>');
+    bp.push('<th class="right" style="width:85px">จำนวนเงิน<br><small>Amount</small></th>');
+    bp.push('</tr></thead><tbody>');
+
+    (items||[]).forEach((it,i)=>{
+      const gross = Number(it.qty||1) * Number(it.sell_price||0);
+      const net = showDiscount ? itemNet(it) : gross;
+      const discAmt = gross - net;
+      const discCell = it.discount > 0
+        ? (it.discount_type==='percent'
+            ? '- '+fmt(discAmt)+' <small style="color:#666">('+it.discount+'%)</small>'
+            : '- '+fmt(discAmt))
+        : '-';
+      bp.push('<tr><td style="text-align:center">'+(i+1)+'</td>');
+      bp.push('<td>'+escapeHTML(it.product_name||'-')+'</td>');
+      bp.push('<td style="text-align:center">'+fmt(it.qty)+'</td>');
+      bp.push('<td style="text-align:right">'+fmt(it.sell_price)+'</td>');
+      if (showDiscount) bp.push('<td style="text-align:right;color:#c00">'+discCell+'</td>');
+      bp.push('<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>');
+    });
+    bp.push(emptyRows);
+    bp.push('</tbody></table>');
+
+    // Totals
+    bp.push('<div class="total-wrap">');
+    bp.push('<div class="total-row"><span>ยอดรวมสินค้า / Subtotal</span><span>'+fmt(subtotal)+'</span></div>');
+    if(showDiscount && billDiscAmt > 0){
+      bp.push('<div class="total-row disc"><span>ส่วนลดท้ายบิล / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
+    }
+    if(shippingFee > 0){
+      bp.push('<div class="total-row"><span>ค่าจัดส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
+    }
+    bp.push('<div class="total-row grand"><span>รวมเงินทั้งสิ้น / Grand Total</span><span>'+fmt(grandTotal)+'</span></div>');
+    bp.push('</div>');
+    bp.push('<div class="baht-text">ตัวอักษร / In Words &nbsp; <strong>( ' + bahtText(grandTotal) + ' )</strong></div>');
+
+    if(qt.valid_until) bp.push('<div class="validity">⏰ ใบเสนอราคานี้มีอายุการใช้งานถึงวันที่: <strong>'+qt.valid_until+'</strong></div>');
+    if(displayNote) bp.push('<div style="margin-top:8px;font-size:12px;color:#333;border:1px solid #777;border-radius:4px;padding:7px 10px;background:#fffdf2"><strong>หมายเหตุ / Note:</strong><br>'+escapeHTML(displayNote).replace(/\n/g,'<br>')+'</div>');
+
+    // Bank transfer details
+    bp.push('<div class="bank-box">');
+    bp.push('<div><div class="bank-title">ชำระเงินโดยการโอน / Bank Transfer</div><div class="bank-name">ธนาคารกสิกรไทย · KASIKORNBANK</div><div class="bank-detail">ชื่อบัญชี / Account Name: <strong>MS. NUNTANA L</strong></div></div>');
+    bp.push('<div style="text-align:right"><div style="font-size:10.5px;color:#555">เลขที่บัญชี / Account No.</div><div class="bank-account">128-8-23520-8</div></div>');
+    bp.push('</div>');
+
+    // Signatures
+    bp.push('<div class="sig-area">');
+    bp.push('<div class="sig-box">');
+    if (showSignature) {
+      bp.push('<div class="sig-image-wrap"><img class="sig-image" src="'+signatureUrl+'" alt="ลายเซ็นผู้เสนอราคา"></div>');
+    } else {
+      bp.push('<div class="sig-space"></div>');
+    }
+    bp.push('<div class="sig-line"></div><div class="sig-label">ผู้เสนอราคา / Prepared By</div></div>');
+    bp.push('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-label">ผู้อนุมัติสั่งซื้อ / Customer Acceptance</div></div>');
+    bp.push('</div>');
+
+    bp.push('</div></div>'); // close page-border & qt-page
   });
-  for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
-  bp.push('</tbody></table>');
-  bp.push('<div class="total-wrap"><div class="total-row grand"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+fmt(total)+'</span></div></div>');
-  if(qt.valid_until) bp.push('<div class="validity">ใบเสนอราคานี้มีอายุถึง: <strong>'+qt.valid_until+'</strong></div>');
-  if(qt.note) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+qt.note+'</div>');
-  bp.push('<div class="bank-box">');
-  bp.push('<div><div class="bank-title">ชำระเงินโดยการโอน / Bank Transfer</div><div class="bank-name">ธนาคารกสิกรไทย · KASIKORNBANK</div><div class="bank-detail">ชื่อบัญชี / Account Name: <strong>MS. NUNTANA L</strong></div></div>');
-  bp.push('<div style="text-align:right"><div style="font-size:10.5px;color:#555">เลขที่บัญชี / Account No.</div><div class="bank-account">128-8-23520-8</div></div>');
-  bp.push('</div>');
-  bp.push('<div class="sig-area">');
-  bp.push('<div class="sig-box"><div class="sig-image-wrap"><img class="sig-image" src="'+signatureUrl+'" alt="ลายเซ็นผู้เสนอราคา"></div><div class="sig-line"></div><div class="sig-label">ผู้เสนอราคา / Prepared By</div></div>');
-  bp.push('<div class="sig-box"><div class="sig-space"></div><div class="sig-line"></div><div class="sig-label">ผู้อนุมัติ / ลูกค้า</div></div>');
-  bp.push('</div>');
+
   bp.push('<'+'script>window.onload=function(){window.print();};</'+'script>');
+
+  document.getElementById('quote-options-modal')?.remove();
   const w=window.open('','_blank','width=900,height=1100,scrollbars=yes');
-  if(!w){toast('กรุณาอนุญาต Pop-up','error');return;}
+  if(!w){toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ใบเสนอราคา','error');return;}
   w.document.write(bp.join('\n')); w.document.close();
 }
 
@@ -19430,7 +19693,7 @@ async function printPO(poId) {
   let poShopName = (shop.name || 'sealthai').toUpperCase();
   if (!poShopName.endsWith('.COM')) poShopName += '.COM';
   bp.push('<div class="hd"><div><div class="shop-name">' + poShopName + '</div>');
-  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(shop)+'</div></div>');
+  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(shop).split('\n').join('<br>')+'<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</div></div>');
   bp.push('<div class="doc-type"><div>ใบสั่งซื้อ / Purchase Order</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div></div>');
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
@@ -34325,7 +34588,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.44', date:'2026-09-30', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
+    { v:'2.45', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
+      '💰 <b>เพิ่มช่องส่วนลดท้ายบิล & ค่าจัดส่ง ในใบเสนอราคา:</b> รองรับการใส่ส่วนลดท้ายบิล (เลือกได้ทั้งแบบบาท ฿ หรือ %) และค่าจัดส่ง ทั้งในหน้าสร้างใบเสนอราคาใหม่ และหน้าแก้ไขแบบร่าง พร้อมคำนวณยอดรวมสุทธิแบบ Real-time',
+      '🖨️ <b>ตัวเลือกการพิมพ์ใบเสนอราคา (Print Options Modal):</b> เพิ่มหน้าต่างตัวเลือกพิมพ์ใบเสนอราคา สามารถเลือกพิมพ์ต้นฉบับ/สำเนา/พิมพ์เป็นชุด, เลือก <b>แสดง หรือ ซ่อนส่วนลด</b> และเลือกพิมพ์ลายเซ็นดิจิทัลได้เหมือนหน้าบิลออเดอร์',
+      '🏬 <b>เพิ่ม Line OA & Website ในหัวกระดาษเอกสาร:</b> เพิ่มข้อความ <code>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</code> ใต้ที่อยู่ร้านค้าในหัวบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation) และเอกสารสั่งซื้อ (PO)',
+      '🔄 <b>ส่งต่อยอดส่วนลดและค่าส่งเมื่อ Convert → Order:</b> เมื่อกดแปลงใบเสนอราคาเป็นคำสั่งซื้อ ระบบจะส่งต่อยอดส่วนลดท้ายบิลและค่าส่งเข้าสู่ออเดอร์ให้อัตโนมัติ',
+      '🧹 <b>Cache Refresh (v2.45):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
+    ]},
+    { v:'2.44', date:'2026-09-30', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
