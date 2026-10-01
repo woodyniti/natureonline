@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.48';
-const DISPLAY_APP_VERSION = 'v2.48';
+const CURRENT_APP_VERSION = 'sealthai-v2.49';
+const DISPLAY_APP_VERSION = 'v2.49';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.48 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.49 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.48 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.49 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.48 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.49 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.48 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.49 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3227,7 +3227,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.48)">v2.48 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.49)">v2.49 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -15601,9 +15601,26 @@ async function loadQuotes() {
 }
 
 async function ensureQuoteProductList() {
-  if(!productList.length) {
-    const {data} = await sb.from('products').select('id,name,sku,supplier_sku,supplier_code,part_no,item_no,barcode,brand,category,sub_category,group_name,seal_type,material,sell_price,current_cost,stock_qty,stock_inhouse,supplier_name').eq('shop_id', currentShop.id).eq('active',true).order('name');
-    productList = data||[];
+  if (Array.isArray(allProducts) && allProducts.length) {
+    productList = allProducts;
+    return;
+  }
+  if (Array.isArray(productList) && productList.length) {
+    return;
+  }
+  try {
+    let { data, error } = await sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true).order('name');
+    if (error || !data || !data.length) {
+      // Fallback without shop_id filter if empty
+      const res = await sb.from('products').select('*').eq('active', true).order('name');
+      data = res.data;
+    }
+    if (data && data.length) {
+      productList = data;
+      allProducts = data;
+    }
+  } catch(e) {
+    console.warn('ensureQuoteProductList error:', e);
   }
 }
 
@@ -15702,11 +15719,16 @@ async function openEditQuote(qtId) {
 }
 
 let _quoteSearchTimer = null;
+window._quoteAutocompleteClicking = false;
 
-function searchQuoteProduct(rowIdx, q) {
+async function searchQuoteProduct(rowIdx, q) {
   const ddid = 'qt-prod-dd-' + rowIdx;
   const dd = document.getElementById(ddid);
   if (!dd) return;
+
+  if ((!productList || !productList.length) && (!allProducts || !allProducts.length)) {
+    await ensureQuoteProductList();
+  }
 
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
@@ -15727,13 +15749,13 @@ function searchQuoteProduct(rowIdx, q) {
         const badges = [];
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
-        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.supplier_sku) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku)}</span>`);
         if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
         if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
 
         return `
-          <div onmousedown="event.preventDefault(); selectQuoteProductById(${rowIdx}, '${p.id}');"
+          <div onmousedown="event.preventDefault(); window._quoteAutocompleteClicking = true; selectQuoteProductById(${rowIdx}, '${p.id}');"
             onclick="selectQuoteProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
             style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:background 0.12s ease"
             onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
@@ -15749,7 +15771,7 @@ function searchQuoteProduct(rowIdx, q) {
     // 1) Option to use as Custom / Temporary Dummy Item
     if (ql) {
       html += `
-        <div onmousedown="event.preventDefault(); selectQuoteCustomItem(${rowIdx}, '${escapeHTML(ql)}');"
+        <div onmousedown="event.preventDefault(); window._quoteAutocompleteClicking = true; selectQuoteCustomItem(${rowIdx}, '${escapeHTML(ql)}');"
           onclick="selectQuoteCustomItem(${rowIdx}, '${escapeHTML(ql)}'); event.stopPropagation();"
           style="padding:8px 10px;background:#fffdf5;color:#b45309;font-weight:700;font-size:12px;cursor:pointer;border-top:1px solid #fef3c7;display:flex;align-items:center;justify-content:space-between"
           onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffdf5'">
@@ -15787,7 +15809,7 @@ function searchQuoteProduct(rowIdx, q) {
           .select('*')
           .eq('shop_id', currentShop.id)
           .eq('active', true)
-          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
           .limit(40);
         
         if (data && data.length) {
@@ -15813,14 +15835,15 @@ function searchQuoteProduct(rowIdx, q) {
 }
 
 function selectQuoteProductById(rowIdx, prodId) {
-  const p = (productList || allProducts || []).find(x => x.id === prodId);
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => String(x.id) === String(prodId));
   if (!p) return;
   if (!quoteItems[rowIdx]) quoteItems[rowIdx] = {};
   quoteItems[rowIdx] = {
     product_id: p.id,
     product_name: p.name,
     qty: quoteItems[rowIdx]?.qty || 1,
-    sell_price: p.sell_price || 0,
+    sell_price: Number(p.sell_price) || 0,
     discount: quoteItems[rowIdx]?.discount || 0,
     discount_type: quoteItems[rowIdx]?.discount_type || 'amount',
     is_custom: false
@@ -15857,6 +15880,10 @@ function handleQuoteProdBlur(rowIdx, val) {
   setTimeout(() => {
     const dd = document.getElementById('qt-prod-dd-' + rowIdx);
     if (dd) dd.style.display = 'none';
+    if (window._quoteAutocompleteClicking) {
+      window._quoteAutocompleteClicking = false;
+      return;
+    }
     const cleanVal = (val || '').trim();
     if (!cleanVal) {
       if (quoteItems[rowIdx]) {
@@ -15869,7 +15896,8 @@ function handleQuoteProdBlur(rowIdx, val) {
       return;
     }
     // Check if directly matched an existing product in DB
-    const matched = (productList || allProducts || []).find(x =>
+    const prods = (productList && productList.length) ? productList : (allProducts || []);
+    const matched = prods.find(x =>
       (x.name && x.name.toLowerCase() === cleanVal.toLowerCase()) ||
       (x.sku && x.sku.toLowerCase() === cleanVal.toLowerCase()) ||
       (x.supplier_sku && x.supplier_sku.toLowerCase() === cleanVal.toLowerCase()) ||
@@ -15887,7 +15915,7 @@ function handleQuoteProdBlur(rowIdx, val) {
       quoteItems[rowIdx].is_custom = true;
       renderQuoteItems();
     }
-  }, 250);
+  }, 200);
 }
 
 function renderQuoteItems() {
@@ -15903,7 +15931,8 @@ function renderQuoteItems() {
     const pw=document.createElement('div'); pw.style.cssText='flex:1;min-width:0';
     const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:600;display:flex;align-items:center;gap:6px';
     
-    const linked = it.product_id ? (productList||allProducts||[]).find(p => p.id === it.product_id) : null;
+    const prods = (productList && productList.length) ? productList : (allProducts || []);
+    const linked = it.product_id ? prods.find(p => String(p.id) === String(it.product_id)) : null;
     if (it.is_custom && (it.product_name||'').trim()) {
       pl.innerHTML = '<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;border:1px solid #fde68a">📝 สินค้าชั่วคราว · ไม่มีในระบบ</span>';
     } else if (linked) {
@@ -34895,34 +34924,39 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.48', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Master Product Search & Quick Product Integration + Custom Item Support', items:[
+    { v:'2.49', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Real-Time Product Search Fix & Unified Master Product Catalog', items:[
+      '🔍 <b>แก้ไขการค้นหาสินค้าในใบเสนอราคา:</b> แก้ไขการโหลดข้อมูลคลังสินค้าให้ดึงทุกคอลัมน์ที่ถูกต้อง ป้องกันข้อผิดพลาด HTTP 400 จากคอลัมน์ที่ไม่ตรงกับฐานข้อมูล พร้อมแสดงรายการสินค้าทันทีที่คลิกหรือพิมพ์ค้นหา',
+      '⚡ <b>เชื่อมต่อสินค้าทั้งคลัง 100%:</b> ดึงข้อมูลสินค้าจากฐานข้อมูลกลาง (Master Products) พร้อมแสดงสต๊อก ราคา และข้อมูล SKU, Part No ครบถ้วนเหมือนหน้า Order',
+      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
+    ]},
+    { v:'2.48', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Master Product Search & Quick Product Integration + Custom Item Support', items:[
       '🔍 <b>ระบบค้นหาสินค้าจากฐานข้อมูล (Master Product Search):</b> หน้าใบเสนอราคาเชื่อมต่อฐานข้อมูลสินค้าและคลังสินค้าเหมือนหน้า Order ค้นหาได้ละเอียดทั้งชื่อ, SKU, Supplier Code, Part No และขนาด พร้อมแสดงป้ายหมวดหมู่ ราคา และจำนวนสต๊อกคงเหลือแบบ Real-time',
       '⚡ <b>สร้างสินค้าใหม่เข้าคลังได้ทันที (Quick Master Product):</b> มีปุ่มสร้างสินค้าใหม่ทั้งในเมนูดรอปดาวน์ค้นหา และปุ่มลัดด้านบน สามารถกรอกสเปก ขนาด ราคาขาย ราคาซื้อ และบันทึกลงคลังสินค้าหลัก พร้อมดึงมาใส่ในใบเสนอราคาอัตโนมัติ',
       '📝 <b>รองรับสินค้าชั่วคราว (Custom / Temporary Item):</b> ยังคงสามารถพิมพ์ชื่อสินค้าเฉพาะกิจหรือสินค้าชั่วคราวที่ยังไม่มีในระบบได้อย่างอิสระ โดยไม่บังคับรหัสสินค้า/SKU และไม่กระทบสต๊อกคลังสินค้า',
-      '🧹 <b>Cache Refresh (v2.48):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
+      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
     ]},
     { v:'2.47', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Auto-Migrate Quotation Running Numbers to QT<YYYY>-<XXXXX>', items:[
       '🔄 <b>อัปเดตและแปลงเลขที่ใบเสนอราคาเดิมอัตโนมัติ:</b> แปลงเลขที่ใบเสนอราคาเดิมที่บันทึกไว้ในรูปแบบ <code>QT-20261001-0001</code> ให้กลายเป็น <b>QT2026-00001</b> ทันทีทั้งในตารางแสดงผลและอัปเดตลงฐานข้อมูลจริงอัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.48):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
+      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
     ]},
     { v:'2.46', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Numbering Format: QT<YYYY>-<XXXXX> (e.g. QT2026-00001)', items:[
       '🔢 <b>ปรับรูปแบบเลขที่ใบเสนอราคาใหม่ (QT2026-00001):</b> เปลี่ยนฟอร์แมตเลขที่ใบเสนอราคาเป็น <code>QT + ปี ค.ศ. (4 หลัก) - เลขรัน 5 หลัก</code> เช่น <b>QT2026-00001</b>, <b>QT2026-00002</b> ต่อเนื่องตลอดทั้งปี',
       '🛡️ <b>ระบบตรวจจับเลขล่าสุดอัตโนมัติ (Smart Max Sequence Detection):</b> ดึงเลขที่ใบเสนอราคาล่าสุดจากฐานข้อมูลจริง และเชื่อมต่อกับตาราง Sequence ป้องกันการเกิดเลขซ้ำ 100%',
       '🤖 <b>เชื่อมต่อระบบ AI Fast Quote:</b> ระบบสร้างใบเสนอราคาอัตโนมัติจากแชต AI ใช้ฟอร์แมตเลขที่เดียวกันอย่างสมบูรณ์แบบ',
-      '🧹 <b>Cache Refresh (v2.48):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
+      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
     ]},
     { v:'2.45', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
       '💰 <b>เพิ่มช่องส่วนลดท้ายบิล & ค่าจัดส่ง ในใบเสนอราคา:</b> รองรับการใส่ส่วนลดท้ายบิล (เลือกได้ทั้งแบบบาท ฿ หรือ %) และค่าจัดส่ง ทั้งในหน้าสร้างใบเสนอราคาใหม่ และหน้าแก้ไขแบบร่าง พร้อมคำนวณยอดรวมสุทธิแบบ Real-time',
       '🖨️ <b>ตัวเลือกการพิมพ์ใบเสนอราคา (Print Options Modal):</b> เพิ่มหน้าต่างตัวเลือกพิมพ์ใบเสนอราคา สามารถเลือกพิมพ์ต้นฉบับ/สำเนา/พิมพ์เป็นชุด, เลือก <b>แสดง หรือ ซ่อนส่วนลด</b> และเลือกพิมพ์ลายเซ็นดิจิทัลได้เหมือนหน้าบิลออเดอร์',
       '🏬 <b>เพิ่ม Line OA & Website ในหัวกระดาษเอกสาร:</b> เพิ่มข้อความ <code>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</code> ใต้ที่อยู่ร้านค้าในหัวบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation) และเอกสารสั่งซื้อ (PO)',
       '🔄 <b>ส่งต่อยอดส่วนลดและค่าส่งเมื่อ Convert → Order:</b> เมื่อกดแปลงใบเสนอราคาเป็นคำสั่งซื้อ ระบบจะส่งต่อยอดส่วนลดท้ายบิลและค่าส่งเข้าสู่ออเดอร์ให้อัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.48):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
+      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
     ]},
     { v:'2.44', date:'2026-09-30', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
-      '🧹 <b>Cache Refresh (v2.48):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+      '🧹 <b>Cache Refresh (v2.49):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
     ]},
     { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
