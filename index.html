@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.51';
-const DISPLAY_APP_VERSION = 'v2.51';
+const CURRENT_APP_VERSION = 'sealthai-v2.52';
+const DISPLAY_APP_VERSION = 'v2.52';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -320,20 +320,48 @@ tbody td:first-child { color: var(--text); }
 .badge-purple { background: rgba(124,58,237,0.1); color: #6d28d9; }
 .badge-gray { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
 
-/* ── Modal ── */
+/* ── Modal & Top-Layer Popup System (v2.52) ── */
 .modal-overlay {
-  display: none; position: fixed; inset: 0; z-index: 200;
-  background: rgba(30,40,70,0.35); backdrop-filter: blur(4px);
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px);
   align-items: center; justify-content: center; padding: 16px;
 }
 .modal-overlay.open { display: flex; }
 .modal {
-  background: var(--bg2); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 28px;
+  position: relative;
+  background: var(--bg2, #ffffff); border: 1px solid var(--border, #cbd5e1);
+  border-radius: var(--radius-lg, 14px); padding: 24px 28px;
   width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
-  box-shadow: 0 8px 40px rgba(99,115,150,0.18);
+  box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
-.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.modal-close-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg3, #f1f5f9);
+  border: 1px solid var(--border, #cbd5e1);
+  color: var(--text2, #64748b);
+  font-size: 15px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  line-height: 1;
+  padding: 0;
+  transition: all 0.15s ease;
+}
+.modal-close-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-right: 36px; }
 .modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px; }
 
 /* ── Tabs ── */
@@ -993,7 +1021,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.51 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.52 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1066,7 +1094,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.51 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.52 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1123,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.51 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.52 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2325,7 +2353,40 @@ window.addEventListener('beforeunload', event => {
   event.returnValue = '';
 });
 
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+let _globalModalZIndex = 2000;
+function getNextModalZIndex() {
+  _globalModalZIndex += 20;
+  return _globalModalZIndex;
+}
+
+function ensureModalCloseButton(overlayEl, closeHandler) {
+  if (!overlayEl) return;
+  const box = overlayEl.querySelector('.modal');
+  if (box && !box.querySelector('.modal-close-btn')) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'modal-close-btn';
+    btn.setAttribute('aria-label', 'Close modal');
+    btn.title = 'ปิดหน้าต่าง (Close)';
+    btn.innerHTML = '✕';
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      if (typeof closeHandler === 'function') closeHandler();
+      else if (overlayEl.id) closeModal(overlayEl.id);
+      else overlayEl.remove();
+    };
+    box.insertBefore(btn, box.firstChild);
+  }
+}
+
+function openModal(id) {
+  const modal = document.getElementById(id);
+  if (!modal) return;
+  modal.style.zIndex = getNextModalZIndex();
+  ensureModalCloseButton(modal, () => closeModal(id));
+  modal.classList.add('open');
+}
+
 function closeModal(id) {
   const modal = document.getElementById(id);
   if (!modal || !confirmUnsavedForm(modal)) return false;
@@ -2456,7 +2517,7 @@ function openProfitMilestone(target) {
     <div style="font-size:10px;color:var(--text3);margin-top:14px">การเลือกนี้เป็นแผนรางวัลเท่านั้น ไม่บันทึกเป็นค่าใช้จ่าย และเปลี่ยนได้ทุกเมื่อ</div>
   </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 function renderProfitJourney(cumulativeProfit, timing = {}) {
@@ -3230,7 +3291,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.51)">v2.51 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.52)">v2.52 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3880,7 +3941,7 @@ function drillLandedCost(type) {
       : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+escapeHTML(title)+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อกในส่วน Landed Cost</span></div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // drill: ออเดอร์ของช่องทางที่เลือก (Shopee/Lazada/Line OA ฯลฯ)
@@ -3908,7 +3969,7 @@ function drillDashChannel(channel) {
       : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ไม่มีออเดอร์</div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 function drillDashOrders() {
@@ -3947,7 +4008,7 @@ function drillDashOrders() {
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 function drillDashExpenses() {
@@ -3974,7 +4035,7 @@ function drillDashExpenses() {
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ─── DRILL-DOWN: ยอดซื้อ (ใบสั่งซื้อในช่วงที่เลือก) ───────────
@@ -4016,7 +4077,7 @@ function drillDashPurchases() {
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 function drillCancelledOrders(source) {
@@ -4049,7 +4110,7 @@ function drillCancelledOrders(source) {
       : '<div class="empty" style="padding:20px"><div class="empty-icon">✅</div><div>ไม่มีออเดอร์ยกเลิกในช่วงนี้</div></div>') +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ─── DRILL-DOWN: หมวดหมู่ ─────────────────────────────
@@ -4505,7 +4566,7 @@ async function drillMonthlyRevenue() {
     </table></div>
   </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function drillMonthlyCost() {
@@ -4584,7 +4645,7 @@ async function drillMonthlyCost() {
     </table></div>
   </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function drillMonthlyExpenses() {
@@ -4639,7 +4700,7 @@ async function drillMonthlyExpenses() {
     </table></div>
   </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function drillMonthlyPlatformFee() {
@@ -4712,7 +4773,7 @@ async function drillMonthlyPlatformFee() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function drillDailyExpenses(dateStr) {
@@ -4728,7 +4789,7 @@ async function drillDailyExpenses(dateStr) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: expenses, error } = await sb.from('expenses')
@@ -4794,7 +4855,7 @@ async function drillDailyOtherIncome(dateStr) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: incomes, error } = await sb.from('other_income')
@@ -4862,7 +4923,7 @@ async function drillMonthlyOtherIncome() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: incomes, error } = await sb.from('other_income')
@@ -4945,7 +5006,7 @@ async function drillDailyWage(dateStr, cfoWageAmt, manualWageAmt) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: expenses, error } = await sb.from('expenses')
@@ -5016,7 +5077,7 @@ async function drillMonthlyWage() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: expenses, error } = await sb.from('expenses')
@@ -5093,7 +5154,7 @@ async function drillDailyCommission(dateStr, empCommAmt) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function drillMonthlyCommission() {
@@ -5115,7 +5176,7 @@ async function drillMonthlyCommission() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function drillDailyGratuity(dateStr) {
@@ -5131,7 +5192,7 @@ async function drillDailyGratuity(dateStr) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: expenses, error } = await sb.from('expenses')
@@ -5201,7 +5262,7 @@ async function drillMonthlyGratuity() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: expenses, error } = await sb.from('expenses')
@@ -5702,7 +5763,7 @@ function drillMonthlyDay(date) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   (async () => {
     try {
@@ -8377,7 +8438,7 @@ function openReceiptOptions(orderId) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function printReceipt(orderId, showDiscount=true, showSignature=false, docCopyType='original') {
@@ -13295,7 +13356,7 @@ async function openProductHistory(productId) {
     + '</div>';
 
   document.body.appendChild(ov);
-  ov.addEventListener('click', e => { if (e.target === ov) closeProductHistory(); });
+  ensureModalCloseButton(ov, () => ov.remove()); ov.style.zIndex = getNextModalZIndex();
 }
 
 // ── Stock history & Document-Based Goods Receipt ─────────────────
@@ -13859,7 +13920,7 @@ function editStockMovement(id) {
       '<button class="btn btn-primary" onclick="saveStockEdit()">💾 บันทึก</button>' +
     '</div></div>';
   document.body.appendChild(ov);
-  ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+  ensureModalCloseButton(ov, () => ov.remove()); ov.style.zIndex = getNextModalZIndex();
 
   document.getElementById('se-date').value  = r.move_date;
   document.getElementById('se-lot').value   = r.lot_name||'';
@@ -17735,7 +17796,7 @@ function openQuotePrintOptions(qtId) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function convertToOrder(qtId) {
@@ -24735,7 +24796,7 @@ function drillSkuOrders(idx) {
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ── รายการ SKU ที่จับคู่ต้นทุนไม่ได้ ──────────────────────
@@ -24761,7 +24822,7 @@ function drillUnmatchedSkus() {
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ── Shopee stat card drill (all orders) ──────────────────
@@ -24809,7 +24870,7 @@ function drillShopeeAllOrders() {
     '</tbody></table></div>' +
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -25370,7 +25431,7 @@ function drillLowStock() {
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div>' +
     '</div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ── Shopee Tabs ────────────────────────────────────────
@@ -25515,7 +25576,7 @@ function drillBuyer(buyer) {
     '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">ปิด</button></div>' +
     '</div>';
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -25710,7 +25771,7 @@ async function openSalesOrderPicker() {
       <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   const [{ data: orders, error: orderError }, { data: linkedAR }] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).order('order_date', {ascending:false}).limit(200),
@@ -25779,7 +25840,7 @@ function openNewAR() {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function saveNewAR() {
@@ -25888,7 +25949,7 @@ async function openARDetail(arId) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function saveARPayment(arId, totalAmt) {
@@ -26076,7 +26137,7 @@ function openNewGR() {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
   addGRIRow();
 }
 
@@ -26196,7 +26257,7 @@ async function openGRDetail(grId) {
       <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function convertSOtoAR(orderId, openAfterCreate=false) {
@@ -26711,7 +26772,7 @@ function openAddProductToBatchPOModal() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 function searchBatchPOAddProd(q) {
@@ -27193,7 +27254,7 @@ async function drillProductOrders(productId, productName) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 function renderShopeeShipping() {
@@ -27420,7 +27481,7 @@ async function openShippingLabelModal(orderId) {
     </div>`;
   document.body.appendChild(modal);
   registerUnsavedForm(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) closeShippingLabelModal(modal); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   // Store for print function
   window._shipOrder = order;
@@ -27655,7 +27716,7 @@ async function openStickerModal(orderId) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   // store items for print
   window._stickerItems = items;
@@ -27969,7 +28030,7 @@ function openCatModal(cat) {
       </div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function editCatModal(catId) {
@@ -32478,7 +32539,7 @@ function openBatchEditPaymentDateModal() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function saveBatchEditPaymentDate() {
@@ -32581,7 +32642,7 @@ function openBatchARPaymentModal() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function saveBatchARPayment() {
@@ -32677,7 +32738,7 @@ function openEditARPaymentModal(payId, arId, payDate, method, ref, note) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function saveEditARPayment(payId, arId) {
@@ -32728,7 +32789,7 @@ async function openARPickerForReturn() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   try {
     const { data: arList, error } = await sb.from('ar_invoices')
@@ -32892,7 +32953,7 @@ async function openReturnFromAR(arId) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
   addARReturnRow();
 }
 
@@ -33158,7 +33219,7 @@ async function openReturnFromOrder(orderId, arId) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function processOrderReturn(orderId, arId, itemCount, event) {
@@ -33360,7 +33421,7 @@ function openCreditNoteModal(arId, arNo, totalAmount, paidAmount) {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
 async function confirmSaveCreditNote(arId) {
@@ -33819,7 +33880,7 @@ async function openAIChatToQuoteModal() {
     </div>
   `;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 
   // Init with default sample
   const txtArea = document.getElementById('ai-chat-input');
@@ -36365,51 +36426,57 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'2.52', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Modal Top-Layer Z-Index & Persistent Close Button Protection', items:[
+      '🛡️ <b>แก้ปัญหา Popup เด้งซ้อนด้านหลัง (Top-Layer Z-Index Manager):</b> หน้าต่างและ Popup ทุกประเภท (ทั้งแบบ Static และ Dynamic) จะได้รับค่า z-index ลำดับสูงสุดเสมอเมื่อเปิดขึ้นมา ทำให้เด้งอยู่ด้านหน้าสุด 100% ไม่จมอยู่หลังหน้าต่างเดิม',
+      '🔒 <b>ป้องกันการปิดหน้าต่างโดยไม่ได้ตั้งใจ (Disable Backdrop Click Close):</b> ยกเลิกการปิดหน้าต่างอัตโนมัติเมื่อเผลอกดนอกกรอบ (Backdrop) เพื่อรักษาข้อมูลที่กำลังกรอกไม่ให้สูญหาย',
+      '✕ <b>เพิ่มปุ่มปิดมุมขวาบน (Top-Right Close Button):</b> ติดตั้งปุ่มกากบาท [✕] ที่มุมขวาบนของทุกหน้าต่าง Modal เพื่อให้กดปิดได้ง่าย สะดวก และชัดเจน',
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.52'
+    ]},
     { v:'2.51', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Declining Balance (Effective Rate) & Quick Employee Add/Edit', items:[
       '📉 <b>อัตราดอกเบี้ยแบบลดต้นลดดอก (Effective Rate):</b> เพิ่มตัวเลือกการคำนวณดอกเบี้ยแบบลดต้นลดดอก (% ต่อปี) พร้อมตารางงวดและแจกแจงเงินต้น/ดอกเบี้ยลดลงตามเงินต้นคงเหลือจริง',
       '👤 <b>เพิ่ม/แก้ไขพนักงานได้ทันที (Quick Add/Edit Employee):</b> เพิ่มปุ่ม <b>+ เพิ่มพนักงาน</b> และ <b>✏️ แก้ไข</b> ในหน้าบันทึกสัญญากู้ยืมเงิน สามารถสร้างพนักงานใหม่หรือแก้ไขชื่อได้ทันทีโดยไม่ต้องออกจากหน้าจอ',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.51'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.51'
     ]},
     { v:'2.50', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Employee Loan & Interest Management System (ระบบจัดการเงินยืมพนักงาน & ดอกเบี้ย)', items:[
       '💳 <b>ระบบจัดการเงินยืมพนักงาน (Employee Loans):</b> เพิ่มเมนูบันทึกสัญญาเงินกู้ยืมพนักงาน พร้อมเชื่อมต่อรายชื่อพนักงานจากฐานข้อมูลจริง และระบบสร้าง Running Number สัญญาอัตโนมัติ (เช่น LN2026-00001)',
       '📈 <b>เครื่องคิดคำนวณอัตราดอกเบี้ย (Interest Calculator):</b> รองรับ 0% ปลอดดอกเบี้ย (สวัสดิการ), ดอกเบี้ยคงที่ % ต่อปี (Annual Flat Rate), และดอกเบี้ยคงที่ % ต่อเดือน (Monthly Flat Rate) พร้อมแสดงตารางงวดผ่อนจำลอง (Amortization Schedule) แบบ Real-time',
       '💰 <b>ระบบบันทึกรับชำระค่างวด & ตัดหนี้คงเหลือ:</b> บันทึกการจ่ายคืนแยกตัดเงินต้น/ดอกเบี้ย ตัดลดยอดหนี้คงเหลืออัตโนมัติ และปรับสถานะเป็นปิดสัญญาเมื่อชำระครบ',
       '🖨️ <b>พิมพ์หนังสือสัญญากู้ยืมเงินพนักงาน:</b> พิมพ์เอกสารสัญญากู้ยืมเงินพนักงานฉบับมาตรฐานภาษาไทย พร้อมหัวบิลร้าน Sealthai เงื่อนไขดอกเบี้ย ตารางงวด และช่องลงนามคู่สัญญา',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.50'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.50'
     ]},
     { v:'2.49', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Real-Time Product Search Fix & Unified Master Product Catalog', items:[
       '🔍 <b>แก้ไขการค้นหาสินค้าในใบเสนอราคา:</b> แก้ไขการโหลดข้อมูลคลังสินค้าให้ดึงทุกคอลัมน์ที่ถูกต้อง ป้องกันข้อผิดพลาด HTTP 400 จากคอลัมน์ที่ไม่ตรงกับฐานข้อมูล พร้อมแสดงรายการสินค้าทันทีที่คลิกหรือพิมพ์ค้นหา',
       '⚡ <b>เชื่อมต่อสินค้าทั้งคลัง 100%:</b> ดึงข้อมูลสินค้าจากฐานข้อมูลกลาง (Master Products) พร้อมแสดงสต๊อก ราคา และข้อมูล SKU, Part No ครบถ้วนเหมือนหน้า Order',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
     ]},
     { v:'2.48', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Master Product Search & Quick Product Integration + Custom Item Support', items:[
       '🔍 <b>ระบบค้นหาสินค้าจากฐานข้อมูล (Master Product Search):</b> หน้าใบเสนอราคาเชื่อมต่อฐานข้อมูลสินค้าและคลังสินค้าเหมือนหน้า Order ค้นหาได้ละเอียดทั้งชื่อ, SKU, Supplier Code, Part No และขนาด พร้อมแสดงป้ายหมวดหมู่ ราคา และจำนวนสต๊อกคงเหลือแบบ Real-time',
       '⚡ <b>สร้างสินค้าใหม่เข้าคลังได้ทันที (Quick Master Product):</b> มีปุ่มสร้างสินค้าใหม่ทั้งในเมนูดรอปดาวน์ค้นหา และปุ่มลัดด้านบน สามารถกรอกสเปก ขนาด ราคาขาย ราคาซื้อ และบันทึกลงคลังสินค้าหลัก พร้อมดึงมาใส่ในใบเสนอราคาอัตโนมัติ',
       '📝 <b>รองรับสินค้าชั่วคราว (Custom / Temporary Item):</b> ยังคงสามารถพิมพ์ชื่อสินค้าเฉพาะกิจหรือสินค้าชั่วคราวที่ยังไม่มีในระบบได้อย่างอิสระ โดยไม่บังคับรหัสสินค้า/SKU และไม่กระทบสต๊อกคลังสินค้า',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
     ]},
     { v:'2.47', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Auto-Migrate Quotation Running Numbers to QT<YYYY>-<XXXXX>', items:[
       '🔄 <b>อัปเดตและแปลงเลขที่ใบเสนอราคาเดิมอัตโนมัติ:</b> แปลงเลขที่ใบเสนอราคาเดิมที่บันทึกไว้ในรูปแบบ <code>QT-20261001-0001</code> ให้กลายเป็น <b>QT2026-00001</b> ทันทีทั้งในตารางแสดงผลและอัปเดตลงฐานข้อมูลจริงอัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
     ]},
     { v:'2.46', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Numbering Format: QT<YYYY>-<XXXXX> (e.g. QT2026-00001)', items:[
       '🔢 <b>ปรับรูปแบบเลขที่ใบเสนอราคาใหม่ (QT2026-00001):</b> เปลี่ยนฟอร์แมตเลขที่ใบเสนอราคาเป็น <code>QT + ปี ค.ศ. (4 หลัก) - เลขรัน 5 หลัก</code> เช่น <b>QT2026-00001</b>, <b>QT2026-00002</b> ต่อเนื่องตลอดทั้งปี',
       '🛡️ <b>ระบบตรวจจับเลขล่าสุดอัตโนมัติ (Smart Max Sequence Detection):</b> ดึงเลขที่ใบเสนอราคาล่าสุดจากฐานข้อมูลจริง และเชื่อมต่อกับตาราง Sequence ป้องกันการเกิดเลขซ้ำ 100%',
       '🤖 <b>เชื่อมต่อระบบ AI Fast Quote:</b> ระบบสร้างใบเสนอราคาอัตโนมัติจากแชต AI ใช้ฟอร์แมตเลขที่เดียวกันอย่างสมบูรณ์แบบ',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
     ]},
     { v:'2.45', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
       '💰 <b>เพิ่มช่องส่วนลดท้ายบิล & ค่าจัดส่ง ในใบเสนอราคา:</b> รองรับการใส่ส่วนลดท้ายบิล (เลือกได้ทั้งแบบบาท ฿ หรือ %) และค่าจัดส่ง ทั้งในหน้าสร้างใบเสนอราคาใหม่ และหน้าแก้ไขแบบร่าง พร้อมคำนวณยอดรวมสุทธิแบบ Real-time',
       '🖨️ <b>ตัวเลือกการพิมพ์ใบเสนอราคา (Print Options Modal):</b> เพิ่มหน้าต่างตัวเลือกพิมพ์ใบเสนอราคา สามารถเลือกพิมพ์ต้นฉบับ/สำเนา/พิมพ์เป็นชุด, เลือก <b>แสดง หรือ ซ่อนส่วนลด</b> และเลือกพิมพ์ลายเซ็นดิจิทัลได้เหมือนหน้าบิลออเดอร์',
       '🏬 <b>เพิ่ม Line OA & Website ในหัวกระดาษเอกสาร:</b> เพิ่มข้อความ <code>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</code> ใต้ที่อยู่ร้านค้าในหัวบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation) และเอกสารสั่งซื้อ (PO)',
       '🔄 <b>ส่งต่อยอดส่วนลดและค่าส่งเมื่อ Convert → Order:</b> เมื่อกดแปลงใบเสนอราคาเป็นคำสั่งซื้อ ระบบจะส่งต่อยอดส่วนลดท้ายบิลและค่าส่งเข้าสู่ออเดอร์ให้อัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
     ]},
     { v:'2.44', date:'2026-09-30', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
-      '🧹 <b>Cache Refresh (v2.51):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+      '🧹 <b>Cache Refresh (v2.52):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
     ]},
     { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
