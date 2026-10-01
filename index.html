@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.45';
-const DISPLAY_APP_VERSION = 'v2.45';
+const CURRENT_APP_VERSION = 'sealthai-v2.46';
+const DISPLAY_APP_VERSION = 'v2.46';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -993,7 +993,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.45 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.46 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1013,7 +1013,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.45 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.46 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1066,7 +1066,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.45 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.46 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1095,7 +1095,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.45 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.46 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3227,7 +3227,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.45)">v2.45 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.46)">v2.46 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7332,20 +7332,75 @@ function apBadge(status) {
 
 let poItems = [];
 
-// ── Generate Quote number QT-YYYYMMDD-XXXX ──────────────
+// ── Generate Quote number QT<YYYY>-<XXXXX> (เช่น QT2026-00001 รันต่อเนื่องตามปี) ──
 async function generateQuoteNo(date) {
-  const dateKey = (date||today()).replace(/-/g,'');
+  let yr = '';
   try {
-    const { data: seq } = await sb.from('quote_sequences')
-      .select('last_seq').eq('shop_id',currentShop.id).eq('date_key',dateKey).single();
-    const nextSeq = (seq?.last_seq||0)+1;
-    await sb.from('quote_sequences').upsert({
-      shop_id:currentShop.id, date_key:dateKey, last_seq:nextSeq
-    },{onConflict:'shop_id,date_key'});
-    return 'QT-'+dateKey+'-'+String(nextSeq).padStart(4,'0');
+    if (date) {
+      const parts = String(date).split('-');
+      if (parts[0] && parts[0].length === 4) yr = parts[0];
+      else yr = String(new Date(date).getFullYear());
+    } else {
+      yr = String(new Date().getFullYear());
+    }
   } catch(e) {
-    return 'QT-'+dateKey+'-'+String(Date.now()).slice(-4);
+    yr = String(new Date().getFullYear());
   }
+  if (!yr || isNaN(yr) || yr.length !== 4) yr = String(new Date().getFullYear());
+
+  const yearKey = 'QT_' + yr;
+  let maxSeq = 0;
+
+  try {
+    // 1. ตรวจสอบเลขล่าสุดที่มีอยู่จริงในตาราง quotations ของปีนั้น
+    if (sb && currentShop?.id) {
+      const { data: existing } = await sb.from('quotations')
+        .select('quote_no')
+        .eq('shop_id', currentShop.id)
+        .like('quote_no', 'QT' + yr + '-%')
+        .order('quote_no', { ascending: false })
+        .limit(30);
+
+      if (existing && existing.length) {
+        for (const row of existing) {
+          const match = String(row.quote_no || '').match(new RegExp('^QT' + yr + '-(\\d+)', 'i'));
+          if (match && match[1]) {
+            const num = parseInt(match[1], 10);
+            if (!isNaN(num) && num > maxSeq) {
+              maxSeq = num;
+            }
+          }
+        }
+      }
+
+      // 2. ตรวจสอบตาราง quote_sequences เพื่อป้องกัน sequence ชนกัน
+      try {
+        const { data: seq } = await sb.from('quote_sequences')
+          .select('last_seq')
+          .eq('shop_id', currentShop.id)
+          .eq('date_key', yearKey)
+          .single();
+        if (seq?.last_seq && seq.last_seq > maxSeq) {
+          maxSeq = seq.last_seq;
+        }
+      } catch(e) {}
+    }
+  } catch(err) {
+    console.warn('generateQuoteNo query warning:', err);
+  }
+
+  const nextSeq = maxSeq + 1;
+
+  // บันทึก sequence ล่าสุดกลับเข้าตาราง quote_sequences (แบบ non-blocking)
+  if (sb && currentShop?.id) {
+    try {
+      await sb.from('quote_sequences').upsert({
+        shop_id: currentShop.id, date_key: yearKey, last_seq: nextSeq
+      }, { onConflict: 'shop_id,date_key' });
+    } catch(e) {}
+  }
+
+  return 'QT' + yr + '-' + String(nextSeq).padStart(5, '0');
 }
 
 // ── Quote status helpers ──────────────────────────────────
@@ -32463,7 +32518,7 @@ async function saveDraftQuotationFromAI() {
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึกใบเสนอราคา...'; }
 
   try {
-    const quoteNo = 'QT-' + today().replace(/-/g,'') + '-' + String(Date.now()).slice(-4);
+    const quoteNo = await generateQuoteNo(today());
     const validUntil = new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10);
     const totalAmount = selectedItems.reduce((s, it) => s + it.evalRes.suggestedPrice, 0);
 
@@ -34604,18 +34659,24 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.45', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
+    { v:'2.46', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Numbering Format: QT<YYYY>-<XXXXX> (e.g. QT2026-00001)', items:[
+      '🔢 <b>ปรับรูปแบบเลขที่ใบเสนอราคาใหม่ (QT2026-00001):</b> เปลี่ยนฟอร์แมตเลขที่ใบเสนอราคาเป็น <code>QT + ปี ค.ศ. (4 หลัก) - เลขรัน 5 หลัก</code> เช่น <b>QT2026-00001</b>, <b>QT2026-00002</b> ต่อเนื่องตลอดทั้งปี',
+      '🛡️ <b>ระบบตรวจจับเลขล่าสุดอัตโนมัติ (Smart Max Sequence Detection):</b> ดึงเลขที่ใบเสนอราคาล่าสุดจากฐานข้อมูลจริง และเชื่อมต่อกับตาราง Sequence ป้องกันการเกิดเลขซ้ำ 100%',
+      '🤖 <b>เชื่อมต่อระบบ AI Fast Quote:</b> ระบบสร้างใบเสนอราคาอัตโนมัติจากแชต AI ใช้ฟอร์แมตเลขที่เดียวกันอย่างสมบูรณ์แบบ',
+      '🧹 <b>Cache Refresh (v2.46):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
+    ]},
+    { v:'2.45', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
       '💰 <b>เพิ่มช่องส่วนลดท้ายบิล & ค่าจัดส่ง ในใบเสนอราคา:</b> รองรับการใส่ส่วนลดท้ายบิล (เลือกได้ทั้งแบบบาท ฿ หรือ %) และค่าจัดส่ง ทั้งในหน้าสร้างใบเสนอราคาใหม่ และหน้าแก้ไขแบบร่าง พร้อมคำนวณยอดรวมสุทธิแบบ Real-time',
       '🖨️ <b>ตัวเลือกการพิมพ์ใบเสนอราคา (Print Options Modal):</b> เพิ่มหน้าต่างตัวเลือกพิมพ์ใบเสนอราคา สามารถเลือกพิมพ์ต้นฉบับ/สำเนา/พิมพ์เป็นชุด, เลือก <b>แสดง หรือ ซ่อนส่วนลด</b> และเลือกพิมพ์ลายเซ็นดิจิทัลได้เหมือนหน้าบิลออเดอร์',
       '🏬 <b>เพิ่ม Line OA & Website ในหัวกระดาษเอกสาร:</b> เพิ่มข้อความ <code>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</code> ใต้ที่อยู่ร้านค้าในหัวบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation) และเอกสารสั่งซื้อ (PO)',
       '🔄 <b>ส่งต่อยอดส่วนลดและค่าส่งเมื่อ Convert → Order:</b> เมื่อกดแปลงใบเสนอราคาเป็นคำสั่งซื้อ ระบบจะส่งต่อยอดส่วนลดท้ายบิลและค่าส่งเข้าสู่ออเดอร์ให้อัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.45):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
+      '🧹 <b>Cache Refresh (v2.46):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
     ]},
     { v:'2.44', date:'2026-09-30', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
-      '🧹 <b>Cache Refresh (v2.45):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+      '🧹 <b>Cache Refresh (v2.46):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
     ]},
     { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
