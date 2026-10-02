@@ -26097,20 +26097,20 @@ async function loadGoodsReturn() {
   tbl.innerHTML =
     '<table class="desktop-only"><thead><tr><th>เลขที่</th><th>วันที่</th><th>ประเภท</th><th>ลูกค้า/Supplier</th><th class="text-right">ยอดรวม</th><th>สาเหตุ</th><th></th></tr></thead><tbody>' +
     rows.map(r => '<tr>' +
-      '<td class="font-mono" style="color:var(--blue)">'+(r.gr_no||'-')+'</td>' +
-      '<td>'+(r.gr_date||'-')+'</td>' +
+      '<td class="font-mono" style="color:var(--blue)">'+(escapeHTML(r.gr_no||'-'))+'</td>' +
+      '<td>'+(escapeHTML(r.gr_date||'-'))+'</td>' +
       '<td><span class="badge '+(r.return_type==='sale'?'badge-amber':'badge-blue')+'">'+(r.return_type==='sale'?'คืนจากลูกค้า':'คืนให้ Supplier')+'</span></td>' +
-      '<td>'+(r.customer_name||r.supplier_name||'-')+'</td>' +
+      '<td>'+(escapeHTML(r.customer_name||r.supplier_name||'-'))+'</td>' +
       '<td class="text-right font-mono">'+fmtB(r.total_amount||0)+'</td>' +
-      '<td style="color:var(--text2);font-size:12px">'+(r.reason||'-')+'</td>' +
-      '<td><button class="btn btn-secondary btn-sm" onclick="openGRDetail(\"'+r.id+'\")">รายละเอียด</button></td>' +
+      '<td style="color:var(--text2);font-size:12px">'+(escapeHTML(r.reason||'-'))+'</td>' +
+      '<td><button class="btn btn-secondary btn-sm" onclick="openGRDetail(\''+r.id+'\')">รายละเอียด</button></td>' +
       '</tr>'
     ).join('') + '</tbody></table>' +
     '<div class="mobile-only">' +
     rows.map(r =>
-      '<div class="m-card" onclick="openGRDetail(\"'+r.id+'\")">' +
-        '<div class="m-card-row"><div><div class="m-card-title">'+(r.customer_name||r.supplier_name||'-')+'</div><div class="m-card-sub">'+(r.gr_no||'-')+' · '+(r.gr_date||'-')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div></div></div>' +
-        '<div class="m-card-meta"><span class="badge '+(r.return_type==='sale'?'badge-amber':'badge-blue')+'">'+(r.return_type==='sale'?'คืนจากลูกค้า':'คืนให้ Supplier')+'</span><span>'+(r.reason||'-')+'</span></div>' +
+      '<div class="m-card" onclick="openGRDetail(\''+r.id+'\')" style="cursor:pointer">' +
+        '<div class="m-card-row"><div><div class="m-card-title">'+(escapeHTML(r.customer_name||r.supplier_name||'-'))+'</div><div class="m-card-sub">'+(escapeHTML(r.gr_no||'-'))+' · '+(escapeHTML(r.gr_date||'-'))+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div></div></div>' +
+        '<div class="m-card-meta"><span class="badge '+(r.return_type==='sale'?'badge-amber':'badge-blue')+'">'+(r.return_type==='sale'?'คืนจากลูกค้า':'คืนให้ Supplier')+'</span><span>'+(escapeHTML(r.reason||'-'))+'</span></div>' +
       '</div>'
     ).join('') + '</div>';
 }
@@ -26248,32 +26248,41 @@ async function saveGoodsReturn() {
 }
 
 async function openGRDetail(grId) {
-  const [{ data: gr }, { data: items }] = await Promise.all([
-    sb.from('goods_returns').select('*').eq('id', grId).single(),
-    sb.from('goods_return_items').select('*').eq('gr_id', grId),
-  ]);
-  if (!gr) return;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay open';
-  modal.style.zIndex = '300';
-  modal.innerHTML = `
-    <div class="modal" style="max-width:560px">
-      <div class="modal-title">🔄 ${gr.gr_no||'-'}</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
-        ประเภท: <strong>${gr.return_type==='sale'?'คืนจากลูกค้า':'คืนให้ Supplier'}</strong> |
-        ${gr.customer_name||gr.supplier_name||'-'} | ${gr.gr_date||'-'}<br>
-        สาเหตุ: ${gr.reason||'-'}
-      </div>
-      <div class="table-wrap">
-        <table><thead><tr><th>สินค้า</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th></tr></thead>
-        <tbody>${(items||[]).map(it=>'<tr><td>'+it.product_name+'</td><td class="text-right">'+fmt(it.qty)+'</td><td class="text-right">'+fmtB(it.unit_price)+'</td><td class="text-right font-mono">'+fmtB(it.amount)+'</td></tr>').join('')}</tbody>
-        <tfoot><tr><td colspan="3" style="text-align:right;font-weight:600">รวมทั้งหมด</td><td class="text-right font-mono text-accent" style="font-weight:700">${fmtB(gr.total_amount)}</td></tr></tfoot>
-        </table>
-      </div>
-      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div>
-    </div>`;
-  document.body.appendChild(modal);
-  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
+  try {
+    const [{ data: gr, error: grErr }, { data: items, error: itErr }] = await Promise.all([
+      sb.from('goods_returns').select('*').eq('id', grId).single(),
+      sb.from('goods_return_items').select('*').eq('gr_id', grId),
+    ]);
+    if (grErr || !gr) {
+      toast('โหลดข้อมูลใบลดหนี้/รับคืนสินค้าไม่สำเร็จ: ' + (grErr?.message || ''), 'error');
+      return;
+    }
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay open';
+    modal.style.zIndex = '300';
+    modal.innerHTML = `
+      <div class="modal" style="max-width:560px">
+        <div class="modal-title">🔄 ${escapeHTML(gr.gr_no||'-')}</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
+          ประเภท: <strong>${gr.return_type==='sale'?'คืนจากลูกค้า (Sales Return)':'คืนให้ Supplier (Purchase Return)'}</strong> |
+          ${escapeHTML(gr.customer_name||gr.supplier_name||'-')} | ${escapeHTML(gr.gr_date||'-')}<br>
+          สาเหตุ: ${escapeHTML(gr.reason||'-')}
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>สินค้า</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th></tr></thead>
+          <tbody>${(items||[]).map(it=>'<tr><td>'+escapeHTML(it.product_name||'-')+'</td><td class="text-right font-mono">'+fmt(it.qty)+'</td><td class="text-right font-mono">'+fmtB(it.unit_price)+'</td><td class="text-right font-mono">'+fmtB(it.amount)+'</td></tr>').join('')}</tbody>
+          <tfoot><tr><td colspan="3" style="text-align:right;font-weight:600">รวมทั้งหมด</td><td class="text-right font-mono text-accent" style="font-weight:700">${fmtB(gr.total_amount)}</td></tr></tfoot>
+          </table>
+        </div>
+        <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div>
+      </div>`;
+    document.body.appendChild(modal);
+    ensureModalCloseButton(modal, () => modal.remove());
+    modal.style.zIndex = getNextModalZIndex();
+  } catch (err) {
+    console.error(err);
+    toast('เกิดข้อผิดพลาดในการเปิดรายละเอียด: ' + err.message, 'error');
+  }
 }
 
 async function convertSOtoAR(orderId, openAfterCreate=false) {
