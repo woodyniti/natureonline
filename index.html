@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.55';
-const DISPLAY_APP_VERSION = 'v2.55';
+const CURRENT_APP_VERSION = 'sealthai-v2.56';
+const DISPLAY_APP_VERSION = 'v2.56';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -320,7 +320,7 @@ tbody td:first-child { color: var(--text); }
 .badge-purple { background: rgba(124,58,237,0.1); color: #6d28d9; }
 .badge-gray { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
 
-/* ── Modal & Top-Layer Popup System (v2.55) ── */
+/* ── Modal & Top-Layer Popup System (v2.56) ── */
 .modal-overlay {
   display: none; position: fixed; inset: 0; z-index: 2000;
   background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px);
@@ -1021,7 +1021,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.55 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.56 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1094,7 +1094,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.55 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.56 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1123,7 +1123,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.55 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.56 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3291,7 +3291,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.55)">v2.55 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.56)">v2.56 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -3939,7 +3939,7 @@ function drillLandedCost(type) {
       ).join('')+
       '</tbody></table></div>'
       : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ยังไม่มีข้อมูล '+escapeHTML(title)+' ในช่วงนี้<br><span style="font-size:11px;color:var(--text3)">บันทึกได้ตอนรับสินค้าเข้าสต๊อกในส่วน Landed Cost</span></div></div>') +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -3967,7 +3967,7 @@ function drillDashChannel(channel) {
       ).join('')+
       '</tbody></table></div>'
       : '<div class="empty" style="padding:20px"><div class="empty-icon">📭</div><div>ไม่มีออเดอร์</div></div>') +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -4006,7 +4006,7 @@ function drillDashOrders() {
         '<td class="text-right font-mono" style="color:' + pc + ';font-weight:600">' + pct + '%</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -4033,7 +4033,7 @@ function drillDashExpenses() {
         '<td class="text-right font-mono" style="color:var(--text3)">' + pct + '%</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -4075,7 +4075,7 @@ function drillDashPurchases() {
         '<td class="text-right font-mono text-amber">' + fmtB(amounts.totalWithVat) + '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -4108,7 +4108,7 @@ function drillCancelledOrders(source) {
         '<td class="text-right font-mono text-red">'+fmtB(o.total_amount)+'</td></tr>'
       ).join('') + '</tbody></table></div>'
       : '<div class="empty" style="padding:20px"><div class="empty-icon">✅</div><div>ไม่มีออเดอร์ยกเลิกในช่วงนี้</div></div>') +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -5758,7 +5758,7 @@ function drillMonthlyDay(date) {
         <div class="spinner"></div>
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
       </div>
     </div>
   `;
@@ -8430,7 +8430,7 @@ function openReceiptOptions(orderId) {
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่งและหมายเหตุจะแสดงในบิลอัตโนมัติเมื่อมีข้อมูล</div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="
           const docCopy = document.querySelector('input[name=\\'receipt-doc-copy\\']:checked')?.value || 'original';
           printReceipt('${orderId}', document.getElementById('receipt-show-discount').checked, document.getElementById('receipt-show-signature').checked, docCopy);
@@ -13916,7 +13916,7 @@ function editStockMovement(id) {
     '</div>' +
     '<div class="form-group"><label>ค่าใช้จ่ายอื่นๆ (บาท)</label><input type="number" id="se-other" step="any" value="0"></div>' +
     '<div class="modal-footer">' +
-      '<button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>' +
+      '<button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>' +
       '<button class="btn btn-primary" onclick="saveStockEdit()">💾 บันทึก</button>' +
     '</div></div>';
   document.body.appendChild(ov);
@@ -17804,7 +17804,7 @@ function openQuotePrintOptions(qtId) {
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าจัดส่งและหมายเหตุจะแสดงในใบเสนอราคาอัตโนมัติเมื่อมีข้อมูล</div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="
           const docCopy = document.querySelector('input[name=\\'quote-doc-copy\\']:checked')?.value || 'original';
           printQuote('${qtId}', document.getElementById('quote-show-discount').checked, document.getElementById('quote-show-signature').checked, docCopy);
@@ -24810,7 +24810,7 @@ function drillSkuOrders(idx) {
         '<td class="text-right font-mono" style="color:' + gc + ';font-weight:600">' + (gpPct !== null ? gpPct+'%' : '-') + '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -24836,7 +24836,7 @@ function drillUnmatchedSkus() {
       '<td style="font-size:12px">' + (u.name||'-') + '</td></tr>'
     ).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -24884,7 +24884,7 @@ function drillShopeeAllOrders() {
         '<td class="text-right font-mono" style="color:' + pc + ';font-weight:600">' + p + '%</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div></div>';
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div></div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -25444,7 +25444,7 @@ function drillLowStock() {
         '</tr>';
     }).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>' +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div>' +
     '</div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
@@ -25589,7 +25589,7 @@ function drillBuyer(buyer) {
       '</tr>'
     ).join('') +
     '</tbody></table></div>' +
-    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>' +
+    '<div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div>' +
     '</div>';
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
@@ -25784,7 +25784,7 @@ async function openSalesOrderPicker() {
         <input id="ar-so-search" type="text" placeholder="ค้นหาเลขที่ SO / ลูกค้า / ช่องทาง..." oninput="renderSalesOrderPicker(this.value)" style="flex:1;min-width:200px">
       </div>
       <div id="ar-so-list"><div class="loading"><div class="spinner"></div></div></div>
-      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div>
     </div>`;
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
@@ -25851,7 +25851,7 @@ function openNewAR() {
       </div>
       <div class="form-group"><label>หมายเหตุ</label><input type="text" id="ar-note-inp" placeholder="หมายเหตุ"></div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="saveNewAR()">💾 บันทึก</button>
       </div>
     </div>`;
@@ -25959,7 +25959,7 @@ async function openARDetail(arId) {
       </div>` : (!isCancelled ? '<div style="background:#e8fdf0;border-radius:10px;padding:12px;text-align:center;color:var(--green);font-weight:600">✅ ชำระครบแล้ว</div>' : '')}
 
       <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
         ${!isCancelled ? `<button class="btn btn-danger" style="background:#fff1f2;color:#be123c;border-color:#fecdd3" onclick="openReturnFromAR('${arId}')">🧾 รับคืนสินค้า (CN)</button>` : ''}
         ${!isCancelled && !sourceOrder ? `<button class="btn btn-secondary" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">ใบลดหนี้ / ยกเลิกบิล</button>` : ''}
       </div>
@@ -26148,7 +26148,7 @@ function openNewGR() {
       <button onclick="addGRIRow()" style="background:#fff;border:1px dashed var(--accent);border-radius:6px;padding:6px 12px;color:var(--accent);cursor:pointer;font-size:12px;width:100%;margin-bottom:12px">+ เพิ่มสินค้า</button>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="saveGoodsReturn()">💾 บันทึก</button>
       </div>
     </div>`;
@@ -26270,7 +26270,7 @@ async function openGRDetail(grId) {
         <tfoot><tr><td colspan="3" style="text-align:right;font-weight:600">รวมทั้งหมด</td><td class="text-right font-mono text-accent" style="font-weight:700">${fmtB(gr.total_amount)}</td></tr></tfoot>
         </table>
       </div>
-      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button></div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button></div>
     </div>`;
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
@@ -26539,7 +26539,7 @@ async function openBatchSOtoPOModal() {
     <div class="modal" style="max-width:920px;width:95vw">
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>🛒 สร้างใบสั่งซื้อ (PO) จากรายการขาย (${ordersData.length} ออเดอร์)</span>
-        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>
       </div>
 
       <!-- Top PO Header Settings -->
@@ -26637,7 +26637,7 @@ async function openBatchSOtoPOModal() {
       </div>
 
       <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary" onclick="saveBatchPOFromOrders('draft')">💾 บันทึกเป็นแบบร่าง (Draft PO)</button>
           <button class="btn btn-primary" style="background:#16a34a;border-color:#15803d;font-weight:700" onclick="saveBatchPOFromOrders('sent')">📄 สร้าง Purchase Order (PO)</button>
@@ -26782,7 +26782,7 @@ function openAddProductToBatchPOModal() {
         </div>
       </div>
       <div class="modal-footer" style="margin-top:14px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="confirmAddProductToBatchPO()">➕ เพิ่มลงใน PO</button>
       </div>
     </div>
@@ -27266,7 +27266,7 @@ async function drillProductOrders(productId, productName) {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -27727,7 +27727,7 @@ async function openStickerModal(orderId) {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="printStickers('${orderId}')">🖨️ พิมพ์สติกเกอร์สินค้า</button>
       </div>
     </div>`;
@@ -28041,7 +28041,7 @@ function openCatModal(cat) {
 
       <div class="modal-footer">
         ${isEdit ? `<button class="btn btn-danger btn-sm" onclick="deleteCat('${cat.id}')">🗑️ ลบ</button>` : ''}
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button id="cat-save-btn" class="btn btn-primary" onclick="saveCat('${cat?.id||''}')">💾 บันทึก</button>
       </div>
     </div>`;
@@ -31770,7 +31770,7 @@ function openAddNewAITrainingModal() {
     <div class="modal" style="max-width:580px">
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>🧠 ฝึกสอนและเพิ่มกฎความรู้ให้ AI (AI Training Rule)</span>
-        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>
       </div>
       <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px;padding:10px 12px;font-size:12px;color:#5b21b6;margin-bottom:12px">
         💡 <b>AI Continuous Learning:</b> เมื่อเพิ่มคำถามและแนวทางคำตอบที่ต้องการ ระบบจะนำกฎนี้ไป Train น้องแอดมิน AI บน LINE OA และ Facebook ให้ตอบได้ถูกต้องแม่นยำยิ่งขึ้น
@@ -31784,7 +31784,7 @@ function openAddNewAITrainingModal() {
         <textarea id="ai-train-response" rows="4" style="width:100%;font-size:13px;line-height:1.5" placeholder="ระบุข้อความที่ต้องการให้น้องแอดมินตอบลูกค้า..."></textarea>
       </div>
       <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" style="background:#7c3aed;border-color:#6d28d9;font-weight:700" onclick="saveAITrainingKnowledge(this.closest('.modal-overlay'))">💾 บันทึกและ Train AI ทันที</button>
       </div>
     </div>
@@ -32549,7 +32549,7 @@ function openBatchEditPaymentDateModal() {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" id="btn-confirm-batch-date" onclick="saveBatchEditPaymentDate()">💾 บันทึกเปลี่ยนวันที่รับเงินทั้งหมด (${paidItems.length} ใบ)</button>
       </div>
     </div>
@@ -32652,7 +32652,7 @@ function openBatchARPaymentModal() {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" id="btn-confirm-batch-pay" onclick="saveBatchARPayment()">✅ ยืนยันบันทึกรับเงิน (${fmtB(totalRemain)})</button>
       </div>
     </div>
@@ -32748,7 +32748,7 @@ function openEditARPaymentModal(payId, arId, payDate, method, ref, note) {
         <input type="text" id="edit-pay-note" value="${note || ''}" placeholder="หมายเหตุ">
       </div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="saveEditARPayment('${payId}', '${arId}')">💾 บันทึกการแก้ไข</button>
       </div>
     </div>
@@ -32792,7 +32792,7 @@ async function openARPickerForReturn() {
     <div class="modal" style="max-width:800px;width:95vw">
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>📥 เลือก AR Invoice สำหรับรับคืนสินค้า / ออกใบลดหนี้ (CN)</span>
-        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕ ปิด</button>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕ ปิด</button>
       </div>
       <div style="margin-bottom:12px">
         <input type="text" id="ar-return-picker-search" placeholder="🔍 ค้นหาเลขที่ Invoice (AR), เลขที่ Order (SO), หรือชื่อลูกค้า..." 
@@ -32963,7 +32963,7 @@ async function openReturnFromAR(arId) {
       </div>
 
       <div class="modal-footer" style="margin-top:16px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-danger" onclick="processARDirectReturn('${arId}', event)">💾 ยืนยันการรับคืน / อัปเดต AR Invoice</button>
       </div>
     </div>
@@ -33229,7 +33229,7 @@ async function openReturnFromOrder(orderId, arId) {
       </div>
 
       <div class="modal-footer" style="margin-top:16px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-danger" onclick="processOrderReturn('${orderId}', ${arId ? `'${arId}'` : 'null'}, ${items.length}, event)">💾 ยืนยันการรับคืน / อัปเดตยอดขาย</button>
       </div>
     </div>
@@ -33431,7 +33431,7 @@ function openCreditNoteModal(arId, arNo, totalAmount, paidAmount) {
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
         <button class="btn btn-danger" onclick="confirmSaveCreditNote('${arId}')">🧾 ยืนยันออกใบลดหนี้ (CN)</button>
       </div>
     </div>
@@ -33887,7 +33887,7 @@ async function openAIChatToQuoteModal() {
       </div>
 
       <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
         <div style="display:flex;gap:8px">
           <button class="btn btn-secondary" style="background:#e0e7ff;color:#4338ca;border-color:#c7d2fe" onclick="copyAIChatResponseText()">📋 คัดลอกข้อความตอบ LINE/Telegram</button>
           <button class="btn btn-primary" id="btn-save-ai-quote" style="background:#7c3aed;border-color:#6d28d9;font-weight:700" onclick="saveDraftQuotationFromAI()">📄 บันทึกเป็น Draft ใบเสนอราคา</button>
@@ -34079,7 +34079,7 @@ function openAIQuoteProductPicker(rowIdx) {
     <div class="modal" style="max-width:560px">
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>🔍 ค้นหาและเลือกสินค้าในระบบ (แถวที่ ${rowIdx + 1})</span>
-        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>
       </div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:8px">
         รายการที่ลูกค้าขอ: <b>${escapeHTML(item.reqItem.spec)}</b>
@@ -34171,7 +34171,7 @@ function openAIQuoteQuickAddProduct(rowIdx) {
     <div class="modal" style="max-width:580px">
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>➕ สร้างสินค้าใหม่เข้าระบบทันที (แถวที่ ${rowIdx + 1})</span>
-        <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button>
+        <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>
       </div>
       <div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:8px 12px;font-size:12px;color:#065f46;margin-bottom:12px">
         ✨ <b>สร้างสินค้าใหม่โดยหน้า Chat-to-Quote ไม่ปิด:</b> สินค้าจะถูกบันทึกลงฐานข้อมูลและผูกเข้ากับใบเสนอราคานี้ให้ทันที!
@@ -34205,7 +34205,7 @@ function openAIQuoteQuickAddProduct(rowIdx) {
         </div>
       </div>
       <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
-        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" style="background:#059669;border-color:#047857;font-weight:700" onclick="saveAIQuoteNewProduct(${rowIdx}, this.closest('.modal-overlay'))">💾 บันทึกสินค้าและเลือกใช้ทันที</button>
       </div>
     </div>
@@ -36442,71 +36442,75 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'2.56', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix JavaScript Quote Syntax & Restore Login (v2.56)', items:[
+      '⚡ <b>แก้ไขข้อผิดพลาด Syntax Error:</b> แก้ไขการ Escape เครื่องหมายคำพูดในฟังก์ชัน Modal ปิดหน้าต่าง ทำให้ระบบโหลด JavaScript และหน้าเข้าสู่ระบบ (Login) ทำงานได้ปกติ 100%',
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.56'
+    ]},
     { v:'2.55', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix Dashboard Modal Overlay Blur & Close Bug', items:[
       '🛡️ <b>แก้ปัญหาหน้าจอมืด/เบลอค้างหลังปิดหน้าต่าง (Fix Modal Overlay Cleanup):</b> แก้ไขปุ่มปิดในหน้า Drilldown ค่าใช้จ่ายและกล่องสถิติต่างๆ ใน Dashboard ให้ลบ Overlay พื้นหลังออกอย่างสมบูรณ์ หน้าจอไม่ค้างเบลอและกลับสู่สถานะปกติทันที',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.55'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.55'
     ]},
     { v:'2.54', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Supabase 403 Permission Grant & Fail-Safe Loan Storage', items:[
       '🛡️ <b>แก้ปัญหา Error 403 Forbidden:</b> อัปเดตสคริปต์ SQL (GRANT ALL และ DISABLE RLS) เพื่อเปิดสิทธิ์การอ่านเขียนตาราง employee_loans ให้กับ Web Client (anon/authenticated)',
       '💾 <b>ระบบบันทึกสำรองปลอดภัย (Fail-Safe Local Storage):</b> หน้าบันทึกสัญญาเงินกู้จะบันทึกข้อมูลลงเครื่องและทำงานต่อได้ทันที แม้ระหว่างรอรันสิทธิ์ใน Supabase ข้อมูลจะไม่สูญหายแน่นอน',
       '📦 <b>แก้ไข Product Query Column (400 Bad Request):</b> ปรับคำสั่งค้นหาสินค้าให้ดึงข้อมูลคลังสินค้าอย่างปลอดภัย ไม่เกิด Error 400',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.54'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.54'
     ]},
     { v:'2.53', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix Quick Add/Edit Employee in Loan Contract Form', items:[
       '👤 <b>แก้ปัญหาข้อมูลพนักงานไม่แสดง (Fix Employee Schema Query):</b> แก้ไขคำสั่งค้นหาและบันทึกข้อมูลพนักงานให้ตรงกับโครงสร้างตารางจริงใน Supabase ทำให้กด <b>+ เพิ่มพนักงาน</b> หรือ <b>✏️ แก้ไข</b> แล้วข้อมูลบันทึกและแสดงผลทันที',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.53'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.53'
     ]},
     { v:'2.52', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Modal Top-Layer Z-Index & Persistent Close Button Protection', items:[
       '🛡️ <b>แก้ปัญหา Popup เด้งซ้อนด้านหลัง (Top-Layer Z-Index Manager):</b> หน้าต่างและ Popup ทุกประเภท (ทั้งแบบ Static และ Dynamic) จะได้รับค่า z-index ลำดับสูงสุดเสมอเมื่อเปิดขึ้นมา ทำให้เด้งอยู่ด้านหน้าสุด 100% ไม่จมอยู่หลังหน้าต่างเดิม',
       '🔒 <b>ป้องกันการปิดหน้าต่างโดยไม่ได้ตั้งใจ (Disable Backdrop Click Close):</b> ยกเลิกการปิดหน้าต่างอัตโนมัติเมื่อเผลอกดนอกกรอบ (Backdrop) เพื่อรักษาข้อมูลที่กำลังกรอกไม่ให้สูญหาย',
       '✕ <b>เพิ่มปุ่มปิดมุมขวาบน (Top-Right Close Button):</b> ติดตั้งปุ่มกากบาท [✕] ที่มุมขวาบนของทุกหน้าต่าง Modal เพื่อให้กดปิดได้ง่าย สะดวก และชัดเจน',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.52'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.52'
     ]},
     { v:'2.51', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Declining Balance (Effective Rate) & Quick Employee Add/Edit', items:[
       '📉 <b>อัตราดอกเบี้ยแบบลดต้นลดดอก (Effective Rate):</b> เพิ่มตัวเลือกการคำนวณดอกเบี้ยแบบลดต้นลดดอก (% ต่อปี) พร้อมตารางงวดและแจกแจงเงินต้น/ดอกเบี้ยลดลงตามเงินต้นคงเหลือจริง',
       '👤 <b>เพิ่ม/แก้ไขพนักงานได้ทันที (Quick Add/Edit Employee):</b> เพิ่มปุ่ม <b>+ เพิ่มพนักงาน</b> และ <b>✏️ แก้ไข</b> ในหน้าบันทึกสัญญากู้ยืมเงิน สามารถสร้างพนักงานใหม่หรือแก้ไขชื่อได้ทันทีโดยไม่ต้องออกจากหน้าจอ',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.51'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.51'
     ]},
     { v:'2.50', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Employee Loan & Interest Management System (ระบบจัดการเงินยืมพนักงาน & ดอกเบี้ย)', items:[
       '💳 <b>ระบบจัดการเงินยืมพนักงาน (Employee Loans):</b> เพิ่มเมนูบันทึกสัญญาเงินกู้ยืมพนักงาน พร้อมเชื่อมต่อรายชื่อพนักงานจากฐานข้อมูลจริง และระบบสร้าง Running Number สัญญาอัตโนมัติ (เช่น LN2026-00001)',
       '📈 <b>เครื่องคิดคำนวณอัตราดอกเบี้ย (Interest Calculator):</b> รองรับ 0% ปลอดดอกเบี้ย (สวัสดิการ), ดอกเบี้ยคงที่ % ต่อปี (Annual Flat Rate), และดอกเบี้ยคงที่ % ต่อเดือน (Monthly Flat Rate) พร้อมแสดงตารางงวดผ่อนจำลอง (Amortization Schedule) แบบ Real-time',
       '💰 <b>ระบบบันทึกรับชำระค่างวด & ตัดหนี้คงเหลือ:</b> บันทึกการจ่ายคืนแยกตัดเงินต้น/ดอกเบี้ย ตัดลดยอดหนี้คงเหลืออัตโนมัติ และปรับสถานะเป็นปิดสัญญาเมื่อชำระครบ',
       '🖨️ <b>พิมพ์หนังสือสัญญากู้ยืมเงินพนักงาน:</b> พิมพ์เอกสารสัญญากู้ยืมเงินพนักงานฉบับมาตรฐานภาษาไทย พร้อมหัวบิลร้าน Sealthai เงื่อนไขดอกเบี้ย ตารางงวด และช่องลงนามคู่สัญญา',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.50'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.50'
     ]},
     { v:'2.49', date:'2026-10-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Quotation Real-Time Product Search Fix & Unified Master Product Catalog', items:[
       '🔍 <b>แก้ไขการค้นหาสินค้าในใบเสนอราคา:</b> แก้ไขการโหลดข้อมูลคลังสินค้าให้ดึงทุกคอลัมน์ที่ถูกต้อง ป้องกันข้อผิดพลาด HTTP 400 จากคอลัมน์ที่ไม่ตรงกับฐานข้อมูล พร้อมแสดงรายการสินค้าทันทีที่คลิกหรือพิมพ์ค้นหา',
       '⚡ <b>เชื่อมต่อสินค้าทั้งคลัง 100%:</b> ดึงข้อมูลสินค้าจากฐานข้อมูลกลาง (Master Products) พร้อมแสดงสต๊อก ราคา และข้อมูล SKU, Part No ครบถ้วนเหมือนหน้า Order',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.49'
     ]},
     { v:'2.48', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Master Product Search & Quick Product Integration + Custom Item Support', items:[
       '🔍 <b>ระบบค้นหาสินค้าจากฐานข้อมูล (Master Product Search):</b> หน้าใบเสนอราคาเชื่อมต่อฐานข้อมูลสินค้าและคลังสินค้าเหมือนหน้า Order ค้นหาได้ละเอียดทั้งชื่อ, SKU, Supplier Code, Part No และขนาด พร้อมแสดงป้ายหมวดหมู่ ราคา และจำนวนสต๊อกคงเหลือแบบ Real-time',
       '⚡ <b>สร้างสินค้าใหม่เข้าคลังได้ทันที (Quick Master Product):</b> มีปุ่มสร้างสินค้าใหม่ทั้งในเมนูดรอปดาวน์ค้นหา และปุ่มลัดด้านบน สามารถกรอกสเปก ขนาด ราคาขาย ราคาซื้อ และบันทึกลงคลังสินค้าหลัก พร้อมดึงมาใส่ในใบเสนอราคาอัตโนมัติ',
       '📝 <b>รองรับสินค้าชั่วคราว (Custom / Temporary Item):</b> ยังคงสามารถพิมพ์ชื่อสินค้าเฉพาะกิจหรือสินค้าชั่วคราวที่ยังไม่มีในระบบได้อย่างอิสระ โดยไม่บังคับรหัสสินค้า/SKU และไม่กระทบสต๊อกคลังสินค้า',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.48'
     ]},
     { v:'2.47', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Auto-Migrate Quotation Running Numbers to QT<YYYY>-<XXXXX>', items:[
       '🔄 <b>อัปเดตและแปลงเลขที่ใบเสนอราคาเดิมอัตโนมัติ:</b> แปลงเลขที่ใบเสนอราคาเดิมที่บันทึกไว้ในรูปแบบ <code>QT-20261001-0001</code> ให้กลายเป็น <b>QT2026-00001</b> ทันทีทั้งในตารางแสดงผลและอัปเดตลงฐานข้อมูลจริงอัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.47'
     ]},
     { v:'2.46', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Numbering Format: QT<YYYY>-<XXXXX> (e.g. QT2026-00001)', items:[
       '🔢 <b>ปรับรูปแบบเลขที่ใบเสนอราคาใหม่ (QT2026-00001):</b> เปลี่ยนฟอร์แมตเลขที่ใบเสนอราคาเป็น <code>QT + ปี ค.ศ. (4 หลัก) - เลขรัน 5 หลัก</code> เช่น <b>QT2026-00001</b>, <b>QT2026-00002</b> ต่อเนื่องตลอดทั้งปี',
       '🛡️ <b>ระบบตรวจจับเลขล่าสุดอัตโนมัติ (Smart Max Sequence Detection):</b> ดึงเลขที่ใบเสนอราคาล่าสุดจากฐานข้อมูลจริง และเชื่อมต่อกับตาราง Sequence ป้องกันการเกิดเลขซ้ำ 100%',
       '🤖 <b>เชื่อมต่อระบบ AI Fast Quote:</b> ระบบสร้างใบเสนอราคาอัตโนมัติจากแชต AI ใช้ฟอร์แมตเลขที่เดียวกันอย่างสมบูรณ์แบบ',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.46'
     ]},
     { v:'2.45', date:'2026-10-01', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Quotation Discount, Shipping Fee & Print Options + Header Line OA/Website', items:[
       '💰 <b>เพิ่มช่องส่วนลดท้ายบิล & ค่าจัดส่ง ในใบเสนอราคา:</b> รองรับการใส่ส่วนลดท้ายบิล (เลือกได้ทั้งแบบบาท ฿ หรือ %) และค่าจัดส่ง ทั้งในหน้าสร้างใบเสนอราคาใหม่ และหน้าแก้ไขแบบร่าง พร้อมคำนวณยอดรวมสุทธิแบบ Real-time',
       '🖨️ <b>ตัวเลือกการพิมพ์ใบเสนอราคา (Print Options Modal):</b> เพิ่มหน้าต่างตัวเลือกพิมพ์ใบเสนอราคา สามารถเลือกพิมพ์ต้นฉบับ/สำเนา/พิมพ์เป็นชุด, เลือก <b>แสดง หรือ ซ่อนส่วนลด</b> และเลือกพิมพ์ลายเซ็นดิจิทัลได้เหมือนหน้าบิลออเดอร์',
       '🏬 <b>เพิ่ม Line OA & Website ในหัวกระดาษเอกสาร:</b> เพิ่มข้อความ <code>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</code> ใต้ที่อยู่ร้านค้าในหัวบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation) และเอกสารสั่งซื้อ (PO)',
       '🔄 <b>ส่งต่อยอดส่วนลดและค่าส่งเมื่อ Convert → Order:</b> เมื่อกดแปลงใบเสนอราคาเป็นคำสั่งซื้อ ระบบจะส่งต่อยอดส่วนลดท้ายบิลและค่าส่งเข้าสู่ออเดอร์ให้อัตโนมัติ',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.45'
     ]},
     { v:'2.44', date:'2026-09-30', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Recurring Expense Frequency Edit Fix (Yearly vs Monthly)', items:[
       '🔄 <b>แก้ไขการเปลี่ยนรอบความถี่ค่าใช้จ่ายประจำ (รายปี ↔ รายเดือน):</b> เพิ่มระบบวิเคราะห์ความถี่อัจฉริยะ (detectExpenseRecurrence) ให้ความสำคัญกับแท็กระบุความถี่ล่าสุด [recurrence:monthly] / [recurrence:yearly] ป้องกันข้อความเดิมในหมายเหตุเขียนทับ',
       '✏️ <b>บันทึกและแก้ไขความถี่ได้ถูกต้องทันที:</b> เมื่อผู้ใช้แก้ไขความถี่จากรายปีเป็นรายเดือน หรือรายเดือนเป็นรายปี ระบบจะล้างแท็กเดิมและอัปเดตสถานะในตารางและรายการเตือนทันที 100%',
       '📊 <b>ปรับปรุง Dashboard Recurring Banner:</b> แก้ไขการดึงข้อมูลรายการเตือนค่าใช้จ่ายประจำหน้าแรกให้แสดงจำนวนและยอดเงินถูกต้อง',
-      '🧹 <b>Cache Refresh (v2.55):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
+      '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.44'
     ]},
     { v:'2.43', date:'2026-09-28', badge:'', color:'#16a34a', bg:'#dcfce7', title:'Customer Purchase Analytics Data Sync & Query Resiliency Fix', items:[
       '🛠️ <b>แก้ไขการโหลดข้อมูลคำสั่งซื้อและรายการสินค้า (Query Resiliency Fix):</b> ปรับปรุงการดึงข้อมูล orders และ order_items พร้อมระบบ Fallback แยก Query อัตโนมัติ เพื่อให้แสดงข้อมูลลูกค้าและประวัติการซื้อสินค้าครบ 100%',
