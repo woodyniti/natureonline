@@ -37,8 +37,8 @@
 })();
 
 // ── Cache Cleaner & Service Worker ────────────────────
-const CURRENT_APP_VERSION = 'sealthai-v2.56';
-const DISPLAY_APP_VERSION = 'v2.56';
+const CURRENT_APP_VERSION = 'sealthai-v2.57';
+const DISPLAY_APP_VERSION = 'v2.57';
 if ('caches' in window) {
   caches.keys().then(keys => {
     keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
@@ -320,7 +320,7 @@ tbody td:first-child { color: var(--text); }
 .badge-purple { background: rgba(124,58,237,0.1); color: #6d28d9; }
 .badge-gray { background: var(--bg3); color: var(--text2); border: 1px solid var(--border); }
 
-/* ── Modal & Top-Layer Popup System (v2.56) ── */
+/* ── Modal & Top-Layer Popup System (v2.57) ── */
 .modal-overlay {
   display: none; position: fixed; inset: 0; z-index: 2000;
   background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px);
@@ -1021,7 +1021,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.56 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.57 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1094,7 +1094,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.56 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.57 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1123,7 +1123,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.56 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.57 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3291,7 +3291,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.56)">v2.56 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.57)">v2.57 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -33307,13 +33307,14 @@ async function processOrderReturn(orderId, arId, itemCount, event) {
       customer_name: order.customer_name
     };
     const { data: gr, error: grErr } = await sb.from('goods_returns').insert(grPayload).select().single();
-    if (grErr) throw new Error('บันทึก Goods Return ไม่สำเร็จ');
+    if (grErr) throw new Error('บันทึก Goods Return ไม่สำเร็จ: ' + (grErr.message || grErr.details || 'กรุณารันสคริปต์สิทธิ์ตารางใน Supabase'));
 
     const grItemsPayload = returnItems.map(it => ({
       gr_id: gr.id, product_id: it.product_id, product_name: it.product_name,
       qty: it.qty, unit_price: it.unit_price, amount: it.amount
     }));
-    await sb.from('goods_return_items').insert(grItemsPayload);
+    const { error: griErr } = await sb.from('goods_return_items').insert(grItemsPayload);
+    if (griErr) throw new Error('บันทึก Goods Return Items ไม่สำเร็จ: ' + (griErr.message || griErr.details || 'กรุณารันสคริปต์สิทธิ์ตาราง'));
 
     const stockPayload = returnItems.map(it => ({
       shop_id: currentShop.id, product_id: it.product_id,
@@ -36442,7 +36443,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.56', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Fix JavaScript Quote Syntax & Restore Login (v2.56)', items:[
+    { v:'2.57', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Credit Note (CN) & Goods Return Permissions Unlock (v2.57)', items:[
+      '🧾 <b>ปลดล็อกสิทธิ์บันทึกรับคืนสินค้า / ใบลดหนี้ (Fix CN 403 Forbidden):</b> ปลดล็อกสิทธิ์ Table Permissions และ RLS สำหรับตาราง goods_returns และ goods_return_items ให้สามารถบันทึกรับคืนสินค้าและปรับยอดขาย/ยอดลูกหนี้ได้อย่างสมบูรณ์',
+      '🔍 <b>Enhanced Error Diagnostics:</b> เพิ่มระบบแสดงข้อความแจ้งเตือนรายละเอียด Error ที่แม่นยำเพื่อความสะดวกในการตรวจสอบสถานะ',
+      '🧹 <b>Cache Refresh (v2.57):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.57'
+    ]},
+    { v:'2.56', date:'2026-10-02', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'Fix JavaScript Quote Syntax & Restore Login (v2.56)', items:[
       '⚡ <b>แก้ไขข้อผิดพลาด Syntax Error:</b> แก้ไขการ Escape เครื่องหมายคำพูดในฟังก์ชัน Modal ปิดหน้าต่าง ทำให้ระบบโหลด JavaScript และหน้าเข้าสู่ระบบ (Login) ทำงานได้ปกติ 100%',
       '🧹 <b>Cache Refresh (v2.56):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.56'
     ]},
