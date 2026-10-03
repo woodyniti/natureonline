@@ -6294,25 +6294,31 @@ async function loadOrders() {
     </div>
   ` : '';
 
-  document.getElementById('ord-stats').innerHTML = `
-    <div class="stat-card" style="min-width:230px"><div class="stat-label">🛒 จำนวนออเดอร์ทั้งหมด</div><div class="stat-value">${rows.length} <span style="font-size:13px;font-weight:500;color:var(--text3)">ใบ</span></div><div class="stat-sub">ใช้งาน ${activeRows.length} · ยกเลิก ${cancelledRows.length}</div>${chBadgesHtml}</div>
-    <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="drillCancelledOrders('orders')" title="คลิกดูรายการออเดอร์ยกเลิก"><div class="stat-label">❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div><div class="stat-value text-red">${cancelledRows.length} ใบ</div><div class="stat-sub">ยอดเงินรวม ${fmtB(cancelledTotal)}</div><div class="stat-sub">${cancelledRate.toFixed(1)}% ของออเดอร์ทั้งหมด</div></div>
-    <div class="stat-card"><div class="stat-label">👥 จำนวนลูกค้า</div><div class="stat-value text-blue">${distinctCustomers} ราย</div></div>
-    <div class="stat-card"><div class="stat-label">💰 ยอดขายรวม <span style="font-size:10px;color:var(--text3)">(ไม่รวมยกเลิก)</span></div><div class="stat-value text-accent">${fmtB(totalRev)}</div></div>
-    <div class="stat-card"><div class="stat-label">📦 ต้นทุนรวม</div><div class="stat-value" style="color:#7c3aed">${fmtB(totalCost)}</div></div>
-    <div class="stat-card"><div class="stat-label">💸 GP Platform ที่ถูกหัก</div><div class="stat-value text-red">${fmtB(totalPlatformFee)}</div></div>
-    <div class="stat-card"><div class="stat-label">📈 กำไรรวม</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}">${fmtB(totalProfit)}</div></div>
-    <div class="stat-card"><div class="stat-label">💼 Sales / Account Commission <span style="font-size:10px;color:var(--text3)">15% เท่ากัน</span></div><div class="stat-value" style="color:#0891b2">${fmtB(commissionPerRole)} <span style="font-size:12px;font-family:var(--font);font-weight:500;color:var(--text3)">ต่อฝ่าย</span></div><div class="stat-sub">Sales (นิติ) 15% ${fmtB(commissionPerRole)} · Account/CFO (นันทนา) 15% ${fmtB(commissionPerRole)}</div><div class="stat-sub">รวมทั้งสองฝ่าย ${fmtB(combinedCommission)}</div></div>
-  `;
+  const ordStatsEl = document.getElementById('ord-stats');
+  if (ordStatsEl) {
+    ordStatsEl.innerHTML = `
+      <div class="stat-card" style="min-width:230px"><div class="stat-label">🛒 จำนวนออเดอร์ทั้งหมด</div><div class="stat-value">${rows.length} <span style="font-size:13px;font-weight:500;color:var(--text3)">ใบ</span></div><div class="stat-sub">ใช้งาน ${activeRows.length} · ยกเลิก ${cancelledRows.length}</div>${chBadgesHtml}</div>
+      <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--red)" onclick="drillCancelledOrders('orders')" title="คลิกดูรายการออเดอร์ยกเลิก"><div class="stat-label">❌ ออเดอร์ยกเลิก <span style="font-size:10px;color:var(--red)">→ ดูรายการ</span></div><div class="stat-value text-red">${cancelledRows.length} ใบ</div><div class="stat-sub">ยอดเงินรวม ${fmtB(cancelledTotal)}</div><div class="stat-sub">${cancelledRate.toFixed(1)}% ของออเดอร์ทั้งหมด</div></div>
+      <div class="stat-card"><div class="stat-label">👥 จำนวนลูกค้า</div><div class="stat-value text-blue">${distinctCustomers} ราย</div></div>
+      <div class="stat-card"><div class="stat-label">💰 ยอดขายรวม <span style="font-size:10px;color:var(--text3)">(ไม่รวมยกเลิก)</span></div><div class="stat-value text-accent">${fmtB(totalRev)}</div></div>
+      <div class="stat-card"><div class="stat-label">📦 ต้นทุนรวม</div><div class="stat-value" style="color:#7c3aed">${fmtB(totalCost)}</div></div>
+      <div class="stat-card"><div class="stat-label">💸 GP Platform ที่ถูกหัก</div><div class="stat-value text-red">${fmtB(totalPlatformFee)}</div></div>
+      <div class="stat-card"><div class="stat-label">📈 กำไรรวม</div><div class="stat-value ${totalProfit>=0?'text-green':'text-red'}">${fmtB(totalProfit)}</div></div>
+      <div class="stat-card"><div class="stat-label">💼 Sales / Account Commission <span style="font-size:10px;color:var(--text3)">15% เท่ากัน</span></div><div class="stat-value" style="color:#0891b2">${fmtB(commissionPerRole)} <span style="font-size:12px;font-family:var(--font);font-weight:500;color:var(--text3)">ต่อฝ่าย</span></div><div class="stat-sub">Sales (นิติ) 15% ${fmtB(commissionPerRole)} · Account/CFO (นันทนา) 15% ${fmtB(commissionPerRole)}</div><div class="stat-sub">รวมทั้งสองฝ่าย ${fmtB(combinedCommission)}</div></div>
+    `;
+  }
+
+  const ordTableEl = document.getElementById('ord-table');
+  const ordCardsEl = document.getElementById('ord-cards');
 
   if (!rows.length) {
-    document.getElementById('ord-table').innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่พบออเดอร์</div></div>';
-    document.getElementById('ord-cards').innerHTML = '';
+    if (ordTableEl) ordTableEl.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่พบออเดอร์</div></div>';
+    if (ordCardsEl) ordCardsEl.innerHTML = '';
     return;
   }
 
   // Desktop table — เลย์เอาต์กระชับ 7 คอลัมน์
-  document.getElementById('ord-table').innerHTML = `
+  if (ordTableEl) ordTableEl.innerHTML = `
     <table class="desktop-only orders-compact" id="tbl-orders">
       <thead><tr>
         <th style="width:36px;text-align:center"><input type="checkbox" id="so-select-all" onchange="toggleSelectAllSO(this.checked)" title="เลือกทั้งหมด"></th>
@@ -6407,7 +6413,8 @@ async function loadOrders() {
     </table>`;
 
   // Mobile cards
-  document.getElementById('ord-cards').innerHTML = rows.map(o=>`
+  if (ordCardsEl) {
+    ordCardsEl.innerHTML = rows.map(o=>`
     <div class="mobile-only" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;box-shadow:0 1px 4px rgba(99,115,150,0.08)" onclick="viewOrder('${o.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
         <div>
@@ -35292,16 +35299,21 @@ async function viewProductInventoryPosting(productId) {
     const dimTxt = (prod.inner_diameter && prod.outer_diameter) ? ` · ขนาด: ${prod.inner_diameter}×${prod.outer_diameter}${prod.width ? '×'+prod.width : ''} ${prod.unit_dim||'mm'}` : '';
     if (subtitleEl) subtitleEl.textContent = `หมวดหมู่: ${prod.category || 'ทั่วไป'}${dimTxt} · ชั้นวาง: ${prod.location_shelf || 'ไม่ระบุ'}`;
 
-    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, purchase_orders, orders, goods_returns
-    const [movesRes, posRes, ordersRes, grsRes] = await Promise.all([
-      sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true }),
-      sb.from('purchase_orders').select('id,po_no,po_date,expected_date,supplier_name,status,note,purchase_order_items(id,po_id,product_id,product_name,qty_ordered,qty_received,unit_cost)').eq('shop_id', currentShop.id).neq('status', 'cancelled'),
-      sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)').eq('shop_id', currentShop.id).neq('doc_status', 'cancelled').neq('shipping_status', 'cancelled'),
-      sb.from('goods_return_items').select('id,gr_id,qty,goods_returns(id,gr_no,gr_date,customer_name)').eq('product_id', productId)
-    ]);
+    // 2. ดึงข้อมูลความเคลื่อนไหวจาก stock_movements, purchase_orders, orders, goods_returns แบบ safe fetch
+    const movesPromise = sb.from('stock_movements').select('*').eq('product_id', productId).order('created_at', { ascending: true })
+      .then(r => r.data || []).catch(e => { console.warn('stock_movements query warn:', e); return []; });
+    const posPromise = sb.from('purchase_orders').select('id,po_no,po_date,expected_date,supplier_name,status,note,purchase_order_items(id,po_id,product_id,product_name,qty_ordered,qty_received,unit_cost)')
+      .eq('shop_id', currentShop.id).neq('status', 'cancelled')
+      .then(r => r.data || []).catch(e => { console.warn('purchase_orders query warn:', e); return []; });
+    const ordersPromise = sb.from('orders').select('id,order_no,order_date,customer_name,customer_social,channel,shipping_status,doc_status,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
+      .eq('shop_id', currentShop.id).neq('doc_status', 'cancelled').neq('shipping_status', 'cancelled')
+      .then(r => r.data || []).catch(e => { console.warn('orders query warn:', e); return []; });
+    const grsPromise = sb.from('goods_return_items').select('id,gr_id,qty,goods_returns(id,gr_no,gr_date,customer_name)').eq('product_id', productId)
+      .then(r => r.data || []).catch(e => { console.warn('goods_returns query warn:', e); return []; });
 
-    const rawMoves = movesRes.data || [];
-    const grItemsList = grsRes.data || [];
+    const [rawMoves, posList, ordersList, grItemsList] = await Promise.all([
+      movesPromise, posPromise, ordersPromise, grsPromise
+    ]);
 
     // Strict Product Matcher: ยึด product_id เป็นหลัก 100% ป้องกันดึงสลับตัวสินค้า
     const cleanItemName = (name) => String(name || '').replace(/\[SO:[^\]]*\]/gi, '').trim().toLowerCase();
@@ -35359,14 +35371,14 @@ async function viewProductInventoryPosting(productId) {
         docType = 'order';
         if (soMatch) refDoc = soMatch[0];
         else if (m.order_id) {
-          const matchedOrd = (ordersRes.data || []).find(o => o.id === m.order_id);
+          const matchedOrd = ordersList.find(o => o.id === m.order_id);
           refDoc = matchedOrd?.order_no || ('SO-' + m.order_id.slice(0, 8));
         }
       } else if (m.po_id || poMatch || mType === 'in' || mNote.includes('รับเข้า') || mNote.includes('ซื้อ')) {
         docType = 'po';
         if (poMatch) refDoc = poMatch[0];
         else if (m.po_id) {
-          const matchedPo = (posRes.data || []).find(p => p.id === m.po_id);
+          const matchedPo = posList.find(p => p.id === m.po_id);
           refDoc = matchedPo?.po_no || ('PO-' + m.po_id.slice(0, 8));
         }
       } else if (grMatch || mType === 'return' || mNote.includes('คืน')) {
@@ -35421,7 +35433,7 @@ async function viewProductInventoryPosting(productId) {
     let totalPendingSOQty = 0;
     let pendingSOCount = 0;
 
-    (ordersRes.data || []).forEach(ord => {
+    ordersList.forEach(ord => {
       if (isOrderCancelled(ord)) return;
       const orderNo = ord.order_no || ('SO-' + ord.id);
       const isPendingShip = (ord.shipping_status === 'pending' || !ord.shipping_status || (ord.shipping_status !== 'shipped' && ord.shipping_status !== 'delivered'));
@@ -35481,7 +35493,7 @@ async function viewProductInventoryPosting(productId) {
     let totalPendingPOQty = 0;
     let pendingPOCount = 0;
 
-    (posRes.data || []).forEach(po => {
+    posList.forEach(po => {
       const poNo = po.po_no || ('PO-' + po.id);
       (po.purchase_order_items || []).forEach(poi => {
         if (!isMatchProd(poi)) return;
@@ -35540,8 +35552,7 @@ async function viewProductInventoryPosting(productId) {
     // D. รับคืนสินค้า
     grItemsList.forEach(gri => {
       const gr = gri.goods_returns;
-      if (!gr) return;
-      const grNo = gr.gr_no || ('GR-' + gr.id);
+      const grNo = gr?.gr_no || (gri.gr_id ? ('GR-' + gri.gr_id) : ('GR-' + gri.id));
       const retQty = Number(gri.qty) || 0;
       if (retQty <= 0) return;
 
@@ -35549,16 +35560,18 @@ async function viewProductInventoryPosting(productId) {
       if (!alreadyHasMove) {
         unifiedList.push({
           id: 'gr_' + gri.id,
-          date: gr.gr_date || today(),
-          timestamp: gr.gr_date || '',
+          date: gr?.gr_date || today(),
+          timestamp: gr?.gr_date || '',
           typeKey: 'return',
           typeLabel: '🔵 รับคืน (GR)',
           badgeStyle: 'background:#e0f2fe;color:#0369a1',
           qty: Math.abs(retQty),
           isPending: false,
           unitCostPrice: Number(prod.current_cost) || 0,
+          docType: 'gr',
+          docId: gri.gr_id || gri.id,
           refDoc: grNo,
-          note: `รับคืนจากลูกค้า: ${gr.customer_name || 'ไม่ระบุ'} (${grNo})`,
+          note: `รับคืนจากลูกค้า: ${gr?.customer_name || 'ไม่ระบุ'} (${grNo})`,
           source: 'gr'
         });
       }
