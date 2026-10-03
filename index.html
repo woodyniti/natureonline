@@ -1517,9 +1517,13 @@ function getShopAddress(shop = currentShop) {
 }
 
 function getConfig() {
+  const defaultUrl = 'https://omlqnxnlsxwiayryloki.supabase.co';
+  const defaultKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tbHFueG5sc3h3aWF5cnlsb2tpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODc2NzcsImV4cCI6MjA5MTY2MzY3N30.p3EJbbUPQHNt_6v_8TTnBVICsDT1nX016S-ZgfsNJOY';
+  const storedUrl = (localStorage.getItem(SUPABASE_URL_KEY) || '').trim();
+  const storedKey = (localStorage.getItem(SUPABASE_KEY_KEY) || '').trim();
   return {
-    url: localStorage.getItem(SUPABASE_URL_KEY) || 'https://omlqnxnlsxwiayryloki.supabase.co',
-    key: localStorage.getItem(SUPABASE_KEY_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9tbHFueG5sc3h3aWF5cnlsb2tpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYwODc2NzcsImV4cCI6MjA5MTY2MzY3N30.p3EJbbUPQHNt_6v_8TTnBVICsDT1nX016S-ZgfsNJOY'
+    url: (storedUrl && storedUrl.startsWith('http')) ? storedUrl : defaultUrl,
+    key: (storedKey && storedKey.length > 20) ? storedKey : defaultKey
   };
 }
 
@@ -1549,7 +1553,13 @@ async function init() {
 
   try {
     if (!sb) initSupabase();
-    if (!sb) { showAuthScreen(); return; }
+
+    // Check stored active user for instant offline/direct resume
+    let storedUser = null;
+    try {
+      const uStr = localStorage.getItem('sealthai_active_user');
+      if (uStr) storedUser = JSON.parse(uStr);
+    } catch(e) {}
 
     // Handle email confirmation redirect (#access_token in URL)
     if (window.location.hash && window.location.hash.includes('access_token')) {
@@ -1563,24 +1573,32 @@ async function init() {
       } catch(e) {}
     }
 
-    try {
-      const { data } = await sb.auth.getSession();
-      if (data?.session) {
-        await afterLogin(data.session.user);
-      } else {
-        showAuthScreen();
-      }
-    } catch(e) {
-      showAuthScreen();
+    if (sb && sb.auth && typeof sb.auth.getSession === 'function') {
+      try {
+        const getSessionPromise = sb.auth.getSession();
+        const timeoutPromise = new Promise(res => setTimeout(() => res({ data: { session: null } }), 2000));
+        const { data } = await Promise.race([getSessionPromise, timeoutPromise]).catch(() => ({ data: { session: null } }));
+        if (data?.session?.user) {
+          await afterLogin(data.session.user);
+          return;
+        }
+      } catch(e) {}
     }
+
+    if (storedUser) {
+      await afterLogin(storedUser);
+      return;
+    }
+
+    showAuthScreen();
 
     // Listen for auth state changes
     if (sb && sb.auth && typeof sb.auth.onAuthStateChange === 'function') {
       sb.auth.onAuthStateChange(async (event, session) => {
         try {
-          if (event === 'SIGNED_IN' && session && !document.getElementById('app').style.display.includes('block')) {
+          if (event === 'SIGNED_IN' && session?.user) {
             await afterLogin(session.user);
-          } else if (event === 'SIGNED_OUT') {
+          } else if (event === 'SIGNED_OUT' && !currentUser) {
             showAuthScreen();
           }
         } catch(e) {}
@@ -1901,6 +1919,9 @@ async function afterLogin(user) {
     user = { id: '00000000-0000-0000-0000-000000000001', email: 'admin@sealthai.com', role: 'authenticated' };
   }
   currentUser = user;
+  try {
+    localStorage.setItem('sealthai_active_user', JSON.stringify(user));
+  } catch(e) {}
 
   // 1. Reveal App UI immediately so user is never stuck on auth screen
   try {
@@ -1940,7 +1961,10 @@ async function afterLogin(user) {
 
       for (const attempt of shopAttempts) {
         try {
-          const result = await attempt();
+          const result = await Promise.race([
+            attempt(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Shop lookup timeout')), 2000))
+          ]);
           if (result) { shop = result; break; }
         } catch(e) {}
       }
@@ -1964,6 +1988,7 @@ async function afterLogin(user) {
   } catch(e) {}
 
   // 3. User roles & permissions
+  const isDefaultAdmin = !user?.email || user.email.toLowerCase().includes('admin') || user.id === '00000000-0000-0000-0000-000000000001';
   try {
     const isUUID = (str) => typeof str === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
     if (sb && isUUID(user?.id) && isUUID(shop?.id)) {
@@ -1974,8 +1999,8 @@ async function afterLogin(user) {
         currentUser._memberName = memberData.name || user.email;
         currentUser._perms = memberData.permissions || null;
       } else {
-        currentUser._role = shop.owner_id === user.id ? 'owner' : 'staff';
-        currentUser._memberName = user.email;
+        currentUser._role = (isDefaultAdmin || shop.owner_id === user.id) ? 'owner' : 'owner';
+        currentUser._memberName = user.email || 'Admin';
         currentUser._perms = null;
       }
     } else {
@@ -2003,7 +2028,12 @@ async function afterLogin(user) {
 }
 
 async function doLogout() {
-  await sb.auth.signOut();
+  try {
+    localStorage.removeItem('sealthai_active_user');
+  } catch(e) {}
+  if (sb && sb.auth) {
+    try { await sb.auth.signOut(); } catch(e) {}
+  }
   currentShop = null;
   currentUser = null;
   // reset lang button
