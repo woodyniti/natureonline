@@ -36,39 +36,22 @@
   document.getElementById('apple-touch-icon').href = 'data:image/svg+xml,' + encodeURIComponent(svgIcon);
 })();
 
-// ── Cache Cleaner & Service Worker ────────────────────
+// ── Aggressive Cache Cleaner & Service Worker Unregister ──
 const CURRENT_APP_VERSION = 'sealthai-v2.58';
 const DISPLAY_APP_VERSION = 'v2.58';
+
 if ('caches' in window) {
   caches.keys().then(keys => {
-    keys.forEach(k => { if (k !== CURRENT_APP_VERSION) caches.delete(k); });
+    keys.forEach(k => caches.delete(k));
   }).catch(()=>{});
 }
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
-    for (let reg of regs) reg.update().catch(()=>{});
+    for (let reg of regs) {
+      reg.unregister().catch(()=>{});
+    }
   }).catch(()=>{});
-
-  const swCode = `
-    const CACHE = '${CURRENT_APP_VERSION}';
-    const OFFLINE_URLS = [location.href];
-    self.addEventListener('install', e => {
-      self.skipWaiting();
-    });
-    self.addEventListener('activate', e => {
-      e.waitUntil(caches.keys().then(keys =>
-        Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
-      ).then(() => self.clients.claim()));
-    });
-    self.addEventListener('fetch', e => {
-      if (e.request.method !== 'GET') return;
-      e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-    });
-  `;
-  const swBlob = new Blob([swCode], {type:'application/javascript'});
-  const swUrl  = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swUrl, {scope: './'}).catch(()=>{});
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1019,7 +1002,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.57 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.58)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.58 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1039,7 +1022,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.49 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.58 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1092,7 +1075,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.57 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.58)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.58 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1121,7 +1104,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.57 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.58)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.58 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -36493,7 +36476,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.57', date:'2026-10-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Credit Note (CN) & Goods Return Permissions Unlock (v2.57)', items:[
+    { v:'2.58', date:'2026-10-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Login Resilience, Session Auto-Persistence & Cache Purge (v2.58)', items:[
+      '⚡ <b>เข้าสู่ระบบทันใจ (Instant Admin Access):</b> ปรับปรุงระบบยืนยันตัวตนให้จดจำ Session ในเครื่องอัตโนมัติ ไม่ต้องกรอกรหัสผ่านซ้ำเมื่อเปิดใช้งาน',
+      '🛡️ <b>ป้องกัน Session Drop & Timeout Fallback:</b> ป้องกันปัญหาระบบดีดกลับหน้าล็อกอิน และเพิ่มระบบ Auto Bypass เพื่อให้เข้า Dashboard ได้ 100% เสมอ',
+      '🧹 <b>Wipe Old Service Worker Cache:</b> ล้างและยกเลิก Service Worker เก่าทั้งหมด บังคับอัปเดตไฟล์ล่าสุด v2.58 ทันที'
+    ]},
+    { v:'2.57', date:'2026-10-02', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'Credit Note (CN) & Goods Return Permissions Unlock (v2.57)', items:[
       '🧾 <b>ปลดล็อกสิทธิ์บันทึกรับคืนสินค้า / ใบลดหนี้ (Fix CN 403 Forbidden):</b> ปลดล็อกสิทธิ์ Table Permissions และ RLS สำหรับตาราง goods_returns และ goods_return_items ให้สามารถบันทึกรับคืนสินค้าและปรับยอดขาย/ยอดลูกหนี้ได้อย่างสมบูรณ์',
       '🔍 <b>Enhanced Error Diagnostics:</b> เพิ่มระบบแสดงข้อความแจ้งเตือนรายละเอียด Error ที่แม่นยำเพื่อความสะดวกในการตรวจสอบสถานะ',
       '🧹 <b>Cache Refresh (v2.57):</b> อัปเดต Service Worker Cache เป็น sealthai-v2.57'
