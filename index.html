@@ -60,11 +60,11 @@ if ('serviceWorker' in navigator) {
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
 // ── Core Early Auth & Bootstrap Module (Guaranteed Global Scope) ──
-const SUPABASE_URL_KEY = 'shopflow_url';
-const SUPABASE_KEY_KEY = 'shopflow_key';
-let sb = null;
-let currentUser = null;
-let currentShop = null;
+var SUPABASE_URL_KEY = 'shopflow_url';
+var SUPABASE_KEY_KEY = 'shopflow_key';
+var sb = window.sb || null;
+var currentUser = window.currentUser || null;
+var currentShop = window.currentShop || null;
 
 function getConfig() {
   const defaultUrl = 'https://omlqnxnlsxwiayryloki.supabase.co';
@@ -1632,14 +1632,14 @@ function renderSidebar() {
   }).join('');
 }
 // ─── CONFIG ───────────────────────────────────────────
-const SUPABASE_URL_KEY = 'shopflow_url';
-const SUPABASE_KEY_KEY = 'shopflow_key';
-let sb = null;
+var SUPABASE_URL_KEY = 'shopflow_url';
+var SUPABASE_KEY_KEY = 'shopflow_key';
+var sb = window.sb || null;
 
 // ── Mobile helper — ใช้ทั่วทั้ง app ──────────────────
 function isMob() { return window.innerWidth <= 768; }
-let currentShop = null;
-let currentUser = null;
+var currentShop = window.currentShop || null;
+var currentUser = window.currentUser || null;
 let currentPage = 'dashboard';
 let charts = {};
 
@@ -2394,7 +2394,10 @@ function scheduleResponsiveEnhance() {
   requestAnimationFrame(enhanceResponsivePage);
 }
 const responsivePageObserver = new MutationObserver(scheduleResponsiveEnhance);
-responsivePageObserver.observe(document.getElementById('page-content'), { childList:true, subtree:true });
+const _pageContentEl = document.getElementById('page-content') || document.getElementById('app') || document.body;
+if (_pageContentEl) {
+  responsivePageObserver.observe(_pageContentEl, { childList:true, subtree:true });
+}
 
 // ── Doc status helpers ──────────────────────────────────
 const DOC_STATUSES = [
@@ -6640,6 +6643,7 @@ async function loadOrders() {
       </div>
     </div>
   `).join('');
+  }
 }
 
 function filterOrdersByChannel(ch) {
