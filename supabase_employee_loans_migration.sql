@@ -46,6 +46,14 @@ CREATE TABLE IF NOT EXISTS employee_loan_payments (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Ensure columns exist in case tables were previously created with older schema
+ALTER TABLE employee_loan_payments ADD COLUMN IF NOT EXISTS principal_portion NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE employee_loan_payments ADD COLUMN IF NOT EXISTS interest_portion NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE employee_loan_payments ADD COLUMN IF NOT EXISTS remaining_after NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE employee_loans ADD COLUMN IF NOT EXISTS total_interest NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE employee_loans ADD COLUMN IF NOT EXISTS total_payable NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE employee_loans ADD COLUMN IF NOT EXISTS remaining_balance NUMERIC(15, 2) DEFAULT 0;
+
 -- 3. Create Indexes
 CREATE INDEX IF NOT EXISTS idx_employee_loans_shop_id ON employee_loans(shop_id);
 CREATE INDEX IF NOT EXISTS idx_employee_loans_employee_id ON employee_loans(employee_id);

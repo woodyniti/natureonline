@@ -16048,8 +16048,8 @@ async function saveLoanPayment() {
     installment_no: installmentNo,
     payment_date: payDate,
     amount_paid: amountPaid,
-    principal_paid: principalPaid,
-    interest_paid: interestPaid,
+    principal_portion: principalPaid,
+    interest_portion: interestPaid,
     remaining_after: remainingAfter,
     payment_method: payMethod,
     notes: notes,
@@ -16061,11 +16061,49 @@ async function saveLoanPayment() {
 
   if (schemaOK) {
     try {
-      const { error: pErr } = await sb.from('employee_loan_payments').insert({ ...paymentPayload, id: undefined });
+      const dbPayload = {
+        loan_id: l.id,
+        shop_id: currentShop.id,
+        installment_no: installmentNo,
+        payment_date: payDate,
+        amount_paid: amountPaid,
+        principal_portion: principalPaid,
+        interest_portion: interestPaid,
+        remaining_after: remainingAfter,
+        payment_method: payMethod,
+        notes: notes,
+        recorded_by: currentUser?.name || 'Admin'
+      };
+
+      let { data: insData, error: pErr } = await sb.from('employee_loan_payments').insert(dbPayload).select();
+      if (pErr) {
+        console.warn('Loan payment insert warning:', pErr.message);
+        // Fallback without portion columns if schema differs
+        const fallbackPayload = {
+          loan_id: l.id,
+          shop_id: currentShop.id,
+          installment_no: installmentNo,
+          payment_date: payDate,
+          amount_paid: amountPaid,
+          remaining_after: remainingAfter,
+          payment_method: payMethod,
+          notes: notes,
+          recorded_by: currentUser?.name || 'Admin'
+        };
+        const retryRes = await sb.from('employee_loan_payments').insert(fallbackPayload).select();
+        if (!retryRes.error) {
+          pErr = null;
+          if (retryRes.data && retryRes.data[0]) paymentPayload.id = retryRes.data[0].id;
+        }
+      } else if (insData && insData[0]) {
+        paymentPayload.id = insData[0].id;
+      }
+
       if (pErr) {
         toast('บันทึกรายการชำระไม่สำเร็จ: ' + pErr.message, 'error');
         return;
       }
+
       // Update Loan Balance
       await sb.from('employee_loans').update({
         total_paid: newTotalPaid,
@@ -16073,7 +16111,9 @@ async function saveLoanPayment() {
         status: isComplete ? 'completed' : l.status,
         updated_at: new Date().toISOString()
       }).eq('id', l.id);
-    } catch(e){}
+    } catch(e){
+      console.error('saveLoanPayment cloud sync error:', e);
+    }
   }
 
   // Update in-memory & local storage
