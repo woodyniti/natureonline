@@ -1077,6 +1077,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
 .ch-lazada { background: rgba(30,64,175,0.1); color: #1e40af; }
 .ch-line { background: rgba(0,185,0,0.1); color: #15803d; }
 .ch-tiktok { background: rgba(124,58,237,0.1); color: #6d28d9; }
+.ch-thaimart { background: rgba(13,148,136,0.12); color: #0f766e; }
 .ch-offline { background: rgba(217,119,6,0.1); color: #b45309; }
 .ch-other { background: var(--bg3); color: var(--text2); }
 
@@ -2438,7 +2439,7 @@ async function updateDocStatus(orderId, newStatus) {
 }
 
 function channelBadge(ch) {
-  const map = { Facebook:'ch-facebook', Shopee:'ch-shopee', Lazada:'ch-lazada', LINE:'ch-line', TikTok:'ch-tiktok', Offline:'ch-offline' };
+  const map = { Facebook:'ch-facebook', Shopee:'ch-shopee', Lazada:'ch-lazada', LINE:'ch-line', TikTok:'ch-tiktok', Thaimart:'ch-thaimart', Offline:'ch-offline' };
   return `<span class="badge ${map[ch]||'ch-other'}">${ch}</span>`;
 }
 
@@ -6050,7 +6051,7 @@ async function orders() {
       <select id="ord-channel">
         <option value="">ทุกช่องทาง</option>
         <option>Facebook</option><option>Shopee</option><option>Lazada</option><option>LINE</option>
-        <option>TikTok</option><option>Offline</option><option>อื่นๆ</option>
+        <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
       </select>
       <select id="ord-doc-status" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px">
         <option value="">ทุกสถานะ</option>
@@ -6085,7 +6086,7 @@ async function orders() {
           <div class="form-group"><label>ช่องทาง</label>
             <select id="o-channel">
               <option>Facebook</option><option selected>Shopee</option><option>Lazada</option><option>LINE</option>
-              <option>TikTok</option><option>Offline</option><option>อื่นๆ</option>
+              <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
             </select>
           </div>
           <div class="form-group" style="position:relative">
@@ -6445,6 +6446,7 @@ async function loadOrders() {
     if (c.includes('line'))   return { bg: '#f0fdf4', col: '#15803d', bdr: '#bbf7d0', icon: '💬' };
     if (c.includes('face') || c.includes('fb')) return { bg: '#eff6ff', col: '#1d4ed8', bdr: '#bfdbfe', icon: '📘' };
     if (c.includes('tik'))    return { bg: '#fdf4ff', col: '#7e22ce', bdr: '#f5d0fe', icon: '🎵' };
+    if (c.includes('thaimart') || c.includes('tm')) return { bg: '#f0fdfa', col: '#0d9488', bdr: '#99f6e4', icon: '🏬' };
     if (c.includes('off') || c.includes('หน้าร้าน') || c.includes('direct')) return { bg: '#fffbeb', col: '#b45309', bdr: '#fde68a', icon: '🏪' };
     return { bg: 'var(--bg3)', col: 'var(--text2)', bdr: 'var(--border)', icon: '📦' };
   };
@@ -8293,7 +8295,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
-          <select id="ed-ch" onchange="updateEditTotal()" style="${sStyle}">${['Facebook','Shopee','Lazada','LINE','TikTok','Offline','อื่นๆ'].map(ch=>`<option ${order.channel===ch?'selected':''}>${ch}</option>`).join('')}</select></div>
+          <select id="ed-ch" onchange="updateEditTotal()" style="${sStyle}">${['Facebook','Shopee','Lazada','LINE','TikTok','Thaimart','Offline','อื่นๆ'].map(ch=>`<option ${order.channel===ch?'selected':''}>${ch}</option>`).join('')}</select></div>
         <div><span style="color:var(--text3)">Tracking ${trackingLink(order.tracking_no)}</span>
           <div style="display:flex;gap:6px;align-items:center;margin-top:3px">
             <input id="ed-track" value="${(order.tracking_no||'').replace(/"/g,'&quot;')}" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box" oninput="updateTrackingLink(this.value)">
@@ -9003,7 +9005,7 @@ async function expenses() {
         <option value="overdue">🚨 เกินกำหนดชำระ</option>
         <option value="recurring">🔄 ค่าใช้จ่ายประจำ (รายเดือน/รายปี)</option>
       </select>
-      <select id="exp-filter-channel" onchange="renderExpenseView()"><option value="">ทุกช่องทาง</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Offline</option><option>สำนักงาน</option></select>
+      <select id="exp-filter-channel" onchange="renderExpenseView()"><option value="">ทุกช่องทาง</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Thaimart</option><option>Offline</option><option>สำนักงาน</option></select>
       <input id="exp-search" placeholder="ค้นหาผู้ขาย/เอกสาร/หมายเหตุ" oninput="renderExpenseView()" style="min-width:210px">
     </div>
     <div class="stat-grid mb-4" id="exp-stats"></div>
@@ -9054,7 +9056,7 @@ async function expenses() {
             <div id="e-vendor-chips" style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px"></div>
           </div>
           <div class="form-group"><label>เลขที่ใบเสร็จ/เอกสาร</label><input id="e-doc" placeholder="INV / TAX / Receipt No."></div>
-          <div class="form-group"><label>ช่องทาง/หน่วยงาน</label><select id="e-channel"><option value="">ไม่ระบุ</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Offline</option><option>สำนักงาน</option></select></div>
+          <div class="form-group"><label>ช่องทาง/หน่วยงาน</label><select id="e-channel"><option value="">ไม่ระบุ</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Thaimart</option><option>Offline</option><option>สำนักงาน</option></select></div>
           <div class="form-group"><label>โครงการ/งานที่เกี่ยวข้อง</label><input id="e-project" placeholder="เช่น เปิดตัวสินค้าใหม่"></div>
           <div class="form-group"><label>ก่อน VAT (บาท) *</label><input type="number" id="e-base" min="0" step="0.01" oninput="recalcExpenseAmounts()" placeholder="0.00"></div>
           <div class="form-group"><label>VAT (บาท)</label><div style="display:flex;gap:6px"><input type="number" id="e-vat" min="0" step="0.01" value="0" oninput="recalcExpenseAmounts()"><button class="btn btn-secondary btn-sm" type="button" onclick="calcExpenseVat7()">7%</button></div></div>
@@ -28503,7 +28505,8 @@ async function marketplace() {
           <option value="TikTok">TikTok Shop ⚫</option>
           <option value="LINE">LINE Shopping 🟢</option>
           <option value="Facebook">Facebook 🔵</option>
-          <option value="Offline">หน้าร้าน / Direct 🏬</option>
+          <option value="Thaimart">Thaimart 🏬</option>
+          <option value="Offline">หน้าร้าน / Direct 🏢</option>
         </select>
         <button class="btn btn-secondary btn-sm" onclick="loadMarketplaceData(true)">🔍 กรองข้อมูล</button>
       </div>
@@ -28584,7 +28587,8 @@ async function marketplace() {
             <option value="TikTok">TikTok Shop ⚫</option>
             <option value="LINE">LINE 🟢</option>
             <option value="Facebook">Facebook 🔵</option>
-            <option value="Offline">หน้าร้าน 🏬</option>
+            <option value="Thaimart">Thaimart 🏬</option>
+            <option value="Offline">หน้าร้าน 🏢</option>
           </select>
           <input type="text" id="mp-toship-search" placeholder="🔍 ค้นหาเลขออเดอร์ / ผู้รับ / Tracking..." oninput="renderMarketplaceToShip()" style="flex:1;min-width:200px">
         </div>
@@ -28613,6 +28617,7 @@ async function marketplace() {
             <option value="Lazada">Lazada</option>
             <option value="TikTok">TikTok Shop</option>
             <option value="LINE">LINE Shopping</option>
+            <option value="Thaimart">Thaimart</option>
           </select>
           <input type="text" id="mp-map-search" placeholder="🔍 ค้นหา Platform SKU / ชื่อสินค้า / SKU ในระบบ..." oninput="renderMarketplaceMappings()" style="flex:1;min-width:200px">
         </div>
@@ -28725,7 +28730,7 @@ function renderMarketplaceOverview() {
   }
 
   // Channels grouping
-  const channels = ['Shopee', 'Lazada', 'TikTok', 'LINE', 'Facebook', 'Offline'];
+  const channels = ['Shopee', 'Lazada', 'TikTok', 'LINE', 'Facebook', 'Thaimart', 'Offline'];
   const channelData = {};
   channels.forEach(c => { channelData[c] = { orders:0, sales:0, fees:0, profit:0 }; });
 
@@ -28746,7 +28751,7 @@ function renderMarketplaceOverview() {
   if (tableBody) {
     tableBody.innerHTML = channels.map(ch => {
       const d = channelData[ch];
-      const chBadge = ch === 'Shopee' ? '🟠 Shopee' : (ch === 'Lazada' ? '🔵 Lazada' : (ch === 'TikTok' ? '⚫ TikTok' : (ch === 'LINE' ? '🟢 LINE' : (ch === 'Facebook' ? '🔵 FB' : '🏬 หน้าร้าน'))));
+      const chBadge = ch === 'Shopee' ? '🟠 Shopee' : (ch === 'Lazada' ? '🔵 Lazada' : (ch === 'TikTok' ? '⚫ TikTok' : (ch === 'LINE' ? '🟢 LINE' : (ch === 'Facebook' ? '🔵 FB' : (ch === 'Thaimart' ? '🏬 Thaimart' : '🏢 หน้าร้าน')))));
       return `
         <tr>
           <td style="font-weight:600">${chBadge}</td>
