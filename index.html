@@ -2271,6 +2271,33 @@ const CFO_WAGE_PCT = 15;
 let _shopeeFeeLoadPromise = null;
 let _shopeeFeeLoadAttempted = false;
 
+// ── Thaimart Fee Structure: GP ตามปี + Payment Fee 3% (คำนวณจากราคาสินค้าและค่าจัดส่ง) ──
+function getThaimartFeeRate(orderDate) {
+  const d = String(orderDate || today()).slice(0, 10);
+  let gpPct = 0;
+  let periodLabel = 'ปีที่ 1 (GP 0%)';
+  // ปีที่ 1 (7 ก.ค. 2569 – 6 ก.ค. 2570 / 2026-07-07 – 2027-07-06): GP 0%
+  // ปีที่ 2 (7 ก.ค. 2570 – 6 ก.ค. 2571 / 2027-07-07 – 2028-07-06): GP 5%
+  // ปีที่ 3 (7 ก.ค. 2571 – 6 ก.ค. 2572 / 2028-07-07 – 2029-07-06): GP 8%
+  // ปีที่ 4 เป็นต้นไป (7 ก.ค. 2572 เป็นต้นไป / 2029-07-07 Onwards): GP 10%
+  if (d <= '2027-07-06') {
+    gpPct = 0;
+    periodLabel = 'ปีที่ 1: GP 0%';
+  } else if (d <= '2028-07-06') {
+    gpPct = 5;
+    periodLabel = 'ปีที่ 2: GP 5%';
+  } else if (d <= '2029-07-06') {
+    gpPct = 8;
+    periodLabel = 'ปีที่ 3: GP 8%';
+  } else {
+    gpPct = 10;
+    periodLabel = 'ปีที่ 4+: GP 10%';
+  }
+  const paymentFeePct = 3; // ค่าธรรมเนียมการชำระเงิน 3% (Payment Fee)
+  const totalPct = gpPct + paymentFeePct;
+  return { gpPct, paymentFeePct, totalPct, periodLabel };
+}
+
 function getOrderPlatformFeeInfo(order) {
   const channel = String(order?.channel || '').toLowerCase();
   const sale = Math.max(0, Number(order?.total_amount) || 0);
@@ -2281,14 +2308,27 @@ function getOrderPlatformFeeInfo(order) {
       : [];
     const actualFee = matchedRows.reduce((sum, row) => sum + Math.abs(Number(row.totalFee) || 0), 0);
     if (actualFee > 0) {
-      return { fee:actualFee, pct:sale > 0 ? actualFee / sale * 100 : 0, source:'actual', isPlatform:true };
+      return { fee:actualFee, pct:sale > 0 ? actualFee / sale * 100 : 0, source:'actual', isPlatform:true, channel:'Shopee' };
     }
-    return { fee:sale * SHOPEE_GP_FALLBACK_PCT / 100, pct:SHOPEE_GP_FALLBACK_PCT, source:'fallback', isPlatform:true };
+    return { fee:sale * SHOPEE_GP_FALLBACK_PCT / 100, pct:SHOPEE_GP_FALLBACK_PCT, source:'fallback', isPlatform:true, channel:'Shopee' };
   }
   if (channel.includes('lazada')) {
-    return { fee:sale * LAZADA_GP_FALLBACK_PCT / 100, pct:LAZADA_GP_FALLBACK_PCT, source:'fallback', isPlatform:true };
+    return { fee:sale * LAZADA_GP_FALLBACK_PCT / 100, pct:LAZADA_GP_FALLBACK_PCT, source:'fallback', isPlatform:true, channel:'Lazada' };
   }
-  return { fee:0, pct:0, source:'none', isPlatform:false };
+  if (channel.includes('thaimart') || channel.includes('tm')) {
+    const tm = getThaimartFeeRate(order?.order_date);
+    return {
+      fee: sale * tm.totalPct / 100,
+      pct: tm.totalPct,
+      gpPct: tm.gpPct,
+      paymentFeePct: tm.paymentFeePct,
+      periodLabel: tm.periodLabel,
+      source: 'rule',
+      isPlatform: true,
+      channel: 'Thaimart'
+    };
+  }
+  return { fee:0, pct:0, source:'none', isPlatform:false, channel: order?.channel || '' };
 }
 
 async function ensureShopeeFeeData() {
@@ -3055,16 +3095,22 @@ async function dashboard() {
   }
   const avgSalesPerDay = daysInPeriod > 0 ? (totalRevenue / daysInPeriod) : 0;
 
-  // ── Platform fees: Shopee ใช้ค่าจริงจาก export เมื่อจับคู่เลขออเดอร์ได้ ──
+  // ── Platform fees: Shopee ใช้ค่าจริงจาก export, Lazada ใช้ 30%, Thaimart ใช้ GP ตามปี + 3% ──
   const shopeeOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
   const lazadaOrders = orders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
+  const thaimartOrders = orders.filter(o => {
+    const ch = (o.channel||'').toLowerCase();
+    return ch.includes('thaimart') || ch.includes('tm');
+  });
 
   const shopeeRev   = shopeeOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
   const lazadaRev   = lazadaOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
+  const thaimartRev = thaimartOrders.reduce((s,o) => s + Number(o.total_amount||0), 0);
   const shopeeFeeInfos = shopeeOrders.map(getOrderPlatformFeeInfo);
   const shopeeFee   = shopeeFeeInfos.reduce((s,info) => s + info.fee, 0);
   const lazadaFee   = lazadaOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
-  const totalPlatformFee = shopeeFee + lazadaFee;
+  const thaimartFee = thaimartOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const totalPlatformFee = shopeeFee + lazadaFee + thaimartFee;
   const shopeeActualCount = shopeeFeeInfos.filter(info=>info.source==='actual').length;
 
   // Calculate total purchase amount from active POs (exclude draft & cancelled)
@@ -3150,9 +3196,14 @@ async function dashboard() {
 
   const prevShopeeOrders = prevOrders.filter(o => (o.channel||'').toLowerCase().includes('shopee'));
   const prevLazadaOrders = prevOrders.filter(o => (o.channel||'').toLowerCase().includes('lazada'));
+  const prevThaimartOrders = prevOrders.filter(o => {
+    const ch = (o.channel||'').toLowerCase();
+    return ch.includes('thaimart') || ch.includes('tm');
+  });
   const prevShopeeFee = prevShopeeOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
   const prevLazadaFee = prevLazadaOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
-  const prevTotalPlatformFee = prevShopeeFee + prevLazadaFee;
+  const prevThaimartFee = prevThaimartOrders.reduce((s,o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const prevTotalPlatformFee = prevShopeeFee + prevLazadaFee + prevThaimartFee;
 
   const prevGrossProfit = prevTotalRevenue - prevTotalCost;
   const prevProfitAfterPlatform = prevGrossProfit - prevTotalPlatformFee;
@@ -3624,6 +3675,7 @@ async function dashboard() {
             { label:'📦 ต้นทุนสินค้า',      val: -totalCost,       color:'#7c3aed',       plus:false, drill:'drillDashOrders()' },
             ...(shopeeFee>0 ? [{ label:'💸 ค่าธรรมเนียม Shopee', val: -shopeeFee, color:'var(--red)', plus:false, sub:(shopeeActualCount?shopeeActualCount+' ออเดอร์ใช้ค่าจริง · ':'')+'ที่เหลือประมาณ '+SHOPEE_GP_FALLBACK_PCT+'% · ยอด Shopee '+fmtB(shopeeRev) }] : []),
             ...(lazadaFee>0 ? [{ label:'💸 ค่า GP Lazada '+LAZADA_GP_FALLBACK_PCT+'%', val: -lazadaFee, color:'#f97316', plus:false, sub:'จากยอด Lazada '+fmtB(lazadaRev) }] : []),
+            ...(thaimartFee>0 ? [{ label:'💸 ค่าธรรมเนียม Thaimart', val: -thaimartFee, color:'#0d9488', plus:false, sub:'GP ตามปี + Payment Fee 3% · ยอด Thaimart '+fmtB(thaimartRev) }] : []),
             { label:'🔧 ค่าจัดการ (จากรับสินค้า)', val: -handlingCost, color:'#0891b2', plus:false, sub:landed.filter(l=>l.type==='ค่าจัดการ').length+' รายการ', drill:'drillLandedCost(&quot;ค่าจัดการ&quot;)' },
             { label:'🚚 ค่าขนส่ง (จากรับสินค้า)', val: -shippingCostGR, color:'#0ea5e9', plus:false, sub:landed.filter(l=>l.type==='ค่าขนส่ง').length+' รายการ', drill:'drillLandedCost(&quot;ค่าขนส่ง&quot;)' },
             ...empCommList.map(e=>({ label:'👤 คอมพนักงาน: '+e.name+' 15%', val:-e.commission, color:'#be185d', plus:false, sub:'15% ของกำไรหลังหัก GP Platform แล้ว '+fmtB(commBase) })),
@@ -3670,6 +3722,12 @@ async function dashboard() {
           <div style="font-size:14px;font-weight:700;color:var(--red)">${fmtB(shopeeFee)}</div>
           <div style="font-size:11px;color:var(--text3)">${shopeeRev>0?(shopeeFee/shopeeRev*100).toFixed(2):0}% ของ Shopee · ค่าจริง ${shopeeActualCount}/${shopeeOrders.length} ออเดอร์</div>
         </div>
+        ${thaimartOrders.length > 0 ? `
+        <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
+          <div style="font-size:11px;color:var(--text3)">ค่าธรรมเนียม Thaimart</div>
+          <div style="font-size:14px;font-weight:700;color:#0d9488">${fmtB(thaimartFee)}</div>
+          <div style="font-size:11px;color:var(--text3)">${thaimartRev>0?(thaimartFee/thaimartRev*100).toFixed(2):0}% ของ Thaimart (${thaimartOrders.length} ออเดอร์)</div>
+        </div>` : ''}
         <div style="text-align:center;padding:8px;background:var(--bg3);border-radius:8px">
           <div style="font-size:11px;color:var(--text3)">ค่าคอมพนักงาน</div>
           <div style="font-size:14px;font-weight:700;color:#be185d">${fmtB(totalEmpComm)}</div>
@@ -4886,27 +4944,39 @@ async function drillMonthlyPlatformFee() {
   const rows = (orders || []).filter(o => !isOrderCancelled(o));
   const shopeeRows = rows.filter(o => (o.channel || '').toLowerCase().includes('shopee'));
   const lazadaRows = rows.filter(o => (o.channel || '').toLowerCase().includes('lazada'));
+  const thaimartRows = rows.filter(o => {
+    const ch = (o.channel || '').toLowerCase();
+    return ch.includes('thaimart') || ch.includes('tm');
+  });
   
   const shopeeFeeTotal = shopeeRows.reduce((s, o) => s + getOrderPlatformFeeInfo(o).fee, 0);
   const lazadaFeeTotal = lazadaRows.reduce((s, o) => s + getOrderPlatformFeeInfo(o).fee, 0);
-  const totFee = shopeeFeeTotal + lazadaFeeTotal;
+  const thaimartFeeTotal = thaimartRows.reduce((s, o) => s + getOrderPlatformFeeInfo(o).fee, 0);
+  const totFee = shopeeFeeTotal + lazadaFeeTotal + thaimartFeeTotal;
 
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
   modal.innerHTML = `
-    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:880px;position:relative">
+    <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:920px;position:relative">
       <button onclick="this.closest('[style*=fixed]').remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
-      <div style="font-weight:700;font-size:16px;margin-bottom:4px">💸 รายละเอียด GP Platform (Shopee / Lazada)</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">📅 ${periodLabel} · รวมค่าธรรมเนียม GP ${fmtB(totFee)}</div>
+      <div style="font-weight:700;font-size:16px;margin-bottom:4px">💸 รายละเอียด GP & ค่าธรรมเนียม Platform (Shopee / Lazada / Thaimart)</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:16px">📅 ${periodLabel} · รวมค่าธรรมเนียม Platform ทั้งหมด ${fmtB(totFee)}</div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-bottom:16px">
         <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:8px;padding:12px">
           <div style="font-size:12px;color:#c2410c;font-weight:600">🟠 Shopee Fee (${shopeeRows.length} ออเดอร์)</div>
           <div style="font-size:20px;font-weight:800;color:#ea580c;font-family:var(--mono);margin-top:4px">${fmtB(shopeeFeeTotal)}</div>
+          <div style="font-size:11px;color:#c2410c;margin-top:2px">ค่าจริงจากระบบ / ประมาณ ${SHOPEE_GP_FALLBACK_PCT}%</div>
         </div>
         <div style="background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:8px;padding:12px">
           <div style="font-size:12px;color:#0369a1;font-weight:600">🔵 Lazada Fee (${lazadaRows.length} ออเดอร์)</div>
           <div style="font-size:20px;font-weight:800;color:#0284c7;font-family:var(--mono);margin-top:4px">${fmtB(lazadaFeeTotal)}</div>
+          <div style="font-size:11px;color:#0369a1;margin-top:2px">ประมาณ ${LAZADA_GP_FALLBACK_PCT}%</div>
+        </div>
+        <div style="background:#f0fdfa;border:1.5px solid #99f6e4;border-radius:8px;padding:12px">
+          <div style="font-size:12px;color:#0f766e;font-weight:600">🏬 Thaimart Fee (${thaimartRows.length} ออเดอร์)</div>
+          <div style="font-size:20px;font-weight:800;color:#0d9488;font-family:var(--mono);margin-top:4px">${fmtB(thaimartFeeTotal)}</div>
+          <div style="font-size:11px;color:#0f766e;margin-top:2px">GP ตามปี + ค่าชำระเงิน 3%</div>
         </div>
       </div>
 
@@ -4917,14 +4987,20 @@ async function drillMonthlyPlatformFee() {
           <th style="text-align:left;padding:6px 8px">ช่องทาง</th>
           <th style="text-align:left;padding:6px 8px">เลขอ้างอิง</th>
           <th style="text-align:right;padding:6px 8px">ยอดขาย</th>
-          <th style="text-align:right;padding:6px 8px">ค่า GP Platform</th>
-          <th style="text-align:right;padding:6px 8px">% GP</th>
+          <th style="text-align:right;padding:6px 8px">ค่าธรรมเนียม Platform</th>
+          <th style="text-align:right;padding:6px 8px">อัตราที่คิด</th>
         </tr></thead>
         <tbody>
-          ${[...shopeeRows, ...lazadaRows].map(o => {
+          ${[...shopeeRows, ...lazadaRows, ...thaimartRows].map(o => {
             const feeInfo = getOrderPlatformFeeInfo(o);
-            const isShopee = (o.channel||'').toLowerCase().includes('shopee');
-            const color = isShopee ? '#ea580c' : '#0284c7';
+            const chLower = (o.channel||'').toLowerCase();
+            const isShopee = chLower.includes('shopee');
+            const isLazada = chLower.includes('lazada');
+            const color = isShopee ? '#ea580c' : (isLazada ? '#0284c7' : '#0d9488');
+            let rateTxt = feeInfo.pct ? feeInfo.pct.toFixed(1)+'%' : '-';
+            if (feeInfo.gpPct != null) {
+              rateTxt = `${feeInfo.pct.toFixed(1)}% (GP ${feeInfo.gpPct}% + ชำระ ${feeInfo.paymentFeePct}%)`;
+            }
             return `<tr style="border-bottom:1px solid var(--border)">
               <td style="padding:6px 8px;font-family:var(--mono);font-size:12px;color:var(--blue)">${o.order_no||'-'}</td>
               <td style="padding:6px 8px;color:var(--text2)">${o.order_date||'-'}</td>
@@ -4932,7 +5008,7 @@ async function drillMonthlyPlatformFee() {
               <td style="padding:6px 8px;font-family:var(--mono);font-size:11.5px;color:var(--text3)">${o.customer_social||'-'}</td>
               <td style="padding:6px 8px;text-align:right;font-family:var(--mono)">${fmtB(o.total_amount)}</td>
               <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:${color}">${fmtB(feeInfo.fee)}</td>
-              <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:11.5px;color:${color}">${feeInfo.pct ? feeInfo.pct.toFixed(1)+'%' : '-'}</td>
+              <td style="padding:6px 8px;text-align:right;font-family:var(--mono);font-size:11.5px;color:${color}">${rateTxt}</td>
             </tr>`;
           }).join('')}
         </tbody>
@@ -5526,7 +5602,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     const d = o.order_date;
     if (!d) return;
     if (!dateMap[d]) dateMap[d] = {
-      rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0,
+      rev:0, shopeeRev:0, lazadaRev:0, thaimartRev:0, shopeeFee:0, lazadaFee:0, thaimartFee:0, platformFee:0,
       other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, cnt:0
     };
     
@@ -5548,6 +5624,10 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       dateMap[d].lazadaRev += rev;
       dateMap[d].lazadaFee += fee;
       dateMap[d].platformFee += fee;
+    } else if (ch.includes('thaimart') || ch.includes('tm')) {
+      dateMap[d].thaimartRev += rev;
+      dateMap[d].thaimartFee += fee;
+      dateMap[d].platformFee += fee;
     } else if (fee > 0) {
       dateMap[d].platformFee += fee;
     }
@@ -5557,7 +5637,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     const d = e.expense_date;
     if (!d) return;
     if (!dateMap[d]) dateMap[d] = {
-      rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0,
+      rev:0, shopeeRev:0, lazadaRev:0, thaimartRev:0, shopeeFee:0, lazadaFee:0, thaimartFee:0, platformFee:0,
       other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, cnt:0
     };
     const amt = expenseProfitAmount(e);
@@ -5574,14 +5654,14 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     const d = e.income_date;
     if (!d) return;
     if (!dateMap[d]) dateMap[d] = {
-      rev:0, shopeeRev:0, lazadaRev:0, shopeeFee:0, lazadaFee:0, platformFee:0,
+      rev:0, shopeeRev:0, lazadaRev:0, thaimartRev:0, shopeeFee:0, lazadaFee:0, thaimartFee:0, platformFee:0,
       other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, cnt:0
     };
     dateMap[d].other += Number(e.realized_profit || 0);
   });
 
   const days = Object.keys(dateMap).sort();
-  let totRev=0, totShopeeRev=0, totLazadaRev=0, totShopeeFee=0, totLazadaFee=0, totPlatformFee=0;
+  let totRev=0, totShopeeRev=0, totLazadaRev=0, totThaimartRev=0, totShopeeFee=0, totLazadaFee=0, totThaimartFee=0, totPlatformFee=0;
   let totOther=0, totCost=0, totExp=0, totWage=0, totCfoWage=0, totManualWage=0, totEmpComm=0, totGratuity=0;
   let cum=0;
   const rows=[]; const chartLabels=[]; const chartCum=[];
@@ -5624,8 +5704,10 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     totRev += dd.rev;
     totShopeeRev += dd.shopeeRev;
     totLazadaRev += dd.lazadaRev;
+    totThaimartRev += dd.thaimartRev || 0;
     totShopeeFee += dd.shopeeFee;
     totLazadaFee += dd.lazadaFee;
+    totThaimartFee += dd.thaimartFee || 0;
     totPlatformFee += dd.platformFee;
     totOther += dd.other;
     totCost += dd.cost;
@@ -5679,7 +5761,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       <div class="stat-card" style="cursor:pointer;border-left:3px solid #f97316" onclick="drillMonthlyPlatformFee()" title="คลิกดูรายละเอียดค่าธรรมเนียม GP Platform">
         <div class="stat-label">💸 GP Platform <span style="font-size:10px;color:#ea580c">→ ดูรายการ</span></div>
         <div class="stat-value" style="color:#ea580c">${fmtB(totPlatformFee)}</div>
-        <div class="stat-sub">Shopee: <b style="color:#ea580c">${fmtB(totShopeeFee)}</b> · Lazada: <b style="color:#0284c7">${fmtB(totLazadaFee)}</b></div>
+        <div class="stat-sub">Shopee: <b style="color:#ea580c">${fmtB(totShopeeFee)}</b> · Laz: <b style="color:#0284c7">${fmtB(totLazadaFee)}</b>${totThaimartFee>0?` · TM: <b style="color:#0d9488">${fmtB(totThaimartFee)}</b>`:''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid #9333ea" onclick="drillMonthlyWage()" title="คลิกดูรายละเอียดค่าแรงและเงินเดือน">
         <div class="stat-label">💼 ค่าแรงรวม <span style="font-size:10px;color:#9333ea">→ ดูรายการ</span></div>
@@ -8201,6 +8283,7 @@ function renderEditProfitBox(saleArg) {
   const feeInfo = getOrderPlatformFeeInfo({
     ...(window._editingOrderForGP||{}),
     channel: ch,
+    order_date: window._editingOrderForGP?.order_date || today(),
     total_amount: sale,
     customer_social: document.getElementById('ed-ref')?.value || window._editingOrderForGP?.customer_social || ''
   });
@@ -8208,10 +8291,14 @@ function renderEditProfitBox(saleArg) {
   const gpFee = feeInfo.fee;
   const net = sale - cost - gpFee;
   const noCost = editItems.filter(it => it.product_id && Number(it.qty||0)>0 && effCost(it)<=0);
+  let feeLabel = '− ค่า GP Platform '+feeInfo.pct.toFixed(2)+'% ('+ch+(feeInfo.source==='actual'?' · ค่าจริง':' · ประมาณ')+')';
+  if (feeInfo.gpPct != null) {
+    feeLabel = '− ค่าธรรมเนียม '+ch+' '+feeInfo.pct.toFixed(1)+'% (GP '+feeInfo.gpPct+'% + ชำระเงิน '+feeInfo.paymentFeePct+'%)';
+  }
   box.innerHTML =
     '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">ยอดขาย</span><span class="font-mono">'+fmtB(sale)+'</span></div>'+
     '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ต้นทุนสินค้า</span><span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span></div>'+
-    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">− ค่า GP Platform '+feeInfo.pct.toFixed(2)+'% ('+ch+(feeInfo.source==='actual'?' · ค่าจริง':' · ประมาณ')+')</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
+    (isPlat ? '<div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">'+feeLabel+'</span><span class="font-mono text-red">'+fmtB(gpFee)+'</span></div>' : '')+
     '<div style="display:flex;justify-content:space-between;border-top:1px solid var(--border);margin-top:4px;padding-top:5px;font-weight:700"><span>'+(net>=0?'กำไรสุทธิ':'ขาดทุน')+'</span><span class="font-mono '+(net>=0?'text-green':'text-red')+'">'+fmtB(net)+(sale>0?' ('+(net/sale*100).toFixed(1)+'%)':'')+'</span></div>'+
     (noCost.length ? '<div style="font-size:11px;color:var(--amber);margin-top:6px;padding:6px 8px;background:#fff8e1;border:1px solid var(--amber);border-radius:6px">⚠️ สินค้าต่อไปนี้<strong>ยังไม่มีต้นทุนในระบบ</strong> (กำไรอาจสูงเกินจริง): '+[...new Set(noCost.map(it=>it.product_name))].join(', ')+'</div>' : '');
 }
@@ -28699,8 +28786,12 @@ function renderMarketplaceOverview() {
   // Summary Metrics
   const totalOrders = filtered.length;
   const totalSales = filtered.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
-  const totalProfit = filtered.reduce((s, o) => s + (Number(o.profit) || 0), 0);
-  const totalFees = filtered.reduce((s, o) => s + (Number(o.platform_fee) || 0), 0);
+  const totalFees = filtered.reduce((s, o) => s + (Number(o.platform_fee) || getOrderPlatformFeeInfo(o).fee), 0);
+  const totalProfit = filtered.reduce((s, o) => {
+    if (o.profit != null) return s + Number(o.profit);
+    const fee = Number(o.platform_fee) || getOrderPlatformFeeInfo(o).fee;
+    return s + (Number(o.total_amount || 0) - Number(o.total_cost || 0) - fee);
+  }, 0);
   const aov = totalOrders > 0 ? (totalSales / totalOrders) : 0;
 
   const statsGrid = document.getElementById('mp-stats-cards');
@@ -28740,10 +28831,13 @@ function renderMarketplaceOverview() {
     if (match) ch = match;
     else ch = 'Offline';
 
+    const fee = Number(o.platform_fee) || getOrderPlatformFeeInfo(o).fee;
+    const profit = o.profit != null ? Number(o.profit) : (Number(o.total_amount || 0) - Number(o.total_cost || 0) - fee);
+
     channelData[ch].orders++;
     channelData[ch].sales += (Number(o.total_amount) || 0);
-    channelData[ch].fees += (Number(o.platform_fee) || 0);
-    channelData[ch].profit += (Number(o.profit) || 0);
+    channelData[ch].fees += fee;
+    channelData[ch].profit += profit;
   });
 
   // Render Table
