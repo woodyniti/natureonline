@@ -18051,30 +18051,90 @@ async function convertToOrder(qtId) {
     return s+(it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d));
   },0);
   const billDiscAmt = meta.bill_discount_type === 'percent' ? (itemDiscountedSubtotal * meta.bill_discount / 100) : meta.bill_discount;
-  const grandTotal = Math.max(0, itemDiscountedSubtotal - billDiscAmt) + meta.shipping_fee;
+  const grandTotal = Math.max(0, itemDiscountedSubtotal - billDiscAmt) + Number(meta.shipping_fee || 0);
 
-  const {data:order,error} = await sb.from('orders').insert({
-    shop_id:currentShop.id, order_no:orderNo, order_date:today(),
-    channel:'Offline', customer_name:qt.customer_name,
-    customer_social:qt.customer_social, customer_contact:qt.customer_contact,
-    customer_phone:qt.customer_phone, customer_address:qt.customer_address,
-    employee_id:qt.employee_id||null, note:'Convert จาก '+qt.quote_no + (meta.note ? ' | ' + meta.note : ''),
-    bill_discount: meta.bill_discount,
-    bill_discount_type: meta.bill_discount_type,
-    shipping_fee: meta.shipping_fee,
-    shipping_status:'pending', doc_status:'confirmed',
-    total_amount:grandTotal, total_cost:0,
-  }).select().single();
-  if(error){toast('สร้าง Order ไม่สำเร็จ: '+error.message,'error');return;}
+  const totalCost = (items || []).reduce((s, it) => {
+    const product = (productList || []).find(p => p.id === it.product_id) || (allProducts || []).find(p => p.id === it.product_id);
+    const unitCost = Number(it.unit_cost) || getProductOrderCost(product);
+    return s + (Number(it.qty) || 1) * unitCost;
+  }, 0);
+
+  const orderPayload = {
+    shop_id: currentShop.id,
+    order_no: orderNo,
+    order_date: today(),
+    channel: 'Offline',
+    customer_name: qt.customer_name,
+    customer_social: qt.customer_social,
+    customer_contact: qt.customer_contact,
+    customer_phone: qt.customer_phone,
+    customer_address: qt.customer_address,
+    billing_address: qt.billing_address || qt.customer_address || '',
+    employee_id: qt.employee_id || null,
+    note: [
+      'Convert จาก ' + (qt.quote_no || ''),
+      meta.note,
+      cleanOrderNote(qt.note)
+    ].filter(Boolean).join('\n'),
+    bill_discount: meta.bill_discount || 0,
+    bill_discount_type: meta.bill_discount_type || 'amount',
+    shipping_fee: Number(meta.shipping_fee || 0),
+    shipping_status: 'pending',
+    doc_status: 'confirmed',
+    total_amount: grandTotal,
+    total_cost: totalCost
+  };
+
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี billing_address / shipping_fee / bill_discount
+  let order, error;
+  for (let a = 0; a < 6; a++) {
+    const r = await sb.from('orders').insert(orderPayload).select().single();
+    order = r.data; error = r.error;
+    if (!error) break;
+    if (('billing_address' in orderPayload) && (error.message || '').includes('billing_address')) {
+      delete orderPayload.billing_address;
+      continue;
+    }
+    if (('shipping_fee' in orderPayload) && (error.message || '').includes('shipping_fee')) {
+      if (Number(meta.shipping_fee || 0) > 0) {
+        orderPayload.note = noteWithShippingFee(orderPayload.note, meta.shipping_fee);
+      }
+      delete orderPayload.shipping_fee;
+      continue;
+    }
+    if (('bill_discount' in orderPayload) && (error.message || '').includes('bill_discount')) {
+      delete orderPayload.bill_discount;
+      continue;
+    }
+    if (('bill_discount_type' in orderPayload) && (error.message || '').includes('bill_discount_type')) {
+      delete orderPayload.bill_discount_type;
+      continue;
+    }
+    break;
+  }
+  if (error) { toast('สร้าง Order ไม่สำเร็จ: ' + error.message, 'error'); return; }
 
   // order_items
-  const orderItems=(items||[]).map(it=>({
-    order_id:order.id, product_id:it.product_id||null,
-    product_name:it.product_name, qty:it.qty,
-    sell_price:it.sell_price, cost_per_unit:0,
-    discount:it.discount, discount_type:it.discount_type,
-  }));
+  const orderItems=(items||[]).map(it=>{
+    const product = (productList || []).find(p => p.id === it.product_id) || (allProducts || []).find(p => p.id === it.product_id);
+    const unitCost = Number(it.unit_cost) || getProductOrderCost(product);
+    return {
+      order_id: order.id,
+      product_id: it.product_id || null,
+      product_name: it.product_name,
+      qty: it.qty,
+      sell_price: it.sell_price,
+      cost_per_unit: unitCost,
+      discount: it.discount || 0,
+      discount_type: it.discount_type || 'amount'
+    };
+  });
   if(orderItems.length) await sb.from('order_items').insert(orderItems);
+
+  // Auto-sync customer to database in background
+  if (orderPayload.customer_name && currentShop?.id && typeof autoSyncCustomerFromOrder === 'function') {
+    autoSyncCustomerFromOrder(orderPayload, order.id).catch(() => {});
+  }
 
   // อัพเดท stock และบันทึก movement
   const movements = [];

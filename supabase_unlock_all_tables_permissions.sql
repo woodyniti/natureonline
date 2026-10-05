@@ -40,7 +40,14 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authentic
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO anon, authenticated, service_role;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO anon, authenticated, service_role;
 
--- 3. DISABLE RLS ON ALL OPERATIONAL TABLES (Matches standard shopflow setup)
+-- 3. Ensure optional helper columns exist in orders & quotations
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_fee NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS billing_address TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS bill_discount NUMERIC(15, 2) DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS bill_discount_type VARCHAR(30) DEFAULT 'amount';
+ALTER TABLE quotations ADD COLUMN IF NOT EXISTS converted_order_id UUID;
+
+-- 4. DISABLE RLS ON ALL OPERATIONAL TABLES (Matches standard shopflow setup)
 DO $$
 DECLARE
     r RECORD;
