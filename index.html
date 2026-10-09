@@ -10644,9 +10644,10 @@ async function products() {
             </div>
           </div>
           <div class="form-group"><label>ชื่อสินค้า / รายละเอียดสินค้า</label><input type="text" id="p-name" placeholder="เช่น ซีลน้ำมัน TC 25x40x7 NBR หรือ O-Ring Viton"></div>
-          <div class="grid-2">
-            <div class="form-group"><label>ราคาขาย (บาท)</label><input type="number" id="p-sell" placeholder="0"></div>
-            <div class="form-group"><label>ราคาซื้อเข้า (บาท)</label><input type="number" id="p-buy" placeholder="0"></div>
+          <div class="grid-3">
+            <div class="form-group"><label>ราคาขาย (บาท)</label><input type="number" step="0.01" id="p-sell" placeholder="0"></div>
+            <div class="form-group"><label>ราคาซื้อ (THB / บาท)</label><input type="number" step="0.001" id="p-buy" placeholder="0.000"></div>
+            <div class="form-group"><label>ราคาซื้อ (USD / $)</label><input type="number" step="0.001" id="p-buy-usd" placeholder="0.000"></div>
           </div>
           <div class="grid-2">
             <div class="form-group"><label>ต้นทุนเริ่มต้น (บาท)</label><input type="number" id="p-cost" placeholder="0"></div>
@@ -11280,7 +11281,7 @@ function renderProductTable(prods) {
           '<div style="font-size:12.5px"><span style="color:var(--text3);font-size:11px">ขาย: </span><b class="text-accent">'+fmtB(p.sell_price)+'</b></div>' +
           '<div style="font-size:11px;color:var(--text3);margin-top:1px">' +
             'กำไร: <span class="'+(margin>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(margin)+'</span>' +
-            (p.purchase_price ? ' · <span title="ราคาซื้อมาตรฐาน">ซื้อ: '+fmtB(p.purchase_price)+'</span>' : '') +
+            ((p.purchase_price || p.purchase_price_usd) ? ' · <span title="ราคาซื้อมาตรฐาน">ซื้อ: '+(p.purchase_price?`฿${Number(p.purchase_price).toFixed(3)}`:'')+(p.purchase_price&&p.purchase_price_usd?' · ':'')+(p.purchase_price_usd?`$${Number(p.purchase_price_usd).toFixed(3)}`:'')+'</span>' : '') +
           '</div>' +
         '</td>' +
         // Col 4: สต๊อก & มูลค่า
@@ -11782,7 +11783,7 @@ function findProductDup({ sku, supplier_sku, part_no }, excludeId = null) {
 function resetProductModalForm() {
   const fields = [
     'p-sku', 'p-supplier-sku', 'p-part-no', 'p-cat', 'p-name',
-    'p-sell', 'p-buy', 'p-cost', 'p-stock',
+    'p-sell', 'p-buy', 'p-buy-usd', 'p-cost', 'p-stock',
     'p-id', 'p-od', 'p-width', 'p-material', 'p-seal-type',
     'p-max-press', 'p-temp-min', 'p-temp-max', 'p-max-speed',
     'p-hs-code', 'p-drawing-no', 'p-machine-model',
@@ -11859,6 +11860,7 @@ async function saveProduct() {
     category: document.getElementById('p-cat').value,
     sell_price: Number(document.getElementById('p-sell').value)||0,
     purchase_price: Number(document.getElementById('p-buy')?.value) || 0,
+    purchase_price_usd: Number(document.getElementById('p-buy-usd')?.value) || 0,
     part_no: strOrNull('p-part-no'),
     current_cost: 0,
     stock_qty: 0,
@@ -11893,7 +11895,7 @@ async function saveProduct() {
     prod = r.data; error = r.error;
     if (!error) break;
     let stripped = false;
-    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','part_no'];
+    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','purchase_price_usd','part_no'];
     for (const col of optionalCols) {
       if ((col in insertPayload) && (error.message||'').includes(col)) { delete insertPayload[col]; stripped = true; }
     }
@@ -11972,9 +11974,10 @@ async function editProduct(id) {
         </div>
       </div>
       <div class="form-group"><label>ชื่อสินค้า / รายละเอียด</label><input type="text" id="ep-name"></div>
-      <div class="grid-2">
-        <div class="form-group"><label>ราคาขาย</label><input type="number" id="ep-sell"></div>
-        <div class="form-group"><label>ราคาซื้อเข้า <span style="font-size:11px;color:var(--text3)">ราคาที่ซื้อเข้า</span></label><input type="number" id="ep-buy"></div>
+      <div class="grid-3">
+        <div class="form-group"><label>ราคาขาย</label><input type="number" step="0.01" id="ep-sell"></div>
+        <div class="form-group"><label>ราคาซื้อ (THB / บาท)</label><input type="number" step="0.001" id="ep-buy" placeholder="0.000"></div>
+        <div class="form-group"><label>ราคาซื้อ (USD / $)</label><input type="number" step="0.001" id="ep-buy-usd" placeholder="0.000"></div>
       </div>
       <div class="form-group"><label>ต้นทุนเฉลี่ยปัจจุบัน <span style="font-size:11px;color:var(--text3)">(อ่านอย่างเดียว · แปรผันตามการรับเข้า)</span></label>
         <input type="number" id="ep-cost" disabled style="opacity:0.6;background:var(--bg3)"></div>
@@ -12094,7 +12097,8 @@ async function editProduct(id) {
   document.getElementById('ep-name').value         = p.name || '';
   document.getElementById('ep-cat').value          = p.category || '';
   document.getElementById('ep-sell').value         = p.sell_price || 0;
-  const _epBuy = document.getElementById('ep-buy'); if (_epBuy) _epBuy.value = p.purchase_price || 0;
+  const _epBuy = document.getElementById('ep-buy'); if (_epBuy) _epBuy.value = p.purchase_price ?? '';
+  const _epBuyUSD = document.getElementById('ep-buy-usd'); if (_epBuyUSD) _epBuyUSD.value = p.purchase_price_usd ?? '';
   document.getElementById('ep-cost').value         = p.current_cost || 0;
   document.getElementById('ep-save-btn').onclick   = () => updateProduct(id);
 
@@ -12225,6 +12229,7 @@ async function updateProduct(id) {
     image_url: imageUrl,
     sell_price: Number(document.getElementById('ep-sell').value)||0,
     purchase_price: Number(document.getElementById('ep-buy')?.value) || 0,
+    purchase_price_usd: Number(document.getElementById('ep-buy-usd')?.value) || 0,
     part_no: strOrNull('ep-part-no'),
     // Seal specs
     inner_diameter: numOrNull('ep-id'),
@@ -12256,7 +12261,7 @@ async function updateProduct(id) {
     updData = r.data; updErr = r.error;
     if (!updErr) break;
     let stripped = false;
-    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','part_no'];
+    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','purchase_price_usd','part_no'];
     for (const col of optionalCols) {
       if ((col in updatePayload) && (updErr.message||'').includes(col)) { delete updatePayload[col]; stripped = true; }
     }
@@ -18477,9 +18482,15 @@ async function suppliers() {
           <div class="form-group"><label>เบอร์โทร</label><input type="text" id="sup-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>อีเมล</label><input type="email" id="sup-email" placeholder="username หรือ email"></div>
           <div class="form-group"><label>เลขผู้เสียภาษี</label><input type="text" id="sup-taxid" placeholder="0000000000000"></div>
+          <div class="form-group"><label>สกุลเงินประจำ (Default Currency)</label>
+            <select id="sup-currency" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:14px">
+              <option value="THB" selected>THB (บาทไทย - ฿)</option>
+              <option value="USD">USD (ดอลลาร์สหรัฐ - $)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>หมายเหตุ</label><input type="text" id="sup-note" placeholder="หมายเหตุ"></div>
         </div>
         <div class="form-group"><label>ที่อยู่</label><textarea id="sup-address" rows="2" placeholder="ที่อยู่บริษัท"></textarea></div>
-        <div class="form-group"><label>หมายเหตุ</label><input type="text" id="sup-note" placeholder="หมายเหตุ"></div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal(&quot;modal-supplier&quot;);clearSupplierForm()">ยกเลิก</button>
           <button class="btn btn-primary" onclick="saveSupplier()">💾 บันทึก</button>
@@ -18519,12 +18530,13 @@ function renderSupplierList(rows) {
   }
   el.innerHTML =
     '<div class="table-wrap desktop-only"><table><thead><tr>'+
-    '<th>รหัส</th><th>ชื่อบริษัท / ผู้ขาย</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th><th>อีเมล</th><th>เลขภาษี</th><th></th>'+
+    '<th>รหัส</th><th>ชื่อบริษัท / ผู้ขาย</th><th>สกุลเงิน</th><th>ผู้ติดต่อ</th><th>เบอร์โทร</th><th>อีเมล</th><th>เลขภาษี</th><th></th>'+
     '</tr></thead><tbody>'+
     rows.map(s=>
       '<tr>'+
       '<td class="font-mono" style="color:var(--text3);font-size:12px">'+(s.code||'-')+'</td>'+
       '<td style="font-weight:600">'+(s.name)+'</td>'+
+      '<td><span class="badge '+(s.currency==='USD'?'badge-green':'badge-gray')+'" style="font-weight:700;font-size:11px">'+(s.currency||'THB')+'</span></td>'+
       '<td style="font-size:13px">'+(s.contact_name||'-')+'</td>'+
       '<td style="font-size:13px">'+(s.phone||'-')+'</td>'+
       '<td style="font-size:12px;color:var(--blue)">'+(s.email||'-')+'</td>'+
@@ -18540,7 +18552,7 @@ function renderSupplierList(rows) {
       '<div class="order-card">'+
         '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'+
           '<div>'+
-            '<div style="font-weight:600">'+s.name+'</div>'+
+            '<div style="font-weight:600">'+s.name+' <span class="badge '+(s.currency==='USD'?'badge-green':'badge-gray')+'" style="font-size:10px;font-weight:700">'+(s.currency||'THB')+'</span></div>'+
             (s.code?'<div style="font-size:11px;color:var(--text3)">'+s.code+'</div>':'')+
           '</div>'+
           '<div style="display:flex;gap:6px">'+
@@ -18559,6 +18571,8 @@ function renderSupplierList(rows) {
 function clearSupplierForm() {
   ['sup-edit-id','sup-code','sup-name','sup-contact','sup-phone','sup-email','sup-taxid','sup-address','sup-note']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const curEl = document.getElementById('sup-currency');
+  if (curEl) curEl.value = 'THB';
   const t=document.getElementById('sup-modal-title');
   if(t) t.textContent='🏢 เพิ่ม Supplier';
 }
@@ -18575,6 +18589,8 @@ function editSupplier(id) {
   document.getElementById('sup-taxid').value     = s.tax_id||'';
   document.getElementById('sup-address').value   = s.address||'';
   document.getElementById('sup-note').value      = s.note||'';
+  const curEl = document.getElementById('sup-currency');
+  if (curEl) curEl.value = s.currency || 'THB';
   const t=document.getElementById('sup-modal-title');
   if(t) t.textContent='✏️ แก้ไข Supplier';
   openModal('modal-supplier');
@@ -18592,13 +18608,24 @@ async function saveSupplier() {
     phone:        document.getElementById('sup-phone').value.trim(),
     email:        document.getElementById('sup-email').value.trim(),
     tax_id:       document.getElementById('sup-taxid').value.trim(),
+    currency:     document.getElementById('sup-currency')?.value || 'THB',
     address:      document.getElementById('sup-address').value.trim(),
     note:         document.getElementById('sup-note').value.trim(),
     active: true,
   };
-  const { error } = editId
-    ? await sb.from('suppliers').update(payload).eq('id', editId)
-    : await sb.from('suppliers').insert(payload);
+  let error;
+  for (let a = 0; a < 3; a++) {
+    const r = editId
+      ? await sb.from('suppliers').update(payload).eq('id', editId)
+      : await sb.from('suppliers').insert(payload);
+    error = r.error;
+    if (!error) break;
+    if (error.message && error.message.includes('currency')) {
+      delete payload.currency;
+      continue;
+    }
+    break;
+  }
   if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
   closeModal('modal-supplier');
   clearSupplierForm();
@@ -18620,7 +18647,7 @@ async function loadSupplierDropdown(selId, currentSupplierId) {
   if (!sel) return;
   sel.innerHTML = '<option value="">-- เลือก Supplier --</option>' +
     allSuppliers.map(s=>
-      '<option value="'+s.id+'" '+(s.id===currentSupplierId?'selected':'')+'>'+s.name+(s.code?' ('+s.code+')':'')+'</option>'
+      '<option value="'+s.id+'" '+(s.id===currentSupplierId?'selected':'')+'>'+s.name+(s.code?' ('+s.code+')':'')+(s.currency?' ['+s.currency+']':'')+'</option>'
     ).join('');
   // เมื่อเลือก supplier ให้ fill ข้อมูล
   sel.onchange = () => {
@@ -18630,6 +18657,13 @@ async function loadSupplierDropdown(selId, currentSupplierId) {
     const nameEl  = document.getElementById('po-supplier-name');
     if (phoneEl) phoneEl.value = sup.phone||'';
     if (nameEl)  nameEl.value  = sup.name;
+    if (sup.currency) {
+      const curEl = document.getElementById('po-currency');
+      if (curEl && curEl.value !== sup.currency) {
+        curEl.value = sup.currency;
+        if (typeof togglePoCurrency === 'function') togglePoCurrency();
+      }
+    }
   };
 }
 
@@ -20822,8 +20856,8 @@ async function loadPOs() {
       const rawTHB = Number(po.total_amount || 0);
       const usdTotal = isUSD && poRate > 0 ? (rawTHB / poRate) : 0;
       const amtDisplay = isUSD
-        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(rawTHB)})</div>`
-        : fmtB(rawTHB);
+        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+        : `฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
       const supRef = getPOSupplierRef(po);
       return '<tr style="cursor:pointer" onclick="viewPO(&quot;'+po.id+'&quot;)">'+
@@ -20853,8 +20887,8 @@ async function loadPOs() {
       const rawTHB = Number(po.total_amount || 0);
       const usdTotal = isUSD && poRate > 0 ? (rawTHB / poRate) : 0;
       const amtMobile = isUSD
-        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:11px;color:var(--text3);font-weight:normal">(${fmtB(rawTHB)})</div>`
-        : fmtB(rawTHB);
+        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:11px;color:var(--text3);font-weight:normal">(฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+        : `฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
       const supRef = getPOSupplierRef(po);
       return '<div class="order-card" onclick="viewPO(&quot;'+po.id+'&quot;)" style="cursor:pointer">'+
@@ -20866,6 +20900,22 @@ async function loadPOs() {
         poBadge(po.status)+'</div>';
     }).join('')+
     '</div>';
+}
+
+// ── Helper: ดึงราคาซื้อสินค้าสำหรับ PO (อิงตามสกุลเงิน THB หรือ USD) ──
+function getPOProductBuyPrice(p, cur = 'THB', rate = 35) {
+  if (!p) return 0;
+  if (cur === 'USD') {
+    if (p.purchase_price_usd !== undefined && p.purchase_price_usd !== null && p.purchase_price_usd !== '' && Number(p.purchase_price_usd) > 0) {
+      return Number(p.purchase_price_usd);
+    }
+    if (p.buy_price_usd !== undefined && p.buy_price_usd !== null && p.buy_price_usd !== '' && Number(p.buy_price_usd) > 0) {
+      return Number(p.buy_price_usd);
+    }
+    const thb = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price || p.cost_price || 0));
+    return rate > 0 ? +(thb / rate).toFixed(3) : 0;
+  }
+  return Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
 }
 
 async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
@@ -20904,21 +20954,11 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
 
   if (Array.isArray(prefilledItems) && prefilledItems.length > 0) {
     poItems = prefilledItems.map(it => {
-      // ดึงราคาซื้อ (purchase_price) ที่แท้จริงจากฐานข้อมูลสินค้าเป็นอันดับแรก (ราคาอ้างอิงจาก Supplier ไม่ใช่ราคาทุนเฉลี่ย)
       const master = productList.find(p => p.id === it.product_id || (p.sku && p.sku === it.sku) || (p.name && p.name === it.product_name) || (p.name && wcSearch(p.name, it.product_name || it.name)));
-      let buyPrice = master && master.purchase_price !== undefined && master.purchase_price !== null && Number(master.purchase_price) > 0 ? Number(master.purchase_price) : null;
-      if (buyPrice === null && master && master.buy_price !== undefined && master.buy_price !== null && Number(master.buy_price) > 0) {
-        buyPrice = Number(master.buy_price);
-      }
-      if (buyPrice === null && it.purchase_price !== undefined && it.purchase_price !== null && Number(it.purchase_price) > 0) {
-        buyPrice = Number(it.purchase_price);
-      }
-      if (buyPrice === null && it.buy_price !== undefined && it.buy_price !== null && Number(it.buy_price) > 0) {
-        buyPrice = Number(it.buy_price);
-      }
-      if (buyPrice === null || isNaN(buyPrice)) {
-        buyPrice = Number(it.unit_cost || (master && (master.purchase_price || master.buy_price)) || 0);
-      }
+      let buyPrice = getPOProductBuyPrice(master, 'THB', 35);
+      if (buyPrice <= 0 && it.purchase_price && Number(it.purchase_price) > 0) buyPrice = Number(it.purchase_price);
+      if (buyPrice <= 0 && it.buy_price && Number(it.buy_price) > 0) buyPrice = Number(it.buy_price);
+      if (buyPrice <= 0) buyPrice = Number(it.unit_cost || 0);
 
       return {
         product_id: it.product_id || master?.id || null,
@@ -20938,21 +20978,36 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
       if (supObj) {
         document.getElementById('po-supplier-name').value = supObj.name;
         document.getElementById('po-sup-phone').value = supObj.phone || '';
+        if (supObj.currency) {
+          if (curEl) curEl.value = supObj.currency;
+        }
       }
     }
   }
 
-  renderPOItems();
-  calcPOTotal();   // sync ยอด + แสดงแถว VAT ตาม default
+  togglePoCurrency();
   openModal('modal-po');
   // โหลด supplier dropdown หลัง modal เปิด
-  await loadSupplierDropdown('po-supplier-sel', null);
+  await loadSupplierDropdown('po-supplier-sel', preferredSupplierId || null);
 }
 
 window.togglePoCurrency = function() {
   const cur = document.getElementById('po-currency')?.value || 'THB';
   const exDiv = document.getElementById('po-exrate-div');
   if (exDiv) exDiv.style.display = cur === 'USD' ? 'block' : 'none';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+
+  // เมื่อสลับสกุลเงิน อัปเดตราคาซื้อจากฐานข้อมูลสินค้าตามหน่วยที่เลือก
+  poItems.forEach(it => {
+    if (it.product_id && it.product_id !== '__custom__') {
+      const p = prods.find(x => x.id === it.product_id);
+      if (p) {
+        it.unit_cost = getPOProductBuyPrice(p, cur, rate);
+      }
+    }
+  });
+
   renderPOItems();
   calcPOTotal();
 };
@@ -20988,6 +21043,8 @@ function searchPOProduct(rowIdx, q) {
 
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
 
   function renderRows(results) {
     if (!results.length) {
@@ -21001,14 +21058,15 @@ function searchPOProduct(rowIdx, q) {
           ? `<span style="background:#dcfce7;color:#15803d;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
           : `<span style="background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
 
-        const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+        const buyPrice = getPOProductBuyPrice(p, cur, rate);
+        const priceLabel = cur === 'USD' ? `$${buyPrice.toFixed(3)}` : `฿${buyPrice.toFixed(3)}`;
 
         const codes = [];
         if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
         if (p.supplier_sku || p.supplier_code) codes.push('Supplier SKU: ' + escapeHTML(p.supplier_sku || p.supplier_code));
         if (p.part_no) codes.push('Part: ' + escapeHTML(p.part_no));
-        codes.push('ราคาซื้อ: ' + fmtB(buyPrice));
-        if (p.current_cost) codes.push('ทุนเฉลี่ย: ' + fmtB(p.current_cost));
+        codes.push('ราคาซื้อ: ' + priceLabel);
+        if (p.current_cost) codes.push('ทุนเฉลี่ย: ฿' + Number(p.current_cost).toFixed(3));
         const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
 
         return `
@@ -21109,7 +21167,9 @@ function handlePOProdBlur(rowIdx, val) {
         (x.part_no && x.part_no.toLowerCase() === v.toLowerCase())
       );
       if (matched && poItems[rowIdx]) {
-        const buyPrice = Number(matched.purchase_price !== undefined && matched.purchase_price !== null && matched.purchase_price !== '' ? matched.purchase_price : (matched.buy_price !== undefined && matched.buy_price !== null ? matched.buy_price : (matched.cost_price || 0)));
+        const cur = document.getElementById('po-currency')?.value || 'THB';
+        const rate = Number(document.getElementById('po-exrate')?.value || 35);
+        const buyPrice = getPOProductBuyPrice(matched, cur, rate);
         poItems[rowIdx].product_id = matched.id;
         poItems[rowIdx].product_name = matched.name;
         poItems[rowIdx].sku = matched.sku || '';
@@ -21129,7 +21189,9 @@ function selectNewPOProductById(rowIdx, productId) {
   const p = prods.find(x => x.id === productId);
   if (!p || !poItems[rowIdx]) return;
 
-  const buyPrice = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+  const buyPrice = getPOProductBuyPrice(p, cur, rate);
 
   poItems[rowIdx] = {
     product_id: p.id,
@@ -21259,14 +21321,19 @@ function renderPOItems() {
             : `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:2px 8px;border-radius:12px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:4px">⚠️ สต๊อกหมด (0)</span>`)
         : '';
       
-      const buyPrice = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : (selectedProduct?.cost_price || 0)));
+      const buyTHB = Number(selectedProduct?.purchase_price !== undefined && selectedProduct?.purchase_price !== null && selectedProduct?.purchase_price !== '' ? selectedProduct?.purchase_price : (selectedProduct?.buy_price !== undefined && selectedProduct?.buy_price !== null ? selectedProduct?.buy_price : (selectedProduct?.cost_price || 0)));
+      const buyUSD = Number(selectedProduct?.purchase_price_usd || selectedProduct?.buy_price_usd || 0);
       const avgCost = Number(selectedProduct?.current_cost || 0);
+
+      const buyBadgeText = buyUSD > 0
+        ? `🏷️ ซื้อเข้า: ฿${buyTHB.toFixed(3)} | $${buyUSD.toFixed(3)}`
+        : `🏷️ ซื้อเข้า: ฿${buyTHB.toFixed(3)}`;
 
       statusHelp.innerHTML = `
         <span style="color:#10b981;font-weight:600">✓ เชื่อมโยงคลัง</span> 
         ${stockBadge}
-        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600">🏷️ ราคาซื้อเข้า: ฿${fmtB(buyPrice)}</span>
-        ${avgCost ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:12px;border:1px solid #bfdbfe;font-size:11px">ทุนเฉลี่ย: ฿${fmtB(avgCost)}</span>` : ''}
+        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600">${buyBadgeText}</span>
+        ${avgCost ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:12px;border:1px solid #bfdbfe;font-size:11px">ทุนเฉลี่ย: ฿${avgCost.toFixed(3)}</span>` : ''}
         ${selectedProduct?.supplier_sku ? `<span style="color:var(--blue);font-size:11px">Supplier SKU: <b>${escapeHTML(selectedProduct.supplier_sku)}</b></span>` : ''}
       `;
     } else {
@@ -21313,7 +21380,7 @@ function renderPOItems() {
       l.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500';
       l.textContent = labelTxt;
       const n = document.createElement('input');
-      n.type = 'number'; n.value = val; n.min = '0'; n.step = 'any';
+      n.type = 'number'; n.value = val; n.min = '0'; n.step = '0.001';
       n.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
       n.oninput = () => { onch(+n.value); calcPOTotal(); };
       w.appendChild(l); w.appendChild(n);
@@ -21335,9 +21402,9 @@ function renderPOItems() {
     
     const rowTotal = Number(it.qty_ordered ?? 1) * Number(it.unit_cost || 0);
     if (cur === 'USD') {
-      tv.innerHTML = `$${rowTotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3)">≈ ${fmtB(rowTotal * rate)}</div>`;
+      tv.innerHTML = `$${rowTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3)">≈ ฿${(rowTotal * rate).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>`;
     } else {
-      tv.textContent = fmtB(rowTotal);
+      tv.textContent = `฿${rowTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
     }
     tw.appendChild(tl);
     tw.appendChild(tv);
@@ -21368,9 +21435,9 @@ function calcPOTotal(){
     const lineEl = document.getElementById('po-item-total-'+i);
     if(lineEl) {
       if (cur === 'USD') {
-        lineEl.innerHTML = `$${rowRaw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3)">≈ ${fmtB(rowRaw * rate)}</div>`;
+        lineEl.innerHTML = `$${rowRaw.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3)">≈ ฿${(rowRaw * rate).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>`;
       } else {
-        lineEl.textContent = fmtB(rowRaw);
+        lineEl.textContent = `฿${rowRaw.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
       }
     }
   });
@@ -21383,11 +21450,11 @@ function calcPOTotal(){
 
   const stEl=document.getElementById('po-subtotal'); 
   if(stEl) {
-    stEl.innerHTML = cur === 'USD' ? `${fmtB(subtotal)} <div style="font-size:10px;color:var(--text3)">($${rawSubtotal.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</div>` : fmtB(subtotal);
+    stEl.innerHTML = cur === 'USD' ? `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <div style="font-size:10px;color:var(--text3)">($${rawSubtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>` : `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
   }
-  const vaEl=document.getElementById('po-vat-amt');  if(vaEl) vaEl.textContent=fmtB(vatAmt);
+  const vaEl=document.getElementById('po-vat-amt');  if(vaEl) vaEl.textContent=`฿${vatAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
   const vrEl=document.getElementById('po-vat-row');  if(vrEl) vrEl.style.display=vatOn?'flex':'none';
-  const tEl =document.getElementById('po-total');    if(tEl)  tEl.textContent=fmtB(total);
+  const tEl =document.getElementById('po-total');    if(tEl)  tEl.textContent=`฿${total.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
   return total;
 }
 
@@ -21619,12 +21686,12 @@ async function viewPO(poId) {
       const usdAmt = isUSD && poRate > 0 ? (thbAmt / poRate) : 0;
 
       const unitCostDisplay = isUSD
-        ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(thbCost)})</div>`
-        : fmtB(thbCost);
+        ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+        : `฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
       const amtDisplay = isUSD
-        ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(${fmtB(thbAmt)})</div>`
-        : fmtB(thbAmt);
+        ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+        : `฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
       let displayName = it.product_name || product.sku || '-';
       let soBadgeHTML = '';
@@ -21646,18 +21713,18 @@ async function viewPO(poId) {
     '<div style="border-top:1px solid var(--border);margin-top:8px;padding:10px 0">'+
       '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px">'+
         '<span style="color:var(--text3)">ยอดก่อน VAT</span>'+
-        '<span class="font-mono">'+(isUSD ? `$${totalOrderedUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:11px;color:var(--text3)">(${fmtB(totalOrderedTHB)})</span>` : fmtB(totalOrderedTHB))+'</span>'+
+        '<span class="font-mono">'+(isUSD ? `$${totalOrderedUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:11px;color:var(--text3)">(฿${totalOrderedTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${totalOrderedTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+'</span>'+
       '</div>'+
       (vatTHB>0 ?
         '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px">'+
           '<span style="color:var(--text3)">VAT 7% ('+( po.vat_type==='excluded'?'แยกออก':'รวมใน')+')' +'</span>'+
-          '<span class="font-mono text-accent">'+(isUSD ? `$${vatUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:11px;color:var(--text3)">(${fmtB(vatTHB)})</span>` : fmtB(vatTHB))+'</span>'+
+          '<span class="font-mono text-accent">'+(isUSD ? `$${vatUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:11px;color:var(--text3)">(฿${vatTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${vatTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+'</span>'+
         '</div>' : ''
       )+
       '<div style="display:flex;justify-content:flex-end;align-items:center;gap:12px">'+
         '<span style="font-size:13px;color:var(--text3);font-weight:600">ยอดรวมสุทธิ</span>'+
         '<span class="font-mono text-amber" style="font-size:20px;font-weight:700">'+
-          (isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:14px;font-weight:normal;color:var(--text2)">(${fmtB(grandTotalTHB)})</span>` : fmtB(grandTotalTHB))+
+          (isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:14px;font-weight:normal;color:var(--text2)">(฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+
         '</span>'+
       '</div>'+
     '</div>'+
@@ -21900,12 +21967,12 @@ async function printPO(poId) {
     const usdAmt = isUSD && poRate > 0 ? (thbAmt / poRate) : 0;
 
     const unitCostText = isUSD
-      ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`
-      : fmtB(thbCost);
+      ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`
+      : `฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
     const amtText = isUSD
-      ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:9.5px;color:#555">(${fmtB(thbAmt)})</div>`
-      : fmtB(thbAmt);
+      ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:9.5px;color:#555">(฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+      : `฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
     let displayName = product.sku || it.product_name || '-';
     let soPrintHTML = '';
@@ -21918,7 +21985,7 @@ async function printPO(poId) {
   });
   for(let i=0;i<empties;i++) bp.push('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>');
   bp.push('</tbody></table>');
-  bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+(isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})} <span style="font-size:13px;font-weight:normal;color:#444">(${fmtB(grandTotalTHB)})</span>` : fmtB(grandTotalTHB))+'</span></div>');
+  bp.push('<div class="total-row"><span>ยอดรวมทั้งสิ้น / Total</span><span>'+(isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:13px;font-weight:normal;color:#444">(฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+'</span></div>');
   if(cleanNote) bp.push('<div style="margin-top:10px;font-size:12px;color:#555;border:1px solid #ddd;border-radius:4px;padding:8px">หมายเหตุ: '+cleanNote+'</div>');
   bp.push('<div class="sig-area">');
   bp.push('<div class="sig-box"><div style="height:44px"></div><div class="sig-line"></div><div class="sig-label">ผู้สั่งซื้อ</div></div>');
@@ -27113,10 +27180,10 @@ function renderBatchPOItemsTable() {
           <input type="number" min="1" step="1" value="${item.qty_po}" onchange="onChangeBatchPOQty('${item.key}', this.value)" style="width:70px;text-align:right;font-weight:700;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
         </td>
         <td style="text-align:right">
-          <input type="number" min="0" step="0.01" value="${item.unit_cost}" title="ราคาซื้อต่อหน่วย (บ.)" placeholder="ราคาซื้อ" onchange="onChangeBatchPOCost('${item.key}', this.value)" style="width:80px;text-align:right;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
+          <input type="number" min="0" step="0.001" value="${item.unit_cost}" title="ราคาซื้อต่อหน่วย (บ.)" placeholder="ราคาซื้อ" onchange="onChangeBatchPOCost('${item.key}', this.value)" style="width:90px;text-align:right;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
         </td>
         <td style="text-align:right;font-weight:700;font-family:monospace">
-          ${fmtB(lineTotal)}
+          ฿${lineTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}
         </td>
         <td style="text-align:center">
           <button class="btn btn-secondary btn-sm" style="padding:2px 5px;font-size:10px;color:var(--red)" onclick="removeBatchPOItem('${item.key}')">✕</button>
@@ -27333,16 +27400,16 @@ function calcBatchPOTotals() {
   if (sqEl) sqEl.textContent = `${totalQty} ชิ้น`;
 
   const ssubEl = document.getElementById('bpo-sum-subtotal');
-  if (ssubEl) ssubEl.textContent = fmtB(subtotal);
+  if (ssubEl) ssubEl.textContent = `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
   const svBox = document.getElementById('bpo-vat-amount-box');
   if (svBox) svBox.style.display = vatOn ? 'block' : 'none';
 
   const svEl = document.getElementById('bpo-sum-vat');
-  if (svEl) svEl.textContent = fmtB(vatAmt);
+  if (svEl) svEl.textContent = `฿${vatAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
   const stotEl = document.getElementById('bpo-sum-total');
-  if (stotEl) stotEl.textContent = fmtB(netTotal);
+  if (stotEl) stotEl.textContent = `฿${netTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
   return { totalQty, subtotal, vatAmt, netTotal };
 }
@@ -27384,8 +27451,8 @@ async function saveBatchPOFromOrders(status = 'sent') {
     supplier_contact: supplierPhone,
     note: note,
     status: status,
-    total_amount: Math.round(netTotal * 100) / 100,
-    vat_amount: Math.round(vatAmt * 100) / 100,
+    total_amount: Math.round(netTotal * 1000) / 1000,
+    vat_amount: Math.round(vatAmt * 1000) / 1000,
     vat_type: vatOn ? vatType : null,
   };
 
