@@ -6196,14 +6196,27 @@ async function orders() {
             <select id="o-emp"><option value="">-- ไม่ระบุ --</option></select>
           </div>
         </div>
-        <div class="grid-2">
-          <div class="form-group"><label>ที่อยู่จัดส่ง <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><textarea id="o-address" rows="2" placeholder="ที่อยู่ / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea></div>
-          <div class="form-group">
-            <label style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
-              <span>ที่อยู่ออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></span>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('o-address','o-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกจากที่อยู่จัดส่ง</button>
-            </label>
-            <textarea id="o-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกใบกำกับภาษี / ใบเสร็จ"></textarea>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+            <span>🏢 ข้อมูลออกบิล / ใบกำกับภาษี <span style="font-size:11px;font-weight:400;color:var(--text3)">(ไม่บังคับ)</span></span>
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('o-address','o-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+          </div>
+          <div class="grid-2" style="margin-bottom:8px">
+            <div class="form-group" style="margin-bottom:0">
+              <label>ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
+              <input type="text" id="o-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>เลขประจำตัวผู้เสียภาษี (Tax ID) <span style="font-size:11px;color:var(--text3)">(13 หลัก)</span></label>
+              <input type="text" id="o-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group" style="margin-bottom:0"><label>ที่อยู่จัดส่ง <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><textarea id="o-address" rows="2" placeholder="ที่อยู่ / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea></div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>ที่อยู่ออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
+              <textarea id="o-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกใบกำกับภาษี / ใบเสร็จตาม ภ.พ.20"></textarea>
+            </div>
           </div>
         </div>
         <div class="form-group"><label>หมายเหตุ</label><textarea id="o-note" rows="2" placeholder="หมายเหตุ..."></textarea></div>
@@ -6843,7 +6856,7 @@ async function openNewOrder() {
   orderSourceQuoteId = null;
   renderOrderItems();
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-billing-address','o-track','o-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-billing-address','o-track','o-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
@@ -6924,14 +6937,14 @@ async function loadOrderCustomerList() {
   } catch(e) {}
 
   // 2. ดึงรายชื่อจากประวัติออเดอร์ (orders table) สูงสุด 1,000 รายการล่าสุด
-  const baseCols = 'id,customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username,billing_address,order_date,channel';
+  const baseCols = 'id,customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username,company_name,tax_id,billing_address,order_date,channel';
   let ordCusts = [];
   try {
     let res = await sb.from('orders').select(baseCols)
       .eq('shop_id', currentShop.id).not('customer_name','is',null)
       .order('created_at',{ascending:false}).limit(1000);
     if (res.error) {
-      res = await sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username')
+      res = await sb.from('orders').select('customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username,billing_address')
         .eq('shop_id', currentShop.id).not('customer_name','is',null)
         .order('created_at',{ascending:false}).limit(1000);
     }
@@ -6951,11 +6964,13 @@ async function loadOrderCustomerList() {
       customer_name: c.name,
       customer_phone: c.phone || '',
       customer_contact: c.contact_person || '',
-      customer_address: c.address || '',
+      customer_address: c.address || c.shipping_address || '',
       billing_address: c.billing_address || c.address || '',
       customer_username: c.tax_id ? 'Tax ID: ' + c.tax_id : '',
       customer_tier: c.customer_tier || 'retail',
-      company_name: c.company_name || '',
+      customer_type: c.customer_type || 'company',
+      company_name: c.company_name || (c.customer_type === 'company' ? c.name : ''),
+      tax_id: c.tax_id || '',
       order_count: 0
     };
   });
@@ -6972,6 +6987,8 @@ async function loadOrderCustomerList() {
         customer_contact: c.customer_contact || '',
         customer_address: c.customer_address || '',
         billing_address: c.billing_address || '',
+        company_name: c.company_name || '',
+        tax_id: c.tax_id || '',
         customer_username: c.customer_username || '',
         customer_social: c.customer_social || '',
         channel: c.channel || '',
@@ -6979,7 +6996,7 @@ async function loadOrderCustomerList() {
       };
     } else {
       byKey[k].order_count = (byKey[k].order_count || 0) + 1;
-      ['customer_username','customer_social','customer_contact','customer_phone','customer_address','billing_address']
+      ['customer_username','customer_social','customer_contact','customer_phone','customer_address','company_name','tax_id','billing_address']
         .forEach(f => { if (!byKey[k][f] && c[f]) byKey[k][f] = c[f]; });
     }
   });
@@ -6987,7 +7004,7 @@ async function loadOrderCustomerList() {
   _orderCustomerList = Object.values(byKey);
 }
 
-// generic: แสดง dropdown ค้นหาลูกค้าแบบเรียลไทม์ (ค้นหาได้ทั้ง ชื่อ, เบอร์โทร, username, ที่อยู่, ผู้ติดต่อ)
+// generic: แสดง dropdown ค้นหาลูกค้าแบบเรียลไทม์ (ค้นหาได้ทั้ง ชื่อ, เบอร์โทร, username, ที่อยู่, ผู้ติดต่อ, บริษัท, Tax ID)
 function _renderCustDropdown(ddId, fillFn, q) {
   const dd = document.getElementById(ddId);
   if (!dd) return;
@@ -7007,6 +7024,8 @@ function _renderCustDropdown(ddId, fillFn, q) {
         (c.customer_contact||'').toLowerCase().includes(term) ||
         (c.customer_address||'').toLowerCase().includes(term) ||
         (c.company_name||'').toLowerCase().includes(term) ||
+        (c.tax_id||'').toLowerCase().includes(term) ||
+        (c.billing_address||'').toLowerCase().includes(term) ||
         (c.customer_social||'').toLowerCase().includes(term))
   ).slice(0, 12);
 
@@ -7032,10 +7051,12 @@ function _renderCustDropdown(ddId, fillFn, q) {
       : `<span style="font-size:10px;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;font-weight:600;margin-left:6px">🛒 ออเดอร์เดิม (${c.order_count || 1} ครั้ง)</span>`;
     
     const details = [
+      c.company_name ? '🏢 ' + c.company_name : null,
+      c.tax_id ? '🧾 Tax ID: ' + c.tax_id : null,
       c.customer_phone ? '📞 ' + c.customer_phone : null,
       c.customer_contact ? '👤 ' + c.customer_contact : null,
       c.customer_username ? '🏷️ ' + c.customer_username : null,
-      c.customer_address ? '📍 ' + c.customer_address.slice(0, 30) + '...' : null
+      c.billing_address ? '🏢 บิล: ' + c.billing_address.slice(0, 25) + '...' : (c.customer_address ? '📍 ' + c.customer_address.slice(0, 25) + '...' : null)
     ].filter(Boolean).join(' · ') || '—';
 
     return `<div style="padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px;transition:background 0.15s"
@@ -7063,6 +7084,8 @@ function _fillCustFields(c, ids) {
   set(ids.contact, c.customer_contact);
   set(ids.phone,   c.customer_phone);
   set(ids.addr,    c.customer_address);
+  set(ids.company, c.company_name || (c.source === 'crm' && c.customer_type === 'company' ? c.customer_name : ''));
+  set(ids.tax,     c.tax_id);
   set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
   const changedField = document.getElementById(ids.name);
   markUnsavedForm(changedField?.closest('.modal-overlay'));
@@ -7081,7 +7104,17 @@ function copyShipToBill(fromId, toId) {
 function searchOrderCustomer(q) { _renderCustDropdown('o-cust-dd', 'fillCustomerFromOrder', q); }
 function fillCustomerFromOrder(idx) {
   const dd = document.getElementById('o-cust-dd');
-  _fillCustFields(dd?._matches?.[idx], {name:'o-cust',user:'o-username',ref:'o-ref',contact:'o-contact',phone:'o-phone',addr:'o-address',billing:'o-billing-address'});
+  _fillCustFields(dd?._matches?.[idx], {
+    name: 'o-cust',
+    user: 'o-username',
+    ref: 'o-ref',
+    contact: 'o-contact',
+    phone: 'o-phone',
+    addr: 'o-address',
+    company: 'o-company',
+    tax: 'o-tax-id',
+    billing: 'o-billing-address'
+  });
   if (dd) dd.style.display = 'none';
 }
 
@@ -7089,7 +7122,17 @@ function fillCustomerFromOrder(idx) {
 function searchEditCustomer(q) { _renderCustDropdown('ed-cust-dd', 'fillEditCustomer', q); }
 function fillEditCustomer(idx) {
   const dd = document.getElementById('ed-cust-dd');
-  _fillCustFields(dd?._matches?.[idx], {name:'ed-cust',user:'ed-username',ref:'ed-ref',contact:'ed-contact',phone:'ed-phone',addr:'ed-address',billing:'ed-billing-address'});
+  _fillCustFields(dd?._matches?.[idx], {
+    name: 'ed-cust',
+    user: 'ed-username',
+    ref: 'ed-ref',
+    contact: 'ed-contact',
+    phone: 'ed-phone',
+    addr: 'ed-address',
+    company: 'ed-company',
+    tax: 'ed-tax-id',
+    billing: 'ed-billing-address'
+  });
   if (dd) dd.style.display = 'none';
 }
 
@@ -7806,6 +7849,8 @@ async function saveOrder() {
     customer_contact: document.getElementById('o-contact')?.value || '',
     customer_phone:   document.getElementById('o-phone')?.value   || '',
     customer_address: document.getElementById('o-address')?.value || '',
+    company_name:     (document.getElementById('o-company')?.value || '').trim() || null,
+    tax_id:           (document.getElementById('o-tax-id')?.value || '').trim() || null,
     billing_address:  document.getElementById('o-billing-address')?.value || '',  // ที่อยู่ออกบิล
     payment_method: document.getElementById('o-pay').value,
     tracking_no: document.getElementById('o-track').value,
@@ -7819,12 +7864,14 @@ async function saveOrder() {
     total_amount: grand,
     total_cost: totalCost
   };
-  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี billing_address / shipping_fee
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee
   let order, error;
-  for (let a = 0; a < 4; a++) {
+  for (let a = 0; a < 6; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
+    if (('company_name' in orderPayload) && (error.message||'').includes('company_name')) { delete orderPayload.company_name; continue; }
+    if (('tax_id' in orderPayload) && (error.message||'').includes('tax_id')) { delete orderPayload.tax_id; continue; }
     if (('billing_address' in orderPayload) && (error.message||'').includes('billing_address')) { delete orderPayload.billing_address; continue; }
     if (('shipping_fee' in orderPayload) && (error.message||'').includes('shipping_fee')) {
       orderPayload.note = noteWithShippingFee(orderPayload.note, shippingFee);
@@ -8400,16 +8447,27 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">พนักงานขาย</span>
           <select id="ed-emp" style="${sStyle}"><option value="">-- ไม่ระบุ --</option></select></div>
       </div>
-      <div style="margin-top:10px;grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><span style="color:var(--text3);font-size:13px">ที่อยู่จัดส่ง</span>
-          <textarea id="ed-address" rows="2" placeholder="ไม่บังคับ" style="${iStyle};margin-top:3px;resize:vertical">${order.customer_address||''}</textarea>
+      <div style="margin-top:12px;grid-column:1/-1;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:12px">
+        <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+          <span>🏢 ข้อมูลออกบิล / ใบกำกับภาษี <span style="font-size:11px;font-weight:400;color:var(--text3)">(ไม่บังคับ)</span></span>
+          <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('ed-address','ed-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
         </div>
-        <div>
-          <span style="color:var(--text3);font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
-            <span>ที่อยู่ออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
-            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px" onclick="copyShipToBill('ed-address','ed-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอก</button>
-          </span>
-          <textarea id="ed-billing-address" rows="2" placeholder="สำหรับออกใบกำกับภาษี / ใบเสร็จ" style="${iStyle};margin-top:3px;resize:vertical">${order.billing_address||''}</textarea>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+          <div><span style="color:var(--text3);font-size:12px">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
+            <input id="ed-company" value="${(order.company_name||'').replace(/"/g,'&quot;')}" placeholder="ชื่อบริษัท / ชื่อออกบิล (ไม่บังคับ)" style="${iStyle};margin-top:3px">
+          </div>
+          <div><span style="color:var(--text3);font-size:12px">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px">(ไม่บังคับ)</span></span>
+            <input id="ed-tax-id" value="${(order.tax_id||'').replace(/"/g,'&quot;')}" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="${iStyle};margin-top:3px">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div><span style="color:var(--text3);font-size:12px">ที่อยู่จัดส่ง <span style="font-size:11px">(ไม่บังคับ)</span></span>
+            <textarea id="ed-address" rows="2" placeholder="ไม่บังคับ" style="${iStyle};margin-top:3px;resize:vertical">${order.customer_address||''}</textarea>
+          </div>
+          <div>
+            <span style="color:var(--text3);font-size:12px">ที่อยู่ออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
+            <textarea id="ed-billing-address" rows="2" placeholder="สำหรับออกใบกำกับภาษี / ใบเสร็จตาม ภ.พ.20" style="${iStyle};margin-top:3px;resize:vertical">${order.billing_address||''}</textarea>
+          </div>
         </div>
       </div>
       <div style="margin-top:10px"><span style="color:var(--text3);font-size:13px">หมายเหตุ</span>
@@ -8523,6 +8581,8 @@ async function saveOrderEdit(orderId) {
     customer_contact: document.getElementById('ed-contact')?.value || '',
     customer_phone:   document.getElementById('ed-phone')?.value   || '',
     customer_address: document.getElementById('ed-address')?.value || '',
+    company_name:     (document.getElementById('ed-company')?.value || '').trim() || null,
+    tax_id:           (document.getElementById('ed-tax-id')?.value || '').trim() || null,
     billing_address:  document.getElementById('ed-billing-address')?.value || '',  // ที่อยู่ออกบิล
     channel: document.getElementById('ed-ch').value,
     tracking_no: document.getElementById('ed-track').value,
@@ -8536,12 +8596,14 @@ async function saveOrderEdit(orderId) {
     total_amount: editGrand,
     total_cost: editTotalCost
   };
-  // รองรับฐานข้อมูลเดิมที่ยังไม่มี billing_address / shipping_fee
+  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee
   let updErr;
-  for (let a = 0; a < 4; a++) {
+  for (let a = 0; a < 6; a++) {
     const r = await sb.from('orders').update(editPayload).eq('id', orderId);
     updErr = r.error;
     if (!updErr) break;
+    if (('company_name' in editPayload) && (updErr.message||'').includes('company_name')) { delete editPayload.company_name; continue; }
+    if (('tax_id' in editPayload) && (updErr.message||'').includes('tax_id')) { delete editPayload.tax_id; continue; }
     if (('billing_address' in editPayload) && (updErr.message||'').includes('billing_address')) { delete editPayload.billing_address; continue; }
     if (('shipping_fee' in editPayload) && (updErr.message||'').includes('shipping_fee')) {
       editPayload.note = noteWithShippingFee(editPayload.note, editShippingFee);
@@ -8551,6 +8613,11 @@ async function saveOrderEdit(orderId) {
     break;
   }
   if (updErr) { toast('แก้ไขไม่สำเร็จ','error'); return; }
+
+  // Auto-sync customer to database in background
+  if (editPayload.customer_name && currentShop?.id && typeof autoSyncCustomerFromOrder === 'function') {
+    autoSyncCustomerFromOrder(editPayload, orderId).catch(()=>{});
+  }
 
   // save order items: delete old, insert new
   await sb.from('order_items').delete().eq('order_id', orderId);
@@ -8852,12 +8919,13 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
 
     // Info boxes
     billParts.push('<div class="info-row">');
-    billParts.push('<div class="info-box">');
     billParts.push('<div class="info-label">\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / Customer:</div>');
-    billParts.push('<div class="info-val">' + (order.customer_name||'-') + '</div>');
-    if (order.customer_contact) billParts.push('<div class="info-sub">\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d: ' + order.customer_contact + '</div>');
-    if (order.customer_phone) billParts.push('<div class="info-sub">\u0e42\u0e17\u0e23: ' + order.customer_phone + '</div>');
-    if (_billAddr) billParts.push('<div class="info-sub" style="margin-top:4px">' + _billAddr.split('\n').join('<br>') + '</div>');
+    let custHeader = order.company_name ? (escapeHTML(order.company_name) + ' <span style="font-size:11.5px;font-weight:normal;color:#444">(' + escapeHTML(order.customer_name||'') + ')</span>') : escapeHTML(order.customer_name||'-');
+    billParts.push('<div class="info-val">' + custHeader + '</div>');
+    if (order.tax_id) billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> ' + escapeHTML(order.tax_id) + '</div>');
+    if (order.customer_contact) billParts.push('<div class="info-sub">\u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d: ' + escapeHTML(order.customer_contact) + '</div>');
+    if (order.customer_phone) billParts.push('<div class="info-sub">\u0e42\u0e17\u0e23: ' + escapeHTML(order.customer_phone) + '</div>');
+    if (_billAddr) billParts.push('<div class="info-sub" style="margin-top:4px">' + escapeHTML(_billAddr).split('\n').join('<br>') + '</div>');
     billParts.push('</div>');
     billParts.push('<div class="info-box" style="text-align:right">');
     billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.</span>&nbsp;&nbsp;<strong>' + (order.customer_social||order.order_no||'-') + '</strong></div>');
@@ -29724,52 +29792,87 @@ function getCustomerTierBadge(tierKey) {
 async function autoSyncCustomerFromOrder(orderPayload, orderId) {
   try {
     const rawName = (orderPayload.customer_name || '').trim();
-    if (!rawName || rawName === '-' || rawName === 'ลูกค้าทั่วไป') return;
+    const compName = (orderPayload.company_name || '').trim();
+    const taxId = (orderPayload.tax_id || '').trim();
+    const targetName = compName || rawName;
+    if (!targetName || targetName === '-' || targetName === 'ลูกค้าทั่วไป') return;
 
-    const { data: existing } = await sb.from('customers')
-      .select('id, name, phone, tax_id, billing_address, shipping_address')
-      .eq('shop_id', currentShop.id)
-      .ilike('name', rawName)
-      .limit(1)
-      .maybeSingle();
+    let existing = null;
+
+    // 1. If tax_id exists, match by tax_id first
+    if (taxId && taxId.length >= 10) {
+      const { data: byTax } = await sb.from('customers')
+        .select('id, name, phone, tax_id, billing_address, shipping_address')
+        .eq('shop_id', currentShop.id)
+        .eq('tax_id', taxId)
+        .limit(1)
+        .maybeSingle();
+      if (byTax) existing = byTax;
+    }
+
+    // 2. If not found by tax_id, match by customer/company name
+    if (!existing) {
+      const { data: byName } = await sb.from('customers')
+        .select('id, name, phone, tax_id, billing_address, shipping_address')
+        .eq('shop_id', currentShop.id)
+        .ilike('name', targetName)
+        .limit(1)
+        .maybeSingle();
+      if (byName) existing = byName;
+    }
+
+    // 3. If rawName is different from compName, try rawName too
+    if (!existing && rawName && rawName !== targetName) {
+      const { data: byRaw } = await sb.from('customers')
+        .select('id, name, phone, tax_id, billing_address, shipping_address')
+        .eq('shop_id', currentShop.id)
+        .ilike('name', rawName)
+        .limit(1)
+        .maybeSingle();
+      if (byRaw) existing = byRaw;
+    }
 
     if (!existing) {
-      const isCompany = /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด|co\.,\s*ltd|corp|inc|ร้าน|อู่|การช่าง/i.test(rawName) || ((orderPayload.tax_id||'').length === 13);
-      const { data: newCust } = await sb.from('customers').insert({
+      const isCompany = compName || /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด|co\.,\s*ltd|corp|inc|ร้าน|อู่|การช่าง/i.test(targetName) || (taxId.length === 13);
+      const insertData = {
         shop_id: currentShop.id,
-        name: rawName,
+        name: targetName,
         customer_type: isCompany ? 'company' : 'individual',
         customer_tier: orderPayload.customer_tier || 'retail',
-        tax_id: orderPayload.tax_id || null,
+        tax_id: taxId || null,
         branch_code: orderPayload.branch_code || '00000',
         phone: orderPayload.customer_phone || null,
         billing_address: orderPayload.billing_address || orderPayload.customer_address || null,
         shipping_address: orderPayload.customer_address || orderPayload.billing_address || null,
-        notes: orderPayload.channel ? `ช่องทาง: ${orderPayload.channel}` : null,
+        notes: orderPayload.channel ? `ช่องทาง: ${orderPayload.channel}${rawName && rawName !== targetName ? ` (ผู้ติดต่อ: ${rawName})` : ''}` : (rawName && rawName !== targetName ? `ผู้ติดต่อ: ${rawName}` : null),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }).select().single();
+      };
+
+      const { data: newCust } = await sb.from('customers').insert(insertData).select().single();
 
       if (newCust && orderId) {
-        await sb.from('orders').update({ customer_id: newCust.id }).eq('id', orderId);
+        await sb.from('orders').update({ customer_id: newCust.id }).eq('id', orderId).catch(()=>{});
       }
     } else {
       const updates = {};
       if (!existing.phone && orderPayload.customer_phone) updates.phone = orderPayload.customer_phone;
+      if (!existing.tax_id && taxId) updates.tax_id = taxId;
       if (!existing.billing_address && orderPayload.billing_address) updates.billing_address = orderPayload.billing_address;
       if (!existing.shipping_address && orderPayload.customer_address) updates.shipping_address = orderPayload.customer_address;
       if (Object.keys(updates).length > 0) {
         updates.updated_at = new Date().toISOString();
-        await sb.from('customers').update(updates).eq('id', existing.id);
+        await sb.from('customers').update(updates).eq('id', existing.id).catch(()=>{});
       }
       if (orderId) {
-        await sb.from('orders').update({ customer_id: existing.id }).eq('id', orderId);
+        await sb.from('orders').update({ customer_id: existing.id }).eq('id', orderId).catch(()=>{});
       }
     }
   } catch(err) {
     console.warn('autoSyncCustomerFromOrder background error:', err);
   }
 }
+
 
 async function syncCustomersFromOrders(isManual = true) {
   if (!currentShop?.id) { toast('กรุณาเข้าสู่ระบบร้านค้าก่อนทำรายการ', 'error'); return; }
