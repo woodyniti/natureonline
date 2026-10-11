@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.60';
-const DISPLAY_APP_VERSION = 'v2.60';
+const CURRENT_APP_VERSION = 'sealthai-v2.61';
+const DISPLAY_APP_VERSION = 'v2.61';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.58)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.58 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.61)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.61 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3515,7 +3515,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.57)">v2.57 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.61)">v2.61 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -8428,7 +8428,7 @@ async function viewOrder(orderId) {
     <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:13px">
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
-        <div><span style="color:var(--text3)">วันที่</span><div>${order.order_date}</div></div>
+        <div><span style="color:var(--text3)">วันที่เอกสาร</span><input type="date" id="ed-date" value="${order.order_date||''}" style="${iStyle}"></div>
         <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}"></div>
@@ -8581,6 +8581,7 @@ async function saveOrderEdit(orderId) {
   const edEmpVal = document.getElementById('ed-emp')?.value || null;
   const editPayload = {
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
+    order_date:       document.getElementById('ed-date')?.value || today(),
     customer_name:    document.getElementById('ed-cust').value,
     customer_username: document.getElementById('ed-username')?.value || '', // ชื่อผู้ใช้ Shopee/Lazada
     customer_social:  document.getElementById('ed-ref').value,             // Customer Ref
@@ -9004,7 +9005,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     // Right Column: Document Details
     billParts.push('<div class="info-col-right">');
     billParts.push('<div class="info-label">\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 (Document Details):</div>');
-    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.customer_social||order.order_no||'-') + '</span></div>');
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.order_no||'-') + '</span></div>');
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date:</span><span class="doc-meta-val">' + thDate + '</span></div>');
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
     if (order.customer_social) {
@@ -37362,7 +37363,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.58', date:'2026-10-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Login Resilience, Session Auto-Persistence & Cache Purge (v2.58)', items:[
+    { v:'2.61', date:'2026-10-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เลขที่เอกสารหน้าบิล & แก้ไขวันที่เอกสาร (v2.61)', items:[
+      '📄 <b>เลขที่ / No. หน้าบิล:</b> แสดงเลขที่ออเดอร์ของระบบ (Order No.) เป็นหลัก และแยกแสดงเลขอ้างอิงช้อปปี้ในช่อง "อ้างอิง / Ref"',
+      '📅 <b>แก้ไขวันที่เอกสารย้อนหลัง:</b> หน้าแก้ไขออเดอร์สามารถเลือกเปลี่ยนวันที่เอกสาร (Order Date) ได้ และซิงค์ประวัติสต๊อกตามวันที่ใหม่อัตโนมัติ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันเป็น v2.61 และล้างแคชระบบอัตโนมัติ'
+    ]},
+    { v:'2.58', date:'2026-10-03', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'Login Resilience, Session Auto-Persistence & Cache Purge (v2.58)', items:[
       '⚡ <b>เข้าสู่ระบบทันใจ (Instant Admin Access):</b> ปรับปรุงระบบยืนยันตัวตนให้จดจำ Session ในเครื่องอัตโนมัติ ไม่ต้องกรอกรหัสผ่านซ้ำเมื่อเปิดใช้งาน',
       '🛡️ <b>ป้องกัน Session Drop & Timeout Fallback:</b> ป้องกันปัญหาระบบดีดกลับหน้าล็อกอิน และเพิ่มระบบ Auto Bypass เพื่อให้เข้า Dashboard ได้ 100% เสมอ',
       '🧹 <b>Wipe Old Service Worker Cache:</b> ล้างและยกเลิก Service Worker เก่าทั้งหมด บังคับอัปเดตไฟล์ล่าสุด v2.58 ทันที'
