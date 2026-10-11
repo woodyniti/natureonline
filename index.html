@@ -8825,8 +8825,8 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const d      = new Date(order.order_date+'T00:00:00');
   const thDate = d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
 
-  // สร้างแถวสินค้า (ขั้นต่ำ 10 แถว)
-  const MIN_ROWS = 10;
+  // สร้างแถวสินค้า (ขั้นต่ำ 8 แถว พอดีหน้ากระดาษ ไม่อัดแน่นและไม่เหลือที่ว่างเวิ้งว้าง)
+  const MIN_ROWS = 8;
   const itemRows = items.map((it,i) => {
     const gross    = Number(it.qty||1) * Number(it.sell_price||0);
     const net      = showDiscount ? itemNet(it) : gross;
@@ -8875,7 +8875,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('* { box-sizing:border-box; margin:0; padding:0; }');
   billParts.push('body { font-family:\'Sarabun\',sans-serif; font-size:13px; color:#000; background:#eaedf2; padding:15px 0; margin:0; }');
   billParts.push('.bill-page { width:210mm; min-height:297mm; padding:10mm; margin:0 auto 20px; background:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.08); box-sizing:border-box; }');
-  billParts.push('.page-border { border:2px solid #1e3a5f; border-radius:4px; padding:12mm 12mm 10mm; min-height:273mm; position:relative; }');
+  billParts.push('.page-border { border:2px solid #1e3a5f; border-radius:4px; padding:10mm 12mm 10mm; min-height:270mm; position:relative; box-sizing:border-box; }');
   billParts.push('.corner-tl,.corner-tr,.corner-bl,.corner-br { position:absolute; width:12px; height:12px; }');
   billParts.push('.corner-tl { top:3px; left:3px; border-top:3px solid #00a882; border-left:3px solid #00a882; }');
   billParts.push('.corner-tr { top:3px; right:3px; border-top:3px solid #00a882; border-right:3px solid #00a882; }');
@@ -8888,12 +8888,17 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.bill-type { border:2.5px solid #00a882; color:#00a882; font-weight:700; font-size:15px; padding:6px 18px; border-radius:6px; white-space:nowrap; text-align:center; line-height:1.3; }');
   billParts.push('.bill-type.copy { border:2.5px solid #475569; color:#334155; }');
   billParts.push('.bill-type .doc-sub { font-size:11px; font-weight:700; letter-spacing:0.5px; opacity:0.95; margin-top:2px; }');
-  billParts.push('.info-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }');
-  billParts.push('.info-box { border:1.5px solid #333; border-radius:4px; padding:8px 10px; }');
-  billParts.push('.info-label { font-size:10.5px; color:#1a1a1a; font-weight:600; margin-bottom:2px; }');
-  billParts.push('.info-val { font-size:13px; font-weight:700; color:#000; }');
-  billParts.push('.info-sub { font-size:11.5px; color:#111; margin-top:2px; }');
-  billParts.push('table { width:100%; border-collapse:collapse; font-size:12.5px; }');
+  billParts.push('.info-row { display:grid; grid-template-columns:1.22fr 0.78fr; gap:14px; margin-bottom:12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; }');
+  billParts.push('.info-col-left { display:flex; flex-direction:column; gap:2px; }');
+  billParts.push('.info-col-right { display:flex; flex-direction:column; gap:3px; border-left:1px solid #cbd5e1; padding-left:14px; }');
+  billParts.push('.info-label { font-size:11px; color:#475569; font-weight:700; margin-bottom:2px; text-transform:uppercase; letter-spacing:0.3px; }');
+  billParts.push('.info-val { font-size:13.5px; font-weight:700; color:#0f172a; margin-bottom:1px; }');
+  billParts.push('.info-sub { font-size:11.5px; color:#334155; line-height:1.45; }');
+  billParts.push('.doc-meta-row { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:1px 0; }');
+  billParts.push('.doc-meta-lbl { color:#475569; font-size:11.5px; }');
+  billParts.push('.doc-meta-val { font-weight:700; color:#0f172a; }');
+  billParts.push('.font-mono { font-family:Courier, monospace; }');
+  billParts.push('table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:0; }');
   billParts.push('thead th { background:#0d1f3c; color:#fff; padding:7px 6px; font-size:12px; font-weight:700; border:1px solid #1e3a5f; text-align:center; }');
   billParts.push('thead th small { font-weight:600; opacity:0.92; }');
   billParts.push('thead th.left { text-align:left; } thead th.right { text-align:right; }');
@@ -8905,7 +8910,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.total-row.grand { background:#e8f5f0; font-size:15px; font-weight:700; border-top:2.5px solid #00a882; }');
   billParts.push('.baht-text { background:#eef0f2; border:1px solid #555; border-top:none; padding:6px 10px; font-size:12px; color:#000; }');
   billParts.push('.note-box { border:1px solid #777; border-top:none; padding:7px 10px; font-size:12px; line-height:1.55; background:#fffdf2; }');
-  billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:28px; }');
+  billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:20px; }');
   billParts.push('.sig-box { text-align:center; width:180px; }');
   billParts.push('.sig-image-wrap { height:26px; display:flex; align-items:flex-end; justify-content:center; overflow:visible; margin-bottom:2px; }');
   billParts.push('.sig-image { display:block; max-width:72px; max-height:24px; object-fit:contain; }');
@@ -8913,7 +8918,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.sig-line { border-top:1.5px solid #1d4ed8; margin-bottom:5px; }');
   billParts.push('.sig-label { font-size:12px; color:#1d4ed8; font-weight:700; }');
   billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
-  billParts.push('@media print { body { background:#fff; padding:0; margin:0; } .bill-page { box-shadow:none; padding:10mm 12mm 8mm; margin:0; page-break-after:always; break-after:page; } .bill-page:last-child { page-break-after:avoid; break-after:avoid; } @page { size:A4 portrait; margin:0; } }');
+  billParts.push('@media print { body { background:#fff; padding:0; margin:0; } .bill-page { box-shadow:none; padding:8mm 10mm; margin:0; width:100%; min-height:275mm; page-break-after:always; break-after:page; } .bill-page:last-child { page-break-after:avoid; break-after:avoid; } .page-border { min-height:265mm; padding:8mm 10mm; } @page { size:A4 portrait; margin:0; } }');
   billParts.push('</' + 'style></head><body>');
 
   // Loop render each page (Original / Copy)
@@ -8934,10 +8939,12 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<div class="bill-type' + (cp.isCopy ? ' copy' : '') + '"><div>บิลเงินสด / Cash Sale</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
     billParts.push('</div>');
 
-    // Info boxes
+    // Info card: Unified 2-column card with clean separation and zero empty gaps
     billParts.push('<div class="info-row">');
-    billParts.push('<div class="info-box">');
-    billParts.push('<div class="info-label">\u0e0a\u0e37\u0e48\u0e2d\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / \u0e1c\u0e39\u0e49\u0e0b\u0e37\u0e49\u0e2d (Customer / Buyer):</div>');
+
+    // Left Column: Customer & Billing Details
+    billParts.push('<div class="info-col-left">');
+    billParts.push('<div class="info-label">\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / \u0e1c\u0e39\u0e49\u0e0b\u0e37\u0e49\u0e2d (Customer / Buyer):</div>');
     if (companyName) {
       billParts.push('<div class="info-val">' + escapeHTML(companyName) + '</div>');
       if (customerName && customerName.toLowerCase() !== companyName.toLowerCase()) {
@@ -8955,21 +8962,29 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       const branchDisplay = (branchCode === '00000' || !branchCode || branchCode.toLowerCase().includes('head') || branchCode === 'สำนักงานใหญ่')
         ? ' (\u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e43\u0e2b\u0e0d\u0e48 / Head Office)'
         : ' (\u0e2a\u0e32\u0e02\u0e32: ' + escapeHTML(branchCode) + ')';
-      billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> ' + escapeHTML(taxId) + branchDisplay + '</div>');
+      billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> <span class="font-mono" style="font-weight:700">' + escapeHTML(taxId) + '</span>' + branchDisplay + '</div>');
     }
     if (phone) billParts.push('<div class="info-sub"><strong>\u0e42\u0e17\u0e23:</strong> ' + escapeHTML(phone) + '</div>');
-    if (billAddr) billParts.push('<div class="info-sub" style="margin-top:4px;line-height:1.5"><strong>\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e2d\u0e2d\u0e01\u0e1a\u0e34\u0e25:</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
+    if (billAddr) billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45"><strong>\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e2d\u0e2d\u0e01\u0e1a\u0e34\u0e25:</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
     if (shipAddr && shipAddr !== billAddr) {
-      billParts.push('<div class="info-sub" style="margin-top:3px;font-size:11px;color:#555"><strong>\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e08\u0e31\u0e14\u0e2a\u0e48\u0e07:</strong> ' + escapeHTML(shipAddr).split('\n').join(' ') + '</div>');
+      billParts.push('<div class="info-sub" style="margin-top:2px;font-size:11px;color:#64748b"><strong>\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e08\u0e31\u0e14\u0e2a\u0e48\u0e07:</strong> ' + escapeHTML(shipAddr).split('\n').join(' ') + '</div>');
     }
-    billParts.push('</div>'); // close info-box
-    billParts.push('<div class="info-box" style="text-align:right">');
-    billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.</span>&nbsp;&nbsp;<strong>' + (order.customer_social||order.order_no||'-') + '</strong></div>');
-    billParts.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date</span>&nbsp;&nbsp;<strong>' + thDate + '</strong></div>');
-    billParts.push('<div><span style="font-size:11px;color:#1a1a1a">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel</span>&nbsp;&nbsp;<strong>' + (order.channel||'-') + '</strong></div>');
-    if (order.customer_social) billParts.push('<div style="margin-top:5px"><span style="font-size:11px;color:#1a1a1a">\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 / Ref</span>&nbsp;&nbsp;<strong>' + order.customer_social + '</strong></div>');
-    if (order.tracking_no) billParts.push('<div style="margin-top:5px"><span style="font-size:11px;color:#1a1a1a">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking</span>&nbsp;&nbsp;<strong>' + order.tracking_no + '</strong></div>');
-    billParts.push('</div></div>');
+    billParts.push('</div>'); // close info-col-left
+
+    // Right Column: Document Details
+    billParts.push('<div class="info-col-right">');
+    billParts.push('<div class="info-label">\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 (Document Details):</div>');
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.customer_social||order.order_no||'-') + '</span></div>');
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date:</span><span class="doc-meta-val">' + thDate + '</span></div>');
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
+    if (order.customer_social) {
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 / Ref:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.customer_social) + '</span></div>');
+    }
+    if (order.tracking_no) {
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.tracking_no) + '</span></div>');
+    }
+    billParts.push('</div>'); // close info-col-right
+    billParts.push('</div>'); // close info-row
 
     // Table
     billParts.push('<table><thead><tr>');
