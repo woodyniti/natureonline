@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.58';
-const DISPLAY_APP_VERSION = 'v2.58';
+const CURRENT_APP_VERSION = 'sealthai-v2.60';
+const DISPLAY_APP_VERSION = 'v2.60';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1442,6 +1442,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div style="font-size:13px;color:#475569;margin-top:4px" id="ipl-subtitle">แสดงธุรกรรมการรับเข้า, ขายออก, ปรับยอดสต๊อก, และคืนสินค้าทั้งหมดแบบ Real-time</div>
       </div>
       <div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="openCostCorrectionModal(_currentPostingProductId)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700" title="ปรับแก้ต้นทุนสินค้ากรณีคีย์ยอดซื้อผิด">🛠️ ปรับแก้ต้นทุน</button>
         <button class="btn btn-secondary btn-sm" onclick="openQuickAdjustStockFromPosting()" style="background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700" title="ปรับยอดสต๊อกให้ตรงกับของจริง">⚖️ ปรับยอดสต๊อก</button>
         <button class="btn btn-secondary btn-sm" onclick="refreshCurrentInventoryPosting()" title="โหลดข้อมูลล่าสุด">🔄 รีเฟรช</button>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-inventory-posting')">✕ ปิด</button>
@@ -6448,7 +6449,8 @@ async function loadOrders() {
     rows = rows.filter(o => {
       // 1. ตรวจสอบข้อมูลหลักของออเดอร์ (เลขที่, ลูกค้า, ช่องทาง, โน้ต ฯลฯ)
       const baseFields = [
-        o.order_no, o.customer_name, o.customer_username, o.customer_social, o.customer_contact,
+        o.order_no, o.customer_name, o.company_name, o.tax_id, o.billing_address,
+        o.customer_username, o.customer_social, o.customer_contact,
         o.customer_phone, o.tracking_no, o.channel, o.payment_method,
         o.note, o.customer_address,
         o.employee_id ? empMap[o.employee_id] : ''
@@ -6647,9 +6649,11 @@ async function loadOrders() {
             ${hasPO?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${linkedPOs.map(po=>`<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;cursor:pointer;padding:1px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px" onclick="showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)" title="คลิกดูใบสั่งซื้อ PO: ${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')})">🛒 ${escapeHTML(po.po_no)}</span>`).join('')}</div>`:''}
           </td>
           <td class="col-customer">
-            <div style="font-weight:500">${o.customer_name||'-'}</div>
-            ${o.customer_username?`<div style="font-size:11px;color:var(--text3)">👤 ${o.customer_username}</div>`:''}
-            <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${o.employees.name}</span>`:''}</div>
+            ${o.company_name ? `<div style="font-weight:700;color:var(--text);font-size:13.5px">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
+            <div style="font-weight:${o.company_name?'500':'600'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'-')}</div>
+            ${o.customer_username?`<div style="font-size:11px;color:var(--text3)">👤 ${escapeHTML(o.customer_username)}</div>`:''}
+            ${o.customer_address ? `<div style="font-size:10.5px;color:var(--text3);margin-top:2px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(o.customer_address)}">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
+            <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${escapeHTML(o.employees.name)}</span>`:''}</div>
           </td>
           <td class="col-products" style="font-size:11px;color:var(--text3);line-height:1.45">${products}</td>
           <td class="col-money text-right" style="white-space:nowrap;font-size:12px;line-height:1.55">
@@ -6686,8 +6690,10 @@ async function loadOrders() {
     <div class="mobile-only" style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;cursor:pointer;box-shadow:0 1px 4px rgba(99,115,150,0.08)" onclick="viewOrder('${o.id}')">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
         <div>
-          <div style="font-weight:600;font-size:14px">${o.customer_name||'ไม่ระบุชื่อ'}</div>
-          <div style="font-size:11px;color:var(--text3)">${o.order_date} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
+          ${o.company_name ? `<div style="font-weight:700;font-size:14px;color:var(--text)">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
+          <div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>
+          ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
         </div>
         <div style="text-align:right">
           <div class="font-mono text-accent" style="font-size:15px;font-weight:700">${fmtB(o.total_amount)}</div>
@@ -8598,21 +8604,44 @@ async function saveOrderEdit(orderId) {
   };
   // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee
   let updErr;
-  for (let a = 0; a < 6; a++) {
+  for (let a = 0; a < 8; a++) {
     const r = await sb.from('orders').update(editPayload).eq('id', orderId);
     updErr = r.error;
     if (!updErr) break;
-    if (('company_name' in editPayload) && (updErr.message||'').includes('company_name')) { delete editPayload.company_name; continue; }
-    if (('tax_id' in editPayload) && (updErr.message||'').includes('tax_id')) { delete editPayload.tax_id; continue; }
-    if (('billing_address' in editPayload) && (updErr.message||'').includes('billing_address')) { delete editPayload.billing_address; continue; }
-    if (('shipping_fee' in editPayload) && (updErr.message||'').includes('shipping_fee')) {
+    const msg = (updErr.message || '').toLowerCase();
+    if (('company_name' in editPayload) && msg.includes('company_name')) {
+      if (editPayload.company_name) {
+        editPayload.note = [editPayload.note, `[บริษัท: ${editPayload.company_name}]`].filter(Boolean).join('\n');
+      }
+      delete editPayload.company_name;
+      continue;
+    }
+    if (('tax_id' in editPayload) && msg.includes('tax_id')) {
+      if (editPayload.tax_id) {
+        editPayload.note = [editPayload.note, `[Tax ID: ${editPayload.tax_id}]`].filter(Boolean).join('\n');
+      }
+      delete editPayload.tax_id;
+      continue;
+    }
+    if (('billing_address' in editPayload) && msg.includes('billing_address')) {
+      if (editPayload.billing_address) {
+        editPayload.note = [editPayload.note, `[ที่อยู่ออกบิล: ${editPayload.billing_address}]`].filter(Boolean).join('\n');
+      }
+      delete editPayload.billing_address;
+      continue;
+    }
+    if (('shipping_fee' in editPayload) && msg.includes('shipping_fee')) {
       editPayload.note = noteWithShippingFee(editPayload.note, editShippingFee);
       delete editPayload.shipping_fee;
       continue;
     }
     break;
   }
-  if (updErr) { toast('แก้ไขไม่สำเร็จ','error'); return; }
+  if (updErr) {
+    console.error('saveOrderEdit update error:', updErr);
+    toast('แก้ไขไม่สำเร็จ: ' + (updErr.message || 'เกิดข้อผิดพลาดในการบันทึก'), 'error');
+    return;
+  }
 
   // Auto-sync customer to database in background
   if (editPayload.customer_name && currentShop?.id && typeof autoSyncCustomerFromOrder === 'function') {
@@ -8959,15 +8988,16 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       }
     }
     if (taxId) {
-      const branchDisplay = (branchCode === '00000' || !branchCode || branchCode.toLowerCase().includes('head') || branchCode === 'สำนักงานใหญ่')
-        ? ' (\u0e2a\u0e33\u0e19\u0e31\u0e01\u0e07\u0e32\u0e19\u0e43\u0e2b\u0e0d\u0e48 / Head Office)'
-        : ' (\u0e2a\u0e32\u0e02\u0e32: ' + escapeHTML(branchCode) + ')';
+      const branchDisplay = (branchCode && branchCode !== '00000' && !branchCode.toLowerCase().includes('head') && branchCode !== 'สำนักงานใหญ่')
+        ? ' (สาขา: ' + escapeHTML(branchCode) + ')'
+        : '';
       billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> <span class="font-mono" style="font-weight:700">' + escapeHTML(taxId) + '</span>' + branchDisplay + '</div>');
     }
     if (phone) billParts.push('<div class="info-sub"><strong>\u0e42\u0e17\u0e23:</strong> ' + escapeHTML(phone) + '</div>');
-    if (billAddr) billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45"><strong>\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e2d\u0e2d\u0e01\u0e1a\u0e34\u0e25:</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
-    if (shipAddr && shipAddr !== billAddr) {
-      billParts.push('<div class="info-sub" style="margin-top:2px;font-size:11px;color:#64748b"><strong>\u0e17\u0e35\u0e48\u0e2d\u0e22\u0e39\u0e48\u0e08\u0e31\u0e14\u0e2a\u0e48\u0e07:</strong> ' + escapeHTML(shipAddr).split('\n').join(' ') + '</div>');
+    if (billAddr) {
+      billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
+    } else if (shipAddr) {
+      billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div>');
     }
     billParts.push('</div>'); // close info-col-left
 
@@ -11399,6 +11429,7 @@ function renderProductTable(prods) {
         '<td class="text-right" style="padding:7px 10px;font-family:var(--mono)">' +
           '<div style="font-size:12.5px"><span style="color:var(--text3);font-size:11px">ขาย: </span><b class="text-accent">'+fmtB(p.sell_price)+'</b></div>' +
           '<div style="font-size:11px;color:var(--text3);margin-top:1px">' +
+            '<span style="cursor:pointer;color:var(--text);font-weight:600" onclick="openCostCorrectionModal(&quot;'+p.id+'&quot;)" title="ต้นทุนปัจจุบัน '+fmtB(p.current_cost)+' (คลิกเพื่อปรับแก้ต้นทุน)">ทุน: <span style="color:var(--amber);text-decoration:underline dashed">'+fmtB(p.current_cost)+'</span> ✏️</span> · ' +
             'กำไร: <span class="'+(margin>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(margin)+'</span>' +
             ((p.purchase_price || p.purchase_price_usd) ? ' · <span title="ราคาซื้อมาตรฐาน">ซื้อ: '+(p.purchase_price?`฿${Number(p.purchase_price).toFixed(3)}`:'')+(p.purchase_price&&p.purchase_price_usd?' · ':'')+(p.purchase_price_usd?`$${Number(p.purchase_price_usd).toFixed(3)}`:'')+'</span>' : '') +
           '</div>' +
@@ -11465,6 +11496,10 @@ function renderProductTable(prods) {
         <div style="background:var(--bg4);border-radius:7px;padding:6px;text-align:center">
           <div style="font-size:10px;color:var(--text3);margin-bottom:2px">ราคาขาย</div>
           <div class="font-mono text-accent" style="font-size:13px;font-weight:600">${fmtB(p.sell_price)}</div>
+        </div>
+        <div style="background:var(--bg4);border-radius:7px;padding:6px;text-align:center;cursor:pointer" onclick="openCostCorrectionModal('${p.id}')" title="คลิกเพื่อปรับแก้ต้นทุน">
+          <div style="font-size:10px;color:var(--text3);margin-bottom:2px">ต้นทุน ✏️</div>
+          <div class="font-mono text-amber" style="font-size:13px;font-weight:600">${fmtB(p.current_cost)}</div>
         </div>
         <div style="background:var(--bg4);border-radius:7px;padding:6px;text-align:center">
           <div style="font-size:10px;color:var(--text3);margin-bottom:2px">กำไร/ชิ้น</div>
@@ -12098,8 +12133,19 @@ async function editProduct(id) {
         <div class="form-group"><label>ราคาซื้อ (THB / บาท)</label><input type="number" step="0.001" id="ep-buy" placeholder="0.000"></div>
         <div class="form-group"><label>ราคาซื้อ (USD / $)</label><input type="number" step="0.001" id="ep-buy-usd" placeholder="0.000"></div>
       </div>
-      <div class="form-group"><label>ต้นทุนเฉลี่ยปัจจุบัน <span style="font-size:11px;color:var(--text3)">(อ่านอย่างเดียว · แปรผันตามการรับเข้า)</span></label>
-        <input type="number" id="ep-cost" disabled style="opacity:0.6;background:var(--bg3)"></div>
+      <div class="form-group">
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          <span>ต้นทุนเฉลี่ยปัจจุบัน (THB / บาท)</span>
+          <span style="font-size:11px;color:var(--text3)">(แก้ไขได้กรณีคีย์ยอดซื้อผิด)</span>
+        </label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" step="0.0001" id="ep-cost" placeholder="0.0000" style="flex:1">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openCostCorrectionModal('${id}')" style="white-space:nowrap;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;padding:6px 10px" title="เครื่องมือปรับแก้ต้นทุน & คำนวณกำไรใหม่">🛠️ ปรับแก้ต้นทุน</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:3px">
+          💡 หากคีย์ยอดซื้อผิด สามารถแก้ไขตัวเลขในช่องนี้ได้โดยตรง ระบบจะอัพเดทต้นทุนและคำนวณกำไรใหม่ทันที
+        </div>
+      </div>
       <div class="form-group">
         <label>🖼️ รูปสินค้า</label>
         <div style="display:flex;gap:12px;align-items:flex-start">
@@ -12340,6 +12386,10 @@ async function updateProduct(id) {
   };
   const strOrNull = elId => (document.getElementById(elId)?.value || '').trim() || null;
 
+  const existingProd = allProducts.find(x => x.id === id);
+  const oldCost = Number(existingProd?.current_cost || 0);
+  const newCost = Number(document.getElementById('ep-cost')?.value) || 0;
+
   const updatePayload = {
     sku: sku,
     supplier_sku: document.getElementById('ep-supplier-sku').value.trim(),
@@ -12349,6 +12399,7 @@ async function updateProduct(id) {
     sell_price: Number(document.getElementById('ep-sell').value)||0,
     purchase_price: Number(document.getElementById('ep-buy')?.value) || 0,
     purchase_price_usd: Number(document.getElementById('ep-buy-usd')?.value) || 0,
+    current_cost: newCost,
     part_no: strOrNull('ep-part-no'),
     // Seal specs
     inner_diameter: numOrNull('ep-id'),
@@ -12380,7 +12431,7 @@ async function updateProduct(id) {
     updData = r.data; updErr = r.error;
     if (!updErr) break;
     let stripped = false;
-    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','purchase_price_usd','part_no'];
+    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','purchase_price_usd','part_no','current_cost'];
     for (const col of optionalCols) {
       if ((col in updatePayload) && (updErr.message||'').includes(col)) { delete updatePayload[col]; stripped = true; }
     }
@@ -12404,6 +12455,29 @@ async function updateProduct(id) {
     }
   } catch(e){}
 
+  // ซิงค์ต้นทุนไปยังประวัติรับเข้าสต๊อกและคำนวณออเดอร์ใหม่หากมีการแก้ต้นทุน
+  if (Math.abs(newCost - oldCost) > 0.0001) {
+    try {
+      const { data: inMoves } = await sb.from('stock_movements')
+        .select('id,lot_name')
+        .eq('product_id', id)
+        .eq('move_type', 'in');
+      if (inMoves && inMoves.length > 0) {
+        const initMv = inMoves.find(m => m.lot_name === 'สต๊อกเริ่มต้น') || (inMoves.length === 1 ? inMoves[0] : null);
+        if (initMv) {
+          await sb.from('stock_movements').update({ cost_per_unit: newCost }).eq('id', initMv.id);
+        }
+      }
+      const { data: oi } = await sb.from('order_items').select('order_id').eq('product_id', id);
+      const affectedOrderIds = [...new Set((oi || []).map(x => x.order_id).filter(Boolean))];
+      if (affectedOrderIds.length > 0) {
+        await recomputeOrderCosts(affectedOrderIds);
+      }
+    } catch(costSyncErr) {
+      console.warn('Cost sync warning:', costSyncErr);
+    }
+  }
+
   const idx = allProducts.findIndex(p => p.id === id);
   if (idx >= 0) Object.assign(allProducts[idx], updatePayload);
 
@@ -12411,6 +12485,197 @@ async function updateProduct(id) {
   toast('อัพเดทสินค้าและสเปกซีลสำเร็จ ✓','success');
   filterProducts();
   loadProducts();
+}
+
+// ── Modal ปรับแก้ต้นทุนสินค้า (Cost Correction Modal) ──
+async function openCostCorrectionModal(productId) {
+  if (!productId) return;
+  let p = allProducts.find(x => x.id === productId);
+  if (!p) {
+    try {
+      const { data } = await sb.from('products').select('*').eq('id', productId).single();
+      p = data;
+    } catch(e){}
+  }
+  if (!p) { toast('ไม่พบข้อมูลสินค้า', 'error'); return; }
+
+  document.getElementById('modal-cost-correction')?.remove();
+
+  const ov = document.createElement('div');
+  ov.className = 'modal-overlay open';
+  ov.id = 'modal-cost-correction';
+  ov.style.zIndex = '1300';
+
+  const curCost = Number(p.current_cost || 0);
+  const curBuy = Number(p.purchase_price || 0);
+  const curBuyUSD = Number(p.purchase_price_usd || 0);
+  const curSell = Number(p.sell_price || 0);
+  const curStock = Number(p.stock_qty || 0);
+
+  ov.innerHTML = `
+    <div class="modal" style="max-width:540px;width:95%;padding:22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1.5px solid var(--border);padding-bottom:10px">
+        <div style="font-size:16.5px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:6px">
+          <span>🛠️</span> <span>ปรับแก้ต้นทุนสินค้า (Cost Correction)</span>
+        </div>
+        <button onclick="document.getElementById('modal-cost-correction')?.remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">&times;</button>
+      </div>
+
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px 14px;margin-bottom:14px;font-size:13px">
+        <div style="font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px">\${escapeHTML(p.name)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;color:var(--text2);font-size:12px;align-items:center">
+          <span><strong>SKU:</strong> <span class="font-mono" style="color:var(--accent);font-weight:600">\${escapeHTML(p.sku || '-')}</span></span>
+          <span><strong>คงเหลือ:</strong> <b style="color:\${curStock>0?'var(--green)':'var(--red)'}">\${fmt(curStock)}</b> ชิ้น</span>
+          <span><strong>ราคาขาย:</strong> <b class="text-accent">\${fmtB(curSell)}</b></span>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--text3)">ต้นทุนเฉลี่ยปัจจุบันในระบบ:</span>
+          <span class="font-mono" style="font-size:16px;font-weight:800;color:var(--amber)">฿\${curCost.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="font-weight:700;color:var(--text);font-size:13px">💰 ต้นทุนใหม่ที่ถูกต้อง (บาท/ชิ้น) <span style="color:var(--red)">*</span></label>
+        <input type="number" step="0.0001" id="cc-new-cost" value="\${curCost || (curBuy > 0 ? curBuy : '')}" placeholder="ระบุต้นทุนที่ถูกต้อง เช่น 45.00" style="font-size:16px;font-weight:700;padding:8px 12px;width:100%">
+        <div style="font-size:11.5px;color:var(--text3);margin-top:3px">💡 กรณีคีย์ยอดซื้อรวมหรือตัวเลขผิด ให้กรอกต้นทุนเฉลี่ยต่อชิ้นที่ถูกต้องจริงที่นี่</div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:12px">
+        <label style="font-weight:600;font-size:12.5px;color:var(--text)">📝 เหตุผลในการปรับแก้ต้นทุน</label>
+        <input type="text" id="cc-reason" value="คีย์ยอดซื้อผิดพลาด / แก้ไขต้นทุน" placeholder="เช่น คีย์ยอดรวมบิลแทนราคาต่อหน่วย, พิมพ์ราคาผิด" style="width:100%">
+      </div>
+
+      <div style="background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.2);border-radius:8px;padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--text2)">
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" id="cc-sync-purchase-price" checked style="margin-top:2px">
+          <span><strong>อัพเดทราคาซื้อมาตรฐาน (Purchase Price THB)</strong> ให้เท่ากับยอดนี้ด้วย (เดิม: ฿\${curBuy.toFixed(3)})</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" id="cc-sync-movements" checked style="margin-top:2px">
+          <span><strong>ปรับปรุงประวัติรับเข้าสต๊อก (Stock Movements)</strong> ให้เป็นต้นทุนนี้ เพื่อป้องกันการคำนวณเฉลี่ยกลับไปยอดเดิม</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+          <input type="checkbox" id="cc-recompute-orders" checked style="margin-top:2px">
+          <span><strong>คำนวณกำไรของออเดอร์ในอดีตใหม่</strong> ให้สะท้อนกำไรตามต้นทุนที่ถูกต้อง</span>
+        </label>
+      </div>
+
+      <div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding-top:10px;border-top:1px solid var(--border)">
+        <button class="btn btn-secondary" onclick="document.getElementById('modal-cost-correction')?.remove()">ยกเลิก</button>
+        <button class="btn btn-primary" id="btn-save-cost-corr" onclick="saveCostCorrection('\${productId}')">💾 บันทึกปรับแก้ต้นทุน</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(ov);
+  ensureModalCloseButton(ov, () => ov.remove());
+  setTimeout(() => {
+    const inp = document.getElementById('cc-new-cost');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 120);
+}
+
+async function saveCostCorrection(productId) {
+  const btn = document.getElementById('btn-save-cost-corr');
+  const costInput = document.getElementById('cc-new-cost');
+  const newCost = Number(costInput?.value);
+
+  if (costInput?.value === '' || isNaN(newCost) || newCost < 0) {
+    toast('กรุณาระบุต้นทุนเป็นตัวเลขที่ถูกต้อง', 'error');
+    costInput?.focus();
+    return;
+  }
+
+  const reason = (document.getElementById('cc-reason')?.value || '').trim() || 'ปรับแก้ต้นทุน';
+  const syncBuy = !!document.getElementById('cc-sync-purchase-price')?.checked;
+  const syncMoves = !!document.getElementById('cc-sync-movements')?.checked;
+  const recomputeOrders = !!document.getElementById('cc-recompute-orders')?.checked;
+
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังบันทึก...'; }
+
+  try {
+    let p = allProducts.find(x => x.id === productId);
+    const oldCost = Number(p?.current_cost || 0);
+
+    const updateObj = { current_cost: newCost };
+    if (syncBuy) updateObj.purchase_price = newCost;
+
+    const { error: pErr } = await sb.from('products').update(updateObj).eq('id', productId);
+    if (pErr) throw pErr;
+
+    // อัพเดทในหน่วยความจำ allProducts
+    if (p) {
+      p.current_cost = newCost;
+      if (syncBuy) p.purchase_price = newCost;
+    }
+
+    // ซิงค์ประวัติรับเข้าสต๊อก
+    if (syncMoves) {
+      const { data: inMoves } = await sb.from('stock_movements')
+        .select('id,lot_name')
+        .eq('product_id', productId)
+        .eq('move_type', 'in');
+
+      if (inMoves && inMoves.length > 0) {
+        const initMv = inMoves.find(m => m.lot_name === 'สต๊อกเริ่มต้น') || (inMoves.length === 1 ? inMoves[0] : null);
+        if (initMv) {
+          await sb.from('stock_movements').update({ cost_per_unit: newCost }).eq('id', initMv.id);
+        } else {
+          for (const m of inMoves) {
+            await sb.from('stock_movements').update({ cost_per_unit: newCost }).eq('id', m.id);
+          }
+        }
+      }
+
+      // บันทึก audit log รายการปรับแก้ต้นทุน
+      await sb.from('stock_movements').insert({
+        shop_id: currentShop.id,
+        product_id: productId,
+        move_type: 'in',
+        qty: 0,
+        cost_per_unit: newCost,
+        other_cost: 0,
+        lot_name: 'ปรับแก้ต้นทุน',
+        note: `[ปรับแก้ต้นทุน] จาก \${oldCost.toFixed(2)} เป็น \${newCost.toFixed(2)} (\${reason})`,
+        move_date: today()
+      });
+    }
+
+    // คำนวณกำไรของออเดอร์ใหม่
+    if (recomputeOrders) {
+      const { data: oi } = await sb.from('order_items').select('order_id').eq('product_id', productId);
+      const affectedOrderIds = [...new Set((oi || []).map(x => x.order_id).filter(Boolean))];
+      if (affectedOrderIds.length > 0) {
+        await recomputeOrderCosts(affectedOrderIds);
+      }
+    }
+
+    // อัพเดทฟอร์มแก้ไขสินค้าถ้าเปิดอยู่
+    const epCost = document.getElementById('ep-cost');
+    if (epCost) epCost.value = newCost;
+    if (syncBuy) {
+      const epBuy = document.getElementById('ep-buy');
+      if (epBuy) epBuy.value = newCost;
+    }
+
+    document.getElementById('modal-cost-correction')?.remove();
+    toast(`ปรับแก้ต้นทุนเป็น ฿\${newCost.toFixed(2)} สำเร็จ ✓`, 'success');
+
+    // รีเฟรชตารางสินค้า
+    filterProducts();
+
+    // ถ้ารายการประวัติสต๊อกเปิดอยู่ ให้รีเฟรชด้วย
+    if (document.getElementById('modal-inventory-posting')?.classList.contains('open')) {
+      if (typeof viewProductInventoryPosting === 'function') viewProductInventoryPosting(productId);
+    }
+    if (document.getElementById('modal-product-history')) {
+      if (typeof openProductHistory === 'function') openProductHistory(productId);
+    }
+  } catch (err) {
+    console.error('Error saving cost correction:', err);
+    toast('เกิดข้อผิดพลาดในการบันทึกต้นทุน: ' + (err.message || err), 'error');
+    if (btn) { btn.disabled = false; btn.textContent = '💾 บันทึกปรับแก้ต้นทุน'; }
+  }
 }
 
 async function archiveProduct(id) {
@@ -13199,6 +13464,32 @@ async function saveStockBatch() {
     toast('จำนวนรับของ '+(overReceived.product_name||'สินค้า')+' เกินจำนวนคงเหลือใน '+(overReceived.po_no||'PO'),'error');
     return;
   }
+  // ── ตรวจสอบราคาต่อหน่วยผิดปกติ (เช่น เผลอใส่ราคารวมทั้งบิลแทนราคาต่อหน่วย) ──
+  const suspiciousCosts = [];
+  for (const r of valid) {
+    const prod = allProducts.find(p => p.id === r.product_id);
+    const enteredCost = Number(r.cost) || 0;
+    const qty = Number(r.qty) || 1;
+    if (prod && enteredCost > 0) {
+      const sellPrice = Number(prod.sell_price) || 0;
+      const prevCost = Number(prod.current_cost || prod.purchase_price) || 0;
+      
+      // ถ้าต้นทุนต่อหน่วยที่กรอก มากกว่าราคาขายเกิน 1.5 เท่า (และราคาขาย > 0) หรือมากกว่าต้นทุนเดิม 3 เท่าขึ้นไป
+      if (sellPrice > 0 && enteredCost > (sellPrice * 1.5)) {
+        suspiciousCosts.push(`• ${prod.name || prod.sku}: ทุนที่กรอก ฿${fmt(enteredCost)}/ชิ้น (ราคาขาย ฿${fmt(sellPrice)}) อาจเป็น "ยอดรวมทั้งบิล" หรือไม่?`);
+      } else if (prevCost > 0 && enteredCost > (prevCost * 3) && qty > 1) {
+        suspiciousCosts.push(`• ${prod.name || prod.sku}: ทุนที่กรอก ฿${fmt(enteredCost)}/ชิ้น (ทุนเดิม ฿${fmt(prevCost)}) สูงกว่าเดิมผิดปกติ`);
+      }
+    }
+  }
+
+  if (suspiciousCosts.length > 0) {
+    const warnMsg = '⚠️ ตรวจพบต้นทุนต่อหน่วยที่กรอกอาจมีความผิดปกติ:\n\n' +
+      suspiciousCosts.join('\n') +
+      '\n\n💡 หมายเหตุ: ช่องต้นทุนต้องใส่ "ต้นทุนต่อ 1 ชิ้น" ไม่ใช่ยอดรวมทั้งบิล\nต้องการยืนยันบันทึกด้วยต้นทุนนี้จริงหรือไม่?';
+    if (!confirm(warnMsg)) return;
+  }
+
   // ── ยืนยันก่อนบันทึก (กันกดผิด) ──
   const _grand = document.getElementById('s-grand-total')?.textContent || '';
   const selectedPOCount = new Set(valid.map(r=>r.po_id).filter(Boolean)).size;
@@ -13702,7 +13993,7 @@ async function openProductHistory(productId) {
         + '<span><strong>Part No:</strong> '+(p.part_no||'-')+'</span>'
         + '<span><strong>คงเหลือ:</strong> <strong style="color:'+(Number(p.stock_qty)>=0?'var(--green)':'var(--red)')+'">'+fmt(p.stock_qty)+'</strong></span>'
         + '<span><strong>ราคาขาย:</strong> <strong style="color:var(--accent)">'+fmtB(p.sell_price)+'</strong></span>'
-        + '<span><strong>ต้นทุนปัจจุบัน:</strong> <strong style="color:var(--amber)">'+fmtB(p.current_cost)+'</strong></span>'
+        + '<span><strong>ต้นทุนปัจจุบัน:</strong> <strong style="color:var(--amber);cursor:pointer" onclick="openCostCorrectionModal(\''+p.id+'\')" title="คลิกเพื่อปรับแก้ต้นทุน">'+fmtB(p.current_cost)+' ✏️</strong></span>'
         + (Number(p.sell_price||0) > 0 && Number(p.current_cost||0) > Number(p.sell_price||0)
             ? '<span style="background:rgba(239,68,68,0.12);color:var(--red);border-radius:4px;padding:2px 6px;font-weight:700">⚠️ ต้นทุน > ราคาขาย!</span>' : '')
       + '</div>'
@@ -13742,7 +14033,10 @@ async function openProductHistory(productId) {
     + '</div>'
     // footer
     + '<div style="margin-top:12px;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:10px">'
-      + '<button class="btn btn-secondary" id="btn-recalc-cost-'+p.id+'" onclick="recalcProductCost(\''+p.id+'\')" title="คำนวณต้นทุนเฉลี่ยใหม่จากรายการรับสินค้าทั้งหมด">🔄 คำนวณต้นทุนใหม่</button>'
+      + '<div style="display:flex;gap:8px">'
+        + '<button class="btn btn-secondary" onclick="openCostCorrectionModal(\''+p.id+'\')" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700" title="ปรับแก้ต้นทุนสินค้ากรณีคีย์ยอดซื้อผิด">🛠️ ปรับแก้ต้นทุน</button>'
+        + '<button class="btn btn-secondary" id="btn-recalc-cost-'+p.id+'" onclick="recalcProductCost(\''+p.id+'\')" title="คำนวณต้นทุนเฉลี่ยใหม่จากรายการรับสินค้าทั้งหมด">🔄 คำนวณต้นทุนใหม่</button>'
+      + '</div>'
       + '<button class="btn btn-secondary" onclick="closeProductHistory()">ปิด</button>'
     + '</div>'
     + '</div>';
@@ -14280,6 +14574,7 @@ async function saveInlineStock(id, field, rawVal) {
   }
 
   await sb.from('stock_movements').update(updateData).eq('id', id);
+  if (r?.product_id) await recalcStockQty([r.product_id]);
   toast('อัพเดทแล้ว ✓','success');
   loadStockHistory();
 }
@@ -14349,6 +14644,10 @@ async function saveStockEdit() {
     qty, cost_per_unit: cost,
     other_cost: Number(document.getElementById('se-other').value)||0
   }).eq('id', editingStockId);
+
+  if (old?.product_id) {
+    await recalcStockQty([old.product_id]);
+  }
 
   document.getElementById('modal-stock-edit')?.remove();
   toast('แก้ไขสำเร็จ ✓','success');
