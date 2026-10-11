@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.62';
-const DISPLAY_APP_VERSION = 'v2.62';
+const CURRENT_APP_VERSION = 'sealthai-v2.63';
+const DISPLAY_APP_VERSION = 'v2.63';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.62)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.62 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.63)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.63 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3548,7 +3548,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.62)">v2.62 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.63)">v2.63 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -8997,9 +8997,10 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
     billParts.push('<div><div class="shop-name">' + billShopName + '</div>');
     billParts.push('<div class="shop-info">' + shopAddr);
-    billParts.push('<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com');
-    if (shop.phone) billParts.push('<br>\u0e42\u0e17\u0e23: ' + shop.phone);
-    if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; \u0e40\u0e25\u0e02\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35: ' + shop.tax_id);
+    billParts.push('<br>Line OA : @sealthai');
+    if (shop.phone) billParts.push(' &nbsp;|&nbsp; โทร: ' + shop.phone);
+    if (shop.tax_id) billParts.push(' &nbsp;|&nbsp; เลขผู้เสียภาษี: ' + shop.tax_id);
+    billParts.push('<br>Website : www.sealthai.com &nbsp;|&nbsp; www.oilsealthai.com &nbsp;|&nbsp; www.oilsealthailand.com');
     billParts.push('</div></div></div>');
     billParts.push('<div class="bill-type' + (cp.isCopy ? ' copy' : '') + '"><div>บิลเงินสด / Cash Sale</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
     billParts.push('</div>');
@@ -16858,7 +16859,7 @@ function printLoanContract(loanId) {
       <div class="header">
         <div class="company-title">${escapeHTML(companyName)}</div>
         <div style="font-size:11.5px;color:#444">${escapeHTML(shopAddr)}</div>
-        <div style="font-size:11.5px;color:#444">Line OA : @sealthai | Website : www.sealthai.com</div>
+        <div style="font-size:11.5px;color:#444">Line OA : @sealthai | Website : www.sealthai.com | www.oilsealthai.com | www.oilsealthailand.com</div>
         <div class="contract-title">หนังสือสัญญากู้ยืมเงินพนักงาน (Employee Loan Agreement)</div>
       </div>
 
@@ -18811,9 +18812,10 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     bp.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
     bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
     bp.push('<div class="shop-info">'+shopAddr);
-    bp.push('<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com');
-    if (shop.phone) bp.push('<br>โทร: ' + shop.phone);
+    bp.push('<br>Line OA : @sealthai');
+    if (shop.phone) bp.push(' &nbsp;|&nbsp; โทร: ' + shop.phone);
     if (shop.tax_id) bp.push(' &nbsp;|&nbsp; เลขผู้เสียภาษี: ' + shop.tax_id);
+    bp.push('<br>Website : www.sealthai.com &nbsp;|&nbsp; www.oilsealthai.com &nbsp;|&nbsp; www.oilsealthailand.com');
     bp.push('</div></div></div>');
     bp.push('<div class="doc-type' + (cp.isCopy ? ' copy' : '') + '"><div>ใบเสนอราคา / Quotation</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
     bp.push('</div>');
@@ -22398,7 +22400,7 @@ async function printPO(poId) {
   let poShopName = (shop.name || 'sealthai').toUpperCase();
   if (!poShopName.endsWith('.COM')) poShopName += '.COM';
   bp.push('<div class="hd"><div><div class="shop-name">' + poShopName + '</div>');
-  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(shop).split('\n').join('<br>')+'<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com</div></div>');
+  bp.push('<div style="font-size:11px;color:#555">'+getShopAddress(shop).split('\n').join('<br>')+'<br>Line OA : @sealthai &nbsp;|&nbsp; Website : www.sealthai.com &nbsp;|&nbsp; www.oilsealthai.com &nbsp;|&nbsp; www.oilsealthailand.com</div></div>');
   bp.push('<div class="doc-type"><div>ใบสั่งซื้อ / Purchase Order</div><div class="doc-sub">( ต้นฉบับ / ORIGINAL )</div></div></div>');
   bp.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">');
   bp.push('<div style="border:1px solid #bbb;border-radius:4px;padding:8px"><div style="font-size:10px;color:#777">Supplier / ผู้ขาย</div><div style="font-weight:600">'+po.supplier_name+'</div>'+(po.supplier_contact?'<div style="font-size:11px">'+po.supplier_contact+'</div>':'')+' </div>');
@@ -37399,7 +37401,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.62', date:'2026-10-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'บันทึกและแสดงชื่อบริษัทในออเดอร์ & ฐานข้อมูล (v2.62)', items:[
+    { v:'2.63', date:'2026-10-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มข้อมูลเว็บไซต์ในหัวกระดาษเอกสาร (v2.63)', items:[
+      '🌐 <b>Website Header Information:</b> เพิ่มข้อมูลเว็บไซต์ <code>www.sealthai.com | www.oilsealthai.com | www.oilsealthailand.com</code> ในหัวกระดาษของบิลเงินสด (Cash Sale), ใบเสนอราคา (Quotation), ใบสั่งซื้อ (Purchase Order) และสัญญากู้ยืมเงิน',
+      '📄 <b>Clean Document Layout:</b> จัดระเบียบแถวข้อมูล Line OA, เบอร์โทรศัพท์, เลขผู้เสียภาษี และเว็บไซต์ให้สวยงามเป็นสัดส่วน ไม่ทับซ้อนกัน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันเป็น v2.63 และล้างแคชระบบอัตโนมัติ'
+    ]},
+    { v:'2.62', date:'2026-10-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'บันทึกและแสดงชื่อบริษัทในออเดอร์ & ฐานข้อมูล (v2.62)', items:[
       '🏢 <b>Two-Way Company Name Persistence:</b> ปรับปรุงให้บันทึกและดึง "ชื่อบริษัท / ชื่อออกบิล" แสดงในช่องบริษัทของหน้าต่างรายละเอียดออเดอร์ได้ถูกต้อง 100% แม้ปิดแล้วเปิดเข้ามาใหม่',
       '🏷️ <b>Smart Note Tag Extraction:</b> ดึงชื่อบริษัทที่ฝังอยู่ในหมายเหตุขึ้นมาแสดงในช่องชื่อบริษัทอัตโนมัติ และซ่อนแท็กระบบออกจากช่องหมายเหตุให้อ่านง่ายสะอาดตา',
       '🖨️ <b>Receipt & Thermal Slip Integration:</b> หน้าพิมพ์บิลเงินสด ใบเสร็จรับเงิน และใบปะหน้าพัสดุดึงชื่อบริษัทและข้อมูลผู้ติดต่อมาแสดงผลครบถ้วน',
