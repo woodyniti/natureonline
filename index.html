@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.61';
-const DISPLAY_APP_VERSION = 'v2.61';
+const CURRENT_APP_VERSION = 'sealthai-v2.62';
+const DISPLAY_APP_VERSION = 'v2.62';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.61)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.61 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.62)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.62 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2251,8 +2251,42 @@ function escapeHTML(value) {
   })[ch]);
 }
 const SHIPPING_FEE_NOTE_RE = /(?:^|\n)\[\[SHIPPING_FEE:([0-9]+(?:\.[0-9]+)?)\]\](?=\n|$)/i;
+const COMPANY_NOTE_RE = /(?:^|\n)\[(?:บริษัท|Company):\s*([^\]]+)\](?=\n|$)/i;
+const COMPANY_NOTE_GLOBAL_RE = /(?:^|\n)\[(?:บริษัท|Company):\s*[^\]]+\](?=\n|$)/gi;
+
 function cleanOrderNote(note) {
-  return String(note || '').replace(SHIPPING_FEE_NOTE_RE, '').trim();
+  return String(note || '')
+    .replace(SHIPPING_FEE_NOTE_RE, '')
+    .replace(COMPANY_NOTE_GLOBAL_RE, '')
+    .trim();
+}
+
+function getOrderCompanyName(order, customer = null) {
+  if (order?.company_name && String(order.company_name).trim()) {
+    return String(order.company_name).trim();
+  }
+  const match = String(order?.note || '').match(COMPANY_NOTE_RE);
+  if (match && match[1]?.trim()) {
+    return match[1].trim();
+  }
+  if (customer?.company_name && String(customer.company_name).trim()) {
+    return String(customer.company_name).trim();
+  }
+  if (customer?.customer_type === 'company' && customer?.name) {
+    return String(customer.name).trim();
+  }
+  return '';
+}
+
+function noteWithCompanyAndShipping(note, companyName, shippingFee) {
+  let clean = cleanOrderNote(note);
+  const comp = (companyName || '').trim();
+  const fee = Math.max(0, Number(shippingFee) || 0);
+  const parts = [];
+  if (clean) parts.push(clean);
+  if (comp) parts.push(`[บริษัท: ${comp}]`);
+  if (fee > 0) parts.push(`[[SHIPPING_FEE:${fee}]]`);
+  return parts.join('\n');
 }
 function getOrderShippingFee(order) {
   const match = String(order?.note || '').match(SHIPPING_FEE_NOTE_RE);
@@ -2372,9 +2406,8 @@ function getPOPurchaseAmounts(po) {
 }
 
 function noteWithShippingFee(note, shippingFee) {
-  const clean = cleanOrderNote(note);
-  const fee = Math.max(0, Number(shippingFee) || 0);
-  return fee > 0 ? [clean, `[[SHIPPING_FEE:${fee}]]`].filter(Boolean).join('\n') : clean;
+  const comp = (String(note || '').match(COMPANY_NOTE_RE) || [])[1] || '';
+  return noteWithCompanyAndShipping(note, comp, shippingFee);
 }
 function today() { return new Date().toISOString().slice(0,10); }
 function localDateString(d) {
@@ -3515,7 +3548,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.61)">v2.61 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.62)">v2.62 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6437,9 +6470,10 @@ async function loadOrders() {
     if (p.sku) prodBySku[p.sku.trim().toLowerCase()] = p;
   });
 
-  // merge ข้อมูลพนักงานเข้าไป
+  // merge ข้อมูลพนักงานและชื่อบริษัทเข้าไป
   let rows = (ordRes.data||[]).map(o => ({
     ...o,
+    company_name: getOrderCompanyName(o),
     employees: o.employee_id ? { name: empMap[o.employee_id] || '-' } : null
   }));
 
@@ -7862,7 +7896,7 @@ async function saveOrder() {
     tracking_no: document.getElementById('o-track').value,
     doc_status: 'confirmed',
     shipping_status: document.getElementById('o-status').value,
-    note: document.getElementById('o-note').value,
+    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee),
     employee_id: empId,
     bill_discount: billDisc,
     bill_discount_type: billDiscType,
@@ -7880,7 +7914,6 @@ async function saveOrder() {
     if (('tax_id' in orderPayload) && (error.message||'').includes('tax_id')) { delete orderPayload.tax_id; continue; }
     if (('billing_address' in orderPayload) && (error.message||'').includes('billing_address')) { delete orderPayload.billing_address; continue; }
     if (('shipping_fee' in orderPayload) && (error.message||'').includes('shipping_fee')) {
-      orderPayload.note = noteWithShippingFee(orderPayload.note, shippingFee);
       delete orderPayload.shipping_fee;
       continue;
     }
@@ -7903,7 +7936,8 @@ async function saveOrder() {
 
   // Auto-sync customer to database in background
   if (orderPayload.customer_name && currentShop?.id) {
-    autoSyncCustomerFromOrder(orderPayload, order.id).catch(()=>{});
+    const oCompanyVal = (document.getElementById('o-company')?.value || '').trim() || null;
+    autoSyncCustomerFromOrder({ ...orderPayload, company_name: oCompanyVal }, order.id).catch(()=>{});
   }
 
   if (orderSourceQuoteId) {
@@ -8460,7 +8494,7 @@ async function viewOrder(orderId) {
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
           <div><span style="color:var(--text3);font-size:12px">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
-            <input id="ed-company" value="${(order.company_name||'').replace(/"/g,'&quot;')}" placeholder="ชื่อบริษัท / ชื่อออกบิล (ไม่บังคับ)" style="${iStyle};margin-top:3px">
+            <input id="ed-company" value="${(getOrderCompanyName(order)).replace(/"/g,'&quot;')}" placeholder="ชื่อบริษัท / ชื่อออกบิล (ไม่บังคับ)" style="${iStyle};margin-top:3px">
           </div>
           <div><span style="color:var(--text3);font-size:12px">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px">(ไม่บังคับ)</span></span>
             <input id="ed-tax-id" value="${(order.tax_id||'').replace(/"/g,'&quot;')}" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="${iStyle};margin-top:3px">
@@ -8579,6 +8613,11 @@ async function saveOrderEdit(orderId) {
 
   // อัพเดท order totals + discount
   const edEmpVal = document.getElementById('ed-emp')?.value || null;
+  const editCompanyName = (document.getElementById('ed-company')?.value || '').trim();
+  const editTaxId = (document.getElementById('ed-tax-id')?.value || '').trim();
+  const editBillingAddress = document.getElementById('ed-billing-address')?.value || '';
+  const editRawNote = document.getElementById('ed-note')?.value || '';
+
   const editPayload = {
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
     order_date:       document.getElementById('ed-date')?.value || today(),
@@ -8588,14 +8627,14 @@ async function saveOrderEdit(orderId) {
     customer_contact: document.getElementById('ed-contact')?.value || '',
     customer_phone:   document.getElementById('ed-phone')?.value   || '',
     customer_address: document.getElementById('ed-address')?.value || '',
-    company_name:     (document.getElementById('ed-company')?.value || '').trim() || null,
-    tax_id:           (document.getElementById('ed-tax-id')?.value || '').trim() || null,
-    billing_address:  document.getElementById('ed-billing-address')?.value || '',  // ที่อยู่ออกบิล
+    company_name:     editCompanyName || null,
+    tax_id:           editTaxId || null,
+    billing_address:  editBillingAddress,  // ที่อยู่ออกบิล
     channel: document.getElementById('ed-ch').value,
     tracking_no: document.getElementById('ed-track').value,
     payment_method: document.getElementById('ed-pay').value,
     shipping_status: document.getElementById('ed-status').value,
-    note: document.getElementById('ed-note').value,
+    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee),
     employee_id: edEmpVal || null,
     bill_discount: editBillDisc,
     bill_discount_type: editBillDiscType,
@@ -8611,9 +8650,6 @@ async function saveOrderEdit(orderId) {
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
     if (('company_name' in editPayload) && msg.includes('company_name')) {
-      if (editPayload.company_name) {
-        editPayload.note = [editPayload.note, `[บริษัท: ${editPayload.company_name}]`].filter(Boolean).join('\n');
-      }
       delete editPayload.company_name;
       continue;
     }
@@ -8632,7 +8668,6 @@ async function saveOrderEdit(orderId) {
       continue;
     }
     if (('shipping_fee' in editPayload) && msg.includes('shipping_fee')) {
-      editPayload.note = noteWithShippingFee(editPayload.note, editShippingFee);
       delete editPayload.shipping_fee;
       continue;
     }
@@ -8646,7 +8681,7 @@ async function saveOrderEdit(orderId) {
 
   // Auto-sync customer to database in background
   if (editPayload.customer_name && currentShop?.id && typeof autoSyncCustomerFromOrder === 'function') {
-    autoSyncCustomerFromOrder(editPayload, orderId).catch(()=>{});
+    autoSyncCustomerFromOrder({ ...editPayload, company_name: editCompanyName }, orderId).catch(()=>{});
   }
 
   // save order items: delete old, insert new
@@ -8819,7 +8854,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     if (c) customer = c;
   }
 
-  const companyName = (order.company_name || customer?.company_name || (customer?.customer_type === 'company' ? customer?.name : '') || '').trim();
+  const companyName = (getOrderCompanyName(order, customer) || '').trim();
   const customerName = (order.customer_name || customer?.name || '').trim();
   const taxId = (order.tax_id || customer?.tax_id || '').trim();
   const branchCode = (order.branch_code || customer?.branch_code || '00000').trim();
@@ -28279,8 +28314,9 @@ async function openShippingLabelModal(orderId) {
   const shopAddr = DEFAULT_SHOP_ADDRESS;
   
   // Prepare Receiver Address (prefill from order)
-  const custName = (order.company_name ? (order.company_name + (order.customer_name && order.customer_name !== order.company_name ? ` (${order.customer_name})` : '')) : (order.customer_name || '-'));
-  const custContact = order.customer_contact || (order.company_name && order.customer_name && order.customer_name !== order.company_name ? order.customer_name : '');
+  const comp = getOrderCompanyName(order);
+  const custName = (comp ? (comp + (order.customer_name && order.customer_name !== comp ? ` (${order.customer_name})` : '')) : (order.customer_name || '-'));
+  const custContact = order.customer_contact || (comp && order.customer_name && order.customer_name !== comp ? order.customer_name : '');
   const custPhone = order.customer_phone || '-';
   const custAddr = order.customer_address || order.billing_address || '';
 
@@ -36848,7 +36884,7 @@ async function openInventoryDocViewer(params) {
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:12.5px">
           <div>
             <span style="color:#64748b">ชื่อลูกค้า / บริษัท:</span>
-            <strong style="color:#0f172a">${order.company_name ? `${escapeHTML(order.company_name)} ${order.customer_name && order.customer_name !== order.company_name ? `<span style="font-weight:normal;color:#64748b">(${escapeHTML(order.customer_name)})</span>` : ''}` : escapeHTML(order.customer_name || 'ลูกค้าทั่วไป')}</strong>
+            <strong style="color:#0f172a">${getOrderCompanyName(order) ? `${escapeHTML(getOrderCompanyName(order))} ${order.customer_name && order.customer_name !== getOrderCompanyName(order) ? `<span style="font-weight:normal;color:#64748b">(${escapeHTML(order.customer_name)})</span>` : ''}` : escapeHTML(order.customer_name || 'ลูกค้าทั่วไป')}</strong>
           </div>
           ${order.tax_id ? `<div><span style="color:#64748b">Tax ID:</span> <span style="color:#0f172a;font-family:var(--mono);font-weight:600">${escapeHTML(order.tax_id)}</span></div>` : ''}
           <div><span style="color:#64748b">เบอร์โทร/ผู้ติดต่อ:</span> <span style="color:#0f172a">${escapeHTML(order.customer_phone || order.customer_contact || '-')}</span></div>
@@ -37363,7 +37399,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.61', date:'2026-10-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เลขที่เอกสารหน้าบิล & แก้ไขวันที่เอกสาร (v2.61)', items:[
+    { v:'2.62', date:'2026-10-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'บันทึกและแสดงชื่อบริษัทในออเดอร์ & ฐานข้อมูล (v2.62)', items:[
+      '🏢 <b>Two-Way Company Name Persistence:</b> ปรับปรุงให้บันทึกและดึง "ชื่อบริษัท / ชื่อออกบิล" แสดงในช่องบริษัทของหน้าต่างรายละเอียดออเดอร์ได้ถูกต้อง 100% แม้ปิดแล้วเปิดเข้ามาใหม่',
+      '🏷️ <b>Smart Note Tag Extraction:</b> ดึงชื่อบริษัทที่ฝังอยู่ในหมายเหตุขึ้นมาแสดงในช่องชื่อบริษัทอัตโนมัติ และซ่อนแท็กระบบออกจากช่องหมายเหตุให้อ่านง่ายสะอาดตา',
+      '🖨️ <b>Receipt & Thermal Slip Integration:</b> หน้าพิมพ์บิลเงินสด ใบเสร็จรับเงิน และใบปะหน้าพัสดุดึงชื่อบริษัทและข้อมูลผู้ติดต่อมาแสดงผลครบถ้วน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันเป็น v2.62 และล้างแคชระบบอัตโนมัติ'
+    ]},
+    { v:'2.61', date:'2026-10-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เลขที่เอกสารหน้าบิล & แก้ไขวันที่เอกสาร (v2.61)', items:[
       '📄 <b>เลขที่ / No. หน้าบิล:</b> แสดงเลขที่ออเดอร์ของระบบ (Order No.) เป็นหลัก และแยกแสดงเลขอ้างอิงช้อปปี้ในช่อง "อ้างอิง / Ref"',
       '📅 <b>แก้ไขวันที่เอกสารย้อนหลัง:</b> หน้าแก้ไขออเดอร์สามารถเลือกเปลี่ยนวันที่เอกสาร (Order Date) ได้ และซิงค์ประวัติสต๊อกตามวันที่ใหม่อัตโนมัติ',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันเป็น v2.61 และล้างแคชระบบอัตโนมัติ'
