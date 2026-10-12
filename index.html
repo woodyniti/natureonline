@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.64';
-const DISPLAY_APP_VERSION = 'v2.64';
+const CURRENT_APP_VERSION = 'sealthai-v2.65';
+const DISPLAY_APP_VERSION = 'v2.65';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.64)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.64 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.65 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.64 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.65 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.64)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.64 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.65 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.64)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.64 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.65 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3584,7 +3584,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.64)">v2.64 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.65)">v2.65 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -13310,8 +13310,10 @@ function selectStockProduct(rowIdx, productId, productName) {
 // ── Stock Currency & Labels ─────────────────────────────
 window.toggleStockCurrency = function() {
   const cur = document.getElementById('s-currency')?.value || 'THB';
+  const hasUsdLanded = (landedCostRows || []).some(r => r && r.currency === 'USD' && Number(r.amount) > 0);
+  const hasUsdRowOther = (stockRows || []).some(r => r && r.other_cur === 'USD' && Number(r.other) > 0);
   const exDiv = document.getElementById('s-exrate-div');
-  if (exDiv) exDiv.style.display = cur === 'USD' ? 'block' : 'none';
+  if (exDiv) exDiv.style.display = (cur === 'USD' || hasUsdLanded || hasUsdRowOther) ? 'block' : 'none';
   updateStockLabels();
   updateStockTotal();
 };
@@ -13322,22 +13324,27 @@ function updateStockLabels() {
     if (!r) return;
     const costLbl = document.getElementById('sr-cost-lbl-' + i);
     if (costLbl) costLbl.textContent = cur === 'USD' ? 'ทุน/ชิ้น (USD)' : 'ทุน/ชิ้น (฿)';
-    const otherLbl = document.getElementById('sr-other-lbl-' + i);
-    if (otherLbl) otherLbl.textContent = cur === 'USD' ? 'ค่าส่ง/อื่น (USD)' : 'ค่าส่ง/อื่น (฿)';
+    const otherCurSel = document.getElementById('sr-other-cur-' + i);
+    if (otherCurSel && !r.other_cur_custom) {
+      r.other_cur = cur;
+      otherCurSel.value = cur;
+    }
   });
 }
 
 // ── Stock rows ─────────────────────────────────────────
 function addStockRow(initial={}) {
   const idx = stockRows.length;
+  const cur = document.getElementById('s-currency')?.value || 'THB';
   const row = {
     product_id:'', product_name:'', qty:0, cost:0, other:0,
+    other_cur: cur,
     po_id:null, po_item_id:null, po_no:'', supplier_name:'', remaining:null, enabled:true,
     ...initial,
   };
+  if (!row.other_cur) row.other_cur = cur;
   stockRows.push(row);
 
-  const cur = document.getElementById('s-currency')?.value || 'THB';
   const wrap = document.getElementById('stock-rows-wrap');
   if (!wrap) return;
   const div = document.createElement('div');
@@ -13370,9 +13377,16 @@ function addStockRow(initial={}) {
           oninput="stockRows[${idx}].cost=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
-      <div style="display:flex;flex-direction:column;min-width:90px;flex:1">
-        <label id="sr-other-lbl-${idx}" style="font-size:12px;color:var(--text3);margin-bottom:4px">ค่าส่ง/อื่น (${cur==='USD'?'USD':'฿'})</label>
+      <div style="display:flex;flex-direction:column;min-width:105px;flex:1">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <label id="sr-other-lbl-${idx}" style="font-size:12px;color:var(--text3)">ค่าส่ง/อื่น</label>
+          <select id="sr-other-cur-${idx}" onchange="stockRows[${idx}].other_cur=this.value; stockRows[${idx}].other_cur_custom=true; toggleStockCurrency(); updateStockTotal();" style="font-size:11px;font-weight:700;padding:0 3px;height:20px;border:1px solid var(--border2);border-radius:4px;background:#fff;cursor:pointer;color:var(--text)">
+            <option value="THB" ${(row.other_cur||cur)==='THB'?'selected':''}>฿</option>
+            <option value="USD" ${(row.other_cur||cur)==='USD'?'selected':''}>$</option>
+          </select>
+        </div>
         <input type="number" value="${Number(row.other)||0}" min="0" step="any" id="sr-other-${idx}"
+          placeholder="${(row.other_cur||cur)==='USD'?'$0.00':'0.00'}"
           oninput="stockRows[${idx}].other=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
@@ -13431,7 +13445,19 @@ function updateStockTotal() {
 
   stockRows.forEach((r,i) => {
     if (!r) return;
-    const rawTotal = (Number(r.qty)||0) * (Number(r.cost)||0) + (Number(r.other)||0);
+    const rQty = Number(r.qty) || 0;
+    const rCost = Number(r.cost) || 0;
+    const rOther = Number(r.other) || 0;
+    const otherCur = r.other_cur || cur;
+
+    let otherInCur = rOther;
+    if (cur === 'USD' && otherCur === 'THB') {
+      otherInCur = rate > 0 ? (rOther / rate) : 0;
+    } else if (cur === 'THB' && otherCur === 'USD') {
+      otherInCur = rOther * rate;
+    }
+
+    const rawTotal = (rQty * rCost) + otherInCur;
     const thbTotal = cur === 'USD' ? rawTotal * rate : rawTotal;
     const el = document.getElementById('sr-total-'+i);
     if (el) {
@@ -13443,12 +13469,40 @@ function updateStockTotal() {
     }
   });
 
-  const goodsRaw = stockRows.filter(r=>r&&r.enabled!==false).reduce((s,r)=>s+(Number(r.qty)||0)*(Number(r.cost)||0)+(Number(r.other)||0),0);
+  const goodsRaw = stockRows.filter(r=>r&&r.enabled!==false).reduce((s,r)=>{
+    const rQty = Number(r.qty) || 0;
+    const rCost = Number(r.cost) || 0;
+    const rOther = Number(r.other) || 0;
+    const otherCur = r.other_cur || cur;
+    let otherInCur = rOther;
+    if (cur === 'USD' && otherCur === 'THB') {
+      otherInCur = rate > 0 ? (rOther / rate) : 0;
+    } else if (cur === 'THB' && otherCur === 'USD') {
+      otherInCur = rOther * rate;
+    }
+    return s + (rQty * rCost) + otherInCur;
+  }, 0);
   const goodsTotal = cur === 'USD' ? goodsRaw * rate : goodsRaw;
-  const landedTotal = (landedCostRows||[]).reduce((s,r)=>s+Number(r.amount||0),0);
+
+  // Landed Cost: convert USD rows to THB
+  let landedTotalTHB = 0;
+  let landedTotalUSD = 0;
+  let hasUsdLanded = false;
+  (landedCostRows || []).forEach(r => {
+    const amt = Number(r.amount) || 0;
+    const rowCur = r.currency || 'THB';
+    if (rowCur === 'USD') {
+      hasUsdLanded = true;
+      landedTotalUSD += amt;
+      landedTotalTHB += amt * rate;
+    } else {
+      landedTotalTHB += amt;
+    }
+  });
+
   const vatOn   = document.getElementById('s-vat-on')?.checked || false;
   const vatType = document.getElementById('s-vat-type')?.value || 'excluded';
-  const baseAmt = goodsTotal + landedTotal;
+  const baseAmt = goodsTotal + landedTotalTHB;
   let vatAmt = 0;
   if (vatOn) {
     vatAmt = vatType === 'excluded' ? baseAmt * 0.07 : baseAmt - (baseAmt / 1.07);
@@ -13456,13 +13510,20 @@ function updateStockTotal() {
   const grandTotal = vatType === 'excluded' ? baseAmt + vatAmt : baseAmt;
   const vatRow = document.getElementById('s-vat-row');
   if (vatRow) vatRow.style.display = vatOn ? 'block' : 'none';
-  const gtEl=document.getElementById('s-goods-total');
-  if(gtEl) {
+  const gtEl = document.getElementById('s-goods-total');
+  if (gtEl) {
     gtEl.innerHTML = cur === 'USD' ? `${fmtB(goodsTotal)} <span style="font-size:11px;color:var(--text3)">($${goodsRaw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>` : fmtB(goodsTotal);
   }
-  const ltEl=document.getElementById('s-landed-total'); if(ltEl) ltEl.textContent=fmtB(landedTotal);
-  const vaEl=document.getElementById('s-vat-amt');      if(vaEl) vaEl.textContent=fmtB(vatAmt);
-  const grEl=document.getElementById('s-grand-total');  if(grEl) grEl.textContent=fmtB(grandTotal);
+  const ltEl = document.getElementById('s-landed-total');
+  if (ltEl) {
+    if (hasUsdLanded) {
+      ltEl.innerHTML = `${fmtB(landedTotalTHB)} <span style="font-size:11px;color:var(--text3)">($${landedTotalUSD.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>`;
+    } else {
+      ltEl.textContent = fmtB(landedTotalTHB);
+    }
+  }
+  const vaEl = document.getElementById('s-vat-amt');      if(vaEl) vaEl.textContent=fmtB(vatAmt);
+  const grEl = document.getElementById('s-grand-total');  if(grEl) grEl.textContent=fmtB(grandTotal);
 }
 
 // ── Landed Cost rows state ─────────────────────────────
@@ -13473,7 +13534,8 @@ const LANDED_COST_TYPES = [
 ];
 
 function addLandedCostRow() {
-  landedCostRows.push({ type: 'ค่าขนส่ง', amount: 0, note: '' });
+  const cur = document.getElementById('s-currency')?.value || 'THB';
+  landedCostRows.push({ type: 'ค่าขนส่ง', amount: 0, currency: cur, note: '' });
   renderLandedCostRows();
 }
 
@@ -13481,13 +13543,18 @@ function renderLandedCostRows() {
   const wrap = document.getElementById('landed-cost-rows');
   if (!wrap) return;
   wrap.innerHTML = '';
+  const currentCur = document.getElementById('s-currency')?.value || 'THB';
+  const exRate = Number(document.getElementById('s-exrate')?.value || 35);
+
   landedCostRows.forEach((row, i) => {
+    if (!row.currency) row.currency = currentCur;
+
     const div = document.createElement('div');
-    div.style.cssText = 'display:grid;grid-template-columns:1.5fr 1fr auto;gap:8px;align-items:center';
+    div.style.cssText = 'display:grid;grid-template-columns:1.3fr 95px 1fr auto;gap:8px;align-items:center';
 
     // type select
     const sel = document.createElement('select');
-    sel.style.cssText = 'background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:14px';
+    sel.style.cssText = 'background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13.5px';
     LANDED_COST_TYPES.forEach(t => {
       const o = document.createElement('option');
       o.value = t; o.textContent = t;
@@ -13496,20 +13563,66 @@ function renderLandedCostRows() {
     });
     sel.onchange = () => { landedCostRows[i].type = sel.value; };
 
-    // amount input
+    // currency select
+    const curSel = document.createElement('select');
+    curSel.style.cssText = 'background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 6px;font-size:12.5px;font-weight:700';
+    [
+      { id: 'THB', label: 'THB (฿)' },
+      { id: 'USD', label: 'USD ($)' }
+    ].forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id; o.textContent = c.label;
+      if (c.id === (row.currency || 'THB')) o.selected = true;
+      curSel.appendChild(o);
+    });
+    curSel.onchange = () => {
+      landedCostRows[i].currency = curSel.value;
+      toggleStockCurrency();
+      renderLandedCostRows();
+      updateStockTotal();
+    };
+
+    // amount input wrap
+    const amtWrap = document.createElement('div');
+    amtWrap.style.cssText = 'position:relative;display:flex;flex-direction:column';
+
     const inp = document.createElement('input');
-    inp.type = 'number'; inp.value = row.amount; inp.min = '0'; inp.step = 'any';
-    inp.placeholder = '0';
-    inp.style.cssText = 'background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:16px;text-align:right;box-sizing:border-box;width:100px';
-    inp.oninput = () => { landedCostRows[i].amount = Number(inp.value)||0; updateStockTotal(); };
+    inp.type = 'number'; inp.value = row.amount || ''; inp.min = '0'; inp.step = 'any';
+    inp.placeholder = row.currency === 'USD' ? '$0.00' : '0.00';
+    inp.style.cssText = 'background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:15px;text-align:right;box-sizing:border-box;width:100%';
+
+    const prevSpan = document.createElement('div');
+    prevSpan.style.cssText = 'font-size:11px;color:var(--text3);text-align:right;margin-top:2px';
+    const updatePreview = () => {
+      const amt = Number(inp.value) || 0;
+      if (row.currency === 'USD') {
+        const rate = Number(document.getElementById('s-exrate')?.value || 35);
+        const thbVal = amt * rate;
+        prevSpan.textContent = amt > 0 ? `≈ ฿${fmtB(thbVal)}` : '';
+        prevSpan.style.display = amt > 0 ? 'block' : 'none';
+      } else {
+        prevSpan.style.display = 'none';
+      }
+    };
+    updatePreview();
+
+    inp.oninput = () => {
+      landedCostRows[i].amount = Number(inp.value) || 0;
+      updatePreview();
+      updateStockTotal();
+    };
+
+    amtWrap.appendChild(inp);
+    amtWrap.appendChild(prevSpan);
 
     // delete btn
     const del = document.createElement('button');
     del.textContent = '✕';
-    del.style.cssText = 'background:rgba(220,38,38,.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:700';
-    del.onclick = () => { landedCostRows.splice(i,1); renderLandedCostRows(); updateStockTotal(); };
+    del.title = 'ลบรายการนี้';
+    del.style.cssText = 'background:rgba(220,38,38,.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-weight:700;height:35px';
+    del.onclick = () => { landedCostRows.splice(i, 1); renderLandedCostRows(); toggleStockCurrency(); updateStockTotal(); };
 
-    div.appendChild(sel); div.appendChild(inp); div.appendChild(del);
+    div.appendChild(sel); div.appendChild(curSel); div.appendChild(amtWrap); div.appendChild(del);
     wrap.appendChild(div);
   });
   updateStockTotal();
@@ -13591,26 +13704,48 @@ async function saveStockBatch() {
   // ── คำนวณ Landed Cost แบ่งตามสัดส่วนมูลค่า (แปลงค่าเป็นเงินบาทตาม Exchange Rate) ──
   const curSave = document.getElementById('s-currency')?.value || 'THB';
   const rateSave = Number(document.getElementById('s-exrate')?.value || 35);
-  const totalLanded = landedCostRows.reduce((s,r)=>s+Number(r.amount||0), 0);
-  const rawGoodsTotal = valid.reduce((s,r)=>s+Number(r.qty)*Number(r.cost), 0);
-  const goodsTotal = curSave === 'USD' ? rawGoodsTotal * rateSave : rawGoodsTotal;
+  
+  // Landed Cost รวม (เป็นเงินบาท)
+  const totalLanded = (landedCostRows || []).reduce((s, r) => {
+    const amt = Number(r.amount) || 0;
+    const rCur = r.currency || 'THB';
+    return s + (rCur === 'USD' ? amt * rateSave : amt);
+  }, 0);
+
+  // มูลค่าสินค้าและค่าใช้จ่ายรวมแต่ละรายการ (แปลงเป็นเงินบาท)
+  const goodsTotal = valid.reduce((s, r) => {
+    const rQty = Number(r.qty) || 0;
+    const rCost = Number(r.cost) || 0;
+    const rOther = Number(r.other) || 0;
+    const otherCur = r.other_cur || curSave;
+    const otherTHB = otherCur === 'USD' ? rOther * rateSave : rOther;
+    const baseGoodsTHB = curSave === 'USD' ? (rQty * rCost * rateSave) : (rQty * rCost);
+    return s + baseGoodsTHB + otherTHB;
+  }, 0);
 
   const inserts = valid.map(r => {
-    const rawGoodsAmt = Number(r.qty) * Number(r.cost);
-    const goodsAmt = curSave === 'USD' ? rawGoodsAmt * rateSave : rawGoodsAmt;
+    const rQty = Number(r.qty) || 0;
+    const rCost = Number(r.cost) || 0;
+    const rOther = Number(r.other) || 0;
+    const otherCur = r.other_cur || curSave;
+    const rowOtherTHB = otherCur === 'USD' ? rOther * rateSave : rOther;
+    const rowGoodsAmt = (curSave === 'USD' ? rQty * rCost * rateSave : rQty * rCost) + rowOtherTHB;
+
     // แบ่ง landed cost ตามสัดส่วนมูลค่า
-    const landedShare = goodsTotal > 0 ? (goodsAmt / goodsTotal) * totalLanded : 0;
-    // ต้นทุนต่อหน่วยที่แท้จริง (เป็นเงินบาท) = (ราคาซื้อ THB × จำนวน + landed share) / จำนวน
+    const landedShare = goodsTotal > 0 ? (rowGoodsAmt / goodsTotal) * totalLanded : 0;
     // รวม VAT ในต้นทุนถ้าเลือก VAT excluded
     const vatOnSave   = document.getElementById('s-vat-on')?.checked || false;
     const vatTypeSave = document.getElementById('s-vat-type')?.value || 'excluded';
     const vatShareSave = vatOnSave && vatTypeSave === 'excluded'
-      ? (goodsAmt + landedShare) * 0.07 : 0;
-    const trueCostPerUnit = Number(r.qty) > 0
-      ? (goodsAmt + landedShare + vatShareSave) / Number(r.qty)
-      : (curSave === 'USD' ? Number(r.cost) * rateSave : Number(r.cost));
+      ? (rowGoodsAmt + landedShare) * 0.07 : 0;
+    const trueCostPerUnit = rQty > 0
+      ? (rowGoodsAmt + landedShare + vatShareSave) / rQty
+      : (curSave === 'USD' ? rCost * rateSave : rCost);
 
-    const finalLot = [lot, curSave === 'USD' ? `[USD rate: ${rateSave}]` : ''].filter(Boolean).join(' ');
+    const lotParts = [lot];
+    if (curSave === 'USD') lotParts.push(`[USD rate: ${rateSave}]`);
+    if (otherCur === 'USD' && rOther > 0) lotParts.push(`[Other: $${rOther}]`);
+    const finalLot = lotParts.filter(Boolean).join(' ');
 
     return {
       shop_id: currentShop.id,
@@ -13618,7 +13753,7 @@ async function saveStockBatch() {
       move_type: 'in',
       qty: r.qty,
       cost_per_unit: Math.round(trueCostPerUnit * 100) / 100,
-      other_cost: Math.round(landedShare * 100) / 100,
+      other_cost: Math.round((landedShare + rowOtherTHB) * 100) / 100,
       lot_name: finalLot,
       move_date: date,
       po_id: r.po_id || null,
@@ -13632,11 +13767,25 @@ async function saveStockBatch() {
   const receivedPoIds = [...new Set(valid.map(r=>r.po_id).filter(Boolean))];
   const _poIdSave = receivedPoIds.length===1 ? receivedPoIds[0] : null;
   const poRefs = [...new Set(valid.map(r=>r.po_no).filter(Boolean))].join(', ');
-  const landedToSave = (landedCostRows||[]).filter(r => Number(r.amount) > 0).map(r => ({
-    shop_id: currentShop.id, type: r.type, amount: Number(r.amount)||0,
-    note: [r.note||'', receivedPoIds.length>1&&poRefs?'หลาย PO: '+poRefs:''].filter(Boolean).join(' · '),
-    lot_name: lot, move_date: date, po_id: _poIdSave
-  }));
+  const landedToSave = (landedCostRows||[]).filter(r => Number(r.amount) > 0).map(r => {
+    const rCur = r.currency || 'THB';
+    const thbAmt = rCur === 'USD' ? Math.round(Number(r.amount) * rateSave * 100) / 100 : Number(r.amount);
+    const noteParts = [
+      r.note || '',
+      rCur === 'USD' ? `[$${r.amount} USD @ rate ${rateSave}]` : '',
+      receivedPoIds.length > 1 && poRefs ? 'หลาย PO: ' + poRefs : ''
+    ].filter(Boolean).join(' · ');
+
+    return {
+      shop_id: currentShop.id,
+      type: r.type,
+      amount: thbAmt,
+      note: noteParts,
+      lot_name: lot,
+      move_date: date,
+      po_id: _poIdSave
+    };
+  });
   if (landedToSave.length) {
     const { error: lcErr } = await sb.from('landed_costs').insert(landedToSave);
     if (lcErr) console.warn('landed_costs insert skipped (ตารางยังไม่มี?):', lcErr.message);
@@ -14691,7 +14840,23 @@ function editStockMovement(id) {
       '<div class="form-group"><label>จำนวน (ชิ้น)</label><input type="number" id="se-qty" min="0.01" step="any"></div>' +
       '<div class="form-group"><label>ราคาทุน/ชิ้น (บาท)</label><input type="number" id="se-cost" step="any"></div>' +
     '</div>' +
-    '<div class="form-group"><label>ค่าใช้จ่ายอื่นๆ (บาท)</label><input type="number" id="se-other" step="any" value="0"></div>' +
+    '<div class="form-group">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<label>ค่าใช้จ่ายอื่นๆ</label>' +
+        '<select id="se-other-cur" onchange="toggleSeOtherCurrency()" style="font-size:12px;font-weight:700;padding:2px 6px;border:1px solid var(--border2);border-radius:4px;background:#fff">' +
+          '<option value="THB">THB (บาท)</option>' +
+          '<option value="USD">USD ($)</option>' +
+        '</select>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+        '<input type="number" id="se-other" step="any" value="0" style="flex:1" oninput="updateSeOtherPreview()">' +
+        '<div id="se-other-rate-wrap" style="display:none;align-items:center;gap:4px">' +
+          '<span style="font-size:11px;color:var(--text3)">เรท:</span>' +
+          '<input type="number" id="se-other-rate" value="35.00" step="0.01" style="width:75px;padding:6px;font-size:13px;border:1px solid var(--border2);border-radius:4px;text-align:right" title="อัตราแลกเปลี่ยน THB/USD" oninput="updateSeOtherPreview()">' +
+        '</div>' +
+      '</div>' +
+      '<div id="se-other-preview" style="font-size:11.5px;color:var(--text3);margin-top:3px;display:none"></div>' +
+    '</div>' +
     '<div class="modal-footer">' +
       '<button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>' +
       '<button class="btn btn-primary" onclick="saveStockEdit()">💾 บันทึก</button>' +
@@ -14704,13 +14869,48 @@ function editStockMovement(id) {
   document.getElementById('se-qty').value   = r.qty;
   document.getElementById('se-cost').value  = r.cost_per_unit;
   document.getElementById('se-other').value = r.other_cost||0;
+
+  const lot = String(r.lot_name || '');
+  const mRate = lot.match(/\[USD rate:\s*([0-9.]+)\]/i);
+  if (mRate && mRate[1]) {
+    const rateInp = document.getElementById('se-other-rate');
+    if (rateInp) rateInp.value = mRate[1];
+  }
 }
+
+window.toggleSeOtherCurrency = function() {
+  const cur = document.getElementById('se-other-cur')?.value || 'THB';
+  const rateWrap = document.getElementById('se-other-rate-wrap');
+  if (rateWrap) rateWrap.style.display = cur === 'USD' ? 'flex' : 'none';
+  const inp = document.getElementById('se-other');
+  if (inp) inp.placeholder = cur === 'USD' ? '$0.00' : '0.00';
+  updateSeOtherPreview();
+};
+
+window.updateSeOtherPreview = function() {
+  const cur = document.getElementById('se-other-cur')?.value || 'THB';
+  const prev = document.getElementById('se-other-preview');
+  if (!prev) return;
+  if (cur === 'USD') {
+    const val = Number(document.getElementById('se-other')?.value) || 0;
+    const rate = Number(document.getElementById('se-other-rate')?.value) || 35;
+    prev.textContent = val > 0 ? `≈ ฿${fmtB(val * rate)}` : '';
+    prev.style.display = val > 0 ? 'block' : 'none';
+  } else {
+    prev.style.display = 'none';
+  }
+};
 
 async function saveStockEdit() {
   if (!editingStockId) return;
   const qty  = Number(document.getElementById('se-qty').value)||0;
   const cost = Number(document.getElementById('se-cost').value)||0;
   if (!qty) { toast('กรุณาใส่จำนวน','error'); return; }
+
+  const otherCur = document.getElementById('se-other-cur')?.value || 'THB';
+  const otherVal = Number(document.getElementById('se-other').value) || 0;
+  const otherRate = Number(document.getElementById('se-other-rate')?.value) || 35;
+  const finalOtherCost = otherCur === 'USD' ? Math.round(otherVal * otherRate * 100) / 100 : otherVal;
 
   // Get old record to reverse stock change
   const old = allStockHistory.find(x=>x.id===editingStockId);
@@ -14732,7 +14932,7 @@ async function saveStockEdit() {
     move_date: document.getElementById('se-date').value,
     lot_name:  document.getElementById('se-lot').value,
     qty, cost_per_unit: cost,
-    other_cost: Number(document.getElementById('se-other').value)||0
+    other_cost: finalOtherCost
   }).eq('id', editingStockId);
 
   if (old?.product_id) {
@@ -37450,7 +37650,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.64', date:'2026-10-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับราคาซื้อสกุลเงิน USD ($) จัดการสินค้า & ใบสั่งซื้อ PO (v2.64)', items:[
+    { v:'2.65', date:'2026-10-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับค่าใช้จ่ายอื่นๆ เป็น THB หรือ USD ตอนรับสินค้า (v2.65)', items:[
+      '💵 <b>THB / USD Landed Cost:</b> รองรับการระบุสกุลเงิน THB หรือ USD ในแต่ละรายการค่าใช้จ่าย Landed Cost (ค่าขนส่ง, ค่าศุลกากร, ฯลฯ) พร้อมระบบคำนวณและแสดงผลมูลค่าเทียบเท่าเงินบาท (≈ ฿...) แบบเรียลไทม์',
+      '📦 <b>Item-Level Extra Cost Currency:</b> เพิ่มตัวเลือกสกุลเงิน THB / USD ในช่องค่าส่ง/อื่นของแต่ละรายการสินค้าที่รับเข้าคลัง',
+      '✏️ <b>Stock Movement Edit Support:</b> รองรับการเลือก THB / USD และอัตราแลกเปลี่ยนสำหรับค่าใช้จ่ายอื่นๆ ในหน้าต่างแก้ไขรายการรับเข้าสต๊อกย้อนหลัง',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันเป็น v2.65 และล้างแคชระบบอัตโนมัติ'
+    ]},
+    { v:'2.64', date:'2026-10-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'รองรับราคาซื้อสกุลเงิน USD ($) จัดการสินค้า & ใบสั่งซื้อ PO (v2.64)', items:[
       '💵 <b>USD Purchase Price Support:</b> เพิ่มช่องกรอกราคาซื้อสกุลเงิน USD ($) ในหน้าเพิ่มสินค้าใหม่ (Add Product) และหน้าแก้ไขสินค้า (Edit Product)',
       '🛡️ <b>Dual-layer Persistence:</b> รองรับการบันทึกลงคอลัมน์ <code>purchase_price_usd</code> พร้อมระบบ Fallback สำรองแท็ก <code>[USD_BUY:...]</code> ในหมายเหตุสินค้า ป้องกันข้อมูลสูญหาย 100%',
       '📋 <b>Product Table & PO Integration:</b> ตารางสินค้าแสดงราคาซื้อทั้ง THB และ USD สรุปชัดเจน และดึงราคาซื้อ USD เป็นค่าเริ่มต้นให้อัตโนมัติเมื่อสร้างใบสั่งซื้อ (PO) สกุลเงิน USD',
