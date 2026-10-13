@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.65';
-const DISPLAY_APP_VERSION = 'v2.65';
+const CURRENT_APP_VERSION = 'sealthai-v2.66';
+const DISPLAY_APP_VERSION = 'v2.66';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.65 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.66 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.65 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.66 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.65 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.66 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.65 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.66 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2253,9 +2253,35 @@ function escapeHTML(value) {
 const SHIPPING_FEE_NOTE_RE = /(?:^|\n)\[\[SHIPPING_FEE:([0-9]+(?:\.[0-9]+)?)\]\](?=\n|$)/i;
 const COMPANY_NOTE_RE = /(?:^|\n)\[(?:บริษัท|Company):\s*([^\]]+)\](?=\n|$)/i;
 const COMPANY_NOTE_GLOBAL_RE = /(?:^|\n)\[(?:บริษัท|Company):\s*[^\]]+\](?=\n|$)/gi;
+const INTERNAL_NOTE_TAG_RE = /(?:^|\n)\[\[INTERNAL_NOTE:([A-Za-z0-9%_\-.~]+)\]\](?=\n|$)/i;
+const INTERNAL_NOTE_TAG_GLOBAL_RE = /(?:^|\n)\[\[INTERNAL_NOTE:[A-Za-z0-9%_\-.~]+\]\](?=\n|$)/gi;
+const INTERNAL_NOTE_TEXT_RE = /(?:^|\n)\[(?:INTERNAL|INTERNAL_NOTE|หมายเหตุหลังบ้าน|หลังบ้าน):\s*([^\]]+)\](?=\n|$)/i;
+const INTERNAL_NOTE_TEXT_GLOBAL_RE = /(?:^|\n)\[(?:INTERNAL|INTERNAL_NOTE|หมายเหตุหลังบ้าน|หลังบ้าน):\s*[^\]]+\](?=\n|$)/gi;
+
+function getOrderInternalNote(order) {
+  if (order?.internal_note && String(order.internal_note).trim()) {
+    return String(order.internal_note).trim();
+  }
+  const raw = String(order?.note || '');
+  const mTag = raw.match(INTERNAL_NOTE_TAG_RE);
+  if (mTag && mTag[1]) {
+    try {
+      return decodeURIComponent(mTag[1]).trim();
+    } catch(e) {
+      return mTag[1].trim();
+    }
+  }
+  const mText = raw.match(INTERNAL_NOTE_TEXT_RE);
+  if (mText && mText[1]?.trim()) {
+    return mText[1].trim();
+  }
+  return '';
+}
 
 function cleanOrderNote(note) {
   return String(note || '')
+    .replace(INTERNAL_NOTE_TAG_GLOBAL_RE, '')
+    .replace(INTERNAL_NOTE_TEXT_GLOBAL_RE, '')
     .replace(SHIPPING_FEE_NOTE_RE, '')
     .replace(COMPANY_NOTE_GLOBAL_RE, '')
     .trim();
@@ -2278,14 +2304,16 @@ function getOrderCompanyName(order, customer = null) {
   return '';
 }
 
-function noteWithCompanyAndShipping(note, companyName, shippingFee) {
+function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null) {
   let clean = cleanOrderNote(note);
   const comp = (companyName || '').trim();
   const fee = Math.max(0, Number(shippingFee) || 0);
+  const inote = internalNote !== null ? (internalNote || '').trim() : getOrderInternalNote({ note });
   const parts = [];
   if (clean) parts.push(clean);
   if (comp) parts.push(`[บริษัท: ${comp}]`);
   if (fee > 0) parts.push(`[[SHIPPING_FEE:${fee}]]`);
+  if (inote) parts.push(`[[INTERNAL_NOTE:${encodeURIComponent(inote)}]]`);
   return parts.join('\n');
 }
 function getOrderShippingFee(order) {
@@ -3584,7 +3612,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.65)">v2.65 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.66)">v2.66 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6289,7 +6317,16 @@ async function orders() {
             </div>
           </div>
         </div>
-        <div class="form-group"><label>หมายเหตุ</label><textarea id="o-note" rows="2" placeholder="หมายเหตุ..."></textarea></div>
+        <div class="grid-2" style="margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>หมายเหตุเอกสาร <span style="font-size:11px;color:var(--text3)">(จะพิมพ์ลงในบิล/ใบเสร็จ)</span></label>
+            <textarea id="o-note" rows="2" placeholder="เช่น หมายเหตุสำหรับลูกค้า, เงื่อนไขจัดส่ง (แสดงในหน้าพิมพ์บิล)..."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="color:#b45309;font-weight:700">🔒 หมายเหตุหลังบ้าน <span style="font-size:11px;color:var(--text3);font-weight:400">(เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)</span></label>
+            <textarea id="o-internal-note" rows="2" placeholder="บันทึกช่วยจำสำหรับหลังบ้าน เช่น ข้อมูลลูกค้า, เกรด, กำชับทีมแพ็ค (ไม่นำไปพิมพ์บิล)..." style="background:#fffbeb;border:1px solid #fde68a"></textarea>
+          </div>
+        </div>
         <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
           <div class="card-title" style="margin:0">รายการสินค้า</div>
           <div style="display:flex;gap:6px">
@@ -6522,7 +6559,7 @@ async function loadOrders() {
         o.order_no, o.customer_name, o.company_name, o.tax_id, o.billing_address,
         o.customer_username, o.customer_social, o.customer_contact,
         o.customer_phone, o.tracking_no, o.channel, o.payment_method,
-        o.note, o.customer_address,
+        o.note, o.internal_note, getOrderInternalNote(o), o.customer_address,
         o.employee_id ? empMap[o.employee_id] : ''
       ];
       if (baseFields.some(v => smartWildcardMatch(v, search))) return true;
@@ -6717,6 +6754,10 @@ async function loadOrders() {
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
             ${hasAR?`<div style="margin-top:3px"><span class="badge badge-blue" style="font-size:10px;cursor:pointer" onclick="showPage('arinvoice');setTimeout(()=>openARDetail('${linkedAR.id}'),250)" title="คลิกดู AR Invoice ${escapeHTML(linkedAR.ar_no)}">📄 ${escapeHTML(linkedAR.ar_no)}</span></div>`:''}
             ${hasPO?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${linkedPOs.map(po=>`<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;cursor:pointer;padding:1px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px" onclick="showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)" title="คลิกดูใบสั่งซื้อ PO: ${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')})">🛒 ${escapeHTML(po.po_no)}</span>`).join('')}</div>`:''}
+            ${(()=>{
+              const inote = getOrderInternalNote(o);
+              return inote ? `<div style="margin-top:4px"><span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;padding:2px 6px;border-radius:5px;display:inline-block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="หมายเหตุหลังบ้าน: ${escapeHTML(inote)}">🔒 ${escapeHTML(inote)}</span></div>` : '';
+            })()}
           </td>
           <td class="col-customer">
             ${o.company_name ? `<div style="font-weight:700;color:var(--text);font-size:13.5px">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
@@ -6764,6 +6805,10 @@ async function loadOrders() {
           <div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>
           ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
+          ${(()=>{
+            const inote = getOrderInternalNote(o);
+            return inote ? `<div style="margin-top:4px"><span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10.5px;padding:2px 6px;border-radius:5px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="หมายเหตุหลังบ้าน: ${escapeHTML(inote)}">🔒 หลังบ้าน: ${escapeHTML(inote)}</span></div>` : '';
+          })()}
         </div>
         <div style="text-align:right">
           <div class="font-mono text-accent" style="font-size:15px;font-weight:700">${fmtB(o.total_amount)}</div>
@@ -6932,7 +6977,7 @@ async function openNewOrder() {
   orderSourceQuoteId = null;
   renderOrderItems();
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-billing-address','o-track','o-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-billing-address','o-track','o-note','o-internal-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
@@ -7913,6 +7958,7 @@ async function saveOrder() {
   });
 
   const totalCost = orderItems.reduce((s,it) => s + Number(it.qty||1)*Number(it.cost_per_unit||0), 0);
+  const internalNote = (document.getElementById('o-internal-note')?.value || '').trim();
 
   const orderPayload = {
     shop_id: currentShop.id,
@@ -7932,7 +7978,8 @@ async function saveOrder() {
     tracking_no: document.getElementById('o-track').value,
     doc_status: 'confirmed',
     shipping_status: document.getElementById('o-status').value,
-    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee),
+    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote),
+    internal_note: internalNote || null,
     employee_id: empId,
     bill_discount: billDisc,
     bill_discount_type: billDiscType,
@@ -7940,12 +7987,13 @@ async function saveOrder() {
     total_amount: grand,
     total_cost: totalCost
   };
-  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note
   let order, error;
-  for (let a = 0; a < 6; a++) {
+  for (let a = 0; a < 7; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
+    if (('internal_note' in orderPayload) && (error.message||'').includes('internal_note')) { delete orderPayload.internal_note; continue; }
     if (('company_name' in orderPayload) && (error.message||'').includes('company_name')) { delete orderPayload.company_name; continue; }
     if (('tax_id' in orderPayload) && (error.message||'').includes('tax_id')) { delete orderPayload.tax_id; continue; }
     if (('billing_address' in orderPayload) && (error.message||'').includes('billing_address')) { delete orderPayload.billing_address; continue; }
@@ -8546,8 +8594,15 @@ async function viewOrder(orderId) {
           </div>
         </div>
       </div>
-      <div style="margin-top:10px"><span style="color:var(--text3);font-size:13px">หมายเหตุ</span>
-        <textarea id="ed-note" rows="2" style="${iStyle};margin-top:3px;resize:vertical">${escapeHTML(cleanOrderNote(order.note))}</textarea>
+      <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <span style="color:var(--text3);font-size:12.5px">หมายเหตุเอกสาร (จะพิมพ์ลงในบิล/ใบเสร็จ)</span>
+          <textarea id="ed-note" rows="2" placeholder="เช่น รายละเอียดส่งมอบ เงื่อนไขรับประกัน" style="${iStyle};margin-top:3px;resize:vertical">${escapeHTML(cleanOrderNote(order.note))}</textarea>
+        </div>
+        <div>
+          <span style="color:#d97706;font-size:12.5px;font-weight:600">🔒 หมายเหตุหลังบ้าน (เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)</span>
+          <textarea id="ed-internal-note" rows="2" placeholder="บันทึกข้อความภายใน เช่น บัญชี/โกดัง/แอดมิน ทราบกันเอง ไม่ปรากฏบนเอกสาร" style="${iStyle};margin-top:3px;resize:vertical;border-color:#fde68a;background:#fffbeb">${escapeHTML(getOrderInternalNote(order))}</textarea>
+        </div>
       </div>
     </div>
 
@@ -8653,6 +8708,7 @@ async function saveOrderEdit(orderId) {
   const editTaxId = (document.getElementById('ed-tax-id')?.value || '').trim();
   const editBillingAddress = document.getElementById('ed-billing-address')?.value || '';
   const editRawNote = document.getElementById('ed-note')?.value || '';
+  const editInternalNote = (document.getElementById('ed-internal-note')?.value || '').trim();
 
   const editPayload = {
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
@@ -8670,7 +8726,8 @@ async function saveOrderEdit(orderId) {
     tracking_no: document.getElementById('ed-track').value,
     payment_method: document.getElementById('ed-pay').value,
     shipping_status: document.getElementById('ed-status').value,
-    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee),
+    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote),
+    internal_note: editInternalNote || null,
     employee_id: edEmpVal || null,
     bill_discount: editBillDisc,
     bill_discount_type: editBillDiscType,
@@ -8678,13 +8735,17 @@ async function saveOrderEdit(orderId) {
     total_amount: editGrand,
     total_cost: editTotalCost
   };
-  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee
+  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note
   let updErr;
   for (let a = 0; a < 8; a++) {
     const r = await sb.from('orders').update(editPayload).eq('id', orderId);
     updErr = r.error;
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
+    if (('internal_note' in editPayload) && msg.includes('internal_note')) {
+      delete editPayload.internal_note;
+      continue;
+    }
     if (('company_name' in editPayload) && msg.includes('company_name')) {
       delete editPayload.company_name;
       continue;
@@ -37650,7 +37711,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.65', date:'2026-10-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับค่าใช้จ่ายอื่นๆ เป็น THB หรือ USD ตอนรับสินค้า (v2.65)', items:[
+    { v:'2.66', date:'2026-10-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องหมายเหตุหลังบ้าน (Internal Note) เฉพาะภายใน ไม่พิมพ์ลงบิล (v2.66)', items:[
+      '🔒 <b>Internal Back-Office Note:</b> เพิ่มช่อง "หมายเหตุหลังบ้าน (เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)" ในหน้าบันทึกออเดอร์ใหม่ และหน้าดู/แก้ไขรายละเอียดออเดอร์ สำหรับบันทึกข้อความประสานงานภายใน เช่น บัญชี โกดัง หรือแอดมิน',
+      '🖨️ <b>Strict Bill & Receipt Privacy:</b> ระบบคัดกรองหมายเหตุหลังบ้านออกจากการพิมพ์บิลเงินสด (Cash Sale) และใบเสร็จรับเงินอย่างเข้มงวด ลูกค้าจะไม่เห็นข้อความภายในร้าน 100%',
+      '🛡️ <b>Dual-layer Persistence:</b> รองรับการบันทึกลงคอลัมน์ <code>internal_note</code> พร้อมระบบแท็กสำรองอัตโนมัติในฐานข้อมูล ป้องกันข้อมูลสูญหายแม้ยังไม่ได้รัน SQL Migration',
+      '👀 <b>Order List & Search Visibility:</b> แสดงป้ายหมายเหตุหลังบ้าน <code>🔒 ...</code> ในตารางออเดอร์และการ์ดมือถือ พร้อมรองรับการค้นหาออเดอร์จากข้อความหมายเหตุหลังบ้าน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันเป็น v2.66 และล้างแคชระบบอัตโนมัติ'
+    ]},
+    { v:'2.65', date:'2026-10-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'รองรับค่าใช้จ่ายอื่นๆ เป็น THB หรือ USD ตอนรับสินค้า (v2.65)', items:[
       '💵 <b>THB / USD Landed Cost:</b> รองรับการระบุสกุลเงิน THB หรือ USD ในแต่ละรายการค่าใช้จ่าย Landed Cost (ค่าขนส่ง, ค่าศุลกากร, ฯลฯ) พร้อมระบบคำนวณและแสดงผลมูลค่าเทียบเท่าเงินบาท (≈ ฿...) แบบเรียลไทม์',
       '📦 <b>Item-Level Extra Cost Currency:</b> เพิ่มตัวเลือกสกุลเงิน THB / USD ในช่องค่าส่ง/อื่นของแต่ละรายการสินค้าที่รับเข้าคลัง',
       '✏️ <b>Stock Movement Edit Support:</b> รองรับการเลือก THB / USD และอัตราแลกเปลี่ยนสำหรับค่าใช้จ่ายอื่นๆ ในหน้าต่างแก้ไขรายการรับเข้าสต๊อกย้อนหลัง',
