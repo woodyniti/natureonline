@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.66';
-const DISPLAY_APP_VERSION = 'v2.66';
+const CURRENT_APP_VERSION = 'sealthai-v2.67';
+const DISPLAY_APP_VERSION = 'v2.67';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.66 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.67)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.67 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.66 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.67 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.66 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.67)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.67 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.66 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.67)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.67 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2325,9 +2325,11 @@ function isOrderCancelled(order) {
   return order?.shipping_status === 'cancelled' || order?.doc_status === 'cancelled';
 }
 
-// ── USD Purchase Price Helpers (Dual-layer persistence: native column & fallback tag in application_note) ──
+// ── Purchase Price Helpers (Dual-layer persistence: native column & fallback tag in application_note) ──
 const USD_BUY_NOTE_RE = /\[(?:USD_BUY|BUY_USD):([0-9]+(?:\.[0-9]+)?)\]/i;
 const USD_BUY_NOTE_GLOBAL_RE = /\[(?:USD_BUY|BUY_USD):[0-9]+(?:\.[0-9]+)?\]/gi;
+const THB_BUY_NOTE_RE = /\[(?:THB_BUY|BUY_THB):([0-9]+(?:\.[0-9]+)?)\]/i;
+const THB_BUY_NOTE_GLOBAL_RE = /\[(?:THB_BUY|BUY_THB):[0-9]+(?:\.[0-9]+)?\]/gi;
 
 function getProductPurchasePriceUSD(p) {
   if (!p) return 0;
@@ -2342,14 +2344,41 @@ function getProductPurchasePriceUSD(p) {
   return 0;
 }
 
-function noteWithProductUSD(currentNote, buyUSD) {
-  let note = (currentNote || '').replace(USD_BUY_NOTE_GLOBAL_RE, '').trim();
-  const val = Math.max(0, parseFloat(buyUSD) || 0);
-  if (val > 0) {
-    const tag = `[USD_BUY:${val}]`;
-    return note ? `${note}\n${tag}` : tag;
+function getProductPurchasePriceTHB(p) {
+  if (!p) return 0;
+  const colVal = Number(p.purchase_price ?? p.buy_price);
+  if (!isNaN(colVal) && colVal > 0) return colVal;
+  const note = String(p.application_note || p.note || '');
+  const m = note.match(THB_BUY_NOTE_RE);
+  if (m) {
+    const parsed = parseFloat(m[1]);
+    if (!isNaN(parsed) && parsed > 0) return parsed;
   }
-  return note;
+  return 0;
+}
+
+function noteWithProductPrices(currentNote, buyUSD, buyTHB) {
+  let note = String(currentNote || '');
+  const usdVal = buyUSD !== undefined ? (Math.max(0, parseFloat(buyUSD) || 0)) : null;
+  const thbVal = buyTHB !== undefined ? (Math.max(0, parseFloat(buyTHB) || 0)) : null;
+
+  if (usdVal !== null) {
+    note = note.replace(USD_BUY_NOTE_GLOBAL_RE, '').trim();
+    if (usdVal > 0) {
+      note = note ? `${note}\n[USD_BUY:${usdVal}]` : `[USD_BUY:${usdVal}]`;
+    }
+  }
+  if (thbVal !== null) {
+    note = note.replace(THB_BUY_NOTE_GLOBAL_RE, '').trim();
+    if (thbVal > 0) {
+      note = note ? `${note}\n[THB_BUY:${thbVal}]` : `[THB_BUY:${thbVal}]`;
+    }
+  }
+  return note.trim();
+}
+
+function noteWithProductUSD(currentNote, buyUSD) {
+  return noteWithProductPrices(currentNote, buyUSD, undefined);
 }
 
 function normalizeProduct(p) {
@@ -2357,6 +2386,10 @@ function normalizeProduct(p) {
   const usd = getProductPurchasePriceUSD(p);
   if (usd > 0) {
     p.purchase_price_usd = usd;
+  }
+  const thb = getProductPurchasePriceTHB(p);
+  if (thb > 0 && (!p.purchase_price || Number(p.purchase_price) <= 0)) {
+    p.purchase_price = thb;
   }
   return p;
 }
@@ -3612,7 +3645,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.66)">v2.66 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.67)">v2.67 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -11566,8 +11599,9 @@ function renderProductTable(prods) {
             '<span style="cursor:pointer;color:var(--text);font-weight:600" onclick="openCostCorrectionModal(&quot;'+p.id+'&quot;)" title="ต้นทุนปัจจุบัน '+fmtB(p.current_cost)+' (คลิกเพื่อปรับแก้ต้นทุน)">ทุน: <span style="color:var(--amber);text-decoration:underline dashed">'+fmtB(p.current_cost)+'</span> ✏️</span> · ' +
             'กำไร: <span class="'+(margin>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(margin)+'</span>' +
             (() => {
+              const pTHB = getProductPurchasePriceTHB(p) || p.purchase_price;
               const pUSD = getProductPurchasePriceUSD(p);
-              return (p.purchase_price || pUSD) ? ' · <span title="ราคาซื้อมาตรฐาน">ซื้อ: '+(p.purchase_price?`฿${Number(p.purchase_price).toFixed(3)}`:'')+(p.purchase_price&&pUSD?' · ':'')+(pUSD?`$${Number(pUSD).toFixed(3)}`:'')+'</span>' : '';
+              return (pTHB || pUSD) ? ' · <span title="ราคาซื้อมาตรฐาน">ซื้อ: '+(pTHB?`฿${Number(pTHB).toFixed(3)}`:'')+(pTHB&&pUSD?' · ':'')+(pUSD?`$${Number(pUSD).toFixed(3)}`:'')+'</span>' : '';
             })() +
           '</div>' +
         '</td>' +
@@ -11615,12 +11649,16 @@ function renderProductTable(prods) {
       ? `<img src="${escapeHTML(imgUrl)}" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--border);flex-shrink:0" onerror="this.style.display=\'none\'">`
       : `<div style="width:44px;height:44px;background:var(--bg3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📦</div>`;
 
+    const mTHB = getProductPurchasePriceTHB(p) || p.purchase_price;
+    const mUSD = getProductPurchasePriceUSD(p);
+    const buyTag = (mTHB || mUSD) ? ' · <span title="ราคาซื้อมาตรฐาน" style="color:var(--text2,#475569)">ซื้อ: '+(mTHB?`฿${Number(mTHB).toFixed(2)}`:'')+(mTHB&&mUSD?' · ':'')+(mUSD?`$${Number(mUSD).toFixed(2)}`:'')+'</span>' : '';
+
     return `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(99,115,150,0.07)">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10px;gap:8px">
         <div style="cursor:pointer" onclick="editProduct('${p.id}')" title="คลิกเพื่อแก้ไขรูปและข้อมูล">${imgHtml}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:14px;margin-bottom:3px"><a href="javascript:void(0)" onclick="editProduct('${p.id}')" style="color:var(--text);text-decoration:none">${escapeHTML(p.name)} ✏️</a></div>
-          <div style="font-size:11px;color:var(--text3)"><span style="font-weight:600;color:var(--accent)">${p.sku||''}</span> ${p.supplier_sku?'<span style="color:var(--blue)">· '+p.supplier_sku+'</span>':''} ${p.part_no?'<span style="color:var(--purple,#7c3aed)">· '+p.part_no+'</span>':''} · <span class="badge badge-gray" style="font-size:10px">${p.category||'ไม่ระบุ'}</span></div>
+          <div style="font-size:11px;color:var(--text3)"><span style="font-weight:600;color:var(--accent)">${p.sku||''}</span> ${p.supplier_sku?'<span style="color:var(--blue)">· '+p.supplier_sku+'</span>':''} ${p.part_no?'<span style="color:var(--purple,#7c3aed)">· '+p.part_no+'</span>':''} · <span class="badge badge-gray" style="font-size:10px">${p.category||'ไม่ระบุ'}</span>${buyTag}</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
           <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" style="background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700" title="แก้ไข">✏️ แก้ไข</button>
@@ -12144,6 +12182,7 @@ async function saveProduct() {
   const strOrNull = id => (document.getElementById(id)?.value || '').trim() || null;
 
   const buyUSDVal = Number(document.getElementById('p-buy-usd')?.value) || 0;
+  const buyTHBVal = Number(document.getElementById('p-buy')?.value) || 0;
   const insertPayload = {
     shop_id: currentShop.id,
     sku: sku,
@@ -12151,9 +12190,9 @@ async function saveProduct() {
     name,
     category: document.getElementById('p-cat').value,
     sell_price: Number(document.getElementById('p-sell').value)||0,
-    purchase_price: Number(document.getElementById('p-buy')?.value) || 0,
+    purchase_price: buyTHBVal,
     purchase_price_usd: buyUSDVal,
-    application_note: noteWithProductUSD(null, buyUSDVal),
+    application_note: noteWithProductPrices(null, buyUSDVal, buyTHBVal),
     part_no: strOrNull('p-part-no'),
     current_cost: 0,
     stock_qty: 0,
@@ -12188,16 +12227,22 @@ async function saveProduct() {
     prod = r.data; error = r.error;
     if (!error) break;
     let stripped = false;
-    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','purchase_price_usd','part_no'];
+    const optionalCols = ['purchase_price_usd','inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','part_no'];
+    const errMsg = String(error.message || '');
     for (const col of optionalCols) {
-      if ((col in insertPayload) && (error.message||'').includes(col)) { delete insertPayload[col]; stripped = true; }
+      if ((col in insertPayload) && new RegExp(`\\b${col}\\b`, 'i').test(errMsg)) {
+        delete insertPayload[col];
+        stripped = true;
+      }
     }
     if (stripped) continue;
     break;
   }
   if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
   if (prod) {
+    prod.purchase_price = buyTHBVal;
     prod.purchase_price_usd = buyUSDVal;
+    normalizeProduct(prod);
   }
   if (stockQty > 0) {
     // trigger trg_stock_movement จะอัพเดท stock_qty + current_cost ให้อัตโนมัติ
@@ -12404,7 +12449,11 @@ async function editProduct(id) {
   document.getElementById('ep-name').value         = p.name || '';
   document.getElementById('ep-cat').value          = p.category || '';
   document.getElementById('ep-sell').value         = p.sell_price || 0;
-  const _epBuy = document.getElementById('ep-buy'); if (_epBuy) _epBuy.value = p.purchase_price ?? '';
+  const _epBuy = document.getElementById('ep-buy');
+  if (_epBuy) {
+    const curTHB = getProductPurchasePriceTHB(p);
+    _epBuy.value = (curTHB > 0 ? curTHB : (p.purchase_price ?? ''));
+  }
   const _epBuyUSD = document.getElementById('ep-buy-usd');
   if (_epBuyUSD) {
     const curUSD = getProductPurchasePriceUSD(p);
@@ -12536,6 +12585,7 @@ async function updateProduct(id) {
   const oldCost = Number(existingProd?.current_cost || 0);
   const newCost = Number(document.getElementById('ep-cost')?.value) || 0;
   const buyUSDVal = Number(document.getElementById('ep-buy-usd')?.value) || 0;
+  const buyTHBVal = Number(document.getElementById('ep-buy')?.value) || 0;
 
   const updatePayload = {
     sku: sku,
@@ -12544,9 +12594,9 @@ async function updateProduct(id) {
     category: document.getElementById('ep-cat').value,
     image_url: imageUrl,
     sell_price: Number(document.getElementById('ep-sell').value)||0,
-    purchase_price: Number(document.getElementById('ep-buy')?.value) || 0,
+    purchase_price: buyTHBVal,
     purchase_price_usd: buyUSDVal,
-    application_note: noteWithProductUSD(existingProd?.application_note, buyUSDVal),
+    application_note: noteWithProductPrices(existingProd?.application_note, buyUSDVal, buyTHBVal),
     current_cost: newCost,
     part_no: strOrNull('ep-part-no'),
     // Seal specs
@@ -12579,9 +12629,13 @@ async function updateProduct(id) {
     updData = r.data; updErr = r.error;
     if (!updErr) break;
     let stripped = false;
-    const optionalCols = ['inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','purchase_price_usd','part_no','current_cost'];
+    const optionalCols = ['purchase_price_usd','inner_diameter','outer_diameter','width','unit_dim','material','seal_type','max_pressure','temp_min','temp_max','max_speed','hs_code','drawing_no','machine_model','preferred_supplier_id','supplier_lead_time_days','moq','pack_size','safety_stock_days','min_safety_stock_qty','manual_reorder_point','purchase_price','part_no','current_cost'];
+    const errMsg = String(updErr.message || '');
     for (const col of optionalCols) {
-      if ((col in updatePayload) && (updErr.message||'').includes(col)) { delete updatePayload[col]; stripped = true; }
+      if ((col in updatePayload) && new RegExp(`\\b${col}\\b`, 'i').test(errMsg)) {
+        delete updatePayload[col];
+        stripped = true;
+      }
     }
     if (stripped) continue;
     break;
@@ -12629,13 +12683,15 @@ async function updateProduct(id) {
   const idx = allProducts.findIndex(p => p.id === id);
   if (idx >= 0) {
     Object.assign(allProducts[idx], updatePayload);
+    allProducts[idx].purchase_price = buyTHBVal;
     allProducts[idx].purchase_price_usd = buyUSDVal;
+    normalizeProduct(allProducts[idx]);
   }
 
   document.querySelectorAll('#modal-edit-prod').forEach(el => el.remove());
   toast('อัพเดทสินค้าและสเปกซีลสำเร็จ ✓','success');
-  filterProducts();
-  loadProducts();
+  await loadProducts();
+  if (typeof filterProducts === 'function') filterProducts();
 }
 
 // ── Modal ปรับแก้ต้นทุนสินค้า (Cost Correction Modal) ──
@@ -12658,7 +12714,7 @@ async function openCostCorrectionModal(productId) {
   ov.style.zIndex = '1300';
 
   const curCost = Number(p.current_cost || 0);
-  const curBuy = Number(p.purchase_price || 0);
+  const curBuy = getProductPurchasePriceTHB(p) || Number(p.purchase_price || 0);
   const curBuyUSD = getProductPurchasePriceUSD(p);
   const curSell = Number(p.sell_price || 0);
   const curStock = Number(p.stock_qty || 0);
@@ -21678,10 +21734,10 @@ function getPOProductBuyPrice(p, cur = 'THB', rate = 35) {
   if (cur === 'USD') {
     const usd = getProductPurchasePriceUSD(p);
     if (usd > 0) return usd;
-    const thb = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price || p.cost_price || 0));
+    const thb = getProductPurchasePriceTHB(p) || Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price || p.cost_price || 0));
     return rate > 0 ? +(thb / rate).toFixed(3) : 0;
   }
-  return Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+  return getProductPurchasePriceTHB(p) || Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
 }
 
 async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
@@ -37711,7 +37767,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.66', date:'2026-10-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องหมายเหตุหลังบ้าน (Internal Note) เฉพาะภายใน ไม่พิมพ์ลงบิล (v2.66)', items:[
+    { v:'2.67', date:'2026-10-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการบันทึกราคาซื้อ THB ในหน้าต่างแก้ไขสินค้าและสเปกซีล (v2.67)', items:[
+      '💰 <b>THB Purchase Price Persistence:</b> แก้ไขการบันทึกราคาซื้อสกุลเงินบาท (THB) ในหน้าต่างแก้ไขสินค้า (Edit Product) และเพิ่มสินค้าใหม่ ให้บันทึกตรงเข้าคอลัมน์ <code>purchase_price</code> ในฐานข้อมูล Supabase สำเร็จ 100%',
+      '🛡️ <b>Exact Regex Column Stripping & Schema Resilience:</b> แก้ไขข้อผิดพลาดของระบบ Retry Fallback ให้ใช้ Exact Word Boundary ในการจับคู่ชื่อคอลัมน์ ป้องกันไม่ให้ <code>purchase_price</code> ถูกลบผิดพลาดอันเนื่องมาจากคอลัมน์ <code>purchase_price_usd</code>',
+      '🏷️ <b>Dual-Layer Fallback Tag:</b> รองรับระบบแท็กสำรอง <code>[THB_BUY:...]</code> และ <code>[USD_BUY:...]</code> ในหมายเหตุสินค้า (application_note) พร้อมฟังก์ชัน Normalizer ดึงราคาซื้ออัตโนมัติ',
+      '🔄 <b>Instant UI & Table Refresh:</b> รีเฟรชข้อมูลในหน่วยความจำและโหลดข้อมูลล่าสุด (<code>loadProducts</code>) แบบ Real-time ทันทีหลังบันทึก โดยไม่ต้องรีโหลดหน้าเว็บใหม่',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.67 และล้าง Service Worker Cache อัตโนมัติ'
+    ]},
+    { v:'2.66', date:'2026-10-13', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มช่องหมายเหตุหลังบ้าน (Internal Note) เฉพาะภายใน ไม่พิมพ์ลงบิล (v2.66)', items:[
       '🔒 <b>Internal Back-Office Note:</b> เพิ่มช่อง "หมายเหตุหลังบ้าน (เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)" ในหน้าบันทึกออเดอร์ใหม่ และหน้าดู/แก้ไขรายละเอียดออเดอร์ สำหรับบันทึกข้อความประสานงานภายใน เช่น บัญชี โกดัง หรือแอดมิน',
       '🖨️ <b>Strict Bill & Receipt Privacy:</b> ระบบคัดกรองหมายเหตุหลังบ้านออกจากการพิมพ์บิลเงินสด (Cash Sale) และใบเสร็จรับเงินอย่างเข้มงวด ลูกค้าจะไม่เห็นข้อความภายในร้าน 100%',
       '🛡️ <b>Dual-layer Persistence:</b> รองรับการบันทึกลงคอลัมน์ <code>internal_note</code> พร้อมระบบแท็กสำรองอัตโนมัติในฐานข้อมูล ป้องกันข้อมูลสูญหายแม้ยังไม่ได้รัน SQL Migration',
