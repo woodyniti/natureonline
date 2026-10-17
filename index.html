@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.68';
-const DISPLAY_APP_VERSION = 'v2.68';
+const CURRENT_APP_VERSION = 'sealthai-v2.69';
+const DISPLAY_APP_VERSION = 'v2.69';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.68)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.68 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.69 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.68 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.69 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.68)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.68 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.69 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.68)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.68 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.69 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3645,7 +3645,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.68)">v2.68 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.69)">v2.69 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6762,6 +6762,7 @@ async function loadOrders() {
             );
           };
 
+          const isOrderPending = !cancelled && (!o.shipping_status || o.shipping_status === 'pending');
           const products = (o.order_items||[]).map(it => {
             const qtyTxt = Number(it.qty) > 1 ? `<b style="color:var(--text);font-family:var(--mono)">${it.qty}×</b> ` : '';
             const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
@@ -6775,14 +6776,17 @@ async function loadOrders() {
             let stockHtml = '';
             let nameHtml = escapeHTML(it.product_name || p?.name || '');
             if (p && p.id) {
-              const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+              const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+              // ถ้าสถานะยังเป็นรอจัดส่ง ไม่ต้องเอาจำนวนของออเดอร์นี้มาลบออก
+              const stockVal = isOrderPending ? (rawStock + Number(it.qty || 0)) : rawStock;
               const isStockOut = stockVal <= 0;
               const sBg = isStockOut ? '#fee2e2' : '#dcfce7';
               const sColor = isStockOut ? '#b91c1c' : '#15803d';
               const sBdr = isStockOut ? '#fca5a5' : '#86efac';
               const sIcon = isStockOut ? '⚠️' : '📦';
               const sText = isStockOut ? 'คงเหลือ 0' : `คงเหลือ ${fmt(stockVal)}`;
-              stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
+              const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ยังไม่หัก ${it.qty} ชิ้น)` : '';
+              stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
             }
             return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}</div>`;
@@ -6870,6 +6874,7 @@ async function loadOrders() {
           (it.product_name && poi.clean_product_name && it.product_name.trim().toLowerCase() === poi.clean_product_name.toLowerCase()) ||
           (it.product_name && poi.raw_product_name && poi.raw_product_name.toLowerCase().includes(it.product_name.trim().toLowerCase()))
         );
+        const isOrderPending = !isOrderCancelled(o) && (!o.shipping_status || o.shipping_status === 'pending');
         const prodHtml = (o.order_items||[]).map(it => {
           const qtyTxt = Number(it.qty) > 1 ? `<b style="font-family:var(--mono)">${it.qty}×</b> ` : '';
           const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
@@ -6880,14 +6885,17 @@ async function loadOrders() {
           let stockHtml = '';
           let nameHtml = escapeHTML(it.product_name || p?.name || '');
           if (p && p.id) {
-            const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+            const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+            // ถ้าสถานะยังเป็นรอจัดส่ง ไม่ต้องเอาจำนวนของออเดอร์นี้มาลบออก
+            const stockVal = isOrderPending ? (rawStock + Number(it.qty || 0)) : rawStock;
             const isStockOut = stockVal <= 0;
             const sBg = isStockOut ? '#fee2e2' : '#dcfce7';
             const sColor = isStockOut ? '#b91c1c' : '#15803d';
             const sBdr = isStockOut ? '#fca5a5' : '#86efac';
             const sIcon = isStockOut ? '⚠️' : '📦';
             const sText = isStockOut ? 'คงเหลือ 0' : `คงเหลือ ${fmt(stockVal)}`;
-            stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
+            const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ยังไม่หัก ${it.qty} ชิ้น)` : '';
+            stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
           }
           return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}</div>`;
@@ -8394,13 +8402,18 @@ function renderEditItems() {
                    ((allProducts || []).find(p => p.id === it.product_id)) || 
                    ((allProducts || []).find(p => p.name && it.product_name && p.name.trim().toLowerCase() === it.product_name.trim().toLowerCase()));
     if (_pItem && _pItem.id) {
-      const stockVal = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
+      const edShipStatus = document.getElementById('ed-status')?.value || window._editingOrderForGP?.shipping_status;
+      const isOrderPending = !edShipStatus || edShipStatus === 'pending';
+      const rawStock = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
+      // ถ้าสถานะยังเป็นรอจัดส่ง ไม่ต้องเอาจำนวนของออเดอร์นี้มาลบออก
+      const stockVal = isOrderPending ? (rawStock + Number(it.qty || 0)) : rawStock;
       const isOut = stockVal <= 0;
       const stockHint = document.createElement('div');
       stockHint.style.cssText = 'margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap';
+      const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ยังไม่หัก ${it.qty} ชิ้น)` : '';
       stockHint.innerHTML = `
-        <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)" style="cursor:pointer;background:${isOut?'#fee2e2':'#dcfce7'};color:${isOut?'#b91c1c':'#15803d'};border:1px solid ${isOut?'#fca5a5':'#86efac'};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
-          ${isOut ? '⚠️ คงเหลือ 0' : '📦 คงเหลือ: ' + fmt(stockVal) + ' ชิ้น'} 🔍
+        <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)${tipPending}" style="cursor:pointer;background:${isOut?'#fee2e2':'#dcfce7'};color:${isOut?'#b91c1c':'#15803d'};border:1px solid ${isOut?'#fca5a5':'#86efac'};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
+          ${isOut ? '⚠️ คงเหลือ 0' : '📦 คงเหลือ: ' + fmt(stockVal) + ' ชิ้น'}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
         </span>
         <button type="button" class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting('${_pItem.id}')" title="ดูประวัติการเคลื่อนไหวสต๊อกอย่างละเอียด (Inventory Movement Ledger)" style="padding:1px 6px;font-size:10.5px;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700">
           📜 Movement
@@ -36965,7 +36978,9 @@ async function viewProductInventoryPosting(productId) {
     const onHandQty = Number(prod.stock_qty || 0);
     const inhouseQty = Number(prod.stock_inhouse !== undefined && prod.stock_inhouse !== null ? prod.stock_inhouse : onHandQty);
     const ecosealQty = Number(prod.stock_ecoseal || 0);
-    const totalCurrentStock = inhouseQty + ecosealQty;
+    // สต๊อกในคลังจริง (ยังไม่หักออเดอร์ที่สถานะยังรอจัดส่ง)
+    const physicalInhouse = inhouseQty + totalPendingSOQty;
+    const totalCurrentStock = physicalInhouse + ecosealQty;
     const availableNetStock = totalCurrentStock + totalPendingPOQty - totalPendingSOQty;
     const avgCost = Number(prod.current_cost) || 0;
     const totalVal = avgCost * inhouseQty;
@@ -36975,7 +36990,7 @@ async function viewProductInventoryPosting(productId) {
         <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #0284c7;border-radius:10px;padding:12px">
           <div style="font-size:11.5px;color:#64748b;font-weight:600">📦 สต๊อกคงเหลือจริง (On-Hand)</div>
           <div style="font-size:20px;font-weight:800;color:#0f172a;font-family:var(--mono);margin:4px 0">${fmt(totalCurrentStock)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
-          <div style="font-size:11px;color:#94a3b8">คลังร้าน: ${fmt(inhouseQty)} | Ecoseal: ${fmt(ecosealQty)}</div>
+          <div style="font-size:11px;color:#94a3b8">คลังร้าน: ${fmt(physicalInhouse)} | Ecoseal: ${fmt(ecosealQty)}</div>
         </div>
         <div class="stat-card" style="background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:12px;cursor:pointer" onclick="document.getElementById('ipl-filter-type').value='pending_po';filterInventoryPostingRows()" title="คลิกเพื่อดูเฉพาะรายการที่รอเข้าจาก PO">
           <div style="font-size:11.5px;color:#b45309;font-weight:600">⏳ รอเข้าจาก PO (Inbound) 🔍</div>
@@ -37833,7 +37848,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.68', date:'2026-10-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงสินค้าคงเหลือในสต๊อก และกดดู Inventory Movement จากรายการออเดอร์ (v2.68)', items:[
+    { v:'2.69', date:'2026-10-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ไม่หักยอดสต๊อกคงเหลือ หากออเดอร์ยังเป็นสถานะรอจัดส่ง (v2.69)', items:[
+      '📦 <b>Pending Shipment Stock Protection:</b> ในรายการออเดอร์ (ทั้งตารางคอมพิวเตอร์ Desktop, การ์ดมือถือ Mobile และหน้าต่าง Order Detail/Edit) หากออเดอร์ยังเป็นสถานะ "รอจัดส่ง" (Pending) ระบบจะไม่นำจำนวนสินค้าของออเดอร์นั้นมาหักลบออกจากยอดคงเหลือที่แสดง เพื่อให้เห็นสต๊อกของจริงที่ยังคงวางอยู่ในร้านก่อนจัดส่ง',
+      '🚚 <b>Accurate Shipment Deduction:</b> ระบบจะนำยอดสินค้ามาหักลบออกจากสต๊อกคงเหลือก็ต่อเมื่อสถานะเปลี่ยนเป็น "จัดส่งแล้ว" (Shipped) หรือ "ส่งถึงแล้ว" (Delivered) จริงเท่านั้น',
+      '📊 <b>Warehouse Physical On-Hand Alignment:</b> ในหน้าต่างประวัติการเคลื่อนไหวสต๊อก (Inventory Movement Ledger) ยอดการ์ด On-Hand คงเหลือจริงจะสะท้อนจำนวนสินค้าที่อยู่ในร้านจริง (ยังไม่หักลบด้วยออเดอร์ที่ยังรอส่ง)',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.69 พร้อมล้างแคชอัตโนมัติ'
+    ]},
+    { v:'2.68', date:'2026-10-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แสดงสินค้าคงเหลือในสต๊อก และกดดู Inventory Movement จากรายการออเดอร์ (v2.68)', items:[
       '📦 <b>Remaining Stock Visibility:</b> ในรายการออเดอร์ (ทั้งตารางคอมพิวเตอร์ Desktop และการ์ดมือถือ Mobile) แสดงจำนวนสินค้าคงเหลือในสต๊อกของแต่ละรายการทันที เช่น <code>📦 คงเหลือ 15</code> หรือ <code>⚠️ คงเหลือ 0</code>',
       '📜 <b>Direct Inventory Movement Access:</b> สามารถคลิกที่ชื่อสินค้า หรือคลิกที่ป้ายคงเหลือสต๊อก เพื่อเปิดดูประวัติการเคลื่อนไหวสต๊อก (Inventory Posting List & Movement Ledger) ได้ทันที โดยไม่ต้องสลับหน้าจอ',
       '🔍 <b>Order Detail & Edit Integration:</b> ในหน้าดู/แก้ไขออเดอร์ (Order Detail Modal) แสดงป้ายคงเหลือสต๊อกและปุ่ม <code>📜 Movement</code> ของแต่ละรายการสินค้า พร้อมเปิดดูความเคลื่อนไหวซ้อนบนหน้าต่างออเดอร์ได้ทันที',
