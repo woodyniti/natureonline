@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.69';
-const DISPLAY_APP_VERSION = 'v2.69';
+const CURRENT_APP_VERSION = 'sealthai-v2.70';
+const DISPLAY_APP_VERSION = 'v2.70';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.69 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.70)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.70 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.69 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.70 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.69 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.70)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.70 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.69 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.70)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.70 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3645,7 +3645,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.69)">v2.69 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.70)">v2.70 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -30607,6 +30607,96 @@ function getCustomerTierBadge(tierKey) {
   return `<span class="${t.badgeClass}" style="font-size:11px;font-weight:600">${t.label.split(' ')[0]}</span>`;
 }
 
+// ─── ระบบสะสมแต้ม & ระดับสมาชิกคลับช่าง (Mechanic Club & Points) ─────────────
+const MECHANIC_TIERS = {
+  bronze: {
+    key: 'bronze',
+    name: 'Bronze Apprentice',
+    nameTh: 'ช่างมือใหม่',
+    icon: '🥉',
+    minSpend: 0,
+    maxSpend: 2999,
+    discountPct: 0,
+    couponCode: 'MECHBRONZE',
+    color: '#92400e',
+    bg: '#fef3c7',
+    border: '#fde68a',
+    cardGradient: 'linear-gradient(135deg, #78350f, #b45309, #d97706)',
+    perks: ['รับ 1 แต้มทุก 100 บาท', 'โบนัสเปิดเบอร์ใหม่ 50 แต้มฟรี', 'ปรึกษาสเปกวิศวกรรมฟรี']
+  },
+  silver: {
+    key: 'silver',
+    name: 'Silver Mechanic',
+    nameTh: 'ช่างประจำอู่',
+    icon: '🥈',
+    minSpend: 3000,
+    maxSpend: 9999,
+    discountPct: 3,
+    couponCode: 'MECHSILVER3',
+    color: '#334155',
+    bg: '#f1f5f9',
+    border: '#cbd5e1',
+    cardGradient: 'linear-gradient(135deg, #1e293b, #475569, #64748b)',
+    perks: ['ลด 3% ทุกออเดอร์ ไม่มีขั้นต่ำ', 'รับ 1 แต้มทุก 100 บาท', 'สิทธิ์แลกของรางวัลพรีเมียม']
+  },
+  gold: {
+    key: 'gold',
+    name: 'Gold Master',
+    nameTh: 'ช่างผู้ชำนาญการ',
+    icon: '🥇',
+    minSpend: 10000,
+    maxSpend: 29999,
+    discountPct: 5,
+    couponCode: 'MECHGOLD5',
+    color: '#854d0e',
+    bg: '#fef9c3',
+    border: '#fde047',
+    cardGradient: 'linear-gradient(135deg, #713f12, #a16207, #ca8a04)',
+    perks: ['ลด 5% ทุกออเดอร์', 'จัดส่งด่วนฟรีทุกออเดอร์ (Flash/Kerry)', 'สิทธิ์แลกชุดเครื่องมือพิเศษ']
+  },
+  platinum: {
+    key: 'platinum',
+    name: 'Platinum Pro',
+    nameTh: 'ช่างโรงงาน VIP',
+    icon: '👑',
+    minSpend: 30000,
+    maxSpend: Infinity,
+    discountPct: 7,
+    couponCode: 'MECHPLATINUM7',
+    color: '#0369a1',
+    bg: '#e0f2fe',
+    border: '#bae6fd',
+    cardGradient: 'linear-gradient(135deg, #090d16, #0f172a, #0369a1)',
+    perks: ['ลดสูงสุด 7% ทุกออเดอร์', 'จัดส่งฟรี + สิทธิ์ส่งด่วนแมสเซนเจอร์ในวัน', 'สิทธิ์ขอเครดิตเทอมโรงงาน 30 วัน']
+  }
+};
+
+function cleanPhoneDigits(p) {
+  if (!p) return '';
+  return String(p).replace(/\D+/g, '');
+}
+
+function getCustomerMechanicTier(lifetimeSpend) {
+  const spend = Number(lifetimeSpend) || 0;
+  if (spend >= 30000) return MECHANIC_TIERS.platinum;
+  if (spend >= 10000) return MECHANIC_TIERS.gold;
+  if (spend >= 3000)  return MECHANIC_TIERS.silver;
+  return MECHANIC_TIERS.bronze;
+}
+
+function getMechanicTierBadgeHtml(tier) {
+  if (!tier) tier = MECHANIC_TIERS.bronze;
+  return `<span style="background:${tier.bg};color:${tier.color};border:1px solid ${tier.border};padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px">
+    <span>${tier.icon}</span> <span>${tier.nameTh}</span> ${tier.discountPct > 0 ? `<span style="background:${tier.color};color:#fff;padding:0 4px;border-radius:3px;font-size:10px">-${tier.discountPct}%</span>` : ''}
+  </span>`;
+}
+
+function calculateOrderPoints(amount) {
+  const num = Number(amount) || 0;
+  if (num < 100) return 0;
+  return Math.floor(num / 100);
+}
+
 
 // ─── CRM & CUSTOMER DATABASE AUTO-SYNC (v2.16) ─────────────────────
 async function autoSyncCustomerFromOrder(orderPayload, orderId) {
@@ -30652,13 +30742,41 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
       if (byRaw) existing = byRaw;
     }
 
+    // 4. Match by phone digits if available
+    const cleanPhone = cleanPhoneDigits(orderPayload.customer_phone);
+    if (!existing && cleanPhone && cleanPhone.length >= 8) {
+      const { data: byPhone } = await sb.from('customers')
+        .select('id, name, phone, tax_id, billing_address, shipping_address, code')
+        .eq('shop_id', currentShop.id)
+        .ilike('phone', `%${cleanPhone.slice(-8)}%`)
+        .limit(1)
+        .maybeSingle();
+      if (byPhone) existing = byPhone;
+    }
+
     if (!existing) {
       const isCompany = compName || /บริษัท|บจก|หจก|ห้างหุ้นส่วน|โรงงาน|จำกัด|co\.,\s*ltd|corp|inc|ร้าน|อู่|การช่าง/i.test(targetName) || (taxId.length === 13);
+      
+      let nextCode = 'MC-0001';
+      try {
+        const { count } = await sb.from('customers').select('id', { count: 'exact', head: true }).eq('shop_id', currentShop.id);
+        nextCode = `MC-${String((count || 0) + 1).padStart(4, '0')}`;
+      } catch(e) {}
+
+      const orderPts = calculateOrderPoints(orderPayload.total_amount);
+      const welcomeBonus = 50;
+
       const insertData = {
         shop_id: currentShop.id,
+        code: nextCode,
         name: targetName,
         customer_type: isCompany ? 'company' : 'individual',
         customer_tier: orderPayload.customer_tier || 'retail',
+        mechanic_tier: 'bronze',
+        welcome_bonus_awarded: true,
+        points_balance: orderPts + welcomeBonus,
+        lifetime_points: orderPts + welcomeBonus,
+        lifetime_spend: Number(orderPayload.total_amount) || 0,
         tax_id: taxId || null,
         branch_code: orderPayload.branch_code || '00000',
         phone: orderPayload.customer_phone || null,
@@ -30803,11 +30921,22 @@ async function syncCustomersFromOrders(isManual = true) {
       let targetCust = custMapByName.get(key);
       
       if (!targetCust) {
+        const memberCode = `MC-${String(existingCustomers.length + insertedCount + 1).padStart(4, '0')}`;
+        const earnedPts = calculateOrderPoints(cData.total_spend);
+        const welcomeBonus = 50;
+        const tier = getCustomerMechanicTier(cData.total_spend);
+
         const insertPayload = {
           shop_id: currentShop.id,
+          code: memberCode,
           name: cData.name,
           customer_type: cData.customer_type,
           customer_tier: cData.customer_tier,
+          mechanic_tier: tier.key,
+          welcome_bonus_awarded: true,
+          points_balance: earnedPts + welcomeBonus,
+          lifetime_points: earnedPts + welcomeBonus,
+          lifetime_spend: cData.total_spend || 0,
           tax_id: cData.tax_id,
           branch_code: cData.branch_code,
           phone: cData.phone,
@@ -30827,6 +30956,9 @@ async function syncCustomersFromOrders(isManual = true) {
         }
       } else {
         const updatePayload = {};
+        if (!targetCust.code) {
+          updatePayload.code = `MC-${String(existingCustomers.indexOf(targetCust) + 1).padStart(4, '0')}`;
+        }
         if (!targetCust.phone && cData.phone) updatePayload.phone = cData.phone;
         if (!targetCust.tax_id && cData.tax_id) updatePayload.tax_id = cData.tax_id;
         if (!targetCust.billing_address && cData.billing_address) updatePayload.billing_address = cData.billing_address;
@@ -30909,6 +31041,7 @@ async function customers() {
     <!-- Tabs Header -->
     <div class="tab-btn-row" id="crm-tabs">
       <button class="tab-btn active" id="tab-crm-directory" onclick="switchCRMTab('directory')">👥 ทะเบียนลูกค้า & CRM (<span id="crm-cust-count">0</span>)</button>
+      <button class="tab-btn" id="tab-crm-points" onclick="switchCRMTab('points')" style="color:#b45309;font-weight:700">🎁 คลับช่าง & สะสมแต้ม (<span id="crm-points-count">0</span>)</button>
       <button class="tab-btn" id="tab-crm-purchases" onclick="switchCRMTab('purchases')">🛍️ แดชบอร์ด & รายการซื้อตามลูกค้า (<span id="crm-purchases-count">0</span>)</button>
       <button class="tab-btn" id="tab-crm-pricing" onclick="switchCRMTab('pricing')">🏷️ ราคาส่งตามกลุ่ม & จำนวน (Tier Pricing)</button>
       <button class="tab-btn" id="tab-crm-pipeline" onclick="switchCRMTab('pipeline')">📋 ติดตามใบเสนอราคา (Quotation Pipeline)</button>
@@ -31114,6 +31247,134 @@ async function customers() {
         </div>
       </div>
     </div>
+
+    <!-- PANE 6: Mechanic Club & Loyalty Points -->
+    <div id="pane-crm-points" class="crm-pane" style="display:none">
+      <!-- 4 Tiers Display Cards -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px;margin-bottom:16px">
+        <div style="background:linear-gradient(135deg, #fffbeb, #fef3c7);border:1.5px solid #fde68a;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase">Level 1 · สมาชิกเริ่มต้น</div>
+              <div style="font-size:15px;font-weight:800;color:#78350f;margin-top:2px">🥉 Bronze Apprentice</div>
+              <div style="font-size:11.5px;color:#b45309;font-weight:600">ช่างมือใหม่ (ยอดซื้อ ฿0 - ฿2,999)</div>
+            </div>
+            <span style="font-size:26px">🥉</span>
+          </div>
+          <div style="margin-top:10px;font-size:11.5px;color:#78350f;line-height:1.6">
+            <div>• รับ 1 แต้มทุกยอดซื้อ 100 บาท</div>
+            <div>• โบนัสเปิดเบอร์ใหม่ 50 แต้มฟรี</div>
+            <div>• ปรึกษาสเปกวิศวกรรมฟรี</div>
+          </div>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #fde68a;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:#92400e;font-weight:600">โค้ดคูปอง:</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('MECHBRONZE');toast('คัดลอกโค้ด MECHBRONZE เรียบร้อย','success')" style="font-family:var(--mono);font-size:11px;padding:2px 8px;font-weight:700;background:#fff;border-color:#fde68a;color:#78350f">📋 MECHBRONZE</button>
+          </div>
+        </div>
+
+        <div style="background:linear-gradient(135deg, #f8fafc, #f1f5f9);border:1.5px solid #cbd5e1;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase">Level 2 · ส่วนลด 3%</div>
+              <div style="font-size:15px;font-weight:800;color:#1e293b;margin-top:2px">🥈 Silver Mechanic</div>
+              <div style="font-size:11.5px;color:#334155;font-weight:600">ช่างประจำอู่ (ยอดซื้อ ฿3,000 - ฿9,999)</div>
+            </div>
+            <span style="font-size:26px">🥈</span>
+          </div>
+          <div style="margin-top:10px;font-size:11.5px;color:#334155;line-height:1.6">
+            <div>• <b style="color:#0f172a">ลด 3% ทุกออเดอร์</b> ไม่มีขั้นต่ำ</div>
+            <div>• รับ 1 แต้มทุกยอดซื้อ 100 บาท</div>
+            <div>• สิทธิ์แลกของรางวัลพรีเมียม</div>
+          </div>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:#475569;font-weight:600">โค้ดคูปอง:</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('MECHSILVER3');toast('คัดลอกโค้ด MECHSILVER3 เรียบร้อย','success')" style="font-family:var(--mono);font-size:11px;padding:2px 8px;font-weight:700;background:#fff;border-color:#cbd5e1;color:#1e293b">📋 MECHSILVER3</button>
+          </div>
+        </div>
+
+        <div style="background:linear-gradient(135deg, #fefce8, #fef9c3);border:1.5px solid #fde047;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#854d0e;text-transform:uppercase">Level 3 · ส่วนลด 5%</div>
+              <div style="font-size:15px;font-weight:800;color:#713f12;margin-top:2px">🥇 Gold Master</div>
+              <div style="font-size:11.5px;color:#a16207;font-weight:600">ช่างผู้ชำนาญการ (ยอด ฿10,000 - ฿29,999)</div>
+            </div>
+            <span style="font-size:26px">🥇</span>
+          </div>
+          <div style="margin-top:10px;font-size:11.5px;color:#713f12;line-height:1.6">
+            <div>• <b style="color:#854d0e">ลด 5% ทุกออเดอร์</b></div>
+            <div>• จัดส่งด่วนฟรีทุกออเดอร์ (Flash/Kerry)</div>
+            <div>• สิทธิ์แลกชุดเครื่องมือพิเศษ</div>
+          </div>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #fde047;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:#854d0e;font-weight:600">โค้ดคูปอง:</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('MECHGOLD5');toast('คัดลอกโค้ด MECHGOLD5 เรียบร้อย','success')" style="font-family:var(--mono);font-size:11px;padding:2px 8px;font-weight:700;background:#fff;border-color:#fde047;color:#713f12">📋 MECHGOLD5</button>
+          </div>
+        </div>
+
+        <div style="background:linear-gradient(135deg, #f0f9ff, #e0f2fe);border:1.5px solid #7dd3fc;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,0.05);position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start">
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#0369a1;text-transform:uppercase">Level 4 · ส่วนลดสูงสุด 7%</div>
+              <div style="font-size:15px;font-weight:800;color:#0c4a6e;margin-top:2px">👑 Platinum Pro</div>
+              <div style="font-size:11.5px;color:#0284c7;font-weight:600">ช่างโรงงาน VIP (ยอด ฿30,000 ขึ้นไป)</div>
+            </div>
+            <span style="font-size:26px">👑</span>
+          </div>
+          <div style="margin-top:10px;font-size:11.5px;color:#0c4a6e;line-height:1.6">
+            <div>• <b style="color:#0369a1">ลดสูงสุด 7% ทุกออเดอร์</b></div>
+            <div>• จัดส่งฟรี + ส่งด่วนแมสเซนเจอร์ในวัน</div>
+            <div>• สิทธิ์ขอเครดิตเทอมโรงงาน 30 วัน</div>
+          </div>
+          <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #7dd3fc;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11px;color:#0369a1;font-weight:600">โค้ดคูปอง:</span>
+            <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('MECHPLATINUM7');toast('คัดลอกโค้ด MECHPLATINUM7 เรียบร้อย','success')" style="font-family:var(--mono);font-size:11px;padding:2px 8px;font-weight:700;background:#fff;border-color:#7dd3fc;color:#0c4a6e">📋 MECHPLATINUM7</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stat-grid mb-4" id="crm-points-stats-grid">
+        <div class="stat-card"><div class="stat-label">กำลังประมวลผลแต้มสะสม...</div></div>
+      </div>
+
+      <!-- Main Table Card -->
+      <div class="card">
+        <div class="card-header" style="flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="card-title">🎁 ทำเนียบสมาชิกคลับช่าง & บัญชีคะแนนสะสม (Technician Club Ledger)</div>
+            <div class="card-subtitle">สะสมยอดซื้อตลอดชีพ (Lifetime Spend) อัตโนมัติ 100 บาท = 1 แต้ม · ปรับระดับ Tier และดึงแต้มคืนเมื่อยกเลิกออเดอร์อัตโนมัติ</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="loadCRMData(true)" title="รีเฟรชยอดแต้มและยอดซื้อสะสมจากออเดอร์ล่าสุด">🔄 รีเฟรชยอดแต้ม</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportMechanicClubCSV()" title="ส่งออกรายชื่อสมาชิกและแต้มเป็นไฟล์ CSV">📤 ส่งออก CSV</button>
+            <button class="btn btn-primary btn-sm" onclick="openAdjustPointsModal()" title="เพิ่ม/ลดแต้ม หรือบันทึกการแลกของรางวัล">+ ปรับแต้ม / แลกรางวัล</button>
+          </div>
+        </div>
+
+        <div class="filter-bar" style="border:none;padding:0 0 12px 0;flex-wrap:wrap;gap:8px">
+          <input type="text" id="crm-points-search" placeholder="🔍 ค้นหารหัสสมาชิก (MC-xxx) / ชื่อช่าง / อู่ / Tax ID / เบอร์โทร..." oninput="filterMechanicClubList()" style="flex:1;min-width:260px">
+          <select id="crm-points-filter-tier" onchange="filterMechanicClubList()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="all">🏆 ทุกระดับสมาชิก (All Tiers)</option>
+            <option value="bronze">🥉 Bronze Apprentice (฿0 - ฿2,999)</option>
+            <option value="silver">🥈 Silver Mechanic (฿3,000 - ฿9,999 · ลด 3%)</option>
+            <option value="gold">🥇 Gold Master (฿10,000 - ฿29,999 · ลด 5%)</option>
+            <option value="platinum">👑 Platinum Pro (฿30,000+ · ลด 7%)</option>
+          </select>
+          <select id="crm-points-sort" onchange="filterMechanicClubList()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13px">
+            <option value="points-desc">🎁 แต้มคงเหลือสูงสุด (Points High→Low)</option>
+            <option value="spend-desc">💰 ยอดซื้อสะสมสูงสุด (Spend High→Low)</option>
+            <option value="orders-desc">📦 จำนวนบิลมากสุด (Orders High→Low)</option>
+            <option value="code-asc">📇 รหัสสมาชิก (MC-0001→...)</option>
+            <option value="name-asc">🔤 ชื่อลูกค้า (A→Z)</option>
+          </select>
+        </div>
+
+        <div class="table-wrap" id="crm-points-table-wrap">
+          <div class="loading"><div class="spinner"></div> กำลังโหลดรายชื่อสมาชิกระบบคะแนน...</div>
+        </div>
+      </div>
+    </div>
   `);
 
   await loadCRMData();
@@ -31121,7 +31382,7 @@ async function customers() {
 
 function switchCRMTab(tab) {
   _crmTab = tab;
-  ['directory', 'purchases', 'pricing', 'pipeline', 'credit'].forEach(t => {
+  ['directory', 'points', 'purchases', 'pricing', 'pipeline', 'credit'].forEach(t => {
     const btn = document.getElementById('tab-crm-' + t);
     const pane = document.getElementById('pane-crm-' + t);
     if (btn) btn.classList.toggle('active', t === tab);
@@ -31129,6 +31390,7 @@ function switchCRMTab(tab) {
   });
 
   if (tab === 'directory') filterCustomerList();
+  if (tab === 'points') renderMechanicClubPointsTab();
   if (tab === 'purchases') renderCustomerPurchasesDashboard();
   if (tab === 'pricing') renderTierPricingTable();
   if (tab === 'pipeline') renderQuotationPipeline();
@@ -31196,21 +31458,64 @@ async function loadCRMData(force = false) {
 
     _allOrdersWithItems = ordersData || [];
 
-    // Calculate customer metrics (Total Spend, Outstanding AR, Orders count)
+    // Calculate customer metrics (Total Spend, Outstanding AR, Orders count, Mechanic Club Points & Tier)
     const orders = _allOrdersWithItems || [];
-    _allCustomers.forEach(c => {
-      const cOrders = orders.filter(o => (o.customer_id === c.id) || (o.customer_name && o.customer_name.trim().toLowerCase() === c.name.trim().toLowerCase()));
-      c.totalSpend = cOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
-      c.orderCount = cOrders.length;
-      c.lastOrderDate = cOrders.length ? cOrders[0].order_date : null;
+    _allCustomers.forEach((c, idx) => {
+      const cCleanPhone = cleanPhoneDigits(c.phone);
+      const cTaxId = (c.tax_id || '').trim();
+      const cName = (c.name || '').trim().toLowerCase();
+
+      // Multi-key matching: customer_id OR Tax ID OR Phone digits OR Name
+      const cOrders = orders.filter(o => {
+        if (o.customer_id && o.customer_id === c.id) return true;
+        if (cTaxId && cTaxId.length >= 10 && o.tax_id && o.tax_id.trim() === cTaxId) return true;
+        if (cCleanPhone && cCleanPhone.length >= 8 && o.customer_phone && cleanPhoneDigits(o.customer_phone).endsWith(cCleanPhone.slice(-8))) return true;
+        if (o.customer_name && o.customer_name.trim().toLowerCase() === cName) return true;
+        return false;
+      });
+
+      // Filter valid non-cancelled orders for Points & Lifetime Spend (Automatic Revocation on Cancel/Refund)
+      const validOrders = cOrders.filter(o => !isOrderCancelled(o) && o.status !== 'cancelled' && o.status !== 'refunded');
+
+      c.lifetimeSpend = validOrders.reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
+      c.totalSpend = c.lifetimeSpend;
+      c.orderCount = validOrders.length;
+      c.allOrdersCount = cOrders.length;
+      c.lastOrderDate = validOrders.length ? validOrders[0].order_date : (cOrders.length ? cOrders[0].order_date : null);
+
+      // Unique Member Code (MC-0001, MC-0002...)
+      if (!c.code) {
+        c.code = `MC-${String(idx + 1).padStart(4, '0')}`;
+      }
+
+      // Membership Tier (Bronze, Silver, Gold, Platinum)
+      c.mechanicTier = getCustomerMechanicTier(c.lifetimeSpend);
+
+      // Points calculation:
+      // 1. Welcome Bonus: 50 points
+      c.welcomeBonus = (c.welcome_bonus_awarded !== false) ? 50 : 0;
+      // 2. Order points: 100 THB = 1 Point (rounded down)
+      c.earnedOrderPoints = validOrders.reduce((sum, o) => sum + calculateOrderPoints(o.total_amount), 0);
+      // 3. Manual adjustments / redemptions tag: [POINTS_ADJ:+/-X]
+      let manualAdj = 0;
+      if (c.notes) {
+        const m = String(c.notes).match(/\[POINTS_ADJ:([+-]?\d+)\]/i);
+        if (m) manualAdj = parseInt(m[1], 10) || 0;
+      }
+      c.manualPointsAdj = manualAdj;
+      // 4. Points balance (cannot be negative)
+      c.pointsBalance = Math.max(0, c.welcomeBonus + c.earnedOrderPoints + manualAdj);
+      c.lifetimePoints = Math.max(0, c.welcomeBonus + c.earnedOrderPoints + (manualAdj > 0 ? manualAdj : 0));
 
       // Unpaid AR balance
-      c.outstandingAR = cOrders.filter(o => o.status === 'pending' || o.payment_method === 'COD' || (c.credit_term_days > 0 && o.status !== 'delivered')).reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
+      c.outstandingAR = cOrders.filter(o => !isOrderCancelled(o) && (o.status === 'pending' || o.payment_method === 'COD' || (c.credit_term_days > 0 && o.status !== 'delivered'))).reduce((s, o) => s + (Number(o.total_amount) || 0), 0);
       c.isCreditExceeded = c.credit_limit > 0 && c.outstandingAR > c.credit_limit;
     });
 
     const custCountBadge = document.getElementById('crm-cust-count');
     if (custCountBadge) custCountBadge.textContent = _allCustomers.length;
+    const pointsCountBadge = document.getElementById('crm-points-count');
+    if (pointsCountBadge) pointsCountBadge.textContent = _allCustomers.length;
 
     renderCRMStats();
     filterCustomerList();
@@ -31218,6 +31523,7 @@ async function loadCRMData(force = false) {
     renderTierPricingTable();
     renderQuotationPipeline();
     renderCreditReport();
+    if (_crmTab === 'points') renderMechanicClubPointsTab();
   } catch(e) {
     console.error('Error loading CRM data:', e);
     // If table doesn't exist, show friendly prompt
@@ -31271,7 +31577,7 @@ function filterCustomerList() {
   if (tier !== 'all') filtered = filtered.filter(c => c.customer_tier === tier);
   if (cred === 'cash') filtered = filtered.filter(c => !c.credit_term_days || c.credit_term_days === 0);
   if (cred === 'credit') filtered = filtered.filter(c => c.credit_term_days > 0);
-  if (q) filtered = filtered.filter(c => `${c.name} ${c.tax_id||''} ${c.phone||''} ${c.email||''} ${c.billing_address||''}`.toLowerCase().includes(q));
+  if (q) filtered = filtered.filter(c => `${c.code||''} ${c.name} ${c.tax_id||''} ${c.phone||''} ${c.email||''} ${c.billing_address||''}`.toLowerCase().includes(q));
 
   const wrap = document.getElementById('crm-customers-table-wrap');
   if (!wrap) return;
@@ -31299,13 +31605,13 @@ function filterCustomerList() {
       <thead>
         <tr>
           <th>กลุ่มลูกค้า</th>
-          <th>ชื่อบริษัท / ลูกค้า</th>
+          <th>ชื่อบริษัท / ลูกค้า & รหัสสมาชิก</th>
           <th>Tax ID & สาขา</th>
           <th>ติดต่อ / เบอร์โทร</th>
           <th class="text-right">เครดิตเทอม</th>
           <th class="text-right">วงเงิน / ค้างชำระ</th>
           <th class="text-right">ยอดซื้อสะสม</th>
-          <th style="width:110px;text-align:center">จัดการ</th>
+          <th style="width:130px;text-align:center">จัดการ</th>
         </tr>
       </thead>
       <tbody>
@@ -31313,8 +31619,15 @@ function filterCustomerList() {
           <tr style="${c.isCreditExceeded ? 'background:rgba(220,38,38,0.03)' : ''}">
             <td>${getCustomerTierBadge(c.customer_tier)}</td>
             <td>
-              <div style="font-weight:600;font-size:13px;color:var(--text)">${escapeHTML(c.name)}</div>
-              <div style="font-size:11px;color:var(--text3)">${c.customer_type === 'company' ? '🏢 นิติบุคคล' : '👤 บุคคล'}</div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-family:var(--mono);font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;padding:1px 6px;border-radius:4px;border:1px solid #bfdbfe">${c.code || 'MC-0001'}</span>
+                <span style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(c.name)}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap">
+                <span style="font-size:11px;color:var(--text3)">${c.customer_type === 'company' ? '🏢 นิติบุคคล' : '👤 บุคคล'}</span>
+                ${getMechanicTierBadgeHtml(c.mechanicTier)}
+                <span style="font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:1px 6px;border-radius:4px">🎁 ${fmt(c.pointsBalance)} แต้ม</span>
+              </div>
             </td>
             <td>
               <div style="font-family:var(--mono);font-size:12px">${c.tax_id || '-'}</div>
@@ -31340,6 +31653,7 @@ function filterCustomerList() {
               <div style="font-size:10px;font-weight:400;color:var(--text3)">(${c.orderCount} บิล)</div>
             </td>
             <td style="text-align:center;white-space:nowrap">
+              <button class="btn btn-secondary btn-sm" onclick="openMembershipCardModal('${c.id}')" title="ดูบัตรสมาชิกช่างดิจิทัล & โค้ดคูปอง" style="color:#b45309">📇</button>
               <button class="btn btn-secondary btn-sm" onclick="openCustomerProfileModal('${c.id}')" title="ดูข้อมูล 360 & ประวัติการซื้อ">👤</button>
               <button class="btn btn-secondary btn-sm" onclick="openEditCustomerModal('${c.id}')" title="แก้ไขข้อมูล">✏️</button>
               <button class="btn btn-secondary btn-sm" onclick="deleteCustomer('${c.id}')" title="ลบ">🗑️</button>
@@ -32055,6 +32369,10 @@ function renderCustomerModal(title, c) {
         <input type="text" id="mc-name" value="${escapeHTML(c.name || '')}" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด">
       </div>
       <div class="form-group">
+        <label>รหัสสมาชิกคลับช่าง (Member Code)</label>
+        <input type="text" id="mc-code" value="${escapeHTML(c.code || '')}" placeholder="เช่น MC-0001 (เว้นว่างเพื่อสร้างอัตโนมัติ)" style="font-family:var(--mono);font-weight:700">
+      </div>
+      <div class="form-group">
         <label>ประเภทลูกค้า</label>
         <select id="mc-type">
           <option value="company" ${c.customer_type === 'company' ? 'selected' : ''}>🏢 บริษัท / นิติบุคคล / โรงงาน</option>
@@ -32124,6 +32442,8 @@ async function saveCustomerData() {
   const name = (document.getElementById('mc-name')?.value || '').trim();
   if (!name) { toast('กรุณาระบุชื่อลูกค้า', 'error'); return; }
 
+  const codeInput = (document.getElementById('mc-code')?.value || '').trim();
+
   const payload = {
     shop_id: currentShop.id,
     name,
@@ -32141,6 +32461,15 @@ async function saveCustomerData() {
     updated_at: new Date().toISOString()
   };
 
+  if (codeInput) {
+    payload.code = codeInput;
+  } else if (!_editingCustomerId) {
+    payload.code = `MC-${String((_allCustomers?.length || 0) + 1).padStart(4, '0')}`;
+    payload.welcome_bonus_awarded = true;
+    payload.points_balance = 50;
+    payload.mechanic_tier = 'bronze';
+  }
+
   try {
     if (_editingCustomerId) {
       const { error } = await sb.from('customers').update(payload).eq('id', _editingCustomerId);
@@ -32149,7 +32478,7 @@ async function saveCustomerData() {
     } else {
       const { error } = await sb.from('customers').insert(payload);
       if (error) throw error;
-      toast('เพิ่มลูกค้าใหม่เรียบร้อย ✓', 'success');
+      toast('เพิ่มลูกค้าใหม่และเปิดบัตรสมาชิกช่างเรียบร้อย (+50 แต้ม) ✓', 'success');
     }
     closeModal('modal-dynamic');
     await loadCRMData(true);
@@ -32252,6 +32581,23 @@ async function openCustomerProfileModal(id) {
         <div style="margin-top:10px;display:flex;gap:6px">
           <button class="btn btn-primary btn-sm" onclick="closeModal('modal-dynamic'); showPage('orders'); setTimeout(()=>openNewOrder(), 200);">🛒 เปิดบิลใหม่</button>
           <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-dynamic'); switchCRMTab('purchases'); setTimeout(()=>{ document.getElementById('crm-purchase-search').value='${escapeHTML(c.name)}'; renderCustomerPurchasesDashboard(); }, 200);">🛍️ แดชบอร์ดซื้อ</button>
+        </div>
+      </div>
+      <div style="flex:1;min-width:240px;background:${c.mechanicTier.bg};border:1.5px solid ${c.mechanicTier.border};padding:14px;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:800;color:${c.mechanicTier.color}">🎁 คลับช่าง & บัตรสมาชิก</div>
+          <span style="font-family:var(--mono);font-size:11px;font-weight:700;background:#fff;color:#1e293b;padding:1px 6px;border-radius:4px;border:1px solid ${c.mechanicTier.border}">${c.code || 'MC-0001'}</span>
+        </div>
+        <div style="margin-bottom:8px">${getMechanicTierBadgeHtml(c.mechanicTier)}</div>
+        <div style="font-size:12px;line-height:1.8;color:${c.mechanicTier.color}">
+          <div><b>แต้มคงเหลือ:</b> <span style="font-size:14px;font-weight:800">🎁 ${fmt(c.pointsBalance)}</span> แต้ม</div>
+          <div><b>ยอดซื้อสะสม:</b> <b>฿${fmtB(c.lifetimeSpend)}</b> (${c.orderCount} บิล)</div>
+          <div><b>โค้ดส่วนลด:</b> <code style="background:#fff;padding:1px 6px;border-radius:3px;font-weight:700">${c.mechanicTier.couponCode}</code> (${c.mechanicTier.discountPct}%)</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="openMembershipCardModal('${c.id}')" style="background:#fff;font-weight:700;color:${c.mechanicTier.color}">📇 บัตรดิจิทัล</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAdjustPointsModal('${c.id}')" style="background:#fff">⚖️ ปรับแต้ม</button>
+          <button class="btn btn-secondary btn-sm" onclick="openPointsLedgerModal('${c.id}')" style="background:#fff">📜 ประวัติแต้ม</button>
         </div>
       </div>
     </div>
@@ -32561,6 +32907,624 @@ function renderCreditReport() {
       </tbody>
     </table>
   `;
+}
+
+// ─── ระบบสะสมแต้ม & สมาชิกคลับช่าง (Mechanic Club & Points Ledger) ───────────
+
+function renderMechanicClubPointsTab() {
+  const grid = document.getElementById('crm-points-stats-grid');
+  if (!grid) return;
+
+  const totalMembers = _allCustomers.length;
+  const totalPoints = _allCustomers.reduce((s, c) => s + (c.pointsBalance || 0), 0);
+  const totalSpend = _allCustomers.reduce((s, c) => s + (c.lifetimeSpend || 0), 0);
+
+  const bronzeCount = _allCustomers.filter(c => c.mechanicTier?.key === 'bronze').length;
+  const silverCount = _allCustomers.filter(c => c.mechanicTier?.key === 'silver').length;
+  const goldCount   = _allCustomers.filter(c => c.mechanicTier?.key === 'gold').length;
+  const platCount   = _allCustomers.filter(c => c.mechanicTier?.key === 'platinum').length;
+
+  grid.innerHTML = `
+    <div class="stat-card" style="border-left:4px solid #b45309;background:#fff">
+      <div class="stat-label">👥 สมาชิกคลับช่างทั้งหมด</div>
+      <div class="stat-value" style="color:#b45309">${fmt(totalMembers)} <span style="font-size:13px;font-weight:400;color:var(--text3)">ราย</span></div>
+      <div class="stat-sub">โบนัสเปิดบัตร 50 แต้มฟรีทุกคน</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #16a34a;background:#fff">
+      <div class="stat-label">🎁 แต้มสะสมหมุนเวียนรวม</div>
+      <div class="stat-value" style="color:#16a34a">${fmt(totalPoints)} <span style="font-size:13px;font-weight:400;color:var(--text3)">แต้ม</span></div>
+      <div class="stat-sub">คำนวณอัตโนมัติ ทุก 100 บาท = 1 แต้ม</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid var(--accent);background:#fff">
+      <div class="stat-label">💰 ยอดซื้อสะสมรวมตลอดชีพ</div>
+      <div class="stat-value text-accent">${fmtB(totalSpend)}</div>
+      <div class="stat-sub">คิดเฉพาะบิลสำเร็จ (ยกเลิกดึงกลับอัตโนมัติ)</div>
+    </div>
+    <div class="stat-card" style="border-left:4px solid #0284c7;background:#fff">
+      <div class="stat-label">🏆 การกระจายระดับสมาชิก (Tiers)</div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px">
+        <span style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700">🥉 ${bronzeCount}</span>
+        <span style="background:#f1f5f9;color:#334155;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700">🥈 ${silverCount}</span>
+        <span style="background:#fef9c3;color:#854d0e;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700">🥇 ${goldCount}</span>
+        <span style="background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:700">👑 ${platCount}</span>
+      </div>
+      <div class="stat-sub" style="margin-top:4px">ปรับระดับตามยอดซื้อสะสมตลอดชีพ</div>
+    </div>
+  `;
+
+  filterMechanicClubList();
+}
+
+function filterMechanicClubList() {
+  const q = (document.getElementById('crm-points-search')?.value || '').trim().toLowerCase();
+  const tierFilter = document.getElementById('crm-points-filter-tier')?.value || 'all';
+  const sort = document.getElementById('crm-points-sort')?.value || 'points-desc';
+
+  let filtered = [..._allCustomers];
+
+  if (tierFilter !== 'all') {
+    filtered = filtered.filter(c => c.mechanicTier?.key === tierFilter);
+  }
+
+  if (q) {
+    filtered = filtered.filter(c => `${c.code||''} ${c.name} ${c.tax_id||''} ${c.phone||''} ${c.email||''} ${c.billing_address||''}`.toLowerCase().includes(q));
+  }
+
+  // Sorting
+  filtered.sort((a, b) => {
+    if (sort === 'points-desc') return (b.pointsBalance || 0) - (a.pointsBalance || 0);
+    if (sort === 'spend-desc')  return (b.lifetimeSpend || 0) - (a.lifetimeSpend || 0);
+    if (sort === 'orders-desc') return (b.orderCount || 0) - (a.orderCount || 0);
+    if (sort === 'code-asc')    return (a.code || '').localeCompare(b.code || '');
+    if (sort === 'name-asc')    return (a.name || '').localeCompare(b.name || '');
+    return 0;
+  });
+
+  const wrap = document.getElementById('crm-points-table-wrap');
+  if (!wrap) return;
+
+  if (!filtered.length) {
+    wrap.innerHTML = `
+      <div class="empty" style="padding:40px 20px;text-align:center">
+        <div class="empty-icon" style="font-size:48px">🎁</div>
+        <div class="empty-text" style="font-size:15px;font-weight:700;color:var(--text);margin-top:6px">ไม่พบรายชื่อสมาชิกคลับช่างที่ตรงกับเงื่อนไข</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px">ลองปรับคำค้นหา หรือรีเฟรชข้อมูลใหม่อีกครั้ง</div>
+      </div>
+    `;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th style="width:110px">รหัสสมาชิก</th>
+          <th>ชื่อช่าง / บริษัท / อู่</th>
+          <th>ระดับสมาชิก</th>
+          <th>ติดต่อ / Tax ID</th>
+          <th class="text-right">แต้มสะสมปัจจุบัน</th>
+          <th class="text-right">ยอดซื้อสะสม</th>
+          <th>สิทธิ์ส่วนลด & คูปอง</th>
+          <th style="width:150px;text-align:center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(c => {
+          const t = c.mechanicTier || MECHANIC_TIERS.bronze;
+          return `
+            <tr>
+              <td>
+                <span style="font-family:var(--mono);font-size:12px;font-weight:800;background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:6px;border:1px solid #bfdbfe;display:inline-block">${c.code || 'MC-0001'}</span>
+              </td>
+              <td>
+                <div style="font-weight:700;font-size:13.5px;color:var(--text)">${escapeHTML(c.name)}</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:1px">${c.customer_type === 'company' ? '🏢 นิติบุคคล / อู่' : '👤 ช่าง / บุคคล'}</div>
+              </td>
+              <td>
+                ${getMechanicTierBadgeHtml(t)}
+              </td>
+              <td>
+                <div style="font-size:12px">${c.phone ? `📞 <span class="font-mono">${escapeHTML(c.phone)}</span>` : '<span style="color:var(--text3)">ไม่มีเบอร์</span>'}</div>
+                <div style="font-size:11px;color:var(--text3)">Tax ID: ${c.tax_id || '-'}</div>
+              </td>
+              <td class="text-right">
+                <div style="font-size:15px;font-weight:900;color:#b45309">🎁 ${fmt(c.pointsBalance)} <span style="font-size:11px;font-weight:600;color:var(--text3)">แต้ม</span></div>
+                <div style="font-size:10.5px;color:var(--text3)" title="โบนัสเปิดบัตร 50 + ยอดซื้อ ${fmt(c.earnedOrderPoints)}${c.manualPointsAdj ? ` + ปรับ ${c.manualPointsAdj}` : ''}">
+                  โบนัส 50 + ซื้อ ${fmt(c.earnedOrderPoints)}${c.manualPointsAdj ? ` + ปรับ ${c.manualPointsAdj}` : ''}
+                </div>
+              </td>
+              <td class="text-right font-mono">
+                <div style="font-weight:800;color:var(--accent);font-size:13px">฿${fmtB(c.lifetimeSpend)}</div>
+                <div style="font-size:10.5px;color:var(--text3)">(${c.orderCount} บิลสำเร็จ)</div>
+              </td>
+              <td>
+                <div style="font-size:11.5px;font-weight:700;color:${t.color}">${t.discountPct > 0 ? `ส่วนลด ${t.discountPct}% ทุกออเดอร์` : 'สมาชิกทั่วไป'}</div>
+                <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
+                  <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${t.couponCode}');toast('คัดลอกโค้ด ${t.couponCode} เรียบร้อย','success')" style="font-family:var(--mono);font-size:10.5px;padding:1px 6px;font-weight:700" title="คลิกเพื่อคัดลอกโค้ดคูปอง">📋 ${t.couponCode}</button>
+                </div>
+              </td>
+              <td style="text-align:center;white-space:nowrap">
+                <button class="btn btn-secondary btn-sm" onclick="openMembershipCardModal('${c.id}')" title="ดูบัตรสมาชิกดิจิทัล (Digital VIP Pass)" style="color:#b45309;font-weight:700">📇 บัตร</button>
+                <button class="btn btn-secondary btn-sm" onclick="openAdjustPointsModal('${c.id}')" title="บวก/ลบแต้ม หรือบันทึกการแลกรางวัล">⚖️ ปรับ</button>
+                <button class="btn btn-secondary btn-sm" onclick="openPointsLedgerModal('${c.id}')" title="ดูประวัติการได้รับแต้มรายบิล">📜 ประวัติ</button>
+                <button class="btn btn-secondary btn-sm" onclick="openCustomerProfileModal('${c.id}')" title="ดูข้อมูล 360">👤</button>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// ── Digital VIP Membership Card Modal ──────────────────────────────
+function openMembershipCardModal(customerId) {
+  const c = _allCustomers.find(x => x.id === customerId);
+  if (!c) return;
+
+  const t = c.mechanicTier || MECHANIC_TIERS.bronze;
+  const spend = Number(c.lifetimeSpend) || 0;
+
+  // Next tier progress calculation
+  let nextTierName = '';
+  let nextTargetSpend = 0;
+  let spendNeeded = 0;
+  let progressPct = 100;
+  let nextDiscount = 0;
+
+  if (t.key === 'bronze') {
+    nextTierName = 'Silver Mechanic';
+    nextTargetSpend = 3000;
+    spendNeeded = Math.max(0, nextTargetSpend - spend);
+    progressPct = Math.min(100, Math.round((spend / nextTargetSpend) * 100));
+    nextDiscount = 3;
+  } else if (t.key === 'silver') {
+    nextTierName = 'Gold Master';
+    nextTargetSpend = 10000;
+    spendNeeded = Math.max(0, nextTargetSpend - spend);
+    progressPct = Math.min(100, Math.round(((spend - 3000) / 7000) * 100));
+    nextDiscount = 5;
+  } else if (t.key === 'gold') {
+    nextTierName = 'Platinum Pro';
+    nextTargetSpend = 30000;
+    spendNeeded = Math.max(0, nextTargetSpend - spend);
+    progressPct = Math.min(100, Math.round(((spend - 10000) / 20000) * 100));
+    nextDiscount = 7;
+  } else {
+    progressPct = 100;
+  }
+
+  showDynamicModal(`📇 บัตรสมาชิกช่างดิจิทัล: ${escapeHTML(c.name)}`, `
+    <div style="max-width:540px;margin:0 auto">
+      <!-- Luxury Digital Membership Card -->
+      <div id="sealthai-digital-vip-card" style="background:${t.cardGradient};color:#fff;border-radius:18px;padding:24px 26px;box-shadow:0 12px 28px -6px rgba(0,0,0,0.35);position:relative;overflow:hidden;margin-bottom:20px;border:1px solid rgba(255,255,255,0.15)">
+        <!-- Watermark Icon -->
+        <div style="position:absolute;right:-15px;bottom:-15px;font-size:130px;opacity:0.07;user-select:none;pointer-events:none">🔧</div>
+
+        <!-- Top Header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:2">
+          <div>
+            <div style="font-size:10.5px;letter-spacing:2px;text-transform:uppercase;opacity:0.85;font-weight:700">SEALTHAI · VIP MECHANIC CLUB</div>
+            <div style="font-size:18px;font-weight:900;letter-spacing:0.5px;margin-top:3px;display:flex;align-items:center;gap:6px">
+              <span>${t.icon}</span> <span>${t.name}</span>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.18);backdrop-filter:blur(6px);padding:4px 12px;border-radius:20px;font-size:11px;font-weight:800;border:1px solid rgba(255,255,255,0.3);letter-spacing:0.3px">
+            ${t.discountPct > 0 ? `ส่วนลดประจำตัว ${t.discountPct}%` : 'MEMBER'}
+          </div>
+        </div>
+
+        <!-- Smart Card Chip & Member Code -->
+        <div style="margin:20px 0 16px 0;display:flex;align-items:center;gap:14px;position:relative;z-index:2">
+          <div style="width:40px;height:30px;background:linear-gradient(135deg, #fcd34d, #f59e0b, #b45309);border-radius:5px;border:1px solid rgba(0,0,0,0.2);box-shadow:inset 0 1px 2px rgba(255,255,255,0.6)"></div>
+          <div style="font-family:var(--mono);font-size:20px;font-weight:800;letter-spacing:3.5px;text-shadow:0 1px 3px rgba(0,0,0,0.6)">
+            ${c.code || 'MC-0001'}
+          </div>
+        </div>
+
+        <!-- Card Footer -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;position:relative;z-index:2">
+          <div>
+            <div style="font-size:10px;opacity:0.75;letter-spacing:1px;text-transform:uppercase">MEMBER NAME</div>
+            <div style="font-size:15px;font-weight:700;letter-spacing:0.3px;margin-top:1px">${escapeHTML(c.name)}</div>
+            <div style="font-size:11px;opacity:0.85;margin-top:2px">${c.phone ? '📞 ' + escapeHTML(c.phone) : (c.tax_id ? 'Tax ID: ' + escapeHTML(c.tax_id) : 'สมาชิกร้านค้า')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:10px;opacity:0.75;letter-spacing:1px;text-transform:uppercase">POINTS BALANCE</div>
+            <div style="font-size:24px;font-weight:900;color:#fef08a;text-shadow:0 1px 4px rgba(0,0,0,0.6);line-height:1">
+              ${fmt(c.pointsBalance)} <span style="font-size:13px;font-weight:600;opacity:0.9">แต้ม</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier Progress Bar -->
+      <div class="card mb-3" style="padding:14px;background:#fff">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:13px;font-weight:700;color:var(--text)">
+            ${t.key === 'platinum' ? '👑 ระดับสูงสุด: Platinum Pro' : `ความคืบหน้าสู่ระดับ: <b>${nextTierName}</b> (ลด ${nextDiscount}%)`}
+          </span>
+          <span style="font-family:var(--mono);font-size:12px;font-weight:800;color:var(--accent)">
+            ${t.key === 'platinum' ? '100%' : `${progressPct}%`}
+          </span>
+        </div>
+        <div style="background:#e2e8f0;border-radius:10px;height:10px;overflow:hidden;margin-bottom:8px">
+          <div style="background:var(--accent);height:100%;width:${progressPct}%;border-radius:10px;transition:width 0.4s ease"></div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);display:flex;justify-content:space-between">
+          <span>ยอดซื้อสะสม: <b>฿${fmtB(spend)}</b></span>
+          <span>${t.key === 'platinum' ? '🎉 สิทธิประโยชน์สูงสุด' : `ซื้อเพิ่มอีก <b>฿${fmtB(spendNeeded)}</b>`}</span>
+        </div>
+      </div>
+
+      <!-- Exclusive Coupon & Perks -->
+      <div class="card mb-3" style="padding:14px;background:#fff">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">🎟️ โค้ดส่วนลดประจำตัว (Exclusive Coupon)</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1.5px dashed var(--border2);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+          <div>
+            <div style="font-family:var(--mono);font-size:16px;font-weight:800;color:${t.color};letter-spacing:1px">${t.couponCode}</div>
+            <div style="font-size:11.5px;color:var(--text3);margin-top:2px">${t.discountPct > 0 ? `ส่วนลด ${t.discountPct}% ทุกออเดอร์ ไม่มีขั้นต่ำ` : 'ส่วนลดและแต้มสะสมสมาชิก'}</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="navigator.clipboard.writeText('${t.couponCode}');toast('คัดลอกโค้ด ${t.couponCode} สำเร็จ','success')" style="font-size:12px;font-weight:700">📋 คัดลอกโค้ด</button>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">✨ สิทธิประโยชน์สำหรับระดับ ${t.nameTh}:</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${t.perks.map(p => `
+            <div style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px">
+              <span style="color:#16a34a;font-weight:700">✓</span> <span>${p}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-dynamic');openAdjustPointsModal('${c.id}')" style="flex:1">⚖️ ปรับแต้ม / แลกรางวัล</button>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-dynamic');openPointsLedgerModal('${c.id}')" style="flex:1">📜 ดูประวัติแต้ม</button>
+        <button class="btn btn-primary btn-sm" onclick="closeModal('modal-dynamic');showPage('orders');setTimeout(()=>openNewOrder(), 200);" style="flex:1">🛒 เปิดบิลให้ลูกค้านี้</button>
+      </div>
+    </div>
+  `, `<button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ปิดหน้าต่าง</button>`);
+}
+
+// ── Adjust Points / Redeem Rewards Modal ───────────────────────────
+function openAdjustPointsModal(customerId = null) {
+  const selectedCust = customerId ? _allCustomers.find(x => x.id === customerId) : _allCustomers[0];
+
+  showDynamicModal('⚖️ ปรับปรุงแต้มสะสม & บันทึกการแลกของรางวัล', `
+    <div style="max-width:500px;margin:0 auto">
+      <div class="form-group">
+        <label>เลือกลูกค้า / สมาชิกคลับช่าง <span style="color:var(--red)">*</span></label>
+        <select id="adj-cust-id" style="width:100%" onchange="updateAdjustModalCustInfo(this.value)">
+          ${_allCustomers.map(c => `
+            <option value="${c.id}" ${c.id === (selectedCust?.id) ? 'selected' : ''}>
+              ${c.code || 'MC-0001'} — ${escapeHTML(c.name)} (แต้มปัจจุบัน: ${fmt(c.pointsBalance)} แต้ม)
+            </option>
+          `).join('')}
+        </select>
+      </div>
+
+      <div id="adj-cust-info-box" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:11px;color:var(--text3)">ระดับสมาชิก</div>
+            <div id="adj-cust-tier" style="margin-top:2px">${selectedCust ? getMechanicTierBadgeHtml(selectedCust.mechanicTier) : '-'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;color:var(--text3)">แต้มคงเหลือปัจจุบัน</div>
+            <div id="adj-cust-pts" style="font-size:18px;font-weight:900;color:#b45309">🎁 ${fmt(selectedCust?.pointsBalance || 0)} แต้ม</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>ประเภทรายการ <span style="color:var(--accent)">*</span></label>
+        <select id="adj-type" onchange="adjustTypeChanged(this.value)" style="width:100%">
+          <option value="add">🎁 บวกแต้มพิเศษ (Bonus / Campaign / Goodwill)</option>
+          <option value="redeem">🛍️ ตัดแต้มแลกของรางวัล / ส่วนลด (Redemption)</option>
+          <option value="adjust">⚖️ ปรับปรุงยอดแต้มให้ตรง (Reconciliation)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>จำนวนแต้ม <span style="color:var(--red)">*</span></label>
+        <input type="number" id="adj-points" min="1" placeholder="ระบุจำนวนแต้ม เช่น 50, 100" style="font-size:16px;font-weight:700">
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('adj-points').value=50" style="font-size:11px">+50 แต้ม</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('adj-points').value=100" style="font-size:11px">+100 แต้ม</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('adj-points').value=150" style="font-size:11px">+150 แต้ม</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('adj-points').value=200" style="font-size:11px">+200 แต้ม</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>เหตุผล / รายละเอียดบันทึกช่วยจำ <span style="color:var(--text3);font-size:11px">(แสดงในประวัติแต้ม)</span></label>
+        <input type="text" id="adj-reason" placeholder="เช่น แลกชุดไขควงช่าง, โบนัสงานเปิดตัว, ปรับแต้มชดเชย">
+      </div>
+
+      <div style="font-size:11.5px;color:var(--text3);background:#eff6ff;padding:10px;border-radius:6px;border:1px solid #bfdbfe;line-height:1.5">
+        💡 <b>หมายเหตุ:</b> รายการปรับแต้มจะบันทึกลงในระบบบัญชีแต้ม และปรับยอดแต้มคงเหลือของสมาชิกทันทีโดยอัตโนมัติค่ะ
+      </div>
+    </div>
+  `, `
+    <button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ยกเลิก</button>
+    <button class="btn btn-primary" onclick="submitAdjustPoints()">💾 บันทึกรายการ</button>
+  `);
+}
+
+function updateAdjustModalCustInfo(customerId) {
+  const c = _allCustomers.find(x => x.id === customerId);
+  if (!c) return;
+  const tierEl = document.getElementById('adj-cust-tier');
+  const ptsEl = document.getElementById('adj-cust-pts');
+  if (tierEl) tierEl.innerHTML = getMechanicTierBadgeHtml(c.mechanicTier);
+  if (ptsEl) ptsEl.innerHTML = `🎁 ${fmt(c.pointsBalance || 0)} แต้ม`;
+}
+
+function adjustTypeChanged(type) {
+  const reasonInput = document.getElementById('adj-reason');
+  if (!reasonInput) return;
+  if (type === 'redeem' && !reasonInput.value) {
+    reasonInput.placeholder = 'ระบุของรางวัลที่แลก เช่น แลกชุดบล็อกลม 150 แต้ม';
+  } else if (type === 'add' && !reasonInput.value) {
+    reasonInput.placeholder = 'เช่น โบนัสโปรโมชั่นพิเศษ 100 แต้ม';
+  }
+}
+
+async function submitAdjustPoints() {
+  const custId = document.getElementById('adj-cust-id')?.value;
+  const type = document.getElementById('adj-type')?.value || 'add';
+  const ptsRaw = parseInt(document.getElementById('adj-points')?.value, 10);
+  const reason = (document.getElementById('adj-reason')?.value || '').trim();
+
+  if (!custId) { toast('กรุณาเลือกลูกค้า', 'error'); return; }
+  if (isNaN(ptsRaw) || ptsRaw <= 0) { toast('กรุณาระบุจำนวนแต้มมากกว่า 0', 'error'); return; }
+
+  const ptsDelta = (type === 'redeem') ? -ptsRaw : ptsRaw;
+  await saveAdjustPoints(custId, ptsDelta, reason, type);
+}
+
+async function saveAdjustPoints(customerId, pointsDelta, reason, txType = 'adjust') {
+  const c = _allCustomers.find(x => x.id === customerId);
+  if (!c) return;
+
+  const pts = parseInt(pointsDelta, 10);
+  if (isNaN(pts) || pts === 0) {
+    toast('กรุณาระบุจำนวนแต้มที่ถูกต้อง', 'error');
+    return;
+  }
+
+  try {
+    // 1. Dual-layer persistence: update notes tag [POINTS_ADJ:xxx]
+    let currentAdj = 0;
+    let baseNotes = c.notes || '';
+    const m = baseNotes.match(/\[POINTS_ADJ:([+-]?\d+)\]/i);
+    if (m) {
+      currentAdj = parseInt(m[1], 10) || 0;
+      baseNotes = baseNotes.replace(/\[POINTS_ADJ:[+-]?\d+\]/gi, '').trim();
+    }
+    const newAdj = currentAdj + pts;
+    const updatedNotes = `${baseNotes} [POINTS_ADJ:${newAdj >= 0 ? '+' : ''}${newAdj}]`.trim();
+
+    const newBalance = Math.max(0, (c.pointsBalance || 0) + pts);
+
+    // 2. Try updating DB columns if they exist
+    const updatePayload = {
+      notes: updatedNotes,
+      updated_at: new Date().toISOString()
+    };
+    const { error: upErr } = await sb.from('customers').update({
+      ...updatePayload,
+      points_balance: newBalance
+    }).eq('id', customerId);
+
+    if (upErr) {
+      // Fallback if points_balance column not yet added to table
+      await sb.from('customers').update(updatePayload).eq('id', customerId);
+    }
+
+    // 3. Try inserting into customer_point_transactions ledger if table exists
+    try {
+      await sb.from('customer_point_transactions').insert({
+        shop_id: currentShop.id,
+        customer_id: customerId,
+        transaction_type: txType,
+        points: pts,
+        balance_after: newBalance,
+        reason: reason || (pts > 0 ? 'ปรับเพิ่มแต้มโดยผู้ดูแลระบบ' : 'แลกของรางวัล/ตัดแต้ม'),
+        created_at: new Date().toISOString()
+      });
+    } catch(ledgerErr) {
+      console.warn('Ledger insert fallback (table might not exist yet):', ledgerErr);
+    }
+
+    // Update local object
+    c.notes = updatedNotes;
+    c.pointsBalance = newBalance;
+    c.manualPointsAdj = newAdj;
+
+    toast(`ปรับแต้มสมาชิก ${c.name} สำเร็จ (${pts > 0 ? '+' : ''}${pts} แต้ม)`, 'success');
+    closeModal('modal-dynamic');
+    await loadCRMData(true);
+    if (_crmTab === 'points') renderMechanicClubPointsTab();
+  } catch(err) {
+    console.error('saveAdjustPoints error:', err);
+    toast('เกิดข้อผิดพลาดในการบันทึกแต้ม: ' + (err.message || err), 'error');
+  }
+}
+
+// ── Points Ledger & Statement Modal ────────────────────────────────
+async function openPointsLedgerModal(customerId) {
+  const c = _allCustomers.find(x => x.id === customerId);
+  if (!c) return;
+
+  const t = c.mechanicTier || MECHANIC_TIERS.bronze;
+  const cCleanPhone = cleanPhoneDigits(c.phone);
+  const cTaxId = (c.tax_id || '').trim();
+  const cName = (c.name || '').trim().toLowerCase();
+
+  // Find all orders for this customer (including cancelled ones to display revocation)
+  const orders = (_allOrdersWithItems || []).filter(o => {
+    if (o.customer_id && o.customer_id === c.id) return true;
+    if (cTaxId && cTaxId.length >= 10 && o.tax_id && o.tax_id.trim() === cTaxId) return true;
+    if (cCleanPhone && cCleanPhone.length >= 8 && o.customer_phone && cleanPhoneDigits(o.customer_phone).endsWith(cCleanPhone.slice(-8))) return true;
+    if (o.customer_name && o.customer_name.trim().toLowerCase() === cName) return true;
+    return false;
+  }).sort((a, b) => new Date(b.order_date || 0) - new Date(a.order_date || 0));
+
+  showDynamicModal(`📜 สมุดบัญชีแต้มสะสม: ${escapeHTML(c.name)} (${c.code || 'MC-0001'})`, `
+    <div style="margin-bottom:14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <div>
+        <div style="font-weight:700;font-size:14px">${escapeHTML(c.name)} ${getMechanicTierBadgeHtml(t)}</div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:2px">รหัสสมาชิก: <b>${c.code || 'MC-0001'}</b> | ยอดซื้อสะสมรวม: <b>฿${fmtB(c.lifetimeSpend)}</b></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:11px;color:var(--text3)">แต้มคงเหลือปัจจุบัน</div>
+        <div style="font-size:20px;font-weight:900;color:#b45309">🎁 ${fmt(c.pointsBalance)} แต้ม</div>
+      </div>
+    </div>
+
+    <!-- Ledger Table -->
+    <div class="table-wrap mb-3" style="max-height:360px;overflow-y:auto;border:1px solid var(--border);border-radius:8px">
+      <table>
+        <thead>
+          <tr style="background:#f8fafc">
+            <th style="width:110px">วันที่</th>
+            <th>รายการ / เลขที่เอกสาร</th>
+            <th>ประเภท</th>
+            <th class="text-right">ยอดเงิน (บาท)</th>
+            <th class="text-right" style="width:110px">แต้มที่ได้</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 1. Welcome Bonus Entry -->
+          <tr style="background:#f0fdf4">
+            <td style="font-size:12px;color:var(--text3)">${c.created_at ? c.created_at.slice(0, 10) : 'แรกเข้า'}</td>
+            <td>
+              <div style="font-weight:700;color:#166534">🎉 โบนัสต้อนรับสมาชิกใหม่ (Welcome Bonus)</div>
+              <div style="font-size:11px;color:var(--text3)">เปิดบัตรสมาชิกช่าง SEALTHAI</div>
+            </td>
+            <td><span class="badge" style="background:#dcfce7;color:#15803d;font-size:11px">โบนัส</span></td>
+            <td class="text-right font-mono">-</td>
+            <td class="text-right font-mono" style="font-weight:800;color:#16a34a">+50 แต้ม</td>
+          </tr>
+
+          <!-- 2. Manual Adjustment if exists -->
+          ${c.manualPointsAdj ? `
+            <tr style="background:#fffbeb">
+              <td style="font-size:12px;color:var(--text3)">ปรับปรุง</td>
+              <td>
+                <div style="font-weight:700;color:#92400e">⚖️ ปรับยอดแต้ม / แลกของรางวัล</div>
+                <div style="font-size:11px;color:var(--text3)">บันทึกคำสั่งพิเศษโดยผู้ดูแลระบบ</div>
+              </td>
+              <td><span class="badge" style="background:#fef3c7;color:#92400e;font-size:11px">ปรับแต้ม</span></td>
+              <td class="text-right font-mono">-</td>
+              <td class="text-right font-mono" style="font-weight:800;color:${c.manualPointsAdj > 0 ? '#16a34a' : '#dc2626'}">
+                ${c.manualPointsAdj > 0 ? '+' : ''}${c.manualPointsAdj} แต้ม
+              </td>
+            </tr>
+          ` : ''}
+
+          <!-- 3. Orders breakdown -->
+          ${orders.map(o => {
+            const isCancelled = isOrderCancelled(o) || o.status === 'cancelled' || o.status === 'refunded';
+            const pts = calculateOrderPoints(o.total_amount);
+
+            if (isCancelled) {
+              return `
+                <tr style="opacity:0.65;background:#fef2f2">
+                  <td style="font-size:12px">${o.order_date || '-'}</td>
+                  <td>
+                    <div style="font-weight:600;text-decoration:line-through">${o.order_no || 'บิลไม่ระบุเลข'}</div>
+                    <div style="font-size:11px;color:#dc2626;font-weight:600">❌ บิลถูกยกเลิก / คืนเงิน (แต้มถูกดึงกลับอัตโนมัติ)</div>
+                  </td>
+                  <td><span class="badge badge-red" style="font-size:10.5px">ยกเลิก</span></td>
+                  <td class="text-right font-mono" style="text-decoration:line-through">฿${fmtB(o.total_amount)}</td>
+                  <td class="text-right font-mono" style="color:var(--text3)">
+                    <s style="color:var(--text3)">+${pts}</s> <span style="font-weight:700;color:#dc2626;font-size:11px">0 แต้ม</span>
+                  </td>
+                </tr>
+              `;
+            }
+
+            return `
+              <tr>
+                <td style="font-size:12px">${o.order_date || '-'}</td>
+                <td>
+                  <div style="font-weight:700;color:var(--blue);cursor:pointer" onclick="closeModal('modal-dynamic');viewOrder('${o.id}')" title="คลิกดูบิล">${o.order_no || '-'}</div>
+                  <div style="font-size:11px;color:var(--text3)">${(o.order_items||[]).map(i => `${i.qty}x ${escapeHTML(i.product_name)}`).join(', ') || 'คำสั่งซื้อสำเร็จ'}</div>
+                </td>
+                <td><span class="badge" style="background:#eff6ff;color:#1e40af;font-size:10.5px">สั่งซื้อ</span></td>
+                <td class="text-right font-mono" style="font-weight:600">฿${fmtB(o.total_amount)}</td>
+                <td class="text-right font-mono" style="font-weight:800;color:#b45309">
+                  +${pts} แต้ม
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <div style="font-size:12px;color:var(--text3);display:flex;justify-content:space-between;align-items:center">
+      <span>💡 กติกา: ยอดซื้อทุกๆ 100 บาท = 1 แต้ม (คำนวณจากยอดสุทธิ ปัดเศษลง)</span>
+      <button class="btn btn-primary btn-sm" onclick="closeModal('modal-dynamic');openAdjustPointsModal('${c.id}')">+ ปรับแต้ม / แลกของ</button>
+    </div>
+  `, `<button class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ปิด</button>`);
+}
+
+// ── Export Mechanic Club to CSV ────────────────────────────────────
+function exportMechanicClubCSV() {
+  if (!_allCustomers || !_allCustomers.length) {
+    toast('ไม่มีข้อมูลสมาชิกสำหรับส่งออก', 'error');
+    return;
+  }
+
+  const headers = [
+    'Member Code (รหัสสมาชิก)',
+    'Customer Name (ชื่อช่าง/ลูกค้า)',
+    'Type (ประเภท)',
+    'Mechanic Tier (ระดับสมาชิก)',
+    'Discount Pct (ส่วนลด %)',
+    'Coupon Code (โค้ดคูปอง)',
+    'Points Balance (แต้มคงเหลือ)',
+    'Lifetime Spend (ยอดซื้อสะสมบาท)',
+    'Orders Count (จำนวนบิล)',
+    'Phone (เบอร์โทร)',
+    'Tax ID (เลขประจำตัวผู้เสียภาษี)',
+    'Address (ที่อยู่)'
+  ];
+
+  const rows = _allCustomers.map(c => {
+    const t = c.mechanicTier || MECHANIC_TIERS.bronze;
+    return [
+      `"${c.code || 'MC-0001'}"`,
+      `"${(c.name || '').replace(/"/g, '""')}"`,
+      `"${c.customer_type === 'company' ? 'นิติบุคคล/อู่' : 'ช่าง/บุคคล'}"`,
+      `"${t.name} (${t.nameTh})"`,
+      `${t.discountPct}%`,
+      `"${t.couponCode}"`,
+      c.pointsBalance || 0,
+      c.lifetimeSpend || 0,
+      c.orderCount || 0,
+      `"${c.phone || ''}"`,
+      `"${c.tax_id || ''}"`,
+      `"${(c.billing_address || c.shipping_address || '').replace(/"/g, '""')}"`
+    ].join(',');
+  });
+
+  const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sealthai_mechanic_club_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('ส่งออกไฟล์ CSV สมาชิกคลับช่างเรียบร้อยแล้ว ✓', 'success');
 }
 
 // ── Smart Tier Price Calculator for Orders & Quotations ──────
@@ -37848,7 +38812,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.69', date:'2026-10-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ไม่หักยอดสต๊อกคงเหลือ หากออเดอร์ยังเป็นสถานะรอจัดส่ง (v2.69)', items:[
+    { v:'2.70', date:'2026-10-18', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบสมาชิกคลับช่าง & แต้มสะสม Mechanic Club & Loyalty Points 4 ขั้นบันได (v2.70)', items:[
+      '🥉 <b>4-Tier Mechanic Club:</b> ระบบสมาชิกคลับช่าง 4 ระดับขั้นบันได: Bronze Apprentice (🥉 ฿0 - ฿2,999 / Welcome 50 แต้ม / โค้ด MECHBRONZE), Silver Mechanic (🥈 ฿3,000 - ฿9,999 / ส่วนลด 3% / MECHSILVER3), Gold Master (🥇 ฿10,000 - ฿29,999 / ส่วนลด 5% / ส่งฟรีด่วน / MECHGOLD5), Platinum Pro (👑 ฿30,000+ / ส่วนลด 7% / แมสเซนเจอร์ส่งด่วน / เครดิตโรงงาน 30 วัน / MECHPLATINUM7)',
+      '💎 <b>100 THB = 1 Point:</b> คำนวณแต้มสะสมจากยอดซื้อสุทธิ 100 บาท = 1 แต้ม อัตโนมัติ (ปัดเศษลง) พร้อมระบบหักแต้มและลดยอดสะสมคืนอัตโนมัติหากออเดอร์ถูกยกเลิก (Cancelled) หรือคืนเงิน (Refunded)',
+      '📇 <b>Digital VIP Pass & Ledger:</b> หน้าต่างบัตรสมาชิกช่างดิจิทัลสุดหรู พร้อม Progress Bar แสดงเป้าหมายยอดซื้อเพื่อเลื่อนขั้น รหัสสิทธิพิเศษ และสมุดบัญชีประวัติการรับ-ใช้แต้ม (Points Movement Ledger) รองรับการปรับแต้มแบบแมนนวล (+/-)',
+      '📊 <b>Dedicated CRM Points Tab:</b> แท็บ "💎 สมาชิก & แต้มสะสม" ใหม่ในหน้าระบบลูกค้า (CRM) พร้อมการ์ดสรุปสถิติ 4 ระดับ ฟิลเตอร์ค้นหา ตารางสมาชิกคลับช่าง และปุ่มส่งออกรายงานสมาชิก CSV',
+      '🆔 <b>Auto Sequential Member Code:</b> ซิงค์และสร้างรหัสสมาชิกช่างอัตโนมัติ (MC-0001, MC-0002...) พร้อมระบบ Multi-key Identity Matching (Tax ID 13 หลัก / เบอร์โทรศัพท์ 8 หลักท้าย / ชื่อลูกค้า) เชื่อมโยงประวัติการซื้อทุกช่องทางอย่างไร้รอยต่อ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.70 พร้อมล้างแคช Service Worker อัตโนมัติ'
+    ]},
+    { v:'2.69', date:'2026-10-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ไม่หักยอดสต๊อกคงเหลือ หากออเดอร์ยังเป็นสถานะรอจัดส่ง (v2.69)', items:[
       '📦 <b>Pending Shipment Stock Protection:</b> ในรายการออเดอร์ (ทั้งตารางคอมพิวเตอร์ Desktop, การ์ดมือถือ Mobile และหน้าต่าง Order Detail/Edit) หากออเดอร์ยังเป็นสถานะ "รอจัดส่ง" (Pending) ระบบจะไม่นำจำนวนสินค้าของออเดอร์นั้นมาหักลบออกจากยอดคงเหลือที่แสดง เพื่อให้เห็นสต๊อกของจริงที่ยังคงวางอยู่ในร้านก่อนจัดส่ง',
       '🚚 <b>Accurate Shipment Deduction:</b> ระบบจะนำยอดสินค้ามาหักลบออกจากสต๊อกคงเหลือก็ต่อเมื่อสถานะเปลี่ยนเป็น "จัดส่งแล้ว" (Shipped) หรือ "ส่งถึงแล้ว" (Delivered) จริงเท่านั้น',
       '📊 <b>Warehouse Physical On-Hand Alignment:</b> ในหน้าต่างประวัติการเคลื่อนไหวสต๊อก (Inventory Movement Ledger) ยอดการ์ด On-Hand คงเหลือจริงจะสะท้อนจำนวนสินค้าที่อยู่ในร้านจริง (ยังไม่หักลบด้วยออเดอร์ที่ยังรอส่ง)',
@@ -38391,7 +39363,7 @@ function openChangelogModal() {
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <span>📋 บันทึกประวัติการอัปเดตระบบ (System Changelog)</span>
-          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">v2.45</span>
+          <span style="background:#dcfce7;color:#059669;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:800">${DISPLAY_APP_VERSION}</span>
         </div>
         <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-changelog-viewer')">✕ ปิด</button>
       </div>
