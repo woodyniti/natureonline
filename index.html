@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.70';
-const DISPLAY_APP_VERSION = 'v2.70';
+const CURRENT_APP_VERSION = 'sealthai-v2.71';
+const DISPLAY_APP_VERSION = 'v2.71';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.70)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.70 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.71 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.70 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.71 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.70)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.70 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.71 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.70)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.70 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.71 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3645,7 +3645,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.70)">v2.70 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.71)">v2.71 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -13171,7 +13171,7 @@ async function stock() {
         <div class="modal-title">🏭 รับสินค้าเข้าสต๊อก</div>
         <!-- เลือก PO ได้หลายใบ (optional) -->
         <div class="form-group" style="margin-bottom:12px">
-          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(เลือกได้หลาย PO หรือไม่เลือกก็ได้)</span></label>
+          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(เลือกได้หลาย PO หรือไม่เลือกก็ได้ · เฉพาะ PO ที่ส่งสั่งซื้อแล้ว ไม่แสดงแบบร่าง)</span></label>
           <div id="s-po-list" style="max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border2);border-radius:8px;padding:6px">
             <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">กำลังโหลด PO ที่รอรับ...</div>
           </div>
@@ -15138,30 +15138,33 @@ async function delStockMovement(id) {
   loadStockHistory();
 }
 
-// โหลด PO pending ลง dropdown ใน stock modal
+// โหลด PO pending ลง dropdown ใน stock modal (เฉพาะสถานะ sent และ partial โดยไม่แสดง draft)
 async function loadPODropdownForStock() {
   const { data } = await sb.from('purchase_orders')
-    .select('id,po_no,supplier_name,purchase_order_items(*)')
+    .select('id,po_no,supplier_name,status,currency,exchange_rate,note,purchase_order_items(*)')
     .eq('shop_id', currentShop.id)
-    .in('status', ['draft','sent','partial'])
+    .in('status', ['sent','partial'])
     .order('po_date', {ascending:false});
   const list = document.getElementById('s-po-list');
   if (!list) return;
-  const pendingPOs = (data||[]).map(po => {
+  const pendingPOs = (data||[]).filter(po => po.status !== 'draft').map(po => {
     const pendingItems = (po.purchase_order_items||[]).filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
     return { ...po, pendingItems };
   }).filter(po => po.pendingItems.length);
   list._poData = pendingPOs;
   if (!pendingPOs.length) {
-    list.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">ไม่มี PO ที่รอรับสินค้า</div>';
+    list.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">ไม่มี PO ที่ส่งสั่งซื้อแล้วรอรับสินค้า (PO แบบร่างจะไม่แสดง)</div>';
     updateStockPOSelectionSummary();
     return;
   }
   list.innerHTML = pendingPOs.map(po => {
     const pendingQty = po.pendingItems.reduce((sum,it)=>sum+Math.max(0,Number(it.qty_ordered)-Number(it.qty_received||0)),0);
+    const statusBadge = po.status === 'partial'
+      ? '<span style="font-size:10px;background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px">รับบางส่วน</span>'
+      : '<span style="font-size:10px;background:#e0f2fe;color:#0284c7;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px">ส่งสั่งซื้อแล้ว</span>';
     return '<label style="display:flex;align-items:flex-start;gap:9px;padding:8px;border-bottom:1px solid var(--border);cursor:pointer">'+
       '<input type="checkbox" class="s-po-check" value="'+po.id+'" onchange="updateStockPOSelectionSummary()" style="width:17px;height:17px;margin-top:1px">'+
-      '<span style="min-width:0"><strong style="font-size:12px">'+escapeHTML(po.po_no||'-')+'</strong> · '+escapeHTML(po.supplier_name||'-')+
+      '<span style="min-width:0"><strong style="font-size:12px">'+escapeHTML(po.po_no||'-')+'</strong>'+statusBadge+' · '+escapeHTML(po.supplier_name||'-')+
       '<br><span style="font-size:11px;color:var(--text3)">'+po.pendingItems.length+' รายการ · คงเหลือ '+fmt(pendingQty)+' ชิ้น</span></span></label>';
   }).join('');
   updateStockPOSelectionSummary();
@@ -15190,7 +15193,11 @@ async function applyPOsToStock() {
   const list = document.getElementById('s-po-list');
   const selectedIds = getSelectedStockPOIds();
   if (!selectedIds.length) { toast('กรุณาเลือก PO อย่างน้อย 1 ใบ','error'); return; }
-  const selectedPOs = (list?._poData||[]).filter(po=>selectedIds.includes(po.id));
+  const selectedPOs = (list?._poData||[]).filter(po=>selectedIds.includes(po.id) && po.status !== 'draft');
+  if (!selectedPOs.length) {
+    toast('PO ที่เลือกเป็นแบบร่างหรือไม่มีสิทธิ์รับสินค้าเข้าสต๊อก', 'error');
+    return;
+  }
 
   // ตรวจสอบว่ามี PO ที่เป็น USD หรือไม่
   let hasUsdPO = false;
@@ -15284,11 +15291,19 @@ async function openStockModal(preselectedPOIds=[]) {
   updateStockTotal();   // แสดงแถว VAT ตาม default
   await loadPODropdownForStock();
   if (preselectedPOIds.length) {
+    let hasMatch = false;
     document.querySelectorAll('.s-po-check').forEach(el=>{
-      el.checked = preselectedPOIds.includes(el.value);
+      if (preselectedPOIds.includes(el.value)) {
+        el.checked = true;
+        hasMatch = true;
+      }
     });
     updateStockPOSelectionSummary();
-    if (getSelectedStockPOIds().length) await applyPOsToStock();
+    if (hasMatch && getSelectedStockPOIds().length) {
+      await applyPOsToStock();
+    } else {
+      toast('ไม่พบ PO ที่ส่งสั่งซื้อแล้วตรงกับที่เลือก (PO แบบร่างยังไม่สามารถรับสินค้าเข้าสต๊อกได้)','error');
+    }
   }
 }
 
@@ -19566,7 +19581,7 @@ async function grpo() {
   setContent(`
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
       <select id="gr-filter" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px" onchange="loadGRPO()">
-        <option value="pending">รอรับสินค้า (draft + sent + partial)</option>
+        <option value="pending">รอรับสินค้า (sent + partial · ไม่รวมแบบร่าง)</option>
         <option value="all">ทั้งหมด</option>
         <option value="received">รับครบแล้ว</option>
       </select>
@@ -19589,7 +19604,7 @@ async function loadGRPO() {
   const filter = document.getElementById('gr-filter')?.value || 'pending';
   let q = sb.from('purchase_orders').select('*,purchase_order_items(*)')
     .eq('shop_id', currentShop.id).order('po_date', {ascending:false});
-  if (filter === 'pending') q = q.in('status', ['draft','sent','partial']);
+  if (filter === 'pending') q = q.in('status', ['sent','partial']);
   else if (filter === 'received') q = q.eq('status', 'received');
 
   const { data, error } = await q;
@@ -19626,9 +19641,11 @@ async function loadGRPO() {
         '<td class="text-right font-mono text-accent">'+fmt(totalReceived)+'</td>' +
         '<td class="text-right font-mono '+(pending>0?'text-red':'text-accent')+'">'+fmt(pending)+'</td>' +
         '<td>'+poBadge(po.status)+'</td>' +
-        '<td>' + (po.status!=='received'&&po.status!=='cancelled'
-          ? '<button class="btn btn-primary btn-sm" onclick="openGR(&quot;'+po.id+'&quot;)">📦 รับสินค้า</button>'
-          : '<span style="color:var(--accent);font-size:12px">✓ ครบแล้ว</span>') +
+        '<td>' + (po.status === 'draft'
+          ? '<span style="color:var(--text3);font-size:12px">✏️ แบบร่าง (ยังไม่ส่งซื้อ)</span>'
+          : (po.status!=='received'&&po.status!=='cancelled'
+            ? '<button class="btn btn-primary btn-sm" onclick="openGR(&quot;'+po.id+'&quot;)">📦 รับสินค้า</button>'
+            : '<span style="color:var(--accent);font-size:12px">✓ ครบแล้ว</span>')) +
         '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
@@ -19653,9 +19670,11 @@ async function loadGRPO() {
           '<div><div style="font-size:11px;color:var(--text3)">รับแล้ว</div><div class="font-mono text-accent">'+fmt(totalReceived)+'</div></div>' +
           '<div><div style="font-size:11px;color:var(--text3)">คงเหลือ</div><div class="font-mono '+(pending>0?'text-red':'text-accent')+'">'+fmt(pending)+'</div></div>' +
         '</div>' +
-        (po.status!=='received'&&po.status!=='cancelled'
-          ? '<button class="btn btn-primary" style="width:100%" onclick="openGR(&quot;'+po.id+'&quot;)">📦 รับสินค้า</button>'
-          : '<div style="text-align:center;color:var(--accent);font-size:13px">✓ รับครบแล้ว</div>') +
+        (po.status === 'draft'
+          ? '<div style="text-align:center;color:var(--text3);font-size:12px;padding:6px;background:var(--bg3);border-radius:6px">✏️ แบบร่าง (ยังไม่ส่งซื้อ)</div>'
+          : (po.status!=='received'&&po.status!=='cancelled'
+            ? '<button class="btn btn-primary" style="width:100%" onclick="openGR(&quot;'+po.id+'&quot;)">📦 รับสินค้า</button>'
+            : '<div style="text-align:center;color:var(--accent);font-size:13px">✓ รับครบแล้ว</div>')) +
       '</div>';
     }).join('') +
     '</div>';
@@ -19667,6 +19686,10 @@ async function openGR(poId) {
     sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
   ]);
   if (!po) return;
+  if (po.status === 'draft') {
+    toast('PO นี้ยังเป็นสถานะแบบร่าง (ยังไม่ส่งสั่งซื้อ) ไม่สามารถรับสินค้าเข้าได้', 'error');
+    return;
+  }
 
   const pending = items.filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
   if (!pending.length) { toast('รับสินค้าครบแล้ว','success'); return; }
@@ -22749,6 +22772,11 @@ async function updatePOStatus(poId, status) {
 }
 
 async function openGoodsReceipt(poId) {
+  const { data: po } = await sb.from('purchase_orders').select('status').eq('id', poId).single();
+  if (po?.status === 'draft') {
+    toast('PO นี้ยังเป็นสถานะแบบร่าง (ยังไม่ส่งสั่งซื้อ) ไม่สามารถรับสินค้าเข้าสต๊อกได้', 'error');
+    return;
+  }
   window._stockPOsToOpen = [poId];
   closeModal('modal-po-detail');
   showPage('stock');
@@ -38812,7 +38840,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.70', date:'2026-10-18', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบสมาชิกคลับช่าง & แต้มสะสม Mechanic Club & Loyalty Points 4 ขั้นบันได (v2.70)', items:[
+    { v:'2.71', date:'2026-10-18', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'กรองใบสั่งซื้อ (PO) สถานะแบบร่างออกจากการดึงมารับสินค้าเข้าสต๊อก (v2.71)', items:[
+      '🚫 <b>Hide Draft PO from Stock Receiving:</b> ในหน้าบันทึกรับสินค้าเข้าสต๊อก (Stock Receive Modal) กรองใบสั่งซื้อที่มีสถานะเป็น "แบบร่าง" (Draft) ออกจากรายการเลือกเชื่อมโยง PO โดยสิ้นเชิง เพื่อป้องกันข้อผิดพลาดในการดึงรายการมารับเข้าสต๊อกสำหรับ PO ที่แอดมินยังไม่ได้ส่งสั่งซื้อไปยังซัพพลายเออร์',
+      '📦 <b>Only Sent & Partial POs:</b> เมนูดึงรายการ PO จะแสดงเฉพาะใบสั่งซื้อที่สถานะเป็น "ส่งสั่งซื้อแล้ว" (Sent) หรือ "รับบางส่วน" (Partial) เท่านั้น พร้อมแสดงป้ายสถานะกำกับชัดเจน',
+      '🛡️ <b>Draft Protection Across All Entry Points:</b> เพิ่มระบบป้องกัน (Draft Guard) ทั้งในหน้ารับสินค้า Goods Receipt (GRPO), หน้าต่างดูรายละเอียด PO และฟังก์ชันเปิดรับสินค้าเข้าสต๊อก หากมีการพยายามเปิดรับ PO ที่เป็นแบบร่าง ระบบจะแจ้งเตือนและระงับการทำรายการทันที',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.71 พร้อมล้างแคช Service Worker อัตโนมัติ'
+    ]},
+    { v:'2.70', date:'2026-10-18', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ระบบสมาชิกคลับช่าง & แต้มสะสม Mechanic Club & Loyalty Points 4 ขั้นบันได (v2.70)', items:[
       '🥉 <b>4-Tier Mechanic Club:</b> ระบบสมาชิกคลับช่าง 4 ระดับขั้นบันได: Bronze Apprentice (🥉 ฿0 - ฿2,999 / Welcome 50 แต้ม / โค้ด MECHBRONZE), Silver Mechanic (🥈 ฿3,000 - ฿9,999 / ส่วนลด 3% / MECHSILVER3), Gold Master (🥇 ฿10,000 - ฿29,999 / ส่วนลด 5% / ส่งฟรีด่วน / MECHGOLD5), Platinum Pro (👑 ฿30,000+ / ส่วนลด 7% / แมสเซนเจอร์ส่งด่วน / เครดิตโรงงาน 30 วัน / MECHPLATINUM7)',
       '💎 <b>100 THB = 1 Point:</b> คำนวณแต้มสะสมจากยอดซื้อสุทธิ 100 บาท = 1 แต้ม อัตโนมัติ (ปัดเศษลง) พร้อมระบบหักแต้มและลดยอดสะสมคืนอัตโนมัติหากออเดอร์ถูกยกเลิก (Cancelled) หรือคืนเงิน (Refunded)',
       '📇 <b>Digital VIP Pass & Ledger:</b> หน้าต่างบัตรสมาชิกช่างดิจิทัลสุดหรู พร้อม Progress Bar แสดงเป้าหมายยอดซื้อเพื่อเลื่อนขั้น รหัสสิทธิพิเศษ และสมุดบัญชีประวัติการรับ-ใช้แต้ม (Points Movement Ledger) รองรับการปรับแต้มแบบแมนนวล (+/-)',
