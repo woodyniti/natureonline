@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.71';
-const DISPLAY_APP_VERSION = 'v2.71';
+const CURRENT_APP_VERSION = 'sealthai-v2.72';
+const DISPLAY_APP_VERSION = 'v2.72';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.71 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.72 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.71 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.72 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.71 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.72 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.71 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.72 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3645,7 +3645,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.71)">v2.71 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.72)">v2.72 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -15140,11 +15140,15 @@ async function delStockMovement(id) {
 
 // โหลด PO pending ลง dropdown ใน stock modal (เฉพาะสถานะ sent และ partial โดยไม่แสดง draft)
 async function loadPODropdownForStock() {
-  const { data } = await sb.from('purchase_orders')
-    .select('id,po_no,supplier_name,status,currency,exchange_rate,note,purchase_order_items(*)')
-    .eq('shop_id', currentShop.id)
+  let q = sb.from('purchase_orders')
+    .select('*,purchase_order_items(*)')
     .in('status', ['sent','partial'])
     .order('po_date', {ascending:false});
+  if (currentShop?.id) q = q.eq('shop_id', currentShop.id);
+  const { data, error } = await q;
+  if (error) {
+    console.error('Error loading PO dropdown for stock:', error);
+  }
   const list = document.getElementById('s-po-list');
   if (!list) return;
   const pendingPOs = (data||[]).filter(po => po.status !== 'draft').map(po => {
@@ -38840,7 +38844,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.71', date:'2026-10-18', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'กรองใบสั่งซื้อ (PO) สถานะแบบร่างออกจากการดึงมารับสินค้าเข้าสต๊อก (v2.71)', items:[
+    { v:'2.72', date:'2026-10-19', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการโหลดรายการสั่งซื้อ (PO) ในหน้ารับสินค้าเข้าสต๊อก (v2.72)', items:[
+      '🏭 <b>Fix PO Loading for Stock Receiving:</b> แก้ไขการโหลดรายการใบสั่งซื้อที่ส่งสั่งซื้อแล้วในหน้าต่าง "รับสินค้าเข้าสต๊อก" (Stock Receive Modal) ให้ดึงข้อมูลและแสดงรายการ PO ที่รอรับสินค้าได้อย่างสมบูรณ์ 100%',
+      '🛡️ <b>Database Schema Alignment:</b> ปรับปรุงคำสั่งดึงข้อมูลจากตาราง <code>purchase_orders</code> ให้สอดคล้องกับโครงสร้างฐานข้อมูล Supabase ป้องกันข้อผิดพลาดจากการเรียกคอลัมน์ที่ไม่ได้อยู่ใน schema หลัก',
+      '📦 <b>Automatic Pending Calculation:</b> ดึงรายการสินค้าทั้งหมดในใบสั่งซื้อ (purchase_order_items) พร้อมคำนวณจำนวนที่รอรับเข้าสต๊อกคงเหลืออย่างแม่นยำ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.72 พร้อมล้างแคช Service Worker อัตโนมัติ'
+    ]},
+    { v:'2.71', date:'2026-10-18', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'กรองใบสั่งซื้อ (PO) สถานะแบบร่างออกจากการดึงมารับสินค้าเข้าสต๊อก (v2.71)', items:[
       '🚫 <b>Hide Draft PO from Stock Receiving:</b> ในหน้าบันทึกรับสินค้าเข้าสต๊อก (Stock Receive Modal) กรองใบสั่งซื้อที่มีสถานะเป็น "แบบร่าง" (Draft) ออกจากรายการเลือกเชื่อมโยง PO โดยสิ้นเชิง เพื่อป้องกันข้อผิดพลาดในการดึงรายการมารับเข้าสต๊อกสำหรับ PO ที่แอดมินยังไม่ได้ส่งสั่งซื้อไปยังซัพพลายเออร์',
       '📦 <b>Only Sent & Partial POs:</b> เมนูดึงรายการ PO จะแสดงเฉพาะใบสั่งซื้อที่สถานะเป็น "ส่งสั่งซื้อแล้ว" (Sent) หรือ "รับบางส่วน" (Partial) เท่านั้น พร้อมแสดงป้ายสถานะกำกับชัดเจน',
       '🛡️ <b>Draft Protection Across All Entry Points:</b> เพิ่มระบบป้องกัน (Draft Guard) ทั้งในหน้ารับสินค้า Goods Receipt (GRPO), หน้าต่างดูรายละเอียด PO และฟังก์ชันเปิดรับสินค้าเข้าสต๊อก หากมีการพยายามเปิดรับ PO ที่เป็นแบบร่าง ระบบจะแจ้งเตือนและระงับการทำรายการทันที',
