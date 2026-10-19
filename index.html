@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.72';
-const DISPLAY_APP_VERSION = 'v2.72';
+const CURRENT_APP_VERSION = 'sealthai-v2.73';
+const DISPLAY_APP_VERSION = 'v2.73';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1160,7 +1160,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.72 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.73)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.73 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1180,7 +1180,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.72 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.73 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1233,7 +1233,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.72 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.73)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.73 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1262,7 +1262,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.72 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.73)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.73 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3645,7 +3645,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.72)">v2.72 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.73)">v2.73 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -12348,6 +12348,7 @@ async function editProduct(id) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay open';
   overlay.id = 'modal-edit-prod';
+  overlay.style.zIndex = '2300';
 
   const modal = document.createElement('div');
   modal.className = 'modal';
@@ -12754,6 +12755,29 @@ async function updateProduct(id) {
 
   document.querySelectorAll('#modal-edit-prod').forEach(el => el.remove());
   toast('อัพเดทสินค้าและสเปกซีลสำเร็จ ✓','success');
+
+  // หากเปิดหน้า PO อยู่ ให้ซิงค์ราคาซื้อที่เพิ่งแก้ลงใน PO อัตโนมัติ
+  const poModal = document.getElementById('modal-po');
+  if (poModal && poModal.classList.contains('open') && typeof poItems !== 'undefined' && Array.isArray(poItems)) {
+    const cur = document.getElementById('po-currency')?.value || 'THB';
+    const rate = Number(document.getElementById('po-exrate')?.value || 35);
+    const updatedMaster = allProducts.find(x => x.id === id);
+    if (updatedMaster) {
+      const newBp = getPOProductBuyPrice(updatedMaster, cur, rate);
+      let poUpdated = false;
+      poItems.forEach(it => {
+        if (it.product_id === id) {
+          it.unit_cost = newBp > 0 ? newBp : '';
+          poUpdated = true;
+        }
+      });
+      if (poUpdated) {
+        if (typeof renderPOItems === 'function') renderPOItems();
+        if (typeof calcPOTotal === 'function') calcPOTotal();
+      }
+    }
+  }
+
   await loadProducts();
   if (typeof filterProducts === 'function') filterProducts();
 }
@@ -21878,7 +21902,7 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
         product_name: it.product_name || it.name || master?.name || '',
         sku: it.sku || master?.sku || '',
         qty_ordered: Number(it.qty_ordered) || Number(it.qty) || 1,
-        unit_cost: buyPrice
+        unit_cost: buyPrice > 0 ? buyPrice : ''
       };
     });
   }
@@ -21916,7 +21940,8 @@ window.togglePoCurrency = function() {
     if (it.product_id && it.product_id !== '__custom__') {
       const p = prods.find(x => x.id === it.product_id);
       if (p) {
-        it.unit_cost = getPOProductBuyPrice(p, cur, rate);
+        const bp = getPOProductBuyPrice(p, cur, rate);
+        it.unit_cost = bp > 0 ? bp : '';
       }
     }
   });
@@ -22086,7 +22111,9 @@ function handlePOProdBlur(rowIdx, val) {
         poItems[rowIdx].product_id = matched.id;
         poItems[rowIdx].product_name = matched.name;
         poItems[rowIdx].sku = matched.sku || '';
-        if (!poItems[rowIdx].unit_cost) poItems[rowIdx].unit_cost = buyPrice;
+        if (poItems[rowIdx].unit_cost === undefined || poItems[rowIdx].unit_cost === null || poItems[rowIdx].unit_cost === 0 || poItems[rowIdx].unit_cost === '') {
+          poItems[rowIdx].unit_cost = buyPrice > 0 ? buyPrice : '';
+        }
       } else if (poItems[rowIdx]) {
         poItems[rowIdx].product_name = v;
         if (!poItems[rowIdx].product_id) poItems[rowIdx].product_id = '__custom__';
@@ -22111,7 +22138,7 @@ function selectNewPOProductById(rowIdx, productId) {
     product_name: p.name,
     sku: p.sku || p.supplier_sku || p.name || '',
     qty_ordered: poItems[rowIdx]?.qty_ordered || 1,
-    unit_cost: buyPrice
+    unit_cost: buyPrice > 0 ? buyPrice : ''
   };
 
   const dd = document.getElementById('po-prod-dd-' + rowIdx);
@@ -22238,14 +22265,21 @@ function renderPOItems() {
       const buyUSD = getProductPurchasePriceUSD(selectedProduct);
       const avgCost = Number(selectedProduct?.current_cost || 0);
 
-      const buyBadgeText = buyUSD > 0
-        ? `🏷️ ซื้อเข้า: ฿${buyTHB.toFixed(3)} | $${buyUSD.toFixed(3)}`
-        : `🏷️ ซื้อเข้า: ฿${buyTHB.toFixed(3)}`;
+      const hasMasterBuyPrice = (buyTHB > 0 || buyUSD > 0);
+
+      const buyBadge = hasMasterBuyPrice
+        ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+            🏷️ ซื้อเข้า: ${buyUSD > 0 ? `฿${buyTHB.toFixed(3)} | $${buyUSD.toFixed(3)}` : `฿${buyTHB.toFixed(3)}`}
+            <a href="javascript:void(0)" onclick="openPOProductQuickPriceModal('${selectedProduct.id}', ${i})" style="color:var(--accent);font-size:11px;margin-left:4px;text-decoration:underline" title="แก้ไขราคาซื้อของสินค้านี้">✏️ แก้ไข</a>
+          </span>`
+        : `<button type="button" onclick="openPOProductQuickPriceModal('${selectedProduct.id}', ${i})" style="background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:12px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(185,28,28,0.1)">
+            ⚠️ ยังไม่มีราคาซื้อ — บันทึกราคาซื้อ ✏️
+          </button>`;
 
       statusHelp.innerHTML = `
         <span style="color:#10b981;font-weight:600">✓ เชื่อมโยงคลัง</span> 
         ${stockBadge}
-        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600">${buyBadgeText}</span>
+        ${buyBadge}
         ${avgCost ? `<span style="background:#eff6ff;color:#1e40af;padding:2px 8px;border-radius:12px;border:1px solid #bfdbfe;font-size:11px">ทุนเฉลี่ย: ฿${avgCost.toFixed(3)}</span>` : ''}
         ${selectedProduct?.supplier_sku ? `<span style="color:var(--blue);font-size:11px">Supplier SKU: <b>${escapeHTML(selectedProduct.supplier_sku)}</b></span>` : ''}
       `;
@@ -22285,26 +22319,69 @@ function renderPOItems() {
 
     // ── Row 2: Qty | Unit Cost | Line Total ──
     const r2 = document.createElement('div');
-    r2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end';
+    r2.style.cssText = 'display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:start';
 
-    function nf(val, labelTxt, onch) {
-      const w = document.createElement('div');
-      const l = document.createElement('div');
-      l.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500';
-      l.textContent = labelTxt;
-      const n = document.createElement('input');
-      n.type = 'number'; n.value = val; n.min = '0'; n.step = '0.001';
-      n.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
-      n.oninput = () => { onch(+n.value); calcPOTotal(); };
-      w.appendChild(l); w.appendChild(n);
-      return w;
+    // Qty field
+    const qtyWrap = document.createElement('div');
+    const qtyLbl = document.createElement('div');
+    qtyLbl.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500';
+    qtyLbl.textContent = 'จำนวนสั่งซื้อ';
+    const qtyInp = document.createElement('input');
+    qtyInp.type = 'number';
+    qtyInp.value = (it.qty_ordered !== undefined && it.qty_ordered !== null && it.qty_ordered !== '') ? it.qty_ordered : 1;
+    qtyInp.min = '0';
+    qtyInp.step = '1';
+    qtyInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
+    qtyInp.oninput = () => {
+      poItems[i].qty_ordered = qtyInp.value === '' ? '' : Math.max(0, +qtyInp.value);
+      calcPOTotal();
+    };
+    qtyWrap.appendChild(qtyLbl);
+    qtyWrap.appendChild(qtyInp);
+    r2.appendChild(qtyWrap);
+
+    // Unit Cost field
+    const costWrap = document.createElement('div');
+    const costLbl = document.createElement('div');
+    costLbl.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:500;display:flex;justify-content:space-between;align-items:center';
+    costLbl.innerHTML = `<span>${cur === 'USD' ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น (บาท)'}</span>`;
+
+    const costInp = document.createElement('input');
+    costInp.type = 'number';
+    const hasCostVal = it.unit_cost !== undefined && it.unit_cost !== null && it.unit_cost !== '' && Number(it.unit_cost) > 0;
+    costInp.value = hasCostVal ? it.unit_cost : '';
+    costInp.placeholder = 'เว้นว่าง (ไม่มีราคาซื้อ)';
+    costInp.min = '0';
+    costInp.step = '0.001';
+    costInp.style.cssText = hasCostVal
+      ? 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box'
+      : 'width:100%;background:#fff8f8;border:1.5px solid #fca5a5;border-radius:6px;padding:7px 8px;color:var(--text);font-size:16px;text-align:right;box-sizing:border-box';
+    
+    costInp.oninput = () => {
+      poItems[i].unit_cost = costInp.value === '' ? '' : +costInp.value;
+      if (costInp.value === '') {
+        costInp.style.background = '#fff8f8';
+        costInp.style.border = '1.5px solid #fca5a5';
+      } else {
+        costInp.style.background = '#fff';
+        costInp.style.border = '1px solid var(--border2)';
+      }
+      calcPOTotal();
+    };
+    costWrap.appendChild(costLbl);
+    costWrap.appendChild(costInp);
+
+    if (selectedProduct) {
+      const qpLink = document.createElement('div');
+      qpLink.style.cssText = 'font-size:10.5px;margin-top:3px;text-align:right';
+      qpLink.innerHTML = `<a href="javascript:void(0)" onclick="openPOProductQuickPriceModal('${selectedProduct.id}', ${i})" style="color:var(--accent);font-weight:600;text-decoration:underline" title="คลิกเพื่อบันทึกราคาซื้อเข้าข้อมูลสินค้าหลักโดยไม่ปิดหน้า PO">✏️ บันทึกราคาซื้อเข้าระบบสินค้า</a>`;
+      costWrap.appendChild(qpLink);
     }
+    r2.appendChild(costWrap);
 
-    r2.appendChild(nf(it.qty_ordered || 1, 'จำนวนสั่งซื้อ', v => poItems[i].qty_ordered = v));
-    r2.appendChild(nf(it.unit_cost || 0, cur === 'USD' ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น (บาท)', v => poItems[i].unit_cost = v));
-
+    // Line Total
     const tw = document.createElement('div');
-    tw.style.cssText = 'text-align:right;padding-bottom:8px';
+    tw.style.cssText = 'text-align:right;padding-top:18px';
     const tl = document.createElement('div');
     tl.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px';
     tl.textContent = 'รวมราคาซื้อ';
@@ -22313,7 +22390,8 @@ function renderPOItems() {
     tv.style.cssText = 'font-size:15px;font-weight:700';
     tv.id = 'po-item-total-' + i;
     
-    const rowTotal = Number(it.qty_ordered ?? 1) * Number(it.unit_cost || 0);
+    const rowCost = Number(it.unit_cost || 0);
+    const rowTotal = Number(it.qty_ordered || 0) * rowCost;
     if (cur === 'USD') {
       tv.innerHTML = `$${rowTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3)">≈ ฿${(rowTotal * rate).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>`;
     } else {
@@ -22335,7 +22413,203 @@ function renderPOItems() {
   el.appendChild(ab);
 }
 
-function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:0});renderPOItems();}
+function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:''});renderPOItems();}
+
+// ── Quick Buy Price Modal for PO (บันทึกราคาซื้อโดยไม่ปิดหน้า PO) ──
+function openPOProductQuickPriceModal(productId, rowIdx) {
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === productId);
+  if (!p) {
+    toast('ไม่พบข้อมูลสินค้า', 'error');
+    return;
+  }
+
+  document.getElementById('modal-po-quick-price')?.remove();
+
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+  
+  const curBuyTHB = Number(p.purchase_price !== undefined && p.purchase_price !== null && p.purchase_price !== '' ? p.purchase_price : (p.buy_price !== undefined && p.buy_price !== null ? p.buy_price : (p.cost_price || 0)));
+  const curBuyUSD = getProductPurchasePriceUSD(p);
+
+  const initTHB = curBuyTHB > 0 ? curBuyTHB : (poItems[rowIdx]?.unit_cost && cur === 'THB' ? Number(poItems[rowIdx].unit_cost) : (poItems[rowIdx]?.unit_cost && cur === 'USD' ? +(Number(poItems[rowIdx].unit_cost) * rate).toFixed(3) : ''));
+  const initUSD = curBuyUSD > 0 ? curBuyUSD : (poItems[rowIdx]?.unit_cost && cur === 'USD' ? Number(poItems[rowIdx].unit_cost) : (initTHB > 0 && rate > 0 ? +(initTHB / rate).toFixed(3) : ''));
+
+  const overlay = document.createElement('div');
+  overlay.id = 'modal-po-quick-price';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.7);z-index:2200;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;backdrop-filter:blur(2px)';
+
+  overlay.innerHTML = `
+    <div style="background:var(--bg2,#fff);border:1px solid var(--border,#e2e8f0);border-radius:14px;width:100%;max-width:480px;box-shadow:0 20px 40px rgba(0,0,0,0.3);overflow:hidden;animation:modalIn 0.18s ease-out">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border,#e2e8f0);display:flex;justify-content:space-between;align-items:center;background:var(--bg3,#f8fafc)">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text,#1e293b);display:flex;align-items:center;gap:6px">
+            🏷️ บันทึกราคาซื้อสินค้า
+          </div>
+          <div style="font-size:11.5px;color:var(--text3,#64748b)">บันทึกราคาซื้อเข้าฐานข้อมูลสินค้าหลัก (หน้า PO ไม่ปิด)</div>
+        </div>
+        <button type="button" onclick="closePOQuickPriceModal()" style="background:none;border:none;font-size:20px;line-height:1;color:var(--text3,#64748b);cursor:pointer;padding:4px">✕</button>
+      </div>
+
+      <div style="padding:20px">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 12px;margin-bottom:16px">
+          <div style="font-weight:700;font-size:13px;color:#15803d">${escapeHTML(p.name || '')}</div>
+          <div style="font-size:11px;color:#166534;margin-top:2px;display:flex;gap:10px;flex-wrap:wrap">
+            <span>SKU: <b>${escapeHTML(p.sku || '-')}</b></span>
+            ${p.supplier_sku ? `<span>Supplier SKU: <b>${escapeHTML(p.supplier_sku)}</b></span>` : ''}
+            <span>สต๊อก: <b>${p.stock_qty || 0}</b></span>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text,#1e293b);margin-bottom:4px">
+              ราคาซื้อ บาท (THB) 🇹🇭
+            </label>
+            <input type="number" id="po-qp-thb" step="0.001" min="0" value="${initTHB !== '' ? initTHB : ''}" placeholder="0.000"
+              style="width:100%;padding:9px 10px;border:1.5px solid var(--border2,#cbd5e1);border-radius:8px;font-size:16px;font-weight:600;color:var(--text,#1e293b);text-align:right;box-sizing:border-box"
+              oninput="poQuickPriceCalcUSD(${rate})">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text,#1e293b);margin-bottom:4px">
+              ราคาซื้อ ดอลลาร์ (USD) 🇺🇸
+            </label>
+            <input type="number" id="po-qp-usd" step="0.001" min="0" value="${initUSD !== '' ? initUSD : ''}" placeholder="0.000"
+              style="width:100%;padding:9px 10px;border:1.5px solid var(--border2,#cbd5e1);border-radius:8px;font-size:16px;font-weight:600;color:var(--text,#1e293b);text-align:right;box-sizing:border-box"
+              oninput="poQuickPriceCalcTHB(${rate})">
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg4,#f1f5f9);padding:8px 12px;border-radius:6px;font-size:11.5px;color:var(--text2,#475569);margin-bottom:16px">
+          <span>อัตราแลกเปลี่ยน PO: <b>1 USD = ${rate.toFixed(2)} บาท</b></span>
+          <span style="font-size:10.5px;color:var(--text3,#64748b)">(คำนวณแปลงสกุลเงินให้อัตโนมัติเมื่อพิมพ์)</span>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:18px">
+          <button type="button" class="btn btn-secondary" onclick="closePOQuickPriceModal()" style="flex:1;padding:10px;font-weight:600">ยกเลิก</button>
+          <button type="button" class="btn btn-primary" id="po-qp-save-btn" onclick="savePOQuickPrice('${productId}', ${rowIdx})" style="flex:2;padding:10px;font-weight:700;background:var(--accent,#00a882);color:#fff">
+            💾 บันทึกราคาซื้อ & นำเข้า PO
+          </button>
+        </div>
+
+        <div style="text-align:center;margin-top:12px">
+          <a href="javascript:void(0)" onclick="closePOQuickPriceModal();editProduct('${productId}')" style="font-size:11.5px;color:var(--accent,#00a882);text-decoration:underline">
+            ⚙️ ต้องการแก้ไขข้อมูลสินค้าเต็มรูปแบบ (สเปก, ชื่อ, ซัพพลายเออร์) คลิกที่นี่
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  setTimeout(() => {
+    const focusEl = cur === 'USD' ? document.getElementById('po-qp-usd') : document.getElementById('po-qp-thb');
+    if (focusEl) { focusEl.focus(); focusEl.select(); }
+  }, 100);
+}
+
+function closePOQuickPriceModal() {
+  document.getElementById('modal-po-quick-price')?.remove();
+}
+
+function poQuickPriceCalcUSD(rate) {
+  const thbVal = parseFloat(document.getElementById('po-qp-thb')?.value);
+  const usdEl = document.getElementById('po-qp-usd');
+  if (!usdEl) return;
+  if (!isNaN(thbVal) && thbVal > 0 && rate > 0) {
+    usdEl.value = +(thbVal / rate).toFixed(3);
+  } else if (isNaN(thbVal) || thbVal === 0) {
+    usdEl.value = '';
+  }
+}
+
+function poQuickPriceCalcTHB(rate) {
+  const usdVal = parseFloat(document.getElementById('po-qp-usd')?.value);
+  const thbEl = document.getElementById('po-qp-thb');
+  if (!thbEl) return;
+  if (!isNaN(usdVal) && usdVal > 0 && rate > 0) {
+    thbEl.value = +(usdVal * rate).toFixed(3);
+  } else if (isNaN(usdVal) || usdVal === 0) {
+    thbEl.value = '';
+  }
+}
+
+async function savePOQuickPrice(productId, rowIdx) {
+  const saveBtn = document.getElementById('po-qp-save-btn');
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = '⏳ กำลังบันทึก...'; }
+
+  const thbVal = parseFloat(document.getElementById('po-qp-thb')?.value) || 0;
+  const usdVal = parseFloat(document.getElementById('po-qp-usd')?.value) || 0;
+
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === productId);
+  const currentNote = p?.application_note || p?.note || '';
+  const newNote = noteWithProductPrices(currentNote, usdVal, thbVal);
+
+  const payload = {
+    purchase_price: thbVal,
+    purchase_price_usd: usdVal,
+    application_note: newNote
+  };
+
+  // บันทึกลงตาราง products ใน Supabase
+  let updData, updErr;
+  for (let a = 0; a < 3; a++) {
+    const r = await sb.from('products').update(payload).eq('id', productId).select();
+    updData = r.data; updErr = r.error;
+    if (!updErr) break;
+    const errMsg = String(updErr.message || '');
+    if (/purchase_price_usd/i.test(errMsg)) {
+      delete payload.purchase_price_usd;
+    } else if (/purchase_price/i.test(errMsg)) {
+      delete payload.purchase_price;
+    } else {
+      break;
+    }
+  }
+
+  if (updErr) {
+    toast('บันทึกราคาซื้อไม่สำเร็จ: ' + updErr.message, 'error');
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = '💾 บันทึกราคาซื้อ & นำเข้า PO'; }
+    return;
+  }
+
+  // อัปเดตข้อมูลสินค้าในหน่วยความจำ
+  if (p) {
+    p.purchase_price = thbVal;
+    p.purchase_price_usd = usdVal;
+    p.application_note = newNote;
+    normalizeProduct(p);
+  }
+  const allIdx = (allProducts || []).findIndex(x => x.id === productId);
+  if (allIdx >= 0) {
+    allProducts[allIdx].purchase_price = thbVal;
+    allProducts[allIdx].purchase_price_usd = usdVal;
+    allProducts[allIdx].application_note = newNote;
+    normalizeProduct(allProducts[allIdx]);
+  }
+
+  // อัปเดตราคาซื้อในรายการ PO แถวที่กำลังทำอยู่ทันที
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+  const buyPriceInCur = cur === 'USD' ? (usdVal > 0 ? usdVal : (rate > 0 ? +(thbVal / rate).toFixed(3) : 0)) : (thbVal > 0 ? thbVal : 0);
+
+  if (poItems[rowIdx]) {
+    poItems[rowIdx].unit_cost = buyPriceInCur > 0 ? buyPriceInCur : '';
+  }
+
+  // ซิงค์แถวอื่นใน PO ที่เป็นสินค้าเดียวกันด้วย (ถ้ามี)
+  poItems.forEach((it, idx) => {
+    if (idx !== rowIdx && it.product_id === productId) {
+      it.unit_cost = buyPriceInCur > 0 ? buyPriceInCur : '';
+    }
+  });
+
+  closePOQuickPriceModal();
+  renderPOItems();
+  calcPOTotal();
+  toast('บันทึกราคาซื้อสินค้าและอัปเดตลงใน PO เรียบร้อย ✓', 'success');
+}
 
 function calcPOTotal(){
   const cur = document.getElementById('po-currency')?.value || 'THB';
@@ -22742,8 +23016,8 @@ async function editPO(poId) {
   
   // ── รายการสินค้า (แปลง unit_cost กลับเป็นหน่วยสกุลเงินเดิม เช่น USD) ──
   poItems = (items||[]).map(it => {
-    let unitCost = Number(it.unit_cost || 0);
-    if (poCurrency === 'USD' && poExRate > 0) {
+    let unitCost = (it.unit_cost !== null && it.unit_cost !== undefined && it.unit_cost !== '') ? Number(it.unit_cost) : '';
+    if (unitCost !== '' && poCurrency === 'USD' && poExRate > 0) {
       unitCost = +(unitCost / poExRate).toFixed(4);
     }
     const matchedMaster = productList.find(p => p.id === it.product_id || (p.sku && p.sku === it.product_name));
@@ -22752,7 +23026,7 @@ async function editPO(poId) {
       product_name: it.product_name || (matchedMaster?.name) || '',
       sku: (matchedMaster?.sku) || it.product_name || '',
       qty_ordered: Number(it.qty_ordered) || 1,
-      unit_cost: unitCost
+      unit_cost: (unitCost > 0) ? unitCost : ''
     };
   });
   
@@ -38791,6 +39065,7 @@ async function saveQuickProduct() {
       } else {
         poUnitCost = (currency === 'USD') ? current_cost_thb : rawCost;
       }
+      const finalPoUnitCost = (poUnitCost && Number(poUnitCost) > 0) ? poUnitCost : '';
 
       if (ctx.rowIdx >= 0 && poItems[ctx.rowIdx]) {
         poItems[ctx.rowIdx] = {
@@ -38798,7 +39073,7 @@ async function saveQuickProduct() {
           product_name: newProd.name,
           sku: newProd.sku || '',
           qty_ordered: poItems[ctx.rowIdx].qty_ordered || 1,
-          unit_cost: poUnitCost
+          unit_cost: finalPoUnitCost
         };
       } else {
         poItems.push({
@@ -38806,7 +39081,7 @@ async function saveQuickProduct() {
           product_name: newProd.name,
           sku: newProd.sku || '',
           qty_ordered: 1,
-          unit_cost: poUnitCost
+          unit_cost: finalPoUnitCost
         });
       }
       renderPOItems();
@@ -38844,7 +39119,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.72', date:'2026-10-19', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการโหลดรายการสั่งซื้อ (PO) ในหน้ารับสินค้าเข้าสต๊อก (v2.72)', items:[
+    { v:'2.73', date:'2026-10-19', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เว้นว่างราคาซื้อใน PO หากไม่มีราคา + เพิ่มโมดอลบันทึกราคาซื้อสินค้าโดยไม่ปิดหน้า PO (v2.73)', items:[
+      '🛒 <b>Blank PO Unit Cost If Unset:</b> ในหน้าทำใบสั่งซื้อ (PO Modal) รายการสินค้าที่ยังไม่มีราคาซื้อในระบบ (purchase_price เป็น 0 หรือเว้นว่าง) จะเว้นว่างช่องราคาซื้อไว้แทนการใส่เลข 0 และหากสินค้าใดมีราคาซื้อเดิมระบบจะดึงราคาซื้อมาใส่ให้อัตโนมัติ',
+      '🏷️ <b>Quick Buy Price Modal Without Closing PO:</b> เพิ่มปุ่มและลิงก์เตือน "⚠️ ยังไม่มีราคาซื้อ — บันทึกราคาซื้อ ✏️" ให้ผู้ใช้สามารถกดเปิดโมดอลบันทึกราคาซื้อ (ทั้ง THB และ USD พร้อมคำนวณตามเรท) เข้าฐานข้อมูลสินค้าหลัก (Master Product) ได้ทันที โดยที่หน้าทำ PO ไม่ปิด และข้อมูลรายการสินค้าที่กำลังทำอยู่ไม่สูญหาย',
+      '🔄 <b>Instant PO Auto-Sync & Recalculate:</b> เมื่อบันทึกราคาซื้อใหม่สำเร็จ ระบบจะอัปเดตราคาซื้อลงในรายการแถว PO นั้นทันที พร้อมคำนวณยอดรวมของใบสั่งซื้อใหม่อัตโนมัติ',
+      '⚙️ <b>Full Product Edit Overlay:</b> ปรับปรุงระดับ Layer (z-index: 2300) ของหน้าต่างแก้ไขสินค้าเต็มรูปแบบให้แสดงลอยอยู่เหนือหน้าทำ PO และหากแก้ไขราคาซื้อจากหน้าสินค้าหลัก จะซิงค์ราคาใหม่ลงใน PO ทันที',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.73 พร้อมล้างแคช Service Worker อัตโนมัติ'
+    ]},
+    { v:'2.72', date:'2026-10-19', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขการโหลดรายการสั่งซื้อ (PO) ในหน้ารับสินค้าเข้าสต๊อก (v2.72)', items:[
       '🏭 <b>Fix PO Loading for Stock Receiving:</b> แก้ไขการโหลดรายการใบสั่งซื้อที่ส่งสั่งซื้อแล้วในหน้าต่าง "รับสินค้าเข้าสต๊อก" (Stock Receive Modal) ให้ดึงข้อมูลและแสดงรายการ PO ที่รอรับสินค้าได้อย่างสมบูรณ์ 100%',
       '🛡️ <b>Database Schema Alignment:</b> ปรับปรุงคำสั่งดึงข้อมูลจากตาราง <code>purchase_orders</code> ให้สอดคล้องกับโครงสร้างฐานข้อมูล Supabase ป้องกันข้อผิดพลาดจากการเรียกคอลัมน์ที่ไม่ได้อยู่ใน schema หลัก',
       '📦 <b>Automatic Pending Calculation:</b> ดึงรายการสินค้าทั้งหมดในใบสั่งซื้อ (purchase_order_items) พร้อมคำนวณจำนวนที่รอรับเข้าสต๊อกคงเหลืออย่างแม่นยำ',
