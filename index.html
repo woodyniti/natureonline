@@ -9473,7 +9473,7 @@ async function expenses() {
         <option value="recurring">🔄 ค่าใช้จ่ายประจำ (รายเดือน/รายปี)</option>
       </select>
       <select id="exp-filter-channel" onchange="renderExpenseView()"><option value="">ทุกช่องทาง</option><option>Shopee</option><option>Lazada</option><option>LINE</option><option>Facebook</option><option>Thaimart</option><option>Offline</option><option>สำนักงาน</option></select>
-      <input id="exp-search" placeholder="ค้นหาผู้ขาย/เอกสาร/หมายเหตุ" oninput="renderExpenseView()" style="min-width:210px">
+      <input id="exp-search" placeholder="ค้นหาผู้ขาย/หมวดย่อย/หมายเหตุ" oninput="renderExpenseView()" style="min-width:210px">
     </div>
     <div class="stat-grid mb-4" id="exp-stats"></div>
     <div id="exp-quality"></div>
@@ -10627,7 +10627,7 @@ function filteredExpenseRows() {
   return expenseCurrentRows.filter(e => {
     if (cat && effectiveExpenseCategory(e) !== cat) return false;
     if (ch && (e.channel || '') !== ch) return false;
-    if (q && !`${e.vendor_name || ''} ${e.document_no || ''} ${e.note || ''} ${e.category || ''}`.toLowerCase().includes(q)) return false;
+    if (q && !`${e.vendor_name || ''} ${e.document_no || ''} ${e.note || ''} ${e.category || ''} ${e.subcategory || ''} ${e.expense_type || ''}`.toLowerCase().includes(q)) return false;
     if (st) {
       if (st === 'recurring') {
         return e.recurrence && e.recurrence !== 'one_time';
