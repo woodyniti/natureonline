@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.75</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.74';
-const DISPLAY_APP_VERSION = 'v2.74';
+const CURRENT_APP_VERSION = 'sealthai-v2.75';
+const DISPLAY_APP_VERSION = 'v2.75';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -61,6 +61,7 @@ if ('serviceWorker' in navigator) {
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="shopee_orders_preloaded.js"></script>
 <script src="shopee_summary_module.js"></script>
+<script src="tax_analysis_module.js"></script>
 <script>
 // ── Core Early Auth & Bootstrap Module (Guaranteed Global Scope) ──
 var SUPABASE_URL_KEY = 'shopflow_url';
@@ -1163,7 +1164,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.74)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.74 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.75)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.75 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1183,7 +1184,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <div style="text-align:center;margin-top:14px;font-size:13px;color:var(--text3)">
         ยังไม่มีบัญชี? <span style="color:var(--accent);cursor:pointer" onclick="showRegister()">สมัครใช้งาน</span>
       </div>
-      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.74 (คลิกดูประวัติการอัปเดต)</div>
+      <div style="text-align:center;margin-top:14px;font-size:11.5px;color:var(--text3);font-family:var(--mono);cursor:pointer" onclick="openChangelogModal()">SEALTHAI Dashboard · Version 2.75 (คลิกดูประวัติการอัปเดต)</div>
     </div>
     <div id="auth-register-view" style="display:none">
       <div class="auth-title">สมัครใช้งาน</div>
@@ -1236,7 +1237,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.74)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.74 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.75)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.75 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1265,7 +1266,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.74)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.74 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.75)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.75 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1556,7 +1557,7 @@ function canSee(page) {
   if (role === 'admin') return page !== 'settings';
   const perms = currentUser?._perms || {};
   if (page === 'aiIntelligence' || page === 'contentstudio') return true;
-  if (page === 'shopeeSummary' && (perms?.dashboard || perms?.orders || perms?.sales || perms?.products || perms?.purchase)) return true;
+  if ((page === 'shopeeSummary' || page === 'taxAnalysis') && (perms?.dashboard || perms?.orders || perms?.sales || perms?.products || perms?.purchase || perms?.finance || perms?.expenses)) return true;
   if (page === 'stockPlanning' && perms?.products) return true;
   if (page === 'employeeLoans' && (perms?.employees || perms?.expenses || perms?.finance || perms?.sales || perms?.orders)) return true;
   if (page === 'gratuity' && (perms?.expenses || perms?.finance || perms?.sales || perms?.orders)) return true;
@@ -1566,8 +1567,8 @@ function canSee(page) {
   if (page === 'customers' && (perms?.customers || perms?.orders || perms?.sales)) return true;
   // staff: ตรวจ permissions object
   if (perms && typeof perms === 'object') return !!perms[page];
-  // staff fallback: เห็นแค่ dashboard + orders + aiIntelligence + shopeeSummary
-  return ['dashboard','orders','aiIntelligence','shopeeSummary'].includes(page);
+  // staff fallback: เห็นแค่ dashboard + orders + aiIntelligence + shopeeSummary + taxAnalysis
+  return ['dashboard','orders','aiIntelligence','shopeeSummary','taxAnalysis'].includes(page);
 }
 
 function renderSidebar() {
@@ -1585,6 +1586,7 @@ function renderSidebar() {
     {page:'monthly',        icon:'📅', label: t('nav.monthly')},
     {page:'shopee',         icon:'🛍', label: t('nav.shopee')},
     {page:'shopeeSummary',  icon:'🛒', label: 'Shopee Summary'},
+    {page:'taxAnalysis',    icon:'🏛️', label: 'วิเคราะห์ภาษี'},
 
     {section: '💼 งานขาย', accent: true},
     {page:'customers',   icon:'👥', label: 'ลูกค้า & CRM'},
@@ -2189,6 +2191,7 @@ async function doLogout() {
 
 // ─── NAVIGATION ───────────────────────────────────────
 const pageTitles = {
+  taxAnalysis: '🏛️ วิเคราะห์ภาษี · วางแผนนิติบุคคล & กองทุนสำรองภาษี',
   shopeeSummary: '🛒 Shopee Summary · สรุปยอดขาย & วางแผนสต๊อก/การตลาด',
   dashboard: 'Dashboard ภาพรวม',
   monthly: 'สรุปยอดขายรายเดือน',
@@ -2235,7 +2238,7 @@ function showPage(page) {
   document.querySelectorAll('.mob-nav-item[data-page]').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
-  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, shopeeSummary: window.shopeeSummary || (typeof shopeeSummary !== 'undefined' ? shopeeSummary : null), orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, employeeLoans, suppliers, purchase, supplierWeeklyExpense, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
+  const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, shopeeSummary: window.shopeeSummary || (typeof shopeeSummary !== 'undefined' ? shopeeSummary : null), taxAnalysis: window.taxAnalysis || (typeof taxAnalysis !== 'undefined' ? taxAnalysis : null), orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, employeeLoans, suppliers, purchase, supplierWeeklyExpense, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
   if (pages[page]) pages[page]();
 }
 
@@ -3651,7 +3654,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.74)">v2.74 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.75)">v2.75 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -39125,7 +39128,17 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.74', date:'2026-10-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แดชบอร์ดสรุปยอดขาย Shopee Summary สำหรับวางแผนจัดซื้อ & ยิง Ads การตลาด (v2.74)', items:[
+    { v:'2.75', date:'2026-10-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบวิเคราะห์ภาษี, แถบเกณฑ์เปลี่ยนเป็นนิติบุคคล & กองทุนสำรองภาษี (v2.75)', items:[
+      '🏛️ <b>Tax Analysis & Corporate Transition Engine:</b> เพิ่มเมนู "วิเคราะห์ภาษี" ใต้หมวดหมู่ "ภาพรวม" ประเมินภาระภาษีบุคคลธรรมดา (ภ.ง.ด. 90/94) จากยอดขายจริงของร้านทั้งปีและรายเดือน',
+      '🏢 <b>Corporate Transition Break-even Progress Bar:</b> แถบเกณฑ์เปรียบเทียบจุดคุ้มทุนในการเปลี่ยนเป็น "นิติบุคคล (บริษัทจำกัด)" vs บุคคลธรรมดา ชี้ชัดระดับยอดขายที่ภาษีนิติบุคคลประหยัดกว่าค่าทำบัญชี/สอบบัญชี',
+      '🧾 <b>VAT 1.8M Threshold Progress Bar:</b> แถบวัดระยะความคืบหน้าสู่เกณฑ์บังคับจดทะเบียนภาษีมูลค่าเพิ่ม 7% (1.8 ล้านบาทต่อปี) พร้อมระบบแจ้งเตือนล่วงหน้าเมื่อถึง 75%',
+      '⚖️ <b>Side-by-Side Comparison Table:</b> ตารางเปรียบเทียบภาระค่าใช้จ่ายและภาษีบุคคลธรรมดา vs นิติบุคคล SME ข้างกันชัดเจนทุกมิติ (หักเหมา 60% vs ตามจริง, อัตราก้าวหน้า 5-35% vs นิติบุคคล 0-15%)',
+      '🛡️ <b>Tax Reserve Provision Fund:</b> ระบบคำนวณและแนะนำสัดส่วนเงินสำรองภาษีที่ควรหักแยกบัญชีไว้ทุกสัปดาห์/เดือน (2% - 5%) เพื่อไม่ให้เงินสดตึงตัวตอนสิ้นปี',
+      '📖 <b>FlowAccount 7 Crucial Considerations:</b> สรุป 7 ข้อคิดสำคัญก่อนจดทะเบียนบริษัทจำกัด พร้อมการประเมินความพร้อมของร้านค้า',
+      '🎮 <b>Interactive Tax Simulator:</b> สลับโหมดทดลองปรับสไลเดอร์ยอดขายและอัตรากำไรเพื่อจำลองผลลัพธ์ภาษีแบบ Dynamic',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.75 พร้อมล้างแคชอัตโนมัติ'
+    ]},
+    { v:'2.74', date:'2026-10-25', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แดชบอร์ดสรุปยอดขาย Shopee Summary สำหรับวางแผนจัดซื้อ & ยิง Ads การตลาด (v2.74)', items:[
       '🛒 <b>Shopee Executive Summary:</b> เพิ่มเมนู "Shopee Summary" ใต้หมวดหมู่ "ภาพรวม" วิเคราะห์เจาะลึกยอดขาย Shopee 6 เดือน (เม.ย. - ก.ย. 2026 ยอดขาย ฿107,288.00 รวม 302 ออเดอร์ 364 รายการ)',
       '🎯 <b>Marketing Ads Recommendations (สินค้าที่น่าจะยิง ads):</b> วิเคราะห์สินค้าขายดีที่มีกำไรขั้นต้นสูง (Margin > 50%) พร้อมคำนวณ Breakeven ROAS, Target ROAS และ Maximum Recommended CPC สำหรับยิงโฆษณา Shopee Ads / Facebook Ads อย่างแม่นยำ',
       '📦 <b>Procurement & Stock Recommendations (สินค้าที่ควรเก็บ stock):</b> วิเคราะห์สินค้าที่มียอดสั่งซื้อแต่ในระบบสต๊อกสินค้าหมด (Out of Stock Alert) คำนวณ Run Rate รายเดือน, จุดสั่งซื้อใหม่ (Reorder Point), Buffer Stock พร้อมปุ่มเปิดทำใบสั่งซื้อ (PO) ทันที',
