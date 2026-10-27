@@ -13,6 +13,12 @@ var _shopeeSummaryCharts = {};
 var _shopeeSummaryMappings = [];
 var _shopeeSummaryLoaded = false;
 
+// ── Ads Filter & Sorting State ──
+var _shopeeAdsFilter = 'high_buffer'; // 'high_buffer', 'should_run_ads', 'in_stock', 'top_stars', 'out_of_stock', 'all'
+var _shopeeAdsSearch = '';
+var _shopeeAdsSortBy = 'buffer'; // 'buffer' (breakevenROAS asc), 'marginPct', 'profit', 'units', 'dealPrice', 'stockQty', 'sku'
+var _shopeeAdsSortDir = 'asc';
+
 // ── Region Classifier ──
 function getThaiRegion(prov) {
   if (!prov) return 'ไม่ระบุ';
@@ -33,11 +39,57 @@ function getThaiRegion(prov) {
   return 'อื่นๆ / ไม่ระบุ';
 }
 
+// ── Dimensional Seal Key & Cache Builder for Shopee Matching ──
+function _sealKeyHelper(str) {
+  if (typeof _sealKey === 'function') {
+    try {
+      const res = _sealKey(str);
+      if (res && res.mat) return res;
+    } catch(e){}
+  }
+  if (!str) return null;
+  const s = String(str).toLowerCase();
+  const m = s.match(/(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)\s*[x×*]\s*(\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const dims = [m[1], m[2], m[3]].map(x => String(parseFloat(x))).join('x');
+  let mat = '';
+  if (/viton|fkm|(?:^|[^a-z])vi(?:[^a-z]|$)/.test(s)) mat = 'vi';
+  else if (/nbr|(?:^|[^a-z])nb(?:[^a-z]|$)/.test(s)) mat = 'nb';
+  else if (/pu|(?:^|[^a-z])pu(?:[^a-z]|$)/.test(s)) mat = 'pu';
+  return { mat, dims, key: (mat || '?') + '|' + dims };
+}
+
+function buildShopeeProdMaps(prods) {
+  if (!Array.isArray(prods) || !prods.length) return;
+  const exactMap = window._shopeeProdMap || {};
+  const normMap = window._shopeeProdMapNorm || {};
+
+  prods.forEach(p => {
+    [p.sku, p.supplier_sku, p.part_no].forEach(code => {
+      if (code) {
+        exactMap[String(code).toLowerCase().trim()] = p;
+        const k = _sealKeyHelper(code);
+        if (k && k.mat) normMap[k.key] = p;
+      }
+    });
+    const kName = _sealKeyHelper(p.name);
+    if (kName && kName.mat) normMap[kName.key] = p;
+  });
+
+  window._shopeeProdMap = exactMap;
+  window._shopeeProdMapNorm = normMap;
+}
+
 // ── Match Shopee Item with DB Products ──
 function findShopeeProductMatch(itemSku, itemName) {
   const prods = window.allProducts || [];
   const sLow = String(itemSku || '').toLowerCase().trim();
   const nLow = String(itemName || '').toLowerCase().trim();
+
+  // Ensure map is built
+  if (!window._shopeeProdMapNorm || Object.keys(window._shopeeProdMapNorm).length === 0) {
+    buildShopeeProdMaps(prods);
+  }
 
   // 1. Check user mapping in marketplace_sku_mappings table
   if (sLow && Array.isArray(_shopeeSummaryMappings)) {
@@ -62,6 +114,13 @@ function findShopeeProductMatch(itemSku, itemName) {
   if (typeof matchShopeeProd === 'function') {
     const sealHit = matchShopeeProd(itemSku, itemName);
     if (sealHit) return { matched: true, product: sealHit, via: 'seal_dimension' };
+  }
+  const normMap = window._shopeeProdMapNorm || {};
+  for (const s of [itemSku, itemName]) {
+    const k = _sealKeyHelper(s);
+    if (k && k.mat && normMap[k.key]) {
+      return { matched: true, product: normMap[k.key], via: 'seal_dimension' };
+    }
   }
 
   // 4. Fallback search by normalized part number inside itemSku or itemName
@@ -139,7 +198,10 @@ async function initShopeeSummary(forceReload = false) {
       sb.from('products').select('id, name, sku, supplier_sku, part_no, stock_qty, current_cost, sell_price, active, min_safety_stock_qty, moq').eq('shop_id', currentShop.id),
       sb.from('marketplace_sku_mappings').select('*').eq('shop_id', currentShop.id).eq('channel', 'shopee')
     ]);
-    if (prodsRes.data) window.allProducts = prodsRes.data;
+    if (prodsRes.data) {
+      window.allProducts = prodsRes.data;
+      buildShopeeProdMaps(prodsRes.data);
+    }
     if (mapsRes.data) _shopeeSummaryMappings = mapsRes.data;
   } catch (e) {
     console.warn('Error fetching Supabase products or mappings:', e);
@@ -363,8 +425,28 @@ function computeShopeeSummaryMetrics() {
   });
   const regionsList = Object.values(regionMap).sort((a,b) => b.revenue - a.revenue);
 
-  // Ads candidates: Margin > 50% and Units >= 2
-  const adsCandidates = productItems.filter(p => p.matched && p.marginPct >= 50 && p.units >= 2).sort((a,b) => b.profit - a.profit);
+  // Ads classification metrics:
+  // 1. High ROAS Buffer (คุ้มค่าที่สุด): Margin >= 60% and Breakeven ROAS <= 1.67x (Safest buffer, highest margin)
+  const highBufferCandidates = productItems.filter(p => p.matched && p.marginPct >= 60 && p.breakevenROAS > 0 && p.breakevenROAS <= 1.67).sort((a,b) => a.breakevenROAS - b.breakevenROAS);
+
+  // 2. Should Run Ads (ตัวที่ควรยิง Ads รวม): Margin >= 50% or Breakeven ROAS <= 2.0x (Standard high-profit candidates)
+  const shouldRunAdsCandidates = productItems.filter(p => p.matched && p.marginPct >= 50 && p.breakevenROAS > 0 && p.breakevenROAS <= 2.0).sort((a,b) => a.breakevenROAS - b.breakevenROAS);
+
+  // 3. Ready In Stock: Should run ads and has stock in house (> 0)
+  const inStockAdsCandidates = shouldRunAdsCandidates.filter(p => p.stockQty !== null && p.stockQty > 0);
+
+  // 4. Out of Stock Warning: Should run ads but stock is 0 or negative (must restock before ads)
+  const outOfStockAdsCandidates = shouldRunAdsCandidates.filter(p => p.stockQty === null || p.stockQty <= 0);
+
+  // 5. Top Stars (สินค้าขายดี & กำไรสูง): Units >= 3 and Margin >= 40% (High conversion proof)
+  const topStarsCandidates = productItems.filter(p => p.matched && p.units >= 3 && p.marginPct >= 40).sort((a,b) => b.units - a.units);
+
+  // 6. All Analyzed SKUs
+  const allAnalyzedAds = productItems.filter(p => p.matched).sort((a,b) => (a.breakevenROAS || 999) - (b.breakevenROAS || 999));
+
+  // Legacy adsCandidates fallback (mapped to shouldRunAdsCandidates)
+  const adsCandidates = shouldRunAdsCandidates;
+
   // Stock danger: stockQty <= 0 or low stock
   const stockDanger = productItems.filter(p => p.matched && p.stockStatus === 'out_of_stock').sort((a,b) => b.units - a.units);
   const stockLow = productItems.filter(p => p.matched && p.stockStatus === 'low_stock').sort((a,b) => b.units - a.units);
@@ -398,6 +480,12 @@ function computeShopeeSummaryMetrics() {
     carrierMap,
     monthlyList: Object.values(monthMap).sort((a,b) => a.month.localeCompare(b.month)),
     adsCandidates,
+    highBufferCandidates,
+    shouldRunAdsCandidates,
+    inStockAdsCandidates,
+    outOfStockAdsCandidates,
+    topStarsCandidates,
+    allAnalyzedAds,
     stockDanger,
     stockLow,
     unmatchedItems
@@ -650,19 +738,19 @@ function renderShopeeTabOverview(m) {
     </div>
 
     <!-- Product Portfolio Matrix Pills -->
-    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <span style="font-size:12px;font-weight:700;color:#1e293b">กลยุทธ์สินค้า (Portfolio Matrix):</span>
-      <span style="background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #86efac">
-        🌟 สินค้าขายดี & กำไรสูง (Stars): ${m.productItems.filter(p=>p.portfolioType==='star').length} SKUs
+      <span onclick="switchShopeeSummaryTab('ads');setShopeeAdsFilter('high_buffer')" style="cursor:pointer;background:#ecfdf5;color:#047857;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1.5px solid #6ee7b7;box-shadow:0 1px 2px rgba(4,120,87,0.1)" title="คลิกเพื่อดูรายการสินค้า Ads คุ้มค่าที่สุด (High ROAS Buffer)">
+        💎 Ads คุ้มค่าที่สุด (High Buffer): ${m.highBufferCandidates.length} SKUs ➔
       </span>
-      <span style="background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #bae6fd">
-        💎 กำไรสูงเป้าหมายยิง Ads: ${m.adsCandidates.length} SKUs
+      <span onclick="switchShopeeSummaryTab('ads');setShopeeAdsFilter('should_run_ads')" style="cursor:pointer;background:#e0f2fe;color:#0369a1;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #bae6fd" title="คลิกเพื่อดูรายการสินค้าที่ควรยิง Ads ทั้งหมด">
+        🎯 สินค้าเป้าหมายยิง Ads: ${m.shouldRunAdsCandidates.length} SKUs ➔
       </span>
-      <span style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #fde68a">
-        🚀 สินค้าดึงลูกค้า (Traffic Drivers): ${m.productItems.filter(p=>p.portfolioType==='traffic_driver').length} SKUs
+      <span onclick="switchShopeeSummaryTab('ads');setShopeeAdsFilter('top_stars')" style="cursor:pointer;background:#dcfce7;color:#15803d;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #86efac" title="คลิกเพื่อดูสินค้าขายดี & กำไรสูง">
+        🌟 ขายดี & กำไรสูง (Stars): ${m.topStarsCandidates.length} SKUs ➔
       </span>
-      <span style="background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #fca5a5">
-        🚨 ขายแล้วสต๊อกหมด: ${m.stockDanger.length} SKUs
+      <span onclick="switchShopeeSummaryTab('stock')" style="cursor:pointer;background:#fee2e2;color:#b91c1c;padding:4px 10px;border-radius:12px;font-size:12px;font-weight:700;border:1px solid #fca5a5" title="คลิกเพื่อดูสินค้าที่สต๊อกหมด">
+        🚨 ขายแล้วสต๊อกหมด: ${m.stockDanger.length} SKUs ➔
       </span>
     </div>
 
@@ -794,33 +882,256 @@ function getSortArrow(col) {
 // ──────────────────────────────────────────────────────────────
 // TAB 2: MARKETING & ADS PLANNING
 // ──────────────────────────────────────────────────────────────
+function setShopeeAdsFilter(filter) {
+  _shopeeAdsFilter = filter;
+  renderShopeeSummaryDashboard();
+}
+
+function searchShopeeAds(query) {
+  _shopeeAdsSearch = query || '';
+  renderShopeeSummaryDashboard();
+}
+
+function sortShopeeAds(col) {
+  if (_shopeeAdsSortBy === col) {
+    _shopeeAdsSortDir = _shopeeAdsSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    _shopeeAdsSortBy = col;
+    _shopeeAdsSortDir = (col === 'buffer' || col === 'breakevenROAS') ? 'asc' : 'desc';
+  }
+  renderShopeeSummaryDashboard();
+}
+
+function getShopeeAdsSortIndicator(col) {
+  if (_shopeeAdsSortBy !== col) return '<span style="color:#cbd5e1;font-size:10px;margin-left:2px">⇅</span>';
+  return _shopeeAdsSortDir === 'desc' 
+    ? '<span style="color:var(--accent,#00a882);font-weight:800;font-size:10px;margin-left:2px">▼</span>' 
+    : '<span style="color:var(--accent,#00a882);font-weight:800;font-size:10px;margin-left:2px">▲</span>';
+}
+
 function renderShopeeTabAds(m) {
-  const candidates = m.adsCandidates;
+  // Determine dataset based on _shopeeAdsFilter
+  let adsList = [];
+  let filterTitle = '';
+  let filterDesc = '';
+  let filterBadge = '';
+
+  if (_shopeeAdsFilter === 'high_buffer') {
+    adsList = [...(m.highBufferCandidates || [])];
+    filterTitle = '💎 Ads คุ้มค่าที่สุด (High ROAS Buffer)';
+    filterDesc = 'สินค้าที่มีอัตรากำไรสูงมาก (% Margin ≥ 60%) และ Breakeven ROAS ต่ำมาก (≤ 1.67x) ปลอดภัยสูงสุด ค่าโฆษณาไม่กินทุน กำไรเหลือเยอะ';
+    filterBadge = 'background:#dcfce7;color:#15803d;border:1px solid #86efac';
+  } else if (_shopeeAdsFilter === 'should_run_ads') {
+    adsList = [...(m.shouldRunAdsCandidates || [])];
+    filterTitle = '🎯 สินค้าที่ควรยิง Ads ทั้งหมด (Recommended Candidates)';
+    filterDesc = 'สินค้าที่ผ่านเกณฑ์อัตรากำไร % Margin ≥ 50% (Breakeven ROAS ≤ 2.0x) เหมาะสำหรับการตั้งค่า Shopee Search Ads และ Discovery Ads';
+    filterBadge = 'background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe';
+  } else if (_shopeeAdsFilter === 'in_stock') {
+    adsList = [...(m.inStockAdsCandidates || [])];
+    filterTitle = '📦 มีสต๊อกพร้อมยิงทันที (In Stock & Ready)';
+    filterDesc = 'สินค้าที่ผ่านเกณฑ์ยิง Ads และมีสต๊อกในคลัง > 0 พร้อมเปิดแคมเปญได้ทันที ออเดอร์ไม่สะดุด ไม่เสี่ยงของหมด';
+    filterBadge = 'background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4';
+  } else if (_shopeeAdsFilter === 'top_stars') {
+    adsList = [...(m.topStarsCandidates || [])];
+    filterTitle = '🌟 สินค้าขายดี & กำไรสูง (Top Stars & Proven Demand)';
+    filterDesc = 'สินค้าที่มียอดขายสูง (3 ชิ้นขึ้นไป) และมี % Margin ≥ 40% มี Conversion Proof สูงมาก ลูกค้าตัดสินใจซื้อง่าย';
+    filterBadge = 'background:#fef3c7;color:#92400e;border:1px solid #fde68a';
+  } else if (_shopeeAdsFilter === 'out_of_stock') {
+    adsList = [...(m.outOfStockAdsCandidates || [])];
+    filterTitle = '⚠️ สินค้ากำไรดีแต่สต๊อกหมด (Restock Before Ads)';
+    filterDesc = 'สินค้ากำไรสูงที่น่าทำแอดมาก แต่สต๊อกในระบบหมด (0 ชิ้น) ต้องเปิดใบสั่งซื้อ (PO) เติมของก่อนเปิดโฆษณา';
+    filterBadge = 'background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5';
+  } else {
+    adsList = [...(m.allAnalyzedAds || m.productItems || [])];
+    filterTitle = '📋 รายการสินค้า Shopee ทั้งหมดที่วิเคราะห์';
+    filterDesc = 'แสดงข้อมูลวิเคราะห์ความคุ้มค่าการยิง Ads และ Breakeven ROAS ของสินค้าทุกตัวในร้าน';
+    filterBadge = 'background:#f1f5f9;color:#475569;border:1px solid #cbd5e1';
+  }
+
+  // Search filter
+  if (_shopeeAdsSearch && _shopeeAdsSearch.trim()) {
+    const q = _shopeeAdsSearch.toLowerCase().trim();
+    adsList = adsList.filter(it => 
+      (it.sku && it.sku.toLowerCase().includes(q)) ||
+      (it.name && it.name.toLowerCase().includes(q)) ||
+      (it.parentSku && it.parentSku.toLowerCase().includes(q)) ||
+      (it.matchedProduct && it.matchedProduct.sku && it.matchedProduct.sku.toLowerCase().includes(q))
+    );
+  }
+
+  // Sorting
+  adsList.sort((a,b) => {
+    let vA = 0;
+    let vB = 0;
+    if (_shopeeAdsSortBy === 'buffer' || _shopeeAdsSortBy === 'breakevenROAS') {
+      vA = a.breakevenROAS || 999;
+      vB = b.breakevenROAS || 999;
+    } else if (_shopeeAdsSortBy === 'marginPct') {
+      vA = a.marginPct || 0;
+      vB = b.marginPct || 0;
+    } else if (_shopeeAdsSortBy === 'profit') {
+      vA = (a.units > 0 ? (a.profit / a.units) : 0);
+      vB = (b.units > 0 ? (b.profit / b.units) : 0);
+    } else if (_shopeeAdsSortBy === 'totalProfit') {
+      vA = a.profit || 0;
+      vB = b.profit || 0;
+    } else if (_shopeeAdsSortBy === 'avgDealPrice') {
+      vA = a.avgDealPrice || 0;
+      vB = b.avgDealPrice || 0;
+    } else if (_shopeeAdsSortBy === 'costPerUnit') {
+      vA = a.costPerUnit || 0;
+      vB = b.costPerUnit || 0;
+    } else if (_shopeeAdsSortBy === 'units') {
+      vA = a.units || 0;
+      vB = b.units || 0;
+    } else if (_shopeeAdsSortBy === 'stockQty') {
+      vA = a.stockQty !== null ? a.stockQty : -999;
+      vB = b.stockQty !== null ? b.stockQty : -999;
+    } else if (_shopeeAdsSortBy === 'maxCPC') {
+      vA = a.maxCPC || 0;
+      vB = b.maxCPC || 0;
+    } else if (_shopeeAdsSortBy === 'name' || _shopeeAdsSortBy === 'sku') {
+      return _shopeeAdsSortDir === 'desc' 
+        ? (b.sku || '').localeCompare(a.sku || '') 
+        : (a.sku || '').localeCompare(b.sku || '');
+    }
+    return _shopeeAdsSortDir === 'desc' ? (vB - vA) : (vA - vB);
+  });
 
   return `
-    <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px">
+    <!-- Top Strategic Intro Banner -->
+    <div style="background:linear-gradient(135deg,#eff6ff 0%,#f0fdf4 100%);border:1.5px solid #bfdbfe;border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
       <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:10px">
         <div>
           <div style="font-size:15px;font-weight:700;color:#1e40af;display:flex;align-items:center;gap:6px">
-            🎯 แผนการตลาด: รายการสินค้าที่คุ้มค่าแก่การยิงแอด (High Margin & Proven Conversion)
+            🎯 แผนการตลาดยิง Ads: วิเคราะห์ความคุ้มค่า &amp; คัดกรอง High ROAS Buffer
           </div>
           <div style="font-size:12px;color:#1e3a8a;margin-top:4px;line-height:1.5">
-            คัดเลือกเฉพาะสินค้าที่มี <b>% Margin &gt; 50%</b> และเคยมีคำสั่งซื้อจริงบน Shopee แล้ว เพื่อให้การยิง Shopee Search Ads / Discovery Ads คุ้มค่าที่สุด (High ROAS Buffer)
+            ระบบคำนวณ <b>Breakeven ROAS</b> (จุดคุ้มทุนค่าโฆษณา) จากโครงสร้างราคาขาย หักค่าธรรมเนียม Shopee และต้นทุนสินค้าจริง ยิ่งค่า Breakeven ROAS ต่ำ ยิ่งมี <b>ROAS Buffer</b> สูง ปลอดภัย ไม่กินทุน
           </div>
         </div>
-        <div style="text-align:right">
-          <span style="background:#1d4ed8;color:#fff;font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px">
-            พร้อมยิง Ads: ${candidates.length} SKUs
+        <div style="text-align:right;display:flex;align-items:center;gap:8px">
+          <span style="background:#1d4ed8;color:#fff;font-size:12.5px;font-weight:700;padding:4px 12px;border-radius:20px;box-shadow:0 2px 4px rgba(29,78,216,0.25)">
+            🎯 เป้าหมายยิง Ads: ${m.shouldRunAdsCandidates.length} SKUs
+          </span>
+          <span style="background:#16a34a;color:#fff;font-size:12.5px;font-weight:700;padding:4px 12px;border-radius:20px;box-shadow:0 2px 4px rgba(22,163,74,0.25)">
+            💎 High Buffer: ${m.highBufferCandidates.length} SKUs
           </span>
         </div>
       </div>
     </div>
 
-    <!-- Ads Candidates Table -->
+    <!-- 4 Clickable KPI Cards -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px">
+      <!-- Card 1: High Buffer -->
+      <div onclick="setShopeeAdsFilter('high_buffer')" 
+        style="cursor:pointer;background:${_shopeeAdsFilter === 'high_buffer' ? '#f0fdf4' : '#fff'};border:2px solid ${_shopeeAdsFilter === 'high_buffer' ? '#16a34a' : '#e2e8f0'};border-radius:10px;padding:12px 14px;box-shadow:${_shopeeAdsFilter === 'high_buffer' ? '0 4px 12px rgba(22,163,74,0.18)' : '0 1px 3px rgba(0,0,0,0.05)'};transition:all 0.15s ease">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:#15803d">💎 Ads คุ้มค่าที่สุด (High Buffer)</span>
+          <span style="background:#dcfce7;color:#15803d;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid #86efac">Safe 100%</span>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#166534;font-family:var(--mono)">${m.highBufferCandidates.length} <span style="font-size:12px;font-weight:600">SKUs</span></div>
+        <div style="font-size:11px;color:#15803d;margin-top:3px">Breakeven ROAS ≤ 1.67x (Margin ≥ 60%)</div>
+      </div>
+
+      <!-- Card 2: Should Run Ads -->
+      <div onclick="setShopeeAdsFilter('should_run_ads')" 
+        style="cursor:pointer;background:${_shopeeAdsFilter === 'should_run_ads' ? '#eff6ff' : '#fff'};border:2px solid ${_shopeeAdsFilter === 'should_run_ads' ? '#2563eb' : '#e2e8f0'};border-radius:10px;padding:12px 14px;box-shadow:${_shopeeAdsFilter === 'should_run_ads' ? '0 4px 12px rgba(37,99,235,0.18)' : '0 1px 3px rgba(0,0,0,0.05)'};transition:all 0.15s ease">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:#1d4ed8">🎯 ตัวที่ควรยิง Ads ทั้งหมด</span>
+          <span style="background:#e0f2fe;color:#0369a1;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid #bae6fd">Candidates</span>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#1e40af;font-family:var(--mono)">${m.shouldRunAdsCandidates.length} <span style="font-size:12px;font-weight:600">SKUs</span></div>
+        <div style="font-size:11px;color:#1d4ed8;margin-top:3px">Margin ≥ 50% / ROAS ≤ 2.0x มีประวัติขาย</div>
+      </div>
+
+      <!-- Card 3: In Stock & Ready -->
+      <div onclick="setShopeeAdsFilter('in_stock')" 
+        style="cursor:pointer;background:${_shopeeAdsFilter === 'in_stock' ? '#f0fdfa' : '#fff'};border:2px solid ${_shopeeAdsFilter === 'in_stock' ? '#0d9488' : '#e2e8f0'};border-radius:10px;padding:12px 14px;box-shadow:${_shopeeAdsFilter === 'in_stock' ? '0 4px 12px rgba(13,148,136,0.18)' : '0 1px 3px rgba(0,0,0,0.05)'};transition:all 0.15s ease">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:#0f766e">📦 พร้อมยิงทันที (มีสต๊อก)</span>
+          <span style="background:#ccfbf1;color:#0f766e;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid #99f6e4">เปิด Ads ได้เลย</span>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#0f766e;font-family:var(--mono)">${m.inStockAdsCandidates.length} <span style="font-size:12px;font-weight:600">SKUs</span></div>
+        <div style="font-size:11px;color:#0f766e;margin-top:3px">สต๊อกในคลัง > 0 พร้อมส่ง ไม่เสี่ยงของขาด</div>
+      </div>
+
+      <!-- Card 4: Out of Stock Warning -->
+      <div onclick="setShopeeAdsFilter('out_of_stock')" 
+        style="cursor:pointer;background:${_shopeeAdsFilter === 'out_of_stock' ? '#fff1f2' : '#fff'};border:2px solid ${_shopeeAdsFilter === 'out_of_stock' ? '#e11d48' : '#e2e8f0'};border-radius:10px;padding:12px 14px;box-shadow:${_shopeeAdsFilter === 'out_of_stock' ? '0 4px 12px rgba(225,29,72,0.18)' : '0 1px 3px rgba(0,0,0,0.05)'};transition:all 0.15s ease">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;font-weight:700;color:#be123c">⚠️ สต๊อกหมด (รอเติมก่อนยิง)</span>
+          <span style="background:#ffe4e6;color:#be123c;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid #fecdd3">ต้องทำ PO</span>
+        </div>
+        <div style="font-size:22px;font-weight:800;color:#be123c;font-family:var(--mono)">${m.outOfStockAdsCandidates.length} <span style="font-size:12px;font-weight:600">SKUs</span></div>
+        <div style="font-size:11px;color:#be123c;margin-top:3px">กำไรสูงมากแต่สต๊อก 0 สั่งซื้อเติมก่อนเปิดแอด</div>
+      </div>
+    </div>
+
+    <!-- Dedicated Filter Buttons Row -->
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid #e2e8f0;padding:10px 14px;border-radius:10px;box-shadow:0 1px 2px rgba(0,0,0,0.03)">
+      <span style="font-size:12px;font-weight:700;color:#334155;margin-right:2px">กดเพื่อ Filter:</span>
+
+      <button type="button" onclick="setShopeeAdsFilter('high_buffer')"
+        style="cursor:pointer;font-size:12px;font-weight:${_shopeeAdsFilter === 'high_buffer' ? '800' : '600'};padding:6px 13px;border-radius:8px;border:1.5px solid ${_shopeeAdsFilter === 'high_buffer' ? '#16a34a' : '#cbd5e1'};background:${_shopeeAdsFilter === 'high_buffer' ? '#16a34a' : '#f8fafc'};color:${_shopeeAdsFilter === 'high_buffer' ? '#fff' : '#1e293b'};box-shadow:${_shopeeAdsFilter === 'high_buffer' ? '0 2px 6px rgba(22,163,74,0.3)' : 'none'};display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease">
+        <span>💎 Ads คุ้มค่าที่สุด (High ROAS Buffer)</span>
+        <span style="background:${_shopeeAdsFilter === 'high_buffer' ? 'rgba(255,255,255,0.25)' : '#e2e8f0'};padding:1px 7px;border-radius:10px;font-size:11px">${m.highBufferCandidates.length}</span>
+      </button>
+
+      <button type="button" onclick="setShopeeAdsFilter('should_run_ads')"
+        style="cursor:pointer;font-size:12px;font-weight:${_shopeeAdsFilter === 'should_run_ads' ? '800' : '600'};padding:6px 13px;border-radius:8px;border:1.5px solid ${_shopeeAdsFilter === 'should_run_ads' ? '#2563eb' : '#cbd5e1'};background:${_shopeeAdsFilter === 'should_run_ads' ? '#2563eb' : '#f8fafc'};color:${_shopeeAdsFilter === 'should_run_ads' ? '#fff' : '#1e293b'};box-shadow:${_shopeeAdsFilter === 'should_run_ads' ? '0 2px 6px rgba(37,99,235,0.3)' : 'none'};display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease">
+        <span>🎯 ตัวที่ควรยิง Ads ทั้งหมด</span>
+        <span style="background:${_shopeeAdsFilter === 'should_run_ads' ? 'rgba(255,255,255,0.25)' : '#e2e8f0'};padding:1px 7px;border-radius:10px;font-size:11px">${m.shouldRunAdsCandidates.length}</span>
+      </button>
+
+      <button type="button" onclick="setShopeeAdsFilter('in_stock')"
+        style="cursor:pointer;font-size:12px;font-weight:${_shopeeAdsFilter === 'in_stock' ? '800' : '600'};padding:6px 13px;border-radius:8px;border:1.5px solid ${_shopeeAdsFilter === 'in_stock' ? '#0d9488' : '#cbd5e1'};background:${_shopeeAdsFilter === 'in_stock' ? '#0d9488' : '#f8fafc'};color:${_shopeeAdsFilter === 'in_stock' ? '#fff' : '#1e293b'};box-shadow:${_shopeeAdsFilter === 'in_stock' ? '0 2px 6px rgba(13,148,136,0.3)' : 'none'};display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease">
+        <span>📦 มีสต๊อกพร้อมยิงทันที</span>
+        <span style="background:${_shopeeAdsFilter === 'in_stock' ? 'rgba(255,255,255,0.25)' : '#e2e8f0'};padding:1px 7px;border-radius:10px;font-size:11px">${m.inStockAdsCandidates.length}</span>
+      </button>
+
+      <button type="button" onclick="setShopeeAdsFilter('top_stars')"
+        style="cursor:pointer;font-size:12px;font-weight:${_shopeeAdsFilter === 'top_stars' ? '800' : '600'};padding:6px 13px;border-radius:8px;border:1.5px solid ${_shopeeAdsFilter === 'top_stars' ? '#d97706' : '#cbd5e1'};background:${_shopeeAdsFilter === 'top_stars' ? '#d97706' : '#f8fafc'};color:${_shopeeAdsFilter === 'top_stars' ? '#fff' : '#1e293b'};box-shadow:${_shopeeAdsFilter === 'top_stars' ? '0 2px 6px rgba(217,119,6,0.3)' : 'none'};display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease">
+        <span>🌟 สินค้าขายดี &amp; กำไรสูง</span>
+        <span style="background:${_shopeeAdsFilter === 'top_stars' ? 'rgba(255,255,255,0.25)' : '#e2e8f0'};padding:1px 7px;border-radius:10px;font-size:11px">${m.topStarsCandidates.length}</span>
+      </button>
+
+      <button type="button" onclick="setShopeeAdsFilter('out_of_stock')"
+        style="cursor:pointer;font-size:12px;font-weight:${_shopeeAdsFilter === 'out_of_stock' ? '800' : '600'};padding:6px 13px;border-radius:8px;border:1.5px solid ${_shopeeAdsFilter === 'out_of_stock' ? '#e11d48' : '#cbd5e1'};background:${_shopeeAdsFilter === 'out_of_stock' ? '#e11d48' : '#f8fafc'};color:${_shopeeAdsFilter === 'out_of_stock' ? '#fff' : '#1e293b'};box-shadow:${_shopeeAdsFilter === 'out_of_stock' ? '0 2px 6px rgba(225,29,72,0.3)' : 'none'};display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease">
+        <span>⚠️ สต๊อกหมด / ต้องเติมของ</span>
+        <span style="background:${_shopeeAdsFilter === 'out_of_stock' ? 'rgba(255,255,255,0.25)' : '#e2e8f0'};padding:1px 7px;border-radius:10px;font-size:11px">${m.outOfStockAdsCandidates.length}</span>
+      </button>
+
+      <button type="button" onclick="setShopeeAdsFilter('all')"
+        style="cursor:pointer;font-size:12px;font-weight:${_shopeeAdsFilter === 'all' ? '800' : '600'};padding:6px 13px;border-radius:8px;border:1.5px solid ${_shopeeAdsFilter === 'all' ? '#475569' : '#cbd5e1'};background:${_shopeeAdsFilter === 'all' ? '#475569' : '#f8fafc'};color:${_shopeeAdsFilter === 'all' ? '#fff' : '#1e293b'};box-shadow:${_shopeeAdsFilter === 'all' ? '0 2px 6px rgba(71,85,105,0.3)' : 'none'};display:inline-flex;align-items:center;gap:6px;transition:all 0.15s ease">
+        <span>📋 ดูทั้งหมดที่วิเคราะห์</span>
+        <span style="background:${_shopeeAdsFilter === 'all' ? 'rgba(255,255,255,0.25)' : '#e2e8f0'};padding:1px 7px;border-radius:10px;font-size:11px">${m.allAnalyzedAds.length}</span>
+      </button>
+    </div>
+
+    <!-- Ads Candidates Table Container -->
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
-      <div style="padding:12px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#f8fafc">
-        <div style="font-weight:700;font-size:13px;color:#1e293b">
-          ตารางวิเคราะห์ความคุ้มค่าการยิง Ads & คำนวณ Breakeven ROAS
+      <div style="padding:14px 18px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-weight:700;font-size:14px;color:#1e293b;display:flex;align-items:center;gap:8px">
+            <span>ตารางวิเคราะห์ความคุ้มค่าการยิง Ads &amp; คำนวณ Breakeven ROAS</span>
+            <span style="font-size:11.5px;padding:2px 8px;border-radius:6px;font-weight:700;${filterBadge}">
+              ${filterTitle}
+            </span>
+          </div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:3px">
+            ${filterDesc} (พบ ${adsList.length} รายการ)
+          </div>
+        </div>
+
+        <!-- Search input inside Ads table -->
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="position:relative">
+            <input type="text" value="${escapeHTML(_shopeeAdsSearch)}" oninput="searchShopeeAds(this.value)"
+              placeholder="🔍 ค้นหา SKU / ชื่อสินค้า..."
+              style="padding:6px 12px;font-size:12px;border:1px solid #cbd5e1;border-radius:6px;width:220px;outline:none">
+            ${_shopeeAdsSearch ? `<button type="button" onclick="searchShopeeAds('')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#94a3b8;font-weight:700">✕</button>` : ''}
+          </div>
         </div>
       </div>
 
@@ -828,59 +1139,119 @@ function renderShopeeTabAds(m) {
         <table style="width:100%;border-collapse:collapse;font-size:12px">
           <thead style="background:#f1f5f9;border-bottom:2px solid #cbd5e1">
             <tr>
-              <th style="padding:10px 12px;text-align:left">SKU / ชื่อสินค้า</th>
-              <th style="padding:10px 12px;text-align:right">ราคาขายเฉลี่ย</th>
-              <th style="padding:10px 12px;text-align:right">ต้นทุนสินค้า</th>
-              <th style="padding:10px 12px;text-align:right">กำไรต่อชิ้น</th>
-              <th style="padding:10px 12px;text-align:right">% Margin</th>
-              <th style="padding:10px 12px;text-align:right;background:#ecfeff;color:#0e7490">
-                Breakeven ROAS 💡
+              <th onclick="sortShopeeAds('sku')" style="cursor:pointer;padding:10px 12px;text-align:left;white-space:nowrap">
+                SKU / ชื่อสินค้า ${getShopeeAdsSortIndicator('sku')}
               </th>
-              <th style="padding:10px 12px;text-align:right;background:#eff6ff;color:#1d4ed8">
+              <th onclick="sortShopeeAds('avgDealPrice')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap">
+                ราคาขายเฉลี่ย ${getShopeeAdsSortIndicator('avgDealPrice')}
+              </th>
+              <th onclick="sortShopeeAds('costPerUnit')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap">
+                ต้นทุนสินค้า ${getShopeeAdsSortIndicator('costPerUnit')}
+              </th>
+              <th onclick="sortShopeeAds('profit')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap">
+                กำไรต่อชิ้น ${getShopeeAdsSortIndicator('profit')}
+              </th>
+              <th onclick="sortShopeeAds('marginPct')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap">
+                % Margin ${getShopeeAdsSortIndicator('marginPct')}
+              </th>
+              <th onclick="sortShopeeAds('breakevenROAS')" style="cursor:pointer;padding:10px 12px;text-align:right;background:#ecfeff;color:#0e7490;white-space:nowrap" title="จุดคุ้มทุนค่าโฆษณา (ยิ่งต่ำยิ่งดี/เซฟสุด)">
+                Breakeven ROAS 💡 ${getShopeeAdsSortIndicator('breakevenROAS')}
+              </th>
+              <th style="padding:10px 12px;text-align:center;background:#f0fdf4;color:#166534;white-space:nowrap" title="ระดับความคุ้มค่าและ Buffer ความปลอดภัย">
+                ระดับ ROAS Buffer
+              </th>
+              <th style="padding:10px 12px;text-align:right;background:#eff6ff;color:#1d4ed8;white-space:nowrap" title="เป้าหมาย ROAS ที่แนะนำให้ตั้งในระบบยิงแอด">
                 Target ROAS ที่แนะนำ
               </th>
-              <th style="padding:10px 12px;text-align:right">Max CPC แนะนำ</th>
-              <th style="padding:10px 12px;text-align:right">ยอดขายที่ผ่านมา</th>
-              <th style="padding:10px 12px;text-align:right">สต๊อกพร้อมส่ง</th>
-              <th style="padding:10px 12px;text-align:center">การดำเนินการ</th>
+              <th onclick="sortShopeeAds('maxCPC')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap" title="ราคาบิดคลิกสูงสุดที่ไม่ทำให้ขาดทุน">
+                Max CPC แนะนำ ${getShopeeAdsSortIndicator('maxCPC')}
+              </th>
+              <th onclick="sortShopeeAds('units')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap">
+                ยอดขายที่ผ่านมา ${getShopeeAdsSortIndicator('units')}
+              </th>
+              <th onclick="sortShopeeAds('stockQty')" style="cursor:pointer;padding:10px 12px;text-align:right;white-space:nowrap">
+                สต๊อกพร้อมส่ง ${getShopeeAdsSortIndicator('stockQty')}
+              </th>
+              <th style="padding:10px 12px;text-align:center;white-space:nowrap">การดำเนินการ</th>
             </tr>
           </thead>
           <tbody>
-            ${candidates.map((it, idx) => {
+            ${adsList.length === 0 ? `
+              <tr>
+                <td colspan="12" style="text-align:center;padding:40px 20px;color:#94a3b8">
+                  <div style="font-size:28px;margin-bottom:8px">🔍</div>
+                  <div style="font-size:14px;font-weight:700;color:#64748b">ไม่พบรายการสินค้าที่ตรงกับเงื่อนไขการค้นหา / ตัวกรองนี้</div>
+                  <div style="font-size:12px;margin-top:4px">ลองเปลี่ยนตัวกรองเป็น "🎯 ตัวที่ควรยิง Ads ทั้งหมด" หรือ "📋 ดูทั้งหมดที่วิเคราะห์"</div>
+                </td>
+              </tr>
+            ` : adsList.map((it, idx) => {
               const unitProfit = it.units > 0 ? (it.profit / it.units) : 0;
-              const hasStock = it.stockQty > 0;
+              const hasStock = it.stockQty !== null && it.stockQty > 0;
+
+              // Buffer classification badge
+              let bufferBadgeHTML = '';
+              if (it.marginPct >= 65 && it.breakevenROAS <= 1.54) {
+                bufferBadgeHTML = `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;border:1px solid #86efac;white-space:nowrap">💎 Ultra Buffer</span>`;
+              } else if (it.marginPct >= 60 && it.breakevenROAS <= 1.67) {
+                bufferBadgeHTML = `<span style="background:#ecfdf5;color:#047857;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:800;border:1px solid #6ee7b7;white-space:nowrap">💎 High Buffer</span>`;
+              } else if (it.marginPct >= 50 && it.breakevenROAS <= 2.0) {
+                bufferBadgeHTML = `<span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #bfdbfe;white-space:nowrap">🎯 Safe Buffer</span>`;
+              } else if (it.marginPct >= 35) {
+                bufferBadgeHTML = `<span style="background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #fde68a;white-space:nowrap">⚖️ กำไรปานกลาง</span>`;
+              } else {
+                bufferBadgeHTML = `<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;border:1px solid #fca5a5;white-space:nowrap">⚠️ กำไรน้อย</span>`;
+              }
+
               return `
-                <tr style="border-bottom:1px solid #e2e8f0;background:${idx%2===0?'#fff':'#fbfcfd'}">
+                <tr style="border-bottom:1px solid #e2e8f0;background:${idx%2===0?'#fff':'#fbfcfd'};transition:background 0.1s ease" onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='${idx%2===0?'#fff':'#fbfcfd'}'">
                   <td style="padding:10px 12px;max-width:260px">
-                    <div style="font-weight:700;color:var(--text);font-family:var(--mono)">${escapeHTML(it.sku)}</div>
-                    <div style="font-size:11px;color:#64748b;margin-top:2px">${escapeHTML(it.name.slice(0, 50))}</div>
+                    <div style="display:flex;align-items:center;gap:6px">
+                      <span style="font-weight:700;color:var(--text,#1e293b);font-family:var(--mono)">${escapeHTML(it.sku)}</span>
+                      ${it.portfolioType === 'star' ? `<span style="background:#fef3c7;color:#b45309;font-size:10px;font-weight:800;padding:1px 5px;border-radius:4px">STAR</span>` : ''}
+                    </div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(it.name)}">
+                      ${escapeHTML(it.name.slice(0, 52))}
+                    </div>
                   </td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono)">฿${it.avgDealPrice.toFixed(2)}</td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono);color:#64748b">฿${it.costPerUnit.toFixed(2)}</td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:700;color:#16a34a">฿${unitProfit.toFixed(2)}</td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono)">
-                    <span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-weight:700">
+                    <span style="background:${it.marginPct >= 60 ? '#dcfce7' : (it.marginPct >= 45 ? '#eff6ff' : '#fef3c7')};color:${it.marginPct >= 60 ? '#15803d' : (it.marginPct >= 45 ? '#1d4ed8' : '#b45309')};padding:2px 6px;border-radius:4px;font-weight:700">
                       ${it.marginPct.toFixed(1)}%
                     </span>
                   </td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:800;background:#ecfeff;color:#0e7490">
-                    ${it.breakevenROAS}x
+                    ${it.breakevenROAS > 0 ? `${it.breakevenROAS}x` : '-'}
+                  </td>
+                  <td style="padding:10px 12px;text-align:center">
+                    ${bufferBadgeHTML}
                   </td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:800;background:#eff6ff;color:#1d4ed8">
-                    ${(it.breakevenROAS * 1.5).toFixed(1)}x - ${(it.breakevenROAS * 2.2).toFixed(1)}x
+                    ${it.breakevenROAS > 0 ? `${(it.breakevenROAS * 1.5).toFixed(1)}x - ${(it.breakevenROAS * 2.2).toFixed(1)}x` : '-'}
                   </td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono);font-weight:600">
                     ฿${it.maxCPC}
                   </td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono)">${it.units} ชิ้น</td>
                   <td style="padding:10px 12px;text-align:right;font-family:var(--mono)">
-                    ${hasStock ? `<span style="color:#16a34a;font-weight:700">${it.stockQty} ชิ้น</span>` : `<span style="color:#dc2626;font-weight:700">0 (ต้องเติม)</span>`}
+                    ${hasStock 
+                      ? `<span style="color:#16a34a;font-weight:700">✓ ${it.stockQty} ชิ้น</span>` 
+                      : `<span style="color:#dc2626;font-weight:700;background:#fee2e2;padding:2px 6px;border-radius:4px">⚠️ 0 ชิ้น</span>`}
                   </td>
-                  <td style="padding:10px 12px;text-align:center">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="copyShopeeAdsBrief('${escapeHTML(it.sku)}', '${escapeHTML(it.name)}', ${it.avgDealPrice}, ${it.breakevenROAS})"
-                      style="font-size:11px;padding:3px 8px">
-                      📋 คัดลอกทำแอด
-                    </button>
+                  <td style="padding:10px 12px;text-align:center;white-space:nowrap">
+                    <div style="display:flex;gap:4px;justify-content:center">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="copyShopeeAdsBrief('${escapeHTML(it.sku)}', '${escapeHTML(it.name)}', ${it.avgDealPrice}, ${it.breakevenROAS})"
+                        style="font-size:11px;padding:3px 8px;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700" title="คัดลอกข้อมูลสินค้าและ Breakeven ROAS สำหรับตั้งค่า Ads">
+                        📋 คัดลอก
+                      </button>
+                      ${!hasStock ? `
+                        <button type="button" class="btn btn-sm" onclick="quickCreatePOFromShopee('${escapeHTML(it.sku)}', '${escapeHTML(it.name)}')"
+                          style="font-size:11px;padding:3px 8px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-weight:700" title="สินค้าหมด! กดเพื่อเปิดหน้าทำใบสั่งซื้อ (PO) เติมสต๊อกทันที">
+                          🛒 ทำ PO
+                        </button>
+                      ` : ''}
+                    </div>
                   </td>
                 </tr>
               `;
@@ -893,12 +1264,16 @@ function renderShopeeTabAds(m) {
 }
 
 function copyShopeeAdsBrief(sku, name, price, roas) {
-  const txt = `สินค้าสำหรับยิง Shopee Ads:\nSKU: ${sku}\nชื่อ: ${name}\nราคาขาย: ฿${price.toFixed(2)}\nBreakeven ROAS: ${roas}x (เป้าหมายแคมเปญ > ${(roas*1.5).toFixed(1)}x)`;
+  const txt = `สินค้าสำหรับยิง Shopee Ads:
+SKU: ${sku}
+ชื่อ: ${name}
+ราคาขาย: ฿${price.toFixed(2)}
+Breakeven ROAS: ${roas}x (เป้าหมายแคมเปญ > ${(roas*1.5).toFixed(1)}x - ${(roas*2.2).toFixed(1)}x)
+High ROAS Buffer: คืนทุนง่าย กำไรสูง`;
   navigator.clipboard.writeText(txt).then(() => {
     toast('คัดลอกข้อมูลสินค้าทำแอดเรียบร้อย ✓', 'success');
   });
 }
-
 // ──────────────────────────────────────────────────────────────
 // TAB 3: PROCUREMENT & BUFFER STOCK PLANNING
 // ──────────────────────────────────────────────────────────────
@@ -1648,3 +2023,6 @@ window.copyAIBriefToClipboard = copyAIBriefToClipboard;
 window.uploadShopeeSummaryExcel = uploadShopeeSummaryExcel;
 window.syncShopeeSummaryToAI = syncShopeeSummaryToAI;
 window.exportShopeeSummaryCSV = exportShopeeSummaryCSV;
+window.setShopeeAdsFilter = setShopeeAdsFilter;
+window.searchShopeeAds = searchShopeeAds;
+window.sortShopeeAds = sortShopeeAds;
