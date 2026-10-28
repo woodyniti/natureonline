@@ -336,7 +336,7 @@ function computeShopeeSummaryMetrics() {
   // Compile SKU array with financial and planning calculations
   const productItems = Object.values(skuMap).map(it => {
     const p = it.match.matched ? it.match.product : null;
-    const costPerUnit = p ? Number(p.current_cost || p.cost_price || 0) : 0;
+    const costPerUnit = p ? (typeof getProductOrderCost === 'function' ? getProductOrderCost(p) : Number(p.current_cost || p.cost_price || 0)) : 0;
     const totalCost = costPerUnit * it.units;
     const netSellerItem = it.revenue - it.fees;
     const profit = netSellerItem - totalCost;
