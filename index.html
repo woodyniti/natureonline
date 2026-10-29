@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v2.81</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.81.1</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.81';
-const DISPLAY_APP_VERSION = 'v2.81';
+const CURRENT_APP_VERSION = 'sealthai-v2.81.1';
+const DISPLAY_APP_VERSION = 'v2.81.1';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1164,7 +1164,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.81 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.81 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1237,7 +1237,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.81 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.81 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1266,7 +1266,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.81 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.81 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2445,6 +2445,84 @@ function updateProductBuyVatDisp(prefix = 'p') {
   } else {
     infoEl.innerHTML = `<span style="color:var(--text3)">ไม่มีภาษี VAT (0.00 บาท)</span>`;
   }
+}
+
+// ── Helper: ดึงต้นทุนสินค้าสำหรับออเดอร์ (ลำดับ: ต้นทุนจริง/เฉลี่ย -> ราคาซื้อรวม VAT -> 0) ──
+function getProductOrderCost(p) {
+  if (!p) return 0;
+  // 1. ดึงต้นทุนจริง/เฉลี่ยจากสต๊อก (current_cost / avg_cost / cost_avg)
+  const avgCost = Number(p.current_cost !== undefined && p.current_cost !== null ? p.current_cost : (p.avg_cost !== undefined ? p.avg_cost : (p.cost_avg || 0)));
+  if (avgCost > 0) return avgCost;
+
+  // 2. ถ้ายังไม่มี ให้ดึงราคาซื้อที่เป็น "ราคารวม VAT แล้ว" (ถ้าสินค้านั้นมี VAT)
+  const buyPriceInc = getProductPurchasePriceInclusive(p);
+  if (buyPriceInc > 0) return buyPriceInc;
+
+  return 0;
+}
+
+// ── Helper: คำนวณต้นทุนต่อหน่วยที่แท้จริงของ Order Item (พร้อมที่มาของต้นทุน) ──
+function getEffectiveOrderItemCost(it, product) {
+  // 1. ต้นทุนจริงที่บันทึกไว้ใน Order Item
+  const savedCost = Number(it?.cost_per_unit || 0);
+  if (savedCost > 0) {
+    return { cost: savedCost, source: 'actual' };
+  }
+
+  // 2. ต้นทุนเฉลี่ยจริงจากสต๊อกสินค้า
+  const currentCost = Number(product?.current_cost || 0);
+  if (currentCost > 0) {
+    return { cost: currentCost, source: 'current_cost' };
+  }
+
+  // 3. ถ้ายังไม่มีต้นทุน ให้ดึงราคาซื้อ (ที่เป็นราคารวม VAT แล้ว ถ้าสินค้านั้นมี VAT)
+  const buyPriceInc = getProductPurchasePriceInclusive(product);
+  if (buyPriceInc > 0) {
+    return { cost: buyPriceInc, source: 'buy_price_vat' };
+  }
+
+  return { cost: 0, source: 'none' };
+}
+
+// ── Helper: คำนวณต้นทุนรวมของ Order ด้วย Fallback (actual -> stock avg -> purchase price inc. VAT) ──
+function orderCostWithFallback(o, customProdMap) {
+  if (!o) return 0;
+  const items = o.order_items || [];
+  if (!items.length) return Number(o.total_cost || 0);
+
+  const findP = (it) => {
+    if (!it) return null;
+    if (customProdMap) {
+      if (it.product_id && customProdMap[it.product_id]) return customProdMap[it.product_id];
+      if (it.product_name && customProdMap[String(it.product_name).trim().toLowerCase()]) return customProdMap[String(it.product_name).trim().toLowerCase()];
+      if (it.sku && customProdMap[String(it.sku).trim().toLowerCase()]) return customProdMap[String(it.sku).trim().toLowerCase()];
+    }
+    if (typeof allProducts !== 'undefined' && Array.isArray(allProducts)) {
+      if (it.product_id) {
+        const found = allProducts.find(p => p.id === it.product_id);
+        if (found) return found;
+      }
+      if (it.product_name) {
+        const nameKey = String(it.product_name).trim().toLowerCase();
+        const found = allProducts.find(p => p.name && p.name.trim().toLowerCase() === nameKey);
+        if (found) return found;
+      }
+      if (it.sku) {
+        const skuKey = String(it.sku).trim().toLowerCase();
+        const found = allProducts.find(p => p.sku && p.sku.trim().toLowerCase() === skuKey);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const calculatedCost = items.reduce((sum, it) => {
+    const p = findP(it);
+    const eff = getEffectiveOrderItemCost(it, p);
+    return sum + (Number(it.qty) || 1) * (eff.cost || 0);
+  }, 0);
+
+  return calculatedCost > 0 ? calculatedCost : Number(o.total_cost || 0);
 }
 
 const SUP_USD_NOTE_RE = /\[(?:SUP_USD|SUPPLIER_USD|SUP_OVERSEAS):([^\]]+)\]/i;
@@ -3785,7 +3863,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.81)">v2.81 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.81.1)">v2.81 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6898,6 +6976,19 @@ async function loadOrders() {
     if (p.sku) prodBySku[p.sku.trim().toLowerCase()] = p;
   });
 
+  // Helper: คำนวณต้นทุน fallback สำหรับออเดอร์ในหน้า Orders (ใช้ข้อมูลสินค้าที่ index ไว้แล้ว)
+  const orderCostWithFallback = (o) => {
+    const items = o.order_items || [];
+    if (!items.length) return Number(o.total_cost || 0);
+    const c = items.reduce((s, it) => {
+      const p = (it.product_id ? prodMap[it.product_id] : null) || 
+                (it.product_name ? prodByName[String(it.product_name).trim().toLowerCase()] : null) ||
+                (it.sku ? prodBySku[String(it.sku).trim().toLowerCase()] : null);
+      return s + (Number(it.qty) || 1) * getEffectiveOrderItemCost(it, p).cost;
+    }, 0);
+    return c > 0 ? c : Number(o.total_cost || 0);
+  };
+
   // merge ข้อมูลพนักงานและชื่อบริษัทเข้าไป
   let rows = (ordRes.data||[]).map(o => ({
     ...o,
@@ -6960,7 +7051,8 @@ async function loadOrders() {
   const _shipRank = { pending:0, shipped:1, delivered:2, cancelled:3 };
   const _profitOf = o => {
     if (isOrderCancelled(o)) return 0;
-    const s = Number(o.total_amount||0), c = Number(o.total_cost||0);
+    const s = Number(o.total_amount||0);
+    const c = Number(o.total_cost) > 0 ? Number(o.total_cost) : orderCostWithFallback(o);
     return s - c - getOrderPlatformFeeInfo(o).fee;
   };
   const _sortMode = window._ordSort || 'status';
@@ -6981,7 +7073,10 @@ async function loadOrders() {
   const cancelledRate = rows.length ? cancelledRows.length / rows.length * 100 : 0;
   window._orderCancelledRows = cancelledRows;
   const totalRev  = activeRows.reduce((s,o)=>s+Number(o.total_amount||0),0);
-  const totalCost = activeRows.reduce((s,o)=>s+Number(o.total_cost||0),0);
+  const totalCost = activeRows.reduce((s,o)=>{
+    const c = Number(o.total_cost || 0);
+    return s + (c > 0 ? c : orderCostWithFallback(o));
+  }, 0);
   const totalPlatformFee = activeRows.reduce((s,o)=> s + getOrderPlatformFeeInfo(o).fee, 0);
   const totalProfit = totalRev - totalCost - totalPlatformFee;   // กำไรหลังหักต้นทุน + ค่า GP Platform
   const commBase    = Math.max(0, totalProfit);                  // ฐานคิดคอม (ขาดทุน = ไม่มีคอม)
@@ -7228,7 +7323,9 @@ async function loadOrders() {
           (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => `<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px" onclick="event.stopPropagation();showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)">🛒 PO: ${escapeHTML(po.po_no)}</span>`).join('')}</div>` : '');
       })()}
       ${(()=>{
-        const sale=Number(o.total_amount||0), cost=Number(o.total_cost||0);
+        const sale=Number(o.total_amount||0);
+        const fallbackCost = orderCostWithFallback(o);
+        const cost = Number(o.total_cost) > 0 ? Number(o.total_cost) : fallbackCost;
         if (isOrderCancelled(o)) return '<div style="font-size:11px;margin-bottom:8px;font-weight:600" class="text-red">ไม่นับในยอดขาย ต้นทุน GP และกำไร</div>';
         const feeInfo=getOrderPlatformFeeInfo(o);
         const isPlat=feeInfo.isPlatform;
@@ -7339,43 +7436,6 @@ async function quickUpdateStatus(orderId, status, selEl) {
 }
 
 let orderItems = [];
-// ── Helper: ดึงต้นทุนสินค้าสำหรับออเดอร์ (ลำดับ: ต้นทุนจริง/เฉลี่ย -> ราคาซื้อรวม VAT -> 0) ──
-function getProductOrderCost(p) {
-  if (!p) return 0;
-  // 1. ดึงต้นทุนจริง/เฉลี่ยจากสต๊อก (current_cost / avg_cost / cost_avg)
-  const avgCost = Number(p.current_cost !== undefined && p.current_cost !== null ? p.current_cost : (p.avg_cost !== undefined ? p.avg_cost : (p.cost_avg || 0)));
-  if (avgCost > 0) return avgCost;
-
-  // 2. ถ้ายังไม่มี ให้ดึงราคาซื้อที่เป็น "ราคารวม VAT แล้ว" (ถ้าสินค้านั้นมี VAT)
-  const buyPriceInc = getProductPurchasePriceInclusive(p);
-  if (buyPriceInc > 0) return buyPriceInc;
-
-  return 0;
-}
-
-// ── Helper: คำนวณต้นทุนต่อหน่วยที่แท้จริงของ Order Item (พร้อมที่มาของต้นทุน) ──
-function getEffectiveOrderItemCost(it, product) {
-  // 1. ต้นทุนจริงที่บันทึกไว้ใน Order Item
-  const savedCost = Number(it?.cost_per_unit || 0);
-  if (savedCost > 0) {
-    return { cost: savedCost, source: 'actual' };
-  }
-
-  // 2. ต้นทุนเฉลี่ยจริงจากสต๊อกสินค้า
-  const currentCost = Number(product?.current_cost || 0);
-  if (currentCost > 0) {
-    return { cost: currentCost, source: 'current_cost' };
-  }
-
-  // 3. ถ้ายังไม่มีต้นทุน ให้ดึงราคาซื้อ (ที่เป็นราคารวม VAT แล้ว ถ้าสินค้านั้นมี VAT)
-  const buyPriceInc = getProductPurchasePriceInclusive(product);
-  if (buyPriceInc > 0) {
-    return { cost: buyPriceInc, source: 'buy_price_vat' };
-  }
-
-  return { cost: 0, source: 'none' };
-}
-
 let productList = [];
 let editingPOId = null;
 let editingPONo = null;
@@ -39848,7 +39908,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.81', date:'2026-10-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบภาษีราคาซื้อสินค้า (Purchase Price VAT) & ต้นทุนออเดอร์อัจฉริยะ (v2.81)', items:[
+    { v:'2.81.1', date:'2026-10-29', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขฟังก์ชันต้นทุนออเดอร์ & แก้ไขข้อผิดพลาดหน้า Order เข้าไม่ได้ (v2.81.1)', items:[
+      '🐛 <b>Global Fallback Cost Fix:</b> แก้ไขข้อผิดพลาด ReferenceError: orderCostWithFallback is not defined ในหน้า Orders โดยยกระดับฟังก์ชัน orderCostWithFallback, getProductOrderCost, และ getEffectiveOrderItemCost ขึ้นเป็น Global Scope ทำให้สามารถเรียกใช้งานได้สมบูรณ์จากทุกหน้าและทุกมุมมอง',
+      '📦 <b>Orders Table & Mobile Cards Optimization:</b> เชื่อมโยง fallback ต้นทุนเข้ากับตารางออเดอร์เดสก์ท็อป การ์ดมือถือ และการคำนวณกำไรสุทธิ/สรุปยอดรวม (KPI Card) อย่างแม่นยำ',
+      '⚡ <b>Instant Scope Indexing:</b> เสริมประสิทธิภาพการคำนวณต้นทุนใน loadOrders ด้วย indexed lookup (prodMap, prodByName, prodBySku) รวดเร็วระดับเสี้ยววินาที',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v2.81.1 พร้อมล้างแคช Service Worker อัตโนมัติ'
+    ]},
+    { v:'2.81', date:'2026-10-28', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ระบบภาษีราคาซื้อสินค้า (Purchase Price VAT) & ต้นทุนออเดอร์อัจฉริยะ (v2.81)', items:[
       '🏷️ <b>Purchase Price VAT Mode Selector:</b> เพิ่มตัวเลือกในหน้าสินค้าสำหรับ "ราคาซื้อ (THB / บาท)" เลือกระหว่าง <b>"ยังไม่รวม VAT (7%)" [Default]</b>, <b>"รวม VAT แล้ว (7%)"</b> และ <b>"ไม่มี VAT (0%)"</b>',
       '🧮 <b>Real-time VAT Breakdown:</b> แสดงคำนวณยอดภาษี VAT (กี่บาท) และยอดราคารวม/ก่อน VAT แบบ Real-time ทันทีขณะพิมพ์ราคาซื้อทั้งในหน้าเพิ่มสินค้าใหม่และแก้ไขสินค้า',
       '📦 <b>Smart Order Cost Hierarchy:</b> ปรับปรุงระบบดึงต้นทุนในรายการออเดอร์: 1) ดึงต้นทุนจริง/เฉลี่ยจากสต๊อก (cost_per_unit / current_cost) ก่อนเสมอ, 2) หากรายการไหนยังไม่มีต้นทุนจริง จะดึงราคาซื้อมาตรฐานที่เป็น <b>"ราคารวม VAT แล้ว"</b> (ถ้าสินค้านั้นมี VAT) มาแสดงและคำนวณกำไรโดยอัตโนมัติ',
