@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v2.81.1</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.82</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.81.1';
-const DISPLAY_APP_VERSION = 'v2.81.1';
+const CURRENT_APP_VERSION = 'sealthai-v2.82';
+const DISPLAY_APP_VERSION = 'v2.82';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1164,7 +1164,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.81 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.82)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.82 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1237,7 +1237,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.81 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.82)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.82 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1266,7 +1266,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.81.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.81 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.82)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.82 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3863,7 +3863,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.81.1)">v2.81 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.82)">v2.82 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -11375,7 +11375,7 @@ let allProducts = [];
 let productCategories = [];
 
 async function products() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" onclick="openNewProductModal()">+ เพิ่มสินค้า</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="openSiliconeKitBom()">🧩 BOM ชุดโอริง</button><button class="btn btn-primary btn-sm" onclick="openNewProductModal()">+ เพิ่มสินค้า</button>`;
 
   setContent(`
     <!-- Prominent High-Contrast Product Search Box -->
@@ -12071,7 +12071,7 @@ function renderProductTable(prods) {
     th('สต๊อก & มูลค่า','stock','text-right','width:145px;padding:8px 10px') +
     th('⏳ รอเข้า (PO)','pending_po','text-right','width:95px;padding:8px 8px') +
     th('📤 รอส่ง (SO)','pending_so','text-right','width:95px;padding:8px 8px') +
-    '<th style="width:155px;text-align:center;padding:8px 6px">⚡ จัดการ</th>' +
+    '<th style="width:205px;text-align:center;padding:8px 6px">⚡ จัดการ</th>' +
     '</tr></thead><tbody>' +
     sorted.map((p, idx) => {
       const margin   = Number(p.sell_price||0)-Number(p.current_cost||0);
@@ -12168,6 +12168,7 @@ function renderProductTable(prods) {
         '<td style="text-align:center;padding:7px 6px;white-space:nowrap">' +
           '<div style="display:inline-flex;gap:3px;align-items:center">' +
             '<button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="ดูประวัติความเคลื่อนไหวสต๊อก & เอกสารซื้อ/ขาย" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:700;font-size:11px;padding:3px 6px">📜 สต๊อก</button>' +
+            (getProductBom(p) ? '<button class="btn btn-secondary btn-sm" onclick="openSiliconeKitBom(&quot;'+p.id+'&quot;)" title="ดูส่วนประกอบชุด" style="font-size:11px;padding:3px 6px">🧩 BOM</button>' : '') +
             '<button class="btn btn-secondary btn-sm" onclick="editProduct(&quot;'+p.id+'&quot;)" title="แก้ไขสินค้าและสเปก" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;font-weight:700;font-size:11px;padding:3px 6px">✏️</button>' +
             '<button class="btn btn-secondary btn-sm" onclick="archiveProduct(&quot;'+p.id+'&quot;)" title="ซ่อนสินค้า" style="padding:3px 5px;font-size:11px">🙈</button>' +
             '<button class="btn btn-danger btn-sm" onclick="deleteProduct(&quot;'+p.id+'&quot;)" title="ลบถาวร" style="padding:3px 5px;font-size:11px">🗑️</button>' +
@@ -12212,6 +12213,7 @@ function renderProductTable(prods) {
           <div style="font-size:11px;color:var(--text3)"><span style="font-weight:600;color:var(--accent)">${p.sku||''}</span> ${p.supplier_sku?'<span style="color:var(--blue)">· '+p.supplier_sku+'</span>':''} ${p.part_no?'<span style="color:var(--purple,#7c3aed)">· '+p.part_no+'</span>':''} · <span class="badge badge-gray" style="font-size:10px">${p.category||'ไม่ระบุ'}</span>${buyTag}</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+          ${getProductBom(p) ? `<button class="btn btn-secondary btn-sm" onclick="openSiliconeKitBom('${p.id}')" title="ดูส่วนประกอบชุด">🧩 BOM</button>` : ''}
           <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" style="background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700" title="แก้ไข">✏️ แก้ไข</button>
           <button class="btn btn-secondary btn-sm" onclick="viewProductInventoryPosting('${p.id}')" style="background:#eff6ff;color:#1d4ed8;border:1.5px solid #93c5fd;font-weight:700" title="ดูประวัติความเคลื่อนไหวสต๊อก & เอกสารซื้อขาย">📜 สต๊อก</button>
           <button class="btn btn-secondary btn-sm" onclick="archiveProduct('${p.id}')" title="ซ่อนจากรายการ">🙈</button>
@@ -39908,7 +39910,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.81.1', date:'2026-10-29', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขฟังก์ชันต้นทุนออเดอร์ & แก้ไขข้อผิดพลาดหน้า Order เข้าไม่ได้ (v2.81.1)', items:[
+    { v:'2.82', date:'2026-11-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'นำเข้าชุด O-Ring Silicone และแสดง BOM', items:[
+      'เพิ่มสินค้าโอริงซิลิโคน 60 SKU และชุดขาย 6 SKU จากไฟล์ที่ตรวจสอบแล้ว',
+      'หน้าสินค้าแสดงรายละเอียดส่วนประกอบ จำนวนต่อกล่อง และราคาอ้างอิงของแต่ละชุด',
+      'สต็อกกล่องและโอริงย่อยแยกกัน เพื่อรองรับการรับสินค้าสำเร็จรูปจากผู้ขาย'
+    ]},
+    { v:'2.81.1', date:'2026-10-29', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขฟังก์ชันต้นทุนออเดอร์ & แก้ไขข้อผิดพลาดหน้า Order เข้าไม่ได้ (v2.81.1)', items:[
       '🐛 <b>Global Fallback Cost Fix:</b> แก้ไขข้อผิดพลาด ReferenceError: orderCostWithFallback is not defined ในหน้า Orders โดยยกระดับฟังก์ชัน orderCostWithFallback, getProductOrderCost, และ getEffectiveOrderItemCost ขึ้นเป็น Global Scope ทำให้สามารถเรียกใช้งานได้สมบูรณ์จากทุกหน้าและทุกมุมมอง',
       '📦 <b>Orders Table & Mobile Cards Optimization:</b> เชื่อมโยง fallback ต้นทุนเข้ากับตารางออเดอร์เดสก์ท็อป การ์ดมือถือ และการคำนวณกำไรสุทธิ/สรุปยอดรวม (KPI Card) อย่างแม่นยำ',
       '⚡ <b>Instant Scope Indexing:</b> เสริมประสิทธิภาพการคำนวณต้นทุนใน loadOrders ด้วย indexed lookup (prodMap, prodByName, prodBySku) รวดเร็วระดับเสี้ยววินาที',
@@ -40631,6 +40638,7 @@ async function convertQuotationToOrder(qtId) {
   }
 }
 </script>
+<script src="silicone_kit_bom.js?v=2.82"></script>
 
 <!-- Mobile Bottom Nav -->
 <button id="back-to-top" onclick="scrollToTop()" title="กลับขึ้นบนสุด" aria-label="กลับขึ้นบนสุด">↑</button>
