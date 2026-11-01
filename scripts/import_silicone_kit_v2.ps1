@@ -61,11 +61,13 @@ $payload = @()
 foreach ($component in $componentRows) {
   if ($existingBySku.ContainsKey($component.component_sku)) { continue }
   $cost = [decimal]$component.weighted_avg_unit_cost_thb
+  $size = "{0}x{1}" -f ([decimal]$component.id_mm).ToString('0.################', [Globalization.CultureInfo]::InvariantCulture), ([decimal]$component.cs_mm).ToString('0.################', [Globalization.CultureInfo]::InvariantCulture)
+  $displayName = "O-Ring Silicone White Translucent $size mm (โอริงซิลิโคนสีขาว)"
   $payload += @{
     shop_id = $shopId
     sku = $component.component_sku
-    name = $component.component_name
-    category = 'O-Ring'
+    name = $displayName
+    category = 'O-Ring Silicone White Translucent'
     sell_price = [decimal]$component.sale_price_rounded_thb
     purchase_price = $cost
     current_cost = 0
@@ -93,7 +95,7 @@ foreach ($kit in $kitRows) {
     components = @($lines | ForEach-Object {
       @{
         sku = $_.component_sku
-        name = $_.component_name
+        name = "O-Ring Silicone White Translucent $(([decimal]$_.id_mm).ToString('0.################', [Globalization.CultureInfo]::InvariantCulture))x$(([decimal]$_.cs_mm).ToString('0.################', [Globalization.CultureInfo]::InvariantCulture)) mm (โอริงซิลิโคนสีขาว)"
         qty = [int]$_.qty_per_kit
         reference_unit_price = [decimal]$_.unit_sale_price_rounded_thb
         allocated_unit_cost = [decimal]$_.allocated_unit_cost_thb
