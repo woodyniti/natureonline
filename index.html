@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v2.86</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.87</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.86';
-const DISPLAY_APP_VERSION = 'v2.86';
+const CURRENT_APP_VERSION = 'sealthai-v2.87';
+const DISPLAY_APP_VERSION = 'v2.87';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1164,7 +1164,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.86)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.86 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.87 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1237,7 +1237,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.86)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.86 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.87 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1266,7 +1266,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.86)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.86 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.87 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2242,7 +2242,7 @@ function showPage(page) {
     btn.classList.toggle('active', btn.dataset.page === page);
   });
   const pages = { aiIntelligence, customers, marketplace, ownerDashboard, dashboard, monthly, shopee, shopeeSummary: window.shopeeSummary || (typeof shopeeSummary !== 'undefined' ? shopeeSummary : null), taxAnalysis: window.taxAnalysis || (typeof taxAnalysis !== 'undefined' ? taxAnalysis : null), orders, quotations, expenses, gratuity, finance, products, stockPlanning, chinaImport, stock, categories, employees, employeeLoans, suppliers, purchase, supplierWeeklyExpense, apinvoice, arinvoice, goodsreturn, users, settings, contentstudio };
-  if (pages[page]) pages[page]();
+  if (pages[page]) return pages[page]();
 }
 
 function toggleSidebar() {
@@ -3861,7 +3861,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.86)">v2.86 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11.5px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.87)">v2.87 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -13907,11 +13907,6 @@ async function stock() {
   loadStockHistory();
   stockRows = [];
   addStockRow(); // start with 1 row
-  if (window._stockPOsToOpen?.length) {
-    const preselectedPOs = [...window._stockPOsToOpen];
-    window._stockPOsToOpen = null;
-    await openStockModal(preselectedPOs);
-  }
 }
 
 // ── Product search input (autocomplete) ───────────────
@@ -15743,19 +15738,29 @@ async function delStockMovement(id) {
 }
 
 // โหลด PO pending ลง dropdown ใน stock modal (เฉพาะสถานะ sent และ partial โดยไม่แสดง draft)
-async function loadPODropdownForStock() {
+async function loadPODropdownForStock(preselectedPOIds=[]) {
   let q = sb.from('purchase_orders')
     .select('*,purchase_order_items(*)')
     .in('status', ['sent','partial'])
     .order('po_date', {ascending:false});
   if (currentShop?.id) q = q.eq('shop_id', currentShop.id);
-  const { data, error } = await q;
+  // Fetch the PO opened from its detail directly: it may be outside the default query limit.
+  let selectedQuery = null;
+  if (preselectedPOIds.length) {
+    selectedQuery = sb.from('purchase_orders').select('*,purchase_order_items(*)')
+      .in('id', preselectedPOIds).in('status', ['sent','partial']);
+    if (currentShop?.id) selectedQuery = selectedQuery.eq('shop_id', currentShop.id);
+  }
+  const [{ data, error }, selectedResult] = await Promise.all([q, selectedQuery]);
   if (error) {
     console.error('Error loading PO dropdown for stock:', error);
   }
+  if (selectedResult?.error) console.error('Error loading selected PO for stock:', selectedResult.error);
   const list = document.getElementById('s-po-list');
   if (!list) return;
-  const pendingPOs = (data||[]).filter(po => po.status !== 'draft').map(po => {
+  const poById = new Map((data||[]).map(po => [po.id, po]));
+  (selectedResult?.data||[]).forEach(po => poById.set(po.id, po));
+  const pendingPOs = [...poById.values()].filter(po => po.status !== 'draft').map(po => {
     const pendingItems = (po.purchase_order_items||[]).filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
     return { ...po, pendingItems };
   }).filter(po => po.pendingItems.length);
@@ -15905,7 +15910,7 @@ async function openStockModal(preselectedPOIds=[]) {
   renderLandedCostRows();
   addStockRow();
   updateStockTotal();   // แสดงแถว VAT ตาม default
-  await loadPODropdownForStock();
+  await loadPODropdownForStock(preselectedPOIds);
   if (preselectedPOIds.length) {
     let hasMatch = false;
     document.querySelectorAll('.s-po-check').forEach(el=>{
@@ -15917,6 +15922,8 @@ async function openStockModal(preselectedPOIds=[]) {
     updateStockPOSelectionSummary();
     if (hasMatch && getSelectedStockPOIds().length) {
       await applyPOsToStock();
+      const summary = document.getElementById('s-po-selection-summary');
+      if (summary) summary.textContent = 'โหลดรายการจาก PO ที่เลือกแล้ว — ตรวจสอบจำนวนและต้นทุนก่อนบันทึก';
     } else {
       toast('ไม่พบ PO ที่ส่งสั่งซื้อแล้วตรงกับที่เลือก (PO แบบร่างยังไม่สามารถรับสินค้าเข้าสต๊อกได้)','error');
     }
@@ -23980,14 +23987,18 @@ async function updatePOStatus(poId, status) {
 }
 
 async function openGoodsReceipt(poId) {
-  const { data: po } = await sb.from('purchase_orders').select('status').eq('id', poId).single();
-  if (po?.status === 'draft') {
-    toast('PO นี้ยังเป็นสถานะแบบร่าง (ยังไม่ส่งสั่งซื้อ) ไม่สามารถรับสินค้าเข้าสต๊อกได้', 'error');
+  const { data: po, error } = await sb.from('purchase_orders').select('status').eq('id', poId).eq('shop_id', currentShop.id).single();
+  if (error || !po) {
+    toast('ไม่พบ PO ใบนี้ หรือไม่มีสิทธิ์เข้าถึง', 'error');
     return;
   }
-  window._stockPOsToOpen = [poId];
+  if (!['sent','partial'].includes(po.status)) {
+    toast('รับสินค้าได้เฉพาะ PO ที่ส่งสั่งซื้อแล้วและยังมีสินค้าค้างรับ', 'error');
+    return;
+  }
   closeModal('modal-po-detail');
-  showPage('stock');
+  await showPage('stock');
+  if (currentPage === 'stock') await openStockModal([poId]);
 }
 
 async function createAPFromPO(poId) {
@@ -40136,7 +40147,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.86', date:'2026-11-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ค่าส่ง PO แยกสกุลเงินและส่งต่อหน้ารับสินค้า', items:[
+    { v:'2.87', date:'2026-11-01', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รับสินค้าเข้าสต็อกจากปุ่มใน PO ได้ในคลิกเดียว', items:[
+      'กดรับสินค้าจากรายละเอียด PO แล้วเปิดหน้ารับสินค้า พร้อมเลือกและโหลดรายการค้างรับของ PO ใบนั้นอัตโนมัติ',
+      'ดึง PO ที่เปิดโดยตรงแม้อยู่นอกชุดรายการที่โหลดตามปกติ และแจ้งเมื่อ PO ไม่อยู่ในสถานะที่รับได้'
+    ]},
+    { v:'2.86', date:'2026-11-01', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ค่าส่ง PO แยกสกุลเงินและส่งต่อหน้ารับสินค้า', items:[
       'เลือกค่าส่งเป็น THB หรือ USD แยกจากสกุลเงินสินค้า พร้อมอัตรา 1 USD เท่ากับกี่ THB ในหัว PO',
       'หน้า PO และใบพิมพ์แสดงค่าส่งตามสกุลเงินที่เลือกและยอดแปลงเป็นบาท',
       'หน้ารับสินค้าเสนอค่าส่งจาก PO ในค่าใช้จ่ายเพิ่มเติมตามสัดส่วนสินค้าที่รับแต่ละครั้ง และเลือกไม่บันทึกได้'
