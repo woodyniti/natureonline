@@ -12,6 +12,29 @@ var _shopeeSummarySortDir = 'desc';
 var _shopeeSummaryCharts = {};
 var _shopeeSummaryMappings = [];
 var _shopeeSummaryLoaded = false;
+var _shopeeMappingSortedProducts = [];
+
+function shopeeMappingProductLabel(product) {
+  const sku = product.sku || product.supplier_sku || '';
+  return `${sku ? sku + ' | ' : ''}${product.name || ''} (ทุน: ฿${product.current_cost || 0}, สต๊อก: ${product.stock_qty || 0})`;
+}
+
+function filterShopeeMappingOptions(selectElId, query) {
+  const select = document.getElementById(selectElId);
+  if (!select) return;
+  const search = String(query || '').trim().toLocaleLowerCase('th');
+  const matching = _shopeeMappingSortedProducts.filter(product =>
+    [product.name, product.sku, product.supplier_sku, product.part_no]
+      .some(value => String(value || '').toLocaleLowerCase('th').includes(search))
+  );
+  select.replaceChildren(new Option(search ? '-- เลือกสินค้าที่พบ --' : '-- เลือกสินค้าในระบบ --', ''));
+  matching.slice(0, 100).forEach(product => select.add(new Option(shopeeMappingProductLabel(product), product.id)));
+  select.value = '';
+  const count = document.getElementById(selectElId + '-count');
+  if (count) count.textContent = matching.length
+    ? `พบ ${matching.length.toLocaleString('th-TH')} รายการ${matching.length > 100 ? ' · แสดง 100 รายการแรก กรุณาพิมพ์เพิ่ม' : ''}`
+    : 'ไม่พบสินค้า กรุณาลอง SKU หรือคำค้นอื่น';
+}
 
 function getShopeeSummaryMonths() {
   return [...new Set(_shopeeSummaryOrders.map(order => {
@@ -1576,7 +1599,10 @@ function renderShopeeTabLinkage(m) {
     ? m.productItems.filter(p => p.matched)
     : (_shopeeSummaryLinkFilter === 'unmatched' ? m.unmatchedItems : m.productItems);
 
-  const allProds = window.allProducts || [];
+  const collator = new Intl.Collator('th', { sensitivity: 'base', numeric: true });
+  _shopeeMappingSortedProducts = [...(window.allProducts || [])].sort((a, b) =>
+    collator.compare(a.name || '', b.name || '') || collator.compare(a.sku || '', b.sku || '')
+  );
 
   return `
     <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:16px">
@@ -1623,6 +1649,12 @@ function renderShopeeTabLinkage(m) {
           <tbody>
             ${items.map((it, idx) => {
               const selId = `map-sel-${idx}`;
+              const visibleProducts = _shopeeMappingSortedProducts.slice(0, 100);
+              const selectedProduct = it.matchedProduct;
+              if (selectedProduct && !visibleProducts.some(p => p.id === selectedProduct.id)) {
+                visibleProducts.push(selectedProduct);
+                visibleProducts.sort((a, b) => collator.compare(a.name || '', b.name || '') || collator.compare(a.sku || '', b.sku || ''));
+              }
               return `
                 <tr style="border-bottom:1px solid #e2e8f0;background:${idx%2===0?'#fff':'#fbfcfd'};${!it.matched?'background:#fff8f8':''}">
                   <td style="padding:10px 12px;color:#94a3b8">${idx+1}</td>
@@ -1640,14 +1672,18 @@ function renderShopeeTabLinkage(m) {
                     `}
                   </td>
                   <td style="padding:10px 12px;min-width:320px">
+                    <input type="search" id="${selId}-search" placeholder="🔎 ค้นหา SKU หรือชื่อสินค้าในคลัง..."
+                      oninput="filterShopeeMappingOptions('${selId}', this.value)"
+                      style="width:100%;box-sizing:border-box;padding:6px 10px;margin-bottom:5px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:#fff">
                     <select id="${selId}" style="width:100%;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:#fff">
                       <option value="">-- ${it.matched ? 'เปลี่ยนสินค้าที่เชื่อมโยง...' : 'ค้นหาและเลือกสินค้าในฐานข้อมูล...'} --</option>
-                      ${allProds.slice(0, 300).map(p => `
+                      ${visibleProducts.map(p => `
                         <option value="${p.id}" ${it.matchedProduct?.id === p.id ? 'selected' : ''}>
-                          ${escapeHTML(p.sku || p.supplier_sku || '')} | ${escapeHTML(p.name)} (ทุน: ฿${p.current_cost||0}, สต๊อก: ${p.stock_qty||0})
+                          ${escapeHTML(shopeeMappingProductLabel(p))}
                         </option>
                       `).join('')}
                     </select>
+                    <div id="${selId}-count" style="font-size:10px;color:#64748b;margin-top:3px">เรียงตามชื่อสินค้า · แสดง 100 รายการแรก พิมพ์ค้นหาเพื่อดูทั้งหมด</div>
                   </td>
                   <td style="padding:10px 12px;text-align:center;white-space:nowrap">
                     <button type="button" class="btn btn-primary btn-sm" onclick="handleSaveShopeeMapping('${escapeHTML(it.sku)}', '${selId}', '${escapeHTML(it.name)}')"
@@ -2091,6 +2127,7 @@ window.searchShopeeSummary = searchShopeeSummary;
 window.sortShopeeSummaryTable = sortShopeeSummaryTable;
 window.filterShopeeSummaryLink = filterShopeeSummaryLink;
 window.handleSaveShopeeMapping = handleSaveShopeeMapping;
+window.filterShopeeMappingOptions = filterShopeeMappingOptions;
 window.saveShopeeSummaryMapping = saveShopeeSummaryMapping;
 window.quickCreatePOFromShopee = quickCreatePOFromShopee;
 window.copyShopeeAdsBrief = copyShopeeAdsBrief;
