@@ -301,7 +301,7 @@ function computeShopeeSummaryMetrics() {
     }
     if (_shopeeSummarySearch) {
       const q = _shopeeSummarySearch.toLowerCase();
-      const txt = `${r.orderId} ${r.sku} ${r.parentSku} ${r.productName} ${r.buyer} ${r.province} ${r.payMethod} ${r.carrier}`.toLowerCase();
+      const txt = `${r.orderId} ${r.sku} ${r.optionSku || ''} ${r.parentSku} ${r.productName} ${r.option || ''} ${r.buyer} ${r.province} ${r.payMethod} ${r.carrier}`.toLowerCase();
       if (!txt.includes(q)) return false;
     }
     return true;
@@ -346,6 +346,8 @@ function computeShopeeSummaryMetrics() {
         name: r.productName || itemSku,
         parentSku: r.parentSku || '',
         option: r.option || '',
+        optionSku: r.optionSku || (r.option ? r.sku || '' : ''),
+        optionNames: new Set(),
         units: 0,
         orders: new Set(),
         revenue: 0,
@@ -353,6 +355,10 @@ function computeShopeeSummaryMetrics() {
         dealPrices: [],
         match: findShopeeProductMatch(itemSku, r.productName)
       };
+    }
+    if (r.option) skuMap[itemSku].optionNames.add(String(r.option).trim());
+    if (!skuMap[itemSku].optionSku && (r.optionSku || r.option)) {
+      skuMap[itemSku].optionSku = r.optionSku || r.sku || '';
     }
     skuMap[itemSku].units += qty;
     skuMap[itemSku].orders.add(r.orderId);
@@ -1639,8 +1645,8 @@ function renderShopeeTabLinkage(m) {
           <thead style="background:#f1f5f9;border-bottom:2px solid #cbd5e1">
             <tr>
               <th style="padding:10px 12px;text-align:left">#</th>
-              <th style="padding:10px 12px;text-align:left">รหัส SKU Shopee</th>
-              <th style="padding:10px 12px;text-align:left">ชื่อสินค้าใน Shopee</th>
+              <th style="padding:10px 12px;text-align:left">SKU Shopee ที่ใช้จับคู่</th>
+              <th style="padding:10px 12px;text-align:left">ชื่อสินค้าและตัวเลือกใน Shopee</th>
               <th style="padding:10px 12px;text-align:center">สถานะ</th>
               <th style="padding:10px 12px;text-align:left">เลือกสินค้าในระบบเชื่อมโยง (Update Mapping)</th>
               <th style="padding:10px 12px;text-align:center">การบันทึก</th>
@@ -1649,6 +1655,8 @@ function renderShopeeTabLinkage(m) {
           <tbody>
             ${items.map((it, idx) => {
               const selId = `map-sel-${idx}`;
+              const optionNames = [...(it.optionNames || [])].filter(Boolean);
+              const optionSku = it.optionSku || (it.option ? it.sku : '');
               const visibleProducts = _shopeeMappingSortedProducts.slice(0, 100);
               const selectedProduct = it.matchedProduct;
               if (selectedProduct && !visibleProducts.some(p => p.id === selectedProduct.id)) {
@@ -1659,7 +1667,12 @@ function renderShopeeTabLinkage(m) {
                 <tr style="border-bottom:1px solid #e2e8f0;background:${idx%2===0?'#fff':'#fbfcfd'};${!it.matched?'background:#fff8f8':''}">
                   <td style="padding:10px 12px;color:#94a3b8">${idx+1}</td>
                   <td style="padding:10px 12px;font-weight:700;font-family:var(--mono)">${escapeHTML(it.sku)}</td>
-                  <td style="padding:10px 12px;max-width:260px;line-height:1.3">${escapeHTML(it.name)}</td>
+                  <td style="padding:10px 12px;max-width:320px;line-height:1.4">
+                    <div style="font-weight:600">${escapeHTML(it.name)}</div>
+                    <div style="margin-top:4px;color:#7c3aed"><b>ชื่อตัวเลือก:</b> ${optionNames.length ? optionNames.map(escapeHTML).join(' / ') : 'ไม่มีตัวเลือก'}</div>
+                    <div style="color:#0369a1"><b>SKU ตัวเลือก:</b> ${optionSku ? escapeHTML(optionSku) : 'ไม่ระบุ'}</div>
+                    ${it.parentSku ? `<div style="color:#64748b"><b>Parent SKU:</b> ${escapeHTML(it.parentSku)}</div>` : ''}
+                  </td>
                   <td style="padding:10px 12px;text-align:center">
                     ${it.matched ? `
                       <span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px">
@@ -1917,6 +1930,7 @@ async function uploadShopeeSummaryExcel(input) {
         parentSku,
         productName: prodName,
         sku: sku || parentSku,
+        optionSku: sku,
         option: String(r['ชื่อตัวเลือก'] || '').trim(),
         qty,
         dealPrice,
