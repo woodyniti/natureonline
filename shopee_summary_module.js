@@ -1803,7 +1803,7 @@ async function uploadShopeeSummaryExcel(input) {
       const sku = String(r['เลขอ้างอิง SKU (SKU Reference No.)'] || r['SKU Reference No.'] || '').trim();
       const parentSku = String(r['เลขอ้างอิง Parent SKU'] || r['Parent SKU'] || '').trim();
       const prodName = String(r['ชื่อสินค้า'] || r['Product Name'] || '').trim();
-      const qty = int(cleanNum(r['จำนวน'] || r['Quantity']) || 1);
+      const qty = Math.max(1, Math.trunc(cleanNum(r['จำนวน'] || r['Quantity']) || 1));
       const dealPrice = cleanNum(r['ราคาขาย'] || r['Deal Price']);
       const netSale = cleanNum(r['ราคาขายสุทธิ'] || r['Net Sale']);
       const commission = cleanNum(r['ค่าคอมมิชชั่น'] || r['Commission']);
