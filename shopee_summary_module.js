@@ -13,6 +13,40 @@ var _shopeeSummaryCharts = {};
 var _shopeeSummaryMappings = [];
 var _shopeeSummaryLoaded = false;
 
+function shopeeSummaryOrderKey(order) {
+  return JSON.stringify([order.orderId, order.sku || '']);
+}
+
+function groupShopeeSummaryOrders(orders) {
+  const groups = new Map();
+  (orders || []).forEach(order => {
+    const key = shopeeSummaryOrderKey(order);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(order);
+  });
+  return groups;
+}
+
+function mergeShopeeSummaryOrders(localOrders, serverOrders) {
+  const groups = groupShopeeSummaryOrders(localOrders);
+  groupShopeeSummaryOrders(serverOrders).forEach((rows, key) => groups.set(key, rows));
+  return [...groups.values()].flat();
+}
+
+async function loadShopeeSummaryServerOrders() {
+  if (!sb || !currentShop?.id || !currentUser?.id) return [];
+  const result = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await sb.from('shopee_summary_orders')
+      .select('payload').eq('shop_id', currentShop.id)
+      .order('order_id').range(offset, offset + 499);
+    if (error) throw error;
+    result.push(...(data || []).flatMap(row => Array.isArray(row.payload) ? row.payload : []));
+    if (!data || data.length < 500) break;
+  }
+  return result;
+}
+
 // ── Ads Filter & Sorting State ──
 var _shopeeAdsFilter = 'high_buffer'; // 'high_buffer', 'should_run_ads', 'in_stock', 'top_stars', 'out_of_stock', 'all'
 var _shopeeAdsSearch = '';
@@ -145,8 +179,8 @@ async function shopeeSummary() {
         <span>📂 อัปโหลดไฟล์ Shopee</span>
         <input type="file" id="shopee-summary-file-inp" accept=".xlsx,.csv" style="display:none" onchange="uploadShopeeSummaryExcel(this)">
       </label>
-      <button class="btn btn-secondary btn-sm" id="shopee-summary-sync-btn" onclick="syncShopeeSummaryToAI()" title="ส่งข้อมูลและบทสรุปไปยัง Database / AI Server" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd;font-weight:700">
-        ☁️ ซิงค์เข้า AI Server
+      <button class="btn btn-secondary btn-sm" id="shopee-summary-sync-btn" onclick="syncShopeeSummaryToAI()" title="บันทึกรายการคำสั่งซื้อ Shopee ไปยังฐานข้อมูล Supabase" style="background:#e0f2fe;color:#0369a1;border-color:#bae6fd;font-weight:700">
+        ☁️ ซิงค์ข้อมูลขึ้นเซิร์ฟเวอร์
       </button>
       <button class="btn btn-secondary btn-sm" onclick="exportShopeeSummaryCSV()" title="ส่งออกรายงานเป็น CSV">📥 ส่งออก CSV</button>
     `;
@@ -173,23 +207,33 @@ async function initShopeeSummary(forceReload = false) {
   // 1. Load Orders Data
   if (!_shopeeSummaryOrders.length || forceReload) {
     try {
+      let preloaded = [];
       if (window.SHOPEE_PRELOADED_ORDERS && Array.isArray(window.SHOPEE_PRELOADED_ORDERS) && window.SHOPEE_PRELOADED_ORDERS.length > 0) {
-        _shopeeSummaryOrders = [...window.SHOPEE_PRELOADED_ORDERS];
+        preloaded = window.SHOPEE_PRELOADED_ORDERS;
       } else {
-        const cached = localStorage.getItem('shopee_summary_orders_cache');
-        if (cached) {
-          _shopeeSummaryOrders = JSON.parse(cached);
-        } else {
-          const res = await fetch('shopee_orders_preloaded.json');
-          if (res.ok) {
-            _shopeeSummaryOrders = await res.json();
-            try { localStorage.setItem('shopee_summary_orders_cache', JSON.stringify(_shopeeSummaryOrders)); } catch(e){}
-          }
+        const res = await fetch('shopee_orders_preloaded.json');
+        if (res.ok) {
+          preloaded = await res.json();
         }
       }
+      let merged = preloaded;
+      const cached = localStorage.getItem('shopee_summary_orders_cache');
+      if (cached) merged = mergeShopeeSummaryOrders(merged, JSON.parse(cached));
+      _shopeeSummaryOrders = merged;
     } catch (e) {
       console.warn('Error loading preloaded Shopee orders:', e);
     }
+  }
+
+  // The server is the shared source after a successful sync. Keep local/preloaded rows as fallback.
+  try {
+    const serverOrders = await loadShopeeSummaryServerOrders();
+    if (serverOrders.length) {
+      _shopeeSummaryOrders = mergeShopeeSummaryOrders(_shopeeSummaryOrders, serverOrders);
+      try { localStorage.setItem('shopee_summary_orders_cache', JSON.stringify(_shopeeSummaryOrders)); } catch(e){}
+    }
+  } catch (error) {
+    console.warn('Shopee server orders unavailable:', error);
   }
 
   // 2. Load fresh Products and Mappings from Supabase
@@ -1840,10 +1884,10 @@ async function uploadShopeeSummaryExcel(input) {
     }).filter(Boolean);
 
     // Merge & deduplicate
-    const existingKeys = new Set(_shopeeSummaryOrders.map(o => `${o.orderId}_${o.sku}`));
+    const existingKeys = new Set(_shopeeSummaryOrders.map(shopeeSummaryOrderKey));
     let added = 0;
     newOrders.forEach(o => {
-      const k = `${o.orderId}_${o.sku}`;
+      const k = shopeeSummaryOrderKey(o);
       if (!existingKeys.has(k)) {
         _shopeeSummaryOrders.push(o);
         existingKeys.add(k);
@@ -1853,7 +1897,7 @@ async function uploadShopeeSummaryExcel(input) {
 
     try { localStorage.setItem('shopee_summary_orders_cache', JSON.stringify(_shopeeSummaryOrders)); } catch(e){}
 
-    toast(`นำเข้าไฟล์ "${file.name}" สำเร็จ! เพิ่มรายการใหม่ ${added} รายการ (รวม ${_shopeeSummaryOrders.length} รายการ) ✓`, 'success');
+    toast(`อ่านไฟล์ "${file.name}" เข้าเบราว์เซอร์แล้ว เพิ่ม ${added} รายการ (รวม ${_shopeeSummaryOrders.length}) · กดซิงค์เพื่อบันทึกขึ้นเซิร์ฟเวอร์`, 'success');
     renderShopeeSummaryDashboard();
   } catch (err) {
     console.error('Upload error:', err);
@@ -1863,55 +1907,71 @@ async function uploadShopeeSummaryExcel(input) {
   }
 }
 
-// ── Sync Summary to AI Server & Knowledge Base ──
+// ── Sync Shopee order rows to the shared Supabase database ──
 async function syncShopeeSummaryToAI() {
   const btn = document.getElementById('shopee-summary-sync-btn');
   if (btn) { btn.disabled = true; btn.innerHTML = '⏳ กำลังส่งข้อมูล...'; }
 
   try {
-    const m = computeShopeeSummaryMetrics();
-    const payload = {
-      timestamp: new Date().toISOString(),
-      shop_id: currentShop?.id || null,
-      shop_name: currentShop?.name || 'SEALTHAI',
-      total_orders: m.totalOrders,
-      gross_revenue: m.grossRevenue,
-      net_payout: m.netPayout,
-      total_fees: m.totalFees,
-      gross_profit: m.grossProfit,
-      margin_pct: m.marginPct,
-      total_units: m.totalUnits,
-      unique_buyers: m.uniqueBuyers,
-      repeat_rate_pct: m.repeatRatePct,
-      top_ads_products: m.adsCandidates.slice(0, 10).map(p => ({
-        sku: p.sku, name: p.name, margin: p.marginPct, profit: p.profit, breakeven_roas: p.breakevenROAS, stock: p.stockQty
-      })),
-      stock_alerts: m.stockDanger.slice(0, 10).map(p => ({
-        sku: p.sku, name: p.name, units_sold: p.units, stock: p.stockQty
-      })),
-      top_provinces: m.provincesList.slice(0, 10).map(p => ({
-        province: p.province, orders: p.orderCount, revenue: p.revenue
-      }))
-    };
+    if (!sb || !currentShop?.id || !currentUser?.id) throw new Error('กรุณาเข้าสู่ระบบและเลือกร้านก่อนซิงค์');
+    const groupedOrders = [...groupShopeeSummaryOrders(_shopeeSummaryOrders.filter(order => order?.orderId))];
+    if (!groupedOrders.length) throw new Error('ยังไม่มีข้อมูล Shopee ให้ซิงค์ กรุณาอัปโหลดไฟล์ก่อน');
 
-    // Save to ai_chat_logs
+    let synced = 0;
+    for (let offset = 0; offset < groupedOrders.length; offset += 100) {
+      const batch = groupedOrders.slice(offset, offset + 100).map(([, rows]) => ({
+        shop_id: currentShop.id,
+        order_id: rows[0].orderId,
+        sku: rows[0].sku || '',
+        payload: rows
+      }));
+      const { data, error } = await sb.from('shopee_summary_orders')
+        .upsert(batch, { onConflict: 'shop_id,order_id,sku' })
+        .select('order_id,sku');
+      if (error) throw error;
+      if (!data || data.length !== batch.length) throw new Error('เซิร์ฟเวอร์ยืนยันรายการไม่ครบ กรุณาลองซิงค์อีกครั้ง');
+      synced += batch.reduce((count, row) => count + row.payload.length, 0);
+    }
+    toast(`ซิงค์ข้อมูล Shopee ขึ้นเซิร์ฟเวอร์สำเร็จ ${synced} รายการ ✓`, 'success');
     try {
-      await sb.from('ai_chat_logs').insert([{
-        shop_id: currentShop?.id || null,
-        user_id: currentUser?.id || null,
-        message: 'Shopee Executive Summary Sync',
-        response: JSON.stringify(payload),
-        created_at: new Date().toISOString()
-      }]);
-    } catch(e){}
-
-    localStorage.setItem('shopee_summary_ai_latest', JSON.stringify(payload));
-    toast('ส่งข้อมูลวิเคราะห์เข้าฐานข้อมูลและ AI Engine เรียบร้อย ✓', 'success');
-    showShopeeAISummaryModal(payload);
+      const m = computeShopeeSummaryMetrics();
+      const payload = {
+        timestamp: new Date().toISOString(),
+        shop_id: currentShop.id,
+        shop_name: currentShop?.name || 'SEALTHAI',
+        total_orders: m.totalOrders,
+        gross_revenue: m.grossRevenue,
+        net_payout: m.netPayout,
+        total_fees: m.totalFees,
+        gross_profit: m.grossProfit,
+        margin_pct: m.marginPct,
+        total_units: m.totalUnits,
+        unique_buyers: m.uniqueBuyers,
+        repeat_rate_pct: m.repeatRatePct,
+        top_ads_products: m.adsCandidates.slice(0, 10).map(p => ({
+          sku: p.sku, name: p.name, margin: p.marginPct, profit: p.profit,
+          breakeven_roas: p.breakevenROAS, stock: p.stockQty
+        })),
+        stock_alerts: m.stockDanger.slice(0, 10).map(p => ({
+          sku: p.sku, name: p.name, units_sold: p.units, stock: p.stockQty
+        })),
+        top_provinces: m.provincesList.slice(0, 10).map(p => ({
+          province: p.province, orders: p.orderCount, revenue: p.revenue
+        }))
+      };
+      localStorage.setItem('shopee_summary_ai_latest', JSON.stringify(payload));
+      showShopeeAISummaryModal(payload);
+    } catch (briefError) {
+      console.warn('Shopee summary brief unavailable after successful sync:', briefError);
+    }
   } catch(err) {
-    toast('ส่งข้อมูลไม่สำเร็จ: ' + err.message, 'error');
+    console.error('Shopee server sync failed:', err);
+    const missingTable = err.code === 'PGRST205' || /shopee_summary_orders.*(schema cache|does not exist)/i.test(err.message || '');
+    toast(missingTable
+      ? 'ยังไม่ได้ติดตั้งตาราง Shopee บน Supabase กรุณารันไฟล์ supabase_shopee_sync_v290.sql ใน SQL Editor ก่อน'
+      : 'ซิงค์ขึ้นเซิร์ฟเวอร์ไม่สำเร็จ: ' + err.message, 'error');
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '☁️ ซิงค์เข้า AI Server'; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '☁️ ซิงค์ข้อมูลขึ้นเซิร์ฟเวอร์'; }
   }
 }
 
