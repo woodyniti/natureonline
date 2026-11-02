@@ -1,10 +1,10 @@
 // ══════════════════════════════════════════════════════════════
-// ── SEALTHAI v2.74: Shopee Executive Summary & Planning Engine ──
+// ── SEALTHAI: Shopee Executive Summary & Planning Engine ──
 // ══════════════════════════════════════════════════════════════
 
 var _shopeeSummaryOrders = [];
 var _shopeeSummaryTab = 'overview'; // 'overview', 'ads', 'stock', 'geo', 'buyers', 'linkage'
-var _shopeeSummaryPeriod = 'all';   // 'all', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09'
+var _shopeeSummaryPeriod = 'all';   // 'all' or a YYYY-MM month found in order data
 var _shopeeSummarySearch = '';
 var _shopeeSummaryLinkFilter = 'all'; // 'all', 'linked', 'unmatched'
 var _shopeeSummarySortBy = 'revenue'; // 'revenue', 'units', 'profit', 'margin', 'stock'
@@ -12,6 +12,19 @@ var _shopeeSummarySortDir = 'desc';
 var _shopeeSummaryCharts = {};
 var _shopeeSummaryMappings = [];
 var _shopeeSummaryLoaded = false;
+
+function getShopeeSummaryMonths() {
+  return [...new Set(_shopeeSummaryOrders.map(order => {
+    const match = String(order.orderDate || '').match(/^(\d{4})-(0[1-9]|1[0-2])(?:-|$)/);
+    return match ? `${match[1]}-${match[2]}` : null;
+  }).filter(Boolean))].sort();
+}
+
+function formatShopeeSummaryMonth(month) {
+  const labels = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  const [year, monthNumber] = month.split('-').map(Number);
+  return `${labels[monthNumber - 1]} ${String(year).slice(-2)}`;
+}
 
 function shopeeSummaryOrderKey(order) {
   return JSON.stringify([order.orderId, order.sku || '']);
@@ -257,6 +270,8 @@ async function initShopeeSummary(forceReload = false) {
 
 // ── Metrics Calculation Engine ──
 function computeShopeeSummaryMetrics() {
+  const periodMonthCount = _shopeeSummaryPeriod === 'all'
+    ? Math.max(1, getShopeeSummaryMonths().length) : 1;
   const rows = _shopeeSummaryOrders.filter(r => {
     if (_shopeeSummaryPeriod !== 'all') {
       if (!r.orderDate || !r.orderDate.startsWith(_shopeeSummaryPeriod)) return false;
@@ -388,8 +403,7 @@ function computeShopeeSummaryMetrics() {
     const stockQty = p ? Number(p.stock_qty || 0) : null;
     
     // Active months estimation
-    const activeMonths = _shopeeSummaryPeriod === 'all' ? 6 : 1;
-    const runRate = +(it.units / activeMonths).toFixed(1);
+    const runRate = +(it.units / periodMonthCount).toFixed(1);
     const daysRemaining = (stockQty !== null && stockQty > 0 && runRate > 0) ? Math.round((stockQty / (runRate / 30))) : (stockQty !== null && stockQty <= 0 ? 0 : 999);
     const suggestedReorder = Math.max(0, Math.ceil((runRate * 2) - Math.max(0, stockQty || 0)));
 
@@ -499,6 +513,7 @@ function computeShopeeSummaryMetrics() {
 
   return {
     rows,
+    periodMonthCount,
     totalOrders,
     totalUnits,
     grossRevenue,
@@ -541,7 +556,15 @@ function renderShopeeSummaryDashboard() {
   const container = document.getElementById('page-content');
   if (!container) return;
 
+  const availableMonths = getShopeeSummaryMonths();
+  if (_shopeeSummaryPeriod !== 'all' && !availableMonths.includes(_shopeeSummaryPeriod)) {
+    _shopeeSummaryPeriod = 'all';
+  }
   const m = computeShopeeSummaryMetrics();
+  const periodOptions = [
+    { id: 'all', label: `ทั้งหมด (${availableMonths.length} เดือน)` },
+    ...availableMonths.map(month => ({ id: month, label: formatShopeeSummaryMonth(month) }))
+  ];
 
   container.innerHTML = `
     <!-- Top Filter & Controller Bar -->
@@ -550,7 +573,7 @@ function renderShopeeSummaryDashboard() {
         <div>
           <div style="font-size:17px;font-weight:700;color:var(--text,#1e293b);display:flex;align-items:center;gap:8px">
             <span>🛒 Shopee Executive Summary & Planning</span>
-            <span style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #bae6fd">v2.74 🚀</span>
+            <span style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #bae6fd">${typeof DISPLAY_APP_VERSION === 'string' ? DISPLAY_APP_VERSION : 'v2.91'} 🚀</span>
           </div>
           <div style="font-size:12px;color:var(--text3,#64748b);margin-top:2px">
             รายงานวิเคราะห์คำสั่งซื้อจริงสำหรับหัวหน้าฝ่ายจัดซื้อ & หัวหน้าฝ่ายการตลาด (Planning Dashboard)
@@ -560,15 +583,7 @@ function renderShopeeSummaryDashboard() {
         <!-- Period selector pills -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
           <span style="font-size:12px;color:var(--text3,#64748b);font-weight:600">ช่วงเวลา:</span>
-          ${[
-            { id: 'all', label: 'ทั้งหมด (6 เดือน)' },
-            { id: '2026-04', label: 'เม.ย. 26' },
-            { id: '2026-05', label: 'พ.ค. 26' },
-            { id: '2026-06', label: 'มิ.ย. 26' },
-            { id: '2026-07', label: 'ก.ค. 26' },
-            { id: '2026-08', label: 'ส.ค. 26' },
-            { id: '2026-09', label: 'ก.ย. 26' }
-          ].map(p => `
+          ${periodOptions.map(p => `
             <button type="button" onclick="filterShopeeSummaryPeriod('${p.id}')"
               style="padding:4px 10px;font-size:12px;font-weight:600;border-radius:6px;cursor:pointer;border:1px solid ${_shopeeSummaryPeriod === p.id ? 'var(--accent,#00a882)' : 'var(--border2,#cbd5e1)'};background:${_shopeeSummaryPeriod === p.id ? 'var(--accent,#00a882)' : '#fff'};color:${_shopeeSummaryPeriod === p.id ? '#fff' : 'var(--text2,#475569)'}">
               ${p.label}
@@ -609,7 +624,7 @@ function renderShopeeSummaryDashboard() {
       <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
         <div style="font-size:11.5px;color:#64748b;font-weight:600">💰 ยอดขายสินค้า (GMV)</div>
         <div style="font-size:20px;font-weight:700;color:#0f172a;margin-top:4px">฿${m.grossRevenue.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-        <div style="font-size:11px;color:#10b981;margin-top:2px">เฉลี่ย ฿${(m.grossRevenue / (_shopeeSummaryPeriod === 'all' ? 6 : 1)).toLocaleString('en-US',{maximumFractionDigits:0})}/เดือน</div>
+        <div style="font-size:11px;color:#10b981;margin-top:2px">เฉลี่ย ฿${(m.grossRevenue / m.periodMonthCount).toLocaleString('en-US',{maximumFractionDigits:0})}/เดือน</div>
       </div>
 
       <!-- 2. Net Payout -->
