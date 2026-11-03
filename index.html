@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.03</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.04</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.03';
-const DISPLAY_APP_VERSION = 'v3.03';
+const CURRENT_APP_VERSION = 'sealthai-v3.04';
+const DISPLAY_APP_VERSION = 'v3.04';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -351,6 +351,8 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .marketplace-summary-logo.title-logo { width:22px; height:22px; margin-right:6px; }
 .marketplace-summary-logo.report-logo { width:29px; height:29px; }
 .topbar-title.with-marketplace-logo { display:flex; align-items:center; min-width:0; }
+.badge.order-channel-badge { display:inline-flex; align-items:center; gap:5px; }
+.order-channel-logo { display:inline-block; width:17px; height:17px; flex:none; object-fit:contain; vertical-align:middle; border-radius:3px; }
 .sidebar-footer {
   padding: 12px 8px; border-top: 1px solid var(--border);
 }
@@ -1234,7 +1236,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.03 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.04 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1307,7 +1309,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.03 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.04 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1336,7 +1338,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.03 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.04 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3030,9 +3032,18 @@ async function updateDocStatus(orderId, newStatus) {
   loadOrders();
 }
 
-function channelBadge(ch) {
+function orderChannelLogoHTML(ch) {
+  const value = String(ch||'').trim().toLowerCase();
+  const path = value.includes('shopee') ? 'assets/shopee-summary-logo.png'
+    : value.includes('lazada') ? 'assets/lazada-summary-logo.png'
+    : value === 'line' || value.startsWith('line ') ? 'assets/line-order-logo.png'
+    : value.includes('thaimart') ? 'assets/thaimart-order-logo.png' : '';
+  return path ? `<img class="order-channel-logo" src="${path}" alt="" aria-hidden="true">` : '';
+}
+
+function channelBadge(ch, withOrderLogo=false) {
   const map = { Facebook:'ch-facebook', Shopee:'ch-shopee', Lazada:'ch-lazada', LINE:'ch-line', TikTok:'ch-tiktok', Thaimart:'ch-thaimart', Offline:'ch-offline' };
-  return `<span class="badge ${map[ch]||'ch-other'}">${ch}</span>`;
+  return `<span class="badge ${map[ch]||'ch-other'}${withOrderLogo?' order-channel-badge':''}">${withOrderLogo?orderChannelLogoHTML(ch):''}${escapeHTML(ch||'-')}</span>`;
 }
 
 function shippingBadge(s) {
@@ -4066,7 +4077,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.03)">v3.03 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.04)">v3.04 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7095,7 +7106,7 @@ async function loadPendingOrdersCard() {
     rows.sort((a,b) => (a.order_date||'').localeCompare(b.order_date||'') || (a.order_no||'').localeCompare(b.order_no||''));
     const amount = rows.reduce((sum,o) => sum + Number(o.total_amount||0),0);
     const older = rows.filter(o => (o.order_date||'').slice(0,7) < today().slice(0,7)).length;
-    card.innerHTML = `<div class="ord-pending-top"><div><div style="font-size:13px;color:#92400e;font-weight:700">📦 รอจัดส่ง · ทุกเดือน</div><div class="ord-pending-count">${rows.length} <span style="font-size:13px;font-weight:500">ออเดอร์</span></div><div style="font-size:11px;color:#92400e;margin-top:4px">ยอดรวม ${fmtB(amount)} · ค้างจากเดือนก่อน ${older} ใบ · รวม Preorder ที่ยังไม่ได้จัดส่ง</div></div><button type="button" class="btn ${_ordPendingOnly?'btn-primary':'btn-secondary'} btn-sm" onclick="toggleOrdPendingOnly()" style="min-height:38px">${_ordPendingOnly?'📅 กลับเดือนนี้':'ดูรายการรอจัดส่งทั้งหมด →'}</button></div>${rows.length?`<div class="ord-pending-preview">${rows.slice(0,4).map(o=>`<button type="button" data-order-id="${escapeHTML(o.id)}" onclick="viewOrder(this.dataset.orderId)" title="เปิดออเดอร์ ${escapeHTML(o.order_no||'')}"><b>${escapeHTML(o.order_no||'-')}</b><div style="font-size:11px;color:var(--text3)">${escapeHTML(o.order_date||'-')} · ${escapeHTML(o.customer_name||'-')}</div><div style="font-size:11px;color:#92400e">${escapeHTML(o.channel||'-')} · ${fmtB(o.total_amount)}</div></button>`).join('')}</div>`:'<div style="font-size:12px;color:#92400e;margin-top:8px">ไม่มีออเดอร์ค้างจัดส่ง</div>'}`;
+    card.innerHTML = `<div class="ord-pending-top"><div><div style="font-size:13px;color:#92400e;font-weight:700">📦 รอจัดส่ง · ทุกเดือน</div><div class="ord-pending-count">${rows.length} <span style="font-size:13px;font-weight:500">ออเดอร์</span></div><div style="font-size:11px;color:#92400e;margin-top:4px">ยอดรวม ${fmtB(amount)} · ค้างจากเดือนก่อน ${older} ใบ · รวม Preorder ที่ยังไม่ได้จัดส่ง</div></div><button type="button" class="btn ${_ordPendingOnly?'btn-primary':'btn-secondary'} btn-sm" onclick="toggleOrdPendingOnly()" style="min-height:38px">${_ordPendingOnly?'📅 กลับเดือนนี้':'ดูรายการรอจัดส่งทั้งหมด →'}</button></div>${rows.length?`<div class="ord-pending-preview">${rows.slice(0,4).map(o=>`<button type="button" data-order-id="${escapeHTML(o.id)}" onclick="viewOrder(this.dataset.orderId)" title="เปิดออเดอร์ ${escapeHTML(o.order_no||'')}"><b>${escapeHTML(o.order_no||'-')}</b><div style="font-size:11px;color:var(--text3)">${escapeHTML(o.order_date||'-')} · ${escapeHTML(o.customer_name||'-')}</div><div style="font-size:11px;color:#92400e">${orderChannelLogoHTML(o.channel)} ${escapeHTML(o.channel||'-')} · ${fmtB(o.total_amount)}</div></button>`).join('')}</div>`:'<div style="font-size:12px;color:#92400e;margin-top:8px">ไม่มีออเดอร์ค้างจัดส่ง</div>'}`;
   } catch (error) {
     console.error('loadPendingOrdersCard failed:',error);
     if (card.isConnected) card.innerHTML = `<div style="color:#b91c1c;font-size:12px">โหลดรายการรอจัดส่งไม่สำเร็จ: ${escapeHTML(error.message||'เกิดข้อผิดพลาด')} <button class="btn btn-secondary btn-sm" onclick="loadPendingOrdersCard()">ลองอีกครั้ง</button></div>`;
@@ -7351,12 +7362,12 @@ async function loadOrders() {
 
   const getOrdChStyle = ch => {
     const c = String(ch||'').toLowerCase();
-    if (c.includes('shopee')) return { bg: '#fff7ed', col: '#c2410c', bdr: '#fed7aa', icon: '🛒' };
-    if (c.includes('lazada')) return { bg: '#eff6ff', col: '#1e40af', bdr: '#bfdbfe', icon: '🛍️' };
-    if (c.includes('line'))   return { bg: '#f0fdf4', col: '#15803d', bdr: '#bbf7d0', icon: '💬' };
+    if (c.includes('shopee')) return { bg: '#fff7ed', col: '#c2410c', bdr: '#fed7aa', icon: orderChannelLogoHTML(ch) };
+    if (c.includes('lazada')) return { bg: '#eff6ff', col: '#1e40af', bdr: '#bfdbfe', icon: orderChannelLogoHTML(ch) };
+    if (c === 'line' || c.startsWith('line ')) return { bg: '#f0fdf4', col: '#15803d', bdr: '#bbf7d0', icon: orderChannelLogoHTML(ch) };
     if (c.includes('face') || c.includes('fb')) return { bg: '#eff6ff', col: '#1d4ed8', bdr: '#bfdbfe', icon: '📘' };
     if (c.includes('tik'))    return { bg: '#fdf4ff', col: '#7e22ce', bdr: '#f5d0fe', icon: '🎵' };
-    if (c.includes('thaimart') || c.includes('tm')) return { bg: '#f0fdfa', col: '#0d9488', bdr: '#99f6e4', icon: '🏬' };
+    if (c.includes('thaimart') || c.includes('tm')) return { bg: '#f0fdfa', col: '#0d9488', bdr: '#99f6e4', icon: orderChannelLogoHTML(ch) };
     if (c.includes('off') || c.includes('หน้าร้าน') || c.includes('direct')) return { bg: '#fffbeb', col: '#b45309', bdr: '#fde68a', icon: '🏪' };
     return { bg: 'var(--bg3)', col: 'var(--text2)', bdr: 'var(--border)', icon: '📦' };
   };
@@ -7492,7 +7503,7 @@ async function loadOrders() {
             <div style="font-weight:${o.company_name?'500':'600'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'-')}</div>
             ${o.customer_username?`<div style="font-size:11px;color:var(--text3)">👤 ${escapeHTML(o.customer_username)}</div>`:''}
             ${o.customer_address ? `<div style="font-size:10.5px;color:var(--text3);margin-top:2px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(o.customer_address)}">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
-            <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${escapeHTML(o.employees.name)}</span>`:''}</div>
+            <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel,true)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${escapeHTML(o.employees.name)}</span>`:''}</div>
           </td>
           <td class="col-products" style="font-size:11px;color:var(--text3);line-height:1.45">${products}</td>
           <td class="col-money text-right" style="white-space:nowrap;font-size:12px;line-height:1.55">
@@ -7548,7 +7559,7 @@ async function loadOrders() {
           <div class="font-mono text-accent" style="font-size:15px;font-weight:700">${fmtB(o.total_amount)}</div>
           ${shopeeSaleDifferenceLine(o)}
           ${lazadaSaleDifferenceLine(o)}
-          ${channelBadge(o.channel)}
+          ${channelBadge(o.channel,true)}
         </div>
       </div>
       ${(()=>{
@@ -40466,6 +40477,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.04', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'โลโก้ช่องทางขายในหน้าออเดอร์', items:[
+      'แสดงโลโก้ Shopee, Lazada, LINE และ Thaimart ตามช่องทางของแต่ละออเดอร์ในตาราง PC และการ์ดมือถือ',
+      'แสดงโลโก้ในสรุปช่องทางและตัวอย่างรายการรอจัดส่ง โดยยังคงชื่อช่องทางไว้ให้อ่านชัดเจน'
+    ]},
     { v:'3.03', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'โลโก้ Shopee/Lazada Summary', items:[
       'เพิ่มโลโก้ Shopee และ Lazada จากภาพแนบที่แยกพื้นหลังแล้วในเมนู ชื่อหน้า และหัวรายงาน',
       'ปรับขนาดโลโก้ให้เหมาะกับจอมือถือและ PC โดยคงข้อความชื่อเมนูเดิม'

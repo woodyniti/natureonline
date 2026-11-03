@@ -14,7 +14,7 @@ const context = {
   sb:{from:() => ({select(){return this},eq(){return this},or(){return this},order(){return this},range(start,end){pageCalls++;return Promise.resolve({data:orders.slice(start,end+1),error:null})}})},
   currentShop:{id:'shop-1'},_ordPendingOnly:false,isOrderCancelled:o=>o.doc_status==='cancelled'||o.shipping_status==='cancelled',
   document:{getElementById:id=>id==='ord-pending-card'?card:null},today:()=> '2026-11-03',
-  fmtB:value=>'฿'+Number(value).toFixed(2),escapeHTML:String,console
+  fmtB:value=>'฿'+Number(value).toFixed(2),escapeHTML:String,orderChannelLogoHTML:()=>'',console
 };
 vm.createContext(context);
 vm.runInContext(html.slice(start,end),context);
