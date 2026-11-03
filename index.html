@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v2.98</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.99</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.98';
-const DISPLAY_APP_VERSION = 'v2.98';
+const CURRENT_APP_VERSION = 'sealthai-v2.99';
+const DISPLAY_APP_VERSION = 'v2.99';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -62,6 +62,7 @@ if ('serviceWorker' in navigator) {
 <script src="shopee_orders_preloaded.js"></script>
 <script src="shopee_summary_module.js"></script>
 <script src="lazada_summary_module.js"></script>
+<script src="marketplace_sale_adjust.js"></script>
 <script src="tax_analysis_module.js"></script>
 <script>
 // ── Core Early Auth & Bootstrap Module (Guaranteed Global Scope) ──
@@ -1165,7 +1166,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.98 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.99)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.99 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1238,7 +1239,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.98 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.99)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.99 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1267,7 +1268,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.98 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.99)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.99 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3993,7 +3994,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.98)">v2.98 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.99)">v2.99 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6757,7 +6758,7 @@ function drillMonthlyDay(date) {
 
 
 async function orders() {
-  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" id="btn-batch-ar" onclick="batchConvertSOtoAR()" title="เลือกหลายออเดอร์แล้วออกบิล AR Invoice พร้อมกัน">📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-batch-po" onclick="openBatchSOtoPOModal()" title="เลือกรายการสินค้าจากหลายออเดอร์ไปทำใบสั่งซื้อ (PO)" style="background:#f0fdf4;border-color:#16a34a;color:#15803d;font-weight:700">🛒 สร้าง PO จากออเดอร์ (<span id="so-po-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
+  document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" id="btn-batch-ar" onclick="batchConvertSOtoAR()" title="เลือกหลายออเดอร์แล้วออกบิล AR Invoice พร้อมกัน">📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-batch-po" onclick="openBatchSOtoPOModal()" title="เลือกรายการสินค้าจากหลายออเดอร์ไปทำใบสั่งซื้อ (PO)" style="background:#f0fdf4;border-color:#16a34a;color:#15803d;font-weight:700">🛒 สร้าง PO จากออเดอร์ (<span id="so-po-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" onclick="openMarketplaceSaleAdjust()" title="เทียบยอดขาย Order กับ Shopee/Lazada แล้วเลือกปรับบางออเดอร์หรือทั้งหมด">⚖️ ปรับยอดตาม Marketplace</button> <button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
 
   setContent(`
     <!-- Quick filter รายเดือน/รายปี -->
@@ -9209,6 +9210,7 @@ async function viewOrder(orderId) {
   __odEl.innerHTML = `
     ${renderOrderShopeeReconciliation(order, _orderCostEff)}
     ${renderOrderLazadaReconciliation(order, _orderCostEff)}
+    ${marketplaceSaleAdjustOrderButton(order)}
     ${(()=>{
       const poList = (window._currentOrderPOItems || []).map(p => p.purchase_orders).filter(Boolean);
       const uniquePOs = [];
@@ -40319,6 +40321,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'2.99', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับยอดขาย Order ตาม Shopee/Lazada', items:[
+      'เพิ่มปุ่มปรับยอดทั้งชุดหรือเลือกบางออเดอร์ โดยแสดงยอดเดิม ยอด Marketplace และส่วนต่างก่อนยืนยัน',
+      'เพิ่มปุ่มปรับยอดในรายละเอียดออเดอร์ ใช้เฉพาะข้อมูลที่ซิงค์และจับคู่เลขอ้างอิงได้ พร้อมกันออเดอร์ยกเลิกหรือมี AR Invoice',
+      'ปรับส่วนลดทั้งบิล/ราคาสินค้าให้ยอดรวมคำนวณกลับได้ตรง โดยไม่เปลี่ยนค่าธรรมเนียมหรือรายรับจริงจากแพลตฟอร์ม'
+    ]},
     { v:'2.98', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Lazada Summary และเชื่อมรายรับจริงกับออเดอร์', items:[
       'เพิ่มเมนู Lazada Summary พร้อมข้อมูลออเดอร์และรายรับมิถุนายน–ตุลาคม 2026 โดยไม่เผยแพร่ข้อมูลส่วนตัวลูกค้า',
       'เชื่อม orderItemId ข้ามเดือน แยกยอดค่าสินค้า ค่าหัก/ปรับปรุงจริง และรายการรอรับเงิน พร้อมค้นหา SKU และดูรายละเอียด',
