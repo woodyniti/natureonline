@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.01</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.02</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.01';
-const DISPLAY_APP_VERSION = 'v3.01';
+const CURRENT_APP_VERSION = 'sealthai-v3.02';
+const DISPLAY_APP_VERSION = 'v3.02';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1229,7 +1229,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.01 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.02 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1302,7 +1302,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.01 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.02 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1331,7 +1331,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.01 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.02 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3567,7 +3567,7 @@ async function dashboard() {
   const totalARPaidPeriod = periodPayments.reduce((s, p) => s + Number(p.amount || 0), 0);
   const periodPayCount = periodPayments.filter(p => Number(p.amount) > 0).length;
   const pendingARs = allARInvoices.filter(a => a.status !== 'paid' && a.status !== 'cancelled');
-  const totalAROutstanding = pendingARs.reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
+  const totalAROutstanding = pendingARs.reduce((s, a) => s + Math.max(0,Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
   const arPendingCount = pendingARs.length;
   const cancelledOrderTotal = cancelledOrders.reduce((sum,o)=>sum+Number(o.total_amount||0),0);
   const cancelledOrderRate = allOrders.length ? cancelledOrders.length / allOrders.length * 100 : 0;
@@ -4057,7 +4057,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.01)">v3.01 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.02)">v3.02 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -28581,17 +28581,20 @@ async function loadAR() {
   const activeRows = rows.filter(r => r.status !== 'cancelled');
   const totalAmt  = activeRows.reduce((s,r) => s + Number(r.total_amount||0), 0);
   const totalPaid = activeRows.reduce((s,r) => s + Number(r.paid_amount||0), 0);
-  const totalUnpaid = totalAmt - totalPaid;
-  const unpaidCount = activeRows.filter(r => r.status !== 'paid').length;
+  const totalUnpaid = activeRows.reduce((s,r)=>s+Math.max(0,Number(r.total_amount||0)-Number(r.paid_amount||0)),0);
+  const totalOverpaid = activeRows.reduce((s,r)=>s+Math.max(0,Number(r.paid_amount||0)-Number(r.total_amount||0)),0);
+  const unpaidCount = activeRows.filter(r => Number(r.total_amount||0)-Number(r.paid_amount||0)>0.01).length;
   const cancelledCount = rows.filter(r => r.status === 'cancelled').length;
 
   const statsEl = document.getElementById('ar-stats');
   if (statsEl) statsEl.innerHTML =
     '<div class="stat-card" style="padding:12px"><div class="stat-label">📄 Invoice ที่ใช้งาน</div><div class="stat-value text-accent" style="font-size:20px">'+fmtB(totalAmt)+'</div><div class="stat-sub">'+activeRows.length+' ใบ · ยกเลิก '+cancelledCount+' ใบ</div></div>' +
     '<div class="stat-card" style="padding:12px"><div class="stat-label">💰 รับแล้ว</div><div class="stat-value text-green" style="font-size:20px">'+fmtB(totalPaid)+'</div></div>' +
-    '<div class="stat-card" style="padding:12px"><div class="stat-label">⏳ ค้างรับ</div><div class="stat-value text-red" style="font-size:20px">'+fmtB(totalUnpaid)+'</div><div class="stat-sub">'+unpaidCount+' รายการ</div></div>';
+    '<div class="stat-card" style="padding:12px"><div class="stat-label">⏳ ค้างรับ</div><div class="stat-value text-red" style="font-size:20px">'+fmtB(totalUnpaid)+'</div><div class="stat-sub">'+unpaidCount+' รายการ</div></div>' +
+    '<div class="stat-card" style="padding:12px"><div class="stat-label">⚠️ เงินรับเกิน</div><div class="stat-value" style="font-size:20px;color:#c2410c">'+fmtB(totalOverpaid)+'</div><div class="stat-sub">ต้องตรวจการคืนเงิน/การปรับปรุง</div></div>';
 
-  const statusBadge = s => {
+  const statusBadge = (s,overpaid=0) => {
+    if (s!=='cancelled' && overpaid>0.01) return '<span class="badge" style="background:#fff7ed;color:#c2410c;border:1px solid #fdba74">⚠️ รับเงินเกิน</span>';
     if (s==='paid')    return '<span class="badge badge-green">ชำระแล้ว</span>';
     if (s==='partial') return '<span class="badge badge-amber">บางส่วน</span>';
     if (s==='cancelled') return '<span class="badge badge-red">ยกเลิก / CN</span>';
@@ -28605,7 +28608,8 @@ async function loadAR() {
       tbl.innerHTML =
         '<table class="desktop-only"><thead><tr><th style="width:36px;text-align:center"><input type="checkbox" id="ar-select-all" onchange="toggleSelectAllAR(this.checked)" title="เลือกทั้งหมด"></th><th>เลขที่ AR / อ้างอิง SO & Shopee</th><th>วันที่เปิดบิล / วันที่รับเงิน</th><th>ลูกค้า</th><th class="text-right">ยอดรวม</th><th class="text-right">รับแล้ว</th><th class="text-right">ค้างรับ</th><th>สถานะ</th><th>ครบกำหนด</th><th></th></tr></thead><tbody>' +
         rows.map(r => {
-          const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
+          const remain = r.status==='cancelled' ? 0 : Math.max(0,Number(r.total_amount||0) - Number(r.paid_amount||0));
+          const overpaid = r.status==='cancelled' ? 0 : Math.max(0,Number(r.paid_amount||0)-Number(r.total_amount||0));
           const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
           const isPayable = !['paid','cancelled'].includes(r.status) && remain > 0;
           const ord = r.order_id ? orderMap[r.order_id] : null;
@@ -28631,23 +28635,24 @@ async function loadAR() {
             '</td>' +
             '<td>' + (r.customer_name||'-') + '</td>' +
             '<td class="text-right font-mono">' + fmtB(r.total_amount||0) + '</td>' +
-            '<td class="text-right font-mono text-green">' + fmtB(r.paid_amount||0) + '</td>' +
+            '<td class="text-right font-mono text-green">' + fmtB(r.paid_amount||0) + (overpaid>0.01?'<div style="font-size:10px;color:#c2410c">รับเกิน '+fmtB(overpaid)+'</div>':'') + '</td>' +
             '<td class="text-right font-mono text-red">' + fmtB(remain) + '</td>' +
-            '<td>' + statusBadge(r.status) + '</td>' +
+            '<td>' + statusBadge(r.status,overpaid) + '</td>' +
             '<td style="color:' + (overdue?'var(--red)':'var(--text2)') + '">' + (r.due_date||'-') + (overdue?' ⚠️':'') + '</td>' +
             '<td><button class="btn btn-secondary btn-sm" onclick="openARDetail(\'' + r.id + '\')">รายละเอียด</button></td>' +
             '</tr>';
         }).join('') + '</tbody></table>' +
         '<div class="mobile-only">' +
         rows.map(r => {
-          const remain = r.status==='cancelled' ? 0 : Number(r.total_amount||0) - Number(r.paid_amount||0);
+          const remain = r.status==='cancelled' ? 0 : Math.max(0,Number(r.total_amount||0) - Number(r.paid_amount||0));
+          const overpaid = r.status==='cancelled' ? 0 : Math.max(0,Number(r.paid_amount||0)-Number(r.total_amount||0));
           const overdue = r.due_date && !['paid','cancelled'].includes(r.status) && r.due_date < today();
           const ordM = r.order_id ? orderMap[r.order_id] : null;
           const paysM = paymentMap[r.id] || [];
           const latestPayDateM = paysM.length ? paysM[0].pay_date : null;
 
           return '<div class="m-card" onclick="openARDetail(\'' + r.id + '\')">' +
-            '<div class="m-card-row"><div><div class="m-card-title">'+statusBadge(r.status)+' '+(r.customer_name||'-')+'</div><div class="m-card-sub">'+(r.ar_no||'-')+' · เปิด '+(r.ar_date||'-')+(ordM ? '<br>🛒 '+escapeHTML(ordM.orderNo)+(ordM.ref?' · 📄 '+escapeHTML(ordM.ref):''):'')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div><div style="font-size:11px;color:var(--red)">ค้าง '+fmtB(remain)+'</div></div></div>' +
+            '<div class="m-card-row"><div><div class="m-card-title">'+statusBadge(r.status,overpaid)+' '+(r.customer_name||'-')+'</div><div class="m-card-sub">'+(r.ar_no||'-')+' · เปิด '+(r.ar_date||'-')+(ordM ? '<br>🛒 '+escapeHTML(ordM.orderNo)+(ordM.ref?' · 📄 '+escapeHTML(ordM.ref):''):'')+'</div></div><div class="m-card-right"><div class="m-card-amount">'+fmtB(r.total_amount||0)+'</div><div style="font-size:11px;color:'+(overpaid>0.01?'#c2410c':'var(--red)')+'">'+(overpaid>0.01?'รับเกิน '+fmtB(overpaid):'ค้าง '+fmtB(remain))+'</div></div></div>' +
             '<div class="m-card-meta"><span>'+(overdue?'⚠️ เกิน due date':'📅 ครบ '+(r.due_date||'-'))+'</span><span style="color:var(--green)">'+(latestPayDateM ? '💵 รับ ' + latestPayDateM + ' ('+fmtB(r.paid_amount||0)+')' : 'ยังไม่ได้รับเงิน')+'</span></div>' +
             '</div>';
         }).join('') + '</div>';
@@ -28765,9 +28770,10 @@ async function saveNewAR() {
 }
 
 async function openARDetail(arId) {
-  const [{ data: ar }, { data: payments }] = await Promise.all([
+  const [{ data: ar }, { data: payments }, { data: adjustments }] = await Promise.all([
     sb.from('ar_invoices').select('*').eq('id', arId).single(),
     sb.from('ar_payments').select('*').eq('ar_id', arId).order('pay_date'),
+    sb.from('ar_price_adjustments').select('platform,source_ref,old_total,new_total,paid_amount_at_adjustment,created_at').eq('ar_id',arId).order('created_at',{ascending:false})
   ]);
   if (!ar) return;
   let sourceOrder = null;
@@ -28776,7 +28782,8 @@ async function openARDetail(arId) {
     sourceOrder = data || null;
   }
   const isCancelled = ar.status === 'cancelled';
-  const remain = isCancelled ? 0 : Number(ar.total_amount||0) - Number(ar.paid_amount||0);
+  const remain = isCancelled ? 0 : Math.max(0,Number(ar.total_amount||0) - Number(ar.paid_amount||0));
+  const overpaid = isCancelled ? 0 : Math.max(0,Number(ar.paid_amount||0)-Number(ar.total_amount||0));
   const cnMatch = String(ar.note||'').match(/\[CN:([^\]]+)\]/);
   const cnNo = cnMatch?.[1] || '';
   const payRows = (payments||[]).map(p =>
@@ -28814,14 +28821,18 @@ async function openARDetail(arId) {
   modal.innerHTML = `
     <div class="modal" style="max-width:640px">
       <div class="modal-title">📄 ${ar.ar_no||'-'} — ${ar.customer_name||'-'}</div>
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">
+      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(125px,1fr));margin-bottom:14px">
         <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">ยอดรวม</div><div class="stat-value text-accent" style="font-size:18px">${fmtB(ar.total_amount)}</div></div>
         <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">รับแล้ว</div><div class="stat-value ${isCancelled?'text-red':'text-green'}" style="font-size:18px">${fmtB(ar.paid_amount)}</div></div>
         <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">ค้างรับ</div><div class="stat-value text-red" style="font-size:18px">${fmtB(remain)}</div></div>
+        ${overpaid>0.01?`<div class="stat-card" style="padding:8px;background:#fff7ed;border-color:#fdba74"><div class="stat-label" style="font-size:11px">⚠️ เงินรับเกิน</div><div class="stat-value" style="font-size:18px;color:#c2410c">${fmtB(overpaid)}</div></div>`:''}
       </div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:10px">ครบกำหนด: <strong>${escapeHTML(ar.due_date||'-')}</strong> | สถานะ: <strong>${isCancelled?'ยกเลิก / CN':escapeHTML(ar.status||'-')}</strong> | หมายเหตุ: ${escapeHTML(ar.note||'-')}</div>
       ${isCancelled ? `<div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:10px;padding:12px;margin-bottom:14px"><strong>ยกเลิก Invoice แล้ว</strong>${cnNo?' · Credit Note '+escapeHTML(cnNo):''}<br><span style="font-size:12px">ยอดรับเงินของ Invoice นี้ถูกกลับรายการแล้ว และไม่นับรวมในลูกหนี้/ยอดรับ</span></div>` : ''}
+      ${overpaid>0.01?`<div style="background:#fff7ed;border:1px solid #fdba74;color:#92400e;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px">⚠️ เงินรับเกิน ${fmtB(overpaid)} ยังอยู่ในประวัติรับเงินจริง ระบบไม่ได้คืนเงินหรือลดรายการรับให้อัตโนมัติ กรุณาตรวจการจัดการส่วนเกิน</div>`:''}
       ${sourceBox}
+
+      ${(adjustments||[]).length?`<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px"><b>ประวัติปรับยอดตาม Marketplace</b><div style="color:var(--text3);margin:4px 0">บันทึกภายใน ไม่ใช่ใบลดหนี้หรือใบเพิ่มหนี้ทางภาษี</div>${adjustments.map(a=>`<div style="border-top:1px solid var(--border);padding:7px 0">${escapeHTML(String(a.created_at||'').slice(0,10))} · ${escapeHTML(a.platform||'')} ${escapeHTML(a.source_ref||'')} · ${fmtB(a.old_total)} → <b>${fmtB(a.new_total)}</b> · รับไว้ ${fmtB(a.paid_amount_at_adjustment)}</div>`).join('')}</div>`:''}
 
       <div style="font-weight:600;font-size:13px;margin-bottom:8px">ประวัติรับเงิน</div>
       <div class="table-wrap" style="margin-bottom:14px">
@@ -28841,7 +28852,7 @@ async function openARDetail(arId) {
         </div>
         <div class="form-group"><label>หมายเหตุ</label><input type="text" id="pay-note" placeholder="หมายเหตุ"></div>
         <button class="btn btn-primary" style="width:100%" onclick="saveARPayment('${arId}', ${ar.total_amount})">✅ บันทึกรับเงิน</button>
-      </div>` : (!isCancelled ? '<div style="background:#e8fdf0;border-radius:10px;padding:12px;text-align:center;color:var(--green);font-weight:600">✅ ชำระครบแล้ว</div>' : '')}
+      </div>` : (!isCancelled ? `<div style="background:${overpaid>0.01?'#fff7ed':'#e8fdf0'};border-radius:10px;padding:12px;text-align:center;color:${overpaid>0.01?'#92400e':'var(--green)'};font-weight:600">${overpaid>0.01?'⚠️ รับเงินเกิน '+fmtB(overpaid):'✅ ชำระครบแล้ว'}</div>` : '')}
 
       <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
         <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
@@ -35913,7 +35924,7 @@ function computeCashFlowModel(orders, arInvoices, arPayments, apInvoices, import
 
   // คำนวณยอดลูกหนี้การค้าค้างชำระ (AR Outstanding)
   const pendingARs = (arInvoices || []).filter(a => a.status !== 'paid' && a.status !== 'cancelled');
-  const totalAROutstanding = pendingARs.reduce((s, a) => s + (Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
+  const totalAROutstanding = pendingARs.reduce((s, a) => s + Math.max(0,Number(a.total_amount || 0) - Number(a.paid_amount || 0)), 0);
 
   // ประมาณการรายรับ (Inflows)
   const salesInflow30 = dailyRunRate * 30;
@@ -40446,6 +40457,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.02', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับ Order พร้อม AR Invoice และแสดงเงินรับเกิน', items:[
+      'เปิดให้เลือกปรับออเดอร์ที่มี AR Invoice โดยปรับยอด Order และ AR พร้อมกันผ่านคำสั่งฐานข้อมูลแบบธุรกรรมเดียว',
+      'คงประวัติรับเงินเดิม หากรับมากกว่ายอดใหม่ให้แสดงเป็นเงินรับเกินแยกจากยอดค้างรับ',
+      'บันทึกประวัติยอดก่อน–หลัง แพลตฟอร์ม และเลขอ้างอิงไว้ตรวจย้อนหลัง; ไม่ใช่ใบลดหนี้ทางภาษี'
+    ]},
     { v:'3.01', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'การ์ดรอจัดส่งข้ามเดือนในหน้าออเดอร์', items:[
       'เพิ่มการ์ดรอจัดส่งทุกเดือน แสดงจำนวน ยอดรวม ออเดอร์ค้างจากเดือนก่อน และตัวอย่างออเดอร์เก่าสุด',
       'กดดูทั้งหมดเพื่อเปิดรายการรอจัดส่งข้ามเดือน รวม Preorder โดยไม่ถูกช่วงวันที่เดือนปัจจุบันตัดออก',

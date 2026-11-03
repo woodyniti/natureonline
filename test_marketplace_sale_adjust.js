@@ -40,4 +40,7 @@ assert.equal(loadingRemoved,true);
 assert.match(markup,/msa-kpis/);
 assert.match(markup,/msa-mobile-list/);
 assert.match(markup,/ยืนยันปรับ 0 ออเดอร์/);
+vm.runInContext("_marketplaceAdjustRows=[{order:{id:'1',order_no:'SO-1',total_amount:138,customer_social:'REF-1'},ar:{id:'ar-1',ar_no:'AR-1',paid_amount:138,total_amount:138},platform:'Shopee',target:136,plan:{oldTotal:138,billDiscount:2,itemChange:null},selected:false}];marketplaceSaleAdjustRender()",context);
+assert.match(markup,/ปรับ Order \+ AR ใบนี้/);
+assert.match(markup,/เงินรับเกิน/);
 console.log('Marketplace sale adjustment plans: OK');
