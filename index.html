@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v2.96</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.97</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.96';
-const DISPLAY_APP_VERSION = 'v2.96';
+const CURRENT_APP_VERSION = 'sealthai-v2.97';
+const DISPLAY_APP_VERSION = 'v2.97';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1164,7 +1164,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.96)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.96 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.97)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.97 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1237,7 +1237,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.96)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.96 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.97)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.97 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1266,7 +1266,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.96)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.96 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.97)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.97 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2644,6 +2644,15 @@ function shopeeReconciliationBadge(order) {
   return `<span class="badge" role="button" tabindex="0" data-order-id="${escapeHTML(order.id)}" onclick="event.stopPropagation();openShopeeOrderDrilldown(this.dataset.orderId)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();openShopeeOrderDrilldown(this.dataset.orderId)}" title="กดดูรายการ Shopee · ${escapeHTML(recon.ref || '')}" style="cursor:pointer;background:${ok&&!amountDiff?'#dcfce7':'#fff7ed'};color:${ok&&!amountDiff?'#15803d':'#c2410c'};border:1px solid ${ok&&!amountDiff?'#86efac':'#fdba74'};font-size:10px;margin-top:3px">${ok&&!amountDiff?'✅':'⚠️'} ${amountDiff?'เชื่อมแล้ว · ยอดขายต่าง':(labels[recon.status] || recon.status)} 🔎</span>`;
 }
 
+function shopeeSaleDifferenceLine(order) {
+  if (isOrderCancelled(order)) return '';
+  const recon = getOrderShopeeReconciliation(order);
+  if (recon.status !== 'matched') return '';
+  const orderSale = Number(order.total_amount || 0);
+  if (Math.abs(orderSale - recon.match.sale) <= 0.01) return '';
+  return `<div style="font-size:11px;color:#c2410c;font-weight:700;white-space:nowrap" title="ยอดขายสุทธิจาก Shopee Summary สำหรับเลขอ้างอิง ${escapeHTML(recon.ref)}">ขาย Shopee <span class="font-mono">${fmtB(recon.match.sale)}</span></div>`;
+}
+
 async function openShopeeOrderDrilldown(orderId) {
   document.getElementById('modal-shopee-order-drilldown')?.remove();
   const overlay = document.createElement('div');
@@ -3974,7 +3983,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.96)">v2.96 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.97)">v2.97 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7351,6 +7360,7 @@ async function loadOrders() {
           <td class="col-products" style="font-size:11px;color:var(--text3);line-height:1.45">${products}</td>
           <td class="col-money text-right" style="white-space:nowrap;font-size:12px;line-height:1.55">
             <div><span style="color:var(--text3)">ขาย</span> <span class="font-mono text-accent" style="font-weight:600">${fmtB(sale)}</span></div>
+            ${shopeeSaleDifferenceLine(o)}
             ${cancelled
               ? '<div class="text-red" style="font-weight:600">ไม่นับในยอดขาย/กำไร</div>'
               : `<div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
@@ -7397,6 +7407,7 @@ async function loadOrders() {
         </div>
         <div style="text-align:right">
           <div class="font-mono text-accent" style="font-size:15px;font-weight:700">${fmtB(o.total_amount)}</div>
+          ${shopeeSaleDifferenceLine(o)}
           ${channelBadge(o.channel)}
         </div>
       </div>
@@ -40292,7 +40303,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.96', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'กดดูรายละเอียด Shopee จากป้ายเชื่อมโยงในออเดอร์', items:[
+    { v:'2.97', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงยอดขาย Shopee ในรายการออเดอร์เมื่อยอดต่างกัน', items:[
+      'เพิ่มบรรทัดขาย Shopee ใต้ยอดขายออเดอร์ เฉพาะรายการที่จับคู่แล้วและยอดไม่ตรงกัน',
+      'แสดงทั้งตาราง PC และการ์ดมือถือ โดยไม่เปลี่ยนยอดขายที่บันทึกในระบบ'
+    ]},
+    { v:'2.96', date:'2026-11-03', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'กดดูรายละเอียด Shopee จากป้ายเชื่อมโยงในออเดอร์', items:[
       'กดป้ายสถานะ Shopee ในรายการออเดอร์เพื่อเปิดรายละเอียดคำสั่งซื้อ Shopee',
       'แสดงสินค้าแต่ละรายการ ราคา ค่าธรรมเนียม ยอดหลังหัก และกำไรเทียบกับออเดอร์ในระบบ',
       'ใช้งานได้ทั้งมือถือและ PC พร้อมปุ่มเปิดออเดอร์เดิมต่อ'
