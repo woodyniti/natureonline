@@ -1,6 +1,8 @@
 // Reconcile the order sale (not platform payout) with verified marketplace data.
 let _marketplaceAdjustRows = [];
 let _marketplaceAdjustBusy = false;
+let _marketplaceAdjustFilter = 'all';
+let _marketplaceAdjustSearch = '';
 
 const marketplaceAdjustMoney = value => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
 
@@ -69,11 +71,13 @@ async function marketplaceAdjustFetchAll(table, columns, configure) {
 
 async function openMarketplaceSaleAdjust(onlyOrderId = null) {
   document.getElementById('modal-marketplace-sale-adjust')?.remove();
+  _marketplaceAdjustFilter = 'all';
+  _marketplaceAdjustSearch = '';
   const overlay = document.createElement('div');
   overlay.id = 'modal-marketplace-sale-adjust';
   overlay.className = 'modal-overlay open';
   overlay.style.zIndex = getNextModalZIndex();
-  overlay.innerHTML = `<div class="modal" style="max-width:1050px;width:100%;max-height:92vh;overflow:auto"><div class="modal-title">⚖️ ปรับยอดขาย Order ให้ตรง Shopee/Lazada</div><div id="marketplace-adjust-content" class="loading"><div class="spinner"></div></div></div>`;
+  overlay.innerHTML = `<div class="modal msa-dialog"><div class="msa-header"><div class="modal-title">⚖️ ปรับยอดขายให้ตรง Shopee / Lazada</div><div class="msa-subtitle">ตรวจยอดเดิมเทียบกับยอดขายจริง แล้วเลือกออเดอร์ที่ต้องการปรับ</div></div><div id="marketplace-adjust-content" class="loading"><div class="spinner"></div></div></div>`;
   overlay.addEventListener('click', event => { if (event.target === overlay && !_marketplaceAdjustBusy) overlay.remove(); });
   document.body.appendChild(overlay);
   ensureModalCloseButton(overlay, () => { if (!_marketplaceAdjustBusy) overlay.remove(); });
@@ -93,27 +97,61 @@ async function openMarketplaceSaleAdjust(onlyOrderId = null) {
       if (Math.abs(marketplaceAdjustMoney(order.total_amount) - target) <= 0.01) return null;
       const reason = isOrderCancelled(order) ? 'ออเดอร์ยกเลิก' : invoiced.has(order.id) ? 'มี AR Invoice' : '';
       const plan = reason ? {error:reason} : marketplaceSaleAdjustPlan(order, target);
-      return {order, platform:source.platform, target, plan, selected:!plan.error};
+      return {order, platform:source.platform, target, plan, selected:false};
     }).filter(Boolean);
     marketplaceSaleAdjustRender();
   } catch (error) {
     console.error('marketplace adjustment preview failed:', error);
     const content = document.getElementById('marketplace-adjust-content');
-    if (content) content.innerHTML = `<div style="color:var(--red);padding:12px">โหลดข้อมูลไม่สำเร็จ: ${escapeHTML(error.message || 'เกิดข้อผิดพลาด')}</div>`;
+    if (content) { content.classList.remove('loading'); content.innerHTML = `<div style="color:var(--red);padding:22px">โหลดข้อมูลไม่สำเร็จ: ${escapeHTML(error.message || 'เกิดข้อผิดพลาด')}</div>`; }
   }
 }
 
 function marketplaceSaleAdjustRender(message = '') {
   const content = document.getElementById('marketplace-adjust-content');
   if (!content) return;
+  content.classList.remove('loading');
   const eligible = _marketplaceAdjustRows.filter(row => !row.plan.error && !row.done);
   const selected = eligible.filter(row => row.selected);
   const delta = selected.reduce((sum,row) => sum + row.target - Number(row.order.total_amount || 0), 0);
-  content.innerHTML = `<div style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px">ใช้เฉพาะออเดอร์ที่จับคู่เลขอ้างอิงไม่ซ้ำและข้อมูลแพลตฟอร์มซิงค์ขึ้นเซิร์ฟเวอร์แล้ว · ยอดเป้าหมายคือ <b>ยอดขายสินค้า</b> ไม่ใช่ยอดโอนหลังหักค่าธรรมเนียม · ข้ามออเดอร์ยกเลิก/มี AR Invoice · ไม่เปลี่ยนสต๊อก</div>
-    ${message ? `<div style="background:#eff6ff;padding:9px;border-radius:7px;margin-bottom:10px">${escapeHTML(message)}</div>` : ''}
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-secondary btn-sm" onclick="marketplaceSaleAdjustSelectAll(true)">เลือกทั้งหมดที่ปรับได้</button><button class="btn btn-secondary btn-sm" onclick="marketplaceSaleAdjustSelectAll(false)">ล้างการเลือก</button><span style="font-size:12px">พบยอดต่าง ${_marketplaceAdjustRows.length} ออเดอร์ · ปรับได้ ${eligible.length} · เลือก ${selected.length} · ผลต่างรวม ${fmtB(delta)}</span></div>
-    <div style="overflow:auto;max-height:55vh;border:1px solid var(--border);border-radius:8px"><table style="min-width:730px;font-size:12px"><thead><tr><th>เลือก</th><th>ออเดอร์ / ช่องทาง</th><th class="text-right">ยอดเดิม</th><th class="text-right">ยอดแพลตฟอร์ม</th><th class="text-right">เปลี่ยน</th><th>วิธีปรับ / สถานะ</th></tr></thead><tbody>${_marketplaceAdjustRows.map((row,index) => `<tr><td><input type="checkbox" ${row.selected?'checked':''} ${row.plan.error || row.done?'disabled':''} onchange="marketplaceSaleAdjustToggle(${index},this.checked)"></td><td><b>${escapeHTML(row.order.order_no || '-')}</b><br><span style="color:var(--text3)">${row.platform} · ${escapeHTML(row.order.customer_social || row.order.platform_order_id || '-')}</span></td><td class="text-right">${fmtB(row.done?row.plan.oldTotal:row.order.total_amount)}</td><td class="text-right">${fmtB(row.target)}</td><td class="text-right" style="color:${row.target-Number(row.done?row.plan.oldTotal:row.order.total_amount)<0?'#dc2626':'#15803d'}">${fmtB(row.target-Number(row.done?row.plan.oldTotal:row.order.total_amount))}</td><td>${row.done?'✅ ปรับแล้ว':row.plan.error?`⚠️ ${escapeHTML(row.plan.error)}`:row.plan.itemChange?`ราคา/ชิ้น ${fmtB(row.plan.itemChange.oldPrice)} → ${fmtB(row.plan.itemChange.newPrice)}; ส่วนลดบิล ${fmtB(row.plan.billDiscount)}`:`ส่วนลดบิล ${fmtB(row.plan.billDiscount)}`}</td></tr>`).join('') || '<tr><td colspan="6" style="text-align:center;padding:18px">ไม่พบออเดอร์ที่ยอดต่างและปรับอัตโนมัติได้</td></tr>'}</tbody></table></div>
-    <div style="display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-secondary" onclick="document.getElementById('modal-marketplace-sale-adjust').remove()" ${_marketplaceAdjustBusy?'disabled':''}>ปิด</button><button class="btn btn-primary" id="marketplace-adjust-save" onclick="marketplaceSaleAdjustSave()" ${!selected.length || _marketplaceAdjustBusy?'disabled':''}>💾 ยืนยันปรับ ${selected.length} ออเดอร์</button></div>`;
+  const blocked = _marketplaceAdjustRows.filter(row => !!row.plan.error && !row.done).length;
+  const q = _marketplaceAdjustSearch.trim().toLocaleLowerCase('th');
+  const visible = _marketplaceAdjustRows.map((row,index) => ({row,index})).filter(({row}) => {
+    if (_marketplaceAdjustFilter === 'ready' && (row.plan.error || row.done)) return false;
+    if (_marketplaceAdjustFilter === 'blocked' && !row.plan.error) return false;
+    return !q || [row.order.order_no,row.order.customer_social,row.order.platform_order_id,row.platform].some(value => String(value || '').toLocaleLowerCase('th').includes(q));
+  });
+  const rowInfo = row => {
+    if (row.done) return '✅ ปรับยอดแล้ว';
+    if (row.plan.error) return `⚠️ ${escapeHTML(row.plan.error)}`;
+    if (row.plan.itemChange) return `ปรับราคา/ชิ้น ${fmtB(row.plan.itemChange.oldPrice)} → ${fmtB(row.plan.itemChange.newPrice)} · ส่วนลดบิล ${fmtB(row.plan.billDiscount)}`;
+    return `ปรับส่วนลดทั้งบิลเป็น ${fmtB(row.plan.billDiscount)}`;
+  };
+  const oldAmount = row => row.done ? row.plan.oldTotal : Number(row.order.total_amount || 0);
+  const disabled = row => row.plan.error || row.done || _marketplaceAdjustBusy;
+  content.innerHTML = `<div class="msa-body">
+    <div class="msa-notice">ยอดเป้าหมายคือ <b>ยอดขายสินค้า</b> ไม่ใช่ยอดโอนหลังหักค่าธรรมเนียม · ใช้เฉพาะข้อมูลแพลตฟอร์มที่ซิงค์แล้วและเลขอ้างอิงไม่ซ้ำ · ออเดอร์ที่มี AR Invoice หรือยกเลิกจะไม่ถูกแก้</div>
+    ${message ? `<div role="status" class="msa-notice">${escapeHTML(message)}</div>` : ''}
+    <div class="msa-kpis"><div class="msa-kpi"><small>ยอดต่างทั้งหมด</small><strong>${_marketplaceAdjustRows.length} ออเดอร์</strong></div><div class="msa-kpi"><small>ปรับอัตโนมัติได้</small><strong style="color:#15803d">${eligible.length} ออเดอร์</strong></div><div class="msa-kpi"><small>ต้องตรวจเอง</small><strong style="color:#c2410c">${blocked} ออเดอร์</strong></div><div class="msa-kpi"><small>ผลต่างของที่เลือก</small><strong style="color:${delta<0?'#dc2626':'#15803d'}">${fmtB(delta)}</strong></div></div>
+    <div class="msa-tools"><input class="msa-search" id="msa-search" type="search" value="${escapeHTML(_marketplaceAdjustSearch)}" placeholder="ค้นหาเลขออเดอร์ / เลขอ้างอิง" oninput="marketplaceSaleAdjustSetSearch(this)" aria-label="ค้นหาออเดอร์"><button class="msa-filter ${_marketplaceAdjustFilter==='all'?'active':''}" onclick="marketplaceSaleAdjustSetFilter('all')">ทั้งหมด (${_marketplaceAdjustRows.length})</button><button class="msa-filter ${_marketplaceAdjustFilter==='ready'?'active':''}" onclick="marketplaceSaleAdjustSetFilter('ready')">ปรับได้ (${eligible.length})</button><button class="msa-filter ${_marketplaceAdjustFilter==='blocked'?'active':''}" onclick="marketplaceSaleAdjustSetFilter('blocked')">ตรวจเอง (${blocked})</button></div>
+    <div class="msa-selection"><button class="btn btn-secondary btn-sm" onclick="marketplaceSaleAdjustSelectAll(true)" ${_marketplaceAdjustBusy || !eligible.length?'disabled':''}>☑ เลือกทั้งหมดที่ปรับได้</button><button class="btn btn-secondary btn-sm" onclick="marketplaceSaleAdjustSelectAll(false)" ${_marketplaceAdjustBusy || !selected.length?'disabled':''}>ล้างการเลือก</button><span style="color:var(--text3)">เลือกแล้ว <b style="color:var(--text)">${selected.length}</b> ออเดอร์</span></div>
+    <div class="msa-list"><table class="msa-table"><thead><tr><th style="width:45px">เลือก</th><th>ออเดอร์ / ช่องทาง</th><th class="text-right">ยอดเดิม</th><th class="text-right">ยอดแพลตฟอร์ม</th><th class="text-right">ส่วนต่าง</th><th>วิธีปรับ / สถานะ</th></tr></thead><tbody>${visible.map(({row,index}) => `<tr><td><input type="checkbox" aria-label="เลือก ${escapeHTML(row.order.order_no || row.order.id)}" ${row.selected?'checked':''} ${disabled(row)?'disabled':''} onchange="marketplaceSaleAdjustToggle(${index},this.checked)"></td><td class="msa-order"><b>${escapeHTML(row.order.order_no || '-')}</b><br><span class="msa-ref">${row.platform} · ${escapeHTML(row.order.customer_social || row.order.platform_order_id || '-')}</span></td><td class="text-right">${fmtB(oldAmount(row))}</td><td class="text-right"><b>${fmtB(row.target)}</b></td><td class="text-right" style="color:${row.target-oldAmount(row)<0?'#dc2626':'#15803d'}">${fmtB(row.target-oldAmount(row))}</td><td class="msa-method">${rowInfo(row)}</td></tr>`).join('') || '<tr><td colspan="6" style="padding:26px;text-align:center;color:var(--text3)">ไม่พบออเดอร์ในตัวกรองนี้</td></tr>'}</tbody></table>
+    <div class="msa-mobile-list">${visible.map(({row,index}) => `<div class="msa-card"><div class="msa-card-top"><input class="msa-card-check" type="checkbox" aria-label="เลือก ${escapeHTML(row.order.order_no || row.order.id)}" ${row.selected?'checked':''} ${disabled(row)?'disabled':''} onchange="marketplaceSaleAdjustToggle(${index},this.checked)"><div class="msa-card-order">${escapeHTML(row.order.order_no || '-')}<div class="msa-card-ref">${row.platform} · ${escapeHTML(row.order.customer_social || row.order.platform_order_id || '-')}</div></div></div><div class="msa-card-values"><div><span>ยอดเดิม</span><b>${fmtB(oldAmount(row))}</b></div><div><span>แพลตฟอร์ม</span><b>${fmtB(row.target)}</b></div><div><span>ส่วนต่าง</span><b style="color:${row.target-oldAmount(row)<0?'#dc2626':'#15803d'}">${fmtB(row.target-oldAmount(row))}</b></div></div><div style="font-size:11px;color:${row.plan.error?'#c2410c':'var(--text2)'}">${rowInfo(row)}</div></div>`).join('') || '<div style="padding:26px;text-align:center;color:var(--text3)">ไม่พบออเดอร์ในตัวกรองนี้</div>'}</div></div>
+  </div><div class="msa-footer"><div class="msa-footer-summary">เลือก <b>${selected.length}</b> ออเดอร์ · ยอดเดิม <b>${fmtB(selected.reduce((sum,row)=>sum+Number(row.order.total_amount||0),0))}</b> → ยอดใหม่ <b>${fmtB(selected.reduce((sum,row)=>sum+row.target,0))}</b></div><div class="msa-footer-actions"><button class="btn btn-secondary" onclick="document.getElementById('modal-marketplace-sale-adjust').remove()" ${_marketplaceAdjustBusy?'disabled':''}>ปิด</button><button class="btn btn-primary" id="marketplace-adjust-save" onclick="marketplaceSaleAdjustSave()" ${!selected.length || _marketplaceAdjustBusy?'disabled':''}>💾 ยืนยันปรับ ${selected.length} ออเดอร์</button></div></div>`;
+}
+
+function marketplaceSaleAdjustSetFilter(value) {
+  if (_marketplaceAdjustBusy) return;
+  _marketplaceAdjustFilter = value;
+  marketplaceSaleAdjustRender();
+}
+function marketplaceSaleAdjustSetSearch(input) {
+  if (_marketplaceAdjustBusy) return;
+  _marketplaceAdjustSearch = input.value;
+  const position = input.selectionStart;
+  marketplaceSaleAdjustRender();
+  const next = document.getElementById('msa-search');
+  if (next) { next.focus(); next.setSelectionRange(position,position); }
 }
 
 function marketplaceSaleAdjustToggle(index, checked) {

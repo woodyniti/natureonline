@@ -1,4 +1,6 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
 global.getOrderShippingFee = order => Number(order.shipping_fee || 0);
 const {marketplaceSaleAdjustPlan, marketplaceSaleAdjustItemNet} = require('./marketplace_sale_adjust.js');
 
@@ -24,4 +26,18 @@ assert.ok(Math.abs(marketplaceSaleAdjustItemNet(item(105.56,1,10,'percent'))-pla
 
 assert.ok(marketplaceSaleAdjustPlan(order(10,[item(10)],20),5).error);
 assert.ok(marketplaceSaleAdjustPlan(order(10,[]),9).error);
+
+// Regression: the loading class used to keep the dialog children in one flex row.
+let markup = '';
+let loadingRemoved = false;
+const content = {classList:{remove(name){if(name==='loading') loadingRemoved=true}},set innerHTML(value){markup=value}};
+const context = {document:{getElementById:id=>id==='marketplace-adjust-content'?content:null},
+  getOrderShippingFee:()=>0,fmtB:value=>'฿'+Number(value).toFixed(2),escapeHTML:String,console};
+vm.createContext(context);
+vm.runInContext(fs.readFileSync('marketplace_sale_adjust.js','utf8'),context);
+vm.runInContext("_marketplaceAdjustRows=[{order:{id:'1',order_no:'SO-1',total_amount:138,customer_social:'REF-1'},platform:'Shopee',target:136,plan:{oldTotal:138,billDiscount:2,itemChange:null},selected:false}];marketplaceSaleAdjustRender()",context);
+assert.equal(loadingRemoved,true);
+assert.match(markup,/msa-kpis/);
+assert.match(markup,/msa-mobile-list/);
+assert.match(markup,/ยืนยันปรับ 0 ออเดอร์/);
 console.log('Marketplace sale adjustment plans: OK');
