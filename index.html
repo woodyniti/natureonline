@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.00</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.01</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.00';
-const DISPLAY_APP_VERSION = 'v3.00';
+const CURRENT_APP_VERSION = 'sealthai-v3.01';
+const DISPLAY_APP_VERSION = 'v3.01';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -539,6 +539,12 @@ tbody td:first-child { color: var(--text); }
 #modal-marketplace-sale-adjust .msa-footer-summary { color:var(--text2); font-size:12px; line-height:1.4; }
 #modal-marketplace-sale-adjust .msa-footer-actions { display:flex; gap:8px; flex:none; }
 #modal-marketplace-sale-adjust .msa-footer-actions .btn { min-height:40px; white-space:nowrap; }
+.ord-pending-card { background:linear-gradient(135deg,#fffbeb,#fff); border:1px solid #fcd34d; border-radius:12px; padding:15px 17px; margin:12px 0; box-shadow:0 2px 8px rgba(146,64,14,.07); }
+.ord-pending-top { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.ord-pending-count { color:#92400e; font-weight:800; font-size:24px; line-height:1.1; }
+.ord-pending-preview { display:flex; gap:7px; overflow-x:auto; padding:10px 0 0; }
+.ord-pending-preview button { flex:0 0 auto; min-width:170px; max-width:240px; text-align:left; background:#fff; border:1px solid #fde68a; border-radius:8px; padding:8px 10px; color:var(--text); cursor:pointer; }
+.ord-pending-preview button:hover { border-color:#f59e0b; background:#fffbeb; }
 @media(max-width:700px) {
   #modal-marketplace-sale-adjust .msa-dialog { width:100%; max-height:94dvh; border-radius:18px 18px 0 0; }
   #modal-marketplace-sale-adjust .msa-header { padding:18px 16px 12px; }
@@ -1223,7 +1229,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.00)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.00 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.01 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1296,7 +1302,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.00)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.00 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.01 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1325,7 +1331,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.00)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.00 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.01 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4051,7 +4057,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.00)">v3.00 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.01)">v3.01 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6814,7 +6820,9 @@ function drillMonthlyDay(date) {
 }
 
 
+let _ordPendingOnly = false;
 async function orders() {
+  _ordPendingOnly = false;
   document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-primary btn-sm" id="btn-batch-ar" onclick="batchConvertSOtoAR()" title="เลือกหลายออเดอร์แล้วออกบิล AR Invoice พร้อมกัน">📄 สร้าง AR เป็นชุด (<span id="so-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" id="btn-batch-po" onclick="openBatchSOtoPOModal()" title="เลือกรายการสินค้าจากหลายออเดอร์ไปทำใบสั่งซื้อ (PO)" style="background:#f0fdf4;border-color:#16a34a;color:#15803d;font-weight:700">🛒 สร้าง PO จากออเดอร์ (<span id="so-po-sel-count">0</span>)</button> <button class="btn btn-secondary btn-sm" onclick="openMarketplaceSaleAdjust()" title="เทียบยอดขาย Order กับ Shopee/Lazada แล้วเลือกปรับบางออเดอร์หรือทั้งหมด">⚖️ ปรับยอดตาม Marketplace</button> <button class="btn btn-secondary btn-sm" id="btn-scan-cost" onclick="scanOrderCostAnomalies()" title="สแกนออเดอร์ที่ต้นทุน/ชิ้น สูงกว่าต้นทุนเฉลี่ยปัจจุบันเกิน 1.5 เท่า">🔎 ตรวจต้นทุนผิดปกติ</button> <button class="btn btn-secondary btn-sm" id="btn-backfill-costs" onclick="backfillAllOrderCosts()" title="เติมต้นทุนย้อนหลังให้ออเดอร์ที่ขายก่อนรับสินค้าเข้า">🔄 คำนวณต้นทุนย้อนหลัง</button> <button class="btn btn-primary btn-sm" onclick="openNewOrder()">+ ออเดอร์ใหม่</button>`;
 
   setContent(`
@@ -6840,6 +6848,7 @@ async function orders() {
         })()}
       </div>
     </div>
+    <div id="ord-pending-card" class="ord-pending-card" aria-live="polite"><div style="color:#92400e;font-weight:700">📦 รอจัดส่งทุกเดือน</div><div style="font-size:12px;color:#92400e;margin-top:5px">กำลังตรวจรายการค้างส่ง...</div></div>
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
       <input type="date" id="ord-from" value="${today().slice(0,7)+'-01'}">
       <span style="color:var(--text3);flex-shrink:0">ถึง</span>
@@ -6997,6 +7006,7 @@ async function orders() {
     </div>
   `);
   loadOrders();
+  loadPendingOrdersCard();
   loadEmployeeOptions('o-emp');
 }
 
@@ -7053,6 +7063,50 @@ function smartWildcardMatch(targetText, searchPattern) {
   return false;
 }
 
+async function fetchPendingOrdersAcrossMonths(columns = 'id,order_no,order_date,customer_name,channel,shipping_status,doc_status,total_amount') {
+  const all = [];
+  for (let start = 0; ; start += 250) {
+    const {data,error} = await sb.from('orders').select(columns)
+      .eq('shop_id',currentShop.id)
+      .or('shipping_status.eq.pending,shipping_status.is.null')
+      .order('id',{ascending:true}).range(start,start+249);
+    if (error) throw error;
+    all.push(...(data||[]));
+    if (!data || data.length < 250) break;
+  }
+  return all.filter(o => !isOrderCancelled(o));
+}
+
+async function loadPendingOrdersCard() {
+  const card = document.getElementById('ord-pending-card');
+  if (!card || !currentShop?.id) return;
+  try {
+    const rows = await fetchPendingOrdersAcrossMonths();
+    if (!card.isConnected) return;
+    rows.sort((a,b) => (a.order_date||'').localeCompare(b.order_date||'') || (a.order_no||'').localeCompare(b.order_no||''));
+    const amount = rows.reduce((sum,o) => sum + Number(o.total_amount||0),0);
+    const older = rows.filter(o => (o.order_date||'').slice(0,7) < today().slice(0,7)).length;
+    card.innerHTML = `<div class="ord-pending-top"><div><div style="font-size:13px;color:#92400e;font-weight:700">📦 รอจัดส่ง · ทุกเดือน</div><div class="ord-pending-count">${rows.length} <span style="font-size:13px;font-weight:500">ออเดอร์</span></div><div style="font-size:11px;color:#92400e;margin-top:4px">ยอดรวม ${fmtB(amount)} · ค้างจากเดือนก่อน ${older} ใบ · รวม Preorder ที่ยังไม่ได้จัดส่ง</div></div><button type="button" class="btn ${_ordPendingOnly?'btn-primary':'btn-secondary'} btn-sm" onclick="toggleOrdPendingOnly()" style="min-height:38px">${_ordPendingOnly?'📅 กลับเดือนนี้':'ดูรายการรอจัดส่งทั้งหมด →'}</button></div>${rows.length?`<div class="ord-pending-preview">${rows.slice(0,4).map(o=>`<button type="button" data-order-id="${escapeHTML(o.id)}" onclick="viewOrder(this.dataset.orderId)" title="เปิดออเดอร์ ${escapeHTML(o.order_no||'')}"><b>${escapeHTML(o.order_no||'-')}</b><div style="font-size:11px;color:var(--text3)">${escapeHTML(o.order_date||'-')} · ${escapeHTML(o.customer_name||'-')}</div><div style="font-size:11px;color:#92400e">${escapeHTML(o.channel||'-')} · ${fmtB(o.total_amount)}</div></button>`).join('')}</div>`:'<div style="font-size:12px;color:#92400e;margin-top:8px">ไม่มีออเดอร์ค้างจัดส่ง</div>'}`;
+  } catch (error) {
+    console.error('loadPendingOrdersCard failed:',error);
+    if (card.isConnected) card.innerHTML = `<div style="color:#b91c1c;font-size:12px">โหลดรายการรอจัดส่งไม่สำเร็จ: ${escapeHTML(error.message||'เกิดข้อผิดพลาด')} <button class="btn btn-secondary btn-sm" onclick="loadPendingOrdersCard()">ลองอีกครั้ง</button></div>`;
+  }
+}
+
+function toggleOrdPendingOnly() {
+  _ordPendingOnly = !_ordPendingOnly;
+  const from = document.getElementById('ord-from');
+  const to = document.getElementById('ord-to');
+  if (from) from.value = _ordPendingOnly ? '' : today().slice(0,7)+'-01';
+  if (to) to.value = _ordPendingOnly ? '' : today();
+  for (const id of ['ord-channel','ord-doc-status','ord-search']) {
+    const el = document.getElementById(id); if (el) el.value = '';
+  }
+  loadOrders();
+  loadPendingOrdersCard();
+  document.getElementById('ord-table')?.scrollIntoView({behavior:'smooth',block:'start'});
+}
+
 async function loadOrders() {
   const from = document.getElementById('ord-from')?.value || '';
   const to   = document.getElementById('ord-to')?.value   || '';
@@ -7065,14 +7119,18 @@ async function loadOrders() {
     .order('order_date',{ascending:false})
     .order('created_at',{ascending:false});
 
-  if (from) q = q.gte('order_date', from);
-  if (to)   q = q.lte('order_date', to);
+  if (!_ordPendingOnly && from) q = q.gte('order_date', from);
+  if (!_ordPendingOnly && to)   q = q.lte('order_date', to);
+  if (_ordPendingOnly) q = q.or('shipping_status.eq.pending,shipping_status.is.null');
   if (ch)   q = q.eq('channel', ch);
   const ds = document.getElementById('ord-doc-status')?.value || '';
   if (ds)   q = q.eq('doc_status', ds);
 
+  const pendingOrderQuery = _ordPendingOnly
+    ? fetchPendingOrdersAcrossMonths('*,order_items(*)').then(data => ({data,error:null})).catch(error => ({data:null,error}))
+    : q;
   const [ordRes, empRes, _shopee, arRes, poRes, prodRes, _lazada] = await Promise.all([
-    q,
+    pendingOrderQuery,
     sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
     Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation()]),
     sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
@@ -7179,7 +7237,7 @@ async function loadOrders() {
   };
 
   // merge ข้อมูลพนักงานและชื่อบริษัทเข้าไป
-  let rows = (ordRes.data||[]).map(o => ({
+  let rows = (ordRes.data||[]).filter(o => !_ordPendingOnly || (!isOrderCancelled(o) && (!ch || o.channel === ch) && (!ds || o.doc_status === ds))).map(o => ({
     ...o,
     company_name: getOrderCompanyName(o),
     employees: o.employee_id ? { name: empMap[o.employee_id] || '-' } : null
@@ -7574,6 +7632,7 @@ function filterOrdersByChannel(ch) {
 }
 
 function clearOrdFilter() {
+  _ordPendingOnly = false;
   const f = document.getElementById('ord-from');
   const t = document.getElementById('ord-to');
   const c = document.getElementById('ord-channel');
@@ -7585,6 +7644,7 @@ function clearOrdFilter() {
   if (d) d.value = '';
   if (s) s.value = '';
   loadOrders();
+  loadPendingOrdersCard();
 }
 
 async function quickUpdateStatus(orderId, status, selEl) {
@@ -7633,6 +7693,7 @@ async function quickUpdateStatus(orderId, status, selEl) {
     toast('อัพเดทสถานะแล้ว ✓','success');
   }
   if (typeof loadOrders === 'function') loadOrders();  // refresh สี + เรียงลำดับใหม่
+  loadPendingOrdersCard();
 }
 
 let orderItems = [];
@@ -8750,6 +8811,7 @@ async function saveOrder() {
   toast('บันทึกออเดอร์สำเร็จ ✓', 'success');
   _shopeeOrderReconciliation = null;
   loadOrders();
+  loadPendingOrdersCard();
 
   // ── Auto Marketing Content: ถ้าสร้างออเดอร์พร้อมสถานะ "จัดส่งแล้ว" ──
   if (orderPayload.shipping_status === 'shipped' && order) {
@@ -9571,6 +9633,7 @@ async function saveOrderEdit(orderId) {
   toast('บันทึกการแก้ไขสำเร็จ ✓','success');
   _shopeeOrderReconciliation = null;
   loadOrders();
+  loadPendingOrdersCard();
 
   // ── Auto Marketing Content: เมื่อเปลี่ยนสถานะเป็น "จัดส่งแล้ว" ใน Modal Edit ──
   const oldShipStatus = window._editingOrderForGP?.shipping_status;
@@ -9965,6 +10028,7 @@ async function deleteOrder(orderId) {
   toast('ลบออเดอร์แล้ว','success');
   _shopeeOrderReconciliation = null;
   loadOrders();
+  loadPendingOrdersCard();
 }
 
 // ─── PAGE: EXPENSES · v1.21 MANAGEMENT / v1.22 DASHBOARD ───────────────
@@ -30981,6 +31045,8 @@ async function deleteCat(catId) {
 
 // ── Orders: Quick month/year filter ──────────────────────
 function setOrdMonth(year, month) {
+  _ordPendingOnly = false;
+  loadPendingOrdersCard();
   const mm = String(month).padStart(2,'0');
   const lastDay = new Date(year, Number(month), 0).getDate();
   const fromEl = document.getElementById('ord-from');
@@ -30996,6 +31062,8 @@ function setOrdMonth(year, month) {
 }
 
 function setOrdYear(year) {
+  _ordPendingOnly = false;
+  loadPendingOrdersCard();
   const fromEl = document.getElementById('ord-from');
   const toEl   = document.getElementById('ord-to');
   if (fromEl) fromEl.value = year+'-01-01';
@@ -40378,6 +40446,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.01', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'การ์ดรอจัดส่งข้ามเดือนในหน้าออเดอร์', items:[
+      'เพิ่มการ์ดรอจัดส่งทุกเดือน แสดงจำนวน ยอดรวม ออเดอร์ค้างจากเดือนก่อน และตัวอย่างออเดอร์เก่าสุด',
+      'กดดูทั้งหมดเพื่อเปิดรายการรอจัดส่งข้ามเดือน รวม Preorder โดยไม่ถูกช่วงวันที่เดือนปัจจุบันตัดออก',
+      'อัปเดตการ์ดหลังสร้าง แก้ไข ลบ หรือเปลี่ยนสถานะจัดส่ง และไม่รวมออเดอร์ยกเลิก'
+    ]},
     { v:'3.00', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับ UX/UI หน้าปรับยอดขาย Marketplace', items:[
       'แก้หน้าต่างที่เนื้อหาถูกบีบเป็นคอลัมน์แคบจากคลาสโหลดข้อมูล และจัดเลย์เอาต์ใหม่เต็มความกว้าง',
       'แสดงการ์ดสรุป ตัวค้นหา ตัวกรองสถานะ รายการเดสก์ท็อป/มือถือ และแถบยืนยันที่อ่านง่าย',
