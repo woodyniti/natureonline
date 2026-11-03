@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v2.94</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v2.95</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v2.94';
-const DISPLAY_APP_VERSION = 'v2.94';
+const CURRENT_APP_VERSION = 'sealthai-v2.95';
+const DISPLAY_APP_VERSION = 'v2.95';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1164,7 +1164,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.94)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.94 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.95)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v2.95 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1237,7 +1237,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.94)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.94 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.95)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v2.95 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1266,7 +1266,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.94)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.94 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v2.95)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v2.95 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2620,6 +2620,79 @@ const CFO_WAGE_PCT = 15;
 let _shopeeFeeLoadPromise = null;
 let _shopeeFeeLoadAttempted = false;
 
+function getOrderShopeeReconciliation(order) {
+  if (!String(order?.channel || '').toLowerCase().includes('shopee')) return { status:'other' };
+  const ref = String(order?.customer_social || order?.platform_order_id || '').trim().toUpperCase();
+  if (!ref) return { status:'missing_ref' };
+  if (!_shopeeOrderReconciliation || _shopeeOrderReconciliationShopId !== currentShop?.id) return { status:'loading', ref };
+  if (!_shopeeOrderRefCheckReady) return { status:'unverified', ref };
+  if ((_shopeeOrderRefCounts.get(ref) || 0) > 1) return { status:'duplicate', ref };
+  const match = _shopeeOrderReconciliation.get(ref);
+  if (!match) return { status:'not_found', ref };
+  if (_shopeeOrderReconciliationSource !== 'server') return { status:'local_only', ref, match };
+  if (match.cancelled) return { status:'cancelled', ref, match };
+  if (match.feeConflict) return { status:'fee_conflict', ref, match };
+  return { status:'matched', ref, match, source:_shopeeOrderReconciliationSource };
+}
+
+function shopeeReconciliationBadge(order) {
+  const recon = getOrderShopeeReconciliation(order);
+  if (recon.status === 'other') return '';
+  const ok = recon.status === 'matched';
+  const amountDiff = ok && Math.abs(Number(order.total_amount || 0) - recon.match.sale) > 0.01;
+  const labels = {matched:'เชื่อม Shopee แล้ว', missing_ref:'ไม่มีเลขอ้างอิง Shopee', loading:'กำลังโหลด Shopee', unverified:'ตรวจเลขอ้างอิงไม่ได้', duplicate:'เลขอ้างอิงซ้ำ', not_found:'ไม่พบใน Shopee Summary', local_only:'ยังไม่ซิงค์ Shopee', cancelled:'Shopee ยกเลิก', fee_conflict:'ค่าธรรมเนียมไม่ตรงกัน'};
+  return `<span class="badge" title="${escapeHTML(recon.ref || '')}" style="background:${ok&&!amountDiff?'#dcfce7':'#fff7ed'};color:${ok&&!amountDiff?'#15803d':'#c2410c'};border:1px solid ${ok&&!amountDiff?'#86efac':'#fdba74'};font-size:10px;margin-top:3px">${ok&&!amountDiff?'✅':'⚠️'} ${amountDiff?'เชื่อมแล้ว · ยอดขายต่าง':(labels[recon.status] || recon.status)}</span>`;
+}
+
+function renderOrderShopeeReconciliation(order, cost) {
+  const recon = getOrderShopeeReconciliation(order);
+  if (recon.status === 'other') return '';
+  const note = {missing_ref:'กรอกเลขอ้างอิงเอกสาร Shopee ให้ตรงกับหมายเลขคำสั่งซื้อใน Shopee Summary', loading:'กำลังโหลดข้อมูล Shopee', unverified:'ตรวจความซ้ำของเลขอ้างอิงในออเดอร์ไม่ได้ จึงยังไม่ใช้ยอดจริง', duplicate:'เลขอ้างอิงนี้อยู่ในออเดอร์มากกว่าหนึ่งใบ ต้องแก้เลขซ้ำก่อน', not_found:'ไม่พบเลขนี้ในข้อมูล Shopee Summary ที่ซิงค์ล่าสุด', local_only:'พบข้อมูลในเครื่อง แต่ยังไม่ยืนยันว่าซิงค์ขึ้นเซิร์ฟเวอร์แล้ว จึงยังไม่ใช้ยอดจริง', cancelled:'คำสั่งซื้อฝั่ง Shopee ถูกยกเลิก', fee_conflict:'ค่าธรรมเนียมในแถวสินค้าของ Shopee ไม่ตรงกัน กรุณาตรวจไฟล์ต้นทาง'};
+  if (recon.status !== 'matched') return `<div style="background:#fff7ed;border:1px solid #fdba74;border-radius:9px;padding:10px 12px;margin:12px 0;color:#9a3412;font-size:12px">⚠️ ยังเทียบยอดจริงกับ Shopee ไม่ได้: ${note[recon.status] || ''}${recon.ref ? ` · ${escapeHTML(recon.ref)}` : ''}</div>`;
+  const m = recon.match;
+  const localSale = Number(order.total_amount || 0);
+  const delta = Math.round((localSale - m.sale) * 100) / 100;
+  const localItems = order.order_items || [];
+  const shopeeQty = m.items.reduce((sum,item) => sum + item.qty, 0);
+  const localQty = localItems.reduce((sum,item) => sum + Number(item.qty || 0), 0);
+  const profit = m.payout - Number(cost || 0);
+  const sourceLabel = recon.source === 'server' ? 'ซิงค์จากเซิร์ฟเวอร์' : 'ข้อมูลในเครื่อง/ไฟล์ตั้งต้น';
+  const catalog = typeof editProdList !== 'undefined' && Array.isArray(editProdList) ? editProdList : [];
+  const itemRows = m.items.map(item => {
+    const sku = String(item.sku || '').trim().toUpperCase();
+    const mappedProductId = _shopeeOrderProductMapping.get(sku);
+    const local = localItems.find(it => {
+      const product = catalog.find(p => p.id === it.product_id);
+      return (mappedProductId && it.product_id === mappedProductId) ||
+        (sku && [it.sku, product?.sku, product?.supplier_sku].some(code => String(code || '').trim().toUpperCase() === sku));
+    }) || (m.items.length === 1 && localItems.length === 1 ? localItems[0] : null);
+    const product = local ? catalog.find(p => p.id === local.product_id) : null;
+    const localUnit = local ? Number(local.sell_price || 0) : null;
+    const shopeeUnit = item.qty > 0 ? item.sale / item.qty : 0;
+    const unitDiff = localUnit === null ? null : Math.round((localUnit - shopeeUnit) * 100) / 100;
+    const unitCost = local ? (Number(local.cost_per_unit) > 0 ? Number(local.cost_per_unit) : Number(product?.current_cost || 0)) : null;
+    const itemProfit = unitCost === null || unitCost <= 0 ? null : item.payout - unitCost * item.qty;
+    return `<tr><td>${escapeHTML(item.name)}${item.option?' · '+escapeHTML(item.option):''}<div class="font-mono">${escapeHTML(item.sku || '-')}</div></td>
+      <td class="text-right">${item.qty}</td><td class="text-right">${fmtB(shopeeUnit)}</td>
+      <td class="text-right">${localUnit === null ? '<span style="color:#c2410c">ไม่พบคู่</span>' : fmtB(localUnit)}</td>
+      <td class="text-right" style="color:${unitDiff === null || Math.abs(unitDiff)>0.01?'#c2410c':'#15803d'}">${unitDiff === null ? '—' : (Math.abs(unitDiff)>0.01 ? fmtB(unitDiff) : 'ตรง')}</td>
+      <td class="text-right">${fmtB(item.sale)}</td><td class="text-right">${fmtB(item.fee)}</td><td class="text-right">${fmtB(item.payout)}</td>
+      <td class="text-right">${itemProfit === null ? '<span style="color:#c2410c">ไม่พบทุน</span>' : fmtB(itemProfit)}</td></tr>`;
+  }).join('');
+  return `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:9px;padding:12px;margin:12px 0;font-size:12px;color:var(--text)">
+    <div style="font-weight:700;margin-bottom:7px">🔗 เทียบกับ Shopee Summary · ${escapeHTML(recon.ref)} <span style="font-weight:400;color:#64748b">(${sourceLabel})</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
+      <div>ขายในออเดอร์<br><b>${fmtB(localSale)}</b></div><div>ขายสุทธิใน Shopee<br><b>${fmtB(m.sale)}</b></div>
+      <div>ค่าธรรมเนียมจริง<br><b style="color:#dc2626">−${fmtB(m.fee)}</b></div><div>หลังหักค่าธรรมเนียม<br><b style="color:#0284c7">${fmtB(m.payout)}</b></div>
+      <div>ต้นทุนออเดอร์<br><b>${fmtB(cost)}</b></div><div>กำไรตามยอด Shopee<br><b style="color:${profit>=0?'#15803d':'#dc2626'}">${fmtB(profit)}</b></div>
+    </div>
+    <div style="margin-top:8px;color:${Math.abs(delta)>0.01?'#c2410c':'#15803d'};font-weight:600">${Math.abs(delta)>0.01?'⚠️ ยอดขายต่างกัน '+fmtB(delta)+' (ออเดอร์ − Shopee)':'✅ ยอดขายรวมตรงกัน'} · ${localQty === shopeeQty ? 'จำนวนชิ้นตรงกัน' : '⚠️ จำนวนชิ้นต่างกัน: ออเดอร์ '+localQty+' / Shopee '+shopeeQty}</div>
+    <div style="margin-top:6px;color:#64748b">ค่าธรรมเนียมแยก: คอมมิชชั่น ${fmtB(m.fees.commission)} · ธุรกรรม ${fmtB(m.fees.transaction)} · บริการ ${fmtB(m.fees.service)} · นับครั้งเดียวต่อเลขคำสั่งซื้อ</div>
+    <div style="overflow-x:auto;margin-top:8px"><table style="font-size:11px;min-width:850px"><thead><tr><th>สินค้า / SKU ตัวเลือกใน Shopee</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/ชิ้น Shopee</th><th class="text-right">ราคา/ชิ้น ระบบ</th><th class="text-right">ส่วนต่าง/ชิ้น</th><th class="text-right">ขายสุทธิ</th><th class="text-right">ส่วนค่าธรรมเนียม</th><th class="text-right">หลังหัก</th><th class="text-right">กำไรสินค้า</th></tr></thead><tbody>${itemRows}</tbody></table></div>
+    <div style="color:#64748b;margin-top:5px">ราคา/ชิ้นในระบบอาจยังไม่หักส่วนลดบิล; ส่วนค่าธรรมเนียมรายสินค้าแบ่งตามสัดส่วนราคาขาย; “หลังหัก” ยังไม่ใช่ยอดโอนเข้าธนาคาร หากมีค่าขนส่ง/ปรับปรุงอื่นใน Shopee</div>
+  </div>`;
+}
+
 // ── Thaimart Fee Structure: GP ตามปี + Payment Fee 3% (คำนวณจากราคาสินค้าและค่าจัดส่ง) ──
 function getThaimartFeeRate(orderDate) {
   const d = String(orderDate || today()).slice(0, 10);
@@ -2651,8 +2724,13 @@ function getOrderPlatformFeeInfo(order) {
   const channel = String(order?.channel || '').toLowerCase();
   const sale = Math.max(0, Number(order?.total_amount) || 0);
   if (channel.includes('shopee')) {
+    const recon = getOrderShopeeReconciliation(order);
+    if (recon.status === 'matched') {
+      const actualFee = recon.match.fee;
+      return { fee:actualFee, pct:sale > 0 ? actualFee / sale * 100 : 0, source:'actual', isPlatform:true, channel:'Shopee', reconciliation:recon };
+    }
     const ref = String(order?.customer_social || '').trim().toLowerCase();
-    const matchedRows = ref && typeof shopeeData !== 'undefined'
+    const matchedRows = !_shopeeOrderReconciliation && ref && typeof shopeeData !== 'undefined'
       ? shopeeData.filter(r => String(r.orderId || '').trim().toLowerCase() === ref)
       : [];
     const actualFee = matchedRows.reduce((sum, row) => sum + Math.abs(Number(row.totalFee) || 0), 0);
@@ -3860,7 +3938,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.94)">v2.94 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v2.95)">v2.95 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6883,7 +6961,7 @@ async function loadOrders() {
   const [ordRes, empRes, _shopee, arRes, poRes, prodRes] = await Promise.all([
     q,
     sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
-    ensureShopeeFeeData(),
+    Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation()]),
     sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
     sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered)').eq('shop_id', currentShop.id).neq('status','cancelled'),
     sb.from('products').select('*').eq('shop_id', currentShop.id)
@@ -7219,6 +7297,7 @@ async function loadOrders() {
             <div style="font-weight:600">${o.order_date||'-'}</div>
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
+            ${shopeeReconciliationBadge(o)}
             ${hasAR?`<div style="margin-top:3px"><span class="badge badge-blue" style="font-size:10px;cursor:pointer" onclick="showPage('arinvoice');setTimeout(()=>openARDetail('${linkedAR.id}'),250)" title="คลิกดู AR Invoice ${escapeHTML(linkedAR.ar_no)}">📄 ${escapeHTML(linkedAR.ar_no)}</span></div>`:''}
             ${hasPO?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${linkedPOs.map(po=>`<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;cursor:pointer;padding:1px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px" onclick="showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)" title="คลิกดูใบสั่งซื้อ PO: ${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')})">🛒 ${escapeHTML(po.po_no)}</span>`).join('')}</div>`:''}
             ${(()=>{
@@ -7240,6 +7319,8 @@ async function loadOrders() {
               ? '<div class="text-red" style="font-weight:600">ไม่นับในยอดขาย/กำไร</div>'
               : `<div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
                  ${isPlat?`<div class="text-red" title="${feeInfo.source==='actual'?'ค่าธรรมเนียมจริงจาก Shopee':'ค่าธรรมเนียมประมาณ '+feeInfo.pct.toFixed(2)+'%'}"><span style="color:var(--text3)">GP ${feeInfo.pct.toFixed(2)}%</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
+                 ${feeInfo.reconciliation?`<div style="color:#0284c7"><span style="color:var(--text3)">Shopee หลังหัก</span> <span class="font-mono">${fmtB(feeInfo.reconciliation.match.payout)}</span></div>`:''}
+                 ${feeInfo.reconciliation?`<div style="color:${feeInfo.reconciliation.match.payout-cost>=0?'#15803d':'#dc2626'}"><span style="color:var(--text3)">กำไรตาม Shopee</span> <span class="font-mono">${fmtB(feeInfo.reconciliation.match.payout-cost)}</span></div>`:''}
                  <div class="${profit>=0?'text-green':'text-red'}" style="font-weight:700"><span style="color:var(--text3);font-weight:400">กำไร</span> <span class="font-mono">${fmtB(profit)}</span></div>`}
           </td>
           <td class="col-status" style="white-space:nowrap">
@@ -7272,6 +7353,7 @@ async function loadOrders() {
           <div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>
           ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
+          ${shopeeReconciliationBadge(o)}
           ${(()=>{
             const inote = getOrderInternalNote(o);
             return inote ? `<div style="margin-top:4px"><span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10.5px;padding:2px 6px;border-radius:5px;display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="หมายเหตุหลังบ้าน: ${escapeHTML(inote)}">🔒 หลังบ้าน: ${escapeHTML(inote)}</span></div>` : '';
@@ -7329,7 +7411,8 @@ async function loadOrders() {
         const fee=feeInfo.fee; const profit=sale-cost-fee;
         return '<div style="font-size:11px;margin-bottom:8px;color:var(--text3)">ต้นทุน <span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span>'+
           (isPlat?' · GP Platform '+feeInfo.pct.toFixed(2)+'% <span class="font-mono text-red">-'+fmtB(fee)+'</span>':'')+
-          ' · กำไร <span class="font-mono '+(profit>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(profit)+'</span></div>';
+          ' · กำไรระบบ <span class="font-mono '+(profit>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(profit)+'</span>'+
+          (feeInfo.reconciliation?' · Shopee หลังหัก <span class="font-mono" style="color:#0284c7">'+fmtB(feeInfo.reconciliation.match.payout)+'</span> · กำไร Shopee <span class="font-mono" style="color:'+(feeInfo.reconciliation.match.payout-cost>=0?'#15803d':'#dc2626')+'">'+fmtB(feeInfo.reconciliation.match.payout-cost)+'</span>':'')+'</div>';
       })()}
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="display:flex;gap:6px;align-items:center">
@@ -8545,6 +8628,7 @@ async function saveOrder() {
   unregisterUnsavedForm(document.getElementById('modal-order'));
   closeModal('modal-order');
   toast('บันทึกออเดอร์สำเร็จ ✓', 'success');
+  _shopeeOrderReconciliation = null;
   loadOrders();
 
   // ── Auto Marketing Content: ถ้าสร้างออเดอร์พร้อมสถานะ "จัดส่งแล้ว" ──
@@ -9024,7 +9108,7 @@ async function viewOrder(orderId) {
   if (currentPage !== 'orders' && !_isIplOpen) {
     showPage('orders');
   }
-  await ensureShopeeFeeData();
+  await Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation()]);
   const [{ data: order }, { data: orderPOItemsRaw }] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('id',orderId).single(),
     sb.from('purchase_order_items').select('id, po_id, product_id, product_name, qty_ordered, purchase_orders(id, po_no, po_date, supplier_name, status)')
@@ -9061,6 +9145,7 @@ async function viewOrder(orderId) {
   const __odEl = document.getElementById('order-detail-content');
   if (!__odEl) return;
   __odEl.innerHTML = `
+    ${renderOrderShopeeReconciliation(order, _orderCostEff)}
     ${(()=>{
       const poList = (window._currentOrderPOItems || []).map(p => p.purchase_orders).filter(Boolean);
       const uniquePOs = [];
@@ -9362,6 +9447,7 @@ async function saveOrderEdit(orderId) {
   unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('บันทึกการแก้ไขสำเร็จ ✓','success');
+  _shopeeOrderReconciliation = null;
   loadOrders();
 
   // ── Auto Marketing Content: เมื่อเปลี่ยนสถานะเป็น "จัดส่งแล้ว" ใน Modal Edit ──
@@ -9755,6 +9841,7 @@ async function deleteOrder(orderId) {
   unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('ลบออเดอร์แล้ว','success');
+  _shopeeOrderReconciliation = null;
   loadOrders();
 }
 
@@ -40169,7 +40256,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'2.94', date:'2026-11-02', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ลดเมนู Shopee ที่ซ้ำกัน', items:[
+    { v:'2.95', date:'2026-11-03', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เชื่อมออเดอร์กับ Shopee Summary ด้วยเลขอ้างอิง', items:[
+      'แสดงยอดขาย Shopee ค่าธรรมเนียมจริง ยอดหลังหัก และกำไรเทียบกับออเดอร์',
+      'เตือนเมื่อเลขอ้างอิงหาย ซ้ำ ไม่พบ หรือยอดขายไม่ตรงกัน',
+      'นับค่าธรรมเนียมเพียงครั้งเดียวต่อคำสั่งซื้อ แม้มีหลายสินค้า และแบ่งค่าธรรมเนียมรายสินค้าตามยอดขาย'
+    ]},
+    { v:'2.94', date:'2026-11-02', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ลดเมนู Shopee ที่ซ้ำกัน', items:[
       'นำเมนู Shopee สรุปกำไรออกจากแถบด้านข้าง โดยคง Shopee Summary ไว้',
       'คงข้อมูลและหน้ารายงานเดิมไว้ ไม่ลบข้อมูลย้อนหลัง'
     ]},

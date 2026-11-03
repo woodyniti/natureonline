@@ -13,6 +13,118 @@ var _shopeeSummaryCharts = {};
 var _shopeeSummaryMappings = [];
 var _shopeeSummaryLoaded = false;
 var _shopeeMappingSortedProducts = [];
+var _shopeeOrderReconciliation = null;
+var _shopeeOrderReconciliationSource = '';
+var _shopeeOrderReconciliationPromise = null;
+var _shopeeOrderRefCounts = new Map();
+var _shopeeOrderRefCheckReady = false;
+var _shopeeOrderReconciliationShopId = null;
+var _shopeeOrderProductMapping = new Map();
+
+// Shopee exports repeat order-level fees on every SKU row. Count each fee once per order.
+function buildShopeeOrderReconciliationIndex(rows) {
+  const grouped = new Map();
+  (rows || []).forEach(row => {
+    const ref = String(row.orderId || '').trim().toUpperCase();
+    if (!ref) return;
+    if (!grouped.has(ref)) grouped.set(ref, []);
+    grouped.get(ref).push(row);
+  });
+  const result = new Map();
+  grouped.forEach((sourceRows, ref) => {
+    const items = sourceRows.map(row => {
+      const qty = Number(row.qty) || 1;
+      const rawSale = Number(row.netSale);
+      const sale = rawSale > 0 ? rawSale : (Number(row.dealPrice) || 0) * qty;
+      return { sourceRow: row, sku: String(row.optionSku || row.sku || '').trim(), name: row.productName || '', option: row.option || '', qty, sale, fee: 0, payout: 0 };
+    });
+    const sale = items.reduce((sum, item) => sum + item.sale, 0);
+    const component = key => Math.max(0, ...sourceRows.map(row => Math.abs(Number(row[key]) || 0)));
+    const fees = {
+      commission: component('commission'),
+      transaction: component('txFee'),
+      service: component('serviceFee')
+    };
+    const componentTotal = fees.commission + fees.transaction + fees.service;
+    const totalFee = componentTotal || component('totalFee');
+    let allocated = 0;
+    items.forEach((item, index) => {
+      item.fee = index === items.length - 1
+        ? Math.round((totalFee - allocated) * 100) / 100
+        : Math.round((sale > 0 ? totalFee * item.sale / sale : totalFee / items.length) * 100) / 100;
+      allocated += item.fee;
+      item.payout = Math.round((item.sale - item.fee) * 100) / 100;
+    });
+    const feeColumns = ['commission','txFee','serviceFee','totalFee'];
+    result.set(ref, {
+      ref, items, sale: Math.round(sale * 100) / 100, fees,
+      fee: Math.round(totalFee * 100) / 100,
+      payout: Math.round((sale - totalFee) * 100) / 100,
+      cancelled: sourceRows.every(row => /ยกเลิก|cancel/i.test(String(row.status || ''))),
+      feeConflict: feeColumns.some(key => new Set(sourceRows.map(row => Number(row[key]) || 0)).size > 1)
+    });
+  });
+  return result;
+}
+
+async function ensureShopeeOrderReconciliation(force = false) {
+  if (!force && _shopeeOrderReconciliation && _shopeeOrderReconciliationShopId === currentShop?.id) return _shopeeOrderReconciliation;
+  if (_shopeeOrderReconciliationPromise) return _shopeeOrderReconciliationPromise;
+  _shopeeOrderReconciliationPromise = (async () => {
+    let rows = [];
+    let source = '';
+    try {
+      rows = await loadShopeeSummaryServerOrders();
+      if (rows.length) source = 'server';
+    } catch (error) {
+      console.warn('Shopee reconciliation server unavailable:', error);
+    }
+    if (!rows.length) {
+      try {
+        const cached = JSON.parse(localStorage.getItem('shopee_summary_orders_cache') || '[]');
+        if (Array.isArray(cached) && cached.length) { rows = cached; source = 'local'; }
+      } catch (error) { console.warn('Shopee local cache unavailable:', error); }
+    }
+    if (!rows.length && Array.isArray(window.SHOPEE_PRELOADED_ORDERS)) {
+      rows = window.SHOPEE_PRELOADED_ORDERS;
+      source = 'preloaded';
+    }
+    _shopeeOrderRefCounts = new Map();
+    _shopeeOrderRefCheckReady = false;
+    if (sb && currentShop?.id) {
+      try {
+        for (let offset = 0; ; offset += 500) {
+          const { data, error } = await sb.from('orders')
+            .select('customer_social,platform_order_id,channel')
+            .eq('shop_id', currentShop.id).order('id').range(offset, offset + 499);
+          if (error) throw error;
+          (data || []).forEach(order => {
+            if (!String(order.channel || '').toLowerCase().includes('shopee')) return;
+            const ref = String(order.customer_social || order.platform_order_id || '').trim().toUpperCase();
+            if (ref) _shopeeOrderRefCounts.set(ref, (_shopeeOrderRefCounts.get(ref) || 0) + 1);
+          });
+          if (!data || data.length < 500) break;
+        }
+        _shopeeOrderRefCheckReady = true;
+      } catch (error) { console.warn('Shopee order reference check unavailable:', error); }
+      _shopeeOrderProductMapping = new Map();
+      try {
+        const { data, error } = await sb.from('marketplace_sku_mappings')
+          .select('platform_sku,product_id').eq('shop_id', currentShop.id).eq('channel', 'shopee');
+        if (error) throw error;
+        (data || []).forEach(row => {
+          const sku = String(row.platform_sku || '').trim().toUpperCase();
+          if (sku && row.product_id) _shopeeOrderProductMapping.set(sku, row.product_id);
+        });
+      } catch (error) { console.warn('Shopee product mapping unavailable:', error); }
+    }
+    _shopeeOrderReconciliation = buildShopeeOrderReconciliationIndex(rows);
+    _shopeeOrderReconciliationSource = source;
+    _shopeeOrderReconciliationShopId = currentShop?.id || null;
+    return _shopeeOrderReconciliation;
+  })().finally(() => { _shopeeOrderReconciliationPromise = null; });
+  return _shopeeOrderReconciliationPromise;
+}
 
 function shopeeMappingProductLabel(product) {
   const sku = product.sku || product.supplier_sku || '';
@@ -306,6 +418,10 @@ function computeShopeeSummaryMetrics() {
     }
     return true;
   });
+  const reconciliationByRow = new WeakMap();
+  buildShopeeOrderReconciliationIndex(_shopeeSummaryOrders).forEach(group => {
+    group.items.forEach(item => reconciliationByRow.set(item.sourceRow, { item, group }));
+  });
 
   const skuMap = {};
   const buyerMap = {};
@@ -327,10 +443,12 @@ function computeShopeeSummaryMetrics() {
     orderIds.add(r.orderId);
     const qty = Number(r.qty) || 1;
     const rev = Number(r.netSale) > 0 ? Number(r.netSale) : (Number(r.dealPrice || 0) * qty);
-    const com = Number(r.commission || 0);
-    const tx = Number(r.txFee || 0);
-    const srv = Number(r.serviceFee || 0);
-    const fee = (com + tx + srv) || Number(r.totalFee || 0);
+    const reconciled = reconciliationByRow.get(r);
+    const fee = reconciled ? reconciled.item.fee : 0;
+    const feeShare = reconciled?.group.fee > 0 ? fee / reconciled.group.fee : 0;
+    const com = reconciled ? reconciled.group.fees.commission * feeShare : 0;
+    const tx = reconciled ? reconciled.group.fees.transaction * feeShare : 0;
+    const srv = reconciled ? reconciled.group.fees.service * feeShare : 0;
 
     grossRevenue += rev;
     totalFees += fee;
@@ -1961,6 +2079,7 @@ async function uploadShopeeSummaryExcel(input) {
     });
 
     try { localStorage.setItem('shopee_summary_orders_cache', JSON.stringify(_shopeeSummaryOrders)); } catch(e){}
+    _shopeeOrderReconciliation = null;
 
     toast(`อ่านไฟล์ "${file.name}" เข้าเบราว์เซอร์แล้ว เพิ่ม ${added} รายการ (รวม ${_shopeeSummaryOrders.length}) · กดซิงค์เพื่อบันทึกขึ้นเซิร์ฟเวอร์`, 'success');
     renderShopeeSummaryDashboard();
@@ -1998,6 +2117,7 @@ async function syncShopeeSummaryToAI() {
       synced += batch.reduce((count, row) => count + row.payload.length, 0);
     }
     toast(`ซิงค์ข้อมูล Shopee ขึ้นเซิร์ฟเวอร์สำเร็จ ${synced} รายการ ✓`, 'success');
+    _shopeeOrderReconciliation = null;
     try {
       const m = computeShopeeSummaryMetrics();
       const payload = {
