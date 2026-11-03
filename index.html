@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.02</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.03</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.02';
-const DISPLAY_APP_VERSION = 'v3.02';
+const CURRENT_APP_VERSION = 'sealthai-v3.03';
+const DISPLAY_APP_VERSION = 'v3.03';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -346,6 +346,11 @@ body { font-family: var(--font); background: var(--bg); color: var(--text); min-
 .nav-item.active { background: rgba(0,168,130,0.1); color: var(--accent); }
 .nav-item.active .nav-icon { color: var(--accent); }
 .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+.marketplace-summary-logo { display:inline-block; width:22px; height:22px; object-fit:contain; flex:none; vertical-align:middle; }
+.marketplace-summary-logo.nav-logo { width:20px; height:20px; display:block; }
+.marketplace-summary-logo.title-logo { width:22px; height:22px; margin-right:6px; }
+.marketplace-summary-logo.report-logo { width:29px; height:29px; }
+.topbar-title.with-marketplace-logo { display:flex; align-items:center; min-width:0; }
 .sidebar-footer {
   padding: 12px 8px; border-top: 1px solid var(--border);
 }
@@ -1229,7 +1234,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.02 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.03 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1302,7 +1307,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.02 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.03 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1331,7 +1336,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.02 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.03 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1650,8 +1655,8 @@ function renderSidebar() {
     {page:'ownerDashboard', icon:'🏠', label: t('nav.owner')},
     {page:'dashboard',      icon:'📊', label: t('nav.dashboard')},
     {page:'monthly',        icon:'📅', label: t('nav.monthly')},
-    {page:'shopeeSummary',  icon:'🛒', label: 'Shopee Summary'},
-    {page:'lazadaSummary',  icon:'🛍️', label: 'Lazada Summary'},
+    {page:'shopeeSummary',  icon:'<img class="marketplace-summary-logo nav-logo" src="assets/shopee-summary-logo.png" alt="">', label: 'Shopee Summary'},
+    {page:'lazadaSummary',  icon:'<img class="marketplace-summary-logo nav-logo" src="assets/lazada-summary-logo.png" alt="">', label: 'Lazada Summary'},
     {page:'taxAnalysis',    icon:'🏛️', label: 'วิเคราะห์ภาษี'},
 
     {section: '💼 งานขาย', accent: true},
@@ -2260,8 +2265,8 @@ async function doLogout() {
 // ─── NAVIGATION ───────────────────────────────────────
 const pageTitles = {
   taxAnalysis: '🏛️ วิเคราะห์ภาษี · วางแผนนิติบุคคล & กองทุนสำรองภาษี',
-  shopeeSummary: '🛒 Shopee Summary · สรุปยอดขาย & วางแผนสต๊อก/การตลาด',
-  lazadaSummary: '🛍️ Lazada Summary · ยอดขาย รายรับจริง และวางแผนสต๊อก',
+  shopeeSummary: 'Shopee Summary · สรุปยอดขาย & วางแผนสต๊อก/การตลาด',
+  lazadaSummary: 'Lazada Summary · ยอดขาย รายรับจริง และวางแผนสต๊อก',
   dashboard: 'Dashboard ภาพรวม',
   monthly: 'สรุปยอดขายรายเดือน',
   orders: 'บันทึกออเดอร์',
@@ -2289,7 +2294,11 @@ function showPage(page) {
   // ────────────────────────────────────────────────────────
   currentPage = page;
   document.getElementById('page-content').dataset.page = page;
-  document.getElementById('page-title').textContent = pageTitles[page] || page;
+  const titleEl = document.getElementById('page-title');
+  const marketplaceLogo = page === 'shopeeSummary' ? 'assets/shopee-summary-logo.png' : page === 'lazadaSummary' ? 'assets/lazada-summary-logo.png' : '';
+  titleEl.classList.toggle('with-marketplace-logo',!!marketplaceLogo);
+  if (marketplaceLogo) titleEl.innerHTML = `<img class="marketplace-summary-logo title-logo" src="${marketplaceLogo}" alt=""><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${pageTitles[page]}</span>`;
+  else titleEl.textContent = pageTitles[page] || page;
   document.getElementById('topbar-actions').innerHTML = '';
   // Destroy old charts
   Object.values(charts).forEach(c => c.destroy && c.destroy());
@@ -4057,7 +4066,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.02)">v3.02 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.03)">v3.03 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -40457,6 +40466,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.03', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'โลโก้ Shopee/Lazada Summary', items:[
+      'เพิ่มโลโก้ Shopee และ Lazada จากภาพแนบที่แยกพื้นหลังแล้วในเมนู ชื่อหน้า และหัวรายงาน',
+      'ปรับขนาดโลโก้ให้เหมาะกับจอมือถือและ PC โดยคงข้อความชื่อเมนูเดิม'
+    ]},
     { v:'3.02', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับ Order พร้อม AR Invoice และแสดงเงินรับเกิน', items:[
       'เปิดให้เลือกปรับออเดอร์ที่มี AR Invoice โดยปรับยอด Order และ AR พร้อมกันผ่านคำสั่งฐานข้อมูลแบบธุรกรรมเดียว',
       'คงประวัติรับเงินเดิม หากรับมากกว่ายอดใหม่ให้แสดงเป็นเงินรับเกินแยกจากยอดค้างรับ',

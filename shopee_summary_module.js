@@ -719,7 +719,7 @@ function renderShopeeSummaryDashboard() {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <div>
           <div style="font-size:17px;font-weight:700;color:var(--text,#1e293b);display:flex;align-items:center;gap:8px">
-            <span>🛒 Shopee Executive Summary & Planning</span>
+            <img class="marketplace-summary-logo report-logo" src="assets/shopee-summary-logo.png" alt="Shopee logo"><span>Shopee Executive Summary & Planning</span>
             <span style="background:#e0f2fe;color:#0369a1;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #bae6fd">${typeof DISPLAY_APP_VERSION === 'string' ? DISPLAY_APP_VERSION : 'v2.91'} 🚀</span>
           </div>
           <div style="font-size:12px;color:var(--text3,#64748b);margin-top:2px">
