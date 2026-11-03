@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.04</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.05</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.04';
-const DISPLAY_APP_VERSION = 'v3.04';
+const CURRENT_APP_VERSION = 'sealthai-v3.05';
+const DISPLAY_APP_VERSION = 'v3.05';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1236,7 +1236,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.04 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.05 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1309,7 +1309,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.04 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.05 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1338,7 +1338,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.04 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.05 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4077,7 +4077,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.04)">v3.04 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.05)">v3.05 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6935,7 +6935,7 @@ async function orders() {
               <option value="delivered">ส่งถึงแล้ว</option><option value="cancelled">ยกเลิก</option>
             </select>
           </div>
-          <div class="form-group"><label>พนักงาน</label>
+          <div class="form-group"><label>พนักงานขาย</label>
             <select id="o-emp"><option value="">-- ไม่ระบุ --</option></select>
           </div>
         </div>
@@ -7733,6 +7733,8 @@ async function openNewOrder() {
   if (prodRes && prodRes.data && prodRes.data.length && (!allProducts || !allProducts.length)) {
     allProducts = prodRes.data.map(normalizeProduct);
   }
+  await loadEmployeeOptions('o-emp');
+  selectDefaultOrderSalesEmployee(document.getElementById('o-emp'));
   orderSourceQuoteId = null;
   renderOrderItems();
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
@@ -8540,6 +8542,14 @@ async function loadEmployeeOptions(selId) {
     if (e.id === cur) o.selected = true;
     sel.appendChild(o);
   });
+}
+
+function selectDefaultOrderSalesEmployee(select) {
+  if (!select) return false;
+  const normalized = value => String(value||'').replace(/\s+/g,' ').trim();
+  const match = [...select.options].find(option => normalized(option.textContent) === normalized(DEFAULT_EMP_NAME));
+  select.value = match?.value || '';
+  return !!match;
 }
 
 // ── หา employee_id จาก user_id ────────────────────────────
@@ -40477,6 +40487,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.05', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'พนักงานขายเริ่มต้นเมื่อสร้างออเดอร์', items:[
+      'เลือก “นิติ บุญสายันต์” เป็นพนักงานขายเริ่มต้นทุกครั้งที่เปิดฟอร์มสร้างออเดอร์ใหม่ หากมีชื่ออยู่ในทะเบียนพนักงานที่ใช้งาน',
+      'ยังสามารถเปลี่ยนเป็นพนักงานคนอื่นได้ และการดึงใบเสนอราคายังคงใช้พนักงานของใบเสนอราคานั้น'
+    ]},
     { v:'3.04', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'โลโก้ช่องทางขายในหน้าออเดอร์', items:[
       'แสดงโลโก้ Shopee, Lazada, LINE และ Thaimart ตามช่องทางของแต่ละออเดอร์ในตาราง PC และการ์ดมือถือ',
       'แสดงโลโก้ในสรุปช่องทางและตัวอย่างรายการรอจัดส่ง โดยยังคงชื่อช่องทางไว้ให้อ่านชัดเจน'
