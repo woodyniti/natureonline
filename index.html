@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.11</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.12</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.11';
-const DISPLAY_APP_VERSION = 'v3.11';
+const CURRENT_APP_VERSION = 'sealthai-v3.12';
+const DISPLAY_APP_VERSION = 'v3.12';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.11 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.12 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1336,7 +1336,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.11 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.12 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1365,7 +1365,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.11 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.12 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4104,7 +4104,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.11)">v3.11 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.12)">v3.12 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -14173,6 +14173,7 @@ async function stock() {
 
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeModal('modal-stock')">ยกเลิก</button>
+          <button class="btn btn-secondary" onclick="printPendingStockLabels()">🏷️ พิมพ์ฉลากสินค้า A4</button>
           <button class="btn btn-primary" onclick="saveStockBatch()">💾 บันทึกทั้งหมด</button>
         </div>
       </div>
@@ -15806,7 +15807,10 @@ function openGRDocumentDetail(encodedKey) {
 
       <!-- Footer Buttons -->
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์ใบรับสินค้า</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์ใบรับสินค้า</button>
+          <button class="btn btn-secondary" onclick="printGRItemLabels('${encodeURIComponent(doc.gr_key)}')">🏷️ พิมพ์ฉลากสินค้า A4</button>
+        </div>
         <button class="btn btn-primary" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
       </div>
     </div>
@@ -24229,6 +24233,7 @@ async function viewPO(poId) {
     let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-po-detail&quot;)">ปิด</button>';
     if (hasDupItems) btns+='<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" title="พบรายการสินค้าซ้ำใน PO นี้">🧹 ลบรายการซ้ำ</button>';
     btns+='<button class="btn btn-secondary btn-sm" onclick="printPO(&quot;'+poId+'&quot;)">🖨 พิมพ์ PO</button>';
+    btns+='<button class="btn btn-secondary btn-sm" onclick="printPOItemLabels(&quot;'+poId+'&quot;)">🏷️ พิมพ์ฉลากสินค้า A4</button>';
     if (po.status === 'draft') {
       btns+='<button class="btn btn-warning btn-sm" onclick="editPO(&quot;'+poId+'&quot;)">✏️ แก้ไขแบบร่าง</button>';
     }
@@ -24395,6 +24400,84 @@ async function createAPFromPO(poId) {
   closeModal('modal-po-detail');
   toast('สร้าง AP Invoice ✓','success');
   showPage('apinvoice');
+}
+
+// One label per document line (quantity is printed on the label, not one label per unit).
+function printA4ProductLabels(reference, items, popup) {
+  if (!popup) { toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ฉลาก', 'error'); return; }
+  const valid = (items || []).filter(it => it && String(it.name || '').trim() && Number(it.qty) > 0);
+  if (!valid.length) { popup.close(); toast('ไม่มีรายการสินค้าและจำนวนสำหรับพิมพ์ฉลาก', 'error'); return; }
+  if (valid.length > 48) {
+    popup.close();
+    toast('ฉลากเกิน 48 รายการ ไม่สามารถพิมพ์ให้อ่านได้บน A4 หน้าเดียว กรุณาแยกเอกสาร', 'error');
+    return;
+  }
+  const columns = valid.length <= 16 ? 2 : valid.length <= 30 ? 3 : 4;
+  const rows = Math.ceil(valid.length / columns);
+  const nameSize = columns === 2 ? 14 : columns === 3 ? 11 : 9;
+  const ref = escapeHTML(reference || 'รายการสินค้า');
+  const cards = valid.map((it, i) => {
+    const name = escapeHTML(it.name);
+    const sku = escapeHTML(it.sku || '-');
+    const qty = fmt(it.qty);
+    return `<section class="label"><div class="label-no">${i + 1} / ${valid.length}</div><div class="label-name">${name}</div><div class="label-sku">SKU: ${sku}</div><div class="label-qty">จำนวน <strong>${qty}</strong> ชิ้น</div></section>`;
+  }).join('');
+  popup.onload = () => popup.print();
+  popup.document.open();
+  popup.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>ฉลากสินค้า ${ref}</title><style>
+    @page{size:A4 portrait;margin:8mm}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;width:194mm;height:281mm;font-family:Arial,Tahoma,sans-serif;color:#111827}
+    .sheet{width:194mm;height:281mm;display:flex;flex-direction:column;overflow:hidden}
+    .heading{height:14mm;flex:none;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #9ca3af;font-size:11px}
+    .heading strong{font-size:14px}
+    .grid{height:267mm;display:grid;grid-template-columns:repeat(${columns},minmax(0,1fr));grid-template-rows:repeat(${rows},minmax(0,1fr));gap:1.5mm;padding-top:1.5mm}
+    .label{min-width:0;min-height:0;border:1px dashed #9ca3af;padding:2mm 2.5mm;display:flex;flex-direction:column;overflow:hidden;break-inside:avoid}
+    .label-no{font-size:8px;color:#6b7280;text-align:right;line-height:1}
+    .label-name{font-size:${nameSize}px;line-height:1.18;font-weight:700;overflow-wrap:anywhere;overflow:hidden;flex:1;display:flex;align-items:center}
+    .label-sku{font-size:${Math.max(7,nameSize-2)}px;color:#4b5563;overflow-wrap:anywhere;max-height:2.5em;overflow:hidden}
+    .label-qty{font-size:${nameSize}px;border-top:1px solid #d1d5db;margin-top:1mm;padding-top:1mm;white-space:nowrap}
+    .label-qty strong{font-size:${nameSize+3}px}
+    @media screen{body{margin:10px auto;box-shadow:0 2px 12px #aaa}}
+    @media print{html,body,.sheet{overflow:hidden}}
+  </style></head><body><div class="sheet"><header class="heading"><strong>SEALTHAI · ฉลากสินค้า</strong><span>${ref} · ${valid.length} รายการ · A4 1 หน้า</span></header><main class="grid">${cards}</main></div></body></html>`);
+  popup.document.close();
+}
+
+async function printPOItemLabels(poId) {
+  const popup = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+  if (!popup) { toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ฉลาก', 'error'); return; }
+  try {
+    const [{data:po,error:poError},{data:items,error:itemError}] = await Promise.all([
+      sb.from('purchase_orders').select('po_no').eq('shop_id',currentShop.id).eq('id',poId).single(),
+      sb.from('purchase_order_items').select('product_id,product_name,qty_ordered').eq('po_id',poId).order('id')
+    ]);
+    if (poError || itemError || !po) throw new Error(poError?.message || itemError?.message || 'ไม่พบ PO');
+    const skuMap = await loadPOSkuMap(items || []);
+    printA4ProductLabels('PO ' + po.po_no, (items || []).map(it => ({
+      name: it.product_name || '-', sku: skuMap[it.product_id]?.sku || '-', qty: it.qty_ordered
+    })), popup);
+  } catch (error) {
+    popup.close();
+    toast('พิมพ์ฉลาก PO ไม่สำเร็จ: ' + error.message, 'error');
+  }
+}
+
+function printGRItemLabels(encodedKey) {
+  const doc = allStockDocs.find(d => d.gr_key === decodeURIComponent(encodedKey));
+  if (!doc) { toast('ไม่พบใบรับสินค้า กรุณารีเฟรชหน้า', 'error'); return; }
+  const popup = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+  printA4ProductLabels('รับเข้า ' + (doc.po_no !== '-' ? doc.po_no : doc.lot_name),
+    doc.items.map(it => ({ name: it.product_name, sku: it.product_sku, qty: it.qty })), popup);
+}
+
+function printPendingStockLabels() {
+  const popup = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
+  const products = Array.isArray(allProducts) ? allProducts : [];
+  printA4ProductLabels('รายการรับเข้าที่ยังไม่บันทึก', stockRows.filter(r => r?.enabled !== false).map(r => {
+    const product = products.find(p => p.id === r.product_id);
+    return { name: r.product_name || product?.name, sku: product?.sku || '-', qty: r.qty };
+  }), popup);
 }
 
 async function printPO(poId) {
@@ -40575,6 +40658,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.12', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'พิมพ์ฉลากสินค้าจาก PO และใบรับเข้า', items:[
+      'เพิ่มปุ่มพิมพ์ฉลาก A4 ในรายละเอียด PO, ฟอร์มรับสินค้า และรายละเอียดใบรับเข้าที่บันทึกแล้ว',
+      'ฉลากแสดงชื่อ SKU และจำนวนต่อรายการ จัดหลายช่องใน A4 หน้าเดียว พร้อมแจ้งเตือนเมื่อเกิน 48 รายการ'
+    ]},
     { v:'3.11', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เลขที่ PO ลูกค้าในออเดอร์และบิลเงินสด', items:[
       'เพิ่มช่องเลขที่ PO ของลูกค้าในฟอร์มสร้างและแก้ไขออเดอร์ โดยเก็บเป็นข้อมูลเฉพาะออเดอร์',
       'พิมพ์เลข PO ลูกค้าถัดจากเลขอ้างอิงในบิลเงินสด และเตรียมไฟล์ SQL สำหรับเพิ่มคอลัมน์ใน Supabase'
