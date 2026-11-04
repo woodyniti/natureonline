@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.15</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.16</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.15';
-const DISPLAY_APP_VERSION = 'v3.15';
+const CURRENT_APP_VERSION = 'sealthai-v3.16';
+const DISPLAY_APP_VERSION = 'v3.16';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1300,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.15)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.15 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.16)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.16 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1373,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.15)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.15 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.16)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.16 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1402,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.15)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.15 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.16)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.16 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4133,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.15)">v3.15 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.16)">v3.16 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -23109,7 +23109,8 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
         product_name: it.product_name || it.name || master?.name || '',
         sku: it.sku || master?.sku || '',
         qty_ordered: Number(it.qty_ordered) || Number(it.qty) || 1,
-        unit_cost: buyPrice > 0 ? buyPrice : ''
+        unit_cost: buyPrice > 0 ? buyPrice : '',
+        internal_note: it.internal_note || ''
       };
     });
   }
@@ -23375,7 +23376,8 @@ function selectNewPOProductById(rowIdx, productId) {
     product_name: p.name,
     sku: p.sku || p.supplier_sku || p.name || '',
     qty_ordered: poItems[rowIdx]?.qty_ordered || 1,
-    unit_cost: buyPrice > 0 ? buyPrice : ''
+    unit_cost: buyPrice > 0 ? buyPrice : '',
+    internal_note: poItems[rowIdx]?.internal_note || ''
   };
 
   const dd = document.getElementById('po-prod-dd-' + rowIdx);
@@ -23401,6 +23403,9 @@ function autoMergePOItems() {
       const addQty = Number(it.qty_ordered || 0);
       existing.qty_ordered = (Number(existing.qty_ordered || 0) + addQty);
       if (!existing.unit_cost && it.unit_cost) existing.unit_cost = it.unit_cost;
+      const nextNote = String(it.internal_note || '').trim();
+      if (nextNote && !String(existing.internal_note || '').split('\n').includes(nextNote))
+        existing.internal_note = [existing.internal_note, nextNote].filter(Boolean).join('\n');
       mergedCount++;
     } else {
       const clone = { ...it };
@@ -23724,6 +23729,20 @@ function renderPOItems() {
     r2.appendChild(tw);
 
     card.appendChild(r2);
+    const noteWrap = document.createElement('div');
+    noteWrap.style.cssText = 'margin-top:10px;padding:9px 10px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px';
+    const noteLabel = document.createElement('label');
+    noteLabel.style.cssText = 'display:block;color:#5b21b6;font-size:11px;font-weight:700;margin-bottom:5px';
+    noteLabel.textContent = '🔒 หมายเหตุภายในรายการนี้ (ไม่พิมพ์ใน PO)';
+    const noteInput = document.createElement('textarea');
+    noteInput.rows = 2;
+    noteInput.maxLength = 1000;
+    noteInput.value = it.internal_note || '';
+    noteInput.placeholder = 'เช่น ลูกค้า ABC ขอสินค้ารุ่นนี้ไว้ / สั่งเติมสต๊อกขั้นต่ำ';
+    noteInput.style.cssText = 'width:100%;box-sizing:border-box;background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:7px 9px;font:inherit;font-size:12px;resize:vertical';
+    noteInput.oninput = () => { poItems[i].internal_note = noteInput.value; };
+    noteWrap.append(noteLabel, noteInput);
+    card.appendChild(noteWrap);
     el.appendChild(card);
   });
 
@@ -23735,7 +23754,7 @@ function renderPOItems() {
   el.appendChild(ab);
 }
 
-function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:''});renderPOItems();}
+function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:'',internal_note:''});renderPOItems();}
 
 // ── Quick Buy Price Modal for PO (บันทึกราคาซื้อโดยไม่ปิดหน้า PO) ──
 function openPOProductQuickPriceModal(productId, rowIdx) {
@@ -24063,6 +24082,14 @@ async function savePO(status) {
   if (!Number.isFinite(rate) || rate <= 0) {
     toast('กรุณาระบุอัตราแลกเปลี่ยนที่มากกว่า 0', 'error'); return;
   }
+  const hasItemNotes = poItems.some(it => String(it.internal_note || '').trim());
+  if (hasItemNotes) {
+    const { error: noteSchemaError } = await sb.from('purchase_order_items').select('internal_note').limit(1);
+    if (noteSchemaError) {
+      toast('ยังบันทึกหมายเหตุรายสินค้าไม่ได้ กรุณารัน supabase_po_item_internal_note_v316.sql ใน Supabase SQL Editor ก่อน: ' + noteSchemaError.message, 'error');
+      return;
+    }
+  }
   
   _poSaving = true;
 
@@ -24132,12 +24159,15 @@ async function savePO(status) {
     const items=poItems.filter(it=>it.product_name).map(it=>({
       po_id:po.id, product_id:it.product_id||null, product_name:it.product_name,
       qty_ordered:it.qty_ordered, qty_received:0, unit_cost: cur === 'USD' ? Number(it.unit_cost)*rate : it.unit_cost,
+      ...(hasItemNotes ? { internal_note:String(it.internal_note || '').trim() } : {})
     }));
     if(items.length) {
       const { error: itemsErr } = await sb.from('purchase_order_items').insert(items);
       if (itemsErr) {
         console.error('Error inserting PO items:', itemsErr);
         toast('บันทึกรายการสินค้าไม่สำเร็จ: ' + itemsErr.message, 'error');
+        _poSaving = false;
+        return;
       }
     }
   }
@@ -24170,17 +24200,20 @@ async function dedupePOItems(poId) {
     g.sort((a,b) => Number(b.qty_received||0) - Number(a.qty_received||0)); // เก็บตัวที่รับของแล้วมากสุด
     const keeper = g[0];
     let totalQty = Number(keeper.qty_ordered || 0);
+    const notes = [...new Set(g.map(it => String(it.internal_note || '').trim()).filter(Boolean))];
     for (let idx = 1; idx < g.length; idx++) {
       totalQty += Number(g[idx].qty_ordered || 0);
       toDelete.push(g[idx].id);
     }
-    toUpdate.push({ id: keeper.id, qty_ordered: totalQty });
+    toUpdate.push({ id: keeper.id, qty_ordered: totalQty, ...(notes.length ? { internal_note:notes.join('\n') } : {}) });
   });
   if (!toDelete.length) { toast('ไม่พบรายการซ้ำ', 'info'); return; }
   if (!confirm('พบรายการสินค้าซ้ำ ' + toDelete.length + ' รายการ — ต้องการลบและรวมจำนวนสั่งซื้อเข้าด้วยกันหรือไม่?')) return;
 
   for (const upd of toUpdate) {
-    await sb.from('purchase_order_items').update({ qty_ordered: upd.qty_ordered }).eq('id', upd.id);
+    const { id, ...payload } = upd;
+    const { error: updateError } = await sb.from('purchase_order_items').update(payload).eq('id', id);
+    if (updateError) { toast('รวมรายการไม่สำเร็จ: ' + updateError.message, 'error'); return; }
   }
   const { error } = await sb.from('purchase_order_items').delete().in('id', toDelete);
   if (error) { toast('ลบไม่สำเร็จ: ' + error.message, 'error'); return; }
@@ -24307,6 +24340,10 @@ async function viewPO(poId) {
 
       const supTHB = getProductSupplierTHB(product);
       const supUSD = getProductSupplierUSD(product);
+      const internalNote = String(it.internal_note || '').trim();
+      const internalNoteHtml = '<div style="margin-top:5px;padding:5px 7px;background:#f5f3ff;border-radius:5px;color:#5b21b6;font-size:11px;white-space:pre-wrap">🔒 หมายเหตุภายใน: '+
+        (internalNote ? escapeHTML(internalNote) : '<span style="color:#8b7ab8">ยังไม่มี</span>')+
+        ' <button type="button" onclick="editPOItemInternalNote(&quot;'+poId+'&quot;,&quot;'+it.id+'&quot;)" style="border:0;background:none;color:#6d28d9;cursor:pointer;font-weight:700;text-decoration:underline">✏️ แก้ไข</button></div>';
       const supCell = `
         <div style="display:flex;flex-direction:column;gap:3px">
           ${supTHB ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇹🇭 THB:</span><b>${escapeHTML(supTHB)}</b>${poCopyButton(supTHB,'Sup THB')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇹🇭 THB: -</div>'}
@@ -24315,7 +24352,7 @@ async function viewPO(poId) {
       `;
 
       return '<tr style="'+rowStyle+'">'+
-        '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+'</td>'+
+        '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+internalNoteHtml+'</td>'+
         '<td>'+supCell+'</td>'+
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
         '<td style="text-align:right;color:var(--accent)">'+fmt(receivedQty)+(overQty>0?'<div style="font-size:10px;color:var(--amber)">รับเกิน +'+fmt(overQty)+'</div>':'')+'</td>'+
@@ -24374,6 +24411,23 @@ async function viewPO(poId) {
     footer.innerHTML=btns;
   }
   openModal('modal-po-detail');
+}
+
+async function editPOItemInternalNote(poId, itemId) {
+  const { data: item, error: loadError } = await sb.from('purchase_order_items')
+    .select('internal_note').eq('po_id', poId).eq('id', itemId).single();
+  if (loadError) {
+    toast('ยังแก้หมายเหตุรายสินค้าไม่ได้ กรุณารัน supabase_po_item_internal_note_v316.sql ก่อน: ' + loadError.message, 'error');
+    return;
+  }
+  const next = prompt('🔒 หมายเหตุภายในรายการสินค้า (ไม่แสดงบน PO ที่พิมพ์)', item?.internal_note || '');
+  if (next === null) return;
+  if (next.length > 1000) { toast('หมายเหตุต้องไม่เกิน 1,000 ตัวอักษร', 'error'); return; }
+  const { error: updateError } = await sb.from('purchase_order_items')
+    .update({ internal_note:next.trim() }).eq('po_id', poId).eq('id', itemId);
+  if (updateError) { toast('บันทึกหมายเหตุไม่สำเร็จ: ' + updateError.message, 'error'); return; }
+  toast('บันทึกหมายเหตุภายในรายการแล้ว ✓', 'success');
+  viewPO(poId);
 }
 
 
@@ -24463,7 +24517,8 @@ async function editPO(poId) {
       product_name: it.product_name || (matchedMaster?.name) || '',
       sku: (matchedMaster?.sku) || it.product_name || '',
       qty_ordered: Number(it.qty_ordered) || 1,
-      unit_cost: (unitCost > 0) ? unitCost : ''
+      unit_cost: (unitCost > 0) ? unitCost : '',
+      internal_note: it.internal_note || ''
     };
   });
   
@@ -40731,7 +40786,8 @@ async function saveQuickProduct() {
           product_name: newProd.name,
           sku: newProd.sku || '',
           qty_ordered: poItems[ctx.rowIdx].qty_ordered || 1,
-          unit_cost: finalPoUnitCost
+          unit_cost: finalPoUnitCost,
+          internal_note: poItems[ctx.rowIdx].internal_note || ''
         };
       } else {
         poItems.push({
@@ -40739,7 +40795,8 @@ async function saveQuickProduct() {
           product_name: newProd.name,
           sku: newProd.sku || '',
           qty_ordered: 1,
-          unit_cost: finalPoUnitCost
+          unit_cost: finalPoUnitCost,
+          internal_note: ''
         });
       }
       renderPOItems();
@@ -40777,6 +40834,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.16', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'หมายเหตุภายในแยกรายการสินค้า PO', items:[
+      'เพิ่มช่องเหตุผลการสั่งซื้อในแต่ละรายการ PO เช่น ลูกค้าร้องขอ และแสดงในรายละเอียดภายในพร้อมแก้ไขได้',
+      'ไม่แสดงหมายเหตุรายสินค้าในเอกสาร PO ที่พิมพ์ และเพิ่ม SQL migration สำหรับคอลัมน์ internal_note'
+    ]},
     { v:'3.15', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ทะเบียนเอกสารรับสินค้าและรายละเอียดรายใบ', items:[
       'แก้ฟังก์ชันซ้ำที่ทับมุมมองเอกสารรับเข้า และแสดงเลขเอกสาร วันที่ Lot PO ผู้ขาย จำนวน และต้นทุนในตาราง',
       'คลิกเลขเอกสารเพื่อดูรายการสินค้า จำนวน ราคาต่อหน่วย และยอดรวม พร้อมผูกเลขเอกสารใหม่กับธุรกรรมรับเข้าทุกบรรทัด',
