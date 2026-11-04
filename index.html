@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.14</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.15</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.14';
-const DISPLAY_APP_VERSION = 'v3.14';
+const CURRENT_APP_VERSION = 'sealthai-v3.15';
+const DISPLAY_APP_VERSION = 'v3.15';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1300,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.14)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.14 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.15)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.15 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1373,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.14)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.14 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.15)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.15 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1402,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.14)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.14 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.15)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.15 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4133,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.14)">v3.14 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.15)">v3.15 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -14065,6 +14065,7 @@ async function backfillLandedCosts() {
 }
 
 async function stock() {
+  _stockCurrentView = 'docs';
   document.getElementById('topbar-actions').innerHTML =
     `<div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="openStockModal()">+ รับสินค้าเข้า</button>
@@ -14095,7 +14096,7 @@ async function stock() {
 
     <!-- Document Search / Filter Bar -->
     <div class="filter-bar mb-4" id="stock-filter-bar">
-      <input type="text" id="sh-search" placeholder="🔍 ค้นหาเอกสาร: เลขที่ Lot / PO / Supplier / สินค้า" oninput="filterStockHistory()" style="flex:1;min-width:180px">
+      <input type="text" id="sh-search" placeholder="🔍 ค้นหาเลขเอกสาร / Lot / PO / Supplier / สินค้า" oninput="filterStockHistory()" style="flex:1;min-width:180px">
       <select id="sh-prod-filter" onchange="filterStockHistory()" style="min-width:140px;display:none">
         <option value="">ทุกสินค้า</option>
       </select>
@@ -14934,7 +14935,10 @@ async function saveStockBatch() {
     return s + baseGoodsTHB + otherTHB;
   }, 0);
 
+  const receiptNoByPO = new Map();
   const inserts = valid.map(r => {
+    const receiptGroup = r.po_id || 'NO_PO';
+    if (!receiptNoByPO.has(receiptGroup)) receiptNoByPO.set(receiptGroup, newGoodsReceiptNo(date));
     const rQty = Number(r.qty) || 0;
     const rCost = Number(r.cost) || 0;
     const rOther = Number(r.other) || 0;
@@ -14968,6 +14972,7 @@ async function saveStockBatch() {
       lot_name: finalLot,
       move_date: date,
       po_id: r.po_id || null,
+      note: 'GR|' + receiptNoByPO.get(receiptGroup) + '|COST_INCLUDED',
     };
   });
 
@@ -15510,28 +15515,54 @@ let allStockHistory = [];
 let allStockDocs = [];
 let _stockCurrentView = 'docs'; // 'docs' or 'items'
 
+function newGoodsReceiptNo(date) {
+  return 'GR-' + String(date || today()).replace(/-/g, '') + '-' + Date.now().toString(36).toUpperCase().slice(-6) + Math.random().toString(36).toUpperCase().slice(2, 4);
+}
+
+function legacyGoodsReceiptNo(key, date) {
+  let hash = 2166136261;
+  for (const char of String(key)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+  return 'GR-' + String(date || '').replace(/-/g, '') + '-L' + (hash >>> 0).toString(16).toUpperCase().padStart(8, '0');
+}
+
 async function loadStockHistory() {
-  const [mvRes, lcRes, poRes] = await Promise.all([
-    sb.from('stock_movements')
-      .select('*,products(id,name,sku)')
-      .eq('shop_id', currentShop.id)
-      .or('move_type.eq.in,note.like.GR|%,note.like.GI|%')
-      .order('move_date', { ascending: false })
-      .order('created_at', { ascending: false })
-      .limit(600),
+  const fetchMovements = async () => {
+    const rows = [];
+    for (let offset = 0; offset < 10000; offset += 500) {
+      const { data, error } = await sb.from('stock_movements')
+        .select('*,products(id,name,sku)')
+        .eq('shop_id', currentShop.id)
+        .or('move_type.eq.in,note.like.GR|%,note.like.GI|%')
+        .order('move_date', { ascending: false })
+        .order('created_at', { ascending: false })
+        .range(offset, offset + 499);
+      if (error) return { data: rows, error };
+      rows.push(...(data || []));
+      if (!data || data.length < 500) break;
+    }
+    return { data: rows, error: null };
+  };
+  const [mvRes, lcRes] = await Promise.all([
+    fetchMovements(),
     sb.from('landed_costs')
       .select('*')
       .eq('shop_id', currentShop.id)
-      .limit(300),
-    sb.from('purchase_orders')
-      .select('id,po_no,po_date,supplier_name,total_amount')
-      .eq('shop_id', currentShop.id)
-      .limit(300)
+      .limit(1000)
   ]);
+  if (mvRes.error) { toast('โหลดเอกสารรับเข้าไม่สำเร็จ: ' + mvRes.error.message, 'error'); return; }
+  if (lcRes.error) toast('โหลดค่าใช้จ่ายเพิ่มเติมของเอกสารรับเข้าไม่สำเร็จ: ' + lcRes.error.message, 'error');
 
   allStockHistory = mvRes.data || [];
   const landedCosts = lcRes.data || [];
-  const poMap = new Map((poRes.data || []).map(p => [p.id, p]));
+  const poIds = [...new Set(allStockHistory.map(r => r.po_id).filter(Boolean))];
+  const poMap = new Map();
+  for (let offset = 0; offset < poIds.length; offset += 100) {
+    const { data: poData, error: poError } = await sb.from('purchase_orders')
+      .select('id,po_no,po_date,supplier_name,total_amount')
+      .eq('shop_id', currentShop.id).in('id', poIds.slice(offset, offset + 100));
+    if (poError) { toast('โหลดข้อมูล PO อ้างอิงไม่สำเร็จ: ' + poError.message, 'error'); return; }
+    (poData || []).forEach(po => poMap.set(po.id, po));
+  }
 
   // ── Group incoming stock movements into Goods Receipt Documents ──
   const docGroups = new Map();
@@ -15542,13 +15573,15 @@ async function loadStockHistory() {
     const poNo = po ? po.po_no : (r.note && r.note.includes('PO:') ? r.note.split('PO:')[1].trim() : '-');
     const supName = po ? po.supplier_name : '-';
     
-    // Group Key: Date + Lot + PO + (first 13 chars of created_at for time batching)
-    const timeKey = (r.created_at || '').slice(0, 14); // YYYY-MM-DDTHH
-    const grKey = `${r.move_date}_${r.lot_name || 'NO_LOT'}_${r.po_id || 'NO_PO'}_${timeKey}`;
+    // New receipts carry a shared document number in note; old rows use a stable fallback group.
+    const receiptNo = (r.note || '').match(/^GR\|(GR-[A-Z0-9-]+)/)?.[1] || '';
+    const timeKey = (r.created_at || '').slice(0, 16); // legacy: same minute/lot/PO
+    const grKey = receiptNo || `${r.move_date}_${r.lot_name || 'NO_LOT'}_${r.po_id || 'NO_PO'}_${timeKey}`;
 
     if (!docGroups.has(grKey)) {
       docGroups.set(grKey, {
         gr_key: grKey,
+        doc_no: receiptNo || legacyGoodsReceiptNo(grKey, r.move_date),
         move_date: r.move_date,
         lot_name: r.lot_name || '-',
         po_id: r.po_id || null,
@@ -15566,10 +15599,13 @@ async function loadStockHistory() {
 
     const doc = docGroups.get(grKey);
     const qty = Number(r.qty) || 0;
-    const netUnitCost = Number(r.cost_per_unit) || 0;
+    const storedUnitCost = Number(r.cost_per_unit) || 0;
     const landedShare = Number(r.other_cost) || 0;
-    const baseTotal = Math.max(0, (netUnitCost * qty) - landedShare);
-    const baseUnitCost = qty > 0 ? (baseTotal / qty) : netUnitCost;
+    const landedSeparate = (r.note || '').includes('|COST_EXCLUDED');
+    const netTotal = storedUnitCost * qty + (landedSeparate ? landedShare : 0);
+    const netUnitCost = qty > 0 ? netTotal / qty : storedUnitCost;
+    const baseTotal = Math.max(0, netTotal - landedShare);
+    const baseUnitCost = qty > 0 ? baseTotal / qty : storedUnitCost;
 
     doc.items.push({
       movement_id: r.id,
@@ -15581,14 +15617,14 @@ async function loadStockHistory() {
       base_total: baseTotal,
       landed_share: landedShare,
       net_unit_cost: netUnitCost,
-      net_total: netUnitCost * qty,
+      net_total: netTotal,
       note: r.note || ''
     });
 
     doc.total_qty += qty;
     doc.total_base_cost += baseTotal;
     doc.total_landed_cost += landedShare;
-    doc.total_net_cost += (netUnitCost * qty);
+    doc.total_net_cost += netTotal;
   });
 
   // Attach landed costs breakdown if available
@@ -15631,7 +15667,7 @@ function switchStockView(view) {
   if (view === 'docs') {
     if (titleEl) titleEl.textContent = '📄 รายการเอกสารใบรับสินค้าเข้า (Goods Receipts)';
     if (prodFilter) prodFilter.style.display = 'none';
-    if (searchInput) searchInput.placeholder = '🔍 ค้นหาเอกสาร: เลขที่ Lot / PO / Supplier / สินค้า';
+    if (searchInput) searchInput.placeholder = '🔍 ค้นหาเลขเอกสาร / Lot / PO / Supplier / สินค้า';
   } else {
     if (titleEl) titleEl.textContent = '📦 ประวัติการเคลื่อนไหวสต๊อกรายสินค้า (Item Movements)';
     if (prodFilter) prodFilter.style.display = 'block';
@@ -15649,6 +15685,7 @@ function filterStockHistory() {
     let docs = allStockDocs;
     if (q) {
       docs = docs.filter(d => 
+        (d.doc_no || '').toLowerCase().includes(q) ||
         (d.lot_name || '').toLowerCase().includes(q) ||
         (d.po_no || '').toLowerCase().includes(q) ||
         (d.supplier_name || '').toLowerCase().includes(q) ||
@@ -15693,8 +15730,9 @@ function renderStockDocumentsTable(docs) {
       <table>
         <thead>
           <tr>
+            <th>เลขเอกสาร</th>
             <th>วันที่รับ</th>
-            <th>Lot / เลขที่รับเข้า</th>
+            <th>Lot</th>
             <th>PO อ้างอิง</th>
             <th>ผู้จำหน่าย (Supplier)</th>
             <th class="text-right">จำนวนรายการ</th>
@@ -15707,6 +15745,7 @@ function renderStockDocumentsTable(docs) {
         <tbody>
           ${docs.map(d => `
             <tr>
+              <td><button type="button" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')" style="border:0;background:none;color:var(--blue);font-weight:800;cursor:pointer;padding:3px 0;text-align:left;font-family:var(--mono)">#${escapeHTML(d.doc_no)}</button></td>
               <td style="white-space:nowrap;font-size:12px;font-weight:600">${escapeHTML(d.move_date)}</td>
               <td>
                 <div style="font-weight:700;color:var(--text)">🏷️ ${escapeHTML(d.lot_name)}</div>
@@ -15731,7 +15770,7 @@ function renderStockDocumentsTable(docs) {
                 ${fmtB(d.total_net_cost)}
               </td>
               <td style="text-align:center;white-space:nowrap">
-                <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key)}')">👁️ ดูเอกสาร</button>
+                <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')">👁️ ดูเอกสาร</button>
               </td>
             </tr>
           `).join('')}
@@ -15744,7 +15783,8 @@ function renderStockDocumentsTable(docs) {
       <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:10px;border-left:3px solid var(--accent)">
         <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
           <div>
-            <div style="font-weight:700;font-size:14px;color:var(--text)">🏷️ Lot: ${escapeHTML(d.lot_name)}</div>
+            <button type="button" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')" style="border:0;background:none;color:var(--blue);font-weight:800;font-size:14px;padding:0;text-align:left;cursor:pointer">#${escapeHTML(d.doc_no)}</button>
+            <div style="font-size:12px;color:var(--text)">Lot: ${escapeHTML(d.lot_name)}</div>
             <div style="font-size:11px;color:var(--text3)">วันที่: ${escapeHTML(d.move_date)} · PO: ${escapeHTML(d.po_no)}</div>
           </div>
           <div class="font-mono" style="font-size:15px;font-weight:700;color:var(--green)">
@@ -15765,7 +15805,7 @@ function renderStockDocumentsTable(docs) {
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end">
-          <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key)}')">👁️ เปิดดูใบรับเข้า</button>
+          <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')">👁️ เปิดดูใบรับเข้า</button>
         </div>
       </div>
     `).join('') + '</div>';
@@ -15787,15 +15827,15 @@ function openGRDocumentDetail(encodedKey) {
   }
 
   modal.innerHTML = `
-    <div class="modal" style="max-width:850px">
+    <div class="modal" style="max-width:1100px;max-height:calc(100vh - 32px);overflow-y:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px">
         <div>
           <div class="modal-title" style="margin:0;display:flex;align-items:center;gap:8px">
-            <span>📄 ใบรับสินค้าเข้าสต๊อก (Goods Receipt)</span>
+            <span>📄 ใบรับสินค้าเข้าสต๊อก #${escapeHTML(doc.doc_no)}</span>
             <span class="badge badge-green">รับเข้าสำเร็จ</span>
           </div>
           <div style="font-size:12px;color:var(--text3);margin-top:4px">
-            วันที่รับ: <b>${escapeHTML(doc.move_date)}</b> | Lot: <b>${escapeHTML(doc.lot_name)}</b>
+            Goods Receipt · วันที่รับ: <b>${escapeHTML(doc.move_date)}</b> · Lot: <b>${escapeHTML(doc.lot_name)}</b>
           </div>
         </div>
         <button onclick="closeModal('${modalId}')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3)">✕</button>
@@ -15825,7 +15865,7 @@ function openGRDocumentDetail(encodedKey) {
 
       <!-- Itemized Table -->
       <div style="font-weight:700;font-size:13px;margin-bottom:8px">📦 รายการสินค้าในใบรับเข้า</div>
-      <div class="table-wrap mb-3" style="max-height:280px;overflow-y:auto">
+      <div class="table-wrap mb-3" style="overflow-x:auto">
         <table>
           <thead>
             <tr>
@@ -15876,7 +15916,7 @@ function openGRDocumentDetail(encodedKey) {
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์ใบรับสินค้า</button>
-          <button class="btn btn-secondary" onclick="printGRItemLabels('${encodeURIComponent(doc.gr_key)}')">🏷️ พิมพ์ฉลากสินค้า A4</button>
+          <button class="btn btn-secondary" onclick="printGRItemLabels('${encodeURIComponent(doc.gr_key).replace(/'/g,'%27')}')">🏷️ พิมพ์ฉลากสินค้า A4</button>
         </div>
         <button class="btn btn-primary" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
       </div>
@@ -15886,18 +15926,6 @@ function openGRDocumentDetail(encodedKey) {
   modal.classList.add('open');
 }
 
-
-function filterStockHistory() {
-  const q    = (document.getElementById('sh-search')?.value||'').toLowerCase();
-  const prod = document.getElementById('sh-prod-filter')?.value||'';
-  let rows = allStockHistory;
-  if (q) rows = rows.filter(r=>
-    (r.products?.name||'').toLowerCase().includes(q) ||
-    (r.lot_name||'').toLowerCase().includes(q) ||
-    (r.note||'').toLowerCase().includes(q));
-  if (prod) rows = rows.filter(r=>r.product_id===prod);
-  renderStockTable(rows);
-}
 
 function renderStockTable(rows) {
   const cnt = document.getElementById('sh-count');
@@ -21007,6 +21035,7 @@ async function confirmGR(poId, pendingCount) {
   let stockInserted = false;
   try {
   const grDate = document.getElementById('gr-date')?.value || today();
+  const receiptNo = newGoodsReceiptNo(grDate);
   const {data:po,error:poErr} = await sb.from('purchase_orders').select('*').eq('id',poId).single();
   if (poErr || !po) throw poErr || new Error('ไม่พบ PO');
 
@@ -21050,6 +21079,7 @@ async function confirmGR(poId, pendingCount) {
         move_type:'in', qty:item.qty, cost_per_unit:item.unitCost,
         other_cost: proportionalLanded,
         move_date:grDate, po_id:poId,
+        note:'GR|' + receiptNo + '|COST_EXCLUDED',
       });
       productIds.push(item.productId);
     }
@@ -40747,6 +40777,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.15', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ทะเบียนเอกสารรับสินค้าและรายละเอียดรายใบ', items:[
+      'แก้ฟังก์ชันซ้ำที่ทับมุมมองเอกสารรับเข้า และแสดงเลขเอกสาร วันที่ Lot PO ผู้ขาย จำนวน และต้นทุนในตาราง',
+      'คลิกเลขเอกสารเพื่อดูรายการสินค้า จำนวน ราคาต่อหน่วย และยอดรวม พร้อมผูกเลขเอกสารใหม่กับธุรกรรมรับเข้าทุกบรรทัด',
+      'เอกสารเก่าได้เลขอ้างอิงแบบคำนวณโดยไม่แก้ไขธุรกรรมย้อนหลัง และโหลดประวัติแบบแบ่งหน้าแทนการตัดไว้ 600 รายการ'
+    ]},
     { v:'3.14', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รับสินค้าเกิน PO และเลือกรับบางรายการ', items:[
       'รับจำนวนเกินยอดคงเหลือได้ทั้งจาก PO และฟอร์มรับเข้าสต๊อก โดยยืนยันยอดเกินก่อนบันทึกและเก็บยอดรับจริง',
       'เมื่อยังรับไม่ครบบางรายการ ระบบถามว่าจะเปิด PO ไว้รับต่อหรือปิดรับทันที และแสดงยอดรับเกินโดยไม่ทำให้คงเหลือติดลบ'
