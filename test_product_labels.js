@@ -16,7 +16,8 @@ const context = {
   escapeHTML: value => String(value ?? '').replace(/[&<>"']/g, ch => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   })[ch]),
-  fmt: value => Number(value).toLocaleString('th-TH', { maximumFractionDigits: 2 })
+  fmt: value => Number(value).toLocaleString('th-TH', { maximumFractionDigits: 2 }),
+  setTimeout: callback => callback()
 };
 vm.runInNewContext(html.slice(start, end), context);
 
@@ -25,6 +26,8 @@ function popup() {
   return {
     document: { open() {}, write(text) { output += text; }, close() {} },
     close() { this.closed = true; },
+    focus() { this.focused = true; },
+    print() { this.printed = (this.printed || 0) + 1; },
     get output() { return output; }
   };
 }
@@ -36,6 +39,9 @@ assert.match(win.output, /O-Ring 12x1\.5/);
 assert.match(win.output, /SKU: OR-12/);
 assert.match(win.output, /<strong>40<\/strong> ชิ้น/);
 assert.match(win.output, /A4 1 หน้า/);
+assert.match(win.output, /onclick="window\.print\(\)"/);
+assert.match(win.output, /\.print-toolbar\{display:none\}/);
+assert.equal(win.printed, 1);
 
 win = popup();
 context.printA4ProductLabels('GR-1', Array.from({ length: 48 }, (_, i) => ({ name: `Item ${i}`, qty: 1 })), win);
