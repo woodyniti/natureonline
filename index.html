@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.09</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.10</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.09';
-const DISPLAY_APP_VERSION = 'v3.09';
+const CURRENT_APP_VERSION = 'sealthai-v3.10';
+const DISPLAY_APP_VERSION = 'v3.10';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.09)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.09 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.10 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1336,7 +1336,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.09)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.09 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.10 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1365,7 +1365,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.09)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.09 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.10 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4104,7 +4104,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.09)">v3.09 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.10)">v3.10 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -20142,6 +20142,14 @@ async function convertToOrder(qtId) {
   loadQuotes();
 }
 
+function getQuoteBankSettings(shop = currentShop) {
+  return {
+    name: String(shop?.quote_bank_name || 'ธนาคารกสิกรไทย · KASIKORNBANK').trim(),
+    accountName: String(shop?.quote_bank_account_name || 'MS. NUNTANA L').trim(),
+    accountNumber: String(shop?.quote_bank_account_number || '128-8-23520-8').trim()
+  };
+}
+
 async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original') {
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
@@ -20150,6 +20158,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
   if(!qt) return;
   const meta = getQuoteMeta(qt);
   const shop = currentShop||{};
+  const bank = getQuoteBankSettings(shop);
   const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
 
   function itemNet(it) {
@@ -20307,8 +20316,8 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
 
     // Bank transfer details
     bp.push('<div class="bank-box">');
-    bp.push('<div><div class="bank-title">ชำระเงินโดยการโอน / Bank Transfer</div><div class="bank-name">ธนาคารกสิกรไทย · KASIKORNBANK</div><div class="bank-detail">ชื่อบัญชี / Account Name: <strong>MS. NUNTANA L</strong></div></div>');
-    bp.push('<div style="text-align:right"><div style="font-size:10.5px;color:#555">เลขที่บัญชี / Account No.</div><div class="bank-account">128-8-23520-8</div></div>');
+    bp.push('<div><div class="bank-title">ชำระเงินโดยการโอน / Bank Transfer</div><div class="bank-name">'+escapeHTML(bank.name)+'</div><div class="bank-detail">ชื่อบัญชี / Account Name: <strong>'+escapeHTML(bank.accountName)+'</strong></div></div>');
+    bp.push('<div style="text-align:right"><div style="font-size:10.5px;color:#555">เลขที่บัญชี / Account No.</div><div class="bank-account">'+escapeHTML(bank.accountNumber)+'</div></div>');
     bp.push('</div>');
 
     // Signatures
@@ -28090,6 +28099,7 @@ async function createUserFromPage() {
 }
 
 async function settings() {
+  const quoteBank = getQuoteBankSettings(currentShop);
   setContent(`
     <div class="grid-2 mb-4">
       <div class="card">
@@ -28107,6 +28117,15 @@ async function settings() {
         <div class="form-group"><label>ข้อความท้ายบิล</label>
           <input type="text" id="s-note" value="${currentShop?.receipt_note||'ขอบคุณที่ใช้บริการ'}"></div>
         <button class="btn btn-primary" onclick="saveShopInfo()">💾 บันทึกข้อมูลร้าน</button>
+        <div class="card-title" style="margin-top:24px">🏦 บัญชีรับโอนสำหรับใบเสนอราคา</div>
+        <div class="form-group"><label>ธนาคาร</label>
+          <input type="text" id="s-quote-bank-name" value="${escapeHTML(quoteBank.name)}" placeholder="เช่น ธนาคารกสิกรไทย · KASIKORNBANK"></div>
+        <div class="form-group"><label>ชื่อบัญชี</label>
+          <input type="text" id="s-quote-bank-account-name" value="${escapeHTML(quoteBank.accountName)}" placeholder="ชื่อเจ้าของบัญชี"></div>
+        <div class="form-group"><label>เลขที่บัญชี</label>
+          <input type="text" id="s-quote-bank-account-number" value="${escapeHTML(quoteBank.accountNumber)}" inputmode="numeric" placeholder="เลขที่บัญชี"></div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">ข้อมูลนี้จะแสดงในใบเสนอราคาที่พิมพ์หลังบันทึก</div>
+        <button class="btn btn-primary" onclick="saveQuoteBankSettings()">💾 บันทึกบัญชีธนาคาร</button>
       </div>
       <div class="card">
         <div class="card-title">👁️ ตัวอย่างหัวบิล</div>
@@ -28296,6 +28315,32 @@ async function settings() {
 }
 
 async function saveShopName() { await saveShopInfo(); }
+
+async function saveQuoteBankSettings() {
+  if (!currentShop?.id || !sb) { toast('กรุณาเข้าสู่ระบบและเลือกร้านก่อนบันทึก','error'); return; }
+  const quote_bank_name = document.getElementById('s-quote-bank-name')?.value.trim() || '';
+  const quote_bank_account_name = document.getElementById('s-quote-bank-account-name')?.value.trim() || '';
+  const quote_bank_account_number = document.getElementById('s-quote-bank-account-number')?.value.trim() || '';
+  if (!quote_bank_name || !quote_bank_account_name || !quote_bank_account_number) {
+    toast('กรุณากรอกธนาคาร ชื่อบัญชี และเลขที่บัญชีให้ครบ','error'); return;
+  }
+  const accountDigits = quote_bank_account_number.replace(/\D/g, '');
+  if (!/^[0-9\s-]+$/.test(quote_bank_account_number) || accountDigits.length < 6 || accountDigits.length > 30) {
+    toast('เลขที่บัญชีต้องเป็นตัวเลข 6–30 หลัก (คั่นด้วยขีดหรือเว้นวรรคได้)','error'); return;
+  }
+  const { data, error } = await sb.from('shops')
+    .update({ quote_bank_name, quote_bank_account_name, quote_bank_account_number })
+    .eq('id', currentShop.id)
+    .select('id,quote_bank_name,quote_bank_account_name,quote_bank_account_number')
+    .single();
+  if (error || !data) {
+    const missing = /quote_bank_|schema cache|does not exist/i.test(error?.message || '');
+    toast(missing ? 'ยังไม่มีคอลัมน์บัญชีธนาคาร กรุณารัน supabase_quote_bank_settings_v310.sql ใน Supabase SQL Editor ก่อน' : 'บันทึกบัญชีธนาคารไม่สำเร็จ: '+(error?.message || 'เซิร์ฟเวอร์ไม่ยืนยันข้อมูล'), 'error');
+    return;
+  }
+  currentShop = { ...currentShop, ...data };
+  toast('บันทึกบัญชีธนาคารสำหรับใบเสนอราคาแล้ว ✓', 'success');
+}
 
 async function saveShopInfo() {
   const name    = (document.getElementById('s-shopname')?.value||'').trim() || currentShop.name;
@@ -40515,6 +40560,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.10', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ตั้งค่าบัญชีธนาคารสำหรับใบเสนอราคา', items:[
+      'หน้า Settings แก้ธนาคาร ชื่อบัญชี และเลขที่บัญชีรับโอนสำหรับใบเสนอราคาได้ โดยบันทึกเป็นข้อมูลระดับร้าน',
+      'ใบเสนอราคาที่พิมพ์ใช้ค่าล่าสุดจากร้าน และมีเลข 128-8-23520-8 เป็นค่าเริ่มต้น',
+      'เพิ่มไฟล์ SQL สำหรับคอลัมน์บัญชีธนาคารใน Supabase'
+    ]},
     { v:'3.09', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ใบเสนอราคาเต็มหน้า A4 ไม่มีกรอบรอบกระดาษ', items:[
       'ตัดกรอบใหญ่และมุมตกแต่งออกจากใบเสนอราคา และขยายเนื้อหาให้ใช้พื้นที่พิมพ์ A4',
       'คงระยะขอบพิมพ์ 8 มม. เพื่อไม่ให้ข้อความชิดขอบกระดาษหรือถูกเครื่องพิมพ์ตัด'
