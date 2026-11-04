@@ -38,19 +38,28 @@ assert.match(win.output, /@page\{size:A4 portrait;margin:8mm\}/);
 assert.match(win.output, /O-Ring 12x1\.5/);
 assert.match(win.output, /SKU: OR-12/);
 assert.match(win.output, /<strong>40<\/strong> ชิ้น/);
-assert.match(win.output, /A4 1 หน้า/);
+assert.match(win.output, /A4 1 หน้า \(หน้าละ 12 ฉลาก\)/);
 assert.match(win.output, /onclick="window\.print\(\)"/);
 assert.match(win.output, /\.print-toolbar\{display:none\}/);
+assert.match(win.output, /\.label-name\{font-size:16px/);
 assert.equal(win.printed, 1);
 
 win = popup();
-context.printA4ProductLabels('GR-1', Array.from({ length: 48 }, (_, i) => ({ name: `Item ${i}`, qty: 1 })), win);
-assert.match(win.output, /grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
-assert.match(win.output, /grid-template-rows:repeat\(12,minmax\(0,1fr\)\)/);
+context.printA4ProductLabels('GR-1', Array.from({ length: 12 }, (_, i) => ({ name: `Item ${i}`, qty: 1 })), win);
+assert.equal((win.output.match(/class="sheet"/g) || []).length, 1);
+assert.equal((win.output.match(/class="label"/g) || []).length, 12);
+assert.match(win.output, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+assert.match(win.output, /grid-template-rows:repeat\(6,minmax\(0,1fr\)\)/);
 
 win = popup();
-context.printA4ProductLabels('PO-2', Array.from({ length: 49 }, () => ({ name: 'Item', qty: 1 })), win);
-assert.equal(win.closed, true);
-assert.match(message, /เกิน 48/);
+context.printA4ProductLabels('PO-2', Array.from({ length: 13 }, (_, i) => ({ name: `Item ${i}`, qty: 1 })), win);
+assert.equal((win.output.match(/class="sheet"/g) || []).length, 2);
+assert.equal((win.output.match(/class="label"/g) || []).length, 13);
+assert.match(win.output, /หน้า 2\/2/);
+
+win = popup();
+context.printA4ProductLabels('PO-3', Array.from({ length: 49 }, () => ({ name: 'Item', qty: 1 })), win);
+assert.equal((win.output.match(/class="sheet"/g) || []).length, 5);
+assert.equal(win.closed, undefined);
 
 console.log('A4 product labels: OK');
