@@ -159,6 +159,20 @@ function lazadaItemFinancial(item) {
   const cost = Number(product?.current_cost) || 0;
   return { sale, payout, deductions: lazadaMoney(sale - payout), cost, profit: lazadaMoney(payout - cost), product };
 }
+function lazadaOrderTiming(items) {
+  const groups=new Map();
+  (items||[]).forEach(item=>{
+    if (!item.hasOrder) return;
+    const ref=lazadaText(item.orderId);
+    if (!groups.has(ref)) groups.set(ref,[]);
+    groups.get(ref).push(item);
+  });
+  return [...groups].map(([ref,rows])=>{
+    const orderDate=rows[0]?.orderDate||'';
+    const deliveredDate=rows.every(item=>item.deliveredDate && /delivered/i.test(lazadaText(item.status))) ? rows.map(item=>item.deliveredDate).sort().at(-1) : '';
+    return {ref,orderDate,deliveredDate,days:marketplaceOrderLeadDays(orderDate,deliveredDate)};
+  });
+}
 async function lazadaSummary() {
   document.getElementById('topbar-actions').innerHTML = `<button class="btn btn-secondary btn-sm" onclick="lazadaSummaryRefresh()">🔄 รีเฟรช</button>
     <label class="btn btn-secondary btn-sm" style="cursor:pointer;margin:0">📂 อัปโหลด Lazada<input type="file" accept=".xlsx" multiple style="display:none" onchange="lazadaUploadFiles(this)"></label>
@@ -184,6 +198,10 @@ function lazadaRender() {
   const cost = lazadaMoney(financial.reduce((sum, row) => sum + row.cost, 0));
   const pending = visible.filter(item => !(item.transactions || []).some(tx => tx.type === 'ยอดรวมค่าสินค้า')).length;
   const linked = visible.filter(item => !!lazadaProductFor(item)).length;
+  const visibleRefs=new Set(visible.map(item=>item.orderId));
+  const timing=lazadaOrderTiming(_lazadaItems.filter(item=>visibleRefs.has(item.orderId)));
+  const delivered=timing.filter(order=>order.days!==null);
+  const avgDays=delivered.length?delivered.reduce((sum,order)=>sum+order.days,0)/delivered.length:null;
   const months = lazadaMonths();
   el.innerHTML = `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
     <div><b style="display:inline-flex;align-items:center;gap:8px"><img class="marketplace-summary-logo report-logo" src="assets/lazada-summary-logo.png" alt="Lazada logo">Lazada Executive Summary & Planning</b><div style="font-size:11px;color:var(--text3)">ออเดอร์ตามเดือนที่สั่งซื้อ · ยอดรับเงินจริงรวมรายการปรับปรุงข้ามเดือน · ${_lazadaServerItemIds.size.toLocaleString('th-TH')}/${_lazadaItems.length.toLocaleString('th-TH')} รายการยืนยันบนเซิร์ฟเวอร์</div></div>
@@ -191,6 +209,7 @@ function lazadaRender() {
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin-bottom:13px">
       ${[['ยอดค่าสินค้าจริง',sale],['หลังหัก/ปรับปรุง',payout],['รายการที่ยังไม่รับเงิน',pending],['กำไรประมาณหลังต้นทุน',payout-cost]].map(([label,value],idx) => `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px"><div style="font-size:11px;color:var(--text3)">${label}</div><div style="font-size:19px;font-weight:800;color:${idx===3&&value<0?'#dc2626':'var(--text)'}">${idx===2?fmt(value):fmtB(value)}</div></div>`).join('')}
     </div><div style="font-size:11px;color:var(--text3);margin-bottom:10px">${groups.size} ออเดอร์ · ${visible.length} รายการสินค้า · เชื่อม SO ${_lazadaRefReady?[...groups].filter(ref=>_lazadaRefCounts.get(lazadaText(ref).toUpperCase())===1).length+'/'+groups.size:'รอตรวจ'} · จับคู่สินค้า ${linked}/${visible.length} · ข้อมูลต้นทุนใช้ต้นทุนสินค้าปัจจุบัน จึงเป็นกำไรประมาณ ไม่ใช่ต้นทุน ณ วันที่ขาย</div>
+    <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:13px 16px;margin-bottom:13px"><div style="font-size:12px;color:#475569;font-weight:700">⏱️ วันสั่งซื้อ → ส่งถึงลูกค้า (Lazada)</div><div style="font-size:21px;font-weight:800;color:#0f172a">${avgDays===null?'ยังไม่มีข้อมูลวันส่งถึง':avgDays.toFixed(1)+' วันเฉลี่ย'}</div><div style="font-size:11px;color:#64748b">คำนวณเป็นวันปฏิทินจาก ${delivered.length}/${timing.length} ออเดอร์ที่มีวันส่งถึงครบทุกสินค้า · อีก ${timing.length-delivered.length} ออเดอร์ยังคำนวณไม่ได้ · วันส่งถึงไม่ใช่วันออเดอร์สำเร็จหรือวันเงินเข้า${avgDays===null?' · อัปโหลดไฟล์ Order เดิมอีกครั้งแล้วกดซิงค์':''}</div></div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-sm ${_lazadaTab==='overview'?'btn-primary':'btn-secondary'}" onclick="lazadaSetTab('overview')">📊 ภาพรวมสินค้า</button><button class="btn btn-sm ${_lazadaTab==='orders'?'btn-primary':'btn-secondary'}" onclick="lazadaSetTab('orders')">🧾 ออเดอร์ & รายรับ</button><button class="btn btn-sm ${_lazadaTab==='linkage'?'btn-primary':'btn-secondary'}" onclick="lazadaSetTab('linkage')">🔗 เชื่อม SKU / วางแผนสต๊อก</button></div>
     <input class="form-control" style="width:100%;max-width:420px;margin-bottom:12px" placeholder="ค้นหาเลขออเดอร์ / SKU / ชื่อสินค้า" value="${lazadaSafe(_lazadaSearch)}" oninput="lazadaSearch(this.value)">
     <div id="lazada-tab-content">${_lazadaTab==='orders'?lazadaRenderOrders(visible):_lazadaTab==='linkage'?lazadaRenderLinkage(visible):lazadaRenderOverview(visible)}</div>`;
@@ -198,7 +217,7 @@ function lazadaRender() {
 function lazadaSetPeriod(value) { _lazadaPeriod = value; lazadaRender(); }
 function lazadaSetTab(value) { _lazadaTab = value; lazadaRender(); }
 function lazadaSearch(value) { _lazadaSearch = value; const el = document.getElementById('lazada-tab-content'); if (el) el.innerHTML = _lazadaTab==='orders'?lazadaRenderOrders(lazadaVisibleItems()):_lazadaTab==='linkage'?lazadaRenderLinkage(lazadaVisibleItems()):lazadaRenderOverview(lazadaVisibleItems()); }
-function lazadaTable(headers, body) { return `<div style="overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:9px"><table style="min-width:850px;width:100%;font-size:12px"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body || '<tr><td colspan="9" style="padding:20px;text-align:center">ไม่พบรายการ</td></tr>'}</tbody></table></div>`; }
+function lazadaTable(headers, body) { return `<div style="overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:9px"><table style="min-width:850px;width:100%;font-size:12px"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${body || `<tr><td colspan="${headers.length}" style="padding:20px;text-align:center">ไม่พบรายการ</td></tr>`}</tbody></table></div>`; }
 function lazadaRenderOverview(items) {
   const map = new Map();
   items.forEach(item => { const sku = item.sellerSku || item.lazadaSku || item.name; if (!map.has(sku)) map.set(sku, {sku,name:item.name,units:0,sale:0,payout:0,stock:lazadaProductFor(item)?.stock_qty,product:lazadaProductFor(item)}); const row=map.get(sku); const f=lazadaItemFinancial(item); row.units++; row.sale+=f.sale; row.payout+=f.payout; });
@@ -207,8 +226,10 @@ function lazadaRenderOverview(items) {
 }
 function lazadaRenderOrders(items) {
   const refs=[...new Set(items.map(item=>item.orderId))];
-  const body=refs.map(ref => {const group=_lazadaIndex.get(ref);const localItems=items.filter(item=>item.orderId===ref);const synced=localItems.every(item=>_lazadaServerItemIds.has(item.orderItemId));const refCount=_lazadaRefCounts.get(lazadaText(ref).toUpperCase())||0;return `<tr><td class="font-mono">${lazadaSafe(ref)}</td><td>${lazadaSafe(localItems[0]?.orderDate)}</td><td class="text-right">${localItems.length}</td><td class="text-right">${fmtB(group?.sale)}</td><td class="text-right">${fmtB(group?.payout)}</td><td>${_lazadaRefReady?(refCount===1?'✅ เชื่อม SO':refCount>1?'⚠️ SO ซ้ำ':'ยังไม่เชื่อม SO'):'รอตรวจ'}</td><td>${group?.pending?'⏳ รอรับเงิน '+group.pending+' รายการ':synced?'✅ ซิงค์แล้ว':'⚠️ ในเครื่อง'}</td><td><button class="btn btn-secondary btn-sm" data-ref="${lazadaSafe(ref)}" onclick="lazadaOpenOrder(this.dataset.ref)">ดูรายการ 🔎</button></td></tr>`;}).join('');
-  return lazadaTable(['เลข Lazada','วันที่สั่ง','สินค้า','ยอดค่าสินค้า','หลังหัก/ปรับปรุง','เชื่อม SO','สถานะรายรับ','รายละเอียด'],body);
+  const refSet=new Set(refs);
+  const timings=new Map(lazadaOrderTiming(_lazadaItems.filter(item=>refSet.has(item.orderId))).map(row=>[row.ref,row]));
+  const body=refs.map(ref => {const group=_lazadaIndex.get(ref);const localItems=items.filter(item=>item.orderId===ref);const t=timings.get(ref);const synced=localItems.every(item=>_lazadaServerItemIds.has(item.orderItemId));const refCount=_lazadaRefCounts.get(lazadaText(ref).toUpperCase())||0;return `<tr><td class="font-mono">${lazadaSafe(ref)}</td><td>${lazadaSafe(localItems[0]?.orderDate)}</td><td>${lazadaSafe(t?.deliveredDate||'-')}</td><td class="text-right">${t?.days===null?'รอข้อมูล':t?.days??'รอข้อมูล'}</td><td class="text-right">${localItems.length}</td><td class="text-right">${fmtB(group?.sale)}</td><td class="text-right">${fmtB(group?.payout)}</td><td>${_lazadaRefReady?(refCount===1?'✅ เชื่อม SO':refCount>1?'⚠️ SO ซ้ำ':'ยังไม่เชื่อม SO'):'รอตรวจ'}</td><td>${group?.pending?'⏳ รอรับเงิน '+group.pending+' รายการ':synced?'✅ ซิงค์แล้ว':'⚠️ ในเครื่อง'}</td><td><button class="btn btn-secondary btn-sm" data-ref="${lazadaSafe(ref)}" onclick="lazadaOpenOrder(this.dataset.ref)">ดูรายการ 🔎</button></td></tr>`;}).join('');
+  return lazadaTable(['เลข Lazada','วันที่สั่ง','วันที่ส่งถึง','รอส่งถึง (วัน)','สินค้า','ยอดค่าสินค้า','หลังหัก/ปรับปรุง','เชื่อม SO','สถานะรายรับ','รายละเอียด'],body);
 }
 function lazadaRenderLinkage(items) {
   const unique=[...new Map(items.map(item=>[item.sellerSku,item])).values()].filter(item=>item.sellerSku);
@@ -255,7 +276,7 @@ function lazadaParseOrderRow(row) {
   const orderItemId = lazadaText(row.orderItemId);
   const orderId = lazadaText(row.orderNumber);
   if (!orderItemId || !orderId) return null;
-  return { orderItemId, orderId, orderDate:lazadaParseDate(row.createTime), sellerSku:lazadaText(row.sellerSku),
+  return { orderItemId, orderId, orderDate:lazadaParseDate(row.createTime), deliveredDate:lazadaParseDate(row.deliveredDate), sellerSku:lazadaText(row.sellerSku),
     lazadaSku:lazadaText(row.lazadaSku), name:lazadaText(row.itemName), variation:lazadaText(row.variation),
     status:lazadaText(row.status), unitPrice:lazadaMoney(row.unitPrice), paidPrice:lazadaMoney(row.paidPrice),
     sellerDiscount:lazadaMoney(row.sellerDiscountTotal), platformDiscount:lazadaMoney(row.platformDiscountTotal),

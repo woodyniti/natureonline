@@ -177,8 +177,46 @@ function groupShopeeSummaryOrders(orders) {
 
 function mergeShopeeSummaryOrders(localOrders, serverOrders) {
   const groups = groupShopeeSummaryOrders(localOrders);
-  groupShopeeSummaryOrders(serverOrders).forEach((rows, key) => groups.set(key, rows));
+  groupShopeeSummaryOrders(serverOrders).forEach((rows, key) => {
+    const previous=groups.get(key)||[];
+    groups.set(key,rows.map((row,index)=>({ ...row, completedDate:row.completedDate||previous[index]?.completedDate||'' })));
+  });
   return [...groups.values()].flat();
+}
+
+// Calendar days are comparable across Shopee timestamps and Lazada date-only exports.
+function marketplaceOrderLeadDays(start, end) {
+  const parse = value => {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return null;
+    const year=Number(match[1]), month=Number(match[2]), day=Number(match[3]);
+    const utc=Date.UTC(year, month-1, day);
+    const check=new Date(utc);
+    return check.getUTCFullYear()===year && check.getUTCMonth()===month-1 && check.getUTCDate()===day ? utc : null;
+  };
+  const first=parse(start), last=parse(end);
+  return first===null || last===null || last<first ? null : Math.round((last-first)/86400000);
+}
+
+function shopeeOrderTiming(rows) {
+  const orders=new Map();
+  (rows||[]).forEach(row=>{
+    const ref=String(row.orderId||'').trim();
+    if (!ref) return;
+    const old=orders.get(ref);
+    if (!old) orders.set(ref,{ref,orderDate:row.orderDate||'',completedDate:row.completedDate||'',status:row.status||''});
+    else if (!old.completedDate && row.completedDate) old.completedDate=row.completedDate;
+  });
+  return [...orders.values()].map(order=>({...order,days:/สำเร็จ|completed/i.test(order.status) ? marketplaceOrderLeadDays(order.orderDate,order.completedDate) : null}));
+}
+
+function openShopeeOrderTiming() {
+  const rows=shopeeOrderTiming(computeShopeeSummaryMetrics().rows)
+    .sort((a,b)=>(b.orderDate||'').localeCompare(a.orderDate||''));
+  document.getElementById('modal-shopee-order-timing')?.remove();
+  const overlay=document.createElement('div');overlay.id='modal-shopee-order-timing';overlay.className='modal-overlay open';overlay.style.zIndex=getNextModalZIndex();
+  overlay.innerHTML=`<div class="modal" style="width:100%;max-width:850px;max-height:90vh;overflow:auto"><div class="modal-title">⏱️ Shopee · เวลารอออเดอร์สำเร็จ</div><div style="font-size:12px;color:var(--text3);margin:8px 0">นับวันปฏิทินจากวันที่ลูกค้าสั่งจนถึงวันที่ Shopee ระบุว่าสำเร็จ · ไม่ใช่วันที่เงินเข้าบัญชี</div><div style="overflow:auto;max-height:65vh"><table style="width:100%;font-size:12px"><thead><tr><th>เลขออเดอร์</th><th>วันที่สั่ง</th><th>วันที่สำเร็จ</th><th>รอ (วัน)</th></tr></thead><tbody>${rows.map(row=>`<tr><td class="font-mono">${escapeHTML(row.ref)}</td><td>${escapeHTML(row.orderDate||'-')}</td><td>${escapeHTML(row.completedDate||'-')}</td><td>${row.days===null?'รอข้อมูล':row.days}</td></tr>`).join('')||'<tr><td colspan="4">ไม่มีออเดอร์ในช่วงที่เลือก</td></tr>'}</tbody></table></div><div style="text-align:right;margin-top:12px"><button class="btn btn-secondary" onclick="document.getElementById('modal-shopee-order-timing').remove()">ปิด</button></div></div>`;
+  overlay.addEventListener('click',event=>{if(event.target===overlay)overlay.remove()});document.body.appendChild(overlay);ensureModalCloseButton(overlay,()=>overlay.remove());
 }
 
 async function loadShopeeSummaryServerOrders() {
@@ -708,6 +746,9 @@ function renderShopeeSummaryDashboard() {
     _shopeeSummaryPeriod = 'all';
   }
   const m = computeShopeeSummaryMetrics();
+  const timing=shopeeOrderTiming(m.rows);
+  const finished=timing.filter(order=>order.days!==null);
+  const avgDays=finished.length ? finished.reduce((sum,order)=>sum+order.days,0)/finished.length : null;
   const periodOptions = [
     { id: 'all', label: `ทั้งหมด (${availableMonths.length} เดือน)` },
     ...availableMonths.map(month => ({ id: month, label: formatShopeeSummaryMonth(month) }))
@@ -763,6 +804,11 @@ function renderShopeeSummaryDashboard() {
           </button>
         </div>
       </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:13px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+      <div><div style="font-size:12px;color:#475569;font-weight:700">⏱️ วันสั่งซื้อ → ออเดอร์สำเร็จ (Shopee)</div><div style="font-size:21px;font-weight:800;color:#0f172a">${avgDays===null?'ยังไม่มีข้อมูลวันสำเร็จ':avgDays.toFixed(1)+' วันเฉลี่ย'}</div><div style="font-size:11px;color:#64748b">คำนวณเป็นวันปฏิทินจาก ${finished.length}/${timing.length} ออเดอร์ที่มีวันสำเร็จ · อีก ${timing.length-finished.length} ออเดอร์ยังคำนวณไม่ได้ · วันสำเร็จไม่ใช่วันเงินเข้า${avgDays===null?' · อัปโหลดไฟล์ออเดอร์เดิมอีกครั้งแล้วกดซิงค์':''}</div></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="openShopeeOrderTiming()">ดูรายออเดอร์</button>
     </div>
 
     <!-- 8 Executive KPI Stat Cards -->
@@ -2042,6 +2088,7 @@ async function uploadShopeeSummaryExcel(input) {
         status: String(r['สถานะการสั่งซื้อ'] || '').trim(),
         buyer: String(r['ชื่อผู้ใช้ (ผู้ซื้อ)'] || 'ไม่ระบุ').trim(),
         orderDate: String(r['วันที่ทำการสั่งซื้อ'] || '').slice(0, 19),
+        completedDate: String(r['เวลาที่ทำการสั่งซื้อสำเร็จ'] || '').slice(0, 19),
         payMethod: String(r['ช่องทางการชำระเงิน'] || '').trim(),
         carrier: String(r['ตัวเลือกการจัดส่ง'] || '').trim(),
         tracking: String(r['*หมายเลขติดตามพัสดุ'] || '').trim(),
@@ -2068,20 +2115,13 @@ async function uploadShopeeSummaryExcel(input) {
 
     // Merge & deduplicate
     const existingKeys = new Set(_shopeeSummaryOrders.map(shopeeSummaryOrderKey));
-    let added = 0;
-    newOrders.forEach(o => {
-      const k = shopeeSummaryOrderKey(o);
-      if (!existingKeys.has(k)) {
-        _shopeeSummaryOrders.push(o);
-        existingKeys.add(k);
-        added++;
-      }
-    });
+    const added = new Set(newOrders.map(shopeeSummaryOrderKey).filter(key=>!existingKeys.has(key))).size;
+    _shopeeSummaryOrders = mergeShopeeSummaryOrders(_shopeeSummaryOrders, newOrders);
 
     try { localStorage.setItem('shopee_summary_orders_cache', JSON.stringify(_shopeeSummaryOrders)); } catch(e){}
     _shopeeOrderReconciliation = null;
 
-    toast(`อ่านไฟล์ "${file.name}" เข้าเบราว์เซอร์แล้ว เพิ่ม ${added} รายการ (รวม ${_shopeeSummaryOrders.length}) · กดซิงค์เพื่อบันทึกขึ้นเซิร์ฟเวอร์`, 'success');
+    toast(`อ่านไฟล์ "${file.name}" แล้ว เพิ่ม ${added} รายการ · อัปเดตรายการเดิมที่ซ้ำ (รวม ${_shopeeSummaryOrders.length}) · กดซิงค์เพื่อบันทึกขึ้นเซิร์ฟเวอร์`, 'success');
     renderShopeeSummaryDashboard();
   } catch (err) {
     console.error('Upload error:', err);

@@ -56,6 +56,7 @@ for month in MONTHS:
             "orderItemId": item_id,
             "orderId": order_id,
             "orderDate": iso_date(row[8]),
+            "deliveredDate": iso_date(row[15]),
             "sellerSku": str(row[5] or "").strip(),
             "lazadaSku": str(row[6] or "").strip(),
             "name": str(row[52] or "").strip(),
