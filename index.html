@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.10</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.11</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.10';
-const DISPLAY_APP_VERSION = 'v3.10';
+const CURRENT_APP_VERSION = 'sealthai-v3.11';
+const DISPLAY_APP_VERSION = 'v3.11';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.10 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.11 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1336,7 +1336,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.10 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.11 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1365,7 +1365,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.10 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.11 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4104,7 +4104,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.10)">v3.10 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.11)">v3.11 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -6948,6 +6948,7 @@ async function orders() {
           </div>
           <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-username" placeholder="@username Shopee / Lazada"></div>
           <div class="form-group"><label>เลขอ้างอิงเอกสาร Shopee <span style="font-size:11px;color:var(--text3)">(Customer Ref · เว้นว่างได้)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ" onchange="checkDupCustomerRef(this.value,null)"></div>
+          <div class="form-group"><label>เลขที่ PO ของลูกค้า <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-customer-po" placeholder="เช่น PO-2026-001"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
           <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>ช่องทางชำระ</label>
@@ -8774,6 +8775,7 @@ async function saveOrder() {
     customer_name: document.getElementById('o-cust').value,
     customer_username: document.getElementById('o-username').value, // ชื่อผู้ใช้ Shopee/Lazada
     customer_social: document.getElementById('o-ref').value,        // Customer Ref / เลขอ้างอิงเอกสาร Shopee
+    customer_po_no: (document.getElementById('o-customer-po')?.value || '').trim() || null,
     customer_contact: document.getElementById('o-contact')?.value || '',
     customer_phone:   document.getElementById('o-phone')?.value   || '',
     customer_address: document.getElementById('o-address')?.value || '',
@@ -8799,6 +8801,10 @@ async function saveOrder() {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
+    if (('customer_po_no' in orderPayload) && (error.message||'').includes('customer_po_no')) {
+      if (orderPayload.customer_po_no) { toast('ยังไม่ได้เพิ่มคอลัมน์ PO ลูกค้า กรุณารัน supabase_orders_customer_po_v311.sql ก่อนบันทึกออเดอร์นี้','error'); return; }
+      delete orderPayload.customer_po_no; continue;
+    }
     if (('internal_note' in orderPayload) && (error.message||'').includes('internal_note')) { delete orderPayload.internal_note; continue; }
     if (('company_name' in orderPayload) && (error.message||'').includes('company_name')) { delete orderPayload.company_name; continue; }
     if (('tax_id' in orderPayload) && (error.message||'').includes('tax_id')) { delete orderPayload.tax_id; continue; }
@@ -9413,6 +9419,7 @@ async function viewOrder(orderId) {
         <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">เลขที่ PO ของลูกค้า</span><input id="ed-customer-po" value="${escapeHTML(order.customer_po_no||'')}" placeholder="PO ลูกค้า (ไม่บังคับ)" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">ช่องทาง</span>
@@ -9579,6 +9586,7 @@ async function saveOrderEdit(orderId) {
     customer_name:    document.getElementById('ed-cust').value,
     customer_username: document.getElementById('ed-username')?.value || '', // ชื่อผู้ใช้ Shopee/Lazada
     customer_social:  document.getElementById('ed-ref').value,             // Customer Ref
+    customer_po_no: (document.getElementById('ed-customer-po')?.value || '').trim() || null,
     customer_contact: document.getElementById('ed-contact')?.value || '',
     customer_phone:   document.getElementById('ed-phone')?.value   || '',
     customer_address: document.getElementById('ed-address')?.value || '',
@@ -9605,6 +9613,10 @@ async function saveOrderEdit(orderId) {
     updErr = r.error;
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
+    if (('customer_po_no' in editPayload) && msg.includes('customer_po_no')) {
+      if (editPayload.customer_po_no) { toast('ยังไม่ได้เพิ่มคอลัมน์ PO ลูกค้า กรุณารัน supabase_orders_customer_po_v311.sql ก่อนบันทึก','error'); return; }
+      delete editPayload.customer_po_no; continue;
+    }
     if (('internal_note' in editPayload) && msg.includes('internal_note')) {
       delete editPayload.internal_note;
       continue;
@@ -10008,6 +10020,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
     if (order.customer_social) {
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 / Ref:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.customer_social) + '</span></div>');
+    }
+    if (order.customer_po_no) {
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">PO ลูกค้า / Customer PO:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.customer_po_no) + '</span></div>');
     }
     if (order.tracking_no) {
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.tracking_no) + '</span></div>');
@@ -40560,6 +40575,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.11', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เลขที่ PO ลูกค้าในออเดอร์และบิลเงินสด', items:[
+      'เพิ่มช่องเลขที่ PO ของลูกค้าในฟอร์มสร้างและแก้ไขออเดอร์ โดยเก็บเป็นข้อมูลเฉพาะออเดอร์',
+      'พิมพ์เลข PO ลูกค้าถัดจากเลขอ้างอิงในบิลเงินสด และเตรียมไฟล์ SQL สำหรับเพิ่มคอลัมน์ใน Supabase'
+    ]},
     { v:'3.10', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ตั้งค่าบัญชีธนาคารสำหรับใบเสนอราคา', items:[
       'หน้า Settings แก้ธนาคาร ชื่อบัญชี และเลขที่บัญชีรับโอนสำหรับใบเสนอราคาได้ โดยบันทึกเป็นข้อมูลระดับร้าน',
       'ใบเสนอราคาที่พิมพ์ใช้ค่าล่าสุดจากร้าน และมีเลข 128-8-23520-8 เป็นค่าเริ่มต้น',
