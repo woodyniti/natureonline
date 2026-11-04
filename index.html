@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.18</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.19</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.18';
-const DISPLAY_APP_VERSION = 'v3.18';
+const CURRENT_APP_VERSION = 'sealthai-v3.19';
+const DISPLAY_APP_VERSION = 'v3.19';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1300,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.18)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.18 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.19)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.19 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1373,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.18)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.18 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.19)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.19 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1402,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.18)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.18 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.19)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.19 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4133,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.18)">v3.18 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.19)">v3.19 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -14485,7 +14485,7 @@ function addStockRow(initial={}) {
   const row = {
     product_id:'', product_name:'', qty:0, cost:0, other:0,
     other_cur: cur,
-    po_id:null, po_item_id:null, po_no:'', supplier_name:'', remaining:null, enabled:true,
+    po_id:null, po_item_id:null, po_line_no:null, po_no:'', supplier_name:'', remaining:null, enabled:true,
     ...initial,
   };
   if (!row.other_cur) row.other_cur = cur;
@@ -14499,6 +14499,7 @@ function addStockRow(initial={}) {
   div.innerHTML = `
     ${row.po_item_id ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px;flex-wrap:wrap">
       <div style="font-size:11px;display:flex;align-items:center;gap:6px">
+        ${row.po_line_no ? `<span style="background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:3px 7px;font-size:11px;font-weight:800;white-space:nowrap">บรรทัดที่ ${row.po_line_no}</span>` : ''}
         <span style="color:var(--blue);font-weight:600">PO: ${escapeHTML(row.po_no||'-')} · ${escapeHTML(row.supplier_name||'-')}</span>
         ${!row.product_id ? `<span id="sr-unmapped-badge-${idx}" style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-weight:700;font-size:11px;display:inline-flex;align-items:center;gap:6px">
           <span>⚠️ ยังไม่เชื่อมสินค้า</span>
@@ -16285,6 +16286,16 @@ async function applyPOsToStock() {
     toast('PO ที่เลือกเป็นแบบร่างหรือไม่มีสิทธิ์รับสินค้าเข้าสต๊อก', 'error');
     return;
   }
+  // Use the same item order as the PO detail/print view, not the unordered nested relation.
+  const { data: orderedPOItems, error: orderError } = await sb.from('purchase_order_items')
+    .select('*').in('po_id', selectedPOs.map(po => po.id)).order('id', { ascending:true });
+  if (orderError) { toast('โหลดลำดับรายการ PO ไม่สำเร็จ: ' + orderError.message, 'error'); return; }
+  const linesByPO = new Map(selectedPOs.map(po => [po.id, []]));
+  (orderedPOItems || []).forEach(it => linesByPO.get(it.po_id)?.push(it));
+  if (selectedPOs.some(po => !linesByPO.get(po.id)?.length)) {
+    toast('โหลดรายการสินค้าใน PO ไม่ครบ กรุณารีเฟรชแล้วลองใหม่', 'error');
+    return;
+  }
 
   // ตรวจสอบว่ามี PO ที่เป็น USD หรือไม่
   let hasUsdPO = false;
@@ -16310,7 +16321,7 @@ async function applyPOsToStock() {
 
   const pendingRows = [];
   selectedPOs.forEach(po => {
-    (po.pendingItems||[]).forEach(it => {
+    (linesByPO.get(po.id)||[]).forEach((it, lineIndex) => {
       const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
       // Keep fully received lines available at quantity 0, in case the supplier ships extra.
       let pid = it.product_id || '';
@@ -16334,7 +16345,7 @@ async function applyPOsToStock() {
       pendingRows.push({
         product_id: pid, product_name: pname,
         qty: Math.max(0, remaining), cost: rawUnitCost, other: 0,
-        po_id: po.id, po_item_id: it.id, po_no: po.po_no||'',
+        po_id: po.id, po_item_id: it.id, po_line_no:lineIndex+1, po_no: po.po_no||'',
         supplier_name: po.supplier_name||'', remaining:Math.max(0,remaining), enabled: true,
       });
     });
@@ -20791,7 +20802,8 @@ async function openGR(poId) {
     return;
   }
 
-  const pending = items.filter(it => Number(it.qty_ordered) > 0);
+  const pending = (items || []).map((it, index) => ({ ...it, po_line_no:index+1 }))
+    .filter(it => Number(it.qty_ordered) > 0);
   if (!pending.length) { toast('PO นี้ไม่มีรายการสินค้าให้รับ','error'); return; }
 
   let isUSD = false;
@@ -20859,7 +20871,7 @@ async function openGR(poId) {
           <div class="gr-item-card" style="background:#fff;border:1px solid var(--border2);border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
               <div>
-                <div style="font-weight:700;font-size:13px;color:var(--text);line-height:1.35">${escapeHTML(rawName)}</div>
+                <div style="font-weight:700;font-size:13px;color:var(--text);line-height:1.35"><span style="display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px;font-size:11px">#${it.po_line_no}</span>${escapeHTML(rawName)}</div>
                 ${soBadgeHTML}
               </div>
               <div class="font-mono text-amber gr-unit-cost-preview" data-raw-cost="${it.unit_cost}" style="font-size:11px;font-weight:700;white-space:nowrap">
@@ -40839,6 +40851,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.19', date:'2026-11-05', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รับสินค้าเรียงตามบรรทัด PO', items:[
+      'โหลดรายการสินค้าเข้าแบบฟอร์มรับเข้าตามลำดับเดียวกับรายละเอียด PO และแสดงเลขบรรทัดแยกตาม PO',
+      'หน้ารับเข้าจาก PO โดยตรงแสดงเลขบรรทัดของแต่ละรายการด้วย'
+    ]},
     { v:'3.18', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ฉลาก A4 หน้าละ 12 รายการ', items:[
       'จัดฉลาก 2 คอลัมน์ × 6 แถวต่อ A4 และขึ้นหน้าใหม่อัตโนมัติเมื่อเกิน 12 รายการ',
       'ขยายตัวอักษรชื่อสินค้าเป็น 16px พร้อมแสดงจำนวนหน้าทั้งหมดในหน้าตัวอย่างพิมพ์'
