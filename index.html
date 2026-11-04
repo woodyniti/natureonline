@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.05</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.06</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.05';
-const DISPLAY_APP_VERSION = 'v3.05';
+const CURRENT_APP_VERSION = 'sealthai-v3.06';
+const DISPLAY_APP_VERSION = 'v3.06';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1236,7 +1236,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.05 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.06)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.06 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1309,7 +1309,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.05 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.06)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.06 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1338,7 +1338,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.05 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.06)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.06 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2806,13 +2806,13 @@ function renderOrderShopeeReconciliation(order, cost, catalogOverride) {
     <div style="font-weight:700;margin-bottom:7px">🔗 เทียบกับ Shopee Summary · ${escapeHTML(recon.ref)} <span style="font-weight:400;color:#64748b">(${sourceLabel})</span></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px">
       <div>ขายในออเดอร์<br><b>${fmtB(localSale)}</b></div><div>ขายสุทธิใน Shopee<br><b>${fmtB(m.sale)}</b></div>
-      <div>ค่าธรรมเนียมจริง<br><b style="color:#dc2626">−${fmtB(m.fee)}</b></div><div>หลังหักค่าธรรมเนียม<br><b style="color:#0284c7">${fmtB(m.payout)}</b></div>
+      <div>ค่าธรรมเนียมจริง<br><b style="color:#dc2626">−${fmtB(m.fee)}</b></div><div>หลังหัก Shopee<br><b style="color:#0284c7">${fmtB(m.payout)}</b></div>
       <div>ต้นทุนออเดอร์<br><b>${fmtB(cost)}</b></div><div>กำไรตามยอด Shopee<br><b style="color:${profit>=0?'#15803d':'#dc2626'}">${fmtB(profit)}</b></div>
     </div>
     <div style="margin-top:8px;color:${Math.abs(delta)>0.01?'#c2410c':'#15803d'};font-weight:600">${Math.abs(delta)>0.01?'⚠️ ยอดขายต่างกัน '+fmtB(delta)+' (ออเดอร์ − Shopee)':'✅ ยอดขายรวมตรงกัน'} · ${localQty === shopeeQty ? 'จำนวนชิ้นตรงกัน' : '⚠️ จำนวนชิ้นต่างกัน: ออเดอร์ '+localQty+' / Shopee '+shopeeQty}</div>
     <div style="margin-top:6px;color:#64748b">ค่าธรรมเนียมแยก: คอมมิชชั่น ${fmtB(m.fees.commission)} · ธุรกรรม ${fmtB(m.fees.transaction)} · บริการ ${fmtB(m.fees.service)} · นับครั้งเดียวต่อเลขคำสั่งซื้อ</div>
-    <div style="overflow-x:auto;margin-top:8px"><table style="font-size:11px;min-width:850px"><thead><tr><th>สินค้า / SKU ตัวเลือกใน Shopee</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/ชิ้น Shopee</th><th class="text-right">ราคา/ชิ้น ระบบ</th><th class="text-right">ส่วนต่าง/ชิ้น</th><th class="text-right">ขายสุทธิ</th><th class="text-right">ส่วนค่าธรรมเนียม</th><th class="text-right">หลังหัก</th><th class="text-right">กำไรสินค้า</th></tr></thead><tbody>${itemRows}</tbody></table></div>
-    <div style="color:#64748b;margin-top:5px">ราคา/ชิ้นในระบบอาจยังไม่หักส่วนลดบิล; ส่วนค่าธรรมเนียมรายสินค้าแบ่งตามสัดส่วนราคาขาย; “หลังหัก” ยังไม่ใช่ยอดโอนเข้าธนาคาร หากมีค่าขนส่ง/ปรับปรุงอื่นใน Shopee</div>
+    <div style="overflow-x:auto;margin-top:8px"><table style="font-size:11px;min-width:850px"><thead><tr><th>สินค้า / SKU ตัวเลือกใน Shopee</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/ชิ้น Shopee</th><th class="text-right">ราคา/ชิ้น ระบบ</th><th class="text-right">ส่วนต่าง/ชิ้น</th><th class="text-right">ขายสุทธิ</th><th class="text-right">ส่วนค่าธรรมเนียม</th><th class="text-right">หลังหัก Shopee</th><th class="text-right">กำไรสินค้า</th></tr></thead><tbody>${itemRows}</tbody></table></div>
+    <div style="color:#64748b;margin-top:5px">ราคา/ชิ้นในระบบอาจยังไม่หักส่วนลดบิล; ส่วนค่าธรรมเนียมรายสินค้าแบ่งตามสัดส่วนราคาขาย; “หลังหัก Shopee” ยังไม่ใช่ยอดโอนเข้าธนาคาร หากมีค่าขนส่ง/ปรับปรุงอื่นใน Shopee</div>
   </div>`;
 }
 
@@ -4077,7 +4077,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.05)">v3.05 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.06)">v3.06 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7514,7 +7514,7 @@ async function loadOrders() {
               ? '<div class="text-red" style="font-weight:600">ไม่นับในยอดขาย/กำไร</div>'
               : `<div style="color:#7c3aed"><span style="color:var(--text3)">ต้นทุน</span> <span class="font-mono">${fmtB(cost)}</span></div>
                  ${isPlat?`<div class="text-red" title="${feeInfo.source==='actual'?'รายการหัก/ปรับปรุงจริงจาก '+feeInfo.channel:'ค่าธรรมเนียมประมาณ '+feeInfo.pct.toFixed(2)+'%'}"><span style="color:var(--text3)">${feeInfo.source==='actual'?'หักจริง':'GP ประมาณ'} ${feeInfo.pct.toFixed(2)}%</span> <span class="font-mono">-${fmtB(fee)}</span></div>`:''}
-                 ${feeInfo.reconciliation?`<div style="color:#0284c7"><span style="color:var(--text3)">${feeInfo.channel} หลังหัก</span> <span class="font-mono">${fmtB(feeInfo.reconciliation.match.payout)}</span></div>`:''}
+                 ${feeInfo.reconciliation?`<div style="color:#0284c7"><span style="color:var(--text3)">หลังหัก ${feeInfo.channel}</span> <span class="font-mono">${fmtB(feeInfo.reconciliation.match.payout)}</span></div>`:''}
                  ${feeInfo.reconciliation?`<div style="color:${feeInfo.reconciliation.match.payout-cost>=0?'#15803d':'#dc2626'}"><span style="color:var(--text3)">กำไรตาม ${feeInfo.channel}</span> <span class="font-mono">${fmtB(feeInfo.reconciliation.match.payout-cost)}</span></div>`:''}
                  <div class="${profit>=0?'text-green':'text-red'}" style="font-weight:700"><span style="color:var(--text3);font-weight:400">กำไร</span> <span class="font-mono">${fmtB(profit)}</span></div>`}
           </td>
@@ -7610,7 +7610,7 @@ async function loadOrders() {
         return '<div style="font-size:11px;margin-bottom:8px;color:var(--text3)">ต้นทุน <span class="font-mono" style="color:#7c3aed">'+fmtB(cost)+'</span>'+
           (isPlat?' · GP Platform '+feeInfo.pct.toFixed(2)+'% <span class="font-mono text-red">-'+fmtB(fee)+'</span>':'')+
           ' · กำไรระบบ <span class="font-mono '+(profit>=0?'text-green':'text-red')+'" style="font-weight:600">'+fmtB(profit)+'</span>'+
-          (feeInfo.reconciliation?' · Shopee หลังหัก <span class="font-mono" style="color:#0284c7">'+fmtB(feeInfo.reconciliation.match.payout)+'</span> · กำไร Shopee <span class="font-mono" style="color:'+(feeInfo.reconciliation.match.payout-cost>=0?'#15803d':'#dc2626')+'">'+fmtB(feeInfo.reconciliation.match.payout-cost)+'</span>':'')+'</div>';
+          (feeInfo.reconciliation?' · หลังหัก '+feeInfo.channel+' <span class="font-mono" style="color:#0284c7">'+fmtB(feeInfo.reconciliation.match.payout)+'</span> · กำไร '+feeInfo.channel+' <span class="font-mono" style="color:'+(feeInfo.reconciliation.match.payout-cost>=0?'#15803d':'#dc2626')+'">'+fmtB(feeInfo.reconciliation.match.payout-cost)+'</span>':'')+'</div>';
       })()}
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div style="display:flex;gap:6px;align-items:center">
@@ -40487,6 +40487,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.06', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ชื่อยอดหลังหักตามช่องทางขาย', items:[
+      'หน้าออเดอร์แสดง “หลังหัก Shopee” หรือ “หลังหัก Lazada” ตามช่องทางจริง ทั้งรายการ PC การ์ดมือถือ และรายละเอียดออเดอร์',
+      'แก้การ์ดมือถือที่เคยแสดงชื่อ Shopee ค้างในออเดอร์ Lazada ให้แสดงชื่อช่องทางและกำไรให้ถูกต้อง'
+    ]},
     { v:'3.05', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'พนักงานขายเริ่มต้นเมื่อสร้างออเดอร์', items:[
       'เลือก “นิติ บุญสายันต์” เป็นพนักงานขายเริ่มต้นทุกครั้งที่เปิดฟอร์มสร้างออเดอร์ใหม่ หากมีชื่ออยู่ในทะเบียนพนักงานที่ใช้งาน',
       'ยังสามารถเปลี่ยนเป็นพนักงานคนอื่นได้ และการดึงใบเสนอราคายังคงใช้พนักงานของใบเสนอราคานั้น'
