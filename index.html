@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.13</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.14</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.13';
-const DISPLAY_APP_VERSION = 'v3.13';
+const CURRENT_APP_VERSION = 'sealthai-v3.14';
+const DISPLAY_APP_VERSION = 'v3.14';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1300,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.13)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.13 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.14)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.14 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1373,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.13)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.13 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.14)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.14 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1402,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.13)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.13 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.14)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.14 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4133,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.13)">v3.13 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.14)">v3.14 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -8640,7 +8640,7 @@ const PO_STATUSES = [
   {key:'draft',    th:'แบบร่าง',   cls:'ds-draft'},
   {key:'sent',     th:'ส่งแล้ว',   cls:'ds-confirmed'},
   {key:'partial',  th:'รับบางส่วน',cls:'ds-packed'},
-  {key:'received', th:'รับครบแล้ว',cls:'ds-delivered'},
+  {key:'received', th:'ปิดรับแล้ว',cls:'ds-delivered'},
   {key:'cancelled',th:'ยกเลิก',    cls:'ds-cancelled'},
 ];
 const AP_STATUSES = [
@@ -14511,8 +14511,8 @@ function addStockRow(initial={}) {
     <div style="display:flex;gap:8px;align-items:end;flex-wrap:wrap" class="stock-row-inner">
       ${makeProductSearch(idx)}
       <div style="display:flex;flex-direction:column;min-width:80px;flex:1">
-        <label style="font-size:12px;color:var(--text3);margin-bottom:4px">จำนวน${row.po_item_id&&row.remaining!==null?' (คงเหลือ '+fmt(row.remaining)+')':''}</label>
-        <input type="number" value="${Number(row.qty)||0}" min="0" ${row.po_item_id&&row.remaining!==null?'max="'+Number(row.remaining)+'"':''} step="any" id="sr-qty-${idx}" ${row.enabled===false?'disabled':''}
+        <label style="font-size:12px;color:var(--text3);margin-bottom:4px">จำนวน${row.po_item_id&&row.remaining!==null?' (คงเหลือ '+fmt(row.remaining)+' · รับเกินได้)':''}</label>
+        <input type="number" value="${Number(row.qty)||0}" min="0" step="any" id="sr-qty-${idx}" ${row.enabled===false?'disabled':''}
           oninput="stockRows[${idx}].qty=+this.value;updateStockTotal()"
           style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-size:16px;width:100%;text-align:right">
       </div>
@@ -14809,6 +14809,35 @@ function renderLandedCostRows() {
   updateStockTotal();
 }
 
+function confirmPOOverReceipts(lines) {
+  const over = (lines || []).filter(r => r.remaining !== null && r.remaining !== undefined && Number(r.qty) > Number(r.remaining));
+  if (!over.length) return true;
+  const details = over.map(r => '• ' + (r.name || 'สินค้า') + ': รับ ' + fmt(r.qty) + ' / คงเหลือ ' + fmt(r.remaining) + ' ชิ้น' + (r.po_no ? ' (' + r.po_no + ')' : '')).join('\n');
+  return confirm('⚠️ มีสินค้ารับเกินจำนวนคงเหลือใน PO\n' + details + '\n\nกด ตกลง เพื่อยืนยันจำนวนรับเกิน หรือ ยกเลิก เพื่อกลับไปแก้ไข');
+}
+
+async function decidePOReceiptStatuses(lines) {
+  const poIds = [...new Set((lines || []).map(r => r.po_id).filter(Boolean))];
+  const statuses = new Map();
+  if (!poIds.length) return statuses;
+  const { data: poItems, error } = await sb.from('purchase_order_items')
+    .select('id,po_id,product_name,qty_ordered,qty_received').in('po_id', poIds);
+  if (error) throw error;
+  const addByItem = new Map();
+  (lines || []).forEach(r => addByItem.set(r.po_item_id, (addByItem.get(r.po_item_id) || 0) + Number(r.qty || 0)));
+  for (const poId of poIds) {
+    const thisPO = (poItems || []).filter(it => it.po_id === poId);
+    if (!thisPO.length) throw new Error('ไม่พบรายการสินค้าใน PO สำหรับรับเข้า');
+    const short = thisPO.filter(it => Number(it.qty_received || 0) + (addByItem.get(it.id) || 0) < Number(it.qty_ordered || 0));
+    if (!short.length) { statuses.set(poId, 'received'); continue; }
+    const poNo = (lines || []).find(r => r.po_id === poId)?.po_no || 'PO';
+    const missingQty = short.reduce((sum, it) => sum + Math.max(0, Number(it.qty_ordered || 0) - Number(it.qty_received || 0) - (addByItem.get(it.id) || 0)), 0);
+    const close = confirm('PO ' + poNo + ' ยังมี ' + short.length + ' รายการที่รับไม่ครบ (รวม ' + fmt(missingQty) + ' ชิ้น)\n\nกด ตกลง = ปิด PO ไม่รับเพิ่ม\nกด ยกเลิก = เปิด PO ค้างไว้เพื่อรับภายหลัง');
+    statuses.set(poId, close ? 'received' : 'partial');
+  }
+  return statuses;
+}
+
 let _stockSaving = false;
 async function saveStockBatch() {
   const date = document.getElementById('s-date').value;
@@ -14843,13 +14872,7 @@ async function saveStockBatch() {
   }
   const valid = stockRows.filter(r=>r&&r.enabled!==false&&r.product_id&&r.qty>0);
   if (!valid.length) { toast('กรุณาเลือกสินค้าและใส่จำนวนอย่างน้อย 1 รายการ','error'); return; }
-  const overReceived = valid.find(r => r.po_item_id && r.remaining!==null && Number(r.qty) > Number(r.remaining));
-  if (overReceived) {
-    const qtyInput = document.getElementById('sr-qty-' + stockRows.indexOf(overReceived));
-    if (qtyInput) { qtyInput.focus(); qtyInput.scrollIntoView({ block:'center', behavior:'smooth' }); }
-    toast('รับ '+fmt(overReceived.qty)+' ชิ้น แต่ '+(overReceived.po_no||'PO')+' คงเหลือ '+fmt(overReceived.remaining)+' ชิ้น: '+(overReceived.product_name||'สินค้า')+' — กรุณาแก้จำนวนก่อนบันทึก','error');
-    return;
-  }
+  if (!confirmPOOverReceipts(valid.map(r => ({ name:r.product_name, qty:r.qty, remaining:r.remaining, po_no:r.po_no })))) return;
   // ── ตรวจสอบราคาต่อหน่วยผิดปกติ (เช่น เผลอใส่ราคารวมทั้งบิลแทนราคาต่อหน่วย) ──
   const suspiciousCosts = [];
   for (const r of valid) {
@@ -14885,6 +14908,9 @@ async function saveStockBatch() {
   _stockSaving = true;
   let stockInserted = false;
   try {
+  const poReceiptStatuses = await decidePOReceiptStatuses(valid.filter(r => r.po_id && r.po_item_id).map(r => ({
+    po_id:r.po_id, po_item_id:r.po_item_id, po_no:r.po_no, qty:r.qty
+  })));
 
   // ── คำนวณ Landed Cost แบ่งตามสัดส่วนมูลค่า (แปลงค่าเป็นเงินบาทตาม Exchange Rate) ──
   const curSave = document.getElementById('s-currency')?.value || 'THB';
@@ -14988,22 +15014,15 @@ async function saveStockBatch() {
       .select('po_id,qty_ordered,qty_received').eq('id', r.po_item_id).single();
     if (curErr) throw curErr;
     if (!cur) continue;
-    const newReceived = Math.min(
-      Number(cur.qty_received||0) + Number(r.qty),
-      Number(cur.qty_ordered)
-    );
+    const newReceived = Number(cur.qty_received||0) + Number(r.qty);
     const { error: receivedErr } = await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
     if (receivedErr) throw receivedErr;
     affectedPoIds.add(r.po_id || cur.po_id);
   }
   for (const poId of affectedPoIds) {
     if (!poId) continue;
-    const { data: allItems, error: allItemsErr } = await sb.from('purchase_order_items')
-      .select('qty_ordered,qty_received').eq('po_id', poId);
-    if (allItemsErr) throw allItemsErr;
-    const allDone = allItems?.length && allItems.every(it => Number(it.qty_received||0) >= Number(it.qty_ordered));
     const { error: poStatusErr } = await sb.from('purchase_orders').update({
-      status: allDone ? 'received' : 'partial'
+      status: poReceiptStatuses.get(poId) || 'partial'
     }).eq('id', poId);
     if (poStatusErr) throw poStatusErr;
   }
@@ -16186,9 +16205,10 @@ async function loadPODropdownForStock(preselectedPOIds=[]) {
   const poById = new Map((data||[]).map(po => [po.id, po]));
   (selectedResult?.data||[]).forEach(po => poById.set(po.id, po));
   const pendingPOs = [...poById.values()].filter(po => po.status !== 'draft').map(po => {
-    const pendingItems = (po.purchase_order_items||[]).filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
-    return { ...po, pendingItems };
-  }).filter(po => po.pendingItems.length);
+    const poItems = po.purchase_order_items || [];
+    const hasPending = poItems.some(it => Number(it.qty_ordered) > Number(it.qty_received||0));
+    return { ...po, pendingItems:poItems, hasPending };
+  }).filter(po => po.hasPending);
   list._poData = pendingPOs;
   if (!pendingPOs.length) {
     list.innerHTML = '<div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">ไม่มี PO ที่ส่งสั่งซื้อแล้วรอรับสินค้า (PO แบบร่างจะไม่แสดง)</div>';
@@ -16197,13 +16217,14 @@ async function loadPODropdownForStock(preselectedPOIds=[]) {
   }
   list.innerHTML = pendingPOs.map(po => {
     const pendingQty = po.pendingItems.reduce((sum,it)=>sum+Math.max(0,Number(it.qty_ordered)-Number(it.qty_received||0)),0);
+    const pendingCount = po.pendingItems.filter(it => Number(it.qty_ordered) > Number(it.qty_received||0)).length;
     const statusBadge = po.status === 'partial'
       ? '<span style="font-size:10px;background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px">รับบางส่วน</span>'
       : '<span style="font-size:10px;background:#e0f2fe;color:#0284c7;padding:1px 6px;border-radius:4px;font-weight:600;margin-left:4px">ส่งสั่งซื้อแล้ว</span>';
     return '<label style="display:flex;align-items:flex-start;gap:9px;padding:8px;border-bottom:1px solid var(--border);cursor:pointer">'+
       '<input type="checkbox" class="s-po-check" value="'+po.id+'" onchange="updateStockPOSelectionSummary()" style="width:17px;height:17px;margin-top:1px">'+
       '<span style="min-width:0"><strong style="font-size:12px">'+escapeHTML(po.po_no||'-')+'</strong>'+statusBadge+' · '+escapeHTML(po.supplier_name||'-')+
-      '<br><span style="font-size:11px;color:var(--text3)">'+po.pendingItems.length+' รายการ · คงเหลือ '+fmt(pendingQty)+' ชิ้น</span></span></label>';
+      '<br><span style="font-size:11px;color:var(--text3)">ค้างรับ '+pendingCount+' รายการ · คงเหลือ '+fmt(pendingQty)+' ชิ้น</span></span></label>';
   }).join('');
   updateStockPOSelectionSummary();
 }
@@ -16263,7 +16284,7 @@ async function applyPOsToStock() {
   selectedPOs.forEach(po => {
     (po.pendingItems||[]).forEach(it => {
       const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
-      if (remaining <= 0) return;
+      // Keep fully received lines available at quantity 0, in case the supplier ships extra.
       let pid = it.product_id || '';
       let pname = it.product_name || '';
       if (!pid && pname && stockProductList && stockProductList.length) {
@@ -16284,9 +16305,9 @@ async function applyPOsToStock() {
       }
       pendingRows.push({
         product_id: pid, product_name: pname,
-        qty: remaining, cost: rawUnitCost, other: 0,
+        qty: Math.max(0, remaining), cost: rawUnitCost, other: 0,
         po_id: po.id, po_item_id: it.id, po_no: po.po_no||'',
-        supplier_name: po.supplier_name||'', remaining, enabled: true,
+        supplier_name: po.supplier_name||'', remaining:Math.max(0,remaining), enabled: true,
       });
     });
   });
@@ -20634,7 +20655,7 @@ async function grpo() {
       <select id="gr-filter" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px" onchange="loadGRPO()">
         <option value="pending">รอรับสินค้า (sent + partial · ไม่รวมแบบร่าง)</option>
         <option value="all">ทั้งหมด</option>
-        <option value="received">รับครบแล้ว</option>
+        <option value="received">ปิดรับแล้ว</option>
       </select>
       <button class="btn btn-secondary btn-sm" onclick="loadGRPO()">🔍 โหลดใหม่</button>
     </div>
@@ -20680,7 +20701,7 @@ async function loadGRPO() {
       const items = po.purchase_order_items || [];
       const totalOrdered  = items.reduce((s,i)=>s+Number(i.qty_ordered||0),0);
       const totalReceived = items.reduce((s,i)=>s+Number(i.qty_received||0),0);
-      const pending = totalOrdered - totalReceived;
+      const pending = items.reduce((s,i)=>s+Math.max(0,Number(i.qty_ordered||0)-Number(i.qty_received||0)),0);
       const supRef = getPOSupplierRef(po);
       return '<tr>' +
         '<td>'+po.po_date+'</td>' +
@@ -20696,7 +20717,7 @@ async function loadGRPO() {
           ? '<span style="color:var(--text3);font-size:12px">✏️ แบบร่าง (ยังไม่ส่งซื้อ)</span>'
           : (po.status!=='received'&&po.status!=='cancelled'
             ? '<button class="btn btn-primary btn-sm" onclick="openGR(&quot;'+po.id+'&quot;)">📦 รับสินค้า</button>'
-            : '<span style="color:var(--accent);font-size:12px">✓ ครบแล้ว</span>')) +
+            : '<span style="color:var(--accent);font-size:12px">✓ ปิดรับแล้ว</span>')) +
         '</td></tr>';
     }).join('') +
     '</tbody></table></div>' +
@@ -20707,7 +20728,7 @@ async function loadGRPO() {
       const items = po.purchase_order_items || [];
       const totalOrdered  = items.reduce((s,i)=>s+Number(i.qty_ordered||0),0);
       const totalReceived = items.reduce((s,i)=>s+Number(i.qty_received||0),0);
-      const pending = totalOrdered - totalReceived;
+      const pending = items.reduce((s,i)=>s+Math.max(0,Number(i.qty_ordered||0)-Number(i.qty_received||0)),0);
       return '<div class="order-card">' +
         '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">' +
           '<div>' +
@@ -20725,7 +20746,7 @@ async function loadGRPO() {
           ? '<div style="text-align:center;color:var(--text3);font-size:12px;padding:6px;background:var(--bg3);border-radius:6px">✏️ แบบร่าง (ยังไม่ส่งซื้อ)</div>'
           : (po.status!=='received'&&po.status!=='cancelled'
             ? '<button class="btn btn-primary" style="width:100%" onclick="openGR(&quot;'+po.id+'&quot;)">📦 รับสินค้า</button>'
-            : '<div style="text-align:center;color:var(--accent);font-size:13px">✓ รับครบแล้ว</div>')) +
+            : '<div style="text-align:center;color:var(--accent);font-size:13px">✓ ปิดรับแล้ว</div>')) +
       '</div>';
     }).join('') +
     '</div>';
@@ -20742,8 +20763,8 @@ async function openGR(poId) {
     return;
   }
 
-  const pending = items.filter(it => Number(it.qty_ordered) > Number(it.qty_received||0));
-  if (!pending.length) { toast('รับสินค้าครบแล้ว','success'); return; }
+  const pending = items.filter(it => Number(it.qty_ordered) > 0);
+  if (!pending.length) { toast('PO นี้ไม่มีรายการสินค้าให้รับ','error'); return; }
 
   let isUSD = false;
   let grRate = getPOExchangeRate(po);
@@ -20791,13 +20812,13 @@ async function openGR(poId) {
     </div>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
-      <div style="font-weight:700;font-size:13px">รายการที่รอรับ (${pending.length} รายการ)</div>
+      <div style="font-weight:700;font-size:13px">รายการสินค้าใน PO (${pending.length} รายการ)</div>
       <div style="font-size:11px;color:var(--text3)">แตะปุ่มเพื่อปรับจำนวนรับ</div>
     </div>
 
     <div id="gr-items" style="display:flex;flex-direction:column;gap:10px;max-height:45vh;overflow-y:auto;padding-right:2px">
       ${pending.map((it,i) => {
-        const remaining = Number(it.qty_ordered) - Number(it.qty_received||0);
+        const remaining = Math.max(0,Number(it.qty_ordered) - Number(it.qty_received||0));
         let rawName = it.product_name || 'สินค้า';
         let soBadgeHTML = '';
         const soMatch = rawName.match(/\[SO:\s*([^\]]+)\]/i);
@@ -20836,12 +20857,12 @@ async function openGR(poId) {
 
             <!-- Touch Input Stepper Controls -->
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-              <div style="font-size:12px;font-weight:700;color:var(--text2)">จำนวนรับครั้งนี้:</div>
+              <div style="font-size:12px;font-weight:700;color:var(--text2)">จำนวนรับครั้งนี้ <span style="font-weight:400;color:var(--text3)">(รับเกินได้)</span>:</div>
               <div style="display:flex;align-items:center;gap:5px">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, -1, ${remaining})" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">-</button>
-                <input type="number" id="gr-qty-${i}" data-item-id="${it.id}" data-product-id="${it.product_id||''}" data-unit-cost="${it.unit_cost}" data-max="${remaining}" value="${remaining}" min="0" max="${remaining}" step="any" oninput="updateGRShippingSuggestion()"
+                <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, -1)" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">-</button>
+                <input type="number" id="gr-qty-${i}" data-item-id="${it.id}" data-product-id="${it.product_id||''}" data-unit-cost="${it.unit_cost}" data-max="${remaining}" data-product-name="${escapeHTML(rawName)}" value="${remaining}" min="0" step="any" oninput="updateGRShippingSuggestion()"
                   style="width:70px;height:34px;background:#fff;border:1.5px solid var(--accent);border-radius:6px;padding:4px;font-size:16px;font-weight:700;text-align:center;color:var(--text)">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, 1, ${remaining})" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">+</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, 1)" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">+</button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="setGRQtyFull(${i}, ${remaining})" style="height:34px;padding:0 8px;font-size:11px;font-weight:600;background:#f0fdf4;color:#15803d;border-color:#86efac">รับเต็ม</button>
               </div>
             </div>
@@ -20900,12 +20921,11 @@ window.updateGRPreview = function() {
   });
 };
 
-function adjustGRQty(idx, delta, maxVal) {
+function adjustGRQty(idx, delta) {
   const inp = document.getElementById('gr-qty-' + idx);
   if (!inp) return;
   let cur = Number(inp.value || 0) + delta;
   if (cur < 0) cur = 0;
-  if (cur > maxVal) cur = maxVal;
   inp.value = cur;
   updateGRShippingSuggestion();
 }
@@ -20980,9 +21000,15 @@ function getGRLandedCosts() {
   });
   return result;
 }
+let _grSaving = false;
 async function confirmGR(poId, pendingCount) {
+  if (_grSaving) return;
+  _grSaving = true;
+  let stockInserted = false;
+  try {
   const grDate = document.getElementById('gr-date')?.value || today();
-  const {data:po} = await sb.from('purchase_orders').select('*').eq('id',poId).single();
+  const {data:po,error:poErr} = await sb.from('purchase_orders').select('*').eq('id',poId).single();
+  if (poErr || !po) throw poErr || new Error('ไม่พบ PO');
 
   const movements = [];
   const itemUpdates = [];
@@ -20998,12 +21024,18 @@ async function confirmGR(poId, pendingCount) {
     const inp = document.getElementById('gr-qty-'+i);
     if (!inp) continue;
     const qty = Number(inp.value||0);
-    if (qty <= 0) continue;
+    if (!Number.isFinite(qty) || qty <= 0) continue;
     const itemId    = inp.dataset.itemId;
     const productId = inp.dataset.productId;
     const unitCost  = Number(inp.dataset.unitCost||0);
-    grItems.push({ itemId, productId, qty, unitCost, lineValue: qty * unitCost });
+    grItems.push({ itemId, productId, qty, unitCost, name: inp.dataset.productName || 'สินค้า', remaining:Number(inp.dataset.max || 0), lineValue: qty * unitCost });
   }
+  if (!grItems.length) { toast('กรุณาระบุจำนวนที่รับอย่างน้อย 1 รายการ','error'); return; }
+  if (grItems.some(it => !it.productId)) { toast('มีสินค้าที่ยังไม่เชื่อมกับคลัง กรุณาเชื่อมสินค้าก่อนรับเข้า','error'); return; }
+  if (!confirmPOOverReceipts(grItems.map(it => ({ ...it, po_no:po.po_no })))) return;
+  const poReceiptStatuses = await decidePOReceiptStatuses(grItems.map(it => ({
+    po_id:poId, po_item_id:it.itemId, po_no:po.po_no, qty:it.qty
+  })));
   const totalValue = grItems.reduce((s,r) => s + r.lineValue, 0);
 
   for (const item of grItems) {
@@ -21028,31 +21060,38 @@ async function confirmGR(poId, pendingCount) {
 
   // บันทึก stock movements
   const {error} = await sb.from('stock_movements').insert(movements);
-  if (error) { toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
+  if (error) throw error;
+  stockInserted = true;
 
   // recalc stock
   await recalcStockQty(productIds);
 
   // อัพเดท qty_received ของแต่ละ item
   for (const upd of itemUpdates) {
-    const {data:cur} = await sb.from('purchase_order_items').select('qty_received,qty_ordered').eq('id',upd.itemId).single();
+    const {data:cur,error:curErr} = await sb.from('purchase_order_items').select('qty_received,qty_ordered').eq('id',upd.itemId).single();
+    if (curErr) throw curErr;
     if (cur) {
-      await sb.from('purchase_order_items').update({
-        qty_received: Math.min(Number(cur.qty_received||0)+upd.additionalQty, Number(cur.qty_ordered))
+      const {error:receivedErr} = await sb.from('purchase_order_items').update({
+        qty_received: Number(cur.qty_received||0)+upd.additionalQty
       }).eq('id',upd.itemId);
+      if (receivedErr) throw receivedErr;
     }
   }
 
-  // ตรวจว่ารับครบทุก item ไหม
-  const {data:allItems} = await sb.from('purchase_order_items').select('qty_ordered,qty_received').eq('po_id',poId);
-  const allDone = allItems?.every(it=>Number(it.qty_received||0)>=Number(it.qty_ordered));
-  await sb.from('purchase_orders').update({
-    status: allDone ? 'received' : 'partial'
+  const {error:statusErr} = await sb.from('purchase_orders').update({
+    status: poReceiptStatuses.get(poId) || 'partial'
   }).eq('id',poId);
+  if (statusErr) throw statusErr;
 
   closeModal('modal-grpo');
   toast('รับสินค้าสำเร็จ ✓ Stock อัพเดทแล้ว','success');
   loadGRPO();
+  } catch (err) {
+    if (stockInserted) { closeModal('modal-grpo'); loadGRPO(); }
+    toast((stockInserted ? 'รับสินค้าเข้าสต๊อกแล้ว แต่การอัปเดต PO/ต้นทุนไม่สำเร็จ โปรดตรวจข้อมูลก่อนกดซ้ำ: ' : 'รับสินค้าไม่สำเร็จ: ') + (err?.message || String(err)), 'error');
+  } finally {
+    _grSaving = false;
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -24206,7 +24245,9 @@ async function viewPO(poId) {
     '</tr></thead><tbody>'+
     (items||[]).map((it,i)=>{
       const product = skuMap[it.product_id] || {};
-      const pending=Number(it.qty_ordered)-Number(it.qty_received||0);
+      const receivedQty=Number(it.qty_received||0);
+      const pending=Math.max(0,Number(it.qty_ordered)-receivedQty);
+      const overQty=Math.max(0,receivedQty-Number(it.qty_ordered));
       const thbCost = Number(it.unit_cost || 0);
       const usdCost = isUSD && poRate > 0 ? (thbCost / poRate) : 0;
       const thbAmt = Number(it.qty_ordered)*thbCost;
@@ -24247,7 +24288,7 @@ async function viewPO(poId) {
         '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+'</td>'+
         '<td>'+supCell+'</td>'+
         '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
-        '<td style="text-align:right;color:var(--accent)">'+fmt(it.qty_received||0)+'</td>'+
+        '<td style="text-align:right;color:var(--accent)">'+fmt(receivedQty)+(overQty>0?'<div style="font-size:10px;color:var(--amber)">รับเกิน +'+fmt(overQty)+'</div>':'')+'</td>'+
         '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
         '<td style="text-align:right font-mono">'+unitCostDisplay+'</td>'+
         '<td style="text-align:right;font-weight:600" class="font-mono text-amber">'+amtDisplay+'</td></tr>';
@@ -40706,6 +40747,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.14', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รับสินค้าเกิน PO และเลือกรับบางรายการ', items:[
+      'รับจำนวนเกินยอดคงเหลือได้ทั้งจาก PO และฟอร์มรับเข้าสต๊อก โดยยืนยันยอดเกินก่อนบันทึกและเก็บยอดรับจริง',
+      'เมื่อยังรับไม่ครบบางรายการ ระบบถามว่าจะเปิด PO ไว้รับต่อหรือปิดรับทันที และแสดงยอดรับเกินโดยไม่ทำให้คงเหลือติดลบ'
+    ]},
     { v:'3.13', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แจ้งข้อผิดพลาดให้เห็นเหนือทุกหน้าต่าง', items:[
       'แสดง error เป็นแถบแดงด้านบนสุดของหน้าจอ ค้างจนผู้ใช้กดปิด และจับข้อผิดพลาด JavaScript ที่ไม่ถูกจัดการ',
       'ขั้นตอนรับสินค้าแจ้งผลล้มเหลวของการบันทึก การคำนวณสต๊อก และการอัปเดต PO พร้อมเตือนกรณีบันทึกไปแล้วบางส่วน'
