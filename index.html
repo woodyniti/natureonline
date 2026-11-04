@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.12</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.13</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.12';
-const DISPLAY_APP_VERSION = 'v3.12';
+const CURRENT_APP_VERSION = 'sealthai-v3.13';
+const DISPLAY_APP_VERSION = 'v3.13';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -99,8 +99,32 @@ function initSupabase() {
 
 try { initSupabase(); } catch(e) {}
 
+function showAppError(message) {
+  const text = String(message?.message || message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ').trim().slice(0, 1000);
+  let host = document.getElementById('app-error-notice');
+  if (!host) {
+    host = document.createElement('div');
+    host.id = 'app-error-notice';
+    host.setAttribute('role', 'alert');
+    host.setAttribute('aria-live', 'assertive');
+    (document.body || document.documentElement).appendChild(host);
+  }
+  host.replaceChildren();
+  const title = document.createElement('strong');
+  title.textContent = '⚠️ ดำเนินการไม่สำเร็จ';
+  const detail = document.createElement('span');
+  detail.textContent = text;
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.textContent = 'ปิด';
+  close.setAttribute('aria-label', 'ปิดการแจ้งข้อผิดพลาด');
+  close.onclick = () => host.remove();
+  host.append(title, detail, close);
+}
+
 function toast(msg, type='success') {
   try {
+    if (type === 'error') { showAppError(msg); return; }
     let container = document.getElementById('toasts');
     if (!container) {
       container = document.createElement('div');
@@ -110,13 +134,22 @@ function toast(msg, type='success') {
     }
     const el = document.createElement('div');
     el.className = `toast ${type}`;
-    el.innerHTML = (type==='success'?'✓':'✕') + ' ' + msg;
+    el.textContent = (type==='success'?'✓':'•') + ' ' + String(msg ?? '');
     container.appendChild(el);
     setTimeout(() => el.remove(), 3500);
   } catch(e) {
     console.log('Toast:', msg);
   }
 }
+
+window.addEventListener('error', event => {
+  if (!event.message || event.message === 'Script error.' || /ResizeObserver loop/i.test(event.message)) return;
+  showAppError('ระบบพบข้อผิดพลาด: ' + event.message);
+});
+window.addEventListener('unhandledrejection', event => {
+  const reason = event.reason;
+  showAppError('ระบบพบข้อผิดพลาด: ' + (reason?.message || String(reason || 'คำสั่งทำงานไม่สำเร็จ')));
+});
 
 function showLogin() {
   const v1 = document.getElementById('auth-login-view');
@@ -599,7 +632,11 @@ tbody td:first-child { color: var(--text); }
 .tab.active { background: var(--bg2); color: var(--accent); box-shadow: 0 1px 4px rgba(99,115,150,0.12); font-weight: 600; }
 
 /* ── Toast ── */
-.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+.toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 2147483646; display: flex; flex-direction: column; gap: 8px; }
+#app-error-notice { position:fixed; top:calc(12px + env(safe-area-inset-top)); left:50%; transform:translateX(-50%); z-index:2147483647; width:min(560px,calc(100vw - 24px)); padding:14px 16px; border:2px solid #dc2626; border-radius:12px; background:#fff7f7; box-shadow:0 12px 36px rgba(0,0,0,.32); color:#7f1d1d; display:flex; flex-wrap:wrap; gap:7px 12px; align-items:flex-start; font-size:14px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
+#app-error-notice strong { flex:1 1 70%; font-size:15px; }
+#app-error-notice span { order:3; flex:1 1 100%; max-height:32vh; overflow:auto; }
+#app-error-notice button { margin-left:auto; border:1px solid #fca5a5; border-radius:7px; background:#fff; color:#991b1b; padding:4px 12px; font-weight:700; cursor:pointer; }
 .toast {
   background: var(--bg2); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 12px 16px;
@@ -1263,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.12 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.13)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.13 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1336,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.12 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.13)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.13 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1365,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.12 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.13)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.13 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2976,14 +3013,6 @@ function getMonthOptions(sel=null) {
   return opts;
 }
 
-function toast(msg, type='success') {
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  el.innerHTML = (type==='success'?'✓':'✗') + ' ' + msg;
-  document.getElementById('toasts').appendChild(el);
-  setTimeout(() => el.remove(), 3500);
-}
-
 function setContent(html) {
   const root = document.getElementById('page-content');
   root.innerHTML = html;
@@ -4104,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.12)">v3.12 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.13)">v3.13 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -14816,7 +14845,9 @@ async function saveStockBatch() {
   if (!valid.length) { toast('กรุณาเลือกสินค้าและใส่จำนวนอย่างน้อย 1 รายการ','error'); return; }
   const overReceived = valid.find(r => r.po_item_id && r.remaining!==null && Number(r.qty) > Number(r.remaining));
   if (overReceived) {
-    toast('จำนวนรับของ '+(overReceived.product_name||'สินค้า')+' เกินจำนวนคงเหลือใน '+(overReceived.po_no||'PO'),'error');
+    const qtyInput = document.getElementById('sr-qty-' + stockRows.indexOf(overReceived));
+    if (qtyInput) { qtyInput.focus(); qtyInput.scrollIntoView({ block:'center', behavior:'smooth' }); }
+    toast('รับ '+fmt(overReceived.qty)+' ชิ้น แต่ '+(overReceived.po_no||'PO')+' คงเหลือ '+fmt(overReceived.remaining)+' ชิ้น: '+(overReceived.product_name||'สินค้า')+' — กรุณาแก้จำนวนก่อนบันทึก','error');
     return;
   }
   // ── ตรวจสอบราคาต่อหน่วยผิดปกติ (เช่น เผลอใส่ราคารวมทั้งบิลแทนราคาต่อหน่วย) ──
@@ -14852,6 +14883,8 @@ async function saveStockBatch() {
   if (!confirm('ยืนยันรับสินค้าเข้าสต๊อก ' + valid.length + ' รายการ' + poCountText + (_grand?' · รวม '+_grand:'') + '?\n\nสต๊อกและต้นทุนเฉลี่ยจะถูกอัพเดต')) return;
   if (_stockSaving) return;   // กันกดซ้ำ
   _stockSaving = true;
+  let stockInserted = false;
+  try {
 
   // ── คำนวณ Landed Cost แบ่งตามสัดส่วนมูลค่า (แปลงค่าเป็นเงินบาทตาม Exchange Rate) ──
   const curSave = document.getElementById('s-currency')?.value || 'THB';
@@ -14913,7 +14946,8 @@ async function saveStockBatch() {
   });
 
   const { error } = await sb.from('stock_movements').insert(inserts);
-  if (error) { _stockSaving=false; toast('บันทึกไม่สำเร็จ: '+error.message,'error'); return; }
+  if (error) throw error;
+  stockInserted = true;
 
   // เก็บ Landed Cost แยกตามประเภท (ค่าขนส่ง/ค่าจัดการ ฯลฯ) สำหรับ Dashboard — ถ้าตาราง landed_costs ยังไม่มี จะข้าม (ไม่ block)
   const receivedPoIds = [...new Set(valid.map(r=>r.po_id).filter(Boolean))];
@@ -14940,7 +14974,7 @@ async function saveStockBatch() {
   });
   if (landedToSave.length) {
     const { error: lcErr } = await sb.from('landed_costs').insert(landedToSave);
-    if (lcErr) console.warn('landed_costs insert skipped (ตารางยังไม่มี?):', lcErr.message);
+    if (lcErr) toast('รับสินค้าแล้ว แต่บันทึกค่าใช้จ่ายเพิ่มเติมไม่สำเร็จ: ' + lcErr.message, 'error');
   }
 
   const productIds = [...new Set(valid.map(r => r.product_id))];
@@ -14950,42 +14984,54 @@ async function saveStockBatch() {
   const affectedPoIds = new Set();
   for (const r of valid) {
     if (!r.po_item_id) continue;
-    const { data: cur } = await sb.from('purchase_order_items')
+    const { data: cur, error: curErr } = await sb.from('purchase_order_items')
       .select('po_id,qty_ordered,qty_received').eq('id', r.po_item_id).single();
+    if (curErr) throw curErr;
     if (!cur) continue;
     const newReceived = Math.min(
       Number(cur.qty_received||0) + Number(r.qty),
       Number(cur.qty_ordered)
     );
-    await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
+    const { error: receivedErr } = await sb.from('purchase_order_items').update({ qty_received: newReceived }).eq('id', r.po_item_id);
+    if (receivedErr) throw receivedErr;
     affectedPoIds.add(r.po_id || cur.po_id);
   }
   for (const poId of affectedPoIds) {
     if (!poId) continue;
-    const { data: allItems } = await sb.from('purchase_order_items')
+    const { data: allItems, error: allItemsErr } = await sb.from('purchase_order_items')
       .select('qty_ordered,qty_received').eq('po_id', poId);
+    if (allItemsErr) throw allItemsErr;
     const allDone = allItems?.length && allItems.every(it => Number(it.qty_received||0) >= Number(it.qty_ordered));
-    await sb.from('purchase_orders').update({
+    const { error: poStatusErr } = await sb.from('purchase_orders').update({
       status: allDone ? 'received' : 'partial'
     }).eq('id', poId);
+    if (poStatusErr) throw poStatusErr;
   }
 
   // reset landed cost rows
   landedCostRows = [];
-  _stockSaving = false;
-
   closeModal('modal-stock');
   toast('บันทึกสำเร็จ '+valid.length+' รายการ'+poCountText + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
   loadStockHistory();
+  } catch (err) {
+    if (stockInserted) {
+      closeModal('modal-stock');
+      loadStockHistory();
+    }
+    toast((stockInserted ? 'รับสินค้าเข้าสต๊อกแล้ว แต่ขั้นตอนอัปเดตข้อมูลต่อไม่สำเร็จ โปรดรีเฟรชและตรวจรายการก่อนกดซ้ำ: ' : 'รับสินค้าเข้าสต๊อกไม่สำเร็จ: ') + (err?.message || String(err)), 'error');
+  } finally {
+    _stockSaving = false;
+  }
 }
 
 // ── คำนวณ stock_qty และ current_cost (weighted avg) ใหม่จาก movements จริง ──
 async function recalcStockQty(productIds) {
   const affectedOrderIds = new Set();
   for (const pid of productIds) {
-    const { data: moves } = await sb.from('stock_movements')
+    const { data: moves, error: movesErr } = await sb.from('stock_movements')
       .select('move_type,qty,cost_per_unit')
       .eq('product_id', pid);
+    if (movesErr) throw movesErr;
     if (!moves) continue;
     const inMoves  = moves.filter(m=>m.move_type==='in');
     const totalIn  = inMoves.reduce((s,m)=>s+Number(m.qty||0),0);
@@ -14996,10 +15042,12 @@ async function recalcStockQty(productIds) {
     const avgCost = totalIn > 0 ? Math.round((totalCostValue / totalIn) * 100) / 100 : null;
     const updatePayload = { stock_qty: newQty };
     if (avgCost !== null) updatePayload.current_cost = avgCost;
-    await sb.from('products').update(updatePayload).eq('id', pid);
+    const { error: productErr } = await sb.from('products').update(updatePayload).eq('id', pid);
+    if (productErr) throw productErr;
     // เก็บ order ที่มีสินค้านี้ไว้ recompute total_cost (กรณีขายก่อนรับเข้า)
     if (avgCost && avgCost > 0) {
-      const { data: oi } = await sb.from('order_items').select('order_id').eq('product_id', pid);
+      const { data: oi, error: orderItemsErr } = await sb.from('order_items').select('order_id').eq('product_id', pid);
+      if (orderItemsErr) throw orderItemsErr;
       (oi||[]).forEach(x => { if (x.order_id) affectedOrderIds.add(x.order_id); });
     }
   }
@@ -40658,6 +40706,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.13', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แจ้งข้อผิดพลาดให้เห็นเหนือทุกหน้าต่าง', items:[
+      'แสดง error เป็นแถบแดงด้านบนสุดของหน้าจอ ค้างจนผู้ใช้กดปิด และจับข้อผิดพลาด JavaScript ที่ไม่ถูกจัดการ',
+      'ขั้นตอนรับสินค้าแจ้งผลล้มเหลวของการบันทึก การคำนวณสต๊อก และการอัปเดต PO พร้อมเตือนกรณีบันทึกไปแล้วบางส่วน'
+    ]},
     { v:'3.12', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'พิมพ์ฉลากสินค้าจาก PO และใบรับเข้า', items:[
       'เพิ่มปุ่มพิมพ์ฉลาก A4 ในรายละเอียด PO, ฟอร์มรับสินค้า และรายละเอียดใบรับเข้าที่บันทึกแล้ว',
       'ฉลากแสดงชื่อ SKU และจำนวนต่อรายการ จัดหลายช่องใน A4 หน้าเดียว พร้อมแจ้งเตือนเมื่อเกิน 48 รายการ'
