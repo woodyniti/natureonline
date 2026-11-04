@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.07</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.08</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.07';
-const DISPLAY_APP_VERSION = 'v3.07';
+const CURRENT_APP_VERSION = 'sealthai-v3.08';
+const DISPLAY_APP_VERSION = 'v3.08';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -485,6 +485,17 @@ tbody td:first-child { color: var(--text); }
   width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
+#modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); max-height:94vh; }
+#order-detail-content, #ed-items { min-width:0; max-width:100%; }
+#ed-items table { table-layout:fixed; }
+#ed-items thead th:first-child { width:40%; }
+#ed-items thead th:nth-child(2) { width:7%; }
+#ed-items thead th:nth-child(3) { width:10%; }
+#ed-items thead th:nth-child(4) { width:11%; }
+#ed-items thead th:nth-child(5) { width:12%; }
+#ed-items thead th:nth-child(6) { width:20%; }
+#ed-items td { overflow-wrap:anywhere; }
+#ed-items tr.ed-item-row td:last-child > div { flex-wrap:wrap; }
 .modal-close-btn {
   position: absolute;
   top: 14px;
@@ -829,6 +840,7 @@ tbody td:first-child { color: var(--text); }
   .modal-title { font-size: 16px; }
   .modal-footer { position:sticky;bottom:-20px;z-index:2;flex-wrap:wrap;gap:8px;margin:18px -16px -20px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,0.96);border-top:1px solid var(--border);backdrop-filter:blur(10px); }
   .modal-footer .btn { flex:1 1 120px;min-width:0;min-height:44px;justify-content:center;font-size:13px; }
+  #modal-order-detail .modal { max-width:100%; }
 
   /* ── Forms inside modals ── */
   .form-group input, .form-group select, .form-group textarea {
@@ -998,6 +1010,21 @@ tbody td:first-child { color: var(--text); }
   .user-info { padding: 6px 8px; }
   .shop-name { font-size: 12px; }
   .user-email { font-size: 10px; }
+}
+
+@media (max-width:1100px) {
+  #ed-items table, #ed-items tbody { display:block;width:100%; }
+  #ed-items thead { display:none; }
+  #ed-items tr.ed-item-row { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:12px;margin-bottom:10px;background:var(--bg3);border:1px solid var(--border);border-radius:10px; }
+  #ed-items tr.ed-item-row td { display:block;width:auto!important;min-width:0!important;padding:0;white-space:normal!important;text-align:left!important; }
+  #ed-items tr.ed-item-row td:first-child, #ed-items tr.ed-item-row td:last-child { grid-column:1/-1; }
+  #ed-items tr.ed-item-row td[data-label]::before { content:attr(data-label);display:block;margin-bottom:4px;font-size:11px;font-weight:600;color:var(--text3); }
+  #ed-items tr.ed-item-row input[type=number] { width:100%!important;min-height:36px; }
+  #ed-items tr.ed-item-row td:nth-child(4) > div { display:grid!important;grid-template-columns:minmax(0,1fr) 42px;gap:4px; }
+  #ed-items tr.ed-item-row td:nth-child(4) select { width:100%!important; }
+  #ed-items tr.ed-item-row td:last-child > div { justify-content:flex-start!important;flex-wrap:wrap; }
+  #ed-items tr.ed-add-row { display:block; }
+  #ed-items tr.ed-add-row td { display:block;padding:4px 0; }
 }
 
 /* ── Extra small (iPhone SE etc.) ── */
@@ -1236,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.07)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.07 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.08)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.08 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1309,7 +1336,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.07)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.07 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.08)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.08 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1338,7 +1365,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.07)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.07 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.08)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.08 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4077,7 +4104,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.07)">v3.07 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.08)">v3.08 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7016,7 +7043,7 @@ async function orders() {
 
     <!-- Modal: Order Detail / Edit -->
     <div class="modal-overlay" id="modal-order-detail" style="z-index:1300">
-      <div class="modal" style="max-width:620px">
+      <div class="modal">
         <div class="modal-title">📋 รายละเอียดออเดอร์</div>
         <div id="order-detail-content"></div>
         <div class="modal-footer" id="order-detail-footer">
@@ -8940,7 +8967,7 @@ function renderEditProdSearch(rowIdx) {
     ' style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:5px;padding:4px 7px;color:var(--text);font-size:12px;box-sizing:border-box"' +
     ' oninput="searchEditProd('+rowIdx+',this.value)" onfocus="searchEditProd('+rowIdx+',this.value)">' +
     '<div id="'+ddId+'" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;' +
-    'min-width:380px;max-width:min(580px,90vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;' +
+    'width:min(500px,calc(100vw - 64px));max-width:100%;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;' +
     'box-shadow:0 12px 32px rgba(0,0,0,0.22)"></div>' +
     '<div style="font-size:10px;margin-top:2px;margin-bottom:4px;color:'+statusColor+';font-weight:600">'+statusText+'</div>' +
     poBadgeHtml +
@@ -9103,6 +9130,7 @@ function renderEditItems() {
 
   editItems.forEach((it, i) => {
     const tr = document.createElement('tr');
+    tr.className = 'ed-item-row';
 
     // สินค้า
     const tdProd = document.createElement('td');
@@ -9138,18 +9166,21 @@ function renderEditItems() {
 
     // จำนวน
     const tdQty = document.createElement('td');
+    tdQty.dataset.label = 'จำนวน';
     tdQty.style.cssText = tdStyle;
     tdQty.innerHTML = numInp(it.qty, 'editItems['+i+'].qty=+this.value;updateEditTotal()', '58px');
     tr.appendChild(tdQty);
 
     // ราคา/ชิ้น
     const tdPrice = document.createElement('td');
+    tdPrice.dataset.label = 'ราคา/ชิ้น';
     tdPrice.style.cssText = tdStyle;
     tdPrice.innerHTML = numInp(it.sell_price, 'editItems['+i+'].sell_price=+this.value;updateEditTotal()', '72px');
     tr.appendChild(tdPrice);
 
     // ส่วนลด
     const tdDisc = document.createElement('td');
+    tdDisc.dataset.label = 'ส่วนลด';
     tdDisc.style.cssText = tdStyle;
     tdDisc.innerHTML =
       '<div style="display:flex;gap:2px;align-items:center">' +
@@ -9180,6 +9211,7 @@ function renderEditItems() {
       }
     }
     const tdTotal = document.createElement('td');
+    tdTotal.dataset.label = 'รวม / ต้นทุน';
     tdTotal.style.cssText = tdStyle + ';text-align:right;white-space:nowrap';
     tdTotal.innerHTML =
       '<span id="ed-row-total-'+i+'" class="font-mono text-accent" style="font-size:12px;font-weight:600">'+fmtB(itemNetEdit(it))+'</span>'+
@@ -9214,6 +9246,7 @@ function renderEditItems() {
 
   // แถว "+ เพิ่มสินค้า"
   const addRow = document.createElement('tr');
+  addRow.className = 'ed-add-row';
   const addTd  = document.createElement('td');
   addTd.colSpan = 6;
   addTd.style.paddingTop = '8px';
@@ -30411,8 +30444,8 @@ async function openShippingLabelModal(orderId) {
           <label>ขนาดกระดาษ</label>
           <select id="ship-size" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px;width:100%">
             <option value="A6">A6 (10 &times; 15 cm)</option>
-            <option value="A5" selected>A5 (15 &times; 21 cm)</option>
-            <option value="A4">A4 (21 &times; 29.7 cm)</option>
+            <option value="A5">A5 (15 &times; 21 cm)</option>
+            <option value="A4" selected>A4 (21 &times; 29.7 cm)</option>
           </select>
         </div>
         <div style="display:flex;flex-direction:column;justify-content:center;gap:6px">
@@ -30452,7 +30485,7 @@ async function printShippingLabel(orderId) {
   const order = window._shipOrder || {};
   const items = window._shipItems || [];
   
-  const size = document.getElementById('ship-size')?.value || 'A5';
+  const size = document.getElementById('ship-size')?.value || 'A4';
   const showItems = document.getElementById('ship-show-items')?.checked;
   const showCod = document.getElementById('ship-show-cod')?.checked;
   
@@ -30472,6 +30505,7 @@ async function printShippingLabel(orderId) {
   let Wstr = '5.8in', Hstr = '8.3in';
   if (size === 'A6') { Wstr = '4in'; Hstr = '6in'; }
   else if (size === 'A4') { Wstr = '8.3in'; Hstr = '11.7in'; }
+  const isA4 = size === 'A4';
 
   // COD detection
   const isCOD = order.payment_method === 'COD';
@@ -30513,7 +30547,7 @@ async function printShippingLabel(orderId) {
     '<style>',
     '* { box-sizing:border-box; margin:0; padding:0; }',
     "body { font-family:'Sarabun',sans-serif; background:#fff; color:#000; padding: 0.1in; }",
-    '.label-page { width:'+Wstr+'; min-height:calc('+Hstr+' - 0.2in); padding:0.15in; display:flex; flex-direction:column; border:2px dashed #000; page-break-after:always; page-break-inside:avoid; box-sizing:border-box; }',
+    '.label-page { width:'+(isA4?'170mm':Wstr)+'; min-height:'+(isA4?'257mm':'calc('+Hstr+' - 0.2in)')+'; margin:0 auto; padding:0.15in; display:flex; flex-direction:column; border:2px dashed #000; page-break-after:always; page-break-inside:avoid; box-sizing:border-box; }',
     '.header-row { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:12px; }',
     '.order-no { font-size:14px; font-weight:bold; font-family:monospace; }',
     '.carrier-info { font-size:13px; font-weight:bold; background:#000; color:#fff; padding:3px 8px; border-radius:4px; }',
@@ -30544,8 +30578,8 @@ async function printShippingLabel(orderId) {
     
     '@media print {',
     '  body { margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }',
-    '  .label-page { border:none !important; padding:0; }',
-    '  @page { size:'+Wstr+' '+Hstr+'; margin:0; }',
+    '  .label-page { border:none !important; padding:0; width:100%; margin:0 auto; }',
+    '  @page { size:'+(isA4?'A4 portrait':Wstr+' '+Hstr)+'; margin:'+(isA4?'20mm':'0')+'; }',
     '}',
     '</style></head><body>',
     '<div class="label-page">',
@@ -40487,6 +40521,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.08', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'หน้ารายละเอียดออเดอร์และใบปะหน้า A4', items:[
+      'ขยายหน้าต่างรายละเอียดออเดอร์บน PC และจัดรายการสินค้าเป็นการ์ดเมื่อจอแคบ เพื่อลดการเลื่อนซ้ายขวา',
+      'ตั้งใบปะหน้า A4 เป็นค่าเริ่มต้น จัดพื้นที่พิมพ์ให้อยู่กึ่งกลาง และเว้นขอบซ้ายขวา 2 ซม.'
+    ]},
     { v:'3.07', date:'2026-11-04', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เวลาจากสั่งซื้อถึงปิดออเดอร์บน Marketplace', items:[
       'Shopee Summary แสดงวันสั่งซื้อถึงวันออเดอร์สำเร็จเฉลี่ย พร้อมดูวันที่และจำนวนวันรายออเดอร์',
       'Lazada Summary แสดงวันสั่งซื้อถึงวันส่งถึงลูกค้าเฉลี่ยและรายออเดอร์ โดยระบุชัดว่าไม่ใช่วันออเดอร์สำเร็จหรือวันเงินเข้า',
