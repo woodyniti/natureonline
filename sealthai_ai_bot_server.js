@@ -13,6 +13,7 @@ const axios = require('axios');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./sealthai_catalog.db');
 const { createClient } = require('@supabase/supabase-js');
+const { startStockContentScheduler } = require('./stock_content_autopublisher');
 
 const app = express();
 app.use(express.json());
@@ -610,4 +611,5 @@ function searchCatalogDatabase(queryText) {
 
 app.listen(PORT, () => {
   console.log(`🚀 Sealthai AI Bot Server is running on port ${PORT}`);
+  startStockContentScheduler({ supabase, db, axios, env: process.env, sendTelegramMessage });
 });
