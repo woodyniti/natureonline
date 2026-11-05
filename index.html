@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.21</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.22</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.21';
-const DISPLAY_APP_VERSION = 'v3.21';
+const CURRENT_APP_VERSION = 'sealthai-v3.22';
+const DISPLAY_APP_VERSION = 'v3.22';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1300,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.21)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.21 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.22)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.22 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1373,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.21)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.21 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.22)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.22 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1402,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.21)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.21 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.22)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.22 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4133,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.21)">v3.21 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.22)">v3.22 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -7039,6 +7039,7 @@ async function orders() {
           </div>
         </div>
         <div id="order-items-container"></div>
+        <div id="o-receipt-visibility-warning" style="display:none;margin:6px 0 12px;padding:9px 11px;border-radius:8px;font-size:12px"></div>
 
         <!-- ส่วนลดทั้งบิล -->
         <div style="margin-top:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
@@ -7781,7 +7782,7 @@ let editingPONo = null;
 let _orderCustomerList = [];
 let orderSourceQuoteId = null;
 async function openNewOrder() {
-  orderItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, cost_per_unit: 0, discount: 0, discount_type: 'amount' }];
+  orderItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, cost_per_unit: 0, discount: 0, discount_type: 'amount', show_on_receipt: true }];
   const [prodRes] = await Promise.all([
     (allProducts && allProducts.length) ? Promise.resolve({ data: allProducts }) : sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true).order('name'),
     loadOrderCustomerList()
@@ -7852,7 +7853,7 @@ async function importQuoteToOrder(qtId) {
       product_id: it.product_id || '__custom__', product_name: it.product_name || product?.name || '',
       qty: Number(it.qty)||1, sell_price: Number(it.sell_price)||0,
       cost_per_unit: getProductOrderCost(product),
-      discount: Number(it.discount)||0, discount_type: it.discount_type||'amount'
+      discount: Number(it.discount)||0, discount_type: it.discount_type||'amount', show_on_receipt: true
     };
   });
   const bd = document.getElementById('o-bill-disc'); if (bd) bd.value='0';
@@ -8134,6 +8135,32 @@ function itemNet(item) {
   if (item.discount_type === 'percent') return Math.max(0, gross - gross * disc / 100);
   return Math.max(0, gross - disc);
 }
+function showOrderItemOnReceipt(item) {
+  return item?.show_on_receipt !== false;
+}
+function hiddenPaidReceiptItems(items, netCalculator = itemNet) {
+  return (items || []).filter(it => !showOrderItemOnReceipt(it) && netCalculator(it) > 0.005);
+}
+function hiddenReceiptWarningText(items, netCalculator = itemNet) {
+  const hidden = (items || []).filter(it => !showOrderItemOnReceipt(it));
+  if (!hidden.length) return '';
+  const paid = hiddenPaidReceiptItems(items, netCalculator);
+  if (!paid.length) return `🎁 ซ่อนของแถม ${hidden.length} รายการจากบิล (ยังตัดสต๊อกตามปกติ)`;
+  const amount = paid.reduce((sum, it) => sum + netCalculator(it), 0);
+  return `⚠️ ซ่อน ${paid.length} รายการที่มีมูลค่า ${fmtB(amount)} จากบิล แต่ยอดนี้ยังรวมในยอดสุทธิ — รายการบนบิลจะบวกไม่ตรงกับยอดรวม`;
+}
+function confirmHiddenPaidReceiptItems(items, netCalculator = itemNet) {
+  const paid = hiddenPaidReceiptItems(items, netCalculator);
+  if (!paid.length) return true;
+  const amount = paid.reduce((sum, it) => sum + netCalculator(it), 0);
+  return window.confirm(`มี ${paid.length} รายการที่ตั้งค่าไม่แสดงในบิล แต่มียอดเงินรวม ${fmtB(amount)}\n\nยอดสุทธิยังรวมรายการเหล่านี้ แต่บรรทัดในบิลจะบวกไม่ตรงกับยอดรวม อาจทำให้ลูกค้าสับสน\n\nยืนยันดำเนินการต่อหรือไม่?`);
+}
+async function checkReceiptVisibilityColumn() {
+  const { error } = await sb.from('order_items').select('show_on_receipt').limit(1);
+  if (!error) return true;
+  toast('ยังไม่ได้เพิ่มช่องแสดงรายการในบิล กรุณารัน supabase_order_item_receipt_visibility_v322.sql ใน Supabase ก่อนบันทึก', 'error');
+  return false;
+}
 // คำนวณยอดรวมทั้งบิล (หักส่วนลดบิล)
 function orderGrandTotal(items, billDisc, billDiscType) {
   const subtotal = items.reduce((s,it) => s + itemNet(it), 0);
@@ -8167,6 +8194,16 @@ function updateOrderSummary() {
       <span>ยอดสุทธิ</span>
       <span class="font-mono text-accent">${fmtB(s.grand)}</span>
     </div>`;
+  const receiptWarning = document.getElementById('o-receipt-visibility-warning');
+  if (receiptWarning) {
+    const message = hiddenReceiptWarningText(orderItems);
+    const paid = hiddenPaidReceiptItems(orderItems).length > 0;
+    receiptWarning.style.display = message ? 'block' : 'none';
+    receiptWarning.style.background = paid ? '#fff7ed' : '#f0fdf4';
+    receiptWarning.style.border = `1px solid ${paid ? '#fdba74' : '#86efac'}`;
+    receiptWarning.style.color = paid ? '#9a3412' : '#166534';
+    receiptWarning.textContent = message;
+  }
 }
 
 // ── New order product search ────────────────────────────
@@ -8476,6 +8513,26 @@ function renderOrderItems() {
     customNameWrap.appendChild(customNameInp);
     prodWrap.appendChild(customNameWrap);
 
+    const receiptLabel = document.createElement('label');
+    receiptLabel.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:12px;font-weight:700;color:#334155;cursor:pointer';
+    const receiptCheck = document.createElement('input');
+    receiptCheck.type = 'checkbox';
+    receiptCheck.checked = showOrderItemOnReceipt(item);
+    receiptCheck.style.cssText = 'width:16px;height:16px;accent-color:#0d9488';
+    receiptCheck.onchange = () => {
+      if (!receiptCheck.checked && itemNet(orderItems[i]) > 0.005 &&
+          !window.confirm(`รายการนี้มีมูลค่า ${fmtB(itemNet(orderItems[i]))} หากซ่อนจากบิล ยอดรวมจะไม่ตรงกับรายการที่พิมพ์ ยืนยันซ่อนหรือไม่?`)) {
+        receiptCheck.checked = true;
+        return;
+      }
+      orderItems[i].show_on_receipt = receiptCheck.checked;
+      markUnsavedForm(document.getElementById('modal-order'));
+      updateOrderSummary();
+    };
+    receiptLabel.appendChild(receiptCheck);
+    receiptLabel.appendChild(document.createTextNode('แสดงรายการนี้ในบิล'));
+    prodWrap.appendChild(receiptLabel);
+
     const delBtn = document.createElement('button');
     delBtn.textContent='✕';
     delBtn.style.cssText='background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;flex-shrink:0;margin-top:18px';
@@ -8570,17 +8627,17 @@ function renderOrderItems() {
 }
 
 function addOrderItem() {
-  orderItems.push({ product_id:'', product_name:'', qty:1, sell_price:0, cost_per_unit:0, discount:0, discount_type:'amount' });
+  orderItems.push({ product_id:'', product_name:'', qty:1, sell_price:0, cost_per_unit:0, discount:0, discount_type:'amount', show_on_receipt:true });
   markUnsavedForm(document.getElementById('modal-order'));
   renderOrderItems();
 }
 
 function selectProduct(idx, productId) {
   if (productId === '__custom__') {
-    orderItems[idx] = { product_id:'__custom__', product_name:'', qty:1, sell_price:0, cost_per_unit:0 };
+    orderItems[idx] = { product_id:'__custom__', product_name:'', qty:1, sell_price:0, cost_per_unit:0, show_on_receipt:true };
   } else {
     const p = productList.find(x=>x.id===productId);
-    if (p) orderItems[idx] = { product_id:p.id, product_name:p.name, qty:1, sell_price:Number(p.sell_price)||0, cost_per_unit:getProductOrderCost(p), discount:0, discount_type:'amount' };
+    if (p) orderItems[idx] = { product_id:p.id, product_name:p.name, qty:1, sell_price:Number(p.sell_price)||0, cost_per_unit:getProductOrderCost(p), discount:0, discount_type:'amount', show_on_receipt:true };
     else orderItems[idx].product_id = productId;
   }
   renderOrderItems();
@@ -8777,6 +8834,8 @@ async function generateOrderNo(orderDate) {
 
 async function saveOrder() {
   if (!orderItems.length) { toast('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'error'); return; }
+  if (!await checkReceiptVisibilityColumn()) return;
+  if (!confirmHiddenPaidReceiptItems(orderItems)) return;
   const selEmpId = document.getElementById('o-emp').value || null;
   const empId = selEmpId || (await getEmployeeIdFromUser(currentUser?.id)) || null;
   const billDisc = Number(document.getElementById('o-bill-disc')?.value||0);
@@ -8854,10 +8913,16 @@ async function saveOrder() {
     sell_price: item.sell_price,
     cost_per_unit: item.cost_per_unit,
     discount: item.discount||0,
-    discount_type: item.discount_type||'amount'
+    discount_type: item.discount_type||'amount',
+    show_on_receipt: showOrderItemOnReceipt(item)
   }));
 
-  await sb.from('order_items').insert(items);
+  const { error: orderItemsError } = await sb.from('order_items').insert(items);
+  if (orderItemsError) {
+    const { error: rollbackError } = await sb.from('orders').delete().eq('id', order.id);
+    toast('บันทึกรายการสินค้าไม่สำเร็จ: ' + orderItemsError.message + (rollbackError ? ' · กรุณาตรวจออเดอร์ที่สร้างค้างไว้' : ''), 'error');
+    return;
+  }
 
   // Auto-sync customer to database in background
   if (orderPayload.customer_name && currentShop?.id) {
@@ -9197,6 +9262,25 @@ function renderEditItems() {
         </button>`;
       tdProd.appendChild(stockHint);
     }
+    const receiptLabel = document.createElement('label');
+    receiptLabel.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 7px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:11px;font-weight:700;color:#334155;cursor:pointer';
+    const receiptCheck = document.createElement('input');
+    receiptCheck.type = 'checkbox';
+    receiptCheck.checked = showOrderItemOnReceipt(it);
+    receiptCheck.style.cssText = 'width:15px;height:15px;accent-color:#0d9488';
+    receiptCheck.onchange = () => {
+      if (!receiptCheck.checked && itemNetEdit(editItems[i]) > 0.005 &&
+          !window.confirm(`รายการนี้มีมูลค่า ${fmtB(itemNetEdit(editItems[i]))} หากซ่อนจากบิล ยอดรวมจะไม่ตรงกับรายการที่พิมพ์ ยืนยันซ่อนหรือไม่?`)) {
+        receiptCheck.checked = true;
+        return;
+      }
+      editItems[i].show_on_receipt = receiptCheck.checked;
+      markUnsavedForm(document.getElementById('modal-order-detail'));
+      updateEditTotal();
+    };
+    receiptLabel.appendChild(receiptCheck);
+    receiptLabel.appendChild(document.createTextNode('แสดงในบิล'));
+    tdProd.appendChild(receiptLabel);
     tr.appendChild(tdProd);
 
     // จำนวน
@@ -9288,7 +9372,7 @@ function renderEditItems() {
   const addBtn = document.createElement('button');
   addBtn.textContent = '+ เพิ่มสินค้า';
   addBtn.style.cssText = 'background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:12px;font-weight:600';
-  addBtn.onclick = () => { editItems.push({id:null,product_name:'',qty:1,sell_price:0,cost_per_unit:0,discount:0,discount_type:'amount'}); renderEditItems(); };
+  addBtn.onclick = () => { editItems.push({id:null,product_name:'',qty:1,sell_price:0,cost_per_unit:0,discount:0,discount_type:'amount',show_on_receipt:true}); renderEditItems(); };
   addTd.appendChild(addBtn);
   addRow.appendChild(addTd);
   tbody.appendChild(addRow);
@@ -9326,6 +9410,17 @@ function updateEditTotal() {
   if (bde) bde.textContent = bd > 0 ? '- ' + fmtB(bd) : '';
   const sfe = document.getElementById('ed-shipping-fee-amt');
   if (sfe) sfe.textContent = shippingFee > 0 ? '+ ' + fmtB(shippingFee) : '';
+
+  const receiptWarning = document.getElementById('ed-receipt-visibility-warning');
+  if (receiptWarning) {
+    const message = hiddenReceiptWarningText(editItems, itemNetEdit);
+    const paid = hiddenPaidReceiptItems(editItems, itemNetEdit).length > 0;
+    receiptWarning.style.display = message ? 'block' : 'none';
+    receiptWarning.style.background = paid ? '#fff7ed' : '#f0fdf4';
+    receiptWarning.style.border = `1px solid ${paid ? '#fdba74' : '#86efac'}`;
+    receiptWarning.style.color = paid ? '#9a3412' : '#166534';
+    receiptWarning.textContent = message;
+  }
 
   renderEditProfitBox(grand);
 }
@@ -9402,7 +9497,7 @@ async function viewOrder(orderId) {
   });
   window._currentOrderPOItems = thisOrderPOItems;
   window._editingOrderForGP = order;
-  editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount'}));
+  editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount', show_on_receipt:showOrderItemOnReceipt(i)}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
   await loadOrderCustomerList(); // โหลดรายชื่อลูกค้าสำหรับ auto-fill
   // คำนวณต้นทุน/กำไร โดย fallback ไป current_cost ของสินค้าเมื่อ item cost=0 (ขายก่อนรับเข้า)
@@ -9510,6 +9605,7 @@ async function viewOrder(orderId) {
       <button class="btn btn-secondary btn-sm" onclick="pullLatestCosts()" title="ตั้งต้นทุนของทุกรายการ = ต้นทุนเฉลี่ยล่าสุดของสินค้าในระบบ (แก้กรณีต้นทุนในออเดอร์ค้างค่าเก่า)">🔄 ดึงต้นทุนล่าสุด</button>
     </div>
     <div id="ed-items" style="margin-bottom:10px"></div>
+    <div id="ed-receipt-visibility-warning" style="display:none;margin:0 0 12px;padding:9px 11px;border-radius:8px;font-size:12px"></div>
     <!-- ส่วนลดทั้งบิล -->
     <div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
       <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:10px;flex-wrap:wrap">
@@ -9591,6 +9687,8 @@ function updateTrackingLink(val) {
 }
 
 async function saveOrderEdit(orderId) {
+  if (!await checkReceiptVisibilityColumn()) return;
+  if (!confirmHiddenPaidReceiptItems(editItems, itemNetEdit)) return;
   // save order meta
   // คำนวณยอดสุทธิ
   const editBillDisc = Number(document.getElementById('ed-bill-disc')?.value||0);
@@ -9686,9 +9784,13 @@ async function saveOrderEdit(orderId) {
   }
 
   // save order items: delete old, insert new
-  await sb.from('order_items').delete().eq('order_id', orderId);
+  const { error: deleteItemsError } = await sb.from('order_items').delete().eq('order_id', orderId);
+  if (deleteItemsError) {
+    toast('แก้ไขรายการสินค้าไม่สำเร็จ: ' + deleteItemsError.message, 'error');
+    return;
+  }
   if (editItems.length) {
-    await sb.from('order_items').insert(
+    const { error: insertItemsError } = await sb.from('order_items').insert(
       editItems.map(it => ({
         order_id: orderId,
         product_id: it.product_id || null,
@@ -9697,9 +9799,14 @@ async function saveOrderEdit(orderId) {
         sell_price: Number(it.sell_price)||0,
         cost_per_unit: Number(it.cost_per_unit)||0,
         discount: Number(it.discount)||0,
-        discount_type: it.discount_type||'amount'
+        discount_type: it.discount_type||'amount',
+        show_on_receipt: showOrderItemOnReceipt(it)
       }))
     );
+    if (insertItemsError) {
+      toast('บันทึกรายการสินค้าใหม่ไม่สำเร็จ: ' + insertItemsError.message + ' · กรุณาตรวจออเดอร์นี้ก่อนพิมพ์บิล', 'error');
+      return;
+    }
   }
 
   // อัปเดตประวัติการเคลื่อนไหวสต๊อก (stock movements) ของออเดอร์นี้
@@ -9867,6 +9974,11 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const shipAddr = (order.customer_address || customer?.shipping_address || '').trim();
 
   const items = order.order_items || [];
+  const printedLineValue = showDiscount
+    ? itemNet
+    : (it => Number(it.qty || 1) * Number(it.sell_price || 0));
+  if (!confirmHiddenPaidReceiptItems(items, printedLineValue)) return;
+  const visibleItems = items.filter(showOrderItemOnReceipt);
   const shop  = currentShop || {};
   const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
 
@@ -9895,7 +10007,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
 
   // สร้างแถวสินค้า (ขั้นต่ำ 8 แถว พอดีหน้ากระดาษ ไม่อัดแน่นและไม่เหลือที่ว่างเวิ้งว้าง)
   const MIN_ROWS = 8;
-  const itemRows = items.map((it,i) => {
+  const itemRows = visibleItems.map((it,i) => {
     const gross    = Number(it.qty||1) * Number(it.sell_price||0);
     const net      = showDiscount ? itemNet(it) : gross;
     const discAmt  = gross - net;
@@ -9914,7 +10026,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       '</tr>';
   });
 
-  const emptyCount = Math.max(0, MIN_ROWS - items.length);
+  const emptyCount = Math.max(0, MIN_ROWS - visibleItems.length);
   const emptyRows  = Array(emptyCount).fill(
     showDiscount
       ? '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
@@ -15133,7 +15245,7 @@ async function scanOrderCostAnomalies() {
     (prods||[]).forEach(p => { costMap[p.id] = Number(p.current_cost||0); });
 
     const { data: orders, error } = await sb.from('orders')
-      .select('id,order_no,order_date,total_cost,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit,discount,discount_type)')
+      .select('id,order_no,order_date,total_cost,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit,discount,discount_type,show_on_receipt)')
       .eq('shop_id', currentShop.id).limit(5000);
     if (error) throw error;
 
@@ -15220,6 +15332,7 @@ async function fixAllCostAnomalies() {
       cost_per_unit: badIds.has(it.id) ? bcMap[it.id] : Number(it.cost_per_unit||0),
       discount: it.discount || 0,
       discount_type: it.discount_type || 'amount',
+      show_on_receipt: showOrderItemOnReceipt(it),
     }));
     // insert ชุดใหม่ก่อน แล้วค่อยลบชุดเก่า (กันข้อมูลหายถ้า insert ล้ม)
     const ins = await sb.from('order_items').insert(newItems);
@@ -40924,6 +41037,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.22', date:'2026-11-05', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เลือกแสดงรายการสินค้าในบิลเงินสด', items:[
+      'เพิ่มตัวเลือกแสดงในบิลต่อบรรทัดทั้งออเดอร์ใหม่และแก้ไข โดยค่าเริ่มต้นแสดงทุกบรรทัด',
+      'รายการที่ซ่อนยังอยู่ในออเดอร์ ตัดสต๊อกและคำนวณต้นทุน/ยอดขายตามเดิม; บิลเงินสดพิมพ์เฉพาะรายการที่เลือก',
+      'แจ้งเตือนเมื่อซ่อนรายการที่มียอดเงินก่อนบันทึกและพิมพ์ พร้อม SQL migration ให้รายการเก่าแสดงตามค่าเริ่มต้น'
+    ]},
     { v:'3.21', date:'2026-11-05', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'คิวเผยแพร่สินค้าในสต๊อกรายชั่วโมง', items:[
       'เพิ่ม worker เลือก 1 SKU ต่อชั่วโมงจากสต๊อกจริง เก็บรอบใน SQLite และวนกลับเมื่อครบทุก SKU',
       'เพิ่มตัวเผยแพร่ PHP สำหรับเว็บเดิม: 1 SKU ต่อ 1 URL ถาวร อัปเดตเนื้อหาบนหน้าเดิมและแสดงรายการใต้ /article/stock/',
