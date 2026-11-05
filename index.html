@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.22</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.23</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.22';
-const DISPLAY_APP_VERSION = 'v3.22';
+const CURRENT_APP_VERSION = 'sealthai-v3.23';
+const DISPLAY_APP_VERSION = 'v3.23';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1300,7 +1300,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.22)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.22 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.23)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.23 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1373,7 +1373,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.22)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.22 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.23)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.23 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1402,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.22)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.22 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.23)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.23 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4133,7 +4133,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.22)">v3.22 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.23)">v3.23 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -5868,6 +5868,34 @@ function isOwnerDrawExpense(e) {
   return /ถอนเงินเจ้าของ|ถอนเจ้าของ|เงินถอนเจ้าของ|ซื้อทอง|ปันผล|owner_draw|owner\s*draw|drawing|drawings/.test(allText);
 }
 
+// นับเฉพาะยอดที่มีสถานะจ่ายและระบุ paid_amount ชัดเจน; ข้อมูลเก่าไม่ถูกเดาเป็นยอดถอนจริง
+function ownerDrawPaymentAudit(e) {
+  const recorded = Math.max(0, Number(e?.base_amount ?? e?.amount ?? 0) + Number(e?.vat_amount || 0) - Number(e?.withholding_tax || 0));
+  const paidRaw = Number(e?.paid_amount || 0);
+  const status = String(e?.payment_status || '').toLowerCase();
+  const explicitType = e?.expense_type === 'owner_draw';
+  const statusMatchesAmount = status === 'paid'
+    ? (recorded <= 0 || Math.abs(paidRaw - recorded) <= 0.01)
+    : (status === 'partial' && recorded > 0 && paidRaw < recorded - 0.01);
+  const valid = explicitType && ['paid', 'partial'].includes(status) && Number.isFinite(paidRaw) && paidRaw > 0
+    && (recorded <= 0 || paidRaw <= recorded + 0.01) && statusMatchesAmount;
+  const needsReview = !explicitType || (status === 'unpaid'
+    ? paidRaw > 0
+    : (!valid && (recorded > 0 || paidRaw > 0)));
+  const reason = !needsReview ? '' : !explicitType ? 'รายการเก่าจัดหมวดจากข้อความ ต้องยืนยันประเภท'
+    : status === 'unpaid' && paidRaw > 0 ? 'สถานะยังไม่จ่าย แต่มีตัวเลขยอดจ่าย'
+    : paidRaw > recorded + 0.01 && recorded > 0 ? 'ยอดจ่ายสูงกว่ายอดที่บันทึก'
+    : paidRaw > 0 && !statusMatchesAmount ? 'สถานะชำระกับยอดจ่ายไม่ตรงกัน'
+    : 'ไม่มีข้อมูลยอดจ่ายจริงที่ตรวจสอบได้';
+  return { paid: valid ? paidRaw : 0, recorded, needsReview, reason };
+}
+
+async function reviewOwnerDrawExpense(expenseId) {
+  document.querySelectorAll('[data-owner-draw-modal]').forEach(modal => modal.remove());
+  await showPage('expenses');
+  await editExpense(expenseId);
+}
+
 async function drillDailyWage(dateStr, cfoWageAmt, manualWageAmt) {
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
@@ -6196,6 +6224,7 @@ async function drillMonthlyGratuity() {
 
 async function drillDailyOwnerDraw(dateStr) {
   const modal = document.createElement('div');
+  modal.dataset.ownerDrawModal = 'true';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
   modal.innerHTML = `
     <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
@@ -6219,7 +6248,8 @@ async function drillDailyOwnerDraw(dateStr) {
       .order('id');
     if (error) throw error;
     const rows = (expenses || []).filter(isOwnerDrawExpense);
-    const totDraw = rows.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const totDraw = rows.reduce((s, e) => s + ownerDrawPaymentAudit(e).paid, 0);
+    const reviewCount = rows.filter(e => ownerDrawPaymentAudit(e).needsReview).length;
     const contentEl = document.getElementById('daily-owner-draw-modal-content');
     if (!contentEl) return;
 
@@ -6229,7 +6259,7 @@ async function drillDailyOwnerDraw(dateStr) {
     }
 
     contentEl.outerHTML = `
-      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${rows.length} รายการ · รวมถอน <b>${fmtB(totDraw)}</b></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">${rows.length} รายการ · ยอดที่บันทึกว่าจ่ายแล้ว <b>${fmtB(totDraw)}</b>${reviewCount ? ` · <b style="color:#b45309">ต้องตรวจ ${reviewCount} รายการ</b>` : ''}</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr style="border-bottom:2px solid var(--border)">
           <th style="text-align:left;padding:6px 8px">ประเภท</th>
@@ -6244,14 +6274,15 @@ async function drillDailyOwnerDraw(dateStr) {
               <td style="padding:7px 8px">
                 <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
                 ${e.vendor_name || e.vendor ? `<div style="font-size:11px;color:var(--text3)">ผู้รับเงิน/ร้าน: ${escapeHTML(e.vendor_name || e.vendor)}</div>` : ''}
+                ${ownerDrawPaymentAudit(e).needsReview ? `<button type="button" onclick="reviewOwnerDrawExpense('${escapeHTML(e.id)}')" style="margin-top:4px;border:1px solid #fbbf24;background:#fffbeb;color:#92400e;border-radius:5px;padding:3px 7px;cursor:pointer">✏️ ตรวจ/แก้รายการ</button>` : ''}
               </td>
-              <td style="padding:7px 8px;font-size:11px;color:var(--text2)">${escapeHTML(e.payment_method || 'โอนธนาคาร')}</td>
-              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#0369a1">${fmtB(Number(e.amount || 0))}</td>
+              <td style="padding:7px 8px;font-size:11px;color:var(--text2)">${escapeHTML(e.payment_method || '-')} · ${escapeHTML(e.payment_status || 'ไม่ระบุ')}${ownerDrawPaymentAudit(e).needsReview ? `<div style="color:#b45309">⚠️ ${escapeHTML(ownerDrawPaymentAudit(e).reason)}</div>` : ''}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#0369a1">${fmtB(ownerDrawPaymentAudit(e).paid)}<div style="font-size:10px;color:var(--text3)">บันทึกไว้ ${fmtB(ownerDrawPaymentAudit(e).recorded)}</div></td>
             </tr>
           `).join('')}
         </tbody>
         <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
-          <td colspan="3" style="padding:8px">รวมยอดถอนเงินเจ้าของวันที่ ${dateStr}</td>
+          <td colspan="3" style="padding:8px">รวมยอดที่บันทึกว่าจ่ายแล้ว วันที่ ${dateStr}</td>
           <td style="padding:8px;text-align:right;font-family:var(--mono);color:#0369a1">${fmtB(totDraw)}</td>
         </tr></tfoot>
       </table></div>
@@ -6267,6 +6298,7 @@ async function drillMonthlyOwnerDraw() {
   const { dateFrom, dateTo, periodLabel } = window._monthlyDates || {};
   if (!dateFrom) return;
   const modal = document.createElement('div');
+  modal.dataset.ownerDrawModal = 'true';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9000;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto';
   modal.innerHTML = `
     <div style="background:var(--bg);border-radius:12px;padding:24px;width:100%;max-width:760px;position:relative">
@@ -6290,7 +6322,8 @@ async function drillMonthlyOwnerDraw() {
       .order('expense_date', { ascending: false });
     if (error) throw error;
     const rows = (expenses || []).filter(isOwnerDrawExpense);
-    const totOwnerDraw = rows.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const totOwnerDraw = rows.reduce((s, e) => s + ownerDrawPaymentAudit(e).paid, 0);
+    const reviewCount = rows.filter(e => ownerDrawPaymentAudit(e).needsReview).length;
 
     const contentEl = document.getElementById('monthly-owner-draw-modal-content');
     if (!contentEl) return;
@@ -6301,7 +6334,7 @@ async function drillMonthlyOwnerDraw() {
     }
 
     contentEl.outerHTML = `
-      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">📅 ${periodLabel} · ${rows.length} รายการ · รวมถอน <b>${fmtB(totOwnerDraw)}</b></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px">📅 ${periodLabel} · ${rows.length} รายการ · ยอดที่บันทึกว่าจ่ายแล้ว <b>${fmtB(totOwnerDraw)}</b>${reviewCount ? ` · <b style="color:#b45309">ต้องตรวจ ${reviewCount} รายการ</b>` : ''}</div>
       <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">
         <thead><tr style="border-bottom:2px solid var(--border)">
           <th style="text-align:left;padding:6px 8px">วันที่</th>
@@ -6320,21 +6353,23 @@ async function drillMonthlyOwnerDraw() {
               <td style="padding:7px 8px">
                 <div style="color:var(--text);font-weight:600">${escapeHTML(e.note || e.title || '-')}</div>
                 ${e.vendor_name || e.vendor ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">ผู้รับ/ร้าน: ${escapeHTML(e.vendor_name || e.vendor)}</div>` : ''}
+                ${ownerDrawPaymentAudit(e).needsReview ? `<div style="font-size:11px;color:#b45309">⚠️ ${escapeHTML(ownerDrawPaymentAudit(e).reason)}</div>` : ''}
+                ${ownerDrawPaymentAudit(e).needsReview ? `<button type="button" onclick="reviewOwnerDrawExpense('${escapeHTML(e.id)}')" style="margin-top:4px;border:1px solid #fbbf24;background:#fffbeb;color:#92400e;border-radius:5px;padding:3px 7px;cursor:pointer">✏️ ตรวจ/แก้รายการ</button>` : ''}
               </td>
               <td style="padding:7px 8px;font-size:11px;color:var(--text2)">
-                ${escapeHTML(e.payment_method || 'โอนธนาคาร')}
+                ${escapeHTML(e.payment_method || '-')} · ${escapeHTML(e.payment_status || 'ไม่ระบุ')}
               </td>
-              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#0369a1">${fmtB(Number(e.amount || 0))}</td>
+              <td style="padding:7px 8px;text-align:right;font-family:var(--mono);font-weight:700;color:#0369a1">${fmtB(ownerDrawPaymentAudit(e).paid)}<div style="font-size:10px;color:var(--text3)">บันทึกไว้ ${fmtB(ownerDrawPaymentAudit(e).recorded)}</div></td>
             </tr>
           `).join('')}
         </tbody>
         <tfoot><tr style="border-top:2px solid var(--border);font-weight:700">
-          <td colspan="4" style="padding:8px">รวมยอดถอนเงินเจ้าของทั้งหมด</td>
+          <td colspan="4" style="padding:8px">รวมยอดที่บันทึกว่าจ่ายแล้ว</td>
           <td style="padding:8px;text-align:right;font-family:var(--mono);color:#0369a1">${fmtB(totOwnerDraw)}</td>
         </tr></tfoot>
       </table></div>
       <div style="margin-top:14px;padding:10px 12px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;font-size:11.5px;color:#0369a1;line-height:1.5">
-        💡 <b>หลักการบัญชี:</b> ยอดนี้ไม่ถูกนำไปหักในงบกำไรขาดทุน (P&amp;L Net Profit) ทำให้ร้านยังคงเห็นผลการดำเนินงานจริง แต่จะถูกนำไปหักแสดงในช่อง <b>"เงินสดคงเหลือจริงในร้าน"</b> เพื่อให้เจ้าของเห็นเงินสดจริงที่เหลืออยู่ในกิจการ
+        💡 ยอดนี้ไม่หักกำไรทางบัญชี (P&amp;L) และยังไม่ใช่ยอดยืนยันจากธนาคาร รายการที่ขึ้น “ต้องตรวจ” ยังไม่รวมในยอดจ่ายที่แสดง กรุณาเทียบกับหลักฐานโอนเงินก่อนแก้ไข
       </div>
     `;
   } catch (err) {
@@ -6418,7 +6453,9 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
       other:0, cost:0, exp:0, manualWage:0, cfoWage:0, wage:0, empComm:0, gratuity:0, ownerDraw:0, cnt:0
     };
     if (isOwnerDrawExpense(e)) {
-      dateMap[d].ownerDraw = (dateMap[d].ownerDraw || 0) + Number(e.amount || 0);
+      const audit = ownerDrawPaymentAudit(e);
+      dateMap[d].ownerDraw = (dateMap[d].ownerDraw || 0) + audit.paid;
+      dateMap[d].ownerDrawReview = (dateMap[d].ownerDrawReview || 0) + (audit.needsReview ? 1 : 0);
     } else {
       const amt = expenseProfitAmount(e);
       if (isGratuityExpense(e)) {
@@ -6443,7 +6480,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
 
   const days = Object.keys(dateMap).sort();
   let totRev=0, totShopeeRev=0, totLazadaRev=0, totThaimartRev=0, totShopeeFee=0, totLazadaFee=0, totThaimartFee=0, totPlatformFee=0;
-  let totOther=0, totCost=0, totExp=0, totWage=0, totCfoWage=0, totManualWage=0, totEmpComm=0, totGratuity=0, totOwnerDraw=0;
+  let totOther=0, totCost=0, totExp=0, totWage=0, totCfoWage=0, totManualWage=0, totEmpComm=0, totGratuity=0, totOwnerDraw=0, totOwnerDrawReview=0;
   let cum=0;
   const rows=[]; const chartLabels=[]; const chartCum=[];
   const chartRev=[]; const chartCost=[]; const chartNet=[];
@@ -6499,6 +6536,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
     totEmpComm += dd.empComm;
     totGratuity += dd.gratuity;
     totOwnerDraw += (dd.ownerDraw || 0);
+    totOwnerDrawReview += (dd.ownerDrawReview || 0);
 
     cum += profit;
     rows.push({d, ...dd, profit, cum});
@@ -6576,14 +6614,14 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
         <div class="stat-sub">${totRev>0?(netProfit/totRev*100).toFixed(1)+'% Net Margin':''}${totOwnerDraw>0?' · ยังไม่หักถอนเจ้าของ':''}</div>
       </div>
       <div class="stat-card" style="cursor:pointer;border-left:3px solid #0284c7" onclick="drillMonthlyOwnerDraw()" title="คลิกดูรายการถอนเงินเจ้าของ / ซื้อทอง / ปันผล">
-        <div class="stat-label">👑 ถอนเงินเจ้าของ <span style="font-size:10px;color:#0284c7">→ ดูรายการ</span></div>
+        <div class="stat-label">👑 ถอนเงินเจ้าของ (บันทึกว่าจ่ายแล้ว) <span style="font-size:10px;color:#0284c7">→ ดูรายการ</span></div>
         <div class="stat-value" style="color:#0284c7">${fmtB(totOwnerDraw)}</div>
-        <div class="stat-sub">${totOwnerDraw>0?`${expenses.filter(isOwnerDrawExpense).length} รายการ (ไม่นับเป็นต้นทุนร้าน)`:'ไม่มีรายการถอนเงิน'}</div>
+        <div class="stat-sub">${expenses.filter(isOwnerDrawExpense).length} รายการ${totOwnerDrawReview?` · ⚠️ ต้องตรวจ ${totOwnerDrawReview} รายการ`:''} · ไม่หักกำไร P&amp;L</div>
       </div>
       <div class="stat-card" style="border-left:3px solid ${netProfit-totOwnerDraw>=0?'#10b981':'#ef4444'};background:${netProfit-totOwnerDraw>=0?'rgba(16,185,129,0.06)':'rgba(239,68,68,0.06)'}">
-        <div class="stat-label">💵 เงินสดคงเหลือจริงในร้าน</div>
+        <div class="stat-label">💵 กำไรหลังหักเงินถอนที่บันทึกว่าจ่าย</div>
         <div class="stat-value ${netProfit-totOwnerDraw>=0?'text-green':'text-red'}">${fmtB(netProfit - totOwnerDraw)}</div>
-        <div class="stat-sub">${totOwnerDraw>0?`กำไรสุทธิหักถอนเจ้าของ (${fmtB(netProfit)} - ${fmtB(totOwnerDraw)})`:'กำไรสุทธิคงเหลือเต็มจำนวน'}</div>
+        <div class="stat-sub">ตัวชี้วัดเทียบกำไร ไม่ใช่ยอดเงินสด/เงินในธนาคาร${totOwnerDrawReview?' · มีรายการรอตรวจ':''}</div>
       </div>
     </div>
     ${rows.length ? `
@@ -6616,7 +6654,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
             <th style="padding:8px 5px;text-align:right;color:var(--red)">💸 ค่าใช้จ่าย</th>
             <th style="padding:8px 5px;text-align:right;color:var(--green)">📈 รายได้อื่น</th>
             <th style="padding:8px 5px;text-align:right;color:var(--accent)">✨ กำไรสุทธิ</th>
-            ${totOwnerDraw > 0 ? '<th style="padding:8px 5px;text-align:right;color:#0284c7">👑 ถอนเจ้าของ</th>' : ''}
+            ${totOwnerDraw > 0 || totOwnerDrawReview > 0 ? '<th style="padding:8px 5px;text-align:right;color:#0284c7">👑 ถอนเจ้าของ (บันทึกจ่าย)</th>' : ''}
             <th style="padding:8px 5px;text-align:right">📈 กำไรสะสม</th>
           </tr></thead>
           <tbody>
@@ -6646,7 +6684,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
                 ${r.other !== 0 ? `<a href="javascript:void(0)" onclick="drillDailyOtherIncome('${r.d}')" style="color:${r.other>=0?'var(--green)':'var(--red)'};font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายการรายได้อื่น">${fmtB(r.other)}</a>` : '<span style="color:var(--text3)">-</span>'}
               </td>
               <td style="padding:6px 5px;text-align:right;font-family:var(--mono);font-weight:700;color:${r.profit>=0?'var(--green)':'var(--red)'}">${fmtB(r.profit)}</td>
-              ${totOwnerDraw > 0 ? `<td style="padding:6px 5px;text-align:right;font-family:var(--mono);font-weight:600;color:#0284c7">${r.ownerDraw > 0 ? `<a href="javascript:void(0)" onclick="drillDailyOwnerDraw('${r.d}')" style="color:#0284c7;font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดการถอนเงินเจ้าของ">${fmtB(r.ownerDraw)}</a>` : '-'}</td>` : ''}
+              ${totOwnerDraw > 0 || totOwnerDrawReview > 0 ? `<td style="padding:6px 5px;text-align:right;font-family:var(--mono);font-weight:600;color:#0284c7">${r.ownerDraw > 0 || r.ownerDrawReview > 0 ? `<a href="javascript:void(0)" onclick="drillDailyOwnerDraw('${r.d}')" style="color:#0284c7;font-weight:700;text-decoration:underline;cursor:pointer" title="คลิกดูรายละเอียดการถอนเงินเจ้าของ">${fmtB(r.ownerDraw)}${r.ownerDrawReview ? ' ⚠️' : ''}</a>` : '-'}</td>` : ''}
               <td style="padding:6px 5px;text-align:right;font-family:var(--mono);color:${r.cum>=0?'var(--green)':'var(--red)'}">${fmtB(r.cum)}</td>
             </tr>`).join('')}
           </tbody>
@@ -6677,7 +6715,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
                 <a href="javascript:void(0)" onclick="drillMonthlyOtherIncome()" style="color:${totOther>=0?'var(--green)':'var(--red)'};font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดรายได้อื่นทั้งหมด">${fmtB(totOther)}</a>
               </td>
               <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:${netProfit>=0?'var(--green)':'var(--red)'}">${fmtB(netProfit)}</td>
-              ${totOwnerDraw > 0 ? `<td style="padding:9px 5px;text-align:right;font-family:var(--mono)"><a href="javascript:void(0)" onclick="drillMonthlyOwnerDraw()" style="color:#0284c7;font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดการถอนเงินเจ้าของทั้งหมด">${fmtB(totOwnerDraw)}</a></td>` : ''}
+              ${totOwnerDraw > 0 || totOwnerDrawReview > 0 ? `<td style="padding:9px 5px;text-align:right;font-family:var(--mono)"><a href="javascript:void(0)" onclick="drillMonthlyOwnerDraw()" style="color:#0284c7;font-weight:800;text-decoration:underline;cursor:pointer" title="คลิกเพื่อดูรายละเอียดการถอนเงินเจ้าของทั้งหมด">${fmtB(totOwnerDraw)}${totOwnerDrawReview ? ' ⚠️' : ''}</a></td>` : ''}
               <td style="padding:9px 5px;text-align:right;font-family:var(--mono);color:${cum>=0?'var(--green)':'var(--red)'}">${fmtB(cum)}</td>
             </tr>
           </tfoot>
@@ -6700,7 +6738,7 @@ async function renderPeriodData(dateFrom, dateTo, periodLabel, period) {
                 ${r.gratuity > 0 ? ` · 🎁 สินน้ำใจ <span style="color:#d97706;font-weight:600">${fmtB(r.gratuity)}</span>` : ''}
               </div>
               <div style="font-size:11px;color:var(--text3)">ค่าใช้จ่ายร้าน ${fmtB(r.exp)}</div>
-              ${r.ownerDraw > 0 ? `<div style="font-size:11px;color:#0369a1;font-weight:600">👑 ถอนเจ้าของ ${fmtB(r.ownerDraw)}</div>` : ''}
+              ${r.ownerDraw > 0 || r.ownerDrawReview > 0 ? `<div style="font-size:11px;color:#0369a1;font-weight:600">👑 ถอนเจ้าของ (บันทึกจ่าย) ${fmtB(r.ownerDraw)}${r.ownerDrawReview ? ` · ⚠️ ตรวจ ${r.ownerDrawReview} รายการ` : ''}</div>` : ''}
             </div>
             <div style="text-align:right">
               <div class="font-mono text-accent" style="font-size:14px;font-weight:700">${fmtB(r.rev)}</div>
@@ -10882,6 +10920,16 @@ async function saveExpense() {
   if (!(calc.base>0)) { toast('กรุณาใส่ยอดก่อน VAT มากกว่า 0','error'); return; }
   if (!cat) { toast('กรุณาเลือกหมวดมาตรฐาน','error'); return; }
   const type=document.getElementById('e-type').value;
+  if (type === 'owner_draw') {
+    if (!expenseSchemaReady) { toast('ต้องติดตั้งตารางค่าใช้จ่ายรุ่นใหม่ก่อนบันทึกเงินถอนเจ้าของ', 'error'); return; }
+    const payStatus = document.getElementById('e-pay-status').value;
+    const paid = Number(document.getElementById('e-paid').value || 0);
+    if (payStatus === 'unpaid' && paid > 0) { toast('สถานะยังไม่จ่ายต้องมียอดจ่ายแล้วเป็น 0', 'error'); return; }
+    if (payStatus !== 'unpaid' && !(paid > 0)) { toast('กรุณากรอกยอดจ่ายแล้วจริง หรือเปลี่ยนสถานะเป็นยังไม่จ่าย', 'error'); return; }
+    if (paid > calc.payable + 0.01) { toast('ยอดจ่ายแล้วสูงกว่ายอดถอนที่บันทึก กรุณาตรวจสอบ', 'error'); return; }
+    if (payStatus === 'paid' && Math.abs(paid - calc.payable) > 0.01) { toast('หากจ่ายไม่ครบ กรุณาเลือกสถานะจ่ายบางส่วน', 'error'); return; }
+    if (payStatus !== 'unpaid' && !document.getElementById('e-pay-date').value) { toast('กรุณาระบุวันที่ถอน/วันที่จ่ายเงินจริง', 'error'); return; }
+  }
   const rawRecur = document.getElementById('e-recur').value || 'one_time';
   
   let noteVal = (document.getElementById('e-note').value || '').trim();
@@ -10909,7 +10957,7 @@ async function saveExpense() {
     shop_id: currentShop.id,
     expense_date: document.getElementById('e-date').value,
     category: cat,
-    amount: calc.pnl,
+    amount: type === 'owner_draw' ? calc.payable : calc.pnl,
     note: noteVal
   };
   if (expenseSchemaReady) payload={...payload,
@@ -10921,7 +10969,7 @@ async function saveExpense() {
     payment_status:document.getElementById('e-pay-status').value, payment_method:document.getElementById('e-pay-method').value||null,
     payment_date:document.getElementById('e-pay-date').value||null, due_date:document.getElementById('e-due-date').value||null,
     expense_type:type, recurrence:rawRecur,
-    include_in_profit:document.getElementById('e-profit').checked, duplicate_risk:document.getElementById('e-dup').checked,
+    include_in_profit:type === 'owner_draw' ? false : document.getElementById('e-profit').checked, duplicate_risk:document.getElementById('e-dup').checked,
     review_status:'approved', created_by:currentUser?.id||null, updated_at:new Date().toISOString()
   };
   const btn=document.getElementById('e-save-btn'); btn.disabled=true;
@@ -27306,8 +27354,10 @@ async function loadDashData() {
   const apTotal     = ap.reduce((s, a) => s + Number(a.total_amount) - Number(a.paid_amount || 0), 0);
   const totalOperatingExp = expSum + platformFee + handlingCost + shippingCostGR + totalEmpComm + cfoWage;
 
-  const ownerDrawSum = expenses.filter(isOwnerDrawExpense).reduce((s, e) => s + Number(e.amount || 0), 0);
-  const netRetainedCash = netProfit - ownerDrawSum;
+  const ownerDrawRows = expenses.filter(isOwnerDrawExpense);
+  const ownerDrawSum = ownerDrawRows.reduce((s, e) => s + ownerDrawPaymentAudit(e).paid, 0);
+  const ownerDrawReview = ownerDrawRows.filter(e => ownerDrawPaymentAudit(e).needsReview).length;
+  const netAfterOwnerDraw = netProfit - ownerDrawSum;
   window._monthlyDates = { dateFrom: from, dateTo: to, periodLabel: 'ช่วง ' + from + ' ถึง ' + to };
 
   // ── Stat cards ──────────────────────────────────────────────
@@ -27318,8 +27368,8 @@ async function loadDashData() {
       {icon:'🔶', label:'ต้นทุนสินค้า (COGS)', value:fmtB(costSum),      sub: sales>0?(costSum/sales*100).toFixed(1)+'% ของยอดขาย':'', color:'var(--amber)', page:'products'},
       {icon:'💚', label:'ค่าใช้จ่าย+ธรรมเนียม', value:fmtB(totalOperatingExp), sub: `ร้าน ${fmtB(expSum)} · Fee ${fmtB(platformFee)} · ค่าแรง ${fmtB(totalEmpComm+cfoWage)}`, color:'var(--red)',   page:'expenses'},
       {icon:'✨', label:'กำไรสุทธิทางบัญชี', value:fmtB(netProfit),     sub:'Gross Margin '+grossPct+'% · Net Margin '+netPct+'%'+(ownerDrawSum>0?' · ก่อนหักถอนเจ้าของ':''), color: netProfit>=0?'var(--accent)':'var(--red)', page:'dashboard'},
-      {icon:'👑', label:'ถอนเงินเจ้าของ / ปันผล', value:fmtB(ownerDrawSum), sub: ownerDrawSum>0?'ถอนส่วนตัว / ซื้อทอง (ไม่ลดกำไร P&amp;L)':'ไม่มีรายการถอนเงินงวดนี้', color:'#0284c7', action:'drillMonthlyOwnerDraw()'},
-      {icon:'💵', label:'เงินสดคงเหลือจริงในร้าน', value:fmtB(netRetainedCash), sub: ownerDrawSum>0?`กำไรหักถอนเจ้าของ (${fmtB(netProfit)} - ${fmtB(ownerDrawSum)})`:'กำไรคงเหลือในร้านเต็มจำนวน', color: netRetainedCash>=0?'#10b981':'var(--red)', page:'dashboard'}
+      {icon:'👑', label:'ถอนเงินเจ้าของ (บันทึกว่าจ่ายแล้ว)', value:fmtB(ownerDrawSum), sub: `${ownerDrawRows.length} รายการ${ownerDrawReview?` · ⚠️ ต้องตรวจ ${ownerDrawReview} รายการ`:''} · ตามวันที่รายการ · ไม่หักกำไร P&L`, color:'#0284c7', action:'drillMonthlyOwnerDraw()'},
+      {icon:'💵', label:'กำไรหลังหักเงินถอนที่บันทึกจ่าย', value:fmtB(netAfterOwnerDraw), sub: `ไม่ใช่ยอดเงินสด/เงินในธนาคาร${ownerDrawReview?' · มีรายการรอตรวจ':''}`, color: netAfterOwnerDraw>=0?'#10b981':'var(--red)', page:'dashboard'}
     ];
     statsEl.innerHTML = cards.map(s=>
       '<div class="dash-stat" style="cursor:'+(s.action||s.page?'pointer':'default')+'" onclick="'+(s.action?s.action:(s.page?'showPage(&quot;'+s.page+'&quot;)':''))+'" title="'+(s.action?'คลิกเพื่อดูรายการถอนเงินเจ้าของ':(s.page?'คลิกเพื่อดูรายละเอียด':''))+'">' +
@@ -41037,6 +41087,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.23', date:'2026-11-05', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ตรวจสอบยอดถอนเงินเจ้าของจากยอดที่บันทึกจ่าย', items:[
+      'การ์ดและรายละเอียดรายวัน/รายเดือนใช้ยอดจ่ายที่มีสถานะสอดคล้องกันแทน amount ซึ่งเคยเป็นศูนย์สำหรับ owner draw',
+      'แสดงจำนวนรายการเก่าหรือรายการขัดกันที่ต้องตรวจ และเปิดแก้ไขจากรายละเอียดได้โดยไม่เดายอดย้อนหลัง',
+      'บังคับระบุยอดจ่ายและวันที่จ่ายสำหรับรายการใหม่ แยกเงินถอนจากกำไร P&L และเลิกเรียกกำไรหักถอนว่าเงินสดคงเหลือจริง'
+    ]},
     { v:'3.22', date:'2026-11-05', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เลือกแสดงรายการสินค้าในบิลเงินสด', items:[
       'เพิ่มตัวเลือกแสดงในบิลต่อบรรทัดทั้งออเดอร์ใหม่และแก้ไข โดยค่าเริ่มต้นแสดงทุกบรรทัด',
       'รายการที่ซ่อนยังอยู่ในออเดอร์ ตัดสต๊อกและคำนวณต้นทุน/ยอดขายตามเดิม; บิลเงินสดพิมพ์เฉพาะรายการที่เลือก',
