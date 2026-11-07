@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.24</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.25</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.24';
-const DISPLAY_APP_VERSION = 'v3.24';
+const CURRENT_APP_VERSION = 'sealthai-v3.25';
+const DISPLAY_APP_VERSION = 'v3.25';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -605,7 +605,16 @@ tbody td:first-child { color: var(--text); }
 .po-pending-entry summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
 .po-pending-entry summary::-webkit-details-marker { display:none; }
 .po-pending-entry summary::after { content:'▾'; color:#1d4ed8; font-weight:800; flex:none; }
-.po-pending-entry[open] summary::after { content:'▴'; }
+.po-pending-entry details[open] summary::after { content:'▴'; }
+.po-pending-schedule { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:7px; margin-top:9px; padding:8px 10px; border-radius:8px; background:#eff6ff; border:1px solid #bfdbfe; }
+.po-pending-schedule.overdue { background:#fef2f2; border-color:#fca5a5; }
+.po-pending-schedule.due-today { background:#fffbeb; border-color:#fcd34d; }
+.po-pending-schedule-label { display:block; color:#475569; font-size:10px; font-weight:700; }
+.po-pending-schedule-date { display:block; color:#1d4ed8; font-size:15px; font-weight:800; line-height:1.3; }
+.po-pending-schedule.overdue .po-pending-schedule-date { color:#b91c1c; }
+.po-pending-schedule-status { font-size:11px; font-weight:700; color:#1e40af; }
+.po-pending-schedule.overdue .po-pending-schedule-status { color:#b91c1c; }
+.po-pending-wait { display:inline-block; margin-top:7px; padding:4px 8px; background:#f1f5f9; border-radius:6px; color:#334155; font-size:11px; font-weight:700; }
 .po-pending-item { display:flex; justify-content:space-between; gap:10px; border-top:1px solid #e2e8f0; padding:7px 0; font-size:12px; }
 .po-pending-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
 @media(max-width:700px) {
@@ -1312,7 +1321,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.24)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.24 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.25 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1385,7 +1394,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.24)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.24 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.25 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1414,7 +1423,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.24)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.24 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.25)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.25 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4145,7 +4154,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.24)">v3.24 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.25)">v3.25 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -23238,6 +23247,40 @@ function schedulePendingPOCardRefresh() {
   _pendingPOCardTimer = setTimeout(loadPendingPOCard, 250);
 }
 
+function pendingPOCardToday() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+}
+
+function pendingPOCalendarDays(from, to) {
+  const parse = value => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value||'')) return null;
+    const [year,month,day] = value.split('-').map(Number);
+    const stamp = Date.UTC(year,month-1,day);
+    return new Date(stamp).toISOString().slice(0,10) === value ? stamp : null;
+  };
+  const start = parse(from), end = parse(to);
+  return start === null || end === null ? null : Math.round((end-start)/86400000);
+}
+
+function pendingPOReadableDate(value) {
+  if (pendingPOCalendarDays(value,value) === null) return 'ยังไม่ระบุ';
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const [year,month,day] = value.split('-').map(Number);
+  return `${day} ${months[month-1]} ${year}`;
+}
+
+function pendingPODateStatus(poDate, expectedDate, asOf) {
+  const elapsed = pendingPOCalendarDays(poDate,asOf);
+  const untilDue = pendingPOCalendarDays(asOf,expectedDate);
+  return {
+    waitLabel: elapsed === null ? 'ยังไม่ระบุวันที่ PO' : elapsed < 0 ? 'วันที่ PO อยู่ในอนาคต' : `รอสินค้าแล้ว ${elapsed} วัน นับจากวันที่ PO`,
+    dueLabel: untilDue === null ? 'ยังไม่กำหนดวันรับ' : untilDue < 0 ? `เลยกำหนด ${-untilDue} วัน` : untilDue === 0 ? 'กำหนดรับวันนี้' : `อีก ${untilDue} วันถึงกำหนด`,
+    dueClass: untilDue === null ? '' : untilDue < 0 ? ' overdue' : untilDue === 0 ? ' due-today' : '',
+    overdue: untilDue !== null && untilDue < 0
+  };
+}
+
 async function fetchPendingPOsAcrossMonths() {
   const rows = [];
   for (let start = 0; ; start += 200) {
@@ -23266,13 +23309,20 @@ async function loadPendingPOCard() {
       (a.po_date||'').localeCompare(b.po_date||'') || (a.po_no||'').localeCompare(b.po_no||'',undefined,{numeric:true}));
     const lineCount = rows.reduce((s,po) => s + po.pendingItems.length,0);
     const pendingQty = rows.reduce((s,po) => s + po.pendingItems.reduce((n,it) => n + Math.max(0,Number(it.qty_ordered||0)-Number(it.qty_received||0)),0),0);
-    const overdue = rows.filter(po => po.expected_date && po.expected_date < today()).length;
+    const asOf = pendingPOCardToday();
+    const overdue = rows.filter(po => pendingPODateStatus(po.po_date,po.expected_date,asOf).overdue).length;
     const shown = _pendingPOCardExpanded ? rows : rows.slice(0,4);
     card.innerHTML = `<div class="po-pending-heading"><div><div style="font-size:13px;color:#1e40af;font-weight:700">📦 PO ที่ยังไม่รับเข้า · ทุกเดือน</div><div class="po-pending-count">${rows.length} <span style="font-size:13px;font-weight:500">ใบสั่งซื้อ</span></div><div style="font-size:11px;color:#1e40af;margin-top:4px">ค้างรับ ${fmt(pendingQty)} ชิ้น · ${lineCount} รายการ${overdue ? ` · <span style="color:#b91c1c;font-weight:700">เลยกำหนด ${overdue} ใบ</span>` : ''}</div></div>${rows.length>4 ? `<button type="button" class="btn btn-secondary btn-sm" onclick="togglePendingPOCard()">${_pendingPOCardExpanded?'ย่อรายการ':'ดู PO ค้างรับทั้งหมด →'}</button>` : ''}</div>`+
       (rows.length ? `<div class="po-pending-list${_pendingPOCardExpanded?' expanded':''}">${shown.map(po => {
         const qty = po.pendingItems.reduce((s,it) => s + Math.max(0,Number(it.qty_ordered||0)-Number(it.qty_received||0)),0);
-        const isOverdue = po.expected_date && po.expected_date < today();
-        return `<details class="po-pending-entry"><summary><span style="min-width:0"><b style="color:#1d4ed8">${escapeHTML(po.po_no||'-')}</b> ${poBadge(po.status)}<span style="display:block;font-size:11px;color:var(--text3);margin-top:3px">${escapeHTML(po.supplier_name||'-')} · สั่ง ${escapeHTML(po.po_date||'-')}</span><span style="display:block;font-size:11px;color:${isOverdue?'#b91c1c':'#1e40af'};margin-top:3px">${isOverdue?'⚠️ เลยกำหนด ':'คาดรับ '}${escapeHTML(po.expected_date||'ยังไม่ระบุ')} · ค้าง ${po.pendingItems.length} รายการ / ${fmt(qty)} ชิ้น</span><span style="display:block;font-size:11px;color:var(--text2);margin-top:5px;overflow-wrap:anywhere">↳ ${escapeHTML(po.pendingItems[0].product_name||'-')} ค้าง ${fmt(Math.max(0,Number(po.pendingItems[0].qty_ordered||0)-Number(po.pendingItems[0].qty_received||0)))}${po.pendingItems.length>1?` · อีก ${po.pendingItems.length-1} รายการ`:''}</span></span></summary><div style="margin-top:9px">${po.pendingItems.map((it,i) => `<div class="po-pending-item"><span style="min-width:0;overflow-wrap:anywhere">${i+1}. ${escapeHTML(it.product_name||'-')}</span><span style="white-space:nowrap;text-align:right"><b style="color:#b91c1c">ค้าง ${fmt(Math.max(0,Number(it.qty_ordered||0)-Number(it.qty_received||0)))}</b><br><span style="color:var(--text3);font-size:10px">สั่ง ${fmt(it.qty_ordered||0)} · รับ ${fmt(it.qty_received||0)}</span></span></div>`).join('')}<div class="po-pending-actions"><button type="button" class="btn btn-secondary btn-sm" data-po-id="${escapeHTML(po.id)}" onclick="viewPO(this.dataset.poId)">ดู PO</button><button type="button" class="btn btn-primary btn-sm" data-po-id="${escapeHTML(po.id)}" onclick="openGoodsReceipt(this.dataset.poId)">📦 รับสินค้า</button></div></div></details>`;
+        const timing = pendingPODateStatus(po.po_date,po.expected_date,asOf);
+        return `<div class="po-pending-entry"><details><summary><span style="min-width:0;width:100%"><b style="color:#1d4ed8">${escapeHTML(po.po_no||'-')}</b> ${poBadge(po.status)}
+          <span style="display:block;font-size:11px;color:var(--text3);margin-top:3px">${escapeHTML(po.supplier_name||'-')} · วันที่ PO ${escapeHTML(pendingPOReadableDate(po.po_date))}</span>
+          <span class="po-pending-schedule${timing.dueClass}"><span><span class="po-pending-schedule-label">📅 วันที่คาดว่าจะได้รับ</span><span class="po-pending-schedule-date">${escapeHTML(pendingPOReadableDate(po.expected_date))}</span></span><span class="po-pending-schedule-status">${escapeHTML(timing.dueLabel)}</span></span>
+          <span class="po-pending-wait">⏱️ ${escapeHTML(timing.waitLabel)}</span>
+          <span style="display:block;font-size:11px;color:#1e40af;margin-top:6px">ค้างรับ ${po.pendingItems.length} รายการ / ${fmt(qty)} ชิ้น</span>
+          <span style="display:block;font-size:11px;color:var(--text2);margin-top:5px;overflow-wrap:anywhere">↳ ${escapeHTML(po.pendingItems[0].product_name||'-')} ค้าง ${fmt(Math.max(0,Number(po.pendingItems[0].qty_ordered||0)-Number(po.pendingItems[0].qty_received||0)))}${po.pendingItems.length>1?` · อีก ${po.pendingItems.length-1} รายการ`:''}</span>
+        </span></summary><div style="margin-top:9px">${po.pendingItems.map((it,i) => `<div class="po-pending-item"><span style="min-width:0;overflow-wrap:anywhere">${i+1}. ${escapeHTML(it.product_name||'-')}</span><span style="white-space:nowrap;text-align:right"><b style="color:#b91c1c">ค้าง ${fmt(Math.max(0,Number(it.qty_ordered||0)-Number(it.qty_received||0)))}</b><br><span style="color:var(--text3);font-size:10px">สั่ง ${fmt(it.qty_ordered||0)} · รับ ${fmt(it.qty_received||0)}</span></span></div>`).join('')}</div></details><div class="po-pending-actions"><button type="button" class="btn btn-secondary btn-sm" data-po-id="${escapeHTML(po.id)}" onclick="openPOExpectedDateEditor(this.dataset.poId)">✏️ แก้วันคาดรับ</button><button type="button" class="btn btn-secondary btn-sm" data-po-id="${escapeHTML(po.id)}" onclick="viewPO(this.dataset.poId)">ดู PO</button><button type="button" class="btn btn-primary btn-sm" data-po-id="${escapeHTML(po.id)}" onclick="openGoodsReceipt(this.dataset.poId)">📦 รับสินค้า</button></div></div>`;
       }).join('')}</div>` : '<div style="font-size:12px;color:#1e40af;margin-top:8px">ไม่มี PO ที่ส่งแล้วและยังค้างรับสินค้า</div>');
   } catch (error) {
     console.error('loadPendingPOCard failed:',error);
@@ -23283,6 +23333,48 @@ async function loadPendingPOCard() {
 function togglePendingPOCard() {
   _pendingPOCardExpanded = !_pendingPOCardExpanded;
   return loadPendingPOCard();
+}
+
+async function openPOExpectedDateEditor(poId) {
+  const {data:po,error} = await sb.from('purchase_orders')
+    .select('id,po_no,po_date,expected_date,status')
+    .eq('id',poId).eq('shop_id',currentShop.id).single();
+  if (error || !po) { toast('โหลด PO เพื่อแก้วันคาดรับไม่สำเร็จ: '+(error?.message||'ไม่พบ PO'),'error'); return; }
+  if (!['sent','partial'].includes(po.status)) { toast('แก้วันคาดรับจากการ์ดได้เฉพาะ PO ที่ส่งแล้วหรือรับบางส่วน','error'); return; }
+  showDynamicModal('📅 แก้วันที่คาดว่าจะได้รับ · '+escapeHTML(po.po_no||'-'),`
+    <div style="max-width:420px;margin:0 auto">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">วันที่ PO: <b>${escapeHTML(pendingPOReadableDate(po.po_date))}</b> · เปลี่ยนเฉพาะวันคาดรับ ไม่กระทบสินค้าและยอดรับเข้า</div>
+      <div class="form-group"><label for="po-expected-edit">วันที่คาดว่าจะได้รับสินค้า</label><input type="date" id="po-expected-edit" value="${escapeHTML(po.expected_date||'')}" data-po-date="${escapeHTML(po.po_date||'')}" style="width:100%;min-height:42px"></div>
+      <div style="font-size:11px;color:var(--text3)">หากยังไม่ทราบวันที่ สามารถล้างช่องนี้แล้วบันทึกเป็น “ยังไม่ระบุ” ได้</div>
+    </div>`,
+    `<button type="button" class="btn btn-secondary" onclick="closeModal('modal-dynamic')">ยกเลิก</button><button type="button" class="btn btn-primary" data-po-id="${escapeHTML(po.id)}" onclick="savePOExpectedDate(this.dataset.poId)">💾 บันทึกวันที่</button>`);
+}
+
+async function savePOExpectedDate(poId) {
+  const input = document.getElementById('po-expected-edit');
+  if (!input) return;
+  const expectedDate = input.value || null;
+  const poDate = input.dataset.poDate || '';
+  if (expectedDate && pendingPOCalendarDays(poDate,expectedDate) < 0) {
+    toast('วันที่คาดรับต้องไม่ก่อนวันที่ PO','error'); return;
+  }
+  const saveButton = document.querySelector('#modal-dynamic .btn-primary');
+  if (saveButton) { saveButton.disabled = true; saveButton.textContent = 'กำลังบันทึก...'; }
+  try {
+    const {data,error} = await sb.from('purchase_orders')
+      .update({expected_date:expectedDate}).eq('id',poId).eq('shop_id',currentShop.id)
+      .in('status',['sent','partial']).select('id');
+    if (error) throw error;
+    if (!data?.length) throw new Error('PO นี้ถูกปิดหรือไม่มีสิทธิ์แก้ไขแล้ว กรุณารีเฟรช');
+    closeModal('modal-dynamic');
+    toast('บันทึกวันที่คาดรับแล้ว ✓','success');
+    await loadPOs();
+    if (document.getElementById('modal-po-detail')?.classList.contains('open')) await viewPO(poId);
+  } catch (error) {
+    toast('บันทึกวันที่คาดรับไม่สำเร็จ: '+(error.message||'เกิดข้อผิดพลาด'),'error');
+  } finally {
+    if (saveButton?.isConnected) { saveButton.disabled = false; saveButton.textContent = '💾 บันทึกวันที่'; }
+  }
 }
 
 // ── Helper: ดึงราคาซื้อสินค้าสำหรับ PO (อิงตามสกุลเงิน THB หรือ USD) ──
@@ -24522,7 +24614,8 @@ async function viewPO(poId) {
     '<div class="modal-title" style="margin-bottom:12px">🛒 '+( po.po_no||'-')+' · '+po.supplier_name+'</div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'+
       poBadge(po.status)+
-      (po.expected_date?'<span style="font-size:12px;color:var(--text3)">คาดรับ '+po.expected_date+'</span>':'')+
+      '<span style="font-size:12px;color:var(--text3)">คาดรับ <b>'+escapeHTML(pendingPOReadableDate(po.expected_date))+'</b></span>'+
+      (['sent','partial'].includes(po.status)?'<button type="button" class="btn btn-secondary btn-sm" onclick="openPOExpectedDateEditor(&quot;'+poId+'&quot;)">✏️ แก้วันคาดรับ</button>':'')+
       ((isUSD || poShippingCurrency === 'USD') ? `<span style="background:#f0fdf4;color:#166534;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #86efac">💵 1 USD = ฿${poRate.toFixed(2)}</span>` : '')+
     '</div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">'+
@@ -41155,6 +41248,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.25', date:'2026-11-08', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'วันคาดรับ PO ชัดเจนและแก้ไขได้', items:[
+      'แสดงวันคาดว่าจะได้รับในแถบเด่น แยกสถานะกำหนดวันนี้ อีกกี่วัน หรือเลยกำหนดกี่วัน',
+      'แสดงจำนวนวันที่รอสินค้าจากวันที่ PO ถึงวันปัจจุบัน โดยนับวันตามปฏิทิน',
+      'แก้วันที่คาดรับได้จากการ์ดหรือรายละเอียด PO โดยไม่เปลี่ยนสินค้าและยอดรับเข้า'
+    ]},
     { v:'3.24', date:'2026-11-08', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'การ์ด PO ค้างรับพร้อมรายการสินค้า', items:[
       'หน้า Purchase แสดง PO ที่ส่งแล้วหรือรับบางส่วนและยังมีสินค้าค้างรับจากทุกเดือน แยกจากตัวกรองวันที่ของตาราง',
       'เปิดดูสินค้าในแต่ละ PO ได้ พร้อมจำนวนสั่ง รับแล้ว ค้างรับ และวันคาดรับ/เลยกำหนด',
