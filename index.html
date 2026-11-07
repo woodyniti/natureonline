@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.26</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.27</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.26';
-const DISPLAY_APP_VERSION = 'v3.26';
+const CURRENT_APP_VERSION = 'sealthai-v3.27';
+const DISPLAY_APP_VERSION = 'v3.27';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -617,6 +617,14 @@ tbody td:first-child { color: var(--text); }
 .po-pending-wait { display:inline-block; margin-top:7px; padding:4px 8px; background:#f1f5f9; border-radius:6px; color:#334155; font-size:11px; font-weight:700; }
 .po-pending-item { display:flex; justify-content:space-between; gap:10px; border-top:1px solid #e2e8f0; padding:7px 0; font-size:12px; }
 .po-pending-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:8px; }
+.po-period-shortcuts { background:#fff; border:1px solid var(--border); border-radius:10px; padding:11px 13px; margin-bottom:10px; }
+.po-period-row { display:flex; align-items:center; gap:6px; overflow-x:auto; padding:2px 0; scrollbar-width:thin; }
+.po-period-row + .po-period-row { margin-top:6px; }
+.po-period-label { flex:0 0 auto; min-width:38px; color:var(--text3); font-size:11px; font-weight:700; }
+.po-period-chip { flex:0 0 auto; border:1px solid var(--border2); background:#fff; border-radius:20px; color:var(--text2); padding:5px 10px; font-size:11px; font-weight:700; cursor:pointer; white-space:nowrap; }
+.po-period-chip:hover { border-color:var(--accent); color:var(--accent); }
+.po-period-chip.active { border-color:var(--accent); background:#e8faf4; color:#047857; }
+.po-period-chip small { font-size:10px; opacity:.7; }
 @media(max-width:700px) {
   #modal-marketplace-sale-adjust .msa-dialog { width:100%; max-height:94dvh; border-radius:18px 18px 0 0; }
   #modal-marketplace-sale-adjust .msa-header { padding:18px 16px 12px; }
@@ -1321,7 +1329,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.26)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.26 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.27)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.27 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1394,7 +1402,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.26)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.26 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.27)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.27 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1423,7 +1431,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.26)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.26 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.27)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.27 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4154,7 +4162,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.26)">v3.26 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.27)">v3.27 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -22987,15 +22995,24 @@ function getPOGoodsForReporting(po) {
   return { subtotal: net + discount, discount, net };
 }
 
+let _poPeriodMode = 'default';
+let _poPeriodYear = null;
+let _poPeriodMonth = null;
+let _poPeriodCounts = new Map();
+
 async function purchase() {
+  _poPeriodMode = 'default';
+  _poPeriodYear = Number(pendingPOCardToday().slice(0,4));
+  _poPeriodMonth = Number(pendingPOCardToday().slice(5,7));
   document.getElementById('topbar-actions').innerHTML =
     '<button class="btn btn-primary btn-sm" onclick="openNewPO()">+ Purchase Order</button>';
 
   setContent(`
+    <div id="po-period-shortcuts" class="po-period-shortcuts" aria-label="เลือกช่วงเวลาใบสั่งซื้อ"><div style="font-size:12px;color:var(--text3)">กำลังโหลดตัวเลือกเดือนและปี...</div></div>
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
-      <input type="date" id="po-from" value="${today().slice(0,7)+'-01'}">
+      <input type="date" id="po-from" value="${pendingPOCardToday().slice(0,7)+'-01'}" onchange="setPOCustomPeriod()">
       <span style="color:var(--text3)">ถึง</span>
-      <input type="date" id="po-to" value="${today()}">
+      <input type="date" id="po-to" value="${pendingPOCardToday()}" onchange="setPOCustomPeriod()">
       <select id="po-status" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px" onchange="loadPOs()">
         <option value="">ทุกสถานะ</option>
         ${PO_STATUSES.map(s=>'<option value="'+s.key+'">'+s.th+'</option>').join('')}
@@ -23012,7 +23029,7 @@ async function purchase() {
       <button class="btn btn-secondary btn-sm" onclick="loadPOs()">🔍 ค้นหา</button>
       <button class="btn btn-secondary btn-sm" onclick="clearPOFilter()">📋 ทั้งหมด</button>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin:-5px 0 10px">แบบร่าง / ส่งแล้ว / รับบางส่วน จะแสดงทุกเดือน แม้อยู่นอกช่วงวันที่ที่เลือก</div>
+    <div style="font-size:11px;color:var(--text3);margin:-5px 0 10px">มุมมองเริ่มต้นรวม PO แบบร่าง/ส่งแล้ว/รับบางส่วนจากทุกเดือน · เมื่อเลือกเดือนหรือปี ตารางจะกรองเฉพาะช่วงนั้น (การ์ดค้างรับยังแสดงทุกเดือน)</div>
     <div id="po-pending-card" class="po-pending-card" aria-live="polite"><div style="color:#1e40af;font-weight:700">📦 PO ที่ยังไม่รับเข้า · ทุกเดือน</div><div style="font-size:12px;color:#1e40af;margin-top:5px">กำลังตรวจรายการค้างรับ...</div></div>
     <div class="card" id="po-list"><div class="loading"><div class="spinner"></div></div></div>
 
@@ -23101,14 +23118,104 @@ async function purchase() {
       </div>
     </div>
   `);
+  loadPOPeriodShortcuts();
   loadPOs();
 }
 
+async function loadPOPeriodShortcuts() {
+  const container = document.getElementById('po-period-shortcuts');
+  if (!container || !currentShop?.id) return;
+  const shopId = currentShop.id;
+  try {
+    const counts = new Map();
+    for (let offset=0; ; offset+=500) {
+      const {data,error} = await sb.from('purchase_orders').select('id,po_date')
+        .eq('shop_id',shopId).order('id',{ascending:true}).range(offset,offset+499);
+      if (error) throw error;
+      (data||[]).forEach(po => {
+        const month = String(po.po_date||'').slice(0,7);
+        if (/^\d{4}-\d{2}$/.test(month)) counts.set(month,(counts.get(month)||0)+1);
+      });
+      if (!data || data.length < 500) break;
+    }
+    if (!container.isConnected || currentShop?.id !== shopId) return;
+    _poPeriodCounts = counts;
+    renderPOPeriodShortcuts();
+  } catch (error) {
+    console.error('โหลดตัวเลือกเดือน/ปี PO ไม่สำเร็จ:',error);
+    if (container.isConnected) container.innerHTML = `<span style="color:var(--red);font-size:12px">โหลดช่วงเวลา PO ไม่สำเร็จ: ${escapeHTML(error.message||'เกิดข้อผิดพลาด')}</span> <button type="button" class="btn btn-secondary btn-sm" onclick="loadPOPeriodShortcuts()">ลองอีกครั้ง</button>`;
+  }
+}
+
+function renderPOPeriodShortcuts() {
+  const container = document.getElementById('po-period-shortcuts');
+  if (!container) return;
+  const currentYear = Number(pendingPOCardToday().slice(0,4));
+  const year = _poPeriodYear || currentYear;
+  const yearCounts = new Map();
+  _poPeriodCounts.forEach((count,month) => {
+    const y = Number(month.slice(0,4));
+    yearCounts.set(y,(yearCounts.get(y)||0)+count);
+  });
+  if (!yearCounts.has(currentYear)) yearCounts.set(currentYear,0);
+  const years = [...yearCounts.keys()].sort((a,b)=>b-a);
+  const monthNames = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const chip = (label,active,action) => `<button type="button" class="po-period-chip${active?' active':''}" aria-pressed="${active}" onclick="${action}">${label}</button>`;
+  container.innerHTML = `<div class="po-period-row"><span class="po-period-label">มุมมอง</span>${chip('เดือนนี้ + PO ค้าง',_poPeriodMode==='default','setPOPeriodDefault()')}${chip('ทั้งหมด',_poPeriodMode==='all','clearPOFilter()')}${_poPeriodMode==='custom'?'<span style="font-size:11px;color:var(--text2)">กำหนดช่วงวันที่เอง</span>':''}</div>`+
+    `<div class="po-period-row"><span class="po-period-label">รายปี</span>${years.map(y => chip(`${y} <small>(${yearCounts.get(y)})</small>`,(_poPeriodMode==='year'||_poPeriodMode==='month')&&year===y,`setPOPeriodYear(${y})`)).join('')}</div>`+
+    `<div class="po-period-row"><span class="po-period-label">${year}</span>${monthNames.map((name,i) => chip(`${name} <small>(${_poPeriodCounts.get(`${year}-${String(i+1).padStart(2,'0')}`)||0})</small>`,_poPeriodMode==='month'&&_poPeriodYear===year&&_poPeriodMonth===i+1,`setPOPeriodMonth(${year},${i+1})`)).join('')}</div>`;
+}
+
+function applyPOPeriodRange(from,to) {
+  const fromInput = document.getElementById('po-from');
+  const toInput = document.getElementById('po-to');
+  if (fromInput) fromInput.value = from;
+  if (toInput) toInput.value = to;
+  for (const id of ['po-status','po-search']) {
+    const input = document.getElementById(id);
+    if (input) input.value = '';
+  }
+  renderPOPeriodShortcuts();
+  return loadPOs();
+}
+
+function setPOPeriodDefault() {
+  const date = pendingPOCardToday();
+  _poPeriodMode = 'default';
+  _poPeriodYear = Number(date.slice(0,4));
+  _poPeriodMonth = Number(date.slice(5,7));
+  return applyPOPeriodRange(date.slice(0,7)+'-01',date);
+}
+
+function setPOPeriodYear(year) {
+  _poPeriodMode = 'year';
+  _poPeriodYear = Number(year);
+  _poPeriodMonth = null;
+  return applyPOPeriodRange(`${year}-01-01`,`${year}-12-31`);
+}
+
+function setPOPeriodMonth(year,month) {
+  _poPeriodMode = 'month';
+  _poPeriodYear = Number(year);
+  _poPeriodMonth = Number(month);
+  const ym = `${year}-${String(month).padStart(2,'0')}`;
+  const lastDay = new Date(year,month,0).getDate();
+  return applyPOPeriodRange(`${ym}-01`,`${ym}-${String(lastDay).padStart(2,'0')}`);
+}
+
+function setPOCustomPeriod() {
+  _poPeriodMode = 'custom';
+  renderPOPeriodShortcuts();
+  return loadPOs();
+}
+
 function clearPOFilter() {
+  _poPeriodMode = 'all';
   ['po-from','po-to','po-status','po-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sortEl = document.getElementById('po-sort');
   if (sortEl) sortEl.value = 'date_desc';
-  loadPOs();
+  renderPOPeriodShortcuts();
+  return loadPOs();
 }
 
 async function loadPOs() {
@@ -23122,7 +23229,13 @@ async function loadPOs() {
   const openStatuses = ['draft','sent','partial'];
   const baseQuery = () => sb.from('purchase_orders').select('*').eq('shop_id',currentShop.id);
   const queries = [];
-  if (st && openStatuses.includes(st)) {
+  if (['month','year','custom'].includes(_poPeriodMode)) {
+    let datedQuery = baseQuery();
+    if(from) datedQuery=datedQuery.gte('po_date',from);
+    if(to) datedQuery=datedQuery.lte('po_date',to);
+    if(st) datedQuery=datedQuery.eq('status',st);
+    queries.push(datedQuery);
+  } else if (st && openStatuses.includes(st)) {
     queries.push(baseQuery().eq('status',st));
   } else {
     let datedQuery = baseQuery();
@@ -24561,6 +24674,7 @@ async function savePO(status) {
   closeModal('modal-po-detail');
   toast('บันทึก '+poNo+' ✓','success');
   loadPOs();
+  loadPOPeriodShortcuts();
 }
 
 // ลบและรวมรายการสินค้าที่ซ้ำใน PO (สินค้าเดียวกัน) — รวมจำนวนสั่งซื้อเข้าด้วยกัน
@@ -41302,6 +41416,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.27', date:'2026-11-08', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ทางลัดกรอง PO รายเดือนและรายปี', items:[
+      'เพิ่มแถบปีและเดือนพร้อมจำนวน PO ให้เลือกดูเอกสารเฉพาะช่วงนั้นได้ทันที รองรับข้ามปีและเดือนที่ไม่มีรายการ',
+      'การเลือกช่วงเดือน/ปีกรองเฉพาะตาราง PO; การ์ดติดตาม PO ค้างรับยังแสดงทุกเดือน',
+      'มุมมองเริ่มต้นยังรวม PO ที่เปิดค้างจากเดือนก่อน และมีปุ่มกลับเดือนนี้หรือดูทั้งหมด'
+    ]},
     { v:'3.26', date:'2026-11-08', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระยะเวลารอสินค้าและวันรับจริงในรายการ PO', items:[
       'เพิ่มคอลัมน์รอสินค้าในตาราง Purchase Order และแสดงบนมือถือ; PO ที่สั่งวันนี้แสดงน้อยกว่า 1 วัน',
       'PO ที่ส่งแล้วหรือรับบางส่วนแก้วันคาดรับจากตารางได้โดยตรง',

@@ -27,6 +27,7 @@ const context = {
     then(resolve){resolve({data:rows,error:null})}
   })},
   currentShop:{id:'shop-1'},
+  _poPeriodMode:'default',
   document:{getElementById:id=>id==='po-list'?list:{value:controls[id]||''}},
   schedulePendingPOCardRefresh:()=>{},
   getPOSupplierRef:()=>'',getCleanPONote:()=>'',smartWildcardMatch:()=>false,
