@@ -39,6 +39,11 @@ vm.runInContext('pendingPOCardToday = () => "2026-11-08"',context);
   assert.equal(vm.runInContext("pendingPODateStatus('2026-10-29','2026-11-17','2026-11-08').waitLabel",context),'รอสินค้าแล้ว 10 วัน นับจากวันที่ PO');
   assert.equal(vm.runInContext("pendingPODateStatus('2026-10-29','2026-11-17','2026-11-08').dueLabel",context),'อีก 9 วันถึงกำหนด');
   assert.equal(vm.runInContext("pendingPODateStatus('2026-10-29','2026-11-07','2026-11-08').dueLabel",context),'เลยกำหนด 1 วัน');
+  assert.equal(vm.runInContext("pendingPOWaitText({status:'sent',po_date:'2026-11-08'},'2026-11-08')",context),'น้อยกว่า 1 วัน');
+  assert.equal(vm.runInContext("pendingPOWaitText({status:'partial',po_date:'2026-10-29'},'2026-11-08')",context),'10 วัน');
+  assert.equal(vm.runInContext("pendingPOWaitText({status:'draft',po_date:'2026-11-08'},'2026-11-08')",context),'ยังไม่ส่ง PO');
+  assert.equal(vm.runInContext("pendingPOWaitText({status:'received',po_date:'2026-10-29'},'2026-11-08')",context),'ปิดรับแล้ว');
+  assert.equal(vm.runInContext("pendingPODateStatus('2026-11-08','2026-11-17','2026-11-08').waitLabel",context),'รอสินค้าแล้วน้อยกว่า 1 วัน นับจากวันที่ PO');
   const rows = await vm.runInContext('fetchPendingPOsAcrossMonths()',context);
   assert.equal(rows.length,200); // fully received PO is not pending despite its status
   assert.equal(pageCalls,2); // includes older POs and more than one server page
