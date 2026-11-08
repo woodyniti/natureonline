@@ -7,7 +7,7 @@ assert.equal((html.match(/function filterStockHistory\(/g) || []).length, 1, 'do
 assert.match(html, /_stockCurrentView = 'docs';\s*document\.getElementById\('topbar-actions'\)/);
 assert.match(html, /\(d\.doc_no \|\| ''\)\.toLowerCase\(\)\.includes\(q\)/);
 assert.match(html, /openGRDocumentDetail\('\$\{encodeURIComponent\(d\.gr_key\)/);
-assert.match(html, /note: 'GR\|' \+ receiptNoByPO\.get\(receiptGroup\) \+ '\|COST_INCLUDED'/);
+assert.match(html, /note: 'GR\|' \+ receiptNoByPO\.get\(receiptGroup\) \+ '\|COST_INCLUDED\|DISC:' \+ discountShare\.toFixed\(2\)/);
 assert.match(html, /note:'GR\|' \+ receiptNo \+ '\|COST_EXCLUDED'/);
 assert.match(html, /\.range\(offset, offset \+ 499\)/);
 
