@@ -1,0 +1,18 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const html=fs.readFileSync('index.html','utf8');
+const a=html.indexOf('async function printReceipt(');
+const b=html.indexOf('\nfunction ',a+1);
+const receipt=html.slice(a,b);
+assert.ok(a>=0&&b>a,'cash receipt renderer present');
+assert.match(receipt,/นางสาวนันทนา เลิศจันทร์/);
+assert.match(receipt,/1539900333644/);
+assert.match(receipt,/ใบเสร็จรับเงิน \/ บิลเงินสด/);
+assert.match(receipt,/RECEIPT \/ CASH SALE/);
+assert.match(receipt,/ไม่ใช่ใบกำกับภาษี \/ NOT A TAX INVOICE/);
+assert.ok(receipt.indexOf('shop-owner')>receipt.indexOf('shop-name'),'legal name appears directly under shop name');
+assert.ok(receipt.indexOf("billParts.push('<div class=\"shop-owner\">")<receipt.indexOf("billParts.push('<div class=\"shop-info\">"),'seller identity precedes address');
+assert.match(receipt,/\.doc-warning \{ font-size:9px; font-weight:400/,'non-tax-invoice notice stays understated');
+assert.match(receipt,/copies\.forEach\(cp => \{/,'the heading applies to original and copy');
+assert.doesNotMatch(receipt,/if \(shop\.tax_id\)/,'do not print conflicting tax IDs');
+console.log('Cash receipt seller identity and non-tax-invoice heading: OK');
