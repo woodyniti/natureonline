@@ -15,4 +15,10 @@ assert.ok(receipt.indexOf("billParts.push('<div class=\"shop-owner\">")<receipt.
 assert.match(receipt,/\.doc-warning \{ font-size:9px; font-weight:400/,'non-tax-invoice notice stays understated');
 assert.match(receipt,/copies\.forEach\(cp => \{/,'the heading applies to original and copy');
 assert.doesNotMatch(receipt,/if \(shop\.tax_id\)/,'do not print conflicting tax IDs');
+assert.match(receipt,/<div class="shop-name">ร้าน ' \+ escapeHTML\(billShopName\)/,'receipt shows ร้าน before shop name');
+assert.match(receipt,/width:88px;height:88px;object-fit:contain;flex-shrink:0/,'receipt logo is larger');
+assert.doesNotMatch(receipt,/width:88px[^\n]*background:#f5f5f5/,'receipt logo has no gray background');
+assert.match(receipt,/\.seller-contact-line \{ white-space:nowrap; \}/,'contact lines cannot wrap');
+assert.match(receipt,/<div class="seller-contact"><div class="seller-contact-line">Line OA : @sealthai<\/div><div class="seller-contact-line">Website : www\.sealthai\.com &nbsp;\|&nbsp; www\.oilsealthai\.com &nbsp;\|&nbsp; www\.oilsealthailand\.com<\/div><\/div>/,'all contact details are in exactly two lines');
+assert.match(receipt,/billParts\.push\('<\/div>'\);\s*billParts\.push\('<div class="seller-contact">/,'contact block follows the full-width header');
 console.log('Cash receipt seller identity and non-tax-invoice heading: OK');
