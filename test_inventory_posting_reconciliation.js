@@ -106,5 +106,18 @@ async function run(data = baseline, failTable = null) {
   assert.equal(paged.reads.filter(t=>t==='stock_movements').length,3,'load all history pages');
 
   assert.equal(result.context.inventoryMoveMatchesOrder({note:'ขาย SO-1'}, {id:'x',order_no:'SO-10'}),false,'no prefix-based document match');
+  const countMoves = [
+    move('sale','out',1,'2026-10-27'),
+    {...move('count1','out',-99,'2026-10-27','[ปรับยอดสต๊อก] จาก 99 เป็น 0 ชิ้น (ตรวจนับสต๊อกจริง)'),created_at:'2026-10-27T09:04:18Z',lot_name:'Stock Adjustment'},
+    {...move('count2','out',-99,'2026-10-27','[ปรับยอดสต๊อก] จาก 99 เป็น 0 ชิ้น (ตรวจนับสต๊อกจริง)'),created_at:'2026-10-27T09:04:33Z',lot_name:'Stock Adjustment'},
+    {...move('count3','out',99,'2026-10-27','[ปรับยอดสต๊อก] จาก 99 เป็น 0 ชิ้น (ตรวจนับสต๊อกจริง)'),created_at:'2026-10-27T09:52:06Z',lot_name:'Stock Adjustment'},
+    move('receive','in',6,'2026-10-28')
+  ];
+  countMoves[0].created_at='2026-10-27T09:00:30Z';
+  const counted = await run({...baseline,products:[{...product,stock_qty:104}],orders:[],stock_movements:countMoves});
+  assert.match(counted.summary,/data-stock-on-hand="6"/,'absolute count 0 then receive 6 must be 6, never -292');
+  const countRows=counted.rows.filter(r=>r.typeKey==='adjust');
+  assert.equal(countRows.length,3,'all count audit records remain visible');
+  assert.ok(countRows.every(r=>r.runningBalance===0),'repeated count-to-zero does not deduct again');
   console.log('Inventory posting reconciliation: OK');
 })().catch(error=>{console.error(error);process.exitCode=1;});
