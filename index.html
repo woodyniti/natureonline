@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.36</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.37</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.36';
-const DISPLAY_APP_VERSION = 'v3.36';
+const CURRENT_APP_VERSION = 'sealthai-v3.37';
+const DISPLAY_APP_VERSION = 'v3.37';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.36 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.37 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1333,7 +1333,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.36 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.37 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1362,7 +1362,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.36)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.36 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.37)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.37 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4068,7 +4068,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.36)">v3.36 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.37)">v3.37 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -8053,7 +8053,16 @@ function fillEditCustomer(idx) {
 function searchQuoteCustomer(q) { _renderCustDropdown('qt-cust-dd', 'fillQuoteCustomer', q); }
 function fillQuoteCustomer(idx) {
   const dd = document.getElementById('qt-cust-dd');
-  _fillCustFields(dd?._matches?.[idx], {name:'qt-cust',contact:'qt-contact',phone:'qt-phone',addr:'qt-address'});
+  _fillCustFields(dd?._matches?.[idx], {
+    name: 'qt-cust',
+    ref: 'qt-ref',
+    contact: 'qt-contact',
+    phone: 'qt-phone',
+    addr: 'qt-address',
+    company: 'qt-company',
+    tax: 'qt-tax-id',
+    billing: 'qt-billing-address'
+  });
   if (dd) dd.style.display = 'none';
 }
 
@@ -19769,7 +19778,7 @@ async function quotations() {
 
     <!-- New/Edit Quote Modal -->
     <div class="modal-overlay" id="modal-quote">
-      <div class="modal" style="max-width:680px">
+      <div class="modal" style="max-width:720px">
         <div class="modal-title" id="qt-modal-title">📋 ใบเสนอราคาใหม่</div>
         <div class="grid-2">
           <div class="form-group"><label>วันที่</label><input type="date" id="qt-date" value="${today()}"></div>
@@ -19779,11 +19788,41 @@ async function quotations() {
             <div id="qt-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
           <div class="form-group"><label>Ref / Social</label><input type="text" id="qt-ref" placeholder="รหัสอ้างอิง"></div>
-          <div class="form-group"><label>ชื่อผู้ติดต่อ</label><input type="text" id="qt-contact" placeholder="ไม่บังคับ"></div>
-          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="qt-phone" placeholder="ไม่บังคับ"></div>
+          <div class="form-group"><label>ชื่อผู้ติดต่อ</label><input type="text" id="qt-contact" placeholder="ชื่อ-นามสกุล ผู้ติดต่อ"></div>
+          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="qt-phone" placeholder="0x-xxxx-xxxx"></div>
+          <div class="form-group"><label>ตำแหน่งผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="qt-contact-position" placeholder="เช่น ผู้จัดการฝ่ายจัดซื้อ / วิศวกร"></div>
+          <div class="form-group"><label>อีเมลผู้ติดต่อ (E-mail) <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="email" id="qt-contact-email" placeholder="email@company.com"></div>
         </div>
-        <div class="form-group"><label>ที่อยู่</label><textarea id="qt-address" rows="2" placeholder="ไม่บังคับ"></textarea></div>
-        <div class="form-group"><label>พนักงาน</label><select id="qt-emp"><option value="">-- ไม่ระบุ --</option></select></div>
+
+        <!-- กล่องข้อมูลออกบิล / ที่อยู่ออกบิล และ ที่อยู่จัดส่งสินค้า เหมือนหน้า Order -->
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
+            <span>🏢 ข้อมูลออกบิล / ใบกำกับภาษี & ที่อยู่จัดส่ง</span>
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('qt-address','qt-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+          </div>
+          <div class="grid-2" style="margin-bottom:8px">
+            <div class="form-group" style="margin-bottom:0">
+              <label>ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
+              <input type="text" id="qt-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>เลขประจำตัวผู้เสียภาษี (Tax ID) <span style="font-size:11px;color:var(--text3)">(13 หลัก)</span></label>
+              <input type="text" id="qt-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา">
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group" style="margin-bottom:0">
+              <label>ที่อยู่จัดส่งสินค้า <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
+              <textarea id="qt-address" rows="2" placeholder="ที่อยู่จัดส่ง / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label>ที่อยู่ในการออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
+              <textarea id="qt-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกบิล / ใบกำกับภาษี / ใบเสนอราคา"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group"><label>พนักงานผู้รับผิดชอบ</label><select id="qt-emp"><option value="">-- ไม่ระบุ --</option></select></div>
 
         <!-- รายการสินค้า -->
         <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;flex-wrap:wrap;gap:6px">
@@ -19814,11 +19853,15 @@ async function quotations() {
               <span id="qt-bill-discount-amt" class="font-mono" style="font-size:13px;color:var(--red);min-width:70px;text-align:right"></span>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;flex-wrap:wrap;gap:6px">
             <span style="font-size:13px;color:var(--text3)">ค่าจัดส่ง (Shipping Fee)</span>
             <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="qt-shipping-fee" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:100px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text)">
-              <span style="font-size:13px;color:var(--text3)">฿</span>
+              <select id="qt-shipping-type" onchange="handleQuoteShippingTypeChange()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 6px;font-size:13px;font-weight:600">
+                <option value="custom">ระบุค่าจัดส่ง (฿)</option>
+                <option value="free">ฟรีค่าจัดส่ง (Free)</option>
+                <option value="collect">เก็บค่าขนส่งปลายทาง</option>
+              </select>
+              <input type="number" id="qt-shipping-fee" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:90px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text)">
               <span id="qt-shipping-fee-amt" class="font-mono" style="font-size:13px;color:var(--text);min-width:70px;text-align:right"></span>
             </div>
           </div>
@@ -19827,7 +19870,19 @@ async function quotations() {
             <span class="font-mono text-accent" style="font-size:20px;font-weight:700" id="qt-total">฿0</span>
           </div>
         </div>
-        <div class="form-group" style="margin-top:10px"><label>หมายเหตุ</label><textarea id="qt-note" rows="2" placeholder="หมายเหตุ..."></textarea></div>
+
+        <!-- หมายเหตุ 2 ช่อง: แสดงในบิล & เฉพาะหลังบ้านดู เหมือนหน้า Order -->
+        <div class="grid-2" style="margin-top:12px;margin-bottom:12px">
+          <div class="form-group" style="margin-bottom:0">
+            <label>หมายเหตุที่แสดงในบิล <span style="font-size:11px;color:var(--text3)">(พิมพ์ลงในใบเสนอราคาให้ลูกค้าเห็น)</span></label>
+            <textarea id="qt-note" rows="2" placeholder="เช่น กำหนดยืนราคา 30 วัน, ระยะเวลาส่งมอบ 2-3 วันทำการ..."></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label style="color:#b45309;font-weight:700">🔒 หมายเหตุหลังบ้าน <span style="font-size:11px;color:var(--text3);font-weight:400">(เฉพาะแอดมินดู · ไม่พิมพ์ลงบิล)</span></label>
+            <textarea id="qt-internal-note" rows="2" placeholder="บันทึกช่วยจำสำหรับแอดมิน/หลังบ้าน เช่น ต้นทุนพิเศษ, เช็กสเปกแล้ว, ต่อรองราคา..." style="background:#fffbeb;border:1px solid #fde68a"></textarea>
+          </div>
+        </div>
+
         <div class="modal-footer" id="qt-modal-footer">
           <button class="btn btn-secondary" onclick="closeModal('modal-quote')">ยกเลิก</button>
           <button class="btn btn-secondary" onclick="saveQuote('draft')">💾 บันทึกแบบร่าง</button>
@@ -19998,10 +20053,35 @@ function _setQuoteFooter(mode) {
       '<button class="btn btn-primary" onclick="saveQuote(\'sent\')">📤 บันทึก + ส่งลูกค้า</button>';
 }
 
+function handleQuoteShippingTypeChange() {
+  const type = document.getElementById('qt-shipping-type')?.value || 'custom';
+  const feeInp = document.getElementById('qt-shipping-fee');
+  if (feeInp) {
+    if (type === 'free' || type === 'collect') {
+      feeInp.value = 0;
+      feeInp.disabled = true;
+      feeInp.style.opacity = '0.6';
+      feeInp.style.background = '#f1f5f9';
+    } else {
+      feeInp.disabled = false;
+      feeInp.style.opacity = '1';
+      feeInp.style.background = '#fff';
+    }
+  }
+  calcQuoteTotal();
+}
+
 function getQuoteMeta(qt) {
   let billDisc = Number(qt?.bill_discount || 0);
   let billDiscType = qt?.bill_discount_type || 'amount';
   let shippingFee = Number(qt?.shipping_fee || 0);
+  let shippingType = qt?.shipping_type || 'custom';
+  let internalNote = String(qt?.internal_note || '');
+  let contactPosition = String(qt?.contact_position || '');
+  let contactEmail = String(qt?.contact_email || '');
+  let companyName = String(qt?.company_name || '');
+  let taxId = String(qt?.tax_id || '');
+  let billingAddress = String(qt?.billing_address || '');
   let cleanNote = String(qt?.note || '');
 
   if (cleanNote.includes('<!--QT_META:') || cleanNote.includes('[QT_META:')) {
@@ -20012,11 +20092,36 @@ function getQuoteMeta(qt) {
         if (meta.bill_discount != null) billDisc = Number(meta.bill_discount);
         if (meta.bill_discount_type) billDiscType = meta.bill_discount_type;
         if (meta.shipping_fee != null) shippingFee = Number(meta.shipping_fee);
+        if (meta.shipping_type) shippingType = meta.shipping_type;
+        if (meta.internal_note != null && !internalNote) internalNote = meta.internal_note;
+        if (meta.contact_position != null && !contactPosition) contactPosition = meta.contact_position;
+        if (meta.contact_email != null && !contactEmail) contactEmail = meta.contact_email;
+        if (meta.company_name != null && !companyName) companyName = meta.company_name;
+        if (meta.tax_id != null && !taxId) taxId = meta.tax_id;
+        if (meta.billing_address != null && !billingAddress) billingAddress = meta.billing_address;
         cleanNote = cleanNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
       }
     } catch(e) {}
   }
-  return { bill_discount: billDisc, bill_discount_type: billDiscType, shipping_fee: shippingFee, note: cleanNote };
+
+  // Infer shippingType if not explicitly set
+  if (shippingType === 'custom' && shippingFee === 0 && qt?.shipping_type) {
+    shippingType = qt.shipping_type;
+  }
+
+  return {
+    bill_discount: billDisc,
+    bill_discount_type: billDiscType,
+    shipping_fee: shippingFee,
+    shipping_type: shippingType,
+    internal_note: internalNote,
+    contact_position: contactPosition,
+    contact_email: contactEmail,
+    company_name: companyName,
+    tax_id: taxId,
+    billing_address: billingAddress,
+    note: cleanNote
+  };
 }
 
 async function openNewQuote() {
@@ -20026,10 +20131,12 @@ async function openNewQuote() {
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('qt-date', today());
   set('qt-valid', new Date(Date.now()+30*86400000).toISOString().slice(0,10));
-  ['qt-cust','qt-ref','qt-contact','qt-phone','qt-address','qt-note'].forEach(id=>set(id,''));
+  ['qt-cust','qt-ref','qt-contact','qt-phone','qt-contact-position','qt-contact-email','qt-company','qt-tax-id','qt-address','qt-billing-address','qt-note','qt-internal-note'].forEach(id=>set(id,''));
   set('qt-bill-discount', 0);
   set('qt-bill-discount-type', 'amount');
   set('qt-shipping-fee', 0);
+  set('qt-shipping-type', 'custom');
+  handleQuoteShippingTypeChange();
   const t=document.getElementById('qt-modal-title'); if(t) t.textContent='📋 ใบเสนอราคาใหม่';
   _setQuoteFooter('new');
   await ensureQuoteProductList();
@@ -20058,15 +20165,26 @@ async function openEditQuote(qtId) {
   set('qt-ref', qt.customer_social);
   set('qt-contact', qt.customer_contact);
   set('qt-phone', qt.customer_phone);
+  set('qt-contact-position', meta.contact_position);
+  set('qt-contact-email', meta.contact_email);
+  set('qt-company', meta.company_name);
+  set('qt-tax-id', meta.tax_id);
   set('qt-address', qt.customer_address);
+  set('qt-billing-address', meta.billing_address);
   set('qt-note', meta.note);
+  set('qt-internal-note', meta.internal_note);
   set('qt-bill-discount', meta.bill_discount);
   set('qt-bill-discount-type', meta.bill_discount_type);
+  set('qt-shipping-type', meta.shipping_type || 'custom');
   set('qt-shipping-fee', meta.shipping_fee);
+  handleQuoteShippingTypeChange();
   quoteItems = (items||[]).map(it=>({
-    product_id: it.product_id||null, product_name: it.product_name,
-    qty: it.qty, sell_price: it.sell_price,
-    discount: it.discount||0, discount_type: it.discount_type||'amount',
+    product_id: it.product_id||null,
+    product_name: it.product_name,
+    qty: it.qty,
+    sell_price: it.sell_price,
+    discount: it.discount||0,
+    discount_type: it.discount_type||'amount',
     is_custom: !it.product_id
   }));
   const t=document.getElementById('qt-modal-title'); if(t) t.textContent='✏️ แก้ไขใบเสนอราคา · '+(qt.quote_no||'');
@@ -20305,12 +20423,12 @@ function renderQuoteItems() {
     }
     pw.appendChild(pl);
 
-    // search input with floating dropdown
+    // search input with floating dropdown (บรรทัดที่ 1: ค้นหาจากคลัง / เลือกสินค้า)
     const wrap=document.createElement('div'); wrap.style.cssText='position:relative';
     const inp=document.createElement('input'); inp.type='text'; inp.autocomplete='off';
     inp.id = 'qt-prod-inp-' + i;
-    inp.placeholder='🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด... หรือพิมพ์ชื่อสินค้าเอง';
-    inp.value=it.product_name||'';
+    inp.placeholder='🔍 1. พิมพ์ค้นหาชื่อคลัง / SKU / ขนาด... หรือพิมพ์ชื่อสินค้าเอง';
+    inp.value=(linked ? linked.name : (it.product_name||''));
     inp.style.cssText='width:100%;background:#fff;border:1.5px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box';
     
     const dd=document.createElement('div');
@@ -20319,12 +20437,35 @@ function renderQuoteItems() {
     
     inp.oninput=()=>{
       quoteItems[i].product_name=inp.value;
+      const customInp = document.getElementById('qt-custom-inp-' + i);
+      if (customInp && !customInp.value) customInp.value = inp.value;
       searchQuoteProduct(i, inp.value);
     };
     inp.onfocus=()=>searchQuoteProduct(i, inp.value);
     inp.onblur=()=>handleQuoteProdBlur(i, inp.value);
 
     wrap.appendChild(inp); wrap.appendChild(dd); pw.appendChild(wrap);
+
+    // ── บรรทัดสอง: ข้อความพิมพ์หน้าบิล / แก้ไขข้อความตามที่ลูกค้าต้องการ ทำเหมือน ออเดอร์ ──
+    const customNameWrap = document.createElement('div');
+    customNameWrap.style.cssText = 'margin-top:6px;display:flex;flex-direction:column;gap:2px;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 8px';
+    const customNameLabel = document.createElement('div');
+    customNameLabel.style.cssText = 'font-size:11px;color:#1e40af;font-weight:700;display:flex;justify-content:space-between;align-items:center';
+    customNameLabel.innerHTML = '<span>🏷️ 2. ข้อความพิมพ์หน้าบิล / ชื่อตามลูกค้า (เว้นว่างได้):</span><span style="font-size:9.5px;color:#60a5fa;font-weight:normal">ข้อความบรรทัดสองบนเอกสาร</span>';
+    
+    const customNameInp = document.createElement('input');
+    customNameInp.type = 'text';
+    customNameInp.id = 'qt-custom-inp-' + i;
+    customNameInp.value = it.product_name || '';
+    customNameInp.placeholder = 'เว้นว่างไว้จะใช้ชื่อคลัง | หรือพิมพ์ข้อความเฉพาะตามที่ลูกค้าต้องการให้แสดงในใบเสนอราคา';
+    customNameInp.style.cssText = 'width:100%;background:#ffffff;border:1px solid #93c5fd;border-radius:5px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box';
+    customNameInp.oninput = () => {
+      quoteItems[i].product_name = customNameInp.value;
+    };
+    customNameWrap.appendChild(customNameLabel);
+    customNameWrap.appendChild(customNameInp);
+    pw.appendChild(customNameWrap);
+
     const del=document.createElement('button'); del.textContent='✕';
     del.title='ลบรายการนี้';
     del.style.cssText='background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;margin-top:18px;flex-shrink:0';
@@ -20388,7 +20529,11 @@ function calcQuoteTotal(){
   },0);
   const billDisc = Number(document.getElementById('qt-bill-discount')?.value||0);
   const billDiscType = document.getElementById('qt-bill-discount-type')?.value||'amount';
-  const shippingFee = Math.max(0, Number(document.getElementById('qt-shipping-fee')?.value||0));
+  const shippingType = document.getElementById('qt-shipping-type')?.value || 'custom';
+  let shippingFee = Math.max(0, Number(document.getElementById('qt-shipping-fee')?.value||0));
+  if (shippingType === 'free' || shippingType === 'collect') {
+    shippingFee = 0;
+  }
   const bd = billDiscType === 'percent' ? (subtotal * billDisc / 100) : billDisc;
   const grand = Math.max(0, subtotal - bd) + shippingFee;
 
@@ -20397,7 +20542,15 @@ function calcQuoteTotal(){
   const bde = document.getElementById('qt-bill-discount-amt');
   if (bde) bde.textContent = bd > 0 ? '- ' + fmtB(bd) : '';
   const sfe = document.getElementById('qt-shipping-fee-amt');
-  if (sfe) sfe.textContent = shippingFee > 0 ? '+ ' + fmtB(shippingFee) : '';
+  if (sfe) {
+    if (shippingType === 'free') {
+      sfe.innerHTML = '<span style="color:#16a34a;font-weight:700">ฟรี</span>';
+    } else if (shippingType === 'collect') {
+      sfe.innerHTML = '<span style="color:#d97706;font-weight:700">เก็บปลายทาง</span>';
+    } else {
+      sfe.textContent = shippingFee > 0 ? '+ ' + fmtB(shippingFee) : '฿0';
+    }
+  }
   const el = document.getElementById('qt-total');
   if (el) el.textContent = fmtB(grand);
   return grand;
@@ -20408,12 +20561,32 @@ async function saveQuote(status) {
   if(!date){toast('กรุณาระบุวันที่','error');return;}
   const billDiscount = Number(document.getElementById('qt-bill-discount')?.value||0);
   const billDiscountType = document.getElementById('qt-bill-discount-type')?.value||'amount';
-  const shippingFee = Math.max(0, Number(document.getElementById('qt-shipping-fee')?.value||0));
+  const shippingType = document.getElementById('qt-shipping-type')?.value || 'custom';
+  let shippingFee = Math.max(0, Number(document.getElementById('qt-shipping-fee')?.value||0));
+  if (shippingType === 'free' || shippingType === 'collect') shippingFee = 0;
   const total = calcQuoteTotal();
 
   let rawNote = document.getElementById('qt-note')?.value || '';
   rawNote = rawNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
-  const metaObj = { bill_discount: billDiscount, bill_discount_type: billDiscountType, shipping_fee: shippingFee };
+  const internalNote = document.getElementById('qt-internal-note')?.value || '';
+  const contactPosition = document.getElementById('qt-contact-position')?.value || '';
+  const contactEmail = document.getElementById('qt-contact-email')?.value || '';
+  const companyName = document.getElementById('qt-company')?.value || '';
+  const taxId = document.getElementById('qt-tax-id')?.value || '';
+  const billingAddress = document.getElementById('qt-billing-address')?.value || '';
+
+  const metaObj = {
+    bill_discount: billDiscount,
+    bill_discount_type: billDiscountType,
+    shipping_fee: shippingFee,
+    shipping_type: shippingType,
+    internal_note: internalNote,
+    contact_position: contactPosition,
+    contact_email: contactEmail,
+    company_name: companyName,
+    tax_id: taxId,
+    billing_address: billingAddress
+  };
   const noteWithMeta = (rawNote ? rawNote + '\n' : '') + '<!--QT_META:' + JSON.stringify(metaObj) + '-->';
 
   let payload = {
@@ -20424,11 +20597,18 @@ async function saveQuote(status) {
     customer_contact: document.getElementById('qt-contact').value,
     customer_phone:   document.getElementById('qt-phone').value,
     customer_address: document.getElementById('qt-address').value,
+    billing_address:  billingAddress,
+    company_name:     companyName,
+    tax_id:           taxId,
+    internal_note:    internalNote,
+    contact_position: contactPosition,
+    contact_email:    contactEmail,
     employee_id:      document.getElementById('qt-emp').value||null,
     note:             noteWithMeta,
     bill_discount:    billDiscount,
     bill_discount_type: billDiscountType,
     shipping_fee:     shippingFee,
+    shipping_type:    shippingType,
     status,
     total_amount:     total,
   };
@@ -20446,9 +20626,7 @@ async function saveQuote(status) {
     let { error } = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
     if (error && (error.message.includes('column') || error.code === 'PGRST204')) {
       // Fallback: remove explicit columns and rely on noteWithMeta
-      delete payload.bill_discount;
-      delete payload.bill_discount_type;
-      delete payload.shipping_fee;
+      ['bill_discount','bill_discount_type','shipping_fee','shipping_type','billing_address','company_name','tax_id','internal_note','contact_position','contact_email'].forEach(col => delete payload[col]);
       const retry = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
       error = retry.error;
     }
@@ -20474,9 +20652,7 @@ async function saveQuote(status) {
     .insert(insertPayload)
     .select().single();
   if (error && (error.message.includes('column') || error.code === 'PGRST204')) {
-    delete insertPayload.bill_discount;
-    delete insertPayload.bill_discount_type;
-    delete insertPayload.shipping_fee;
+    ['bill_discount','bill_discount_type','shipping_fee','shipping_type','billing_address','company_name','tax_id','internal_note','contact_position','contact_email'].forEach(col => delete insertPayload[col]);
     const retry = await sb.from('quotations').insert(insertPayload).select().single();
     qt = retry.data;
     error = retry.error;
@@ -20535,14 +20711,22 @@ async function viewQuote(qtId) {
       (qt.valid_until?'<span style="font-size:12px;color:var(--text3)">ใช้ได้ถึง '+qt.valid_until+'</span>':'')+
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:14px">' +
-      '<div><span style="color:var(--text3)">ลูกค้า</span><div style="font-weight:600">'+(qt.customer_name||'-')+'</div>' +
-        (qt.customer_contact?'<div style="font-size:12px;color:var(--text2)">'+escapeHTML(qt.customer_contact)+'</div>':'')+
-        (qt.customer_phone?'<div style="font-size:12px;color:var(--text2)">'+escapeHTML(qt.customer_phone)+'</div>':'')+
+      '<div><span style="color:var(--text3)">ลูกค้า / บริษัท</span><div style="font-weight:600">'+(meta.company_name ? escapeHTML(meta.company_name) + ' (' + (qt.customer_name||'-') + ')' : (qt.customer_name||'-'))+'</div>' +
+        (meta.tax_id?'<div style="font-size:12px;color:var(--text2)">Tax ID: '+escapeHTML(meta.tax_id)+'</div>':'')+
+        (qt.customer_contact?'<div style="font-size:12px;color:var(--text2)">ผู้ติดต่อ: '+escapeHTML(qt.customer_contact)+(meta.contact_position ? ' ('+escapeHTML(meta.contact_position)+')' : '')+'</div>':'')+
+        (meta.contact_email?'<div style="font-size:12px;color:var(--blue)">อีเมล: '+escapeHTML(meta.contact_email)+'</div>':'')+
+        (qt.customer_phone?'<div style="font-size:12px;color:var(--text2)">โทร: '+escapeHTML(qt.customer_phone)+'</div>':'')+
       '</div>' +
       '<div><span style="color:var(--text3)">พนักงาน</span><div>'+(empMap[qt.employee_id]||'-')+'</div></div>' +
       '<div><span style="color:var(--text3)">วันที่</span><div>'+qt.quote_date+'</div></div>' +
       '<div><span style="color:var(--text3)">Ref</span><div>'+(qt.customer_social?escapeHTML(qt.customer_social):'-')+'</div></div>' +
     '</div>' +
+    ((qt.customer_address || meta.billing_address) ? (
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;background:var(--bg3);padding:8px 10px;border-radius:6px;margin-bottom:12px">' +
+        '<div><span style="color:var(--text3);font-weight:600">📦 ที่อยู่จัดส่ง:</span><div style="color:var(--text)">'+(qt.customer_address ? escapeHTML(qt.customer_address).replace(/\n/g, '<br>') : '-')+'</div></div>' +
+        '<div><span style="color:var(--text3);font-weight:600">🏢 ที่อยู่ออกบิล:</span><div style="color:var(--text)">'+(meta.billing_address ? escapeHTML(meta.billing_address).replace(/\n/g, '<br>') : '-')+'</div></div>' +
+      '</div>'
+    ) : '') +
     '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า</div>' +
     '<div class="table-wrap"><table><thead><tr>' +
       '<th>#</th><th class="left">สินค้า</th><th>จำนวน</th><th class="right">ราคา/ชิ้น</th><th class="right">ส่วนลด</th><th class="right">รวม</th>' +
@@ -20569,7 +20753,17 @@ async function viewQuote(qtId) {
           '<span class="font-mono">- '+fmtB(billDiscAmt)+'</span>' +
         '</div>'
       ) : '') +
-      (shippingFee > 0 ? (
+      (meta.shipping_type === 'free' ? (
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#16a34a">' +
+          '<span>ค่าจัดส่ง (Shipping Fee)</span>' +
+          '<span style="font-weight:700">ฟรีค่าจัดส่ง (Free)</span>' +
+        '</div>'
+      ) : meta.shipping_type === 'collect' ? (
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#d97706">' +
+          '<span>ค่าจัดส่ง (Shipping Fee)</span>' +
+          '<span style="font-weight:700">เก็บค่าขนส่งปลายทาง</span>' +
+        '</div>'
+      ) : shippingFee > 0 ? (
         '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
           '<span style="color:var(--text3)">ค่าจัดส่ง</span>' +
           '<span class="font-mono">+ '+fmtB(shippingFee)+'</span>' +
@@ -20580,7 +20774,8 @@ async function viewQuote(qtId) {
         '<span class="font-mono text-accent" style="font-size:20px;font-weight:700">'+fmtB(grandTotal)+'</span>' +
       '</div>' +
     '</div>' +
-    (meta.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px"><strong>หมายเหตุ:</strong> '+escapeHTML(meta.note)+'</div>':'');
+    (meta.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px"><strong>หมายเหตุเอกสาร:</strong> '+escapeHTML(meta.note)+'</div>':'') +
+    (meta.internal_note?'<div style="font-size:13px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;margin-top:6px"><strong>🔒 หมายเหตุหลังบ้าน (Admin):</strong> '+escapeHTML(meta.internal_note)+'</div>':'');
 
   // Footer buttons
   const footer=document.getElementById('qt-detail-footer');
@@ -20690,17 +20885,20 @@ async function convertToOrder(qtId) {
     order_date: today(),
     channel: 'Offline',
     customer_name: qt.customer_name,
+    company_name: meta.company_name || qt.company_name || '',
+    tax_id: meta.tax_id || qt.tax_id || '',
     customer_social: qt.customer_social,
-    customer_contact: qt.customer_contact,
+    customer_contact: qt.customer_contact + (meta.contact_position ? ' (' + meta.contact_position + ')' : ''),
     customer_phone: qt.customer_phone,
     customer_address: qt.customer_address,
-    billing_address: qt.billing_address || qt.customer_address || '',
+    billing_address: meta.billing_address || qt.billing_address || qt.customer_address || '',
     employee_id: qt.employee_id || null,
     note: [
       'Convert จาก ' + (qt.quote_no || ''),
       meta.note,
       cleanOrderNote(qt.note)
     ].filter(Boolean).join('\n'),
+    internal_note: meta.internal_note || '',
     bill_discount: meta.bill_discount || 0,
     bill_discount_type: meta.bill_discount_type || 'amount',
     shipping_fee: Number(meta.shipping_fee || 0),
@@ -20891,8 +21089,8 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     bp.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
     bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
     bp.push('<div class="shop-info">'+shopAddr);
-    bp.push('<br>Line OA : @sealthai');
-    if (shop.phone) bp.push(' &nbsp;|&nbsp; โทร: ' + shop.phone);
+    bp.push('<br>Line OA : @sealthai &nbsp;|&nbsp; โทร: 095 9901708');
+    if (shop.phone && shop.phone !== '095 9901708' && shop.phone !== '095-9901708') bp.push(' &nbsp;|&nbsp; โทรสำรอง: ' + shop.phone);
     if (shop.tax_id) bp.push(' &nbsp;|&nbsp; เลขผู้เสียภาษี: ' + shop.tax_id);
     bp.push('<br>Website : www.sealthai.com &nbsp;|&nbsp; www.oilsealthai.com &nbsp;|&nbsp; www.oilsealthailand.com');
     bp.push('</div></div></div>');
@@ -20903,10 +21101,22 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     bp.push('<div class="info-row">');
     bp.push('<div class="info-box">');
     bp.push('<div class="info-label">ลูกค้า / Customer:</div>');
-    bp.push('<div class="info-val">'+(qt.customer_name||'-')+'</div>');
-    if(qt.customer_contact) bp.push('<div class="info-sub">ผู้ติดต่อ: '+escapeHTML(qt.customer_contact)+'</div>');
+    const custDispName = meta.company_name ? (escapeHTML(meta.company_name) + (qt.customer_name ? ' ('+escapeHTML(qt.customer_name)+')' : '')) : (qt.customer_name||'-');
+    bp.push('<div class="info-val">'+custDispName+'</div>');
+    if(meta.tax_id) bp.push('<div class="info-sub">เลขประจำตัวผู้เสียภาษี: '+escapeHTML(meta.tax_id)+'</div>');
+    if(qt.customer_contact) {
+      let contactLine = 'ผู้ติดต่อ: ' + escapeHTML(qt.customer_contact);
+      if (meta.contact_position) contactLine += ' (' + escapeHTML(meta.contact_position) + ')';
+      bp.push('<div class="info-sub">'+contactLine+'</div>');
+    }
+    if(meta.contact_email) bp.push('<div class="info-sub">อีเมล: '+escapeHTML(meta.contact_email)+'</div>');
     if(qt.customer_phone)   bp.push('<div class="info-sub">โทร: '+escapeHTML(qt.customer_phone)+'</div>');
-    if(qt.customer_address) bp.push('<div class="info-sub" style="margin-top:4px">'+escapeHTML(qt.customer_address).split('\n').join('<br>')+'</div>');
+    if(meta.billing_address) {
+      bp.push('<div class="info-sub" style="margin-top:3px"><strong>ที่อยู่ออกบิล:</strong> '+escapeHTML(meta.billing_address).split('\n').join('<br>')+'</div>');
+    }
+    if(qt.customer_address && (!meta.billing_address || qt.customer_address.trim() !== meta.billing_address.trim())) {
+      bp.push('<div class="info-sub" style="margin-top:3px"><strong>ที่อยู่จัดส่ง:</strong> '+escapeHTML(qt.customer_address).split('\n').join('<br>')+'</div>');
+    }
     bp.push('</div>');
     bp.push('<div class="info-box" style="text-align:right">');
     bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">เลขที่ / No.</span>&nbsp;&nbsp;<strong>'+(qt.quote_no||'-')+'</strong></div>');
@@ -20950,7 +21160,11 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     if(showDiscount && billDiscAmt > 0){
       bp.push('<div class="total-row disc"><span>ส่วนลดท้ายบิล / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
     }
-    if(shippingFee > 0){
+    if(meta.shipping_type === 'free'){
+      bp.push('<div class="total-row"><span style="color:#16a34a">ค่าจัดส่ง / Shipping Fee</span><span style="color:#16a34a;font-weight:700">ฟรีค่าจัดส่ง / FREE</span></div>');
+    } else if(meta.shipping_type === 'collect'){
+      bp.push('<div class="total-row"><span style="color:#d97706">ค่าจัดส่ง / Shipping Fee</span><span style="color:#d97706;font-weight:700">เก็บค่าขนส่งปลายทาง</span></div>');
+    } else if(shippingFee > 0){
       bp.push('<div class="total-row"><span>ค่าจัดส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
     }
     bp.push('<div class="total-row grand"><span>รวมเงินทั้งสิ้น / Grand Total</span><span>'+fmt(grandTotal)+'</span></div>');
@@ -41694,7 +41908,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.36', date:'2026-11-10', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับหัวบิลเงินสดและช่องทางติดต่อ', items:[
+    { v:'3.37', date:'2026-11-10', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ยกระดับใบเสนอราคา: บรรทัดที่สอง, ค่าส่งฟรี/ปลายทาง, ที่อยู่ออกบิล, ตำแหน่ง/อีเมล, หมายเหตุแยกหน้าบิลและหลังบ้าน (v3.37)', items:[
+      '📝 <b>บรรทัดที่สองสำหรับแก้ไขข้อความตามลูกค้า:</b> เพิ่มช่องข้อความพิมพ์หน้าบิลใต้ชื่อสินค้าในใบเสนอราคาเหมือนกับหน้าออเดอร์ เพื่อให้พิมพ์ข้อความเฉพาะตามที่ลูกค้าต้องการแสดงในเอกสารโดยไม่กระทบชื่อสินค้าในคลัง',
+      '🚚 <b>ตัวเลือกค่าจัดส่ง (Shipping Fee):</b> รองรับทั้งระบุจำนวนเงิน, "ฟรีค่าจัดส่ง", และ "เก็บค่าขนส่งปลายทาง" พร้อมแสดงผลอย่างชัดเจนทั้งในหน้าจอ รายละเอียด และใบพิมพ์ A4',
+      '🔒 <b>แยกหมายเหตุเอกสาร & หมายเหตุหลังบ้าน:</b> เพิ่มช่องหมายเหตุที่แสดงในบิล/เอกสาร และช่องหมายเหตุเฉพาะหลังบ้าน (Admin/Internal Note ไม่นำไปพิมพ์บิล) เหมือนหน้าออเดอร์',
+      '👤 <b>ข้อมูลผู้ติดต่อครบถ้วน:</b> เพิ่มช่องตำแหน่ง (Position) และอีเมล (E-mail) ใต้ข้อมูลผู้ติดต่อ พร้อมแสดงในรายละเอียดและใบพิมพ์',
+      '🏢 <b>แยกที่อยู่ออกบิลและที่อยู่จัดส่ง:</b> เพิ่มส่วนข้อมูลออกบิล/ใบกำกับภาษี ที่อยู่ออกบิล ที่อยู่จัดส่งสินค้า และปุ่มคัดลอกที่อยู่จัดส่ง → ออกบิล เหมือนหน้าออเดอร์ พร้อมส่งต่อข้อมูลไปยัง Sales Order เมื่อ Convert ได้ 100%',
+      '📞 <b>เบอร์โทรหัวเอกสาร:</b> เพิ่มเบอร์โทรศัพท์ 095 9901708 ต่อจาก Line OA : @sealthai บนหัวใบเสนอราคาทุกฉบับ'
+    ]},
+    { v:'3.36', date:'2026-11-10', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ปรับหัวบิลเงินสดและช่องทางติดต่อ', items:[
       'ขยายโลโก้และเอาพื้นเทาหลังโลโก้ออก พร้อมแสดงชื่อร้านเป็น ร้าน SEALTHAI.COM',
       'แยก Line OA และเว็บไซต์ทั้งสามแห่งออกมาเต็มความกว้างใต้หัวบิล ให้แสดงสองบรรทัดโดยไม่ตัดบรรทัดเว็บไซต์'
     ]},
