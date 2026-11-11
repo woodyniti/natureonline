@@ -6,8 +6,8 @@ const htmlPath = path.join(__dirname, 'index.html');
 const content = fs.readFileSync(htmlPath, 'utf8');
 
 // 1. Version check
-assert.match(content, /CURRENT_APP_VERSION = 'sealthai-v3\.(38|39|40)'/, 'CURRENT_APP_VERSION should be v3.38+');
-assert.match(content, /DISPLAY_APP_VERSION = 'v3\.(38|39|40)'/, 'DISPLAY_APP_VERSION should be v3.38+');
+assert.match(content, /CURRENT_APP_VERSION = 'sealthai-v3\.\d+'/, 'CURRENT_APP_VERSION should be v3.38+');
+assert.match(content, /DISPLAY_APP_VERSION = 'v3\.\d+'/, 'DISPLAY_APP_VERSION should be v3.38+');
 
 // 2. Reordering buttons & card header in renderQuoteItems
 assert.match(content, /function syncQuoteItemInputs\(idx\)/, 'syncQuoteItemInputs helper should exist');

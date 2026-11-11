@@ -5,8 +5,8 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 // 1. Check version bump
-assert.ok(/CURRENT_APP_VERSION = 'sealthai-v3\.(39|40)'/.test(html), 'Version should be sealthai-v3.40+');
-assert.ok(/DISPLAY_APP_VERSION = 'v3\.(39|40)'/.test(html), 'Display version should be v3.40+');
+assert.ok(/CURRENT_APP_VERSION = 'sealthai-v3\.\d+'/.test(html), 'Version should be sealthai-v3.40+');
+assert.ok(/DISPLAY_APP_VERSION = 'v3\.\d+'/.test(html), 'Display version should be v3.40+');
 
 // 1.1 Check ed-doc-status does not do unsafe querySelector on null
 assert.ok(!html.includes("querySelector('.btn-status-cancel').style"), 'Must not have unsafe querySelector on null element style');

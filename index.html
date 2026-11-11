@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.40';
-const DISPLAY_APP_VERSION = 'v3.40';
+const CURRENT_APP_VERSION = 'sealthai-v3.41';
+const DISPLAY_APP_VERSION = 'v3.41';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -8771,15 +8771,20 @@ async function generateQuoteNo(date) {
 
 // ── Quote status helpers ──────────────────────────────────
 const QUOTE_STATUSES = [
-  {key:'draft',     th:'แบบร่าง',   cls:'ds-draft'},
-  {key:'sent',      th:'ส่งแล้ว',   cls:'ds-confirmed'},
-  {key:'accepted',  th:'อนุมัติ',   cls:'ds-delivered'},
-  {key:'rejected',  th:'ปฏิเสธ',   cls:'ds-cancelled'},
-  {key:'converted', th:'แปลงแล้ว', cls:'ds-shipped'},
+  {key:'draft',     th:'แบบร่าง',          cls:'ds-draft'},
+  {key:'sent',      th:'ส่งแล้ว',          cls:'ds-confirmed'},
+  {key:'accepted',  th:'อนุมัติ',          cls:'ds-delivered'},
+  {key:'rejected',  th:'ปฏิเสธ',          cls:'ds-cancelled'},
+  {key:'converted', th:'🔒 ปิดแล้ว (Close)', cls:'ds-shipped'},
+  {key:'closed',    th:'🔒 ปิดแล้ว (Close)', cls:'ds-shipped'},
 ];
 function quoteBadge(status) {
   const s = QUOTE_STATUSES.find(x=>x.key===status)||QUOTE_STATUSES[0];
   return '<span class="doc-status '+s.cls+'">'+s.th+'</span>';
+}
+function isQuoteClosed(qt) {
+  if (!qt) return false;
+  return qt.status === 'closed' || qt.status === 'converted' || Boolean(qt.converted_order_id);
 }
 
 // ── Quote items state ──────────────────────────────────────
@@ -20019,7 +20024,10 @@ async function loadQuotes() {
       '<td class="text-right font-mono text-accent">'+fmtB(q.total_amount)+'</td>'+
       '<td>'+quoteBadge(q.status)+'</td>'+
       '<td style="font-size:12px;color:var(--text3)">'+(q.valid_until||'-')+'</td>'+
-      '<td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewQuote(&quot;'+q.id+'&quot;)">ดู</button></td>'+
+      '<td><div style="display:flex;gap:4px;justify-content:flex-end">'+
+        '<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewQuote(&quot;'+q.id+'&quot;)">ดู</button>'+
+        '<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();duplicateQuote(&quot;'+q.id+'&quot;)" title="ทำซ้ำ (Duplicate) ใบเสนอราคา">📋 ทำซ้ำ</button>'+
+      '</div></td>'+
     '</tr>').join('')+
     '</tbody></table></div>' +
     '<div class="mobile-only">' +
@@ -20029,8 +20037,11 @@ async function loadQuotes() {
         '<div style="font-size:11px;color:var(--text3)">'+q.quote_date+' · '+(q.quote_no||'-')+'</div></div>'+
         '<div class="font-mono text-accent" style="font-size:15px;font-weight:700">'+fmtB(q.total_amount)+'</div>'+
       '</div>'+
-      '<div style="display:flex;gap:6px">'+quoteBadge(q.status)+
-        (q.valid_until?'<span style="font-size:11px;color:var(--text3)">ถึง '+q.valid_until+'</span>':'')+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">'+
+        '<div style="display:flex;gap:6px;align-items:center">'+quoteBadge(q.status)+
+          (q.valid_until?'<span style="font-size:11px;color:var(--text3)">ถึง '+q.valid_until+'</span>':'')+
+        '</div>'+
+        '<button class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();duplicateQuote(&quot;'+q.id+'&quot;)">📋 ทำซ้ำ</button>'+
       '</div></div>').join('')+
     '</div>';
 }
@@ -20187,7 +20198,10 @@ async function openEditQuote(qtId) {
     sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id'),
   ]);
   if(!qt){ toast('ไม่พบใบเสนอราคา','error'); return; }
-  if(qt.status==='converted'){ toast('ใบนี้แปลงเป็นออเดอร์แล้ว แก้ไขไม่ได้','error'); return; }
+  if (isQuoteClosed(qt)) {
+    toast('ใบเสนอราคานี้ปิดแล้ว (แปลงเป็น Sales Order แล้ว) ถูกล็อคเพื่อป้องกันแก้ไข\nหากต้องการสั่งซื้อใหม่หรือแก้ไข กรุณากด "📋 ทำซ้ำ (Duplicate)"', 'warning');
+    return;
+  }
   closeModal('modal-quote-detail');
   editingQuoteId = qtId; editingQuoteStatus = qt.status;
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=(v==null?'':v);};
@@ -20809,7 +20823,18 @@ async function viewQuote(qtId) {
   const billDiscAmt = billDiscType === 'percent' ? (subtotal * billDisc / 100) : billDisc;
   const grandTotal = Math.max(0, subtotal - billDiscAmt) + shippingFee;
 
+  const isClosed = isQuoteClosed(qt);
+
   el.innerHTML =
+    (isClosed ? (
+      '<div style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;color:#334155;font-size:13px">' +
+        '<span style="font-size:18px">🔒</span>' +
+        '<div>' +
+          '<div style="font-weight:700">เอกสารนี้ปิดแล้ว (Closed · แปลงเป็น Sales Order แล้ว)</div>' +
+          '<div style="font-size:12px;color:#64748b">ระบบล็อคเอกสารเพื่อป้องกันการแก้ไขหรือ Convert ซ้ำ หากต้องการออกใบเสนอราคาใหม่ สามารถกดปุ่ม <strong>"📋 ทำซ้ำ (Duplicate)"</strong> ด้านล่าง</div>' +
+        '</div>' +
+      '</div>'
+    ) : '') +
     '<div class="modal-title" style="margin-bottom:12px">📋 ใบเสนอราคา · '+(qt.quote_no||'-')+'</div>' +
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
       quoteBadge(qt.status) +
@@ -20897,14 +20922,17 @@ async function viewQuote(qtId) {
   if(footer){
     let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-quote-detail&quot;)">ปิด</button>';
     btns+='<button class="btn btn-secondary btn-sm" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;)">🖨 พิมพ์</button>';
-    if(qt.status!=='converted') btns+='<button class="btn btn-secondary btn-sm" onclick="openEditQuote(&quot;'+qtId+'&quot;)">✏️ แก้ไข</button>';
-    if(qt.status!=='converted') btns+='<button class="btn btn-danger btn-sm" onclick="deleteQuote(&quot;'+qtId+'&quot;)">🗑 ลบ</button>';
-    if(qt.status==='draft') btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;sent&quot;)">📤 ส่งลูกค้า</button>';
-    if(qt.status==='sent')  btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;accepted&quot;)">✓ อนุมัติ</button>';
-    if(['draft','sent','accepted'].includes(qt.status) && !qt.converted_order_id)
-      btns+='<button class="btn btn-primary btn-sm" onclick="convertToOrder(&quot;'+qtId+'&quot;)">🔄 Convert → Order</button>';
-    if(!['converted','rejected'].includes(qt.status))
-      btns+='<button class="btn btn-danger btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;rejected&quot;)">✕ ปฏิเสธ</button>';
+    btns+='<button class="btn btn-secondary btn-sm" onclick="duplicateQuote(&quot;'+qtId+'&quot;)" title="ทำซ้ำ (Duplicate) เป็นใบเสนอราคาใหม่">📋 ทำซ้ำ (Duplicate)</button>';
+    if (!isClosed) {
+      btns+='<button class="btn btn-secondary btn-sm" onclick="openEditQuote(&quot;'+qtId+'&quot;)">✏️ แก้ไข</button>';
+      btns+='<button class="btn btn-danger btn-sm" onclick="deleteQuote(&quot;'+qtId+'&quot;)">🗑 ลบ</button>';
+      if(qt.status==='draft') btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;sent&quot;)">📤 ส่งลูกค้า</button>';
+      if(qt.status==='sent')  btns+='<button class="btn btn-secondary btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;accepted&quot;)">✓ อนุมัติ</button>';
+      if(['draft','sent','accepted'].includes(qt.status) && !qt.converted_order_id)
+        btns+='<button class="btn btn-primary btn-sm" onclick="convertToOrder(&quot;'+qtId+'&quot;)">🔄 Convert → Order</button>';
+      if(qt.status!=='rejected')
+        btns+='<button class="btn btn-danger btn-sm" onclick="updateQuoteStatus(&quot;'+qtId+'&quot;,&quot;rejected&quot;)">✕ ปฏิเสธ</button>';
+    }
     footer.innerHTML=btns;
   }
   openModal('modal-quote-detail');
@@ -20970,13 +20998,18 @@ function openQuotePrintOptions(qtId) {
 }
 
 async function convertToOrder(qtId) {
-  const ok=confirm('ยืนยัน Convert ใบเสนอราคานี้เป็น Sales Order?');
-  if(!ok) return;
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
     sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
   ]);
-  if(!qt) return;
+  if(!qt) { toast('ไม่พบใบเสนอราคา', 'error'); return; }
+  if (isQuoteClosed(qt)) {
+    toast('ใบเสนอราคานี้ปิดแล้ว (แปลงเป็น Sales Order แล้ว) ถูกล็อคเพื่อป้องกันแปลงซ้ำ\nหากต้องการสั่งซื้อใหม่ กรุณาใช้ปุ่ม "📋 ทำซ้ำ (Duplicate)"', 'warning');
+    return;
+  }
+  const ok=confirm('ยืนยัน Convert ใบเสนอราคานี้เป็น Sales Order?\nเมื่อแปลงแล้ว เอกสารใบเสนอราคาจะถูกเปลี่ยนสถานะเป็น "Close" และล็อคเพื่อป้องกันการแปลงซ้ำ');
+  if(!ok) return;
+
   const meta = getQuoteMeta(qt);
 
   // สร้าง order
@@ -21023,31 +21056,70 @@ async function convertToOrder(qtId) {
     total_cost: totalCost
   };
 
-  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี billing_address / shipping_fee / bill_discount
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ schema cache ของ orders ยังไม่มีบางคอลัมน์ (company_name, tax_id, internal_note, billing_address, etc.)
   let order, error;
-  for (let a = 0; a < 6; a++) {
+  for (let a = 0; a < 12; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
-    if (('billing_address' in orderPayload) && (error.message || '').includes('billing_address')) {
-      delete orderPayload.billing_address;
-      continue;
-    }
-    if (('shipping_fee' in orderPayload) && (error.message || '').includes('shipping_fee')) {
-      if (Number(meta.shipping_fee || 0) > 0) {
-        orderPayload.note = noteWithShippingFee(orderPayload.note, meta.shipping_fee);
+
+    const errMsg = error.message || '';
+    const colMatch = errMsg.match(/Could not find the '([^']+)' column of 'orders'/i);
+    const missingCol = colMatch ? colMatch[1] : null;
+
+    if (missingCol && (missingCol in orderPayload)) {
+      if (missingCol === 'company_name' && orderPayload.company_name) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[บริษัท/นิติบุคคล]: ' + orderPayload.company_name;
+      } else if (missingCol === 'tax_id' && orderPayload.tax_id) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[Tax ID]: ' + orderPayload.tax_id;
+      } else if (missingCol === 'internal_note' && orderPayload.internal_note) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[หมายเหตุภายใน]: ' + orderPayload.internal_note;
+      } else if (missingCol === 'billing_address' && orderPayload.billing_address) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ที่อยู่ออกบิล]: ' + orderPayload.billing_address;
+      } else if (missingCol === 'customer_po_no' && orderPayload.customer_po_no) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[PO ลูกค้า]: ' + orderPayload.customer_po_no;
+      } else if (missingCol === 'shipping_fee' && Number(orderPayload.shipping_fee) > 0) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ค่าจัดส่ง]: ฿' + orderPayload.shipping_fee;
       }
-      delete orderPayload.shipping_fee;
+      delete orderPayload[missingCol];
       continue;
     }
-    if (('bill_discount' in orderPayload) && (error.message || '').includes('bill_discount')) {
-      delete orderPayload.bill_discount;
-      continue;
+
+    if (('company_name' in orderPayload) && errMsg.includes('company_name')) {
+      if (orderPayload.company_name) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[บริษัท/นิติบุคคล]: ' + orderPayload.company_name;
+      delete orderPayload.company_name; continue;
     }
-    if (('bill_discount_type' in orderPayload) && (error.message || '').includes('bill_discount_type')) {
-      delete orderPayload.bill_discount_type;
-      continue;
+    if (('tax_id' in orderPayload) && errMsg.includes('tax_id')) {
+      if (orderPayload.tax_id) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[Tax ID]: ' + orderPayload.tax_id;
+      delete orderPayload.tax_id; continue;
     }
+    if (('internal_note' in orderPayload) && errMsg.includes('internal_note')) {
+      if (orderPayload.internal_note) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[หมายเหตุภายใน]: ' + orderPayload.internal_note;
+      delete orderPayload.internal_note; continue;
+    }
+    if (('billing_address' in orderPayload) && errMsg.includes('billing_address')) {
+      if (orderPayload.billing_address) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ที่อยู่ออกบิล]: ' + orderPayload.billing_address;
+      delete orderPayload.billing_address; continue;
+    }
+    if (('shipping_fee' in orderPayload) && errMsg.includes('shipping_fee')) {
+      if (Number(orderPayload.shipping_fee) > 0) {
+        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ค่าจัดส่ง]: ฿' + orderPayload.shipping_fee;
+      }
+      delete orderPayload.shipping_fee; continue;
+    }
+    if (('bill_discount' in orderPayload) && errMsg.includes('bill_discount')) {
+      delete orderPayload.bill_discount; continue;
+    }
+    if (('bill_discount_type' in orderPayload) && errMsg.includes('bill_discount_type')) {
+      delete orderPayload.bill_discount_type; continue;
+    }
+    if (('customer_social' in orderPayload) && errMsg.includes('customer_social')) {
+      delete orderPayload.customer_social; continue;
+    }
+    if (('customer_contact' in orderPayload) && errMsg.includes('customer_contact')) {
+      delete orderPayload.customer_contact; continue;
+    }
+
     break;
   }
   if (error) { toast('สร้าง Order ไม่สำเร็จ: ' + error.message, 'error'); return; }
@@ -21093,13 +21165,128 @@ async function convertToOrder(qtId) {
     await recalcStockQty(movements.map(m => m.product_id));
   }
 
-  // mark quotation as converted
-  await sb.from('quotations').update({status:'converted',converted_order_id:order.id}).eq('id',qtId);
+  // mark quotation as closed & won (lock document to prevent repeat conversion)
+  let { error: closeErr } = await sb.from('quotations').update({
+    status: 'closed',
+    deal_stage: 'won',
+    converted_order_id: order.id
+  }).eq('id', qtId);
+  if (closeErr) {
+    await sb.from('quotations').update({
+      status: 'converted',
+      converted_order_id: order.id
+    }).eq('id', qtId);
+  }
 
   closeModal('modal-quote-detail');
-  toast('Convert สำเร็จ → '+orderNo+' ✓','success');
+  toast('Convert เป็น Order สำเร็จ → ' + orderNo + ' (เปลี่ยนสถานะเป็น Close และล็อคเอกสารแล้ว) ✓', 'success');
   loadQuotes();
 }
+
+// ── ทำซ้ำใบเสนอราคา (Duplicate) ──────────────────────────
+async function duplicateQuote(qtId) {
+  const ok = confirm('ต้องการทำซ้ำ (Duplicate) ใบเสนอราคานี้เป็นฉบับใหม่ใช่หรือไม่?\n\nระบบจะคัดลอกข้อมูลลูกค้า ที่อยู่ และรายการสินค้าทั้งหมดไปยังแบบร่างใบเสนอราคาใหม่ เพื่อให้คุณตรวจสอบและแก้ไขก่อนบันทึก');
+  if (!ok) return;
+
+  const [{data:qt, error:qErr},{data:items, error:iErr}] = await Promise.all([
+    sb.from('quotations').select('*').eq('id',qtId).single(),
+    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
+  ]);
+  if (qErr || !qt) { toast('ไม่พบใบเสนอราคาต้นฉบับ', 'error'); return; }
+
+  closeModal('modal-quote-detail');
+
+  // Reset to new quote mode (never edit mode)
+  editingQuoteId = null;
+  editingQuoteStatus = null;
+
+  const meta = getQuoteMeta(qt);
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v == null ? '' : v); };
+
+  set('qt-date', today());
+  set('qt-valid', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10));
+  set('qt-cust', qt.customer_name || '');
+  set('qt-ref', qt.customer_social || '');
+  set('qt-contact', qt.customer_contact || '');
+  set('qt-phone', qt.customer_phone || '');
+  set('qt-contact-position', meta.contact_position || '');
+  set('qt-contact-email', meta.contact_email || '');
+  set('qt-company', meta.company_name || '');
+  set('qt-tax-id', meta.tax_id || '');
+  set('qt-address', qt.customer_address || '');
+  set('qt-billing-address', meta.billing_address || '');
+  set('qt-note', meta.note || '');
+  set('qt-internal-note', meta.internal_note || '');
+  set('qt-bill-discount', meta.bill_discount || 0);
+  set('qt-bill-discount-type', meta.bill_discount_type || 'amount');
+  set('qt-shipping-type', meta.shipping_type || 'custom');
+  set('qt-shipping-fee', meta.shipping_fee || 0);
+  handleQuoteShippingTypeChange();
+
+  quoteItems = (items || []).map(it => ({
+    product_id: it.product_id || null,
+    product_name: it.product_name,
+    qty: it.qty,
+    sell_price: it.sell_price,
+    discount: it.discount || 0,
+    discount_type: it.discount_type || 'amount',
+    is_custom: !it.product_id
+  }));
+
+  const t = document.getElementById('qt-modal-title');
+  if (t) t.textContent = '📋 ใบเสนอราคาใหม่ (ทำซ้ำจาก ' + (qt.quote_no || '') + ')';
+  _setQuoteFooter('new');
+  await ensureQuoteProductList();
+  renderQuoteItems();
+  calcQuoteTotal();
+  await loadEmployeeOptions('qt-emp');
+  const empSel = document.getElementById('qt-emp');
+  if (empSel) empSel.value = qt.employee_id || '';
+  loadOrderCustomerList();
+  openModal('modal-quote');
+  toast('คัดลอกข้อมูลใบเสนอราคาเรียบร้อย กรุณาตรวจสอบและบันทึก ✓', 'info');
+}
+
+// ── ลบใบเสนอราคา (Delete) ──────────────────────────
+async function deleteQuote(qtId) {
+  const { data: qt } = await sb.from('quotations').select('*').eq('id', qtId).single();
+  if (!qt) { toast('ไม่พบใบเสนอราคา', 'error'); return; }
+  if (isQuoteClosed(qt)) {
+    toast('ไม่สามารถลบใบเสนอราคาที่ปิดแล้วได้', 'warning');
+    return;
+  }
+  if (!confirm('ยืนยันลบใบเสนอราคา ' + (qt.quote_no || '') + ' หรือไม่?')) return;
+  try {
+    await sb.from('quotation_items').delete().eq('quotation_id', qtId);
+    const { error } = await sb.from('quotations').delete().eq('id', qtId);
+    if (error) throw error;
+    closeModal('modal-quote-detail');
+    toast('ลบใบเสนอราคาเรียบร้อย ✓', 'success');
+    loadQuotes();
+  } catch(e) {
+    toast('ลบไม่สำเร็จ: ' + e.message, 'error');
+  }
+}
+
+// ── อัพเดตสถานะใบเสนอราคา (Status Update) ────────────
+async function updateQuoteStatus(qtId, newStatus) {
+  try {
+    const { error } = await sb.from('quotations').update({ status: newStatus }).eq('id', qtId);
+    if (error) throw error;
+    closeModal('modal-quote-detail');
+    const label = (QUOTE_STATUSES.find(x => x.key === newStatus) || {}).th || newStatus;
+    toast('เปลี่ยนสถานะเป็น "' + label + '" แล้ว ✓', 'success');
+    loadQuotes();
+  } catch(e) {
+    toast('เปลี่ยนสถานะไม่สำเร็จ: ' + e.message, 'error');
+  }
+}
+
+window.duplicateQuote = duplicateQuote;
+window.deleteQuote = deleteQuote;
+window.updateQuoteStatus = updateQuoteStatus;
+window.convertToOrder = convertToOrder;
+window.isQuoteClosed = isQuoteClosed;
 
 function getQuoteBankSettings(shop = currentShop) {
   return {
@@ -35830,7 +36017,7 @@ function renderQuotationPipeline() {
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
             <div style="font-weight:700;color:var(--accent);font-family:var(--mono);font-size:13px">${fmtB(q.total_amount)}</div>
             <div style="display:flex;gap:4px">
-              ${st !== 'won' ? `<button class="btn btn-primary btn-sm" style="font-size:10px;padding:2px 6px" onclick="convertQuotationToOrder('${q.id}')" title="ปิดการขาย แปลงเป็น SO">✓ ชนะ</button>` : ''}
+              ${(!isQuoteClosed(q) && st !== 'won') ? `<button class="btn btn-primary btn-sm" style="font-size:10px;padding:2px 6px" onclick="convertQuotationToOrder('${q.id}')" title="ปิดการขาย แปลงเป็น SO">✓ ชนะ</button>` : ''}
               <button class="btn btn-secondary btn-sm" style="font-size:10px;padding:2px 6px" onclick="viewQuote('${q.id}')">👁️</button>
             </div>
           </div>
@@ -42023,7 +42210,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.40', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาดการเลือกสถานะเอกสารในหน้าแก้ไขออเดอร์ (v3.40)', items:[
+    { v:'3.41', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไข Convert to Order สำเร็จ 100%, ปิด/ล็อคเอกสาร (Close), และระบบทำซ้ำ (Duplicate) พร้อม Confirm (v3.41)', items:[
+      '🔄 <b>Convert to Order ไร้ข้อผิดพลาด (Schema Resilience):</b> แก้ไขข้อผิดพลาด <code>Could not find the \'company_name\' column of \'orders\' in the schema cache</code> โดยเพิ่มระบบตรวจจับและปลดคอลัมน์ที่ไม่ตรงกับ schema ของ Supabase อัตโนมัติ พร้อมนำข้อมูล (ชื่อบริษัท, Tax ID, หมายเหตุภายใน, ที่อยู่ออกบิล ฯลฯ) บันทึกเข้าหมายเหตุออเดอร์อย่างครบถ้วนโดยไม่ตกหล่น',
+      '🔒 <b>ล็อคเอกสาร & เปลี่ยนสถานะเป็น Close:</b> เมื่อใบเสนอราคาถูกแปลงเป็น Sales Order แล้ว ระบบจะเปลี่ยนสถานะเป็น <code>🔒 ปิดแล้ว (Close)</code> และล็อคเอกสาร ป้องกันการกด Convert ซ้ำ หรือแก้ไข/ลบโดยไม่ได้ตั้งใจ',
+      '📋 <b>ปุ่มทำซ้ำ (Duplicate) พร้อมยืนยันทุกครั้ง:</b> เพิ่มปุ่ม <code>📋 ทำซ้ำ (Duplicate)</code> ทั้งในหน้าต่างรายละเอียดและตารางรายการใบเสนอราคา พร้อมกล่องข้อความยืนยัน (Confirm) ทุกครั้ง เพื่อให้สามารถคัดลอกข้อมูลลูกค้า ที่อยู่ออกบิล และรายการสินค้าเดิมมาเป็นใบเสนอราคาฉบับใหม่ได้อย่างสะดวกรวดเร็ว'
+    ]},
+    { v:'3.40', date:'2026-11-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขข้อผิดพลาดการเลือกสถานะเอกสารในหน้าแก้ไขออเดอร์ (v3.40)', items:[
       '🛠️ <b>Safe Document Status Selector:</b> แก้ไขข้อผิดพลาด Uncaught TypeError: Cannot read properties of null (reading \'style\') เมื่อเปลี่ยนสถานะเอกสาร (เช่น เปลี่ยนเป็นแบบร่าง) ในหน้าต่างแก้ไขออเดอร์',
       '💾 <b>Unsaved Changes Guard:</b> เมื่อแก้ไขสถานะเอกสาร ระบบจะเปิดการแจ้งเตือนการแก้ไขที่ยังไม่ได้บันทึกอัตโนมัติ เพื่อป้องกันการปิดหน้าต่างโดยไม่ได้ตั้งใจ'
     ]},
@@ -43017,6 +43209,13 @@ function switchCSPreviewTab(tab) {
 
 async function convertQuotationToOrder(qtId) {
   if (!qtId) return;
+  try {
+    const { data: qt } = await sb.from('quotations').select('*').eq('id', qtId).single();
+    if (isQuoteClosed(qt)) {
+      toast('ใบเสนอราคานี้ปิดแล้ว (แปลงเป็น Sales Order แล้ว) ถูกล็อคเพื่อป้องกันแปลงซ้ำ\nหากต้องการสั่งซื้อใหม่ กรุณาใช้ปุ่ม "📋 ทำซ้ำ (Duplicate)"', 'warning');
+      return;
+    }
+  } catch(e) {}
   await showPage('orders');
   await openNewOrder();
   const sel = document.getElementById('o-quote-source');
