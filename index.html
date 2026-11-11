@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.39';
-const DISPLAY_APP_VERSION = 'v3.39';
+const CURRENT_APP_VERSION = 'sealthai-v3.40';
+const DISPLAY_APP_VERSION = 'v3.40';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -9542,7 +9542,7 @@ async function viewOrder(orderId) {
           <div id="ed-carrier-hint" style="font-size:11px;color:var(--text3);margin-top:3px">${detectCarrier(order.tracking_no)?'ขนส่ง: '+detectCarrier(order.tracking_no).name:''}</div>
         </div>
         <div><span style="color:var(--text3)">สถานะเอกสาร</span>
-          <select id="ed-doc-status" style="${sStyle}" onchange="document.getElementById('order-detail-footer').querySelector('.btn-status-cancel').style.display=this.value==='cancelled'?'none':'inline-flex'">
+          <select id="ed-doc-status" style="${sStyle}" onchange="const _b = document.getElementById('order-detail-footer')?.querySelector('.btn-status-cancel'); if (_b) _b.style.display = this.value==='cancelled'?'none':'inline-flex'; markUnsavedForm(document.getElementById('modal-order-detail'));">
             ${DOC_STATUSES.map(s=>'<option value="'+s.key+'" '+(( order.doc_status||'confirmed')===s.key?'selected':'')+'>'+s.th+'</option>').join('')}
           </select></div>
         <div><span style="color:var(--text3)">การชำระ</span>
@@ -42023,7 +42023,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.39', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการแสดงสต๊อกคงเหลือในหน้ารายการออเดอร์ ให้ตรงกับสต๊อกคลังจริง (v3.39)', items:[
+    { v:'3.40', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาดการเลือกสถานะเอกสารในหน้าแก้ไขออเดอร์ (v3.40)', items:[
+      '🛠️ <b>Safe Document Status Selector:</b> แก้ไขข้อผิดพลาด Uncaught TypeError: Cannot read properties of null (reading \'style\') เมื่อเปลี่ยนสถานะเอกสาร (เช่น เปลี่ยนเป็นแบบร่าง) ในหน้าต่างแก้ไขออเดอร์',
+      '💾 <b>Unsaved Changes Guard:</b> เมื่อแก้ไขสถานะเอกสาร ระบบจะเปิดการแจ้งเตือนการแก้ไขที่ยังไม่ได้บันทึกอัตโนมัติ เพื่อป้องกันการปิดหน้าต่างโดยไม่ได้ตั้งใจ'
+    ]},
+    { v:'3.39', date:'2026-11-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขการแสดงสต๊อกคงเหลือในหน้ารายการออเดอร์ ให้ตรงกับสต๊อกคลังจริง (v3.39)', items:[
       '📦 <b>Real-Time Stock Alignment:</b> แก้ไขการคำนวณยอดสต๊อกคงเหลือในหน้ารายการออเดอร์ (ทั้ง Desktop, Mobile และหน้าต่างแก้ไขออเดอร์) โดยอิงจากยอดคงเหลือจริงในคลังสินค้า (Stock On-Hand) ยกเลิกการนำจำนวนที่สั่งไปบวกกลับเข้าสต๊อก ซึ่งเคยทำให้สินค้าที่สต๊อกเป็น 0 แสดงเป็นมีคงเหลือหลอกตา',
       '⚠️ <b>เตือนสต๊อกไม่พอส่ง (Insufficient Stock Alert):</b> หากสต๊อกคงเหลือในคลังน้อยกว่าจำนวนที่ลูกค้าสั่ง จะแสดงป้ายเตือนสีส้ม <code>⚠️ มีแค่ X (ขาด Y)</code> เพื่อให้จัดเตรียมสินค้าหรือเปิด PO ได้ทันท่วงที และแสดง <code>⚠️ คงเหลือ 0</code> สีแดงเมื่อสินค้าหมด',
       '📜 <b>ผูก global window.openQuotationDetail:</b> รับประกันการเรียกเปิดดูรายละเอียดใบเสนอราคาในกระดานติดตาม Quotation Deal Pipeline ได้อย่างสมบูรณ์ 100%'
