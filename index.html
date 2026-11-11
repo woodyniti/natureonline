@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.42';
-const DISPLAY_APP_VERSION = 'v3.42';
+const CURRENT_APP_VERSION = 'sealthai-v3.43';
+const DISPLAY_APP_VERSION = 'v3.43';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.42 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.43 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -2367,12 +2367,18 @@ function getOrderInternalNote(order) {
 }
 
 function cleanOrderNote(note) {
-  return String(note || '')
+  let s = String(note || '')
     .replace(INTERNAL_NOTE_TAG_GLOBAL_RE, '')
     .replace(INTERNAL_NOTE_TEXT_GLOBAL_RE, '')
     .replace(SHIPPING_FEE_NOTE_RE, '')
     .replace(COMPANY_NOTE_GLOBAL_RE, '')
+    .replace(/\[(?:บริษัท\/นิติบุคคล|Tax ID|ที่อยู่ออกบิล|หมายเหตุภายใน|PO ลูกค้า|ค่าจัดส่ง)\]:[^\n]*/gi, '')
     .trim();
+  const qm = s.match(/(?:Convert จาก|ดึงจากใบเสนอราคา)\s*(QT[0-9A-Za-z-]+)/i);
+  if (qm && qm[1]) {
+    s = s.replace(/(?:Convert จาก|ดึงจากใบเสนอราคา)\s*QT[0-9A-Za-z-]+/gi, qm[1]).trim();
+  }
+  return s;
 }
 
 function getOrderCompanyName(order, customer = null) {
@@ -7813,12 +7819,17 @@ async function importQuoteToOrder(qtId) {
   ]);
   if (qErr || iErr || !qt) { toast('ดึงใบเสนอราคาไม่สำเร็จ','error'); return; }
   const set = (id,value) => { const el=document.getElementById(id); if(el) el.value=value||''; };
+  const qMeta = getQuoteMeta(qt);
   set('o-cust', qt.customer_name);
   set('o-ref', qt.customer_social);
   set('o-contact', qt.customer_contact);
   set('o-phone', qt.customer_phone);
   set('o-address', qt.customer_address);
-  set('o-note', [cleanOrderNote(qt.note), 'ดึงจากใบเสนอราคา '+(qt.quote_no||'')].filter(Boolean).join('\n'));
+  set('o-note', (qt.quote_no || '').trim());
+  if (qMeta.internal_note) set('o-internal-note', qMeta.internal_note);
+  if (qMeta.company_name) set('o-company', qMeta.company_name);
+  if (qMeta.tax_id) set('o-tax-id', qMeta.tax_id);
+  if (qMeta.billing_address) set('o-billing-address', qMeta.billing_address);
   if (qt.employee_id) set('o-emp', qt.employee_id);
   orderItems = (items||[]).map(it => {
     const product = productList.find(p => p.id === it.product_id);
@@ -9476,9 +9487,10 @@ async function viewOrder(orderId) {
     showPage('orders');
   }
   await Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation(), ensureLazadaSummary()]);
-  const [{ data: order }, { data: orderPOItemsRaw }] = await Promise.all([
+  const [{ data: order }, { data: orderPOItemsRaw }, { data: linkedQuote }] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('id',orderId).single(),
-    sb.from('purchase_order_items').select('id, po_id, product_id, product_name, qty_ordered, purchase_orders(id, po_no, po_date, supplier_name, status)')
+    sb.from('purchase_order_items').select('id, po_id, product_id, product_name, qty_ordered, purchase_orders(id, po_no, po_date, supplier_name, status)'),
+    sb.from('quotations').select('id,quote_no').eq('shop_id', currentShop?.id).eq('converted_order_id', orderId).maybeSingle()
   ]);
   if (!order) return;
   
@@ -9583,7 +9595,12 @@ async function viewOrder(orderId) {
       <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           <span style="color:var(--text3);font-size:12.5px">หมายเหตุเอกสาร (จะพิมพ์ลงในบิล/ใบเสร็จ)</span>
-          <textarea id="ed-note" rows="2" placeholder="เช่น รายละเอียดส่งมอบ เงื่อนไขรับประกัน" style="${iStyle};margin-top:3px;resize:vertical">${escapeHTML(cleanOrderNote(order.note))}</textarea>
+          <textarea id="ed-note" rows="2" placeholder="เช่น รายละเอียดส่งมอบ เงื่อนไขรับประกัน" style="${iStyle};margin-top:3px;resize:vertical">${escapeHTML((()=>{
+            const cNote = cleanOrderNote(order.note);
+            if (cNote) return cNote;
+            if (linkedQuote && linkedQuote.quote_no) return linkedQuote.quote_no;
+            return '';
+          })())}</textarea>
         </div>
         <div>
           <span style="color:#d97706;font-size:12.5px;font-weight:600">🔒 หมายเหตุหลังบ้าน (เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)</span>
@@ -9944,7 +9961,10 @@ function openReceiptOptions(orderId) {
 }
 
 async function printReceipt(orderId, showDiscount=true, showSignature=false, docCopyType='original') {
-  const { data: order } = await sb.from('orders').select('*,order_items(*,products(name))').eq('id',orderId).single();
+  const [{ data: order }, { data: linkedQuote }] = await Promise.all([
+    sb.from('orders').select('*,order_items(*,products(name))').eq('id',orderId).single(),
+    sb.from('quotations').select('id,quote_no').eq('shop_id', currentShop?.id).eq('converted_order_id', orderId).maybeSingle()
+  ]);
   if (!order) { toast('ไม่พบออเดอร์','error'); return; }
 
   let customer = null;
@@ -9991,7 +10011,8 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const subtotal     = showDiscount ? discountedSubtotal : grossSubtotal;
   const shippingFee  = getOrderShippingFee(order);
   const grandTotal   = Math.max(0, subtotal - billDiscAmt) + shippingFee;
-  const displayNote  = cleanOrderNote(order.note);
+  let displayNote    = cleanOrderNote(order.note);
+  if (!displayNote && linkedQuote?.quote_no) displayNote = linkedQuote.quote_no;
 
   // วันที่ไทย พ.ศ.
   const d      = new Date(order.order_date+'T00:00:00');
@@ -21027,29 +21048,30 @@ async function convertToOrder(qtId) {
     return s + (Number(it.qty) || 1) * unitCost;
   }, 0);
 
+  const docNote = (qt.quote_no || '').trim();
+  const compName = (meta.company_name || qt.company_name || '').trim();
+  const inote = (meta.internal_note || qt.internal_note || '').trim();
+  const shippingFee = Number(meta.shipping_fee || 0);
+
   const orderPayload = {
     shop_id: currentShop.id,
     order_no: orderNo,
     order_date: today(),
     channel: 'Offline',
     customer_name: qt.customer_name,
-    company_name: meta.company_name || qt.company_name || '',
-    tax_id: meta.tax_id || qt.tax_id || '',
-    customer_social: qt.customer_social,
+    company_name: compName || null,
+    tax_id: meta.tax_id || qt.tax_id || null,
+    customer_social: qt.customer_social || null,
     customer_contact: qt.customer_contact + (meta.contact_position ? ' (' + meta.contact_position + ')' : ''),
     customer_phone: qt.customer_phone,
     customer_address: qt.customer_address,
     billing_address: meta.billing_address || qt.billing_address || qt.customer_address || '',
     employee_id: qt.employee_id || null,
-    note: [
-      'Convert จาก ' + (qt.quote_no || ''),
-      meta.note,
-      cleanOrderNote(qt.note)
-    ].filter(Boolean).join('\n'),
-    internal_note: meta.internal_note || '',
+    note: noteWithCompanyAndShipping(docNote, compName, shippingFee, inote),
+    internal_note: inote || null,
     bill_discount: meta.bill_discount || 0,
     bill_discount_type: meta.bill_discount_type || 'amount',
-    shipping_fee: Number(meta.shipping_fee || 0),
+    shipping_fee: shippingFee,
     shipping_status: 'pending',
     doc_status: 'confirmed',
     total_amount: grandTotal,
@@ -21068,43 +21090,23 @@ async function convertToOrder(qtId) {
     const missingCol = colMatch ? colMatch[1] : null;
 
     if (missingCol && (missingCol in orderPayload)) {
-      if (missingCol === 'company_name' && orderPayload.company_name) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[บริษัท/นิติบุคคล]: ' + orderPayload.company_name;
-      } else if (missingCol === 'tax_id' && orderPayload.tax_id) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[Tax ID]: ' + orderPayload.tax_id;
-      } else if (missingCol === 'internal_note' && orderPayload.internal_note) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[หมายเหตุภายใน]: ' + orderPayload.internal_note;
-      } else if (missingCol === 'billing_address' && orderPayload.billing_address) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ที่อยู่ออกบิล]: ' + orderPayload.billing_address;
-      } else if (missingCol === 'customer_po_no' && orderPayload.customer_po_no) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[PO ลูกค้า]: ' + orderPayload.customer_po_no;
-      } else if (missingCol === 'shipping_fee' && Number(orderPayload.shipping_fee) > 0) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ค่าจัดส่ง]: ฿' + orderPayload.shipping_fee;
-      }
       delete orderPayload[missingCol];
       continue;
     }
 
     if (('company_name' in orderPayload) && errMsg.includes('company_name')) {
-      if (orderPayload.company_name) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[บริษัท/นิติบุคคล]: ' + orderPayload.company_name;
       delete orderPayload.company_name; continue;
     }
     if (('tax_id' in orderPayload) && errMsg.includes('tax_id')) {
-      if (orderPayload.tax_id) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[Tax ID]: ' + orderPayload.tax_id;
       delete orderPayload.tax_id; continue;
     }
     if (('internal_note' in orderPayload) && errMsg.includes('internal_note')) {
-      if (orderPayload.internal_note) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[หมายเหตุภายใน]: ' + orderPayload.internal_note;
       delete orderPayload.internal_note; continue;
     }
     if (('billing_address' in orderPayload) && errMsg.includes('billing_address')) {
-      if (orderPayload.billing_address) orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ที่อยู่ออกบิล]: ' + orderPayload.billing_address;
       delete orderPayload.billing_address; continue;
     }
     if (('shipping_fee' in orderPayload) && errMsg.includes('shipping_fee')) {
-      if (Number(orderPayload.shipping_fee) > 0) {
-        orderPayload.note = (orderPayload.note ? orderPayload.note + '\n' : '') + '[ค่าจัดส่ง]: ฿' + orderPayload.shipping_fee;
-      }
       delete orderPayload.shipping_fee; continue;
     }
     if (('bill_discount' in orderPayload) && errMsg.includes('bill_discount')) {
@@ -21117,6 +21119,11 @@ async function convertToOrder(qtId) {
       delete orderPayload.customer_social; continue;
     }
     if (('customer_contact' in orderPayload) && errMsg.includes('customer_contact')) {
+      delete orderPayload.customer_contact; continue;
+    }
+
+    break;
+  }
       delete orderPayload.customer_contact; continue;
     }
 
@@ -42782,7 +42789,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.42', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบจัดการหมวดหมู่สินค้า: ดูสินค้าในหมวด, แก้ไขและซิงค์ชื่อ, รวมหมวดหมู่อัตโนมัติ/กำหนดเอง (v3.42)', items:[
+    { v:'3.43', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'หมายเหตุเอกสารในออเดอร์ที่แปลงจากใบเสนอราคา แสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา (v3.43)', items:[
+      '📋 <b>หมายเหตุเอกสารแสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา:</b> ปรับปรุงระบบแปลงใบเสนอราคาเป็น Sales Order (ทั้ง Convert โดยตรงและดึงจากใบเสนอราคา) ให้ช่อง <code>หมายเหตุเอกสาร (จะพิมพ์ลงในบิล/ใบเสร็จ)</code> บันทึกและแสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา (เช่น <code>QT2026-00006</code>) โดยไม่มีข้อความภาษาอังกฤษ Convert จาก หรือข้อความอื่นปะปน',
+      '🔒 <b>แยกข้อมูลหลังบ้านและที่อยู่ออกบิลเป็นสัดส่วน:</b> ข้อมูลหมายเหตุหลังบ้าน (Internal Note) จะถูกเก็บไว้ในช่อง <code>🔒 หมายเหตุหลังบ้าน</code> เท่านั้น ไม่ปรากฏบนเอกสาร/บิลที่พิมพ์ให้ลูกค้า พร้อมรองรับการแสดงผลเลขที่ใบเสนอราคาอัตโนมัติเมื่อเปิดดูรายละเอียดออเดอร์เดิมที่แปลงมาจากใบเสนอราคา'
+    ]},
+    { v:'3.42', date:'2026-11-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ระบบจัดการหมวดหมู่สินค้า: ดูสินค้าในหมวด, แก้ไขและซิงค์ชื่อ, รวมหมวดหมู่อัตโนมัติ/กำหนดเอง (v3.42)', items:[
       '📦 <b>ดูสินค้าในหมวดหมู่ทันที (Category Products Modal):</b> เพิ่มปุ่ม <code>📦 ดูสินค้า</code> ในทุกหมวดหมู่ แสดงรายการสินค้าทั้งหมดพร้อมรูปภาพ, SKU, ราคา, สต๊อกคงเหลือ และปุ่มลัดสำหรับ <code>✏️ แก้ไขสินค้า</code> หรือ <code>🔄 ย้ายหมวด</code> ได้ทันที',
       '🔗 <b>ระบบรวมหมวดหมู่ (Merge Categories) แก้ปัญหาเว้นวรรคไม่ตรงกัน:</b> ตรวจจับหมวดหมู่ที่ชื่อเหมือนกันแต่เว้นวรรคต่างกันอัตโนมัติ (เช่น <code>OIL SEAL NBR</code> vs <code>OIL  SEAL  NBR</code>) พร้อมปุ่ม 1-คลิก รวมทุกคู่ให้เป็นมาตรฐานเดียว และรองรับการเลือกคู่หมวดหมู่เพื่อรวมเอง (Manual Merge) อย่างปลอดภัย',
       '🔄 <b>ซิงค์การเปลี่ยนชื่อหมวดหมู่กับสินค้าอัตโนมัติ 100%:</b> เมื่อเข้าไปแก้ไขชื่อหมวดหมู่ในระบบ ระบบจะอัปเดตฟิลด์ <code>category</code> ของสินค้าทุกชิ้นในหมวดนั้นๆ ให้ตรงกันทันทีทั้งในฐานข้อมูล Supabase และหน่วยความจำ'

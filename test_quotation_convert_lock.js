@@ -35,7 +35,7 @@ console.log('✓ isQuoteClosed logic functions as expected');
 // 3. Convert to Order logic checks
 assert(content.includes("if (isQuoteClosed(qt))"), "convertToOrder must guard against already closed/converted quotes");
 assert(content.includes("Could not find the '([^']+)' column of 'orders'"), "convertToOrder must support dynamic schema column fallback");
-assert(content.includes("missingCol === 'company_name'"), "convertToOrder must preserve company_name when column is missing in schema");
+assert(content.includes("missingCol in orderPayload"), "convertToOrder must support missing column fallback");
 assert(content.includes("status: 'closed'"), "convertToOrder must update status to closed");
 assert(content.includes("deal_stage: 'won'"), "convertToOrder must update deal_stage to won");
 console.log('✓ convertToOrder safeguards and schema resilience verified');
