@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.37.1</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v3.38</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.37.1';
-const DISPLAY_APP_VERSION = 'v3.37.1';
+const CURRENT_APP_VERSION = 'sealthai-v3.38';
+const DISPLAY_APP_VERSION = 'v3.38';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.37.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.37.1 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.38 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1333,7 +1333,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div>
           <div class="logo-text">SEALTHAI</div>
           <div style="display:flex;align-items:center;gap:6px">
-            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.37.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.37.1 🚀</span>
+            <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:1px 7px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd">v3.38 🚀</span>
             <button id="lang-btn" onclick="toggleLang()"
               style="font-size:10px;background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:2px 8px;cursor:pointer;color:var(--text2);font-family:var(--mono);font-weight:600">TH</button>
           </div>
@@ -1362,7 +1362,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.37.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.37.1 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.38 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -4068,7 +4068,7 @@ async function dashboard() {
       </select>
       <span style="color:var(--text3);font-size:13px">📅 ${rangeLabel}</span>
       <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
-        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.37.1)">v3.37.1 🚀</span>
+        <span onclick="openChangelogModal()" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:3px 9px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd" title="คลิกเพื่อดูบันทึกประวัติการอัปเดต (v3.38)">v3.38 🚀</span>
       </div>
     </div>
     <!-- เลือกเดือน (ใช้กับมุมมองรายเดือน) -->
@@ -19765,8 +19765,13 @@ async function quotations() {
         ${QUOTE_STATUSES.map(s=>'<option value="'+s.key+'">'+s.th+'</option>').join('')}
       </select>
       <select id="qt-sort" title="เรียงลำดับ" onchange="loadQuotes()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;font-size:13px">
-        <option value="date">📅 วันที่ล่าสุด</option>
-        <option value="total">💰 ยอดสูงสุด</option>
+        <option value="date">📅 วันที่ล่าสุด (ใหม่ → เก่า)</option>
+        <option value="date_asc">📅 วันที่เก่าสุด (เก่า → ใหม่)</option>
+        <option value="total">💰 ยอดเงินสูงสุด (มาก → น้อย)</option>
+        <option value="total_asc">💰 ยอดเงินต่ำสุด (น้อย → มาก)</option>
+        <option value="no">🔢 เลขที่ (ใหม่ → เก่า)</option>
+        <option value="no_asc">🔢 เลขที่ (เก่า → ใหม่)</option>
+
         <option value="status">🏷️ ตามสถานะ</option>
       </select>
       <input type="text" id="qt-search" placeholder="🔍 ค้นหา ชื่อ / เลขที่ / ref / เบอร์..." oninput="loadQuotes()" onkeydown="if(event.key==='Enter')loadQuotes()" style="min-width:200px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 10px;font-size:13px;color:var(--text)">
@@ -19958,7 +19963,11 @@ async function loadQuotes() {
   const sortMode=document.getElementById('qt-sort')?.value||'date';
   const _rank={draft:0,sent:1,accepted:2,converted:3,rejected:4};
   rows.sort((a,b)=>{
+    if(sortMode==='date_asc') return (a.quote_date||'').localeCompare(b.quote_date||'') || (a.quote_no||'').localeCompare(b.quote_no||'');
     if(sortMode==='total')  return Number(b.total_amount||0)-Number(a.total_amount||0);
+    if(sortMode==='total_asc') return Number(a.total_amount||0)-Number(b.total_amount||0);
+    if(sortMode==='no') return (b.quote_no||'').localeCompare(a.quote_no||'');
+    if(sortMode==='no_asc') return (a.quote_no||'').localeCompare(b.quote_no||'');
     if(sortMode==='status') return (_rank[a.status]??9)-(_rank[b.status]??9) || (b.quote_date||'').localeCompare(a.quote_date||'');
     return (b.quote_date||'').localeCompare(a.quote_date||'') || (b.quote_no||'').localeCompare(a.quote_no||'');
   });
@@ -19990,8 +19999,12 @@ async function loadQuotes() {
   const empMap={}; (emps||[]).forEach(e=>empMap[e.id]=e.name);
 
   el.innerHTML = '<div class="table-wrap desktop-only"><table><thead><tr>' +
-    '<th>วันที่</th><th>เลขที่</th><th>ลูกค้า</th><th>พนักงาน</th>' +
-    '<th class="text-right">ยอดรวม</th><th>สถานะ</th><th>ใช้ได้ถึง</th><th></th>' +
+    '<th onclick="toggleQuoteSort(\'date\')" style="cursor:pointer" title="คลิกเพื่อเรียงตามวันที่">วันที่ ⇕</th>' +
+    '<th onclick="toggleQuoteSort(\'no\')" style="cursor:pointer" title="คลิกเพื่อเรียงตามเลขที่">เลขที่ ⇕</th>' +
+    '<th>ลูกค้า</th><th>พนักงาน</th>' +
+    '<th class="text-right" onclick="toggleQuoteSort(\'total\')" style="cursor:pointer" title="คลิกเพื่อเรียงตามยอดรวม">ยอดรวม ⇕</th>' +
+    '<th onclick="toggleQuoteSort(\'status\')" style="cursor:pointer" title="คลิกเพื่อเรียงตามสถานะ">สถานะ ⇕</th>' +
+    '<th>ใช้ได้ถึง</th><th></th>' +
     '</tr></thead><tbody>' +
     rows.map(q=>'<tr style="cursor:pointer" onclick="viewQuote(&quot;'+q.id+'&quot;)">'+
       '<td>'+q.quote_date+'</td>'+
@@ -20015,6 +20028,21 @@ async function loadQuotes() {
         (q.valid_until?'<span style="font-size:11px;color:var(--text3)">ถึง '+q.valid_until+'</span>':'')+
       '</div></div>').join('')+
     '</div>';
+}
+
+function toggleQuoteSort(field) {
+  const sel = document.getElementById('qt-sort');
+  if (!sel) return;
+  if (field === 'date') {
+    sel.value = sel.value === 'date' ? 'date_asc' : 'date';
+  } else if (field === 'total') {
+    sel.value = sel.value === 'total' ? 'total_asc' : 'total';
+  } else if (field === 'no') {
+    sel.value = sel.value === 'no' ? 'no_asc' : 'no';
+  } else if (field === 'status') {
+    sel.value = 'status';
+  }
+  loadQuotes();
 }
 
 async function ensureQuoteProductList() {
@@ -20398,6 +20426,17 @@ function handleQuoteProdBlur(rowIdx, val) {
   }, 200);
 }
 
+function syncQuoteItemInputs(idx) {
+  if (!quoteItems[idx]) return;
+  const customInp = document.getElementById('qt-custom-inp-' + idx);
+  const prodInp = document.getElementById('qt-prod-inp-' + idx);
+  if (customInp && customInp.value !== undefined) {
+    quoteItems[idx].product_name = customInp.value;
+  } else if (prodInp && prodInp.value !== undefined && !quoteItems[idx].product_id) {
+    quoteItems[idx].product_name = prodInp.value;
+  }
+}
+
 function renderQuoteItems() {
   const el = document.getElementById('qt-items');
   if(!el) return;
@@ -20405,6 +20444,64 @@ function renderQuoteItems() {
   quoteItems.forEach((it,i)=>{
     const card = document.createElement('div');
     card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px';
+
+    // ── Header แถบลำดับรายการ (#1, #2...) + ปุ่มสลับขึ้น/ลง (▲/▼) + ปุ่มลบ ──
+    const cardHeader = document.createElement('div');
+    cardHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px dashed var(--border2)';
+    
+    const leftBadge = document.createElement('div');
+    leftBadge.style.cssText = 'display:flex;align-items:center;gap:6px';
+    leftBadge.innerHTML = `<span style="background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd">ลำดับที่ ${i+1}</span> <span style="font-size:11px;color:var(--text3)">(${i+1} จาก ${quoteItems.length} รายการ)</span>`;
+    
+    const rightActions = document.createElement('div');
+    rightActions.style.cssText = 'display:flex;align-items:center;gap:4px';
+    
+    if (i > 0) {
+      const upBtn = document.createElement('button');
+      upBtn.type = 'button';
+      upBtn.innerHTML = '▲ เลื่อนขึ้น';
+      upBtn.title = 'สลับขึ้นด้านบน';
+      upBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--text);font-weight:600';
+      upBtn.onclick = () => {
+        syncQuoteItemInputs(i);
+        syncQuoteItemInputs(i - 1);
+        const temp = quoteItems[i];
+        quoteItems[i] = quoteItems[i-1];
+        quoteItems[i-1] = temp;
+        renderQuoteItems();
+        calcQuoteTotal();
+      };
+      rightActions.appendChild(upBtn);
+    }
+    if (i < quoteItems.length - 1) {
+      const downBtn = document.createElement('button');
+      downBtn.type = 'button';
+      downBtn.innerHTML = '▼ เลื่อนลง';
+      downBtn.title = 'สลับลงด้านล่าง';
+      downBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--text);font-weight:600';
+      downBtn.onclick = () => {
+        syncQuoteItemInputs(i);
+        syncQuoteItemInputs(i + 1);
+        const temp = quoteItems[i];
+        quoteItems[i] = quoteItems[i+1];
+        quoteItems[i+1] = temp;
+        renderQuoteItems();
+        calcQuoteTotal();
+      };
+      rightActions.appendChild(downBtn);
+    }
+    
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.innerHTML = '✕ ลบ';
+    delBtn.title = `ลบรายการที่ ${i+1}`;
+    delBtn.style.cssText = 'background:rgba(220,38,38,0.1);color:var(--red);border:1px solid rgba(220,38,38,0.2);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px';
+    delBtn.onclick = () => { quoteItems.splice(i,1); renderQuoteItems(); calcQuoteTotal(); };
+    rightActions.appendChild(delBtn);
+
+    cardHeader.appendChild(leftBadge);
+    cardHeader.appendChild(rightActions);
+    card.appendChild(cardHeader);
     
     // Header & badge
     const r1=document.createElement('div'); r1.style.cssText='display:flex;gap:8px;align-items:start;margin-bottom:10px';
@@ -20466,11 +20563,11 @@ function renderQuoteItems() {
     customNameWrap.appendChild(customNameInp);
     pw.appendChild(customNameWrap);
 
-    const del=document.createElement('button'); del.textContent='✕';
-    del.title='ลบรายการนี้';
-    del.style.cssText='background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;margin-top:18px;flex-shrink:0';
-    del.onclick=()=>{quoteItems.splice(i,1);renderQuoteItems();calcQuoteTotal();};
-    r1.appendChild(pw); r1.appendChild(del); card.appendChild(r1);
+
+
+
+
+    r1.appendChild(pw); card.appendChild(r1);
 
     // Row 2: qty / price / discount / row total
     const r2=document.createElement('div'); r2.style.cssText='display:grid;grid-template-columns:1fr 1fr 1.4fr auto;gap:8px;align-items:end';
@@ -20860,7 +20957,7 @@ async function convertToOrder(qtId) {
   if(!ok) return;
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId),
+    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
   ]);
   if(!qt) return;
   const meta = getQuoteMeta(qt);
@@ -20998,7 +21095,7 @@ function getQuoteBankSettings(shop = currentShop) {
 async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original') {
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId),
+    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
   ]);
   if(!qt) return;
   const meta = getQuoteMeta(qt);
@@ -41909,7 +42006,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.37', date:'2026-11-10', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ยกระดับใบเสนอราคา: บรรทัดที่สอง, ค่าส่งฟรี/ปลายทาง, ที่อยู่ออกบิล, ตำแหน่ง/อีเมล, หมายเหตุแยกหน้าบิลและหลังบ้าน (v3.37)', items:[
+    { v:'3.38', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'จัดเรียงลำดับรายการสินค้าในใบเสนอราคาและตัวเลือกเรียงลำดับตาราง (v3.38)', items:[
+      '🔢 <b>จัดเรียงลำดับรายการสินค้า:</b> เพิ่มแถบแสดงลำดับที่ (#1, #2...) พร้อมปุ่มเลื่อนขึ้น (▲) และเลื่อนลง (▼) ในแต่ละรายการสินค้าของใบเสนอราคา ช่วยให้สลับตำแหน่งรายการสินค้าก่อน-หลังได้ทันที',
+      '📄 <b>บันทึกและพิมพ์ตามลำดับจริง:</b> เมื่อจัดเรียงลำดับใหม่ ข้อมูลจะถูกบันทึกและนำไปพิมพ์ใบเสนอราคา (PDF/A4) รวมถึงแปลงเป็น Sales Order ตามลำดับที่จัดเรียงไว้อย่างแม่นยำ 100%',
+      '📊 <b>คลิกหัวตารางและตัวเลือกจัดเรียง:</b> เพิ่มตัวเลือกเรียงลำดับวันที่ (ใหม่-เก่า/เก่า-ใหม่), ยอดเงิน (มาก-น้อย/น้อย-มาก), และเลขที่เอกสาร พร้อมกดคลิกหัวตารางเพื่อสลับเรียงลำดับได้ทันที'
+    ]},
+    { v:'3.37', date:'2026-11-10', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ยกระดับใบเสนอราคา: บรรทัดที่สอง, ค่าส่งฟรี/ปลายทาง, ที่อยู่ออกบิล, ตำแหน่ง/อีเมล, หมายเหตุแยกหน้าบิลและหลังบ้าน (v3.37)', items:[
       '📝 <b>บรรทัดที่สองสำหรับแก้ไขข้อความตามลูกค้า:</b> เพิ่มช่องข้อความพิมพ์หน้าบิลใต้ชื่อสินค้าในใบเสนอราคาเหมือนกับหน้าออเดอร์ เพื่อให้พิมพ์ข้อความเฉพาะตามที่ลูกค้าต้องการแสดงในเอกสารโดยไม่กระทบชื่อสินค้าในคลัง',
       '🚚 <b>ตัวเลือกค่าจัดส่ง (Shipping Fee):</b> รองรับทั้งระบุจำนวนเงิน, "ฟรีค่าจัดส่ง", และ "เก็บค่าขนส่งปลายทาง" พร้อมแสดงผลอย่างชัดเจนทั้งในหน้าจอ รายละเอียด และใบพิมพ์ A4',
       '🔒 <b>แยกหมายเหตุเอกสาร & หมายเหตุหลังบ้าน:</b> เพิ่มช่องหมายเหตุที่แสดงในบิล/เอกสาร และช่องหมายเหตุเฉพาะหลังบ้าน (Admin/Internal Note ไม่นำไปพิมพ์บิล) เหมือนหน้าออเดอร์',
