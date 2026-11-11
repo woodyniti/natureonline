@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.38';
-const DISPLAY_APP_VERSION = 'v3.38';
+const CURRENT_APP_VERSION = 'sealthai-v3.39';
+const DISPLAY_APP_VERSION = 'v3.39';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -7493,16 +7493,16 @@ async function loadOrders() {
             let stockHtml = '';
             let nameHtml = escapeHTML(it.product_name || p?.name || '');
             if (p && p.id) {
-              const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
-              // ถ้าสถานะยังเป็นรอจัดส่ง ไม่ต้องเอาจำนวนของออเดอร์นี้มาลบออก
-              const stockVal = isOrderPending ? (rawStock + Number(it.qty || 0)) : rawStock;
+              const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+              const itemReqQty = Number(it.qty || 1);
               const isStockOut = stockVal <= 0;
-              const sBg = isStockOut ? '#fee2e2' : '#dcfce7';
-              const sColor = isStockOut ? '#b91c1c' : '#15803d';
-              const sBdr = isStockOut ? '#fca5a5' : '#86efac';
-              const sIcon = isStockOut ? '⚠️' : '📦';
-              const sText = isStockOut ? 'คงเหลือ 0' : `คงเหลือ ${fmt(stockVal)}`;
-              const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ยังไม่หัก ${it.qty} ชิ้น)` : '';
+              const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+              const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+              const sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
+              const sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
+              const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
+              const sText = isStockOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+              const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
               stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
             }
@@ -7612,16 +7612,16 @@ async function loadOrders() {
           let stockHtml = '';
           let nameHtml = escapeHTML(it.product_name || p?.name || '');
           if (p && p.id) {
-            const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
-            // ถ้าสถานะยังเป็นรอจัดส่ง ไม่ต้องเอาจำนวนของออเดอร์นี้มาลบออก
-            const stockVal = isOrderPending ? (rawStock + Number(it.qty || 0)) : rawStock;
+            const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+            const itemReqQty = Number(it.qty || 1);
             const isStockOut = stockVal <= 0;
-            const sBg = isStockOut ? '#fee2e2' : '#dcfce7';
-            const sColor = isStockOut ? '#b91c1c' : '#15803d';
-            const sBdr = isStockOut ? '#fca5a5' : '#86efac';
-            const sIcon = isStockOut ? '⚠️' : '📦';
-            const sText = isStockOut ? 'คงเหลือ 0' : `คงเหลือ ${fmt(stockVal)}`;
-            const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ยังไม่หัก ${it.qty} ชิ้น)` : '';
+            const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+            const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+            const sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
+            const sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
+            const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
+            const sText = isStockOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+            const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
             stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
           }
@@ -9225,16 +9225,21 @@ function renderEditItems() {
     if (_pItem && _pItem.id) {
       const edShipStatus = document.getElementById('ed-status')?.value || window._editingOrderForGP?.shipping_status;
       const isOrderPending = !edShipStatus || edShipStatus === 'pending';
-      const rawStock = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
-      // ถ้าสถานะยังเป็นรอจัดส่ง ไม่ต้องเอาจำนวนของออเดอร์นี้มาลบออก
-      const stockVal = isOrderPending ? (rawStock + Number(it.qty || 0)) : rawStock;
+      const stockVal = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
+      const itemReqQty = Number(it.qty || 1);
       const isOut = stockVal <= 0;
+      const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
       const stockHint = document.createElement('div');
       stockHint.style.cssText = 'margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap';
-      const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ยังไม่หัก ${it.qty} ชิ้น)` : '';
+      const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
+      const sBg = isOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+      const sColor = isOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
+      const sBdr = isOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
+      const sIcon = isOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
+      const sText = isOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ: ${fmt(stockVal)} ชิ้น`);
       stockHint.innerHTML = `
-        <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)${tipPending}" style="cursor:pointer;background:${isOut?'#fee2e2':'#dcfce7'};color:${isOut?'#b91c1c':'#15803d'};border:1px solid ${isOut?'#fca5a5':'#86efac'};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
-          ${isOut ? '⚠️ คงเหลือ 0' : '📦 คงเหลือ: ' + fmt(stockVal) + ' ชิ้น'}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
+        <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)${tipPending}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
+          ${sIcon} ${sText}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
         </span>
         <button type="button" class="btn btn-secondary btn-sm" onclick="quickAdjustProductStock('${_pItem.id}')" title="ปรับยอดสต๊อกสินค้าจริงทันที" style="padding:1px 6px;font-size:10.5px;background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700">
           ⚖️ ปรับสต๊อก
@@ -20766,6 +20771,7 @@ async function saveQuote(status) {
 }
 
 function openQuotationDetail(qtId) { return viewQuote(qtId); }
+window.openQuotationDetail = openQuotationDetail;
 async function viewQuote(qtId) {
   const [{data:qt},{data:items},{data:emps}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
@@ -42017,7 +42023,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.38', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'จัดเรียงลำดับรายการสินค้าในใบเสนอราคาและตัวเลือกเรียงลำดับตาราง (v3.38)', items:[
+    { v:'3.39', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการแสดงสต๊อกคงเหลือในหน้ารายการออเดอร์ ให้ตรงกับสต๊อกคลังจริง (v3.39)', items:[
+      '📦 <b>Real-Time Stock Alignment:</b> แก้ไขการคำนวณยอดสต๊อกคงเหลือในหน้ารายการออเดอร์ (ทั้ง Desktop, Mobile และหน้าต่างแก้ไขออเดอร์) โดยอิงจากยอดคงเหลือจริงในคลังสินค้า (Stock On-Hand) ยกเลิกการนำจำนวนที่สั่งไปบวกกลับเข้าสต๊อก ซึ่งเคยทำให้สินค้าที่สต๊อกเป็น 0 แสดงเป็นมีคงเหลือหลอกตา',
+      '⚠️ <b>เตือนสต๊อกไม่พอส่ง (Insufficient Stock Alert):</b> หากสต๊อกคงเหลือในคลังน้อยกว่าจำนวนที่ลูกค้าสั่ง จะแสดงป้ายเตือนสีส้ม <code>⚠️ มีแค่ X (ขาด Y)</code> เพื่อให้จัดเตรียมสินค้าหรือเปิด PO ได้ทันท่วงที และแสดง <code>⚠️ คงเหลือ 0</code> สีแดงเมื่อสินค้าหมด',
+      '📜 <b>ผูก global window.openQuotationDetail:</b> รับประกันการเรียกเปิดดูรายละเอียดใบเสนอราคาในกระดานติดตาม Quotation Deal Pipeline ได้อย่างสมบูรณ์ 100%'
+    ]},
+    { v:'3.38', date:'2026-11-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'จัดเรียงลำดับรายการสินค้าในใบเสนอราคาและตัวเลือกเรียงลำดับตาราง (v3.38)', items:[
       '🔢 <b>จัดเรียงลำดับรายการสินค้า:</b> เพิ่มแถบแสดงลำดับที่ (#1, #2...) พร้อมปุ่มเลื่อนขึ้น (▲) และเลื่อนลง (▼) ในแต่ละรายการสินค้าของใบเสนอราคา ช่วยให้สลับตำแหน่งรายการสินค้าก่อน-หลังได้ทันที',
       '📄 <b>บันทึกและพิมพ์ตามลำดับจริง:</b> เมื่อจัดเรียงลำดับใหม่ ข้อมูลจะถูกบันทึกและนำไปพิมพ์ใบเสนอราคา (PDF/A4) รวมถึงแปลงเป็น Sales Order ตามลำดับที่จัดเรียงไว้อย่างแม่นยำ 100%',
       '📊 <b>คลิกหัวตารางและตัวเลือกจัดเรียง:</b> เพิ่มตัวเลือกเรียงลำดับวันที่ (ใหม่-เก่า/เก่า-ใหม่), ยอดเงิน (มาก-น้อย/น้อย-มาก), และเลขที่เอกสาร พร้อมกดคลิกหัวตารางเพื่อสลับเรียงลำดับได้ทันที'
