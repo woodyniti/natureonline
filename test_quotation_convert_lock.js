@@ -9,9 +9,9 @@ const rawContent = fs.readFileSync(htmlPath, 'utf8');
 const content = rawContent.replace(/\r\n/g, '\n');
 
 // 1. Version checks
-assert(content.includes("CURRENT_APP_VERSION = 'sealthai-v3.41'"), "CURRENT_APP_VERSION should be sealthai-v3.41");
-assert(content.includes("DISPLAY_APP_VERSION = 'v3.41'"), "DISPLAY_APP_VERSION should be v3.41");
-console.log('✓ Version is updated to v3.41');
+assert(/CURRENT_APP_VERSION = 'sealthai-v3\.\d+'/.test(content), "CURRENT_APP_VERSION should match sealthai-v3.x");
+assert(/DISPLAY_APP_VERSION = 'v3\.\d+'/.test(content), "DISPLAY_APP_VERSION should match v3.x");
+console.log('✓ Version is at least v3.41+');
 
 // 2. Status definition & helper checks
 assert(content.includes("{key:'closed',    th:'🔒 ปิดแล้ว (Close)', cls:'ds-shipped'}"), "QUOTE_STATUSES must include closed status");

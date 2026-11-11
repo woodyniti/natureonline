@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.41';
-const DISPLAY_APP_VERSION = 'v3.41';
+const CURRENT_APP_VERSION = 'sealthai-v3.42';
+const DISPLAY_APP_VERSION = 'v3.42';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.38 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.42)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.42 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -32401,16 +32401,33 @@ async function uploadProductImage(productId) {
 }
 
 // ══════════════════════════════════════════════════════════
-// CATEGORIES PAGE
+// CATEGORIES PAGE (v3.42: Product viewer, Category editor & Merge tools)
 // ══════════════════════════════════════════════════════════
 let allCategories = [];
 
+function normalizeCategoryName(name) {
+  return String(name || '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('th-TH');
+}
+
+function getDuplicateCategoryGroups() {
+  const groups = {};
+  (allCategories || []).forEach(cat => {
+    const k = normalizeCategoryName(cat.name);
+    if (!k) return;
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(cat);
+  });
+  return Object.entries(groups).filter(([k, list]) => list.length > 1);
+}
+
 async function categories() {
   document.getElementById('topbar-actions').innerHTML =
+    '<button class="btn btn-secondary btn-sm" onclick="openMergeCategoriesModal()" title="รวมหมวดหมู่สินค้าที่มีชื่อซ้ำกันหรือเว้นวรรคต่างกัน">🔗 รวมหมวดหมู่ (Merge)</button>' +
     '<button class="btn btn-primary btn-sm" onclick="openCatModal()">+ เพิ่มหมวดหมู่</button>';
   setContent(`
+    <div id="cat-dup-banner"></div>
     <div class="stat-grid mb-4" id="cat-page-stats"></div>
-    <div id="cat-page-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px"></div>
+    <div id="cat-page-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
   `);
   await loadCategories();
 }
@@ -32428,12 +32445,26 @@ async function loadCategories() {
   allProducts = prodRes.data || [];
   productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
 
-  // sync: หา categories จาก products ที่ยังไม่มีใน table
-  const existNames = new Set(allCategories.map(c => c.name));
+  // sync: หา categories จาก products ที่ยังไม่มีใน table โดยใช้ชื่อที่ normalize เว้นวรรคแล้ว
+  const existNormMap = new Map();
+  allCategories.forEach(c => {
+    const k = normalizeCategoryName(c.name);
+    if (!existNormMap.has(k)) existNormMap.set(k, c);
+  });
+
   const freshCats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
-  const missingCats = freshCats.filter(c => c && !existNames.has(c));
-  if (missingCats.length) {
-    const inserts = missingCats.map(name => ({ shop_id: currentShop.id, name, sort_order: 0 }));
+  const trulyMissingCats = [];
+  freshCats.forEach(rawCat => {
+    const cleanName = rawCat.trim().replace(/\s+/g, ' ');
+    const k = normalizeCategoryName(cleanName);
+    if (!existNormMap.has(k)) {
+      existNormMap.set(k, { name: cleanName });
+      trulyMissingCats.push(cleanName);
+    }
+  });
+
+  if (trulyMissingCats.length) {
+    const inserts = trulyMissingCats.map(name => ({ shop_id: currentShop.id, name, sort_order: 0 }));
     const { data: newCats } = await sb.from('categories').insert(inserts).select();
     if (newCats) allCategories = [...allCategories, ...newCats];
   }
@@ -32448,12 +32479,38 @@ function getProductImageUrl(product) {
 }
 
 function renderCategoriesPage() {
+  const dupGroups = getDuplicateCategoryGroups();
+
+  // Banner for duplicate category warning
+  const bannerEl = document.getElementById('cat-dup-banner');
+  if (bannerEl) {
+    if (dupGroups.length > 0) {
+      bannerEl.innerHTML = `
+        <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:24px">⚠️</span>
+            <div>
+              <div style="font-weight:700;color:#92400e;font-size:14px">ตรวจพบหมวดหมู่ที่ชื่อซ้ำกันหรือเว้นวรรคต่างกัน (${dupGroups.length} กลุ่ม)</div>
+              <div style="font-size:12.5px;color:#b45309">พบหมวดหมู่สินค้าที่มีชื่อเหมือนกันแต่ต่างกันที่ช่องว่างหรือเว้นวรรค เช่น "OIL SEAL" กับ "OIL  SEAL" ทำให้สินค้ากระจายตัว</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-secondary btn-sm" onclick="openMergeCategoriesModal()" style="font-weight:700">🔍 ดูรายละเอียดและเลือกคู่รวม</button>
+            <button class="btn btn-primary btn-sm" onclick="autoMergeAllDuplicateCategories()" style="background:#d97706;border-color:#b45309;font-weight:700">⚡ รวมหมวดหมู่ซ้ำทั้งหมดทันที</button>
+          </div>
+        </div>
+      `;
+    } else {
+      bannerEl.innerHTML = '';
+    }
+  }
+
   // stats
   const statsEl = document.getElementById('cat-page-stats');
   if (statsEl) {
     const totalProds = allProducts.length;
     statsEl.innerHTML =
-      '<div class="stat-card"><div class="stat-label">🗂️ หมวดหมู่ทั้งหมด</div><div class="stat-value">' + allCategories.length + '</div></div>' +
+      '<div class="stat-card"><div class="stat-label">🗂️ หมวดหมู่ทั้งหมด</div><div class="stat-value">' + allCategories.length + (dupGroups.length > 0 ? ` <span style="font-size:12px;color:#d97706;font-weight:600">(${dupGroups.length} กลุ่มซ้ำ)</span>` : '') + '</div></div>' +
       '<div class="stat-card"><div class="stat-label">📦 สินค้าทั้งหมด</div><div class="stat-value">' + totalProds + '</div></div>';
   }
 
@@ -32466,14 +32523,17 @@ function renderCategoriesPage() {
   }
 
   grid.innerHTML = allCategories.map(cat => {
-    const catKey = String(cat.name||'').trim().toLocaleLowerCase('th-TH');
-    const prods = allProducts.filter(p => String(p.category||'').trim().toLocaleLowerCase('th-TH') === catKey);
+    const catNorm = normalizeCategoryName(cat.name);
+    const prods = (allProducts || []).filter(p => normalizeCategoryName(p.category) === catNorm);
     const prodImgs = prods.map(p=>({product:p,url:getProductImageUrl(p)})).filter(x=>x.url).slice(0, 4);
     const stockVal = prods.reduce((s,p) => s + Number(p.current_cost||0)*Number(p.stock_qty||0), 0);
+    const isDup = dupGroups.some(([k]) => k === catNorm);
 
-    return `<div class="card" style="padding:0;overflow:hidden;cursor:pointer" onclick="editCatModal('${cat.id}')">
-      <!-- รูปหมวดหมู่ -->
-      <div style="height:120px;background:var(--bg3);position:relative;overflow:hidden">
+    return `<div class="card" style="padding:0;overflow:hidden;border:1px solid ${isDup ? '#fde68a' : 'var(--border)'};border-radius:12px;display:flex;flex-direction:column;transition:transform 0.15s,box-shadow 0.15s;background:${isDup ? '#fffdf7' : '#fff'}"
+        onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0,0,0,0.08)'"
+        onmouseleave="this.style.transform='none';this.style.boxShadow='none'">
+      <!-- รูปหมวดหมู่ (คลิกเพื่อดูสินค้าในหมวด) -->
+      <div style="height:120px;background:var(--bg3);position:relative;overflow:hidden;cursor:pointer" onclick="openCategoryProductsModal('${cat.id}')" title="คลิกเพื่อดูสินค้าในหมวดหมู่นี้">
         ${prodImgs.length
           ? `<div style="width:100%;height:100%;display:flex;flex-wrap:wrap;gap:4px;justify-content:center;align-items:center;padding:8px;background:var(--bg3)">
               ${prodImgs.map(x => `<img src="${escapeHTML(x.url)}" alt="${escapeHTML(x.product.name||'รูปสินค้า')}" title="${escapeHTML(x.product.name||'')}" style="width:${prodImgs.length===1?'100%':'48%'};height:${prodImgs.length<=2?'100%':'48%'};min-width:0;object-fit:cover;border-radius:7px;border:1px solid var(--border)" onerror="this.style.display=\'none\'">`).join('')}
@@ -32486,25 +32546,506 @@ function renderCategoriesPage() {
         }
         ${cat.image_url ? `<img src="${escapeHTML(cat.image_url)}" alt="${escapeHTML(cat.name||'รูปหมวดหมู่')}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1" onerror="this.remove()">` : ''}
         <div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
-        <div style="position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,0.5);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${cat.image_url?'🖼️ ภาพหมวด · ':''}${prods.length} สินค้า</div>
+        <div style="position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${cat.image_url?'🖼️ ภาพหมวด · ':''}${prods.length} สินค้า</div>
       </div>
       <!-- ข้อมูล -->
-      <div style="padding:12px">
-        <div style="font-weight:700;font-size:15px;margin-bottom:4px">${cat.name}</div>
-        ${cat.description ? `<div style="font-size:12px;color:var(--text3);margin-bottom:6px">${cat.description}</div>` : ''}
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:11px;color:var(--text3)">มูลค่าสต๊อก</div>
-          <div style="font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent)">${fmtB(stockVal)}</div>
+      <div style="padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:space-between">
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;margin-bottom:4px">
+            <div style="font-weight:700;font-size:15px;color:var(--text);cursor:pointer" onclick="openCategoryProductsModal('${cat.id}')" title="คลิกเพื่อดูสินค้าในหมวด">${escapeHTML(cat.name)}</div>
+            ${isDup ? `<span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;white-space:nowrap" title="มีหมวดหมู่อื่นที่ชื่อซ้ำหรือเว้นวรรคต่างกัน">⚠️ ชื่อซ้ำ</span>` : ''}
+          </div>
+          ${cat.description ? `<div style="font-size:12px;color:var(--text3);margin-bottom:8px;line-height:1.4">${escapeHTML(cat.description)}</div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px">
+            <span style="color:var(--text3)">มูลค่าสต๊อก</span>
+            <span style="font-family:var(--mono);font-size:13px;font-weight:700;color:var(--accent)">${fmtB(stockVal)}</span>
+          </div>
+        </div>
+        <!-- ปุ่มดำเนินการ: ดูสินค้า, แก้ไข, รวมหมวด -->
+        <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;border-top:1px solid var(--border);padding-top:10px;margin-top:auto">
+          <button class="btn btn-primary btn-sm" onclick="openCategoryProductsModal('${cat.id}')" style="font-size:12px;padding:4px 8px;font-weight:600" title="ดูรายการสินค้าทั้งหมดในหมวดนี้">
+            📦 ดูสินค้า (${prods.length})
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="editCatModal('${cat.id}')" style="font-size:12px;padding:4px 8px" title="แก้ไขข้อมูลหมวดหมู่">
+            ✏️ แก้ไข
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="openMergeCategoriesModal('${cat.id}')" style="font-size:12px;padding:4px 8px;color:#d97706" title="รวมหมวดหมู่นี้เข้ากับหมวดอื่น">
+            🔗 รวม
+          </button>
         </div>
       </div>
     </div>`;
   }).join('');
 }
 
+// ── Category Products Viewer Modal ──────────────────────
+function openCategoryProductsModal(catId) {
+  const cat = allCategories.find(c => c.id === catId);
+  if (!cat) return;
+  const catNorm = normalizeCategoryName(cat.name);
+  const prods = (allProducts || []).filter(p => normalizeCategoryName(p.category) === catNorm);
+
+  document.getElementById('modal-cat-products')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'modal-cat-products';
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '310';
+
+  const totalStock = prods.reduce((s, p) => s + Number(p.stock_qty || 0), 0);
+  const stockVal = prods.reduce((s, p) => s + Number(p.current_cost || 0) * Number(p.stock_qty || 0), 0);
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:900px;width:95%;max-height:90vh;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px;flex-wrap:wrap">
+        <div>
+          <div class="modal-title" style="margin-bottom:4px">🗂️ หมวดหมู่: ${escapeHTML(cat.name)}</div>
+          <div style="font-size:12.5px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            ${cat.description ? `<span>${escapeHTML(cat.description)}</span> · ` : ''}
+            <span><strong>${prods.length}</strong> รายการสินค้า</span> ·
+            <span>สต๊อกรวม <strong>${fmt(totalStock)}</strong> ชิ้น</span> ·
+            <span style="color:var(--accent);font-weight:700">มูลค่าสต๊อก ${fmtB(stockVal)}</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="editCatModal('${cat.id}')">✏️ แก้ไขหมวดหมู่</button>
+          <button class="btn btn-secondary btn-sm" onclick="openMergeCategoriesModal('${cat.id}')" style="color:#d97706">🔗 รวมเข้าหมวดอื่น</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-cat-products')?.remove();viewProductsInCategory('${escapeHTML(cat.name)}')" title="เปิดดูในหน้ารายการสินค้าหลัก">↗️ เปิดในหน้าสินค้า</button>
+          <button class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕ ปิด</button>
+        </div>
+      </div>
+
+      <!-- ค้นหาในหมวดหมู่นี้ -->
+      <div style="margin-bottom:12px">
+        <input type="text" id="cat-prod-search" placeholder="🔍 ค้นหาสินค้าในหมวดหมู่นี้ (ชื่อ, รหัส, SKU, Part No)..."
+          style="width:100%;height:38px;padding:0 12px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;outline:none"
+          oninput="filterCategoryProductsList('${cat.id}', this.value)">
+      </div>
+
+      <!-- ตารางสินค้าในหมวดหมู่ -->
+      <div id="cat-prod-list-container" style="flex:1;overflow-y:auto;max-height:55vh;border:1px solid var(--border);border-radius:8px;background:#fff">
+        ${renderCategoryProductsTable(prods, cat)}
+      </div>
+
+      <div class="modal-footer" style="margin-top:12px;justify-content:space-between">
+        <span style="font-size:12px;color:var(--text3)" id="cat-prod-count-lbl">แสดง ${prods.length} รายการ</span>
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  ensureModalCloseButton(modal, () => modal.remove());
+  modal.style.zIndex = getNextModalZIndex();
+}
+
+function renderCategoryProductsTable(prods, cat) {
+  if (!prods || !prods.length) {
+    return `<div style="text-align:center;padding:36px 16px;color:var(--text3)">
+      <div style="font-size:36px;margin-bottom:8px">📦</div>
+      <div style="font-size:14px;font-weight:600">ไม่มีสินค้าในหมวดหมู่นี้</div>
+    </div>`;
+  }
+  return `
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead>
+        <tr style="background:var(--bg3);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:2">
+          <th style="padding:8px 10px;text-align:center;width:48px">รูป</th>
+          <th style="padding:8px 10px;text-align:left">ชื่อสินค้า / ขนาด / Part No</th>
+          <th style="padding:8px 10px;text-align:left;width:130px">SKU / รหัส</th>
+          <th style="padding:8px 10px;text-align:right;width:100px">ราคาขาย</th>
+          <th style="padding:8px 10px;text-align:center;width:95px">คงเหลือ</th>
+          <th style="padding:8px 10px;text-align:center;width:130px">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${prods.map((p, idx) => {
+          const imgUrl = getProductImageUrl(p);
+          const stock = Number(p.stock_qty || 0);
+          const stockBadge = stock > 0
+            ? `<span style="background:#dcfce7;color:#166534;font-weight:700;padding:2px 7px;border-radius:6px;font-size:11px;font-family:var(--mono)">${fmt(stock)}</span>`
+            : `<span style="background:#fee2e2;color:#991b1b;font-weight:700;padding:2px 7px;border-radius:6px;font-size:11px;font-family:var(--mono)">0</span>`;
+          return `
+            <tr style="border-bottom:1px solid var(--border);${idx % 2 === 1 ? 'background:rgba(0,0,0,0.015)' : ''}">
+              <td style="padding:6px 10px;text-align:center">
+                <div style="width:36px;height:36px;border-radius:6px;overflow:hidden;background:var(--bg3);display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);cursor:pointer" onclick="editProduct('${p.id}')" title="คลิกเพื่อดู/แก้ไขรูป">
+                  ${imgUrl ? `<img src="${escapeHTML(imgUrl)}" style="width:100%;height:100%;object-fit:cover" onerror="this.remove()">` : '📦'}
+                </div>
+              </td>
+              <td style="padding:6px 10px">
+                <div style="font-weight:600;color:var(--text);cursor:pointer" onclick="editProduct('${p.id}')" title="คลิกเพื่อแก้ไขสินค้า">${escapeHTML(p.name)}</div>
+                <div style="font-size:11px;color:var(--text3);display:flex;gap:6px;margin-top:2px;font-family:var(--mono);flex-wrap:wrap">
+                  ${p.part_no ? `<span style="color:var(--purple,#7c3aed)">Part: ${escapeHTML(p.part_no)}</span>` : ''}
+                  ${(p.inner_diameter || p.outer_diameter) ? `<span>ขนาด: ${p.inner_diameter||'-'}*${p.outer_diameter||'-'}*${p.width||'-'} ${p.unit_dim||'mm'}</span>` : ''}
+                </div>
+              </td>
+              <td style="padding:6px 10px;font-family:var(--mono);font-size:11.5px;color:var(--text2)">
+                <div>${escapeHTML(p.sku || '-')}</div>
+                ${p.supplier_sku ? `<div style="font-size:10.5px;color:var(--blue)">${escapeHTML(p.supplier_sku)}</div>` : ''}
+              </td>
+              <td style="padding:6px 10px;text-align:right;font-family:var(--mono);font-weight:600;color:var(--accent)">
+                ${fmtB(p.sell_price)}
+              </td>
+              <td style="padding:6px 10px;text-align:center">
+                ${stockBadge}
+              </td>
+              <td style="padding:6px 10px;text-align:center">
+                <div style="display:flex;gap:4px;justify-content:center">
+                  <button class="btn btn-secondary btn-sm" onclick="editProduct('${p.id}')" style="font-size:11px;padding:2px 6px" title="แก้ไขสินค้า">✏️ แก้ไข</button>
+                  <button class="btn btn-secondary btn-sm" onclick="quickMoveProductCategory('${p.id}')" style="font-size:11px;padding:2px 6px;color:#d97706" title="ย้ายหมวดหมู่">🔄 ย้ายหมวด</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function filterCategoryProductsList(catId, q) {
+  const cat = allCategories.find(c => c.id === catId);
+  if (!cat) return;
+  const catNorm = normalizeCategoryName(cat.name);
+  const catProds = (allProducts || []).filter(p => normalizeCategoryName(p.category) === catNorm);
+  const query = (q || '').trim().toLowerCase();
+  const filtered = query
+    ? catProds.filter(p =>
+        (p.name || '').toLowerCase().includes(query) ||
+        (p.sku || '').toLowerCase().includes(query) ||
+        (p.supplier_sku || '').toLowerCase().includes(query) ||
+        (p.part_no || '').toLowerCase().includes(query)
+      )
+    : catProds;
+
+  const container = document.getElementById('cat-prod-list-container');
+  if (container) container.innerHTML = renderCategoryProductsTable(filtered, cat);
+  const lbl = document.getElementById('cat-prod-count-lbl');
+  if (lbl) lbl.textContent = `แสดง ${filtered.length} จากทั้งหมด ${catProds.length} รายการ`;
+}
+
+function viewProductsInCategory(catName) {
+  showPage('products');
+  setTimeout(() => {
+    const sel = document.getElementById('prod-cat-filter');
+    if (sel) {
+      sel.value = catName;
+      filterProducts();
+    }
+  }, 120);
+}
+
+// ── Merge Categories Modal & Operations ──────────────────────
+function openMergeCategoriesModal(preselectCatId = null) {
+  document.getElementById('modal-merge-cats')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'modal-merge-cats';
+  modal.className = 'modal-overlay open';
+  modal.style.zIndex = '320';
+
+  const dupGroups = getDuplicateCategoryGroups();
+  const preselectCat = preselectCatId ? allCategories.find(c => c.id === preselectCatId) : null;
+
+  modal.innerHTML = `
+    <div class="modal" style="max-width:680px;width:95%;max-height:90vh;display:flex;flex-direction:column">
+      <div class="modal-title" style="margin-bottom:6px">🔗 รวมหมวดหมู่สินค้า (Merge Categories)</div>
+      <div style="font-size:12.5px;color:var(--text3);margin-bottom:14px">
+        รวมหมวดหมู่สินค้าที่ชื่อซ้ำกัน หรือเว้นวรรค/ตัวพิมพ์ต่างกัน เพื่อรวมสินค้าเข้าเป็นหมวดหมู่เดียวกันอย่างเป็นระเบียบ
+      </div>
+
+      <!-- Tab Buttons -->
+      <div style="display:flex;gap:6px;border-bottom:1.5px solid var(--border);margin-bottom:14px;padding-bottom:2px">
+        <button type="button" class="btn btn-secondary btn-sm" id="tab-btn-merge-auto" onclick="switchMergeCatTab('auto')"
+          style="font-weight:700;border-bottom:2px solid var(--accent);border-radius:6px 6px 0 0;background:#fff">
+          ⚡ ตรวจจับชื่อเว้นวรรคซ้ำ (${dupGroups.length} กลุ่ม)
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="tab-btn-merge-manual" onclick="switchMergeCatTab('manual')"
+          style="font-weight:600;border-bottom:2px solid transparent;border-radius:6px 6px 0 0">
+          🎯 เลือกคู่หมวดหมู่เพื่อรวมเอง (Manual)
+        </button>
+      </div>
+
+      <!-- Content Area -->
+      <div style="flex:1;overflow-y:auto;max-height:60vh;padding-right:4px">
+        <!-- Tab 1: Auto Duplicate Groups -->
+        <div id="merge-tab-auto" style="display:block">
+          ${dupGroups.length > 0 ? `
+            <div style="display:flex;justify-content:space-between;align-items:center;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:12px;gap:8px;flex-wrap:wrap">
+              <span style="font-size:13px;color:#92400e;font-weight:600">พบ ${dupGroups.length} กลุ่มหมวดหมู่ที่มีการสะกดหรือเว้นวรรคซ้ำกัน</span>
+              <button class="btn btn-primary btn-sm" onclick="autoMergeAllDuplicateCategories()" style="background:#d97706;border-color:#b45309;font-weight:700">
+                ⚡ รวมทุกกลุ่มซ้ำอัตโนมัติ
+              </button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${dupGroups.map(([key, list], gIdx) => {
+                const sorted = [...list].sort((a,b) => {
+                  const cntA = (allProducts||[]).filter(p => p.category === a.name).length;
+                  const cntB = (allProducts||[]).filter(p => p.category === b.name).length;
+                  return cntB - cntA;
+                });
+                const canonical = sorted[0];
+                const cleanCanonicalName = canonical.name.trim().replace(/\\s+/g, ' ');
+                return `
+                  <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:#fff">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+                      <div style="font-weight:700;font-size:14px;color:var(--text)">กลุ่มที่ ${gIdx + 1}: <span style="color:var(--accent)">"${escapeHTML(cleanCanonicalName)}"</span></div>
+                      <button class="btn btn-secondary btn-sm" onclick="mergeCategoryGroup('${escapeHTML(key)}')" style="font-size:11.5px;font-weight:700;color:#047857;background:#ecfdf5;border-color:#a7f3d0">
+                        🔗 รวมกลุ่มนี้เข้าเป็น "${escapeHTML(cleanCanonicalName)}"
+                      </button>
+                    </div>
+                    <div style="font-size:12px;color:var(--text3);margin-bottom:6px">รายการหมวดหมู่ที่พบในกลุ่มนี้:</div>
+                    <div style="display:flex;flex-direction:column;gap:4px">
+                      ${list.map(c => {
+                        const cnt = (allProducts||[]).filter(p => p.category === c.name).length;
+                        const isMain = c.id === canonical.id;
+                        return `
+                          <div style="display:flex;justify-content:space-between;align-items:center;background:${isMain?'#f0fdf4':'var(--bg3)'};border:1px solid ${isMain?'#86efac':'var(--border)'};border-radius:6px;padding:6px 10px;font-size:12.5px">
+                            <div>
+                              <strong style="color:${isMain?'#15803d':'var(--text)'}">${escapeHTML(c.name)}</strong>
+                              ${isMain ? ' <span style="font-size:11px;color:#15803d;font-weight:700">(ชื่อหลักที่แนะนำ)</span>' : ''}
+                            </div>
+                            <span style="font-size:11.5px;color:var(--text3);font-family:var(--mono)">${cnt} สินค้า</span>
+                          </div>
+                        `;
+                      }).join('')}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          ` : `
+            <div style="text-align:center;padding:36px 16px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;color:#15803d">
+              <div style="font-size:36px;margin-bottom:8px">✅</div>
+              <div style="font-weight:700;font-size:15px;margin-bottom:4px">ไม่พบหมวดหมู่ที่เว้นวรรคซ้ำหรือซ้ำซ้อนกัน</div>
+              <div style="font-size:12.5px;color:#166534">หมวดหมู่ทั้งหมดในระบบมีการเว้นวรรคและชื่อที่ถูกต้องเรียบร้อยแล้ว</div>
+            </div>
+          `}
+        </div>
+
+        <!-- Tab 2: Manual Selection Merge -->
+        <div id="merge-tab-manual" style="display:none">
+          <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+            <div class="form-group" style="margin-bottom:12px">
+              <label style="font-weight:700;color:#b45309">1. เลือกหมวดหมู่ต้นทาง (ที่จะยุบรวม / ลบออก) *</label>
+              <select id="merge-source-select" style="width:100%;height:40px;background:#fff;border:1.5px solid #fde68a;border-radius:7px;padding:0 10px;font-size:13px;font-weight:600">
+                <option value="">-- เลือกหมวดหมู่ต้นทางที่จะยุบรวม --</option>
+                ${allCategories.map(c => {
+                  const cnt = (allProducts||[]).filter(p => normalizeCategoryName(p.category) === normalizeCategoryName(c.name)).length;
+                  const sel = preselectCat && preselectCat.id === c.id ? 'selected' : '';
+                  return `<option value="${c.id}" ${sel}>${escapeHTML(c.name)} (${cnt} สินค้า)</option>`;
+                }).join('')}
+              </select>
+            </div>
+
+            <div style="text-align:center;font-size:18px;color:var(--text3);margin:6px 0">⬇️ รวมเข้ากับ ⬇️</div>
+
+            <div class="form-group" style="margin-bottom:12px">
+              <label style="font-weight:700;color:#15803d">2. เลือกหมวดหมู่ปลายทาง (ชื่อหลักที่ต้องการคงไว้) *</label>
+              <select id="merge-target-select" style="width:100%;height:40px;background:#fff;border:1.5px solid #86efac;border-radius:7px;padding:0 10px;font-size:13px;font-weight:600">
+                <option value="">-- เลือกหมวดหมู่ปลายทางที่จะคงไว้ --</option>
+                ${allCategories.map(c => {
+                  const cnt = (allProducts||[]).filter(p => normalizeCategoryName(p.category) === normalizeCategoryName(c.name)).length;
+                  return `<option value="${c.id}">${escapeHTML(c.name)} (${cnt} สินค้า)</option>`;
+                }).join('')}
+              </select>
+            </div>
+
+            <div style="font-size:12px;color:var(--text3);line-height:1.5;background:#fff;padding:8px 12px;border-radius:6px;border:1px dashed var(--border)">
+              💡 <strong>คำแนะนำ:</strong> เมื่อกดยืนยันรวมหมวดหมู่ สินค้าทั้งหมดที่อยู่ในหมวดหมู่ต้นทางจะถูกเปลี่ยนเป็นชื่อหมวดหมู่ปลายทางโดยอัตโนมัติ และระบบจะลบหมวดหมู่ต้นทางออกเพื่อไม่ให้ชื่อซ้ำกัน
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn btn-primary" onclick="submitManualCategoryMerge()" style="font-weight:700">
+              🔗 ยืนยันรวมหมวดหมู่นี้
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="margin-top:14px">
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  ensureModalCloseButton(modal, () => modal.remove());
+  modal.style.zIndex = getNextModalZIndex();
+
+  if (preselectCatId) {
+    switchMergeCatTab('manual');
+  }
+}
+
+function switchMergeCatTab(tab) {
+  const autoDiv = document.getElementById('merge-tab-auto');
+  const manualDiv = document.getElementById('merge-tab-manual');
+  const btnAuto = document.getElementById('tab-btn-merge-auto');
+  const btnManual = document.getElementById('tab-btn-merge-manual');
+  if (tab === 'auto') {
+    if (autoDiv) autoDiv.style.display = 'block';
+    if (manualDiv) manualDiv.style.display = 'none';
+    if (btnAuto) { btnAuto.style.borderBottomColor = 'var(--accent)'; btnAuto.style.fontWeight = '700'; btnAuto.style.background = '#fff'; }
+    if (btnManual) { btnManual.style.borderBottomColor = 'transparent'; btnManual.style.fontWeight = '600'; btnManual.style.background = 'transparent'; }
+  } else {
+    if (autoDiv) autoDiv.style.display = 'none';
+    if (manualDiv) manualDiv.style.display = 'block';
+    if (btnManual) { btnManual.style.borderBottomColor = 'var(--accent)'; btnManual.style.fontWeight = '700'; btnManual.style.background = '#fff'; }
+    if (btnAuto) { btnAuto.style.borderBottomColor = 'transparent'; btnAuto.style.fontWeight = '600'; btnAuto.style.background = 'transparent'; }
+  }
+}
+
+async function submitManualCategoryMerge() {
+  const srcId = document.getElementById('merge-source-select')?.value;
+  const tgtId = document.getElementById('merge-target-select')?.value;
+  if (!srcId || !tgtId) {
+    toast('กรุณาเลือกทั้งหมวดหมู่ต้นทางและปลายทาง', 'error');
+    return;
+  }
+  if (srcId === tgtId) {
+    toast('หมวดหมู่ต้นทางและปลายทางต้องไม่เป็นหมวดเดียวกัน', 'error');
+    return;
+  }
+  const srcCat = allCategories.find(c => c.id === srcId);
+  const tgtCat = allCategories.find(c => c.id === tgtId);
+  if (!srcCat || !tgtCat) return;
+
+  const prodsInSrc = (allProducts || []).filter(p => normalizeCategoryName(p.category) === normalizeCategoryName(srcCat.name) || p.category === srcCat.name);
+
+  const ok = confirm(`ยืนยันรวมหมวดหมู่?\n\n- ยุบรวมหมวด: "${srcCat.name}"\n- รวมเข้ากับ: "${tgtCat.name}"\n\nสินค้าทั้งหมด (${prodsInSrc.length} รายการ) จะถูกย้ายไปหมวดหมู่ "${tgtCat.name}" และลบหมวดหมู่ "${srcCat.name}" ออก`);
+  if (!ok) return;
+
+  await executeMergeCategories(srcCat.name, tgtCat.name, srcCat.id, tgtCat.id);
+  document.getElementById('modal-merge-cats')?.remove();
+  toast(`รวมหมวดหมู่ "${srcCat.name}" เข้ากับ "${tgtCat.name}" สำเร็จ (${prodsInSrc.length} สินค้า) ✓`, 'success');
+  await loadCategories();
+}
+
+async function mergeCategoryGroup(groupKey) {
+  const dupGroups = getDuplicateCategoryGroups();
+  const group = dupGroups.find(([k]) => k === groupKey);
+  if (!group) return;
+  const list = group[1];
+  if (!list || list.length <= 1) return;
+
+  const sorted = [...list].sort((a,b) => {
+    const cntA = (allProducts||[]).filter(p => p.category === a.name).length;
+    const cntB = (allProducts||[]).filter(p => p.category === b.name).length;
+    return cntB - cntA;
+  });
+  const canonical = sorted[0];
+  const canonicalCleanName = canonical.name.trim().replace(/\s+/g, ' ');
+
+  const otherCats = sorted.slice(1);
+  const otherNames = otherCats.map(c => `"${c.name}"`).join(', ');
+
+  const ok = confirm(`ยืนยันรวมกลุ่มหมวดหมู่ที่มีชื่อเว้นวรรคซ้ำกัน?\n\n- รวมหมวดหมู่: ${otherNames}\n- เข้าเป็นชื่อหลัก: "${canonicalCleanName}"\n\nสินค้าทั้งหมดจะถูกอัปเดตให้อยู่ในหมวดหมู่ "${canonicalCleanName}" และลบหมวดหมู่ที่ซ้ำกันออก`);
+  if (!ok) return;
+
+  for (const other of otherCats) {
+    await executeMergeCategories(other.name, canonicalCleanName, other.id, canonical.id);
+  }
+  toast(`รวมกลุ่มหมวดหมู่เข้าเป็น "${canonicalCleanName}" สำเร็จ ✓`, 'success');
+  await loadCategories();
+  openMergeCategoriesModal();
+}
+
+async function autoMergeAllDuplicateCategories() {
+  const dupGroups = getDuplicateCategoryGroups();
+  if (!dupGroups.length) {
+    toast('ไม่พบหมวดหมู่ที่เว้นวรรคซ้ำกัน', 'info');
+    return;
+  }
+  const ok = confirm(`ยืนยันรวมหมวดหมู่ที่เว้นวรรคหรือพิมพ์ซ้ำกันทั้งหมด ${dupGroups.length} กลุ่ม หรือไม่?\n\nระบบจะคัดเลือกชื่อหมวดหมู่มาตรฐาน และย้ายสินค้าทั้งหมดเข้าสู่ชื่อหลักอัตโนมัติ`);
+  if (!ok) return;
+
+  let mergedCount = 0;
+  for (const [key, list] of dupGroups) {
+    if (list.length <= 1) continue;
+    const sorted = [...list].sort((a,b) => {
+      const cntA = (allProducts||[]).filter(p => p.category === a.name).length;
+      const cntB = (allProducts||[]).filter(p => p.category === b.name).length;
+      return cntB - cntA;
+    });
+    const canonical = sorted[0];
+    const canonicalCleanName = canonical.name.trim().replace(/\s+/g, ' ');
+    const otherCats = sorted.slice(1);
+    for (const other of otherCats) {
+      await executeMergeCategories(other.name, canonicalCleanName, other.id, canonical.id);
+      mergedCount++;
+    }
+  }
+
+  document.getElementById('modal-merge-cats')?.remove();
+  toast(`รวมหมวดหมู่ที่ซ้ำกันเรียบร้อยแล้วทั้งหมด (${mergedCount} หมวดหมู่) ✓`, 'success');
+  await loadCategories();
+}
+
+async function executeMergeCategories(sourceName, targetName, sourceCatId, targetCatId) {
+  const srcNorm = normalizeCategoryName(sourceName);
+  const cleanTarget = targetName.trim().replace(/\s+/g, ' ');
+
+  // 1. Update in Supabase products
+  await sb.from('products')
+    .update({ category: cleanTarget })
+    .eq('shop_id', currentShop.id)
+    .eq('category', sourceName);
+
+  // Normalize match for products table (handles multiple spaces / trailing spaces)
+  const affectedProds = (allProducts || []).filter(p => normalizeCategoryName(p.category) === srcNorm || p.category === sourceName);
+  for (const p of affectedProds) {
+    if (p.category !== cleanTarget) {
+      await sb.from('products').update({ category: cleanTarget }).eq('id', p.id);
+      p.category = cleanTarget;
+    }
+  }
+
+  // 2. Remove source category row from categories table
+  if (sourceCatId) {
+    await sb.from('categories').delete().eq('id', sourceCatId);
+  }
+  await sb.from('categories').delete().eq('shop_id', currentShop.id).eq('name', sourceName);
+
+  // 3. Ensure target category exists in categories table
+  const tgtExists = allCategories.some(c => c.name === cleanTarget || (targetCatId && c.id === targetCatId));
+  if (!tgtExists) {
+    const { data: newCat } = await sb.from('categories').insert({ shop_id: currentShop.id, name: cleanTarget, sort_order: 0 }).select().maybeSingle();
+    if (newCat) allCategories.push(newCat);
+  }
+
+  // 4. Update in-memory allCategories
+  allCategories = allCategories.filter(c => c.id !== sourceCatId && c.name !== sourceName);
+}
+
+async function quickMoveProductCategory(productId) {
+  const p = (allProducts || []).find(x => x.id === productId);
+  if (!p) return;
+  const currentCat = p.category || '';
+  const otherCats = [...new Set(allCategories.map(c => c.name.trim()))].filter(n => n && n !== currentCat);
+
+  const targetCat = prompt(`🔄 ย้ายสินค้า: "${p.name}"\n\nหมวดหมู่ปัจจุบัน: "${currentCat}"\n\nกรุณาพิมพ์หรือระบุชื่อหมวดหมู่ใหม่ที่ต้องการย้ายไป:\n(หมวดที่มีอยู่: ${otherCats.slice(0, 8).join(', ')})`, otherCats[0] || '');
+  if (!targetCat || !targetCat.trim() || targetCat.trim() === currentCat) return;
+
+  const cleanTarget = targetCat.trim().replace(/\s+/g, ' ');
+  try {
+    const { error } = await sb.from('products').update({ category: cleanTarget }).eq('id', productId);
+    if (error) throw error;
+    p.category = cleanTarget;
+    toast(`ย้ายสินค้าไปหมวดหมู่ "${cleanTarget}" เรียบร้อย ✓`, 'success');
+    await loadCategories();
+    // Refresh category modal if open
+    const curCatObj = allCategories.find(c => c.name === currentCat);
+    if (curCatObj && document.getElementById('modal-cat-products')) {
+      openCategoryProductsModal(curCatObj.id);
+    }
+  } catch(e) {
+    toast('ย้ายหมวดหมู่ไม่สำเร็จ: ' + e.message, 'error');
+  }
+}
+
 function openCatModal(cat) {
   const isEdit = !!cat;
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
+  modal.id = 'modal-cat';
   modal.style.zIndex = '300';
   modal.innerHTML = `
     <div class="modal" style="max-width:480px">
@@ -32545,6 +33086,7 @@ function openCatModal(cat) {
       </div>
 
       <div class="modal-footer">
+        ${isEdit ? `<button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-cat')?.remove();openMergeCategoriesModal('${cat.id}')" style="color:#d97706">🔗 รวมเข้าหมวดอื่น</button>` : ''}
         ${isEdit ? `<button class="btn btn-danger btn-sm" onclick="deleteCat('${cat.id}')">🗑️ ลบ</button>` : ''}
         <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button id="cat-save-btn" class="btn btn-primary" onclick="saveCat('${cat?.id||''}')">💾 บันทึก</button>
@@ -32572,7 +33114,7 @@ function previewCatImage() {
 }
 
 async function saveCat(catId) {
-  const name = document.getElementById('cat-name-inp')?.value.trim();
+  const name = document.getElementById('cat-name-inp')?.value.trim().replace(/\s+/g, ' ');
   if (!name) { toast('กรุณาระบุชื่อหมวดหมู่', 'error'); return; }
 
   const desc  = document.getElementById('cat-desc-inp')?.value.trim();
@@ -32625,7 +33167,23 @@ async function saveCat(catId) {
 
   let error;
   if (catId) {
+    const oldCat = allCategories.find(c => c.id === catId);
+    const oldName = oldCat?.name;
     ({ error } = await sb.from('categories').update(payload).eq('id', catId));
+    if (!error && oldName && oldName !== name) {
+      // Sync rename to all products
+      await sb.from('products').update({ category: name }).eq('shop_id', currentShop.id).eq('category', oldName);
+      (allProducts || []).forEach(p => {
+        if (p.category === oldName) p.category = name;
+      });
+      // Also update any products that matched old name with spacing differences
+      const oldNorm = normalizeCategoryName(oldName);
+      const affected = (allProducts || []).filter(p => normalizeCategoryName(p.category) === oldNorm && p.category !== name);
+      for (const p of affected) {
+        await sb.from('products').update({ category: name }).eq('id', p.id);
+        p.category = name;
+      }
+    }
   } else {
     ({ error } = await sb.from('categories').insert(payload));
   }
@@ -32651,6 +33209,20 @@ async function deleteCat(catId) {
   toast('ลบหมวดหมู่แล้ว', 'success');
   await loadCategories();
 }
+
+window.openCategoryProductsModal = openCategoryProductsModal;
+window.renderCategoryProductsTable = renderCategoryProductsTable;
+window.filterCategoryProductsList = filterCategoryProductsList;
+window.viewProductsInCategory = viewProductsInCategory;
+window.openMergeCategoriesModal = openMergeCategoriesModal;
+window.switchMergeCatTab = switchMergeCatTab;
+window.submitManualCategoryMerge = submitManualCategoryMerge;
+window.mergeCategoryGroup = mergeCategoryGroup;
+window.autoMergeAllDuplicateCategories = autoMergeAllDuplicateCategories;
+window.executeMergeCategories = executeMergeCategories;
+window.quickMoveProductCategory = quickMoveProductCategory;
+window.getDuplicateCategoryGroups = getDuplicateCategoryGroups;
+window.normalizeCategoryName = normalizeCategoryName;
 
 // ── Orders: Quick month/year filter ──────────────────────
 function setOrdMonth(year, month) {
@@ -42210,7 +42782,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.41', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไข Convert to Order สำเร็จ 100%, ปิด/ล็อคเอกสาร (Close), และระบบทำซ้ำ (Duplicate) พร้อม Confirm (v3.41)', items:[
+    { v:'3.42', date:'2026-11-11', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบจัดการหมวดหมู่สินค้า: ดูสินค้าในหมวด, แก้ไขและซิงค์ชื่อ, รวมหมวดหมู่อัตโนมัติ/กำหนดเอง (v3.42)', items:[
+      '📦 <b>ดูสินค้าในหมวดหมู่ทันที (Category Products Modal):</b> เพิ่มปุ่ม <code>📦 ดูสินค้า</code> ในทุกหมวดหมู่ แสดงรายการสินค้าทั้งหมดพร้อมรูปภาพ, SKU, ราคา, สต๊อกคงเหลือ และปุ่มลัดสำหรับ <code>✏️ แก้ไขสินค้า</code> หรือ <code>🔄 ย้ายหมวด</code> ได้ทันที',
+      '🔗 <b>ระบบรวมหมวดหมู่ (Merge Categories) แก้ปัญหาเว้นวรรคไม่ตรงกัน:</b> ตรวจจับหมวดหมู่ที่ชื่อเหมือนกันแต่เว้นวรรคต่างกันอัตโนมัติ (เช่น <code>OIL SEAL NBR</code> vs <code>OIL  SEAL  NBR</code>) พร้อมปุ่ม 1-คลิก รวมทุกคู่ให้เป็นมาตรฐานเดียว และรองรับการเลือกคู่หมวดหมู่เพื่อรวมเอง (Manual Merge) อย่างปลอดภัย',
+      '🔄 <b>ซิงค์การเปลี่ยนชื่อหมวดหมู่กับสินค้าอัตโนมัติ 100%:</b> เมื่อเข้าไปแก้ไขชื่อหมวดหมู่ในระบบ ระบบจะอัปเดตฟิลด์ <code>category</code> ของสินค้าทุกชิ้นในหมวดนั้นๆ ให้ตรงกันทันทีทั้งในฐานข้อมูล Supabase และหน่วยความจำ'
+    ]},
+    { v:'3.41', date:'2026-11-11', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไข Convert to Order สำเร็จ 100%, ปิด/ล็อคเอกสาร (Close), และระบบทำซ้ำ (Duplicate) พร้อม Confirm (v3.41)', items:[
       '🔄 <b>Convert to Order ไร้ข้อผิดพลาด (Schema Resilience):</b> แก้ไขข้อผิดพลาด <code>Could not find the \'company_name\' column of \'orders\' in the schema cache</code> โดยเพิ่มระบบตรวจจับและปลดคอลัมน์ที่ไม่ตรงกับ schema ของ Supabase อัตโนมัติ พร้อมนำข้อมูล (ชื่อบริษัท, Tax ID, หมายเหตุภายใน, ที่อยู่ออกบิล ฯลฯ) บันทึกเข้าหมายเหตุออเดอร์อย่างครบถ้วนโดยไม่ตกหล่น',
       '🔒 <b>ล็อคเอกสาร & เปลี่ยนสถานะเป็น Close:</b> เมื่อใบเสนอราคาถูกแปลงเป็น Sales Order แล้ว ระบบจะเปลี่ยนสถานะเป็น <code>🔒 ปิดแล้ว (Close)</code> และล็อคเอกสาร ป้องกันการกด Convert ซ้ำ หรือแก้ไข/ลบโดยไม่ได้ตั้งใจ',
       '📋 <b>ปุ่มทำซ้ำ (Duplicate) พร้อมยืนยันทุกครั้ง:</b> เพิ่มปุ่ม <code>📋 ทำซ้ำ (Duplicate)</code> ทั้งในหน้าต่างรายละเอียดและตารางรายการใบเสนอราคา พร้อมกล่องข้อความยืนยัน (Confirm) ทุกครั้ง เพื่อให้สามารถคัดลอกข้อมูลลูกค้า ที่อยู่ออกบิล และรายการสินค้าเดิมมาเป็นใบเสนอราคาฉบับใหม่ได้อย่างสะดวกรวดเร็ว'
