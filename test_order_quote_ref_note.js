@@ -9,9 +9,9 @@ const rawContent = fs.readFileSync(htmlPath, 'utf8');
 const content = rawContent.replace(/\r\n/g, '\n');
 
 // 1. Version check
-assert(content.includes("CURRENT_APP_VERSION = 'sealthai-v3.43'"), "CURRENT_APP_VERSION should be sealthai-v3.43");
-assert(content.includes("DISPLAY_APP_VERSION = 'v3.43'"), "DISPLAY_APP_VERSION should be v3.43");
-console.log('✓ Version is updated to v3.43');
+assert.match(content, /CURRENT_APP_VERSION = 'sealthai-v3\.(43|44)'/, "CURRENT_APP_VERSION should be at least sealthai-v3.43");
+assert.match(content, /DISPLAY_APP_VERSION = 'v3\.(43|44)'/, "DISPLAY_APP_VERSION should be at least v3.43");
+console.log('✓ Version is at least v3.43+');
 
 // 2. cleanOrderNote logic simulation & assertion
 function cleanOrderNote(note) {

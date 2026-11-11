@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.43';
-const DISPLAY_APP_VERSION = 'v3.43';
+const CURRENT_APP_VERSION = 'sealthai-v3.44';
+const DISPLAY_APP_VERSION = 'v3.44';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.43)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.43 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.44 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -7820,8 +7820,12 @@ async function importQuoteToOrder(qtId) {
   if (qErr || iErr || !qt) { toast('ดึงใบเสนอราคาไม่สำเร็จ','error'); return; }
   const set = (id,value) => { const el=document.getElementById(id); if(el) el.value=value||''; };
   const qMeta = getQuoteMeta(qt);
+  if (qMeta.channel) set('o-channel', qMeta.channel);
+  if (qMeta.payment_method) set('o-pay', qMeta.payment_method);
   set('o-cust', qt.customer_name);
+  if (qMeta.customer_username) set('o-username', qMeta.customer_username);
   set('o-ref', qt.customer_social);
+  if (qMeta.customer_po_no) set('o-customer-po', qMeta.customer_po_no);
   set('o-contact', qt.customer_contact);
   set('o-phone', qt.customer_phone);
   set('o-address', qt.customer_address);
@@ -8066,6 +8070,7 @@ function fillQuoteCustomer(idx) {
   const dd = document.getElementById('qt-cust-dd');
   _fillCustFields(dd?._matches?.[idx], {
     name: 'qt-cust',
+    user: 'qt-username',
     ref: 'qt-ref',
     contact: 'qt-contact',
     phone: 'qt-phone',
@@ -19819,14 +19824,27 @@ async function quotations() {
         <div class="grid-2">
           <div class="form-group"><label>วันที่</label><input type="date" id="qt-date" value="${today()}"></div>
           <div class="form-group"><label>ใช้ได้ถึง</label><input type="date" id="qt-valid" value="${new Date(Date.now()+30*86400000).toISOString().slice(0,10)}"></div>
+          <div class="form-group"><label>ช่องทาง</label>
+            <select id="qt-channel">
+              <option>Facebook</option><option>Shopee</option><option>Lazada</option><option selected>LINE</option>
+              <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
+            </select>
+          </div>
+          <div class="form-group"><label>ช่องทางชำระ</label>
+            <select id="qt-pay">
+              <option selected>โอนเงิน</option><option>COD</option><option>บัตรเครดิต</option><option>เงินสด</option>
+            </select>
+          </div>
           <div class="form-group" style="position:relative"><label>ชื่อลูกค้า</label>
             <input type="text" id="qt-cust" placeholder="🔍 พิมพ์/คลิกเพื่อค้นหาลูกค้าเดิม..." autocomplete="off" oninput="searchQuoteCustomer(this.value)" onfocus="searchQuoteCustomer(this.value)">
             <div id="qt-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
           </div>
-          <div class="form-group"><label>Ref / Social</label><input type="text" id="qt-ref" placeholder="รหัสอ้างอิง"></div>
+          <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="qt-username" placeholder="@username Shopee / Lazada"></div>
+          <div class="form-group"><label>เลขอ้างอิง Ref / Social <span style="font-size:11px;color:var(--text3)">(Customer Ref)</span></label><input type="text" id="qt-ref" placeholder="รหัสอ้างอิง / Social"></div>
+          <div class="form-group"><label>เลขที่ PO ของลูกค้า <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="qt-customer-po" placeholder="เช่น PO-2026-001"></div>
           <div class="form-group"><label>ชื่อผู้ติดต่อ</label><input type="text" id="qt-contact" placeholder="ชื่อ-นามสกุล ผู้ติดต่อ"></div>
-          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="qt-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>ตำแหน่งผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="qt-contact-position" placeholder="เช่น ผู้จัดการฝ่ายจัดซื้อ / วิศวกร"></div>
+          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="qt-phone" placeholder="0x-xxxx-xxxx"></div>
           <div class="form-group"><label>อีเมลผู้ติดต่อ (E-mail) <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="email" id="qt-contact-email" placeholder="email@company.com"></div>
         </div>
 
@@ -20137,6 +20155,10 @@ function handleQuoteShippingTypeChange() {
 }
 
 function getQuoteMeta(qt) {
+  let channel = String(qt?.channel || 'LINE');
+  let customerUsername = String(qt?.customer_username || '');
+  let customerPoNo = String(qt?.customer_po_no || '');
+  let paymentMethod = String(qt?.payment_method || 'โอนเงิน');
   let billDisc = Number(qt?.bill_discount || 0);
   let billDiscType = qt?.bill_discount_type || 'amount';
   let shippingFee = Number(qt?.shipping_fee || 0);
@@ -20154,6 +20176,10 @@ function getQuoteMeta(qt) {
       const match = cleanNote.match(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/);
       if (match) {
         const meta = JSON.parse(match[1]);
+        if (meta.channel) channel = meta.channel;
+        if (meta.customer_username != null) customerUsername = meta.customer_username;
+        if (meta.customer_po_no != null) customerPoNo = meta.customer_po_no;
+        if (meta.payment_method) paymentMethod = meta.payment_method;
         if (meta.bill_discount != null) billDisc = Number(meta.bill_discount);
         if (meta.bill_discount_type) billDiscType = meta.bill_discount_type;
         if (meta.shipping_fee != null) shippingFee = Number(meta.shipping_fee);
@@ -20175,6 +20201,10 @@ function getQuoteMeta(qt) {
   }
 
   return {
+    channel: channel,
+    customer_username: customerUsername,
+    customer_po_no: customerPoNo,
+    payment_method: paymentMethod,
     bill_discount: billDisc,
     bill_discount_type: billDiscType,
     shipping_fee: shippingFee,
@@ -20196,7 +20226,9 @@ async function openNewQuote() {
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('qt-date', today());
   set('qt-valid', new Date(Date.now()+30*86400000).toISOString().slice(0,10));
-  ['qt-cust','qt-ref','qt-contact','qt-phone','qt-contact-position','qt-contact-email','qt-company','qt-tax-id','qt-address','qt-billing-address','qt-note','qt-internal-note'].forEach(id=>set(id,''));
+  set('qt-channel', 'LINE');
+  set('qt-pay', 'โอนเงิน');
+  ['qt-cust','qt-username','qt-ref','qt-customer-po','qt-contact','qt-phone','qt-contact-position','qt-contact-email','qt-company','qt-tax-id','qt-address','qt-billing-address','qt-note','qt-internal-note'].forEach(id=>set(id,''));
   set('qt-bill-discount', 0);
   set('qt-bill-discount-type', 'amount');
   set('qt-shipping-fee', 0);
@@ -20229,8 +20261,12 @@ async function openEditQuote(qtId) {
   const meta = getQuoteMeta(qt);
   set('qt-date', qt.quote_date||today());
   set('qt-valid', qt.valid_until||'');
+  set('qt-channel', meta.channel || qt.channel || 'LINE');
+  set('qt-pay', meta.payment_method || qt.payment_method || 'โอนเงิน');
   set('qt-cust', qt.customer_name);
+  set('qt-username', meta.customer_username || qt.customer_username || '');
   set('qt-ref', qt.customer_social);
+  set('qt-customer-po', meta.customer_po_no || qt.customer_po_no || '');
   set('qt-contact', qt.customer_contact);
   set('qt-phone', qt.customer_phone);
   set('qt-contact-position', meta.contact_position);
@@ -20705,6 +20741,10 @@ async function saveQuote(status) {
 
   let rawNote = document.getElementById('qt-note')?.value || '';
   rawNote = rawNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
+  const channel = document.getElementById('qt-channel')?.value || 'LINE';
+  const paymentMethod = document.getElementById('qt-pay')?.value || 'โอนเงิน';
+  const customerUsername = document.getElementById('qt-username')?.value || '';
+  const customerPoNo = document.getElementById('qt-customer-po')?.value || '';
   const internalNote = document.getElementById('qt-internal-note')?.value || '';
   const contactPosition = document.getElementById('qt-contact-position')?.value || '';
   const contactEmail = document.getElementById('qt-contact-email')?.value || '';
@@ -20713,6 +20753,10 @@ async function saveQuote(status) {
   const billingAddress = document.getElementById('qt-billing-address')?.value || '';
 
   const metaObj = {
+    channel: channel,
+    payment_method: paymentMethod,
+    customer_username: customerUsername,
+    customer_po_no: customerPoNo,
     bill_discount: billDiscount,
     bill_discount_type: billDiscountType,
     shipping_fee: shippingFee,
@@ -20729,6 +20773,10 @@ async function saveQuote(status) {
   let payload = {
     quote_date:       date,
     valid_until:      document.getElementById('qt-valid').value||null,
+    channel:          channel,
+    payment_method:   paymentMethod,
+    customer_username: customerUsername,
+    customer_po_no:   customerPoNo,
     customer_name:    document.getElementById('qt-cust').value,
     customer_social:  document.getElementById('qt-ref').value,
     customer_contact: document.getElementById('qt-contact').value,
@@ -20763,7 +20811,7 @@ async function saveQuote(status) {
     let { error } = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
     if (error && (error.message.includes('column') || error.code === 'PGRST204')) {
       // Fallback: remove explicit columns and rely on noteWithMeta
-      ['bill_discount','bill_discount_type','shipping_fee','shipping_type','billing_address','company_name','tax_id','internal_note','contact_position','contact_email'].forEach(col => delete payload[col]);
+      ['channel','payment_method','customer_username','customer_po_no','bill_discount','bill_discount_type','shipping_fee','shipping_type','billing_address','company_name','tax_id','internal_note','contact_position','contact_email'].forEach(col => delete payload[col]);
       const retry = await sb.from('quotations').update(payload).eq('id', editingQuoteId);
       error = retry.error;
     }
@@ -20789,7 +20837,7 @@ async function saveQuote(status) {
     .insert(insertPayload)
     .select().single();
   if (error && (error.message.includes('column') || error.code === 'PGRST204')) {
-    ['bill_discount','bill_discount_type','shipping_fee','shipping_type','billing_address','company_name','tax_id','internal_note','contact_position','contact_email'].forEach(col => delete insertPayload[col]);
+    ['channel','payment_method','customer_username','customer_po_no','bill_discount','bill_discount_type','shipping_fee','shipping_type','billing_address','company_name','tax_id','internal_note','contact_position','contact_email'].forEach(col => delete insertPayload[col]);
     const retry = await sb.from('quotations').insert(insertPayload).select().single();
     qt = retry.data;
     error = retry.error;
@@ -20863,14 +20911,20 @@ async function viewQuote(qtId) {
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:14px">' +
       '<div><span style="color:var(--text3)">ลูกค้า / บริษัท</span><div style="font-weight:600">'+(meta.company_name ? escapeHTML(meta.company_name) + ' (' + (qt.customer_name||'-') + ')' : (qt.customer_name||'-'))+'</div>' +
+        (meta.customer_username ? '<div style="font-size:12px;color:var(--text2)">User: '+escapeHTML(meta.customer_username)+'</div>' : '') +
         (meta.tax_id?'<div style="font-size:12px;color:var(--text2)">Tax ID: '+escapeHTML(meta.tax_id)+'</div>':'')+
         (qt.customer_contact?'<div style="font-size:12px;color:var(--text2)">ผู้ติดต่อ: '+escapeHTML(qt.customer_contact)+(meta.contact_position ? ' ('+escapeHTML(meta.contact_position)+')' : '')+'</div>':'')+
         (meta.contact_email?'<div style="font-size:12px;color:var(--blue)">อีเมล: '+escapeHTML(meta.contact_email)+'</div>':'')+
         (qt.customer_phone?'<div style="font-size:12px;color:var(--text2)">โทร: '+escapeHTML(qt.customer_phone)+'</div>':'')+
       '</div>' +
-      '<div><span style="color:var(--text3)">พนักงาน</span><div>'+(empMap[qt.employee_id]||'-')+'</div></div>' +
+      '<div>' +
+        '<span style="color:var(--text3)">ช่องทาง / ชำระ</span>' +
+        '<div style="font-weight:600;display:flex;gap:6px;align-items:center;margin:2px 0 6px"><span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">'+escapeHTML(meta.channel||'LINE')+'</span>' +
+          '<span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1">'+escapeHTML(meta.payment_method||'โอนเงิน')+'</span></div>' +
+        '<span style="color:var(--text3)">พนักงาน</span><div>'+(empMap[qt.employee_id]||'-')+'</div>' +
+      '</div>' +
       '<div><span style="color:var(--text3)">วันที่</span><div>'+qt.quote_date+'</div></div>' +
-      '<div><span style="color:var(--text3)">Ref</span><div>'+(qt.customer_social?escapeHTML(qt.customer_social):'-')+'</div></div>' +
+      '<div><span style="color:var(--text3)">Ref / PO</span><div>'+(qt.customer_social?escapeHTML(qt.customer_social):'-') + (meta.customer_po_no ? ' · PO: <b style="color:var(--blue)">' + escapeHTML(meta.customer_po_no) + '</b>' : '') + '</div></div>' +
     '</div>' +
     ((qt.customer_address || meta.billing_address) ? (
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;background:var(--bg3);padding:8px 10px;border-radius:6px;margin-bottom:12px">' +
@@ -21057,7 +21111,10 @@ async function convertToOrder(qtId) {
     shop_id: currentShop.id,
     order_no: orderNo,
     order_date: today(),
-    channel: 'Offline',
+    channel: meta.channel || qt.channel || 'LINE',
+    payment_method: meta.payment_method || 'โอนเงิน',
+    customer_username: meta.customer_username || null,
+    customer_po_no: meta.customer_po_no || null,
     customer_name: qt.customer_name,
     company_name: compName || null,
     tax_id: meta.tax_id || qt.tax_id || null,
@@ -21080,7 +21137,7 @@ async function convertToOrder(qtId) {
 
   // บันทึก — รองรับฐานข้อมูลเดิมที่ schema cache ของ orders ยังไม่มีบางคอลัมน์ (company_name, tax_id, internal_note, billing_address, etc.)
   let order, error;
-  for (let a = 0; a < 12; a++) {
+  for (let a = 0; a < 15; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
@@ -21121,10 +21178,14 @@ async function convertToOrder(qtId) {
     if (('customer_contact' in orderPayload) && errMsg.includes('customer_contact')) {
       delete orderPayload.customer_contact; continue;
     }
-
-    break;
-  }
-      delete orderPayload.customer_contact; continue;
+    if (('customer_username' in orderPayload) && errMsg.includes('customer_username')) {
+      delete orderPayload.customer_username; continue;
+    }
+    if (('customer_po_no' in orderPayload) && errMsg.includes('customer_po_no')) {
+      delete orderPayload.customer_po_no; continue;
+    }
+    if (('payment_method' in orderPayload) && errMsg.includes('payment_method')) {
+      delete orderPayload.payment_method; continue;
     }
 
     break;
@@ -21212,8 +21273,12 @@ async function duplicateQuote(qtId) {
 
   set('qt-date', today());
   set('qt-valid', new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10));
+  set('qt-channel', meta.channel || qt.channel || 'LINE');
+  set('qt-pay', meta.payment_method || qt.payment_method || 'โอนเงิน');
   set('qt-cust', qt.customer_name || '');
+  set('qt-username', meta.customer_username || qt.customer_username || '');
   set('qt-ref', qt.customer_social || '');
+  set('qt-customer-po', meta.customer_po_no || qt.customer_po_no || '');
   set('qt-contact', qt.customer_contact || '');
   set('qt-phone', qt.customer_phone || '');
   set('qt-contact-position', meta.contact_position || '');
@@ -42789,7 +42854,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.43', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'หมายเหตุเอกสารในออเดอร์ที่แปลงจากใบเสนอราคา แสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา (v3.43)', items:[
+    { v:'3.44', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องทางและข้อมูลใบเสนอราคาให้ตรงกับใบออเดอร์ 100% เพื่อความสะดวกรวดเร็วในการ Convert (v3.44)', items:[
+      '🛒 <b>ฟิลด์ครบครันเทียบเท่าหน้า Order:</b> เพิ่มช่องทางขาย (Channel: Facebook, Shopee, Lazada, LINE, TikTok, Thaimart, Offline, อื่นๆ), ช่องทางชำระเงิน (Payment Method: โอนเงิน, COD, บัตรเครดิต, เงินสด), ชื่อลูกค้า (User) Shopee/Lazada, และเลขที่ PO ของลูกค้า ลงในฟอร์มใบเสนอราคา',
+      '🔄 <b>Seamless 1-to-1 Convert & Import:</b> เมื่อแปลงใบเสนอราคาเป็น Sales Order (หรือเลือกดึงข้อมูลจากใบเสนอราคาในหน้า Order) ระบบจะส่งต่อข้อมูลช่องทางขาย, ช่องทางการชำระเงิน, User ลูกค้า, และเลขที่ PO ไปยัง Sales Order ครบถ้วนอัตโนมัติ 100%',
+      '⚡ <b>เสถียรภาพและระบบความปลอดภัย:</b> แก้ไขข้อผิดพลาดของลูป Convert to Order พร้อมระบบรองรับ Schema Cache ของ Supabase อย่างสมบูรณ์แบบ ไร้ปัญหาคอลัมน์ไม่ตรงกัน'
+    ]},
+    { v:'3.43', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'หมายเหตุเอกสารในออเดอร์ที่แปลงจากใบเสนอราคา แสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา (v3.43)', items:[
       '📋 <b>หมายเหตุเอกสารแสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา:</b> ปรับปรุงระบบแปลงใบเสนอราคาเป็น Sales Order (ทั้ง Convert โดยตรงและดึงจากใบเสนอราคา) ให้ช่อง <code>หมายเหตุเอกสาร (จะพิมพ์ลงในบิล/ใบเสร็จ)</code> บันทึกและแสดงเฉพาะเลขที่อ้างอิงใบเสนอราคา (เช่น <code>QT2026-00006</code>) โดยไม่มีข้อความภาษาอังกฤษ Convert จาก หรือข้อความอื่นปะปน',
       '🔒 <b>แยกข้อมูลหลังบ้านและที่อยู่ออกบิลเป็นสัดส่วน:</b> ข้อมูลหมายเหตุหลังบ้าน (Internal Note) จะถูกเก็บไว้ในช่อง <code>🔒 หมายเหตุหลังบ้าน</code> เท่านั้น ไม่ปรากฏบนเอกสาร/บิลที่พิมพ์ให้ลูกค้า พร้อมรองรับการแสดงผลเลขที่ใบเสนอราคาอัตโนมัติเมื่อเปิดดูรายละเอียดออเดอร์เดิมที่แปลงมาจากใบเสนอราคา'
     ]},
