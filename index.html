@@ -20787,6 +20787,7 @@ async function viewQuote(qtId) {
     }
   }
   const meta = getQuoteMeta(qt);
+  const bank = getQuoteBankSettings(currentShop);
   const empMap={}; (emps||[]).forEach(e=>empMap[e.id]=e.name);
   const el=document.getElementById('qt-detail-content');
   if(!el) return;
@@ -20870,6 +20871,16 @@ async function viewQuote(qtId) {
       '<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">' +
         '<span style="font-weight:700;font-size:14px">ยอดรวมสุทธิ</span>' +
         '<span class="font-mono text-accent" style="font-size:20px;font-weight:700">'+fmtB(grandTotal)+'</span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:10px;border:1.5px solid #16a34a;border-radius:8px;padding:10px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+      '<div>' +
+        '<div style="font-size:12px;font-weight:700;color:#15803d">🏦 บัญชีรับโอนเงิน (Bank Transfer)</div>' +
+        '<div style="font-size:13px;font-weight:700;color:#0f172a">'+escapeHTML(bank.name)+' · ชื่อบัญชี: '+escapeHTML(bank.accountName)+'</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+        '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:2px">เลขที่บัญชี</div>' +
+        '<div style="font-family:\'JetBrains Mono\',Consolas,\'Segoe UI Mono\',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:\'zero\' 1;font-size:22px;font-weight:800;color:#047857;letter-spacing:2.5px;background:#fff;border:1.5px solid #86efac;border-radius:6px;padding:3px 12px;display:inline-block">'+escapeHTML(bank.accountNumber)+'</div>' +
       '</div>' +
     '</div>' +
     (meta.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px"><strong>หมายเหตุเอกสาร:</strong> '+escapeHTML(meta.note)+'</div>':'') +
@@ -21134,7 +21145,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
   const bp=[];
   bp.push('<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">');
   bp.push('<title>ใบเสนอราคา '+(qt.quote_no||'')+'</title>');
-  bp.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
+  bp.push('<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
   bp.push('<'+'style>');
   bp.push('*{box-sizing:border-box;margin:0;padding:0}body{font-family:Sarabun,sans-serif;font-size:13px;color:#111;background:#eaedf2;padding:15px 0;margin:0 auto}');
   bp.push('.qt-page{width:210mm;min-height:297mm;padding:8mm;margin:0 auto 20px;background:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.08);box-sizing:border-box}');
@@ -21163,8 +21174,8 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
   bp.push('.total-row.grand{background:#e8f5f0;font-size:15px;font-weight:700;border-top:2.5px solid #00a882}');
   bp.push('.baht-text{background:#eef0f2;border:1px solid #555;border-top:none;padding:6px 10px;font-size:12px;color:#000}');
   bp.push('.validity{margin-top:10px;padding:7px 10px;background:#f9f9f9;border:1px solid #bbb;border-radius:4px;font-size:12px;color:#333}');
-  bp.push('.bank-box{margin-top:10px;border:1.5px solid #138f2d;border-radius:6px;padding:9px 12px;background:#f3fbf5;display:flex;justify-content:space-between;align-items:center;gap:16px}');
-  bp.push('.bank-title{font-size:13px;font-weight:700;color:#0d6f23;margin-bottom:3px}.bank-name{font-size:12px;font-weight:700;color:#111}.bank-detail{font-size:11.5px;color:#333;line-height:1.65}.bank-account{font-family:monospace;font-size:17px;font-weight:700;color:#0d6f23;letter-spacing:.5px;white-space:nowrap}');
+  bp.push('.bank-box{margin-top:10px;border:2px solid #15803d;border-radius:8px;padding:10px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;gap:16px}');
+  bp.push('.bank-title{font-size:13px;font-weight:700;color:#166534;margin-bottom:3px}.bank-name{font-size:13px;font-weight:700;color:#111}.bank-detail{font-size:12px;color:#333;line-height:1.65}.bank-account{font-family:\'JetBrains Mono\',Consolas,\'Segoe UI Mono\',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:"zero" 1;font-size:24px;font-weight:800;color:#047857;letter-spacing:2.5px;white-space:nowrap;background:#ffffff;border:1.5px solid #86efac;border-radius:6px;padding:3px 12px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,0.05)}');
   bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:24px}');
   bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:26px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;margin-bottom:2px}.sig-image{display:block;max-width:72px;max-height:24px;object-fit:contain}.sig-space{height:26px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:5px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
   bp.push('@media print{body{background:#fff;padding:0;margin:0}.qt-page{width:100%;min-height:281mm;box-shadow:none;padding:0;margin:0;page-break-after:always;break-after:page}.page-border{min-height:281mm}.qt-page:last-child{page-break-after:avoid;break-after:avoid}@page{size:A4 portrait;margin:8mm}}');
@@ -21275,7 +21286,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     // Bank transfer details
     bp.push('<div class="bank-box">');
     bp.push('<div><div class="bank-title">ชำระเงินโดยการโอน / Bank Transfer</div><div class="bank-name">'+escapeHTML(bank.name)+'</div><div class="bank-detail">ชื่อบัญชี / Account Name: <strong>'+escapeHTML(bank.accountName)+'</strong></div></div>');
-    bp.push('<div style="text-align:right"><div style="font-size:10.5px;color:#555">เลขที่บัญชี / Account No.</div><div class="bank-account">'+escapeHTML(bank.accountNumber)+'</div></div>');
+    bp.push('<div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:3px">เลขที่บัญชี / Account No.</div><div class="bank-account">'+escapeHTML(bank.accountNumber)+'</div></div>');
     bp.push('</div>');
 
     // Signatures
@@ -29414,7 +29425,7 @@ async function settings() {
         <div class="form-group"><label>ชื่อบัญชี</label>
           <input type="text" id="s-quote-bank-account-name" value="${escapeHTML(quoteBank.accountName)}" placeholder="ชื่อเจ้าของบัญชี"></div>
         <div class="form-group"><label>เลขที่บัญชี</label>
-          <input type="text" id="s-quote-bank-account-number" value="${escapeHTML(quoteBank.accountNumber)}" inputmode="numeric" placeholder="เลขที่บัญชี"></div>
+          <input type="text" id="s-quote-bank-account-number" value="${escapeHTML(quoteBank.accountNumber)}" inputmode="numeric" placeholder="เลขที่บัญชี" style="font-family:'JetBrains Mono',Consolas,'Segoe UI Mono',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:'zero' 1;font-size:18px;font-weight:700;letter-spacing:1.5px;color:#047857;background:#f0fdf4;border:1.5px solid #86efac;border-radius:6px;padding:6px 10px"></div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:10px">ข้อมูลนี้จะแสดงในใบเสนอราคาที่พิมพ์หลังบันทึก</div>
         <button class="btn btn-primary" onclick="saveQuoteBankSettings()">💾 บันทึกบัญชีธนาคาร</button>
       </div>
