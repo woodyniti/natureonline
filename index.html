@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.49';
-const DISPLAY_APP_VERSION = 'v3.49';
+const CURRENT_APP_VERSION = 'sealthai-v3.50';
+const DISPLAY_APP_VERSION = 'v3.50';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1264,7 +1264,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.49 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.50 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1363,7 +1363,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.49 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.50 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -1388,7 +1388,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
       <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-quick-product')">✕ ปิด</button>
     </div>
 
-    <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:#1e40af">
+    <div id="qp-hint-box" style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:#1e40af">
       💡 สร้างสินค้าเสร็จแล้ว ระบบจะบันทึกลงคลังและ <b>เลือกใส่ในออเดอร์/PO ให้อัตโนมัติทันที</b> โดยไม่ต้องกรอกข้อมูลหน้าเดิมใหม่ค่ะ
     </div>
 
@@ -7567,6 +7567,7 @@ async function loadOrders() {
 
             let stockHtml = '';
             let nameHtml = escapeHTML(it.product_name || p?.name || '');
+            let quickAddBtn = '';
             if (p && p.id) {
               const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
               const itemReqQty = Number(it.qty || 1);
@@ -7581,8 +7582,19 @@ async function loadOrders() {
               const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
               stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
+            } else {
+              const itemPayload = JSON.stringify({
+                order_id: o.id || '',
+                order_no: o.order_no || '',
+                item_id: it.id || '',
+                raw_name: it.product_name || '',
+                sell_price: it.sell_price || 0,
+                cost_per_unit: it.cost_per_unit || 0,
+                qty: it.qty || 1
+              }).replace(/"/g, '&quot;');
+              quickAddBtn = ` <span class="badge" onclick="event.stopPropagation();openQuickProductFromOrderItem(this)" data-item="${itemPayload}" style="cursor:pointer;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;transition:all 0.15s;vertical-align:middle" title="สินค้านี้ยังไม่ได้อยู่ในฐานข้อมูลสินค้า (คลิกเพื่อสร้างเข้าคลังและเชื่อมโยงกับออเดอร์นี้)" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">➕ เพิ่มเข้าฐานข้อมูล</span>`;
             }
-            return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}${backorderTag}</div>`;
+            return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${quickAddBtn}${poTag}${backorderTag}</div>`;
           }).join('') || '-';
 
           const delDate = getOrderDeliveryDate(o);
@@ -7724,6 +7736,7 @@ async function loadOrders() {
                 : '');
           let stockHtml = '';
           let nameHtml = escapeHTML(it.product_name || p?.name || '');
+          let quickAddBtn = '';
           if (p && p.id) {
             const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
             const itemReqQty = Number(it.qty || 1);
@@ -7738,8 +7751,19 @@ async function loadOrders() {
             const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
             stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
+          } else {
+            const itemPayload = JSON.stringify({
+              order_id: o.id || '',
+              order_no: o.order_no || '',
+              item_id: it.id || '',
+              raw_name: it.product_name || '',
+              sell_price: it.sell_price || 0,
+              cost_per_unit: it.cost_per_unit || 0,
+              qty: it.qty || 1
+            }).replace(/"/g, '&quot;');
+            quickAddBtn = ` <span class="badge" onclick="event.stopPropagation();openQuickProductFromOrderItem(this)" data-item="${itemPayload}" style="cursor:pointer;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;vertical-align:middle" title="สินค้านี้ยังไม่ได้อยู่ในฐานข้อมูลสินค้า (คลิกเพื่อสร้างเข้าคลังและเชื่อมโยงกับออเดอร์นี้)">➕ เพิ่มเข้าฐานข้อมูล</span>`;
           }
-          return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}${backorderTag}</div>`;
+          return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${quickAddBtn}${poTag}${backorderTag}</div>`;
         }).join('') || '-';
         return `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${prodHtml}</div>` +
           (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => {
@@ -9434,6 +9458,24 @@ function renderEditItems() {
           📜 Movement
         </button>`;
       tdProd.appendChild(stockHint);
+    } else {
+      const unlinkedHint = document.createElement('div');
+      unlinkedHint.style.cssText = 'margin-top:4px;display:flex;align-items:center;gap:6px;flex-wrap:wrap';
+      const orderObj = window._editingOrderForGP;
+      const itemPayload = JSON.stringify({
+        order_id: orderObj?.id || '',
+        order_no: orderObj?.order_no || '',
+        item_id: it.id || '',
+        raw_name: it.product_name || '',
+        sell_price: it.sell_price || 0,
+        cost_per_unit: it.cost_per_unit || 0,
+        qty: it.qty || 1
+      }).replace(/"/g, '&quot;');
+      unlinkedHint.innerHTML = `
+        <span class="badge" onclick="event.stopPropagation();openQuickProductFromOrderItem(this)" data-item="${itemPayload}" style="cursor:pointer;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px;transition:all 0.15s" title="สินค้านี้ยังไม่ได้อยู่ในฐานข้อมูลสินค้า (คลิกเพื่อสร้างเข้าคลังและเชื่อมโยงกับออเดอร์นี้ทันที)">
+          ➕ เพิ่มเข้าฐานข้อมูลสินค้า
+        </span>`;
+      tdProd.appendChild(unlinkedHint);
     }
     const receiptLabel = document.createElement('label');
     receiptLabel.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 7px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:11px;font-weight:700;color:#334155;cursor:pointer';
@@ -44228,6 +44270,15 @@ function calcQPConvertedPreview() {
 async function openQuickProductModal(contextType = 'order', rowIdx = -1, initialQuery = '') {
   _quickProdContext = { type: contextType, rowIdx: rowIdx };
 
+  // Reset hint box to default if not order_item_link
+  const hintBox = document.getElementById('qp-hint-box');
+  if (hintBox && contextType !== 'order_item_link') {
+    hintBox.innerHTML = '💡 สร้างสินค้าเสร็จแล้ว ระบบจะบันทึกลงคลังและ <b>เลือกใส่ในออเดอร์/PO ให้อัตโนมัติทันที</b> โดยไม่ต้องกรอกข้อมูลหน้าเดิมใหม่ค่ะ';
+    hintBox.style.background = '#f0f7ff';
+    hintBox.style.border = '1px solid #bfdbfe';
+    hintBox.style.color = '#1e40af';
+  }
+
   // Reset form elements
   const nameEl = document.getElementById('qp-name');
   const skuEl = document.getElementById('qp-sku');
@@ -44314,6 +44365,61 @@ async function openQuickProductModal(contextType = 'order', rowIdx = -1, initial
   }, 150);
 }
 
+// ── Open Quick Product Master Modal from Order Item ──
+async function openQuickProductFromOrderItem(triggerEl) {
+  let data = null;
+  if (typeof triggerEl === 'string') {
+    try { data = JSON.parse(triggerEl); } catch(e){}
+  } else if (triggerEl && triggerEl.getAttribute) {
+    const raw = triggerEl.getAttribute('data-item');
+    try { data = JSON.parse(raw); } catch(e){}
+  } else if (triggerEl && typeof triggerEl === 'object') {
+    data = triggerEl;
+  }
+  if (!data) return;
+
+  const rawName = (data.raw_name || '').trim();
+  // Clean product name: remove bracketed notes like [รอสินค้า 15-20 วัน], [SO:...], etc.
+  const cleanName = rawName
+    .replace(/\[[^\]]*\]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  await openQuickProductModal('order_item_link', -1, cleanName || rawName);
+
+  // Store complete linking context
+  _quickProdContext = {
+    type: 'order_item_link',
+    order_id: data.order_id || '',
+    order_no: data.order_no || '',
+    item_id: data.item_id || '',
+    raw_product_name: rawName,
+    clean_product_name: cleanName || rawName,
+    sell_price: data.sell_price,
+    cost_per_unit: data.cost_per_unit,
+    qty: data.qty
+  };
+
+  // Pre-fill prices from order item if available
+  const sellEl = document.getElementById('qp-sell');
+  const costEl = document.getElementById('qp-cost');
+  if (sellEl && data.sell_price && Number(data.sell_price) > 0) {
+    sellEl.value = data.sell_price;
+  }
+  if (costEl && data.cost_per_unit && Number(data.cost_per_unit) > 0) {
+    costEl.value = data.cost_per_unit;
+  }
+
+  // Customize the hint banner in modal
+  const hintBox = document.getElementById('qp-hint-box');
+  if (hintBox) {
+    hintBox.innerHTML = `💡 ดึงข้อมูลสินค้าจากออเดอร์ <b>${escapeHTML(data.order_no || 'ที่เลือก')}</b> เรียบร้อยค่ะ ตรวจสอบและระบุข้อมูลเพิ่มเติม (เช่น รหัส SKU, หมวดหมู่, สต๊อกตั้งต้น) เมื่อบันทึกแล้วระบบจะผูกสินค้าเข้ากับออเดอร์นี้และแสดงยอดสต๊อกทันทีค่ะ`;
+    hintBox.style.background = '#ecfdf5';
+    hintBox.style.border = '1px solid #a7f3d0';
+    hintBox.style.color = '#065f46';
+  }
+}
+
 async function saveQuickProduct() {
   const name = (document.getElementById('qp-name')?.value || '').trim();
   if (!name) { toast('กรุณาระบุชื่อสินค้าค่ะ', 'error'); return; }
@@ -44388,9 +44494,12 @@ async function saveQuickProduct() {
     }
 
     closeModal('modal-quick-product');
-    toast('🎉 สร้างสินค้า "' + escapeHTML(newProd.name) + '" เข้าคลังและใส่ในฟอร์มเรียบร้อยแล้วค่ะ ✓', 'success');
-
-    const ctx = _quickProdContext;
+    const ctx = _quickProdContext || {};
+    if (ctx.type === 'order_item_link') {
+      toast('🎉 สร้างสินค้า "' + escapeHTML(newProd.name) + '" เข้าคลังและเชื่อมโยงกับออเดอร์เรียบร้อยแล้วค่ะ ✓', 'success');
+    } else {
+      toast('🎉 สร้างสินค้า "' + escapeHTML(newProd.name) + '" เข้าคลังและใส่ในฟอร์มเรียบร้อยแล้วค่ะ ✓', 'success');
+    }
 
     if (ctx.type === 'order') {
       if (ctx.rowIdx >= 0 && orderItems[ctx.rowIdx]) {
@@ -44479,6 +44588,56 @@ async function saveQuickProduct() {
       }
       renderPOItems();
       if (typeof calcPOTotal === 'function') calcPOTotal();
+    } else if (ctx.type === 'order_item_link') {
+      try {
+        let updateData = {
+          product_id: newProd.id,
+          sku: newProd.sku || null
+        };
+        let updateQuery = sb.from('order_items').update(updateData);
+        if (ctx.item_id) {
+          updateQuery = updateQuery.eq('id', ctx.item_id);
+        } else if (ctx.order_id && ctx.raw_product_name) {
+          updateQuery = updateQuery.eq('order_id', ctx.order_id).eq('product_name', ctx.raw_product_name);
+        }
+        const { error: linkErr } = await updateQuery;
+        if (linkErr) console.warn('Link order_item warning:', linkErr);
+
+        // Link stock movements for this order if any
+        if (ctx.order_no) {
+          await sb.from('stock_movements')
+            .update({ product_id: newProd.id })
+            .eq('shop_id', currentShop.id)
+            .like('note', `%${ctx.order_no}%`)
+            .is('product_id', null);
+        }
+
+        // Link purchase_order_items if any had the same product name
+        if (ctx.raw_product_name) {
+          await sb.from('purchase_order_items')
+            .update({ product_id: newProd.id })
+            .eq('product_name', ctx.raw_product_name)
+            .is('product_id', null);
+        }
+      } catch (e) {
+        console.warn('Error linking order item to new product:', e);
+      }
+
+      // If editItems is currently active in Order Detail modal
+      if (typeof editItems !== 'undefined' && Array.isArray(editItems)) {
+        const matchedEdit = editItems.find(x => (ctx.item_id && x.id === ctx.item_id) || (x.product_name && x.product_name === ctx.raw_product_name));
+        if (matchedEdit) {
+          matchedEdit.product_id = newProd.id;
+          matchedEdit.sku = newProd.sku || '';
+          matchedEdit.product_name = newProd.name;
+          if (typeof renderEditItems === 'function') renderEditItems();
+        }
+      }
+
+      // Reload orders to reflect the newly linked product immediately
+      if (typeof loadOrders === 'function') {
+        loadOrders();
+      }
     }
 
   } catch (err) {
@@ -44512,7 +44671,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.49', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบตรวจสอบสต๊อกก่อนจัดส่ง (Stock Validation Guard), จัดส่งบางส่วน (Partial Shipment) & อนุมัติปิดเอกสารตามมาตรฐาน SAP Business One (v3.49)', items:[
+    { v:'3.50', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มสินค้าเข้าฐานข้อมูลสินค้าด่วนจากรายการในหน้าออเดอร์ (Quick Add Product Master from Order Item) (v3.50)', items:[
+      '➕ <b>ปุ่มเพิ่มเข้าฐานข้อมูลสินค้าด่วน (1-Click Add to Database):</b> ในหน้ารายการออเดอร์ (ทั้งตาราง Desktop, การ์ด Mobile และหน้าต่างดู/แก้ไขออเดอร์) รายการสินค้าที่ยังไม่ได้ถูกสร้างในฐานข้อมูลสินค้า (Unlinked Products) จะแสดงปุ่มลัด <code>➕ เพิ่มเข้าฐานข้อมูล</code> ชัดเจน',
+      '⚡ <b>ดึงข้อมูลสินค้าจากหน้ารายการขายอัตโนมัติ (Auto-Extract Specs & Prices):</b> เมื่อกดปุ่ม ระบบจะดึงชื่อสินค้ามาตัดคำบอกระยะเวลา/แท็กสั่งพิเศษ (เช่น <code>[รอสินค้า 15-20 วัน]</code>) อัตโนมัติ พร้อมตรวจจับขนาด (ID × OD × W), ประเภทซีล (TC/SC/ฯลฯ), ชนิดยาง/เนื้อวัสดุ (VITON/NBR/PU/ฯลฯ), หมวดหมู่สินค้า, ราคาขายต่อชิ้น และต้นทุน เพื่อกรอกลงในฟอร์มสร้างสินค้าให้อัตโนมัติทันที',
+      '🔄 <b>บันทึกและเชื่อมโยงเข้าออเดอร์ทันที (Instant Master Link & Stock Sync):</b> ผู้ใช้สามารถตรวจสอบ แก้ไข หรือเพิ่มข้อมูลที่ยังไม่มี (เช่น SKU, Part No, หมวดหมู่, สต๊อกตั้งต้น) ได้ตามต้องการ เมื่อกดบันทึก ระบบจะสร้างสินค้าเข้าคลัง และผูก <code>product_id</code> เข้ากับออเดอร์นี้โดยอัตโนมัติ พร้อมรีเฟรชหน้าออเดอร์ให้แสดงรหัส SKU, ป้ายสต๊อกคงเหลือ และลิงก์ดูประวัติ Inventory Movement ทันที'
+    ]},
+    { v:'3.49', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ระบบตรวจสอบสต๊อกก่อนจัดส่ง (Stock Validation Guard), จัดส่งบางส่วน (Partial Shipment) & อนุมัติปิดเอกสารตามมาตรฐาน SAP Business One (v3.49)', items:[
       '🚫 <b>ระบบบล็อกสถานะ "จัดส่งแล้ว" เมื่อสต๊อกไม่พอ (Stock Validation Guard):</b> ในหน้าออเดอร์ หากสินค้าในคลังมีน้อยกว่าจำนวนที่ต้องจัดส่ง ระบบจะบล็อกไม่อนุญาตให้เปลี่ยนสถานะเป็น "จัดส่งแล้ว" โดยเด็ดขาด ทั้งจาก Dropdown ในตารางและหน้าต่างแก้ไข เพื่อป้องกันสต๊อกติดลบและข้อมูลไม่ตรงกับความเป็นจริง',
       '📦 <b>การจัดส่งแบบบางส่วนและติดตามยอดค้างส่ง (Partial Shipment & Backorders):</b> เพิ่มสถานะ <code>⚠️ จัดส่งบางส่วน (ค้างส่ง)</code> พร้อมหน้าต่างให้ระบุจำนวนที่จัดส่งรอบนี้ตามที่มีของจริงในคลัง ส่วนที่เหลือจะถูกคงยอดไว้และติดป้ายเตือน <code>⚠️ ค้างส่ง X ชิ้น</code> ไว้อย่างชัดเจนทั้งในระดับสินค้าและหัวบิล โดยการตัดสต๊อกจะตัดเฉพาะจำนวนชิ้นที่ส่งจริงเท่านั้น',
       '🔒 <b>ระบบอนุมัติปิดเอกสารเมื่อลูกค้ายอมรับสินค้าบางส่วนตามมาตรฐาน SAP Business One (SAP B1 Close Document Approval):</b> ในกรณีที่ลูกค้ายินยอมรับสินค้าเฉพาะเท่าที่มีและยกเลิกยอดค้างส่งที่เหลือ ระบบเปิดให้ทำเรื่องขออนุมัติปิดเอกสาร (Close Document) เหมือนใน SAP Business One โดยบันทึกชื่อผู้อนุมัติ, วันเวลา, เหตุผลในการปิดเอกสาร พร้อมทางเลือกปรับยอดเงินในบิลให้ตรงกับของที่ส่งจริงและบันทึกประวัติแก้ไขราคา (Audit Log) ครบถ้วน 100%'
