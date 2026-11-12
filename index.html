@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.48';
-const DISPLAY_APP_VERSION = 'v3.48';
+const CURRENT_APP_VERSION = 'sealthai-v3.49';
+const DISPLAY_APP_VERSION = 'v3.49';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1148,6 +1148,7 @@ th.sort-desc::after { content:' ▼';opacity:0.8; }
 .ds-packed    { background:#faeeda;color:#854f0b; }
 .ds-shipped   { background:#eeedfe;color:#534ab7; }
 .ds-delivered { background:#eaf3de;color:#3b6d11; }
+.ds-closed    { background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-weight:700; }
 .ds-cancelled { background:#fcebeb;color:#a32d2d; }
 /* ── Status stepper ── */
 .status-stepper { display:flex;align-items:center;gap:0;margin:16px 0 12px; }
@@ -1263,7 +1264,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.48 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.49 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1362,7 +1363,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.48 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.49)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.49 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2382,12 +2383,19 @@ function getOrderInternalNote(order) {
   return '';
 }
 
+const FULFILLMENT_TAG_RE = /\[\[ORDER_FULFILLMENT:([\s\S]*?)\]\]/i;
+const FULFILLMENT_TAG_GLOBAL_RE = /\[\[ORDER_FULFILLMENT:[\s\S]*?\]\]/gi;
+const SAP_B1_CLOSE_TAG_RE = /\[\[SAP_B1_CLOSE:([\s\S]*?)\]\]/i;
+const SAP_B1_CLOSE_TAG_GLOBAL_RE = /\[\[SAP_B1_CLOSE:[\s\S]*?\]\]/gi;
+
 function cleanOrderNote(note) {
   let s = String(note || '')
     .replace(INTERNAL_NOTE_TAG_GLOBAL_RE, '')
     .replace(INTERNAL_NOTE_TEXT_GLOBAL_RE, '')
     .replace(DELIVERY_DATE_TAG_GLOBAL_RE, '')
     .replace(DELIVERY_DATE_TEXT_GLOBAL_RE, '')
+    .replace(FULFILLMENT_TAG_GLOBAL_RE, '')
+    .replace(SAP_B1_CLOSE_TAG_GLOBAL_RE, '')
     .replace(SHIPPING_FEE_NOTE_RE, '')
     .replace(COMPANY_NOTE_GLOBAL_RE, '')
     .replace(/\[(?:บริษัท\/นิติบุคคล|Tax ID|ที่อยู่ออกบิล|หมายเหตุภายใน|PO ลูกค้า|ค่าจัดส่ง|วันที่ส่งสินค้า|วันส่งสินค้า)\]:[^\n]*/gi, '')
@@ -2416,18 +2424,22 @@ function getOrderCompanyName(order, customer = null) {
   return '';
 }
 
-function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null, deliveryDate = null) {
+function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null, deliveryDate = null, fulfillmentRaw = null, sapCloseRaw = null) {
   let clean = cleanOrderNote(note);
   const comp = (companyName || '').trim();
   const fee = Math.max(0, Number(shippingFee) || 0);
   const inote = internalNote !== null ? (internalNote || '').trim() : getOrderInternalNote({ note });
   const dDate = (deliveryDate || '').trim();
+  const fTag = fulfillmentRaw !== null ? (fulfillmentRaw || '') : (String(note || '').match(FULFILLMENT_TAG_RE)?.[0] || '');
+  const sTag = sapCloseRaw !== null ? (sapCloseRaw || '') : (String(note || '').match(SAP_B1_CLOSE_TAG_RE)?.[0] || '');
   const parts = [];
   if (clean) parts.push(clean);
   if (comp) parts.push(`[บริษัท: ${comp}]`);
   if (fee > 0) parts.push(`[[SHIPPING_FEE:${fee}]]`);
   if (inote) parts.push(`[[INTERNAL_NOTE:${encodeURIComponent(inote)}]]`);
   if (dDate) parts.push(`[[DELIVERY_DATE:${dDate}]]`);
+  if (fTag) parts.push(fTag.startsWith('[[') ? fTag : `[[ORDER_FULFILLMENT:${encodeURIComponent(fTag)}]]`);
+  if (sTag) parts.push(sTag.startsWith('[[') ? sTag : `[[SAP_B1_CLOSE:${encodeURIComponent(sTag)}]]`);
   return parts.join('\n');
 }
 function getOrderShippingFee(order) {
@@ -3018,6 +3030,7 @@ const DOC_STATUSES = [
   { key:'packed',    label:'Packed',     th:'แพ็คแล้ว' },
   { key:'shipped',   label:'Shipped',    th:'จัดส่งแล้ว' },
   { key:'delivered', label:'Delivered',  th:'ส่งถึงแล้ว' },
+  { key:'closed',    label:'Closed',     th:'🔒 ปิดแล้ว (Close)' },
   { key:'cancelled', label:'Cancelled',  th:'ยกเลิก' },
 ];
 
@@ -3029,18 +3042,20 @@ function docStatusBadge(status) {
 function docStatusStepper(currentStatus) {
   const flow = ['draft','confirmed','packed','shipped','delivered'];
   const isCancelled = currentStatus === 'cancelled';
+  const isClosed = currentStatus === 'closed';
   const curIdx = flow.indexOf(currentStatus);
   return flow.map((key, i) => {
     const s = DOC_STATUSES.find(x=>x.key===key);
     let cls = '';
     if (isCancelled) cls = '';
+    else if (isClosed) cls = 'done';
     else if (i < curIdx)  cls = 'done';
     else if (i === curIdx) cls = 'active';
     return '<div class="ss-step '+cls+'">' +
-      '<div class="ss-dot">'+(i < curIdx ? '✓' : (i+1))+'</div>' +
+      '<div class="ss-dot">'+(i < curIdx || isClosed ? '✓' : (i+1))+'</div>' +
       '<div class="ss-label">'+s.th+'</div>' +
       '</div>';
-  }).join('') + (isCancelled ? '<div class="ss-step cancelled"><div class="ss-dot">✕</div><div class="ss-label">ยกเลิก</div></div>' : '');
+  }).join('') + (isClosed ? '<div class="ss-step active"><div class="ss-dot" style="background:#475569;border-color:#475569;color:#fff">🔒</div><div class="ss-label" style="color:#334155;font-weight:700">ปิดแล้ว (Close)</div></div>' : '') + (isCancelled ? '<div class="ss-step cancelled"><div class="ss-dot">✕</div><div class="ss-label">ยกเลิก</div></div>' : '');
 }
 
 async function updateDocStatus(orderId, newStatus) {
@@ -3064,8 +3079,14 @@ function channelBadge(ch, withOrderLogo=false) {
 }
 
 function shippingBadge(s) {
-  // รอจัดส่ง=เหลือง, จัดส่งแล้ว=เขียว, ส่งถึงแล้ว(สำเร็จ)=ฟ้า, ยกเลิก=แดง
-  const map = { pending:['badge-amber','รอจัดส่ง'], shipped:['badge-green','จัดส่งแล้ว'], delivered:['badge-blue','ส่งถึงแล้ว'], cancelled:['badge-red','ยกเลิก'] };
+  // รอจัดส่ง=เหลือง, จัดส่งแล้ว=เขียว, ส่งถึงแล้ว(สำเร็จ)=ฟ้า, ยกเลิก=แดง, จัดส่งบางส่วน=ส้ม/เหลือง
+  const map = {
+    pending:          ['badge-amber','รอจัดส่ง'],
+    partially_shipped:['badge-amber','⚠️ จัดส่งบางส่วน (ค้างส่ง)'],
+    shipped:          ['badge-green','จัดส่งแล้ว'],
+    delivered:        ['badge-blue','ส่งถึงแล้ว'],
+    cancelled:        ['badge-red','ยกเลิก']
+  };
   const b = map[s] || ['badge-gray', s];
   return `<span class="badge ${b[0]}">${b[1]}</span>`;
 }
@@ -3073,10 +3094,11 @@ function shippingBadge(s) {
 // สีพื้นหลัง select สถานะจัดส่งในตารางออเดอร์ (ให้ติดตามงานค้างส่งง่าย)
 function shipSelStyle(s) {
   const m = {
-    pending:  'background:#fef9c3;color:#854d0e;border-color:#eab308',  // เหลือง
-    shipped:  'background:#dcfce7;color:#166534;border-color:#22c55e',  // เขียว
-    delivered:'background:#dbeafe;color:#1e40af;border-color:#3b82f6',  // ฟ้า
-    cancelled:'background:#fee2e2;color:#991b1b;border-color:#ef4444'   // แดง
+    pending:           'background:#fef9c3;color:#854d0e;border-color:#eab308',  // เหลือง
+    partially_shipped: 'background:#fef3c7;color:#92400e;border-color:#f59e0b;font-weight:700', // ส้ม/อำพัน
+    shipped:           'background:#dcfce7;color:#166534;border-color:#22c55e',  // เขียว
+    delivered:         'background:#dbeafe;color:#1e40af;border-color:#3b82f6',  // ฟ้า
+    cancelled:         'background:#fee2e2;color:#991b1b;border-color:#ef4444'   // แดง
   };
   return m[s] || 'background:#fff;color:var(--text);border-color:var(--border2)';
 }
@@ -7517,7 +7539,9 @@ async function loadOrders() {
             );
           };
 
-          const isOrderPending = !cancelled && (!o.shipping_status || o.shipping_status === 'pending');
+          const isOrderPending = !cancelled && (!o.shipping_status || o.shipping_status === 'pending' || o.shipping_status === 'partially_shipped');
+          const fulfillmentData = (typeof getOrderFulfillmentData === 'function') ? getOrderFulfillmentData(o) : null;
+          const sapCloseData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(o) : null;
           const products = (o.order_items||[]).map(it => {
             const qtyTxt = Number(it.qty) > 1 ? `<b style="color:var(--text);font-family:var(--mono)">${it.qty}×</b> ` : '';
             const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
@@ -7532,6 +7556,15 @@ async function loadOrders() {
                 )
               : '';
             
+            const itemFulfill = fulfillmentData?.items?.find(f => (it.product_id && f.product_id === it.product_id) || (f.sku && (f.sku === it.sku || f.sku === p?.sku)));
+            const backorderQty = Number(itemFulfill?.backorder_qty || 0);
+            const shippedQty = Number(itemFulfill?.shipped_qty || 0);
+            const backorderTag = (backorderQty > 0 && o.doc_status !== 'closed')
+              ? ` <span class="badge" onclick="event.stopPropagation();openOrderFulfillmentModal('${o.id}')" style="cursor:pointer;background:#fef2f2;color:#b91c1c;border:1px solid #f87171;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px" title="ยอดค้างส่ง ${backorderQty} ชิ้น (จัดส่งแล้ว ${shippedQty} ชิ้น) คลิกเพื่อจัดการ">⚠️ ค้างส่ง ${backorderQty} ชิ้น</span>`
+              : ((shippedQty > 0 && o.doc_status === 'closed')
+                  ? ` <span class="badge" onclick="event.stopPropagation();openOrderFulfillmentModal('${o.id}')" style="cursor:pointer;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px" title="ปิดเอกสารแบบ SAP B1 แล้ว (ส่งจริง ${shippedQty} ชิ้น)">🔒 ส่งตามรับ ${shippedQty} ชิ้น</span>`
+                  : '');
+
             let stockHtml = '';
             let nameHtml = escapeHTML(it.product_name || p?.name || '');
             if (p && p.id) {
@@ -7549,13 +7582,20 @@ async function loadOrders() {
               stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
             }
-            return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}</div>`;
+            return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}${backorderTag}</div>`;
           }).join('') || '-';
 
           const delDate = getOrderDeliveryDate(o);
           const delBadge = delDate ? `<div style="margin-top:2px"><span class="badge" style="background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;display:inline-flex;align-items:center;gap:3px" title="วันที่ส่งสินค้า (Delivery Date)">🚚 ส่ง: ${escapeHTML(delDate)}</span></div>` : '';
           const pLogCount = typeof getOrderPriceChangeCount === 'function' ? getOrderPriceChangeCount(o.id) : 0;
           const pLogBadge = pLogCount > 0 ? `<div style="margin-top:2px"><span class="badge" onclick="event.stopPropagation();openOrderPriceHistoryModal('${o.id}')" style="cursor:pointer;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;display:inline-flex;align-items:center;gap:3px" title="คลิกดูประวัติการเปลี่ยนแปลงราคาในบิล (${pLogCount} ครั้ง)">📝 แก้ไขราคา (${pLogCount})</span></div>` : '';
+          const boTotal = fulfillmentData?.total_backorder || 0;
+          const boBadge = (boTotal > 0 && o.doc_status !== 'closed')
+            ? `<div style="margin-top:2px"><span class="badge" onclick="event.stopPropagation();openOrderFulfillmentModal('${o.id}')" style="cursor:pointer;background:#fffbeb;color:#92400e;border:1px solid #fde68a;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;display:inline-flex;align-items:center;gap:3px" title="ออเดอร์นี้มีสินค้าค้างส่งรวม ${boTotal} ชิ้น (คลิกเพื่อจัดการ / ปิดเอกสาร)">⚠️ ค้างส่ง ${boTotal} ชิ้น ➔</span></div>`
+            : '';
+          const sapBadge = (o.doc_status === 'closed' || sapCloseData)
+            ? `<div style="margin-top:2px"><span class="badge ds-closed" onclick="event.stopPropagation();openOrderFulfillmentModal('${o.id}')" style="cursor:pointer;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;display:inline-flex;align-items:center;gap:3px" title="อนุมัติปิดเอกสารแบบ SAP B1 แล้ว โดย: ${escapeHTML(sapCloseData?.approved_by || 'Admin')}">🔒 ปิดเอกสาร (SAP B1)</span></div>`
+            : '';
 
           return `<tr>
           <td style="text-align:center" onclick="event.stopPropagation()">
@@ -7568,6 +7608,8 @@ async function loadOrders() {
             <div style="font-weight:600">${o.order_date||'-'}</div>
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
             ${delBadge}
+            ${boBadge}
+            ${sapBadge}
             ${pLogBadge}
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
             ${shopeeReconciliationBadge(o)}
@@ -7609,7 +7651,7 @@ async function loadOrders() {
             <div style="margin-bottom:5px">${docStatusBadge(o.doc_status||'draft')}</div>
             <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value,this)"
               style="border:1px solid;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;font-weight:600;${shipSelStyle(o.shipping_status)}">
-              ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
+              ${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',partially_shipped:'⚠️ จัดส่งบางส่วน (ค้างส่ง)',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
             </select>
           </td>
           <td class="col-actions" style="white-space:nowrap">
@@ -7657,7 +7699,9 @@ async function loadOrders() {
           (it.product_name && poi.clean_product_name && it.product_name.trim().toLowerCase() === poi.clean_product_name.toLowerCase()) ||
           (it.product_name && poi.raw_product_name && poi.raw_product_name.toLowerCase().includes(it.product_name.trim().toLowerCase()))
         );
-        const isOrderPending = !isOrderCancelled(o) && (!o.shipping_status || o.shipping_status === 'pending');
+        const isOrderPending = !isOrderCancelled(o) && (!o.shipping_status || o.shipping_status === 'pending' || o.shipping_status === 'partially_shipped');
+        const fulfillmentData = (typeof getOrderFulfillmentData === 'function') ? getOrderFulfillmentData(o) : null;
+        const sapCloseData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(o) : null;
         const prodHtml = (o.order_items||[]).map(it => {
           const qtyTxt = Number(it.qty) > 1 ? `<b style="font-family:var(--mono)">${it.qty}×</b> ` : '';
           const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
@@ -7670,6 +7714,14 @@ async function loadOrders() {
                 ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700" title="รับของเข้าสต๊อกแล้ว">✓ PO รับแล้ว</span>'
                 : ' <span style="background:#f0fdf4;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700">🛒 PO</span>')
             : '';
+          const itemFulfill = fulfillmentData?.items?.find(f => (it.product_id && f.product_id === it.product_id) || (f.sku && (f.sku === it.sku || f.sku === p?.sku)));
+          const backorderQty = Number(itemFulfill?.backorder_qty || 0);
+          const shippedQty = Number(itemFulfill?.shipped_qty || 0);
+          const backorderTag = (backorderQty > 0 && o.doc_status !== 'closed')
+            ? ` <span class="badge" onclick="event.stopPropagation();openOrderFulfillmentModal('${o.id}')" style="cursor:pointer;background:#fef2f2;color:#b91c1c;border:1px solid #f87171;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px" title="ยอดค้างส่ง ${backorderQty} ชิ้น (จัดส่งแล้ว ${shippedQty} ชิ้น)">⚠️ ค้างส่ง ${backorderQty} ชิ้น</span>`
+            : ((shippedQty > 0 && o.doc_status === 'closed')
+                ? ` <span class="badge" onclick="event.stopPropagation();openOrderFulfillmentModal('${o.id}')" style="cursor:pointer;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px" title="ปิดเอกสารแบบ SAP B1 แล้ว">🔒 ส่งตามรับ ${shippedQty} ชิ้น</span>`
+                : '');
           let stockHtml = '';
           let nameHtml = escapeHTML(it.product_name || p?.name || '');
           if (p && p.id) {
@@ -7687,7 +7739,7 @@ async function loadOrders() {
             stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
           }
-          return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}</div>`;
+          return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}${backorderTag}</div>`;
         }).join('') || '-';
         return `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${prodHtml}</div>` +
           (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => {
@@ -7721,7 +7773,7 @@ async function loadOrders() {
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:11px;padding:4px 6px">🏷️ สติกเกอร์สินค้า</button>
           <select class="status-sel" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value,this)"
             style="border:1px solid;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;${shipSelStyle(o.shipping_status)}">
-            ${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
+            ${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',partially_shipped:'⚠️ จัดส่งบางส่วน (ค้างส่ง)',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -7777,12 +7829,43 @@ function clearOrdFilter() {
 }
 
 async function quickUpdateStatus(orderId, status, selEl) {
-  const _lbl = {pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'};
-  // ดึงสถานะเดิม + รายการสินค้า เพื่อจัดการสต๊อกเมื่อ ยกเลิก ↔ กลับมาใช้งาน
+  const _lbl = {
+    pending:           'รอจัดส่ง',
+    partially_shipped: '⚠️ จัดส่งบางส่วน (ค้างส่ง)',
+    shipped:           'จัดส่งแล้ว',
+    delivered:         'ส่งถึงแล้ว',
+    cancelled:         'ยกเลิก'
+  };
+
+  // ดึงสถานะเดิม + รายการสินค้า
   const { data: ord } = await sb.from('orders')
-    .select('order_no,order_date,shipping_status,doc_status,order_items(product_id,qty,cost_per_unit)')
+    .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
     .eq('id', orderId).single();
   const oldStatus = ord?.shipping_status;
+
+  // ถ้าเลือกสถานะ "จัดส่งบางส่วน (ค้างส่ง)" ให้เปิดหน้าต่างจัดส่งบางส่วนทันที
+  if (status === 'partially_shipped') {
+    if (selEl && oldStatus != null) selEl.value = oldStatus;
+    if (typeof openOrderFulfillmentModal === 'function') {
+      openOrderFulfillmentModal(orderId, 'partially_shipped');
+    }
+    return;
+  }
+
+  // ── Stock Validation Guard: ห้ามเปลี่ยนเป็น "จัดส่งแล้ว" ถ้าสต๊อกไม่พอ (เว้นแต่ปิดเอกสารแล้ว) ──
+  if ((status === 'shipped' || status === 'delivered') && ord?.doc_status !== 'closed') {
+    if (typeof checkOrderStockSufficiency === 'function') {
+      const stockCheck = await checkOrderStockSufficiency(orderId, ord);
+      if (!stockCheck.isSufficient) {
+        if (selEl && oldStatus != null) selEl.value = oldStatus;
+        toast('⚠️ ไม่สามารถเปลี่ยนสถานะเป็น "จัดส่งแล้ว" ได้ เนื่องจากสินค้าในคลังไม่พอส่ง (ขาดรวม ' + stockCheck.totalShortfall + ' ชิ้น)', 'error');
+        if (typeof openOrderFulfillmentModal === 'function') {
+          openOrderFulfillmentModal(orderId, status, stockCheck);
+        }
+        return;
+      }
+    }
+  }
 
   // ── ยืนยันก่อนเปลี่ยน (กันกดผิด) ──
   let _msg = 'เปลี่ยนสถานะจัดส่งเป็น "' + (_lbl[status]||status) + '"?';
@@ -8348,7 +8431,7 @@ function searchOrderProduct(rowIdx, q) {
 
     // Quick Add Button inside dropdown
     const quickAddHtml = `
-      <div onclick="openQuickProductModal('order', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+      <div onclick="openQuickProductModal('order', ${rowIdx}, '${escapeHTML(ql)}'); const _d=document.getElementById('${ddid}'); if(_d)_d.style.display='none'; event.stopPropagation();"
         style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
         onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
         <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
@@ -9210,7 +9293,7 @@ function searchEditProd(rowIdx, q) {
 
     // Quick Add Button inside dropdown
     const quickAddHtml = `
-      <div onclick="openQuickProductModal('edit_order', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+      <div onclick="openQuickProductModal('edit_order', ${rowIdx}, '${escapeHTML(ql)}'); const _d=document.getElementById('${ddid}'); if(_d)_d.style.display='none'; event.stopPropagation();"
         style="padding:10px 12px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 8px 8px"
         onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
         <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง</span>
@@ -9602,7 +9685,7 @@ async function viewOrder(orderId) {
   const _netProfit = _orderProfitEff - _gpFee;
   // สินค้าที่ยังไม่มีต้นทุนเลย (ทั้ง snapshot และ current_cost = 0) → เป็นเหตุให้กำไรดูเป็น 100%
   const _noCostItems = editItems.filter(it => it.product_id && Number(it.qty||0) > 0 && _effCost(it) <= 0);
-  const statusLabels = {pending:'รอจัดส่ง',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'};
+  const statusLabels = {pending:'รอจัดส่ง',partially_shipped:'⚠️ จัดส่งบางส่วน (ค้างส่ง)',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'};
   const iStyle = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box';
   const sStyle = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px';
 
@@ -9614,6 +9697,30 @@ async function viewOrder(orderId) {
     ${renderOrderShopeeReconciliation(order, _orderCostEff)}
     ${renderOrderLazadaReconciliation(order, _orderCostEff)}
     ${marketplaceSaleAdjustOrderButton(order)}
+    ${(()=>{
+      const fData = (typeof getOrderFulfillmentData === 'function') ? getOrderFulfillmentData(order) : null;
+      const sapData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(order) : null;
+      if (order.doc_status === 'closed' || sapData) {
+        return `<div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderFulfillmentModal('${order.id}')" title="คลิกเพื่อดูรายละเอียดการอนุมัติปิดเอกสาร">
+          <div style="font-size:12.5px;color:#334155;font-weight:700;display:flex;align-items:center;gap:6px">
+            <span style="font-size:16px">🔒</span>
+            <span>เอกสารนี้ปิดแล้ว (Closed - SAP B1) · ผู้อนุมัติ: <b>${escapeHTML(sapData?.approved_by || 'Admin')}</b> · เหตุผล: ${escapeHTML(sapData?.reason || 'ลูกค้ายอมรับสินค้าบางส่วน')}</span>
+          </div>
+          <button type="button" class="btn btn-sm" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-weight:700;font-size:11px;padding:2px 8px">🔍 ดูข้อมูลปิดเอกสาร (SAP B1) ➔</button>
+        </div>`;
+      }
+      if (order.shipping_status === 'partially_shipped' || (fData?.total_backorder > 0)) {
+        const boCount = fData?.total_backorder || 0;
+        return `<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderFulfillmentModal('${order.id}')" title="คลิกเพื่อจัดการยอดค้างส่งหรืออนุมัติปิดเอกสาร">
+          <div style="font-size:12.5px;color:#92400e;font-weight:700;display:flex;align-items:center;gap:6px">
+            <span style="font-size:16px">⚠️</span>
+            <span>ออเดอร์นี้จัดส่งแบบบางส่วน <b>${boCount > 0 ? '(มียอดค้างส่ง ' + boCount + ' ชิ้น)' : ''}</b></span>
+          </div>
+          <button type="button" class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-weight:700;font-size:11px;padding:2px 8px">📦 จัดการค้างส่ง / ปิดเอกสาร (SAP B1) ➔</button>
+        </div>`;
+      }
+      return '';
+    })()}
     ${(()=>{
       const poList = (window._currentOrderPOItems || []).map(p => p.purchase_orders).filter(Boolean);
       const uniquePOs = [];
@@ -9664,7 +9771,7 @@ async function viewOrder(orderId) {
         <div><span style="color:var(--text3)">การชำระ</span>
           <select id="ed-pay" style="${sStyle}">${['โอนเงิน','COD','บัตรเครดิต','เงินสด'].map(p=>`<option ${order.payment_method===p?'selected':''}>${p}</option>`).join('')}</select></div>
         <div><span style="color:var(--text3)">สถานะจัดส่ง</span>
-          <select id="ed-status" style="${sStyle}">${['pending','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${order.shipping_status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}</select></div>
+          <select id="ed-status" style="${sStyle}">${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${order.shipping_status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}</select></div>
         <div><span style="color:var(--text3)">พนักงานขาย</span>
           <select id="ed-emp" style="${sStyle}"><option value="">-- ไม่ระบุ --</option></select></div>
       </div>
@@ -9772,6 +9879,7 @@ async function viewOrder(orderId) {
     `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>` +
     `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openOrderPriceHistoryModal('${order.id}')" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;font-weight:700" title="คลิกเพื่อดูประวัติการเปลี่ยนแปลงราคาในบิล">📜 ประวัติแก้ไขราคา${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(order.id) > 0) ? ' ('+getOrderPriceChangeCount(order.id)+')' : ''}</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openOrderFulfillmentModal('${order.id}')" style="background:#fffbeb;color:#92400e;border-color:#fde68a;font-weight:700" title="จัดการยอดค้างส่ง & อนุมัติปิดเอกสารแบบ SAP Business One">📦 ค้างส่ง / ปิดเอกสาร (SAP B1)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700">🖨️ พิมพ์บิล</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
@@ -9807,6 +9915,30 @@ async function saveOrderEdit(orderId) {
   const editShippingFee = Math.max(0, Number(document.getElementById('ed-shipping-fee')?.value||0));
   const editGrand = Math.max(0, editSubtotal - editBd) + editShippingFee;
   const editTotalCost = editItems.reduce((s,it)=>s+Number(it.qty||1)*Number(it.cost_per_unit||0),0);
+
+  const targetShipStatus = document.getElementById('ed-status')?.value;
+  const targetDocStatus = document.getElementById('ed-doc-status')?.value;
+
+  // ── Stock Validation Guard in Edit: ห้ามเปลี่ยนเป็น "จัดส่งแล้ว" ถ้าสต๊อกไม่พอ ──
+  if ((targetShipStatus === 'shipped' || targetShipStatus === 'delivered') && targetDocStatus !== 'closed') {
+    if (typeof checkOrderStockSufficiency === 'function') {
+      const stockCheck = await checkOrderStockSufficiency(orderId, {
+        id: orderId,
+        order_no: window._editingOrderForGP?.order_no,
+        shipping_status: window._editingOrderForGP?.shipping_status,
+        doc_status: window._editingOrderForGP?.doc_status,
+        note: window._editingOrderForGP?.note,
+        order_items: editItems
+      });
+      if (!stockCheck.isSufficient) {
+        toast('⚠️ ไม่สามารถบันทึกเป็น "จัดส่งแล้ว" ได้ เนื่องจากสินค้าในคลังไม่พอส่ง (ขาดรวม ' + stockCheck.totalShortfall + ' ชิ้น)', 'error');
+        if (typeof openOrderFulfillmentModal === 'function') {
+          openOrderFulfillmentModal(orderId, targetShipStatus, stockCheck);
+        }
+        return;
+      }
+    }
+  }
 
   // ── Price Audit Log Snapshot (v3.47) ──
   const oldOrderSnapshot = window._editingOrderForGP || {};
@@ -10589,6 +10721,729 @@ async function openOrderPriceHistoryModal(orderId) {
     </div>
   `;
 }
+
+// ─── ORDER STOCK SUFFICIENCY & FULFILLMENT / SAP B1 CLOSE WORKFLOW (v3.49) ───
+
+function getOrderFulfillmentData(order) {
+  if (!order) return null;
+  if (order.fulfillment_data && typeof order.fulfillment_data === 'object') {
+    return order.fulfillment_data;
+  }
+  const noteStr = String(order.note || '');
+  const m = noteStr.match(FULFILLMENT_TAG_RE);
+  if (m && m[1]) {
+    try {
+      return JSON.parse(decodeURIComponent(m[1]));
+    } catch (e) {
+      try { return JSON.parse(m[1]); } catch (e2) {}
+    }
+  }
+  const localKey = 'shopflow_order_fulfillment_' + (order.id || order.order_no);
+  try {
+    const raw = localStorage.getItem(localKey);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+
+function getSAPCloseData(order) {
+  if (!order) return null;
+  if (order.closed_by || order.close_reason) {
+    return {
+      approved_by: order.closed_by || 'Admin',
+      reason: order.close_reason || 'ลูกค้ายอมรับสินค้าบางส่วน',
+      approved_at: order.closed_at || order.order_date
+    };
+  }
+  const noteStr = String(order.note || '');
+  const m = noteStr.match(SAP_B1_CLOSE_TAG_RE);
+  if (m && m[1]) {
+    try {
+      return JSON.parse(decodeURIComponent(m[1]));
+    } catch (e) {
+      try { return JSON.parse(m[1]); } catch (e2) {}
+    }
+  }
+  const localKey = 'shopflow_sap_close_' + (order.id || order.order_no);
+  try {
+    const raw = localStorage.getItem(localKey);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return null;
+}
+
+async function checkOrderStockSufficiency(orderId, orderObj = null) {
+  let ord = orderObj;
+  if (!ord || !ord.order_items) {
+    const { data } = await sb.from('orders')
+      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+      .eq('id', orderId).single();
+    ord = data;
+  }
+  if (!ord || !ord.order_items || !ord.order_items.length) {
+    return { isSufficient: true, shortfallItems: [], totalShortfall: 0, order: ord };
+  }
+
+  // Ensure products cache has all items
+  let localProdMap = (typeof prodMap !== 'undefined' && prodMap) ? prodMap : {};
+  const missingPids = ord.order_items.map(it => it.product_id).filter(pid => pid && !localProdMap[pid]);
+  if (missingPids.length > 0) {
+    try {
+      const { data: pRows } = await sb.from('products').select('id,name,sku,part_no,stock_qty,stock_inhouse,current_cost').in('id', missingPids);
+      if (pRows) {
+        pRows.forEach(p => { localProdMap[p.id] = p; });
+      }
+    } catch(e) {}
+  }
+
+  const fulfillment = getOrderFulfillmentData(ord);
+  const isOrderPending = !isOrderCancelled(ord) && (!ord.shipping_status || ord.shipping_status === 'pending' || ord.shipping_status === 'partially_shipped');
+
+  const shortfallItems = [];
+  let totalShortfall = 0;
+
+  for (const it of ord.order_items) {
+    if (!it.product_id) continue;
+    const p = localProdMap[it.product_id];
+    if (!p) continue;
+
+    const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+    const orderedQty = Math.max(1, Number(it.qty || 1));
+
+    // Check if item had previous partial fulfillment
+    const prevItemFulfill = fulfillment?.items?.find(f => (it.product_id && f.product_id === it.product_id) || (f.sku && f.sku === it.sku));
+    const alreadyShipped = Number(prevItemFulfill?.shipped_qty || 0);
+    const reqQty = prevItemFulfill ? Math.max(0, orderedQty - alreadyShipped) : orderedQty;
+
+    // Physical available stock: in this system, pending orders already had an 'out' movement, so physical = rawStock + orderedQty
+    const stockVal = isOrderPending ? (rawStock + orderedQty) : rawStock;
+    const available = Math.max(0, stockVal - alreadyShipped);
+
+    if (available < reqQty) {
+      const shortfall = reqQty - available;
+      shortfallItems.push({
+        product_id: it.product_id,
+        product_name: it.product_name || p.name || 'สินค้า',
+        sku: it.sku || p.sku || '',
+        part_no: p.part_no || '',
+        ordered_qty: orderedQty,
+        already_shipped: alreadyShipped,
+        req_qty: reqQty,
+        available_qty: available,
+        shortfall: shortfall,
+        unit_price: Number(it.sell_price || 0),
+        cost_per_unit: Number(it.cost_per_unit || 0)
+      });
+      totalShortfall += shortfall;
+    }
+  }
+
+  return {
+    isSufficient: shortfallItems.length === 0,
+    shortfallItems,
+    totalShortfall,
+    order: ord
+  };
+}
+
+async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stockCheck = null) {
+  if (!orderId) return;
+
+  const modalId = 'modal-order-fulfillment';
+  let modal = document.getElementById(modalId);
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:780px;width:95%;max-height:92vh;display:flex;flex-direction:column;border-radius:14px;box-shadow:0 12px 48px rgba(0,0,0,0.22)">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px 14px 0 0">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
+            <span>📦 จัดการจัดส่งสินค้า & ปิดเอกสาร (SAP B1 Workflow)</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">กำลังโหลดข้อมูลรายการสินค้าและสต๊อกคงเหลือ...</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('${modalId}')" style="font-size:16px;padding:4px 10px;line-height:1">✕</button>
+      </div>
+      <div id="order-fulfillment-body" style="padding:20px;overflow-y:auto;flex:1;background:var(--bg3)">
+        <div class="loading"><div class="spinner"></div> กำลังตรวจสอบสต๊อกคงคลัง...</div>
+      </div>
+    </div>
+  `;
+
+  openModal(modalId);
+
+  // Load latest order and products
+  let ord = stockCheck?.order;
+  if (!ord || !ord.order_items) {
+    const { data } = await sb.from('orders')
+      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+      .eq('id', orderId).single();
+    ord = data;
+  }
+  if (!ord) {
+    document.getElementById('order-fulfillment-body').innerHTML = '<div class="alert alert-danger">ไม่พบข้อมูลออเดอร์</div>';
+    return;
+  }
+
+  const check = stockCheck || await checkOrderStockSufficiency(orderId, ord);
+  const fulfillment = getOrderFulfillmentData(ord);
+  const sapClose = getSAPCloseData(ord);
+
+  // Build product stock lookup
+  let localProdMap = (typeof prodMap !== 'undefined' && prodMap) ? prodMap : {};
+  const isOrderPending = !isOrderCancelled(ord) && (!ord.shipping_status || ord.shipping_status === 'pending' || ord.shipping_status === 'partially_shipped');
+
+  const items = (ord.order_items || []).map((it, idx) => {
+    const p = localProdMap[it.product_id] || {};
+    const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+    const orderedQty = Math.max(1, Number(it.qty || 1));
+    const prevItemFulfill = fulfillment?.items?.find(f => (it.product_id && f.product_id === it.product_id) || (f.sku && f.sku === it.sku));
+    const alreadyShipped = Number(prevItemFulfill?.shipped_qty || 0);
+    const reqQty = prevItemFulfill ? Math.max(0, orderedQty - alreadyShipped) : orderedQty;
+    const stockVal = isOrderPending ? (rawStock + orderedQty) : rawStock;
+    const available = Math.max(0, stockVal - alreadyShipped);
+    const defaultFulfill = Math.min(reqQty, available);
+    const shortfall = Math.max(0, reqQty - available);
+
+    return {
+      index: idx,
+      item_id: it.id,
+      product_id: it.product_id,
+      product_name: it.product_name || p.name || 'สินค้า',
+      sku: it.sku || p.sku || '',
+      ordered_qty: orderedQty,
+      already_shipped: alreadyShipped,
+      req_qty: reqQty,
+      available_qty: available,
+      default_fulfill: defaultFulfill,
+      shortfall: shortfall,
+      unit_price: Number(it.sell_price || 0),
+      cost_per_unit: Number(it.cost_per_unit || 0)
+    };
+  });
+
+  const bodyEl = document.getElementById('order-fulfillment-body');
+  if (!bodyEl) return;
+
+  const isClosed = ord.doc_status === 'closed' || !!sapClose;
+  const isPartial = ord.shipping_status === 'partially_shipped';
+
+  bodyEl.innerHTML = `
+    <!-- Order Card Summary -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
+          <span>${escapeHTML(ord.company_name ? ord.company_name + ' (' + ord.customer_name + ')' : ord.customer_name || 'ไม่ระบุชื่อ')}</span>
+          <span class="font-mono" style="font-size:12px;color:var(--text3)">#${escapeHTML(ord.order_no || ord.id)}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px">
+          วันที่: ${ord.order_date || '-'} · ยอดสุทธิ: <b style="color:var(--accent)">${fmtB(ord.total_amount)}</b> · สถานะปัจจุบัน: ${shippingBadge(ord.shipping_status)} ${docStatusBadge(ord.doc_status)}
+        </div>
+      </div>
+      <div>
+        ${isClosed
+          ? `<span class="badge ds-closed" style="font-size:12px;padding:4px 10px">🔒 ปิดเอกสารแล้ว (SAP B1 Closed)</span>`
+          : (isPartial
+              ? `<span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-size:12px;padding:4px 10px;font-weight:700">⚠️ อยู่ในสถานะจัดส่งบางส่วน (มีค้างส่ง)</span>`
+              : (check.isSufficient
+                  ? `<span class="badge badge-green" style="font-size:12px;padding:4px 10px">✓ สต๊อกเพียงพอจัดส่งเต็มจำนวน</span>`
+                  : `<span class="badge badge-red" style="font-size:12px;padding:4px 10px">⚠️ สต๊อกไม่พอส่ง ขาดรวม ${check.totalShortfall} ชิ้น</span>`))}
+      </div>
+    </div>
+
+    <!-- Shortfall Warning Banner -->
+    ${!check.isSufficient && !isClosed ? `
+      <div style="background:#fff1f2;border:1.5px solid #fecdd3;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#9f1239;font-size:12.5px;line-height:1.5">
+        <div style="font-weight:800;display:flex;align-items:center;gap:6px;font-size:13.5px">
+          <span>⚠️ สินค้าในคลังไม่เพียงพอต่อการจัดส่งเต็มจำนวน</span>
+        </div>
+        <div style="margin-top:4px">
+          ระบบไม่อนุญาตให้เปลี่ยนสถานะเป็น <b>"จัดส่งแล้ว"</b> โดยตรง เนื่องจากสินค้าในคลังไม่พอส่ง (ขาดรวม <b>${check.totalShortfall} ชิ้น</b>)
+          กรุณาเลือกดำเนินการ <b>จัดส่งแบบบางส่วน (คงค้างส่งไว้)</b> หรือ <b>ลูกค้ายอมรับสินค้าบางส่วน & อนุมัติปิดเอกสาร (SAP Business One Close)</b>
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Closed info banner (if already closed) -->
+    ${isClosed && sapClose ? `
+      <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#334155;font-size:12.5px;line-height:1.5">
+        <div style="font-weight:800;display:flex;align-items:center;gap:6px;font-size:13.5px">
+          <span>🔒 เอกสารนี้ได้รับการอนุมัติปิดเอกสารแล้ว (SAP B1 Close Document)</span>
+        </div>
+        <div style="margin-top:4px">
+          ผู้อนุมัติ: <b>${escapeHTML(sapClose.approved_by || 'Admin')}</b> · วันที่อนุมัติ: <b>${escapeHTML(sapClose.approved_at || '-')}</b><br>
+          เหตุผล: <i>${escapeHTML(sapClose.reason || '-')}</i>
+        </div>
+      </div>
+    ` : ''}
+
+    <!-- Items Fulfillment Table -->
+    <div style="background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px">
+      <div style="padding:10px 14px;background:#f8fafc;border-bottom:1px solid var(--border);font-weight:700;font-size:13px;color:#334155;display:flex;justify-content:space-between;align-items:center">
+        <span>📋 รายการสินค้าและยอดจัดส่ง / ยอดค้างส่ง</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:400">กำหนดจำนวนที่จัดส่งรอบนี้ในช่องตัวเลข</span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+        <thead>
+          <tr style="background:#f1f5f9;color:#475569;border-bottom:1px solid var(--border);text-align:left">
+            <th style="padding:8px 12px;font-weight:700">สินค้า / SKU</th>
+            <th style="padding:8px 8px;text-align:center;font-weight:700;width:70px">สั่งซื้อ</th>
+            <th style="padding:8px 8px;text-align:center;font-weight:700;width:85px">ในคลัง</th>
+            <th style="padding:8px 8px;text-align:center;font-weight:700;width:100px">ส่งรอบนี้</th>
+            <th style="padding:8px 12px;text-align:center;font-weight:700;width:100px">ยอดค้างส่ง</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map((it, idx) => {
+            const isDeficient = it.shortfall > 0;
+            const rowBg = isDeficient ? '#fffafb' : (idx % 2 === 0 ? '#fff' : '#fcfcfd');
+            return `
+              <tr style="background:${rowBg};border-bottom:1px solid #f1f5f9">
+                <td style="padding:9px 12px">
+                  <div style="font-weight:600;color:var(--text)">${escapeHTML(it.product_name)}</div>
+                  ${it.sku ? `<span class="badge" style="background:#eff6ff;color:#1e40af;font-size:10px;font-family:var(--mono)">[${escapeHTML(it.sku)}]</span>` : ''}
+                  ${it.already_shipped > 0 ? `<span class="badge badge-green" style="font-size:10px;margin-left:4px">ส่งแล้วก่อนหน้า ${it.already_shipped} ชิ้น</span>` : ''}
+                </td>
+                <td style="padding:9px 8px;text-align:center;font-family:var(--mono);font-weight:700">
+                  ${it.ordered_qty}
+                </td>
+                <td style="padding:9px 8px;text-align:center">
+                  <span class="badge" style="background:${it.available_qty <= 0 ? '#fee2e2' : (it.available_qty < it.req_qty ? '#fef3c7' : '#dcfce7')};color:${it.available_qty <= 0 ? '#b91c1c' : (it.available_qty < it.req_qty ? '#b45309' : '#15803d')};font-weight:700;font-family:var(--mono)">
+                    ${it.available_qty}
+                  </span>
+                </td>
+                <td style="padding:9px 8px;text-align:center">
+                  <input type="number" id="fulfill_qty_${idx}" class="form-control" min="0" max="${it.available_qty}" value="${it.default_fulfill}"
+                    ${isClosed ? 'disabled' : ''}
+                    oninput="updateFulfillmentRowCalc(${idx}, ${it.req_qty}, ${it.available_qty}, ${it.unit_price})"
+                    style="width:75px;margin:0 auto;text-align:center;font-weight:700;font-family:var(--mono);padding:4px 6px;border:1.5px solid var(--border2);border-radius:6px">
+                </td>
+                <td style="padding:9px 12px;text-align:center" id="backorder_cell_${idx}">
+                  ${(it.req_qty - it.default_fulfill > 0)
+                    ? `<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-weight:800;font-family:var(--mono)">⚠️ ค้างส่ง ${it.req_qty - it.default_fulfill}</span>`
+                    : `<span class="badge badge-green" style="font-weight:700">ครบ</span>`}
+                </td>
+              </tr>
+            `;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Action Choices / Workflow Selector -->
+    ${!isClosed ? `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,0.03)">
+        <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:6px">
+          <span>⚡ เลือกแนวทางดำเนินการ (Fulfillment & Approval Action):</span>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <!-- Option A: Partial Shipment -->
+          <div style="border:1.5px solid #f59e0b;background:#fffbeb;border-radius:10px;padding:14px;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <div style="font-size:13.5px;font-weight:800;color:#92400e;display:flex;align-items:center;gap:6px">
+                <span>📦 ทางเลือกที่ 1: จัดส่งแบบบางส่วน (คงค้างส่งไว้)</span>
+              </div>
+              <div style="font-size:12px;color:#78350f;margin-top:6px;line-height:1.5">
+                จัดส่งเฉพาะจำนวนที่มีในคลังตอนนี้ ส่วนที่เหลือคงสถานะ <b>⚠️ ค้างส่ง</b> ในบิล เพื่อเตรียมจัดส่งรอบถัดไปเมื่อรับของเข้าสต๊อก
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <button type="button" class="btn" onclick="submitOrderPartialShipment('${orderId}')"
+                style="width:100%;background:#f59e0b;color:#fff;font-weight:800;border:none;padding:8px 12px;border-radius:8px;font-size:12.5px;box-shadow:0 2px 6px rgba(245,158,11,0.25)">
+                📦 ยืนยันจัดส่งบางส่วน (บันทึกยอดค้างส่ง)
+              </button>
+            </div>
+          </div>
+
+          <!-- Option B: SAP B1 Close Approval -->
+          <div style="border:1.5px solid #0284c7;background:#f0f9ff;border-radius:10px;padding:14px;display:flex;flex-direction:column;justify-content:space-between">
+            <div>
+              <div style="font-size:13.5px;font-weight:800;color:#0369a1;display:flex;align-items:center;gap:6px">
+                <span>🔒 ทางเลือกที่ 2: ลูกค้ายอมรับบางส่วน & ปิดเอกสาร (SAP B1)</span>
+              </div>
+              <div style="font-size:12px;color:#075985;margin-top:6px;line-height:1.5">
+                ลูกค้ายินยอมรับสินค้าเท่าที่มี และ<b>ยกเลิกยอดค้างส่ง</b>ทั้งหมด ปิดเอกสารเป็น <b>🔒 ปิดแล้ว (Close)</b> ตามมาตรฐาน SAP B1 (ต้องมีการอนุมัติ)
+              </div>
+            </div>
+            <div style="margin-top:12px">
+              <button type="button" class="btn" onclick="toggleSAPApprovalSection()"
+                style="width:100%;background:#0284c7;color:#fff;font-weight:800;border:none;padding:8px 12px;border-radius:8px;font-size:12.5px;box-shadow:0 2px 6px rgba(2,132,199,0.25)">
+                🔒 ลูกค้ายอมรับบางส่วน & อนุมัติปิดเอกสาร ➔
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAP B1 Approval Dialog Box (Toggled on Option B) -->
+        <div id="sap-b1-approval-box" style="display:none;background:#f8fafc;border:2px dashed #0284c7;border-radius:10px;padding:16px;margin-top:10px">
+          <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span>🛡️ แบบฟอร์มอนุมัติปิดเอกสารคำสั่งซื้อ (SAP Business One Document Closing Approval)</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px">
+                👤 ผู้อนุมัติปิดเอกสาร (Approved By) <span class="text-red">*</span>
+              </label>
+              <input type="text" id="sap-approver-name" class="form-control" value="${escapeHTML((typeof currentUser !== 'undefined' && currentUser?.name) ? currentUser.name : 'Admin')}" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border2);font-size:13px">
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px">
+                📅 วันเวลาที่อนุมัติ (Approval Date)
+              </label>
+              <input type="text" id="sap-approval-date" class="form-control" value="${new Date().toLocaleString('th-TH')}" readonly style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border2);background:#f1f5f9;font-size:13px;color:#475569">
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:12px;font-weight:700;color:#334155;display:block;margin-bottom:4px">
+              📝 เหตุผลในการปิดเอกสาร (Close Reason) <span class="text-red">*</span>
+            </label>
+            <input type="text" id="sap-close-reason" class="form-control" value="ลูกค้ายอมรับสินค้าเท่าที่มี และขอยกเลิกยอดค้างส่ง" style="width:100%;padding:6px 10px;border-radius:6px;border:1px solid var(--border2);font-size:13px">
+          </div>
+          <div style="background:#fff;border:1px solid #bae6fd;border-radius:8px;padding:10px 12px;margin-bottom:14px">
+            <label style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:#0369a1;cursor:pointer;font-weight:600">
+              <input type="checkbox" id="sap-adjust-bill-total" checked style="margin-top:2px" onchange="renderSAPAdjustTotalPreview('${orderId}')">
+              <span>ปรับปรุงยอดเงินในบิลให้ตรงกับจำนวนชิ้นที่ส่งจริงอัตโนมัติ (พร้อมบันทึก Audit Log ประวัติแก้ไขราคา)</span>
+            </label>
+            <div id="sap-adjust-preview" style="font-size:11.5px;color:#475569;margin-top:6px;margin-left:24px">
+              คำนวณยอดเงินใหม่ตามจำนวนชิ้นที่จัดส่งรอบนี้...
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:8px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="toggleSAPApprovalSection(false)">ยกเลิก</button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="submitSAPCloseOrderApproval('${orderId}')" style="background:#0284c7;border-color:#0284c7;font-weight:800;padding:6px 16px">
+              ✅ ยืนยันอนุมัติปิดเอกสาร (SAP B1 Close)
+            </button>
+          </div>
+        </div>
+      </div>
+    ` : `
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
+      </div>
+    `}
+  `;
+
+  window._currentFulfillmentOrder = ord;
+  window._currentFulfillmentItems = items;
+  if (!isClosed) {
+    setTimeout(() => {
+      renderSAPAdjustTotalPreview(orderId);
+    }, 50);
+  }
+}
+
+function updateFulfillmentRowCalc(rowIdx, reqQty, availableQty, unitPrice) {
+  const inp = document.getElementById(`fulfill_qty_${rowIdx}`);
+  const cell = document.getElementById(`backorder_cell_${rowIdx}`);
+  if (!inp || !cell) return;
+
+  let val = Math.max(0, parseInt(inp.value, 10) || 0);
+  if (val > availableQty) {
+    val = availableQty;
+    inp.value = val;
+    toast(`จำนวนที่ส่งรอบนี้ไม่สามารถเกินสต๊อกในคลัง (${availableQty} ชิ้น)`, 'warning');
+  }
+  if (val > reqQty) {
+    val = reqQty;
+    inp.value = val;
+  }
+
+  const bo = Math.max(0, reqQty - val);
+  cell.innerHTML = bo > 0
+    ? `<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-weight:800;font-family:var(--mono)">⚠️ ค้างส่ง ${bo}</span>`
+    : `<span class="badge badge-green" style="font-weight:700">ครบ</span>`;
+
+  if (window._currentFulfillmentOrder) {
+    renderSAPAdjustTotalPreview(window._currentFulfillmentOrder.id);
+  }
+}
+
+function toggleSAPApprovalSection(forceShow = null) {
+  const box = document.getElementById('sap-b1-approval-box');
+  if (!box) return;
+  const isShown = forceShow !== null ? forceShow : (box.style.display !== 'none');
+  box.style.display = isShown ? 'none' : 'block';
+  if (!isShown) {
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+function renderSAPAdjustTotalPreview(orderId) {
+  const previewEl = document.getElementById('sap-adjust-preview');
+  if (!previewEl || !window._currentFulfillmentItems || !window._currentFulfillmentOrder) return;
+
+  const ord = window._currentFulfillmentOrder;
+  const items = window._currentFulfillmentItems;
+
+  let newSubtotal = 0;
+  let totalShippedPieces = 0;
+  let totalBackorderPieces = 0;
+
+  items.forEach((it, idx) => {
+    const inp = document.getElementById(`fulfill_qty_${idx}`);
+    const fQty = inp ? Math.max(0, parseInt(inp.value, 10) || 0) : it.default_fulfill;
+    const actualTotalShipped = (it.already_shipped || 0) + fQty;
+    newSubtotal += actualTotalShipped * (it.unit_price || 0);
+    totalShippedPieces += actualTotalShipped;
+    totalBackorderPieces += Math.max(0, it.req_qty - fQty);
+  });
+
+  const billDisc = Number(ord.bill_discount || 0);
+  const billDiscType = ord.bill_discount_type || 'amount';
+  const bdCalc = billDiscType === 'percent' ? (newSubtotal * billDisc / 100) : billDisc;
+  const shipFee = Number(ord.shipping_fee || 0);
+  const newGrand = Math.max(0, newSubtotal - bdCalc) + shipFee;
+  const oldGrand = Number(ord.total_amount || 0);
+  const diffGrand = newGrand - oldGrand;
+
+  previewEl.innerHTML = `
+    <span>ยอดเดิมทั้งบิล: <b style="font-family:var(--mono)">${fmtB(oldGrand)}</b> ➔ ยอดใหม่หลังปิดเอกสาร: <b style="font-family:var(--mono);color:#0284c7">${fmtB(newGrand)}</b></span>
+    <span style="margin-left:8px;font-weight:700;color:${diffGrand < 0 ? '#b91c1c' : '#15803d'}">(${diffGrand < 0 ? '-' : '+'}${fmtB(Math.abs(diffGrand))})</span>
+    <span style="margin-left:6px;color:#64748b">· ส่งจริงรวม ${totalShippedPieces} ชิ้น (ยกเลิกยอดค้างส่ง ${totalBackorderPieces} ชิ้น)</span>
+  `;
+}
+
+async function submitOrderPartialShipment(orderId) {
+  const ord = window._currentFulfillmentOrder;
+  const items = window._currentFulfillmentItems;
+  if (!ord || !items) return;
+
+  const fulfillmentItems = [];
+  let totalShipped = 0;
+  let totalBackorder = 0;
+
+  items.forEach((it, idx) => {
+    const inp = document.getElementById(`fulfill_qty_${idx}`);
+    const thisFulfill = inp ? Math.max(0, parseInt(inp.value, 10) || 0) : it.default_fulfill;
+    const cumulativeShipped = (it.already_shipped || 0) + thisFulfill;
+    const bo = Math.max(0, it.ordered_qty - cumulativeShipped);
+
+    fulfillmentItems.push({
+      item_id: it.item_id,
+      product_id: it.product_id,
+      product_name: it.product_name,
+      sku: it.sku,
+      ordered_qty: it.ordered_qty,
+      shipped_qty: cumulativeShipped,
+      backorder_qty: bo,
+      unit_price: it.unit_price,
+      cost_per_unit: it.cost_per_unit
+    });
+
+    totalShipped += cumulativeShipped;
+    totalBackorder += bo;
+  });
+
+  const fulfillData = {
+    updated_at: new Date().toISOString(),
+    status: totalBackorder > 0 ? 'partially_shipped' : 'shipped',
+    total_ordered: items.reduce((s, x) => s + x.ordered_qty, 0),
+    total_shipped: totalShipped,
+    total_backorder: totalBackorder,
+    items: fulfillmentItems
+  };
+
+  // 1. Dual-layer save fulfillment data
+  const rawTag = JSON.stringify(fulfillData);
+  localStorage.setItem('shopflow_order_fulfillment_' + orderId, rawTag);
+  const newNote = noteWithCompanyAndShipping(ord.note, ord.company_name, ord.shipping_fee, getOrderInternalNote(ord), getOrderDeliveryDate(ord), rawTag);
+
+  const newShippingStatus = totalBackorder > 0 ? 'partially_shipped' : 'shipped';
+  const updatePayload = {
+    shipping_status: newShippingStatus,
+    note: newNote,
+    fulfillment_data: fulfillData
+  };
+
+  for (let a = 0; a < 3; a++) {
+    const { error: updErr } = await sb.from('orders').update(updatePayload).eq('id', orderId);
+    if (!updErr) break;
+    if (('fulfillment_data' in updatePayload) && (updErr.message || '').toLowerCase().includes('fulfillment_data')) {
+      delete updatePayload.fulfillment_data;
+      continue;
+    }
+  }
+
+  // 2. Adjust stock movements: Deduct ONLY the shipped portions
+  if (ord.doc_status !== 'cancelled') {
+    const note = 'ขาย ' + (ord.order_no || '');
+    await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).eq('note', note);
+
+    const mvs = fulfillmentItems.filter(f => f.product_id && f.shipped_qty > 0).map(f => ({
+      shop_id: currentShop?.id,
+      product_id: f.product_id,
+      move_type: 'out',
+      qty: Number(f.shipped_qty),
+      cost_per_unit: Number(f.cost_per_unit || 0),
+      note,
+      move_date: ord.order_date
+    }));
+    if (mvs.length) {
+      await sb.from('stock_movements').insert(mvs);
+    }
+    const pids = [...new Set(fulfillmentItems.map(f => f.product_id).filter(Boolean))];
+    if (pids.length && typeof recalcStockQty === 'function') {
+      await recalcStockQty(pids);
+    }
+  }
+
+  closeModal('modal-order-fulfillment');
+  toast(`บันทึกจัดส่งแบบบางส่วนสำเร็จ (มียอดค้างส่งรวม ${totalBackorder} ชิ้น) ✓`, 'success');
+  if (typeof loadOrders === 'function') loadOrders();
+}
+
+async function submitSAPCloseOrderApproval(orderId) {
+  const ord = window._currentFulfillmentOrder;
+  const items = window._currentFulfillmentItems;
+  if (!ord || !items) return;
+
+  const approver = (document.getElementById('sap-approver-name')?.value || '').trim();
+  const reason = (document.getElementById('sap-close-reason')?.value || '').trim();
+  const adjustBill = document.getElementById('sap-adjust-bill-total')?.checked;
+
+  if (!approver) {
+    toast('กรุณาระบุชื่อผู้อนุมัติปิดเอกสาร', 'warning');
+    document.getElementById('sap-approver-name')?.focus();
+    return;
+  }
+  if (!reason) {
+    toast('กรุณาระบุเหตุผลในการปิดเอกสาร', 'warning');
+    document.getElementById('sap-close-reason')?.focus();
+    return;
+  }
+
+  const fulfillmentItems = [];
+  let totalShipped = 0;
+  let totalBackorder = 0;
+  let newSubtotal = 0;
+  let newTotalCost = 0;
+
+  items.forEach((it, idx) => {
+    const inp = document.getElementById(`fulfill_qty_${idx}`);
+    const thisFulfill = inp ? Math.max(0, parseInt(inp.value, 10) || 0) : it.default_fulfill;
+    const cumulativeShipped = (it.already_shipped || 0) + thisFulfill;
+    const bo = Math.max(0, it.ordered_qty - cumulativeShipped);
+
+    fulfillmentItems.push({
+      item_id: it.item_id,
+      product_id: it.product_id,
+      product_name: it.product_name,
+      sku: it.sku,
+      ordered_qty: it.ordered_qty,
+      shipped_qty: cumulativeShipped,
+      backorder_qty: 0, // In SAP close, remaining backorders are closed
+      cancelled_backorder: bo,
+      unit_price: it.unit_price,
+      cost_per_unit: it.cost_per_unit
+    });
+
+    totalShipped += cumulativeShipped;
+    totalBackorder += bo;
+    newSubtotal += cumulativeShipped * it.unit_price;
+    newTotalCost += cumulativeShipped * it.cost_per_unit;
+  });
+
+  const approvalData = {
+    approved_by: approver,
+    approved_at: new Date().toISOString(),
+    reason: reason,
+    total_shipped: totalShipped,
+    cancelled_backorders: totalBackorder,
+    shipped_items: fulfillmentItems
+  };
+
+  const rawSapTag = JSON.stringify(approvalData);
+  localStorage.setItem('shopflow_sap_close_' + orderId, rawSapTag);
+
+  const billDisc = Number(ord.bill_discount || 0);
+  const billDiscType = ord.bill_discount_type || 'amount';
+  const bdCalc = billDiscType === 'percent' ? (newSubtotal * billDisc / 100) : billDisc;
+  const shipFee = Number(ord.shipping_fee || 0);
+  const newGrand = adjustBill ? Math.max(0, newSubtotal - bdCalc) + shipFee : Number(ord.total_amount || 0);
+  const effTotalCost = adjustBill ? newTotalCost : Number(ord.total_cost || 0);
+
+  // 1. Price Audit Log if bill adjusted
+  if (adjustBill && Math.abs(newGrand - Number(ord.total_amount || 0)) > 0.01) {
+    if (typeof recordOrderPriceChangeLog === 'function') {
+      const diffs = [
+        {
+          type: 'sap_b1_close_adjust',
+          label: `อนุมัติปิดเอกสาร SAP B1 (${reason})`,
+          oldVal: Number(ord.total_amount || 0),
+          newVal: newGrand,
+          diff: newGrand - Number(ord.total_amount || 0),
+          unit: '฿'
+        }
+      ];
+      recordOrderPriceChangeLog({
+        order_id: orderId,
+        order_no: ord.order_no,
+        old_grand: Number(ord.total_amount || 0),
+        new_grand: newGrand,
+        diff_grand: newGrand - Number(ord.total_amount || 0),
+        editor_name: approver + ' (ผู้อนุมัติ SAP B1)',
+        reason: 'ลูกค้ายอมรับสินค้าบางส่วน: ' + reason,
+        diffs
+      });
+    }
+  }
+
+  // 2. Dual-layer save order note and fields
+  const newNote = noteWithCompanyAndShipping(ord.note, ord.company_name, ord.shipping_fee, getOrderInternalNote(ord), getOrderDeliveryDate(ord), null, rawSapTag);
+  const updatePayload = {
+    doc_status: 'closed',
+    shipping_status: 'shipped',
+    closed_by: approver,
+    closed_at: approvalData.approved_at,
+    close_reason: reason,
+    total_amount: newGrand,
+    total_cost: effTotalCost,
+    note: newNote
+  };
+
+  for (let a = 0; a < 4; a++) {
+    const { error: updErr } = await sb.from('orders').update(updatePayload).eq('id', orderId);
+    if (!updErr) break;
+    const msg = (updErr.message || '').toLowerCase();
+    if (('closed_by' in updatePayload) && (msg.includes('closed_by') || msg.includes('close_reason') || msg.includes('closed_at'))) {
+      delete updatePayload.closed_by;
+      delete updatePayload.closed_at;
+      delete updatePayload.close_reason;
+      continue;
+    }
+  }
+
+  // 3. Deduct stock movements for actually shipped portion only
+  const note = 'ขาย ' + (ord.order_no || '');
+  await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).eq('note', note);
+  const mvs = fulfillmentItems.filter(f => f.product_id && f.shipped_qty > 0).map(f => ({
+    shop_id: currentShop?.id,
+    product_id: f.product_id,
+    move_type: 'out',
+    qty: Number(f.shipped_qty),
+    cost_per_unit: Number(f.cost_per_unit || 0),
+    note,
+    move_date: ord.order_date
+  }));
+  if (mvs.length) {
+    await sb.from('stock_movements').insert(mvs);
+  }
+  const pids = [...new Set(fulfillmentItems.map(f => f.product_id).filter(Boolean))];
+  if (pids.length && typeof recalcStockQty === 'function') {
+    await recalcStockQty(pids);
+  }
+
+  closeModal('modal-order-fulfillment');
+  toast(`อนุมัติปิดเอกสาร (SAP B1 Close) สำเร็จ โดย ${approver} ✓`, 'success');
+  if (typeof loadOrders === 'function') loadOrders();
+}
+
 
 // ─── BAHT TEXT ────────────────────────────────────────
 function bahtText(amount) {
@@ -21089,7 +21944,7 @@ async function searchQuoteProduct(rowIdx, q) {
 
     // 2) Option to Quick Add Product to Database (เหมือน Order)
     html += `
-      <div onclick="openQuickProductModal('quote', ${rowIdx}, '${escapeHTML(ql)}'); document.getElementById('${ddid}').style.display='none'; event.stopPropagation();"
+      <div onclick="openQuickProductModal('quote', ${rowIdx}, '${escapeHTML(ql)}'); const _d=document.getElementById('${ddid}'); if(_d)_d.style.display='none'; event.stopPropagation();"
         style="padding:8px 10px;background:#f0fdf4;color:#166534;font-weight:700;font-size:12px;cursor:pointer;border-top:1.5px solid #86efac;display:flex;align-items:center;justify-content:space-between"
         onmouseover="this.style.background='#dcfce7'" onmouseout="this.style.background='#f0fdf4'">
         <span>➕ สร้างสินค้าใหม่ "${escapeHTML(ql || '...')}" เข้าคลัง (Quick Master Product)</span>
@@ -43657,7 +44512,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.48', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มปุ่มดูออเดอร์วันนี้ (Today Filter) พร้อมแสดงตัวเลขจำนวนออเดอร์แบบ Real-time (v3.48)', items:[
+    { v:'3.49', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบตรวจสอบสต๊อกก่อนจัดส่ง (Stock Validation Guard), จัดส่งบางส่วน (Partial Shipment) & อนุมัติปิดเอกสารตามมาตรฐาน SAP Business One (v3.49)', items:[
+      '🚫 <b>ระบบบล็อกสถานะ "จัดส่งแล้ว" เมื่อสต๊อกไม่พอ (Stock Validation Guard):</b> ในหน้าออเดอร์ หากสินค้าในคลังมีน้อยกว่าจำนวนที่ต้องจัดส่ง ระบบจะบล็อกไม่อนุญาตให้เปลี่ยนสถานะเป็น "จัดส่งแล้ว" โดยเด็ดขาด ทั้งจาก Dropdown ในตารางและหน้าต่างแก้ไข เพื่อป้องกันสต๊อกติดลบและข้อมูลไม่ตรงกับความเป็นจริง',
+      '📦 <b>การจัดส่งแบบบางส่วนและติดตามยอดค้างส่ง (Partial Shipment & Backorders):</b> เพิ่มสถานะ <code>⚠️ จัดส่งบางส่วน (ค้างส่ง)</code> พร้อมหน้าต่างให้ระบุจำนวนที่จัดส่งรอบนี้ตามที่มีของจริงในคลัง ส่วนที่เหลือจะถูกคงยอดไว้และติดป้ายเตือน <code>⚠️ ค้างส่ง X ชิ้น</code> ไว้อย่างชัดเจนทั้งในระดับสินค้าและหัวบิล โดยการตัดสต๊อกจะตัดเฉพาะจำนวนชิ้นที่ส่งจริงเท่านั้น',
+      '🔒 <b>ระบบอนุมัติปิดเอกสารเมื่อลูกค้ายอมรับสินค้าบางส่วนตามมาตรฐาน SAP Business One (SAP B1 Close Document Approval):</b> ในกรณีที่ลูกค้ายินยอมรับสินค้าเฉพาะเท่าที่มีและยกเลิกยอดค้างส่งที่เหลือ ระบบเปิดให้ทำเรื่องขออนุมัติปิดเอกสาร (Close Document) เหมือนใน SAP Business One โดยบันทึกชื่อผู้อนุมัติ, วันเวลา, เหตุผลในการปิดเอกสาร พร้อมทางเลือกปรับยอดเงินในบิลให้ตรงกับของที่ส่งจริงและบันทึกประวัติแก้ไขราคา (Audit Log) ครบถ้วน 100%'
+    ]},
+    { v:'3.48', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มปุ่มดูออเดอร์วันนี้ (Today Filter) พร้อมแสดงตัวเลขจำนวนออเดอร์แบบ Real-time (v3.48)', items:[
       '📅 <b>ปุ่มดูออเดอร์วันนี้ในคลิกเดียว (1-Click Today Orders Filter):</b> เพิ่มปุ่ม <code>📅 วันนี้</code> ในแถบ Quick Filter รายเดือน/รายปี และในแถบค้นหาของหน้า Order ช่วยให้ผู้ใช้กดดูออเดอร์ของวันปัจจุบันได้ทันทีโดยไม่ต้องเลือกวันที่เอง',
       '🔢 <b>ป้ายแสดงจำนวนออเดอร์วันนี้สดใหม่ (Live Today Order Count Badge):</b> บนปุ่มแสดงตัวเลขจำนวนออเดอร์ของวันนี้แบบ Real-time เช่น <code>📅 วันนี้ (5 ใบ)</code> ทำให้มองเห็นจำนวนออเดอร์ที่เข้ามาในวันนั้นได้ทันทีแม้ยังไม่ได้กดกรอง',
       '📊 <b>สรุปยอดขายและแจ้งเตือนทันใจ:</b> เมื่อคลิกปุ่ม ระบบจะกรองและคำนวณการ์ดสรุปสถิติ (จำนวนออเดอร์, ยอดขายรวม, กำไร, จำนวนลูกค้า) ของวันนี้โดยเฉพาะ พร้อมแจ้งเตือนสรุปผ่าน Toast Bar ทันที'
