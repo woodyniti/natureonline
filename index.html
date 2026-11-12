@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.52';
-const DISPLAY_APP_VERSION = 'v3.52';
+const CURRENT_APP_VERSION = 'sealthai-v3.53';
+const DISPLAY_APP_VERSION = 'v3.53';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -453,7 +453,150 @@ tbody td:first-child { color: var(--text); }
   box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
 #modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); max-height:94vh; }
-#order-detail-content, #ed-items { min-width:0; max-width:100%; }
+#modal-quote .modal, #modal-quote-detail .modal { max-width:min(1400px,calc(100vw - 32px)); max-height:94vh; }
+#order-detail-content, #ed-items, #qt-items { min-width:0; max-width:100%; }
+#qt-channel, #qt-pay {
+  width: 100%;
+  background: #fff;
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--text);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+#qt-channel { font-weight: 600; }
+
+/* ── SAP Business One Form Styles ── */
+.sap-window {
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  overflow: hidden;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.06);
+  margin-bottom: 8px;
+}
+.sap-header-bar {
+  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #cbd5e1;
+  border-top: 3.5px solid #f59e0b;
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: #1e293b;
+}
+.sap-panel {
+  padding: 12px 14px;
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+}
+.sap-form-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 14px 20px;
+}
+@media (max-width: 820px) {
+  .sap-form-grid { grid-template-columns: 1fr; gap: 10px; }
+}
+.sap-field-row {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+}
+@media (max-width: 480px) {
+  .sap-field-row { grid-template-columns: 105px 1fr; gap: 4px; }
+}
+.sap-field-label {
+  color: #475569;
+  font-weight: 600;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.sap-link-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid #f59e0b;
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 800;
+  font-size: 11px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sap-tabs {
+  display: flex;
+  gap: 3px;
+  background: #e2e8f0;
+  padding: 6px 10px 0;
+  border-bottom: 1.5px solid #cbd5e1;
+  overflow-x: auto;
+}
+.sap-tab {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #475569;
+  background: #cbd5e1;
+  border: 1px solid #94a3b8;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.sap-tab:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+.sap-tab.active {
+  background: #fff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+  border-top: 3px solid #f59e0b;
+  margin-bottom: -1.5px;
+  font-weight: 700;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.03);
+}
+.sap-tab-pane {
+  display: none;
+  padding: 14px;
+  background: #fff;
+  min-height: 200px;
+}
+.sap-tab-pane.active {
+  display: block;
+}
+.sap-footer {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 16px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-top: 1.5px solid #cbd5e1;
+}
+@media (max-width: 820px) {
+  .sap-footer { grid-template-columns: 1fr; }
+}
+.btn-sap-update {
+  background: linear-gradient(180deg, #fef08a 0%, #facc15 100%) !important;
+  color: #713f12 !important;
+  border: 1.5px solid #ca8a04 !important;
+  font-weight: 700 !important;
+  box-shadow: 0 1px 3px rgba(202,138,4,0.2) !important;
+}
+.btn-sap-update:hover {
+  background: linear-gradient(180deg, #fde047 0%, #eab308 100%) !important;
+}
 #ed-items table { table-layout:fixed; }
 #ed-items thead th:first-child { width:40%; }
 #ed-items thead th:nth-child(2) { width:7%; }
@@ -1264,7 +1407,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.52 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.53)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.53 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1363,7 +1506,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.52 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.53)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.53 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9707,6 +9850,18 @@ function pullLatestCosts() {
   else toast('ไม่มีรายการที่เชื่อมกับสินค้าในระบบ (ต้นทุนดึงอัตโนมัติไม่ได้)', 'error');
 }
 
+function switchSapTab(scopeId, tabKey) {
+  const container = document.getElementById(scopeId);
+  if (!container) return;
+  container.querySelectorAll('.sap-tab').forEach(t => {
+    t.classList.toggle('active', t.getAttribute('data-tab') === tabKey);
+  });
+  container.querySelectorAll('.sap-tab-pane').forEach(p => {
+    p.classList.toggle('active', p.getAttribute('data-pane') === tabKey);
+  });
+}
+window.switchSapTab = switchSapTab;
+
 async function viewOrder(orderId) {
   const _iplModal = document.getElementById('modal-inventory-posting');
   const _isIplOpen = _iplModal && _iplModal.classList.contains('open');
@@ -9751,168 +9906,312 @@ async function viewOrder(orderId) {
   const __odEl = document.getElementById('order-detail-content');
   if (!__odEl) return;
   __odEl.innerHTML = `
-    ${renderOrderShopeeReconciliation(order, _orderCostEff)}
-    ${renderOrderLazadaReconciliation(order, _orderCostEff)}
-    ${marketplaceSaleAdjustOrderButton(order)}
-    ${(()=>{
-      const fData = (typeof getOrderFulfillmentData === 'function') ? getOrderFulfillmentData(order) : null;
-      const sapData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(order) : null;
-      if (order.doc_status === 'closed' || sapData) {
-        return `<div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderFulfillmentModal('${order.id}')" title="คลิกเพื่อดูรายละเอียดการอนุมัติปิดเอกสาร">
-          <div style="font-size:12.5px;color:#334155;font-weight:700;display:flex;align-items:center;gap:6px">
-            <span style="font-size:16px">🔒</span>
-            <span>เอกสารนี้ปิดแล้ว (Closed - SAP B1) · ผู้อนุมัติ: <b>${escapeHTML(sapData?.approved_by || 'Admin')}</b> · เหตุผล: ${escapeHTML(sapData?.reason || 'ลูกค้ายอมรับสินค้าบางส่วน')}</span>
-          </div>
-          <button type="button" class="btn btn-sm" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-weight:700;font-size:11px;padding:2px 8px">🔍 ดูข้อมูลปิดเอกสาร (SAP B1) ➔</button>
-        </div>`;
-      }
-      if (order.shipping_status === 'partially_shipped' || (fData?.total_backorder > 0)) {
-        const boCount = fData?.total_backorder || 0;
-        return `<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderFulfillmentModal('${order.id}')" title="คลิกเพื่อจัดการยอดค้างส่งหรืออนุมัติปิดเอกสาร">
-          <div style="font-size:12.5px;color:#92400e;font-weight:700;display:flex;align-items:center;gap:6px">
-            <span style="font-size:16px">⚠️</span>
-            <span>ออเดอร์นี้จัดส่งแบบบางส่วน <b>${boCount > 0 ? '(มียอดค้างส่ง ' + boCount + ' ชิ้น)' : ''}</b></span>
-          </div>
-          <button type="button" class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-weight:700;font-size:11px;padding:2px 8px">📦 จัดการค้างส่ง / ปิดเอกสาร (SAP B1) ➔</button>
-        </div>`;
-      }
-      return '';
-    })()}
-    ${(()=>{
-      const poList = (window._currentOrderPOItems || []).map(p => p.purchase_orders).filter(Boolean);
-      const uniquePOs = [];
-      poList.forEach(po => { if (!uniquePOs.some(u => u.id === po.id)) uniquePOs.push(po); });
-      if (!uniquePOs.length) return '';
-      return `<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div style="font-size:12.5px;color:#15803d;font-weight:700;display:flex;align-items:center;gap:6px">
-          <span style="font-size:16px">🛒</span>
-          <span>ออเดอร์นี้มีการเปิดใบสั่งซื้อ (PO) แล้ว:</span>
-          ${uniquePOs.map(po => `<span class="badge" style="background:#fff;color:#15803d;border:1px solid #86efac;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;cursor:pointer" onclick="closeModal('modal-order-detail');showPage('purchase');setTimeout(()=>viewPO('${po.id}'),250)" title="คลิกไปดูใบสั่งซื้อ">${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')}) 🔗</span>`).join(' ')}
+    <div class="sap-window" id="sap-order-window">
+      <!-- 1. SAP B1 Window Header Bar -->
+      <div class="sap-header-bar">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:15px">📑</span>
+          <span>Sales Order · ใบสั่งขาย</span>
+          <span class="font-mono" style="color:#0284c7;font-weight:800;font-size:13px">${escapeHTML(order.order_no||'-')}</span>
+          <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:11px">${escapeHTML(order.channel||'Offline')}</span>
+          <span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-size:11px">${escapeHTML(statusLabels[order.shipping_status]||order.shipping_status||'pending')}</span>
         </div>
-      </div>`;
-    })()}
-    ${(()=>{
-      const pCount = typeof getOrderPriceChangeCount === 'function' ? getOrderPriceChangeCount(order.id) : 0;
-      if (pCount <= 0) return '';
-      return `<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderPriceHistoryModal('${order.id}')" title="คลิกเพื่อดูประวัติการแก้ไขราคาในบิล">
-        <div style="font-size:12.5px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:6px">
-          <span style="font-size:16px">📜</span>
-          <span>ออเดอร์นี้มีการเปลี่ยนแปลงราคาในบิล <b>${pCount} ครั้ง</b> (คลิกดูประวัติและจุดที่เปลี่ยนแปลง)</span>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#64748b;font-weight:600">
+          <span>SAP Business One Layout</span>
         </div>
-        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:700;font-size:11px;padding:2px 8px">🔍 ดูประวัติราคา (Read Only) ➔</button>
-      </div>`;
-    })()}
-    <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:14px">
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:13px">
-        <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
-        <div><span style="color:var(--text3)">วันที่เอกสาร</span><input type="date" id="ed-date" value="${order.order_date||''}" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">วันที่ส่งสินค้า (Delivery)</span><input type="date" id="ed-delivery-date" value="${getOrderDeliveryDate(order)}" style="${iStyle}"></div>
-        <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
-        <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">เลขที่ PO ของลูกค้า</span><input id="ed-customer-po" value="${escapeHTML(order.customer_po_no||'')}" placeholder="PO ลูกค้า (ไม่บังคับ)" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">ชื่อผู้ติดต่อ</span><input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">เบอร์โทร</span><input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="ไม่บังคับ" style="${iStyle}"></div>
-        <div><span style="color:var(--text3)">ช่องทาง</span>
-          <select id="ed-ch" onchange="updateEditTotal()" style="${sStyle}">${['Facebook','Shopee','Lazada','LINE','TikTok','Thaimart','Offline','อื่นๆ'].map(ch=>`<option ${order.channel===ch?'selected':''}>${ch}</option>`).join('')}</select></div>
-        <div><span style="color:var(--text3)">Tracking ${trackingLink(order.tracking_no)}</span>
-          <div style="display:flex;gap:6px;align-items:center;margin-top:3px">
-            <input id="ed-track" value="${(order.tracking_no||'').replace(/"/g,'&quot;')}" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box" oninput="updateTrackingLink(this.value)">
-          </div>
-          <div id="ed-carrier-hint" style="font-size:11px;color:var(--text3);margin-top:3px">${detectCarrier(order.tracking_no)?'ขนส่ง: '+detectCarrier(order.tracking_no).name:''}</div>
-        </div>
-        <div><span style="color:var(--text3)">สถานะเอกสาร</span>
-          <select id="ed-doc-status" style="${sStyle}" onchange="const _b = document.getElementById('order-detail-footer')?.querySelector('.btn-status-cancel'); if (_b) _b.style.display = this.value==='cancelled'?'none':'inline-flex'; markUnsavedForm(document.getElementById('modal-order-detail'));">
-            ${DOC_STATUSES.map(s=>'<option value="'+s.key+'" '+(( order.doc_status||'confirmed')===s.key?'selected':'')+'>'+s.th+'</option>').join('')}
-          </select></div>
-        <div><span style="color:var(--text3)">การชำระ</span>
-          <select id="ed-pay" style="${sStyle}">${['โอนเงิน','COD','บัตรเครดิต','เงินสด'].map(p=>`<option ${order.payment_method===p?'selected':''}>${p}</option>`).join('')}</select></div>
-        <div><span style="color:var(--text3)">สถานะจัดส่ง</span>
-          <select id="ed-status" style="${sStyle}">${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${order.shipping_status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}</select></div>
-        <div><span style="color:var(--text3)">พนักงานขาย</span>
-          <select id="ed-emp" style="${sStyle}"><option value="">-- ไม่ระบุ --</option></select></div>
       </div>
-      <div style="margin-top:12px;grid-column:1/-1;background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:12px">
-        <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-          <span>🏢 ข้อมูลออกบิล / ใบกำกับภาษี <span style="font-size:11px;font-weight:400;color:var(--text3)">(ไม่บังคับ)</span></span>
+
+      <!-- 2. SAP B1 Upper Form Panel (2 columns: Customer BP on left, Document Info on right) -->
+      <div class="sap-panel">
+        <div class="sap-form-grid">
+          <!-- Left Column: Business Partner / Customer -->
+          <div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Customer</span>
+              <div style="display:flex;gap:4px;align-items:center;position:relative;width:100%">
+                <button type="button" class="sap-link-btn" title="ค้นหา / เลือกลูกค้า" onclick="document.getElementById('ed-cust')?.focus()">➔</button>
+                <input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" placeholder="🔍 พิมพ์ค้นหาลูกค้า..." style="${iStyle}">
+                <div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div>
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Name</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input value="${(order.customer_name||'').replace(/"/g,'&quot;')}" readonly style="${iStyle};background:#f8fafc;color:#475569;font-weight:600" title="ชื่อลูกค้าที่ระบุ">
+                ${order.customer_phone ? `<span style="font-size:11px;color:#64748b;white-space:nowrap" title="เบอร์โทร">📞 ${escapeHTML(order.customer_phone)}</span>` : ''}
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Contact Person</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ชื่อผู้ติดต่อ (ไม่บังคับ)" style="${iStyle}">
+                <input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="เบอร์โทรศัพท์" style="${iStyle}">
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Customer Ref. No.</span>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (Shopee)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}">
+                <input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@user Shopee/Lazada" style="${iStyle}">
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Channel / Cur.</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <select id="ed-ch" onchange="updateEditTotal()" style="${sStyle};font-weight:600">
+                  ${['Facebook','Shopee','Lazada','LINE','TikTok','Thaimart','Offline','อื่นๆ'].map(ch=>`<option ${order.channel===ch?'selected':''}>${ch}</option>`).join('')}
+                </select>
+                <span style="font-size:11.5px;font-weight:700;color:#64748b;white-space:nowrap;padding:0 4px">THB (฿)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Document Details -->
+          <div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">No.</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <span class="font-mono" style="font-weight:800;font-size:13px;color:#0369a1">${order.order_no||'-'}</span>
+                <span style="font-size:10.5px;color:#64748b;background:#f1f5f9;border:1px solid #cbd5e1;padding:1px 5px;border-radius:4px">Primary</span>
+                <select id="ed-doc-status" style="${sStyle};width:auto;flex:1" onchange="const _b = document.getElementById('order-detail-footer')?.querySelector('.btn-status-cancel'); if (_b) _b.style.display = this.value==='cancelled'?'none':'inline-flex'; markUnsavedForm(document.getElementById('modal-order-detail'));">
+                  ${DOC_STATUSES.map(s=>'<option value="'+s.key+'" '+(( order.doc_status||'confirmed')===s.key?'selected':'')+'>'+s.th+'</option>').join('')}
+                </select>
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Status</span>
+              <select id="ed-status" style="${sStyle};font-weight:700">
+                ${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${order.shipping_status===s?'selected':''}>${statusLabels[s]}</option>`).join('')}
+              </select>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Posting Date</span>
+              <input type="date" id="ed-date" value="${order.order_date||''}" style="${iStyle}">
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label" style="color:#0284c7;font-weight:700">Delivery Date</span>
+              <input type="date" id="ed-delivery-date" value="${getOrderDeliveryDate(order)}" style="${iStyle};border-color:#93c5fd;background:#f0f9ff;font-weight:700;color:#0369a1">
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Payment Method</span>
+              <select id="ed-pay" style="${sStyle}">
+                ${['โอนเงิน','COD','บัตรเครดิต','เงินสด'].map(p=>`<option ${order.payment_method===p?'selected':''}>${p}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. SAP B1 Tabs Navigation -->
+      <div class="sap-tabs">
+        <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-order-window','contents')">📦 Contents (รายการสินค้า)</div>
+        <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-order-window','logistics')">🚚 Logistics (จัดส่ง & Tracking)</div>
+        <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-order-window','accounting')">💳 Accounting (ออกบิล & ภาษี)</div>
+        <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-order-window','notes')">📝 Notes & Audit (บันทึก & ประวัติ)</div>
+      </div>
+
+      <!-- 4. Tab Panes -->
+      <!-- Pane 1: Contents -->
+      <div class="sap-tab-pane active" data-pane="contents">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+          <div style="font-size:12.5px;color:#475569;font-weight:600">
+            Item / Service Type: <span style="color:#0f172a;font-weight:700">Item (สินค้า)</span> · <span style="font-size:11.5px;color:#64748b">จัดการรายการสินค้าในใบสั่งขาย</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="pullLatestCosts()" title="ตั้งต้นทุนของทุกรายการ = ต้นทุนเฉลี่ยล่าสุดของสินค้าในระบบ (แก้กรณีต้นทุนในออเดอร์ค้างค่าเก่า)">🔄 ดึงต้นทุนล่าสุด</button>
+          </div>
+        </div>
+        <div id="ed-items" style="margin-bottom:10px"></div>
+        <div id="ed-receipt-visibility-warning" style="display:none;margin:0 0 12px;padding:9px 11px;border-radius:8px;font-size:12px"></div>
+      </div>
+
+      <!-- Pane 2: Logistics -->
+      <div class="sap-tab-pane" data-pane="logistics">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
+          <div>
+            <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 Ship-to Address (ที่อยู่จัดส่งสินค้า)</div>
+            <textarea id="ed-address" rows="3" placeholder="ระบุที่อยู่จัดส่ง..." style="${iStyle};resize:vertical">${order.customer_address||''}</textarea>
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">🚚 Carrier & Tracking (ขนส่งและพัสดุ)</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input id="ed-track" value="${(order.tracking_no||'').replace(/"/g,'&quot;')}" placeholder="Tracking No." style="${iStyle}" oninput="updateTrackingLink(this.value)">
+            </div>
+            <div id="ed-carrier-hint" style="font-size:11px;color:#64748b;margin-top:3px">${detectCarrier(order.tracking_no)?'ขนส่ง: '+detectCarrier(order.tracking_no).name:''}</div>
+            <div style="margin-top:4px">${trackingLink(order.tracking_no)}</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div>
+            <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📑 Customer Purchase Order (เลขที่ PO ของลูกค้า)</div>
+            <input id="ed-customer-po" value="${escapeHTML(order.customer_po_no||'')}" placeholder="เช่น PO-2026-001 (ไม่บังคับ)" style="${iStyle}">
+          </div>
+          <div>
+            <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📅 Delivery Confirmation Date</div>
+            <div style="font-size:12.5px;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;padding:6px 10px;border-radius:6px">
+              วันที่ส่งสินค้าตามเอกสาร: <b>${getOrderDeliveryDate(order)}</b>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pane 3: Accounting -->
+      <div class="sap-tab-pane" data-pane="accounting">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+          <div style="font-weight:700;font-size:13px;color:#1e293b">🏢 Bill-to / Tax Invoice Information (ข้อมูลออกบิล & ใบกำกับภาษี)</div>
           <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('ed-address','ed-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
-          <div><span style="color:var(--text3);font-size:12px">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+          <div>
+            <span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
             <input id="ed-company" value="${(getOrderCompanyName(order)).replace(/"/g,'&quot;')}" placeholder="ชื่อบริษัท / ชื่อออกบิล (ไม่บังคับ)" style="${iStyle};margin-top:3px">
           </div>
-          <div><span style="color:var(--text3);font-size:12px">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px">(ไม่บังคับ)</span></span>
+          <div>
+            <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
             <input id="ed-tax-id" value="${(order.tax_id||'').replace(/"/g,'&quot;')}" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="${iStyle};margin-top:3px">
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div><span style="color:var(--text3);font-size:12px">ที่อยู่จัดส่ง <span style="font-size:11px">(ไม่บังคับ)</span></span>
-            <textarea id="ed-address" rows="2" placeholder="ไม่บังคับ" style="${iStyle};margin-top:3px;resize:vertical">${order.customer_address||''}</textarea>
+        <div style="margin-bottom:10px">
+          <span class="sap-field-label">ที่อยู่ออกบิล (สำหรับใบกำกับภาษี / ใบเสร็จรับเงิน ภ.พ.20)</span>
+          <textarea id="ed-billing-address" rows="2" placeholder="ที่อยู่ออกบิล..." style="${iStyle};margin-top:3px;resize:vertical">${order.billing_address||''}</textarea>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:center">
+          <div>
+            <span class="sap-field-label">Sales Employee (พนักงานขาย)</span>
+            <select id="ed-emp" style="${sStyle};margin-top:3px"><option value="">-- ไม่ระบุ --</option></select>
           </div>
           <div>
-            <span style="color:var(--text3);font-size:12px">ที่อยู่ออกบิล <span style="font-size:11px">(ไม่บังคับ)</span></span>
-            <textarea id="ed-billing-address" rows="2" placeholder="สำหรับออกใบกำกับภาษี / ใบเสร็จตาม ภ.พ.20" style="${iStyle};margin-top:3px;resize:vertical">${order.billing_address||''}</textarea>
+            <span class="sap-field-label">AR Invoice Status</span>
+            <div style="margin-top:4px;font-size:12px;color:#475569">
+              ${hasAR ? '<span style="color:#16a34a;font-weight:700">✓ เชื่อมโยงกับ AR Invoice แล้ว</span>' : '<span style="color:#64748b">ยังไม่ได้สร้าง AR Invoice (สามารถกด Copy to Invoice ด้านล่างได้)</span>'}
+            </div>
           </div>
         </div>
       </div>
-      <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <span style="color:var(--text3);font-size:12.5px">หมายเหตุเอกสาร (จะพิมพ์ลงในบิล/ใบเสร็จ)</span>
-          <textarea id="ed-note" rows="2" placeholder="เช่น รายละเอียดส่งมอบ เงื่อนไขรับประกัน" style="${iStyle};margin-top:3px;resize:vertical">${escapeHTML((()=>{
-            const cNote = cleanOrderNote(order.note);
-            if (cNote) return cNote;
-            if (linkedQuote && linkedQuote.quote_no) return linkedQuote.quote_no;
-            return '';
-          })())}</textarea>
-        </div>
-        <div>
-          <span style="color:#d97706;font-size:12.5px;font-weight:600">🔒 หมายเหตุหลังบ้าน (เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)</span>
-          <textarea id="ed-internal-note" rows="2" placeholder="บันทึกข้อความภายใน เช่น บัญชี/โกดัง/แอดมิน ทราบกันเอง ไม่ปรากฏบนเอกสาร" style="${iStyle};margin-top:3px;resize:vertical;border-color:#fde68a;background:#fffbeb">${escapeHTML(getOrderInternalNote(order))}</textarea>
-        </div>
-      </div>
-    </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
-      <div style="font-size:13px;font-weight:600">รายการสินค้า <span style="font-size:11px;color:var(--text3);font-weight:400">(แก้ไขได้)</span></div>
-      <button class="btn btn-secondary btn-sm" onclick="pullLatestCosts()" title="ตั้งต้นทุนของทุกรายการ = ต้นทุนเฉลี่ยล่าสุดของสินค้าในระบบ (แก้กรณีต้นทุนในออเดอร์ค้างค่าเก่า)">🔄 ดึงต้นทุนล่าสุด</button>
-    </div>
-    <div id="ed-items" style="margin-bottom:10px"></div>
-    <div id="ed-receipt-visibility-warning" style="display:none;margin:0 0 12px;padding:9px 11px;border-radius:8px;font-size:12px"></div>
-    <!-- ส่วนลดทั้งบิล -->
-    <div style="padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:10px">
-      <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:10px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:13px;color:var(--text2);min-width:90px">ส่วนลดทั้งบิล</span>
-        <input type="number" id="ed-bill-disc" value="${order.bill_discount||0}" min="0" step="any"
-          oninput="updateEditTotal()"
-          style="width:90px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--red);font-size:14px;text-align:right">
-        <select id="ed-bill-disc-type" onchange="updateEditTotal()"
-          style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px">
-          <option value="amount" ${(order.bill_discount_type||'amount')==='amount'?'selected':''}>บาท (฿)</option>
-          <option value="percent" ${order.bill_discount_type==='percent'?'selected':''}>เปอร์เซ็นต์ (%)</option>
-        </select>
+      <!-- Pane 4: Notes & Audit -->
+      <div class="sap-tab-pane" data-pane="notes">
+        ${renderOrderShopeeReconciliation(order, _orderCostEff)}
+        ${renderOrderLazadaReconciliation(order, _orderCostEff)}
+        ${marketplaceSaleAdjustOrderButton(order)}
+        ${(()=>{
+          const fData = (typeof getOrderFulfillmentData === 'function') ? getOrderFulfillmentData(order) : null;
+          const sapData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(order) : null;
+          if (order.doc_status === 'closed' || sapData) {
+            return `<div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderFulfillmentModal('${order.id}')" title="คลิกเพื่อดูรายละเอียดการอนุมัติปิดเอกสาร">
+              <div style="font-size:12.5px;color:#334155;font-weight:700;display:flex;align-items:center;gap:6px">
+                <span style="font-size:16px">🔒</span>
+                <span>เอกสารนี้ปิดแล้ว (Closed - SAP B1) · ผู้อนุมัติ: <b>${escapeHTML(sapData?.approved_by || 'Admin')}</b> · เหตุผล: ${escapeHTML(sapData?.reason || 'ลูกค้ายอมรับสินค้าบางส่วน')}</span>
+              </div>
+              <button type="button" class="btn btn-sm" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-weight:700;font-size:11px;padding:2px 8px">🔍 ดูข้อมูลปิดเอกสาร (SAP B1) ➔</button>
+            </div>`;
+          }
+          if (order.shipping_status === 'partially_shipped' || (fData?.total_backorder > 0)) {
+            const boCount = fData?.total_backorder || 0;
+            return `<div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderFulfillmentModal('${order.id}')" title="คลิกเพื่อจัดการยอดค้างส่งหรืออนุมัติปิดเอกสาร">
+              <div style="font-size:12.5px;color:#92400e;font-weight:700;display:flex;align-items:center;gap:6px">
+                <span style="font-size:16px">⚠️</span>
+                <span>ออเดอร์นี้จัดส่งแบบบางส่วน <b>${boCount > 0 ? '(มียอดค้างส่ง ' + boCount + ' ชิ้น)' : ''}</b></span>
+              </div>
+              <button type="button" class="btn btn-sm" style="background:#fef3c7;color:#92400e;border:1px solid #f59e0b;font-weight:700;font-size:11px;padding:2px 8px">📦 จัดการค้างส่ง / ปิดเอกสาร (SAP B1) ➔</button>
+            </div>`;
+          }
+          return '';
+        })()}
+        ${(()=>{
+          const poList = (window._currentOrderPOItems || []).map(p => p.purchase_orders).filter(Boolean);
+          const uniquePOs = [];
+          poList.forEach(po => { if (!uniquePOs.some(u => u.id === po.id)) uniquePOs.push(po); });
+          if (!uniquePOs.length) return '';
+          return `<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:9px 12px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div style="font-size:12.5px;color:#15803d;font-weight:700;display:flex;align-items:center;gap:6px">
+              <span style="font-size:16px">🛒</span>
+              <span>ออเดอร์นี้มีการเปิดใบสั่งซื้อ (PO) แล้ว:</span>
+              ${uniquePOs.map(po => `<span class="badge" style="background:#fff;color:#15803d;border:1px solid #86efac;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;cursor:pointer" onclick="closeModal('modal-order-detail');showPage('purchase');setTimeout(()=>viewPO('${po.id}'),250)" title="คลิกไปดูใบสั่งซื้อ">${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')}) 🔗</span>`).join(' ')}
+            </div>
+          </div>`;
+        })()}
+        ${(()=>{
+          const pCount = typeof getOrderPriceChangeCount === 'function' ? getOrderPriceChangeCount(order.id) : 0;
+          if (pCount <= 0) return '';
+          return `<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderPriceHistoryModal('${order.id}')" title="คลิกเพื่อดูประวัติการแก้ไขราคาในบิล">
+            <div style="font-size:12.5px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:6px">
+              <span style="font-size:16px">📜</span>
+              <span>ออเดอร์นี้มีการเปลี่ยนแปลงราคาในบิล <b>${pCount} ครั้ง</b> (คลิกดูประวัติและจุดที่เปลี่ยนแปลง)</span>
+            </div>
+            <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:700;font-size:11px;padding:2px 8px">🔍 ดูประวัติราคา (Read Only) ➔</button>
+          </div>`;
+        })()}
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+          <div>
+            <span class="sap-field-label" style="color:#1e293b">หมายเหตุเอกสาร (Remarks · พิมพ์ลงบิล/ใบเสร็จ)</span>
+            <textarea id="ed-note" rows="3" placeholder="เช่น รายละเอียดส่งมอบ เงื่อนไขรับประกัน" style="${iStyle};margin-top:4px;resize:vertical">${escapeHTML((()=>{
+              const cNote = cleanOrderNote(order.note);
+              if (cNote) return cNote;
+              if (linkedQuote && linkedQuote.quote_no) return linkedQuote.quote_no;
+              return '';
+            })())}</textarea>
+          </div>
+          <div>
+            <span class="sap-field-label" style="color:#d97706">🔒 หมายเหตุหลังบ้าน (Internal Remarks · ไม่พิมพ์ลงบิล)</span>
+            <textarea id="ed-internal-note" rows="3" placeholder="บันทึกข้อความภายใน เช่น บัญชี/โกดัง/แอดมิน ทราบกันเอง ไม่ปรากฏบนเอกสาร" style="${iStyle};margin-top:4px;resize:vertical;border-color:#fde68a;background:#fffbeb">${escapeHTML(getOrderInternalNote(order))}</textarea>
+          </div>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
-          <span>ค่าขนส่ง</span>
-          <input type="number" id="ed-shipping-fee" value="${getOrderShippingFee(order)}" min="0" step="any" oninput="updateEditTotal()"
-            style="width:100px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--blue);font-size:14px;text-align:right">
-          <span>บาท</span>
-        </label>
       </div>
-      <div style="font-size:13px">
-        <div style="display:flex;justify-content:space-between;color:var(--text2);margin-bottom:4px">
-          <span>ยอดรวมก่อนส่วนลดบิล</span><span class="font-mono" id="ed-subtotal">${fmtB(order.total_amount)}</span>
+
+      <!-- 5. SAP B1 Bottom Summary Footer -->
+      <div class="sap-footer">
+        <div>
+          <div class="sap-field-row" style="margin-bottom:8px">
+            <span class="sap-field-label">Sales Employee</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:12.5px;font-weight:700;color:#1e293b" id="ed-emp-label">พนักงานขาย</span>
+            </div>
+          </div>
+          <div class="sap-field-row" style="margin-bottom:6px">
+            <span class="sap-field-label">Remarks</span>
+            <div style="font-size:11.5px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="ดูเพิ่มเติมในแท็บ Notes">
+              ${escapeHTML(cleanOrderNote(order.note)||'-')}
+            </div>
+          </div>
+          <div style="font-size:11px;color:#64748b;display:flex;align-items:center;gap:8px;margin-top:8px">
+            <span>SAP B1 Status:</span>
+            <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:10.5px">${order.doc_status==='closed'?'Closed':'Open'}</span>
+            <span>· Prim: <b>${escapeHTML(order.order_no||'-')}</b></span>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;color:var(--red);margin-bottom:4px" id="ed-bill-disc-row">
-          <span>ส่วนลดทั้งบิล</span><span class="font-mono" id="ed-bill-disc-amt"></span>
+
+        <div>
+          <div style="display:flex;justify-content:space-between;color:#475569;font-size:12.5px;margin-bottom:4px">
+            <span>Total Before Discount</span>
+            <span class="font-mono" id="ed-subtotal">${fmtB(order.total_amount)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;color:var(--red);font-size:12.5px;margin-bottom:4px" id="ed-bill-disc-row">
+            <div style="display:flex;align-items:center;gap:4px">
+              <span>Discount</span>
+              <input type="number" id="ed-bill-disc" value="${order.bill_discount||0}" min="0" step="any" oninput="updateEditTotal()" style="width:75px;background:#fff;border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--red);font-size:12px;text-align:right">
+              <select id="ed-bill-disc-type" onchange="updateEditTotal()" style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:2px 4px;color:var(--text);font-size:11.5px">
+                <option value="amount" ${(order.bill_discount_type||'amount')==='amount'?'selected':''}>฿</option>
+                <option value="percent" ${order.bill_discount_type==='percent'?'selected':''}>%</option>
+              </select>
+            </div>
+            <span class="font-mono" id="ed-bill-disc-amt"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;color:var(--blue);font-size:12.5px;margin-bottom:6px" id="ed-shipping-fee-row">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span>Freight / Shipping</span>
+              <input type="number" id="ed-shipping-fee" value="${getOrderShippingFee(order)}" min="0" step="any" oninput="updateEditTotal()" style="width:75px;background:#fff;border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--blue);font-size:12px;text-align:right">
+              <span style="font-size:11px;color:#64748b">฿</span>
+            </div>
+            <span class="font-mono" id="ed-shipping-fee-amt"></span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;color:#0f172a">
+            <span>Total (ยอดสุทธิ)</span>
+            <span class="font-mono text-accent" id="ed-grand-total">${fmtB(order.total_amount)}</span>
+          </div>
+          <div id="ed-profit-box" style="font-size:11.5px;margin-top:6px;padding:6px 10px;background:#f1f5f9;border-radius:6px;line-height:1.6"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;color:var(--blue);margin-bottom:4px" id="ed-shipping-fee-row">
-          <span>ค่าขนส่ง</span><span class="font-mono" id="ed-shipping-fee-amt"></span>
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid var(--border);padding-top:8px">
-          <span>ยอดสุทธิ</span><span class="font-mono text-accent" id="ed-grand-total">${fmtB(order.total_amount)}</span>
-        </div>
-        <div id="ed-profit-box" style="font-size:12px;margin-top:6px;padding:8px 10px;background:var(--bg4);border-radius:8px;line-height:1.75"></div>
       </div>
     </div>`;
 
@@ -9922,6 +10221,11 @@ async function viewOrder(orderId) {
   loadEmployeeOptions('ed-emp').then(() => {
     const sel = document.getElementById('ed-emp');
     if (sel && order.employee_id) sel.value = order.employee_id;
+    const empLabel = document.getElementById('ed-emp-label');
+    if (empLabel && sel) {
+      const selOpt = sel.options[sel.selectedIndex];
+      empLabel.textContent = (selOpt && selOpt.value) ? selOpt.textContent : '-- ไม่ระบุ --';
+    }
   });
 
   // เช็ค AR Invoice ที่ผูกกับ order นี้
@@ -9932,16 +10236,16 @@ async function viewOrder(orderId) {
     : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}',true)">📄 Copy to Invoice</button>`;
 
   document.getElementById('order-detail-footer').innerHTML =
-    `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">ปิด</button>` +
-    `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>` +
-    `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
-    `<button class="btn btn-secondary btn-sm" onclick="openOrderPriceHistoryModal('${order.id}')" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;font-weight:700" title="คลิกเพื่อดูประวัติการเปลี่ยนแปลงราคาในบิล">📜 ประวัติแก้ไขราคา${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(order.id) > 0) ? ' ('+getOrderPriceChangeCount(order.id)+')' : ''}</button>` +
-    `<button class="btn btn-secondary btn-sm" onclick="openOrderFulfillmentModal('${order.id}')" style="background:#fffbeb;color:#92400e;border-color:#fde68a;font-weight:700" title="จัดการยอดค้างส่ง & อนุมัติปิดเอกสารแบบ SAP Business One">📦 ค้างส่ง / ปิดเอกสาร (SAP B1)</button>` +
+    `<button class="btn btn-sap-update" onclick="saveOrderEdit('${order.id}')">💾 Update (บันทึกการแก้ไข)</button>` +
+    `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">Cancel (ปิด)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700" title="พิมพ์บิลเงินสด / ใบแจ้งหนี้ (Invoice) / ใบส่งสินค้า (Delivery Note)">🖨️ พิมพ์เอกสาร (บิล/แจ้งหนี้/ส่งของ)</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openOrderFulfillmentModal('${order.id}')" style="background:#fffbeb;color:#92400e;border-color:#fde68a;font-weight:700" title="จัดการยอดค้างส่ง & อนุมัติปิดเอกสารแบบ SAP Business One">📦 ค้างส่ง / ปิดเอกสาร (SAP B1)</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openOrderPriceHistoryModal('${order.id}')" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;font-weight:700" title="คลิกเพื่อดูประวัติการเปลี่ยนแปลงราคาในบิล">📜 ประวัติแก้ไขราคา${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(order.id) > 0) ? ' ('+getOrderPriceChangeCount(order.id)+')' : ''}</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openStickerModal('${order.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100">🏷️ สติกเกอร์สินค้า</button>` +
-    `<button class="btn btn-primary" onclick="saveOrderEdit('${order.id}')">💾 บันทึกการแก้ไข</button>`;
+    `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
+    `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>`;
 
   openModal('modal-order-detail');
   registerUnsavedForm(document.getElementById('modal-order-detail'));
@@ -21619,131 +21923,223 @@ async function quotations() {
     <div class="stat-grid mb-4" id="qt-stats"></div>
     <div class="card" id="qt-list"><div class="loading"><div class="spinner"></div></div></div>
 
-    <!-- New/Edit Quote Modal -->
+    <!-- New/Edit Quote Modal (SAP Business One Layout) -->
     <div class="modal-overlay" id="modal-quote">
-      <div class="modal" style="max-width:720px">
-        <div class="modal-title" id="qt-modal-title">📋 ใบเสนอราคาใหม่</div>
-        <div class="grid-2">
-          <div class="form-group"><label>วันที่</label><input type="date" id="qt-date" value="${today()}"></div>
-          <div class="form-group"><label>ใช้ได้ถึง</label><input type="date" id="qt-valid" value="${new Date(Date.now()+30*86400000).toISOString().slice(0,10)}"></div>
-          <div class="form-group"><label>ช่องทาง</label>
-            <select id="qt-channel">
-              <option>Facebook</option><option>Shopee</option><option>Lazada</option><option selected>LINE</option>
-              <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
-            </select>
+      <div class="modal" style="max-width:min(1400px,calc(100vw - 32px))">
+        <div class="sap-window" id="sap-quote-window">
+          <!-- 1. Header Bar -->
+          <div class="sap-header-bar">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:15px">📋</span>
+              <span id="qt-modal-title" style="font-weight:700">Sales Quotation · ใบเสนอราคาใหม่</span>
+              <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:11px">SAP Business One Standard</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#64748b;font-weight:600">
+              <span>Primary / Quotation</span>
+            </div>
           </div>
-          <div class="form-group"><label>ช่องทางชำระ</label>
-            <select id="qt-pay">
-              <option selected>โอนเงิน</option><option>COD</option><option>บัตรเครดิต</option><option>เงินสด</option>
-            </select>
-          </div>
-          <div class="form-group" style="position:relative"><label>ชื่อลูกค้า</label>
-            <input type="text" id="qt-cust" placeholder="🔍 พิมพ์/คลิกเพื่อค้นหาลูกค้าเดิม..." autocomplete="off" oninput="searchQuoteCustomer(this.value)" onfocus="searchQuoteCustomer(this.value)">
-            <div id="qt-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
-          </div>
-          <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="qt-username" placeholder="@username Shopee / Lazada"></div>
-          <div class="form-group"><label>เลขอ้างอิง Ref / Social <span style="font-size:11px;color:var(--text3)">(Customer Ref)</span></label><input type="text" id="qt-ref" placeholder="รหัสอ้างอิง / Social"></div>
-          <div class="form-group"><label>เลขที่ PO ของลูกค้า <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="qt-customer-po" placeholder="เช่น PO-2026-001"></div>
-          <div class="form-group"><label>ชื่อผู้ติดต่อ</label><input type="text" id="qt-contact" placeholder="ชื่อ-นามสกุล ผู้ติดต่อ"></div>
-          <div class="form-group"><label>ตำแหน่งผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="qt-contact-position" placeholder="เช่น ผู้จัดการฝ่ายจัดซื้อ / วิศวกร"></div>
-          <div class="form-group"><label>เบอร์โทร</label><input type="text" id="qt-phone" placeholder="0x-xxxx-xxxx"></div>
-          <div class="form-group"><label>อีเมลผู้ติดต่อ (E-mail) <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="email" id="qt-contact-email" placeholder="email@company.com"></div>
-        </div>
 
-        <!-- กล่องข้อมูลออกบิล / ที่อยู่ออกบิล และ ที่อยู่จัดส่งสินค้า เหมือนหน้า Order -->
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-            <span>🏢 ข้อมูลออกบิล / ใบกำกับภาษี & ที่อยู่จัดส่ง</span>
-            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('qt-address','qt-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
-          </div>
-          <div class="grid-2" style="margin-bottom:8px">
-            <div class="form-group" style="margin-bottom:0">
-              <label>ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
-              <input type="text" id="qt-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>เลขประจำตัวผู้เสียภาษี (Tax ID) <span style="font-size:11px;color:var(--text3)">(13 หลัก)</span></label>
-              <input type="text" id="qt-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา">
-            </div>
-          </div>
-          <div class="grid-2">
-            <div class="form-group" style="margin-bottom:0">
-              <label>ที่อยู่จัดส่งสินค้า <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
-              <textarea id="qt-address" rows="2" placeholder="ที่อยู่จัดส่ง / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea>
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>ที่อยู่ในการออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
-              <textarea id="qt-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกบิล / ใบกำกับภาษี / ใบเสนอราคา"></textarea>
-            </div>
-          </div>
-        </div>
+          <!-- 2. Form Panel (2 columns) -->
+          <div class="sap-panel">
+            <div class="sap-form-grid">
+              <!-- Left Column: Business Partner / Customer -->
+              <div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Customer</span>
+                  <div style="display:flex;gap:4px;align-items:center;position:relative;width:100%">
+                    <button type="button" class="sap-link-btn" title="เลือกลูกค้า" onclick="document.getElementById('qt-cust')?.focus()">➔</button>
+                    <input type="text" id="qt-cust" placeholder="🔍 พิมพ์/คลิกเพื่อค้นหาลูกค้าเดิม..." autocomplete="off" oninput="searchQuoteCustomer(this.value)" onfocus="searchQuoteCustomer(this.value)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <div id="qt-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Contact Person</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                    <input type="text" id="qt-contact" placeholder="ชื่อ-นามสกุล ผู้ติดต่อ" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <input type="text" id="qt-contact-position" placeholder="ตำแหน่ง (ไม่บังคับ)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Phone & Email</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                    <input type="text" id="qt-phone" placeholder="0x-xxxx-xxxx" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <input type="email" id="qt-contact-email" placeholder="email@company.com" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Customer Ref. No.</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                    <input type="text" id="qt-ref" placeholder="รหัสอ้างอิง / Social" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <input type="text" id="qt-username" placeholder="@username Shopee/Lazada" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Channel / Cur.</span>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="qt-channel">
+                      <option>Facebook</option><option>Shopee</option><option>Lazada</option><option selected>LINE</option>
+                      <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
+                    </select>
+                    <span style="font-size:11.5px;font-weight:700;color:#64748b;white-space:nowrap;padding:0 4px">THB (฿)</span>
+                  </div>
+                </div>
+              </div>
 
-        <div class="form-group"><label>พนักงานผู้รับผิดชอบ</label><select id="qt-emp"><option value="">-- ไม่ระบุ --</option></select></div>
-
-        <!-- รายการสินค้า -->
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;flex-wrap:wrap;gap:6px">
-          <div>
-            <div style="font-weight:600;font-size:14px">รายการสินค้า</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:2px">ค้นหาจากฐานข้อมูลสินค้า, สร้างสินค้าใหม่เข้าคลัง, หรือพิมพ์สินค้าชั่วคราวได้อิสระ</div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button type="button" onclick="openQuickProductModal('quote', -1, '')" style="background:#f0fdf4;border:1px solid #16a34a;border-radius:6px;padding:5px 10px;color:#16a34a;cursor:pointer;font-size:12px;font-weight:700">⚡ + เพิ่มสินค้าใหม่เข้าคลัง</button>
-            <button type="button" onclick="addQuoteItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:12px;font-weight:700">+ เพิ่มรายการ</button>
-          </div>
-        </div>
-        <div id="qt-items"></div>
-
-        <div style="border-top:1px solid var(--border);padding-top:10px;margin-top:8px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:13px;color:var(--text3)">ยอดรวมสินค้า (Subtotal)</span>
-            <span class="font-mono" style="font-size:15px;font-weight:600" id="qt-subtotal">฿0</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-            <span style="font-size:13px;color:var(--text3)">ส่วนลดท้ายบิล</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <input type="number" id="qt-bill-discount" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:100px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--red)">
-              <select id="qt-bill-discount-type" onchange="calcQuoteTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 6px;font-size:13px">
-                <option value="amount">฿</option>
-                <option value="percent">%</option>
-              </select>
-              <span id="qt-bill-discount-amt" class="font-mono" style="font-size:13px;color:var(--red);min-width:70px;text-align:right"></span>
+              <!-- Right Column: Document Details -->
+              <div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Posting Date</span>
+                  <input type="date" id="qt-date" value="${today()}" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label" style="color:#0284c7;font-weight:700">Valid Until</span>
+                  <input type="date" id="qt-valid" value="${new Date(Date.now()+30*86400000).toISOString().slice(0,10)}" style="width:100%;background:#f0f9ff;border:1px solid #93c5fd;border-radius:6px;padding:5px 8px;color:#0369a1;font-size:13px;font-weight:700;box-sizing:border-box">
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Payment Method</span>
+                  <select id="qt-pay">
+                    <option selected>โอนเงิน</option><option>COD</option><option>บัตรเครดิต</option><option>เงินสด</option>
+                  </select>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Customer PO</span>
+                  <input type="text" id="qt-customer-po" placeholder="เช่น PO-2026-001 (ไม่บังคับ)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Sales Employee</span>
+                  <select id="qt-emp" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px"><option value="">-- ไม่ระบุ --</option></select>
+                </div>
+              </div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;flex-wrap:wrap;gap:6px">
-            <span style="font-size:13px;color:var(--text3)">ค่าจัดส่ง (Shipping Fee)</span>
-            <div style="display:flex;align-items:center;gap:6px">
-              <select id="qt-shipping-type" onchange="handleQuoteShippingTypeChange()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 6px;font-size:13px;font-weight:600">
-                <option value="custom">ระบุค่าจัดส่ง (฿)</option>
-                <option value="free">ฟรีค่าจัดส่ง (Free)</option>
-                <option value="collect">เก็บค่าขนส่งปลายทาง</option>
-              </select>
-              <input type="number" id="qt-shipping-fee" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:90px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:13px;color:var(--text)">
-              <span id="qt-shipping-fee-amt" class="font-mono" style="font-size:13px;color:var(--text);min-width:70px;text-align:right"></span>
+
+          <!-- 3. Tabs Navigation -->
+          <div class="sap-tabs">
+            <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-quote-window','contents')">📦 Contents (รายการสินค้า)</div>
+            <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-quote-window','logistics')">🚚 Logistics (จัดส่ง & สถานที่)</div>
+            <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-quote-window','accounting')">💳 Accounting (ออกบิล & ภาษี)</div>
+            <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-quote-window','notes')">📝 Notes (หมายเหตุ)</div>
+          </div>
+
+          <!-- 4. Tab Panes -->
+          <!-- Pane 1: Contents -->
+          <div class="sap-tab-pane active" data-pane="contents">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+              <div style="font-size:12.5px;color:#475569;font-weight:600">Item / Service Type: <span style="color:#0f172a;font-weight:700">Item (สินค้า)</span> · <span style="font-size:11.5px;color:#64748b">ค้นหาจากระบบ หรือพิมพ์สินค้าชั่วคราวได้อิสระ</span></div>
+              <div style="display:flex;gap:6px">
+                <button type="button" onclick="openQuickProductModal('quote', -1, '')" style="background:#f0fdf4;border:1px solid #16a34a;border-radius:6px;padding:5px 10px;color:#16a34a;cursor:pointer;font-size:12px;font-weight:700">⚡ + เพิ่มสินค้าใหม่เข้าคลัง</button>
+                <button type="button" onclick="addQuoteItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:12px;font-weight:700">+ เพิ่มรายการ</button>
+              </div>
+            </div>
+            <div id="qt-items"></div>
+          </div>
+
+          <!-- Pane 2: Logistics -->
+          <div class="sap-tab-pane" data-pane="logistics">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</div>
+                <textarea id="qt-address" rows="3" placeholder="ที่อยู่จัดส่ง / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">🚚 รูปแบบการจัดส่ง & ค่าขนส่ง</div>
+                <div style="font-size:12.5px;color:#64748b;margin-bottom:6px">สามารถระบุค่าจัดส่งหรือเงื่อนไขฟรีค่าส่งได้ที่สรุปท้ายเอกสาร</div>
+              </div>
             </div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;border-top:1px dashed var(--border);padding-top:8px">
-            <span style="font-size:14px;font-weight:700;color:var(--text)">ยอดรวมสุทธิ (Grand Total)</span>
-            <span class="font-mono text-accent" style="font-size:20px;font-weight:700" id="qt-total">฿0</span>
-          </div>
-        </div>
 
-        <!-- หมายเหตุ 2 ช่อง: แสดงในบิล & เฉพาะหลังบ้านดู เหมือนหน้า Order -->
-        <div class="grid-2" style="margin-top:12px;margin-bottom:12px">
-          <div class="form-group" style="margin-bottom:0">
-            <label>หมายเหตุที่แสดงในบิล <span style="font-size:11px;color:var(--text3)">(พิมพ์ลงในใบเสนอราคาให้ลูกค้าเห็น)</span></label>
-            <textarea id="qt-note" rows="2" placeholder="เช่น กำหนดยืนราคา 30 วัน, ระยะเวลาส่งมอบ 2-3 วันทำการ..."></textarea>
+          <!-- Pane 3: Accounting -->
+          <div class="sap-tab-pane" data-pane="accounting">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+              <div style="font-weight:700;font-size:13px;color:#1e293b">🏢 ข้อมูลออกบิล / ใบกำกับภาษี (Bill-to & Tax Invoice)</div>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('qt-address','qt-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+              <div>
+                <span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
+                <input type="text" id="qt-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+              </div>
+              <div>
+                <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
+                <input type="text" id="qt-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+              </div>
+            </div>
+            <div>
+              <span class="sap-field-label">ที่อยู่ในการออกบิล (Billing Address)</span>
+              <textarea id="qt-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกบิล / ใบกำกับภาษี / ใบเสนอราคา" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px;resize:vertical"></textarea>
+            </div>
           </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label style="color:#b45309;font-weight:700">🔒 หมายเหตุหลังบ้าน <span style="font-size:11px;color:var(--text3);font-weight:400">(เฉพาะแอดมินดู · ไม่พิมพ์ลงบิล)</span></label>
-            <textarea id="qt-internal-note" rows="2" placeholder="บันทึกช่วยจำสำหรับแอดมิน/หลังบ้าน เช่น ต้นทุนพิเศษ, เช็กสเปกแล้ว, ต่อรองราคา..." style="background:#fffbeb;border:1px solid #fde68a"></textarea>
+
+          <!-- Pane 4: Notes -->
+          <div class="sap-tab-pane" data-pane="notes">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <span class="sap-field-label" style="color:#1e293b">หมายเหตุที่แสดงในบิล (Remarks · พิมพ์ให้ลูกค้าเห็น)</span>
+                <textarea id="qt-note" rows="3" placeholder="เช่น กำหนดยืนราคา 30 วัน, ระยะเวลาส่งมอบ 2-3 วันทำการ..." style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px;resize:vertical"></textarea>
+              </div>
+              <div>
+                <span class="sap-field-label" style="color:#b45309;font-weight:700">🔒 หมายเหตุหลังบ้าน (Internal Remarks · ไม่พิมพ์ลงบิล)</span>
+                <textarea id="qt-internal-note" rows="3" placeholder="บันทึกช่วยจำสำหรับแอดมิน/หลังบ้าน เช่น ต้นทุนพิเศษ, เช็กสเปกแล้ว, ต่อรองราคา..." style="width:100%;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px;resize:vertical"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Bottom Summary Footer -->
+          <div class="sap-footer">
+            <div>
+              <div class="sap-field-row" style="margin-bottom:8px">
+                <span class="sap-field-label">Document Type</span>
+                <div style="font-size:12.5px;font-weight:700;color:#1e293b">Sales Quotation (SQ) · ใบเสนอราคา</div>
+              </div>
+              <div class="sap-field-row" style="margin-bottom:6px">
+                <span class="sap-field-label">Status</span>
+                <div style="font-size:12px;color:#64748b">ร่างเอกสาร / บันทึกส่งลูกค้า</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex;justify-content:space-between;color:#475569;font-size:12.5px;margin-bottom:4px">
+                <span>Total Before Discount</span>
+                <span class="font-mono" style="font-weight:600" id="qt-subtotal">฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;color:var(--red);font-size:12.5px;margin-bottom:4px">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span>Discount</span>
+                  <input type="number" id="qt-bill-discount" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:75px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:2px 6px;font-size:12px;color:var(--red)">
+                  <select id="qt-bill-discount-type" onchange="calcQuoteTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:4px;padding:2px 4px;font-size:11.5px">
+                    <option value="amount">฿</option>
+                    <option value="percent">%</option>
+                  </select>
+                </div>
+                <span id="qt-bill-discount-amt" class="font-mono" style="font-size:12.5px;color:var(--red);min-width:70px;text-align:right"></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;font-size:12.5px">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span style="color:#475569">Freight</span>
+                  <select id="qt-shipping-type" onchange="handleQuoteShippingTypeChange()" style="background:#fff;border:1px solid var(--border2);border-radius:4px;padding:2px 6px;font-size:11.5px;font-weight:600">
+                    <option value="custom">ระบุค่าจัดส่ง (฿)</option>
+                    <option value="free">ฟรีค่าจัดส่ง (Free)</option>
+                    <option value="collect">เก็บค่าขนส่งปลายทาง</option>
+                  </select>
+                  <input type="number" id="qt-shipping-fee" value="0" min="0" step="any" oninput="calcQuoteTotal()" style="width:70px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:2px 6px;font-size:12px;color:var(--text)">
+                </div>
+                <span id="qt-shipping-fee-amt" class="font-mono" style="font-size:12.5px;color:var(--text);min-width:70px;text-align:right"></span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;color:#0f172a">
+                <span>Total (ยอดสุทธิ)</span>
+                <span class="font-mono text-accent" style="font-size:18px;font-weight:800" id="qt-total">฿0</span>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="modal-footer" id="qt-modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('modal-quote')">ยกเลิก</button>
-          <button class="btn btn-secondary" onclick="saveQuote('draft')">💾 บันทึกแบบร่าง</button>
+          <button class="btn btn-secondary" onclick="closeModal('modal-quote')">Cancel (ยกเลิก)</button>
+          <button class="btn btn-sap-update" onclick="saveQuote('draft')">💾 Update / บันทึกแบบร่าง (Draft)</button>
           <button class="btn btn-primary" onclick="saveQuote('sent')">📤 บันทึก + ส่งลูกค้า</button>
         </div>
+      </div>
+    </div>
       </div>
     </div>
 
@@ -22706,93 +23102,124 @@ async function viewQuote(qtId) {
         '</div>' +
       '</div>'
     ) : '') +
-    '<div class="modal-title" style="margin-bottom:12px">📋 ใบเสนอราคา · '+(qt.quote_no||'-')+'</div>' +
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">' +
-      quoteBadge(qt.status) +
-      (qt.valid_until?'<span style="font-size:12px;color:var(--text3)">ใช้ได้ถึง '+qt.valid_until+'</span>':'')+
-    '</div>' +
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;margin-bottom:14px">' +
-      '<div><span style="color:var(--text3)">ลูกค้า / บริษัท</span><div style="font-weight:600">'+(meta.company_name ? escapeHTML(meta.company_name) + ' (' + (qt.customer_name||'-') + ')' : (qt.customer_name||'-'))+'</div>' +
-        (meta.customer_username ? '<div style="font-size:12px;color:var(--text2)">User: '+escapeHTML(meta.customer_username)+'</div>' : '') +
-        (meta.tax_id?'<div style="font-size:12px;color:var(--text2)">Tax ID: '+escapeHTML(meta.tax_id)+'</div>':'')+
-        (qt.customer_contact?'<div style="font-size:12px;color:var(--text2)">ผู้ติดต่อ: '+escapeHTML(qt.customer_contact)+(meta.contact_position ? ' ('+escapeHTML(meta.contact_position)+')' : '')+'</div>':'')+
-        (meta.contact_email?'<div style="font-size:12px;color:var(--blue)">อีเมล: '+escapeHTML(meta.contact_email)+'</div>':'')+
-        (qt.customer_phone?'<div style="font-size:12px;color:var(--text2)">โทร: '+escapeHTML(qt.customer_phone)+'</div>':'')+
+    '<div class="sap-window" id="sap-quote-view-window">' +
+      '<div class="sap-header-bar">' +
+        '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+          '<span style="font-size:15px">📋</span>' +
+          '<span>Sales Quotation · '+(qt.quote_no||'-')+'</span>' +
+          quoteBadge(qt.status) +
+          (qt.valid_until ? '<span style="font-size:11.5px;color:#64748b">ใช้ได้ถึง '+qt.valid_until+'</span>' : '') +
+        '</div>' +
+        '<div style="font-size:11.5px;color:#64748b;font-weight:600">SAP Business One Standard</div>' +
       '</div>' +
-      '<div>' +
-        '<span style="color:var(--text3)">ช่องทาง / ชำระ</span>' +
-        '<div style="font-weight:600;display:flex;gap:6px;align-items:center;margin:2px 0 6px"><span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">'+escapeHTML(meta.channel||'LINE')+'</span>' +
-          '<span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1">'+escapeHTML(meta.payment_method||'โอนเงิน')+'</span></div>' +
-        '<span style="color:var(--text3)">พนักงาน</span><div>'+(empMap[qt.employee_id]||'-')+'</div>' +
+
+      '<div class="sap-panel">' +
+        '<div class="sap-form-grid">' +
+          '<div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Customer</span><div style="font-weight:700;color:#0f172a">'+(meta.company_name ? escapeHTML(meta.company_name) + ' (' + (qt.customer_name||'-') + ')' : (qt.customer_name||'-'))+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Contact Person</span><div style="color:#334155">'+(qt.customer_contact ? escapeHTML(qt.customer_contact)+(meta.contact_position ? ' ('+escapeHTML(meta.contact_position)+')' : '') : '-')+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Phone & Email</span><div style="color:#334155">'+(qt.customer_phone ? escapeHTML(qt.customer_phone) : '-')+(meta.contact_email ? ' · <span style="color:var(--blue)">'+escapeHTML(meta.contact_email)+'</span>' : '')+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Customer Ref.</span><div style="color:#334155">'+(qt.customer_social ? escapeHTML(qt.customer_social) : '-')+(meta.customer_username ? ' (@'+escapeHTML(meta.customer_username)+')' : '')+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Channel / Cur.</span><div style="display:flex;gap:6px;align-items:center"><span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe">'+escapeHTML(meta.channel||'LINE')+'</span><span style="font-weight:700;color:#64748b;font-size:11.5px">THB (฿)</span></div></div>' +
+          '</div>' +
+          '<div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">No.</span><div style="font-weight:800;color:#0369a1">'+(qt.quote_no||'-')+' <span style="font-size:10.5px;color:#64748b;background:#f1f5f9;border:1px solid #cbd5e1;padding:1px 5px;border-radius:4px;font-weight:normal">Primary</span></div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Posting Date</span><div>'+qt.quote_date+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label" style="color:#0284c7;font-weight:700">Valid Until</span><div style="color:#0369a1;font-weight:700">'+(qt.valid_until||'-')+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Payment Method</span><div><span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1">'+escapeHTML(meta.payment_method||'โอนเงิน')+'</span></div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Customer PO</span><div>'+(meta.customer_po_no ? 'PO: <b style="color:var(--blue)">' + escapeHTML(meta.customer_po_no) + '</b>' : '-')+'</div></div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
-      '<div><span style="color:var(--text3)">วันที่</span><div>'+qt.quote_date+'</div></div>' +
-      '<div><span style="color:var(--text3)">Ref / PO</span><div>'+(qt.customer_social?escapeHTML(qt.customer_social):'-') + (meta.customer_po_no ? ' · PO: <b style="color:var(--blue)">' + escapeHTML(meta.customer_po_no) + '</b>' : '') + '</div></div>' +
-    '</div>' +
-    ((qt.customer_address || meta.billing_address) ? (
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12px;background:var(--bg3);padding:8px 10px;border-radius:6px;margin-bottom:12px">' +
-        '<div><span style="color:var(--text3);font-weight:600">📦 ที่อยู่จัดส่ง:</span><div style="color:var(--text)">'+(qt.customer_address ? escapeHTML(qt.customer_address).replace(/\n/g, '<br>') : '-')+'</div></div>' +
-        '<div><span style="color:var(--text3);font-weight:600">🏢 ที่อยู่ออกบิล:</span><div style="color:var(--text)">'+(meta.billing_address ? escapeHTML(meta.billing_address).replace(/\n/g, '<br>') : '-')+'</div></div>' +
-      '</div>'
-    ) : '') +
-    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการสินค้า</div>' +
-    '<div class="table-wrap"><table><thead><tr>' +
-      '<th>#</th><th class="left">สินค้า</th><th>จำนวน</th><th class="right">ราคา/ชิ้น</th><th class="right">ส่วนลด</th><th class="right">รวม</th>' +
-    '</tr></thead><tbody>' +
-    (items||[]).map((it,i)=>{
-      const g=Number(it.qty||1)*Number(it.sell_price||0), d=Number(it.discount||0);
-      const net=it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d);
-      const discStr=d>0?(it.discount_type==='percent'?d+'%':'฿'+fmt(d)):'-';
-      return '<tr><td style="text-align:center">'+(i+1)+'</td>' +
-        '<td>'+escapeHTML(it.product_name)+'</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
-        '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
-        '<td style="text-align:right;color:var(--red)">'+discStr+'</td>' +
-        '<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>';
-    }).join('')+
-    '</tbody></table></div>' +
-    '<div style="border-top:1px solid var(--border);padding:10px 0;margin-top:8px;font-size:13px">' +
-      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
-        '<span style="color:var(--text3)">ยอดรวมสินค้า (Subtotal)</span>' +
-        '<span class="font-mono" style="font-weight:600">'+fmtB(subtotal)+'</span>' +
+
+      '<div class="sap-tabs">' +
+        '<div class="sap-tab active" data-tab="contents" onclick="switchSapTab(\'sap-quote-view-window\',\'contents\')">📦 Contents (รายการสินค้า)</div>' +
+        '<div class="sap-tab" data-tab="logistics" onclick="switchSapTab(\'sap-quote-view-window\',\'logistics\')">🚚 Logistics (สถานที่จัดส่ง)</div>' +
+        '<div class="sap-tab" data-tab="accounting" onclick="switchSapTab(\'sap-quote-view-window\',\'accounting\')">💳 Accounting (ออกบิล & ภาษี)</div>' +
+        '<div class="sap-tab" data-tab="notes" onclick="switchSapTab(\'sap-quote-view-window\',\'notes\')">📝 Notes (หมายเหตุ)</div>' +
       '</div>' +
-      (billDiscAmt > 0 ? (
-        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--red)">' +
-          '<span>ส่วนลดท้ายบิล' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span>' +
-          '<span class="font-mono">- '+fmtB(billDiscAmt)+'</span>' +
-        '</div>'
-      ) : '') +
-      (meta.shipping_type === 'free' ? (
-        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#16a34a">' +
-          '<span>ค่าจัดส่ง (Shipping Fee)</span>' +
-          '<span style="font-weight:700">ฟรีค่าจัดส่ง (Free)</span>' +
-        '</div>'
-      ) : meta.shipping_type === 'collect' ? (
-        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#d97706">' +
-          '<span>ค่าจัดส่ง (Shipping Fee)</span>' +
-          '<span style="font-weight:700">เก็บค่าขนส่งปลายทาง</span>' +
-        '</div>'
-      ) : shippingFee > 0 ? (
-        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
-          '<span style="color:var(--text3)">ค่าจัดส่ง</span>' +
-          '<span class="font-mono">+ '+fmtB(shippingFee)+'</span>' +
-        '</div>'
-      ) : '') +
-      '<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--border);padding-top:6px;margin-top:6px">' +
-        '<span style="font-weight:700;font-size:14px">ยอดรวมสุทธิ</span>' +
-        '<span class="font-mono text-accent" style="font-size:20px;font-weight:700">'+fmtB(grandTotal)+'</span>' +
+
+      '<div class="sap-tab-pane active" data-pane="contents">' +
+        '<div style="font-size:12.5px;color:#475569;margin-bottom:8px">Item / Service Type: <strong style="color:#0f172a">Item (สินค้า)</strong> · '+items.length+' รายการ</div>' +
+        '<div class="table-wrap"><table><thead><tr>' +
+          '<th>#</th><th class="left">สินค้า</th><th>จำนวน</th><th class="right">ราคา/ชิ้น</th><th class="right">ส่วนลด</th><th class="right">รวม</th>' +
+        '</tr></thead><tbody>' +
+        (items||[]).map((it,i)=>{
+          const g=Number(it.qty||1)*Number(it.sell_price||0), d=Number(it.discount||0);
+          const net=it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d);
+          const discStr=d>0?(it.discount_type==='percent'?d+'%':'฿'+fmt(d)):'-';
+          return '<tr><td style="text-align:center">'+(i+1)+'</td>' +
+            '<td>'+escapeHTML(it.product_name)+'</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
+            '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
+            '<td style="text-align:right;color:var(--red)">'+discStr+'</td>' +
+            '<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>';
+        }).join('')+
+        '</tbody></table></div>' +
       '</div>' +
-    '</div>' +
-    '<div style="margin-top:10px;border:1.5px solid #16a34a;border-radius:8px;padding:10px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
-      '<div>' +
-        '<div style="font-size:12px;font-weight:700;color:#15803d">🏦 บัญชีรับโอนเงิน (Bank Transfer)</div>' +
-        '<div style="font-size:13px;font-weight:700;color:#0f172a">'+escapeHTML(bank.name)+' · ชื่อบัญชี: '+escapeHTML(bank.accountName)+'</div>' +
+
+      '<div class="sap-tab-pane" data-pane="logistics">' +
+        '<div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 Ship-to Address (ที่อยู่จัดส่งสินค้า):</div>' +
+        '<div style="background:#f8fafc;padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;line-height:1.6">'+(qt.customer_address ? escapeHTML(qt.customer_address).replace(/\n/g, '<br>') : '<span style="color:#94a3b8">ไม่ได้ระบุที่อยู่จัดส่ง</span>')+'</div>' +
       '</div>' +
-      '<div style="text-align:right">' +
-        '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:2px">เลขที่บัญชี</div>' +
-        '<div style="font-family:\'JetBrains Mono\',Consolas,\'Segoe UI Mono\',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:\'zero\' 1;font-size:22px;font-weight:800;color:#047857;letter-spacing:2.5px;background:#fff;border:1.5px solid #86efac;border-radius:6px;padding:3px 12px;display:inline-block">'+escapeHTML(bank.accountNumber)+'</div>' +
+
+      '<div class="sap-tab-pane" data-pane="accounting">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
+          '<div><span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล:</span><div style="font-weight:600;font-size:13px">'+(meta.company_name ? escapeHTML(meta.company_name) : '-')+'</div></div>' +
+          '<div><span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID):</span><div style="font-weight:600;font-size:13px">'+(meta.tax_id ? escapeHTML(meta.tax_id) : '-')+'</div></div>' +
+        '</div>' +
+        '<div style="margin-bottom:12px"><span class="sap-field-label">ที่อยู่ออกบิล (Billing Address):</span><div style="background:#f8fafc;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;line-height:1.5">'+(meta.billing_address ? escapeHTML(meta.billing_address).replace(/\n/g, '<br>') : '<span style="color:#94a3b8">ไม่ได้ระบุที่อยู่ออกบิล</span>')+'</div></div>' +
+        '<div style="border:1.5px solid #16a34a;border-radius:8px;padding:10px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
+          '<div>' +
+            '<div style="font-size:12px;font-weight:700;color:#15803d">🏦 บัญชีรับโอนเงิน (Bank Transfer)</div>' +
+            '<div style="font-size:13px;font-weight:700;color:#0f172a">'+escapeHTML(bank.name)+' · ชื่อบัญชี: '+escapeHTML(bank.accountName)+'</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+            '<div style="font-size:11px;font-weight:700;color:#15803d;margin-bottom:2px">เลขที่บัญชี</div>' +
+            '<div style="font-family:\'JetBrains Mono\',Consolas,\'Segoe UI Mono\',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:\'zero\' 1;font-size:20px;font-weight:800;color:#047857;letter-spacing:2px;background:#fff;border:1.5px solid #86efac;border-radius:6px;padding:3px 12px;display:inline-block">'+escapeHTML(bank.accountNumber)+'</div>' +
+          '</div>' +
+        '</div>' +
       '</div>' +
-    '</div>' +
-    (meta.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-top:4px"><strong>หมายเหตุเอกสาร:</strong> '+escapeHTML(meta.note)+'</div>':'') +
-    (meta.internal_note?'<div style="font-size:13px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px;margin-top:6px"><strong>🔒 หมายเหตุหลังบ้าน (Admin):</strong> '+escapeHTML(meta.internal_note)+'</div>':'');
+
+      '<div class="sap-tab-pane" data-pane="notes">' +
+        (meta.note?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px;margin-bottom:10px"><strong>หมายเหตุเอกสาร (Remarks):</strong> '+escapeHTML(meta.note)+'</div>':'<div style="font-size:12.5px;color:#94a3b8;margin-bottom:10px">ไม่มีหมายเหตุเอกสาร</div>') +
+        (meta.internal_note?'<div style="font-size:13px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px"><strong>🔒 หมายเหตุหลังบ้าน (Admin):</strong> '+escapeHTML(meta.internal_note)+'</div>':'') +
+      '</div>' +
+
+      '<div class="sap-footer">' +
+        '<div>' +
+          '<div class="sap-field-row" style="margin-bottom:6px"><span class="sap-field-label">Sales Employee</span><div style="font-weight:600;color:#1e293b">'+(empMap[qt.employee_id]||'-')+'</div></div>' +
+          '<div class="sap-field-row"><span class="sap-field-label">SAP B1 Status</span><div><span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:10.5px">'+(isClosed?'Closed':'Open')+'</span></div></div>' +
+        '</div>' +
+        '<div>' +
+          '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#475569;font-size:12.5px">' +
+            '<span>Total Before Discount</span><span class="font-mono" style="font-weight:600">'+fmtB(subtotal)+'</span>' +
+          '</div>' +
+          (billDiscAmt > 0 ? (
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:var(--red);font-size:12.5px">' +
+              '<span>Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span>' +
+              '<span class="font-mono">- '+fmtB(billDiscAmt)+'</span>' +
+            '</div>'
+          ) : '') +
+          (meta.shipping_type === 'free' ? (
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#16a34a;font-size:12.5px">' +
+              '<span>Freight</span><span style="font-weight:700">ฟรีค่าจัดส่ง</span>' +
+            '</div>'
+          ) : meta.shipping_type === 'collect' ? (
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#d97706;font-size:12.5px">' +
+              '<span>Freight</span><span style="font-weight:700">เก็บค่าขนส่งปลายทาง</span>' +
+            '</div>'
+          ) : shippingFee > 0 ? (
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:12.5px">' +
+              '<span style="color:var(--text3)">Freight</span><span class="font-mono">+ '+fmtB(shippingFee)+'</span>' +
+            '</div>'
+          ) : '') +
+          '<div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:6px">' +
+            '<span style="font-weight:800;font-size:15px;color:#0f172a">Total (ยอดสุทธิ)</span>' +
+            '<span class="font-mono text-accent" style="font-size:18px;font-weight:800">'+fmtB(grandTotal)+'</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
 
   // Footer buttons
   const footer=document.getElementById('qt-detail-footer');
@@ -44976,7 +45403,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.52', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับการพิมพ์ใบแจ้งหนี้ (Invoice) & ใบส่งสินค้า (Delivery Note) จากหน้าออเดอร์ (v3.52)', items:[
+    { v:'3.53', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับโฉมหน้าต่างบันทึก/แก้ไข Order & ใบเสนอราคา ตามมาตรฐาน SAP Business One ERP (v3.53)', items:[
+      '🏢 <b>หน้าต่างบันทึก/แก้ไขสไตล์ SAP Business One (SAP B1 ERP Interface):</b> ปรับปรุงการจัดวางหน้าต่างแก้ไขรายการ Order (Sales Order) และใบเสนอราคา (Sales Quotation) เป็นรูปแบบ 2 คอลัมน์บนมาตรฐาน SAP B1 แบ่งสัดส่วนข้อมูลคู่ค้า (Business Partner / Customer Info) ฝั่งซ้าย และข้อมูลเอกสาร (Document Header, No., Status, Posting Date, Delivery Date, Payment Method) ฝั่งขวาอย่างชัดเจนเป็นระเบียบ สวยงามและใช้งานง่ายระดับองค์กร',
+      '📂 <b>ระบบแท็บนำทางแยกหมวดหมู่เอกสาร (SAP B1 Tabbed Navigation):</b> จัดระเบียบเนื้อหาเอกสารออกเป็น 4 แท็บมาตรฐาน ได้แก่ <code>📦 Contents</code> (ตารางรายการสินค้า ราคา ส่วนลด พร้อมปุ่มดึงต้นทุนล่าสุด), <code>🚚 Logistics</code> (ที่อยู่จัดส่งสินค้า, ขนส่ง Tracking, เลข PO ลูกค้า, กำหนดวันส่งมอบ), <code>💳 Accounting</code> (ข้อมูลออกบิล นิติบุคคล เลขประจำตัวผู้เสียภาษี 13 หลัก, พนักงานขาย, ลิงก์ AR Invoice), และ <code>📝 Notes & Audit</code> (หมายเหตุเอกสาร, หมายเหตุหลังบ้านเฉพาะภายใน, บันทึกการอนุมัติปิดเอกสาร SAP B1, ประวัติแก้ไขราคาในบิล)',
+      '💰 <b>สรุปยอดท้ายบิล & ปุ่มสั่งการสีทองมาตรฐาน SAP (Golden Action Bar):</b> ด้านล่างแสดงสรุปยอดรวม Total Before Discount, Discount (% / ฿), Freight/Shipping Fee และ Grand Total พร้อมกล่องวิเคราะห์กำไรขั้นต้น (GP) และปุ่มสั่งการหลัก <code>Update (บันทึกการแก้ไข)</code> สีทองอร่ามตามมาตรฐาน SAP Business One พร้อมปุ่มพิมพ์เอกสาร, ค้างส่ง/ปิดเอกสาร, ใบปะหน้า, สติกเกอร์ และรับคืนสินค้า (CN)'
+    ]},
+    { v:'3.52', date:'2026-11-13', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'รองรับการพิมพ์ใบแจ้งหนี้ (Invoice) & ใบส่งสินค้า (Delivery Note) จากหน้าออเดอร์ (v3.52)', items:[
       '📑 <b>พิมพ์ใบแจ้งหนี้ / ใบเรียกเก็บเงิน (Invoice / Billing Note):</b> เพิ่มตัวเลือกการพิมพ์ใบแจ้งหนี้มาตรฐานจากหน้าออเดอร์ พร้อมแสดงข้อมูลลูกค้า/ผู้ซื้อ, เลขที่ใบแจ้งหนี้, กำหนดชำระเงิน (Due Date), รายการสินค้า ราคา ส่วนลด ค่าจัดส่ง ยอดรวมที่ต้องชำระ ตัวอักษรบาทไทย ข้อมูลบัญชีธนาคารสำหรับโอนเงิน และช่องลงนามผู้วางบิล/ผู้มีอำนาจลงนามและผู้รับใบแจ้งหนี้อย่างเป็นทางการ',
       '🚚 <b>พิมพ์ใบส่งสินค้า / ใบส่งของ (Delivery Note / Packing Slip):</b> เพิ่มตัวเลือกการพิมพ์ใบส่งสินค้า เน้นแสดงสถานที่จัดส่งปลายทาง (Ship To), วันที่จัดส่ง (Delivery Date), ผู้ให้บริการขนส่งและเลขพัสดุ (Tracking No.), เลขที่ PO ลูกค้า พร้อมช่องลงนามผู้ส่งสินค้าและผู้ตรวจรับสินค้าปลายทาง และมีตัวเลือกให้เปิด/ปิดการแสดงราคาได้ตามต้องการ (เหมาะสำหรับใบส่งของฝ่ายคลัง/ตรวจนับสินค้า)',
       '🖨️ <b>ปุ่มลัดพิมพ์เอกสารเข้าถึงง่ายในทุกหน้าจอ (1-Click Multi-Document Printing):</b> สามารถกดพิมพ์เอกสารได้โดยตรงจากปุ่ม <code>🖨️</code> ในตารางออเดอร์ Desktop, ปุ่ม <code>🖨️ พิมพ์เอกสาร</code> บนการ์ด Mobile และในหน้าต่างดู/แก้ไขออเดอร์ โดยสามารถเลือกพิมพ์ต้นฉบับ, สำเนา หรือพิมพ์เป็นชุด (ต้นฉบับ + สำเนา) ได้ทันที'

@@ -3,13 +3,13 @@ const fs = require('node:fs');
 
 const html = fs.readFileSync('index.html', 'utf8');
 
-console.log('--- TEST 1: App Version Bump to v3.52 ---');
-assert.match(html, /const CURRENT_APP_VERSION = 'sealthai-v3\.52';/, 'CURRENT_APP_VERSION must be sealthai-v3.52');
-assert.match(html, /const DISPLAY_APP_VERSION = 'v3\.52';/, 'DISPLAY_APP_VERSION must be v3.52');
-assert.match(html, /v3\.52 🚀 System Active/, 'Auth badge must be v3.52');
-assert.match(html, /v3\.52 🚀/, 'Topbar badge must be v3.52');
+console.log('--- TEST 1: App Version Bump to v3.52+ ---');
+assert.match(html, /const CURRENT_APP_VERSION = 'sealthai-v3\.(5[2-9]|[6-9]\d)';/, 'CURRENT_APP_VERSION must be at least sealthai-v3.52');
+assert.match(html, /const DISPLAY_APP_VERSION = 'v3\.(5[2-9]|[6-9]\d)';/, 'DISPLAY_APP_VERSION must be at least v3.52');
+assert.match(html, /v3\.(5[2-9]|[6-9]\d) 🚀 System Active/, 'Auth badge must be at least v3.52');
+assert.match(html, /v3\.(5[2-9]|[6-9]\d) 🚀/, 'Topbar badge must be at least v3.52');
 assert.match(html, /v:'3\.52'/, 'Changelog must contain v3.52');
-console.log('✓ Test 1 passed: App version is v3.52 everywhere.');
+console.log('✓ Test 1 passed: App version is v3.52+ everywhere.');
 
 console.log('--- TEST 2: openReceiptOptions & openOrderPrintOptions Modal Choices ---');
 assert.match(html, /function openReceiptOptions\(orderId, defaultDocType='receipt'\)/, 'openReceiptOptions accepts orderId and defaultDocType');
