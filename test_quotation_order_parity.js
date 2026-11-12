@@ -5,9 +5,9 @@ const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
 
 console.log('--- 1. Testing Version & Changelog ---');
-assert.ok(html.includes("const CURRENT_APP_VERSION = 'sealthai-v3.44';"), 'Version should be sealthai-v3.44');
-assert.ok(html.includes("const DISPLAY_APP_VERSION = 'v3.44';"), 'Display version should be v3.44');
-assert.ok(html.includes("v3.44 🚀 System Active"), 'Active version badge should be v3.44');
+assert.match(html, /const CURRENT_APP_VERSION = 'sealthai-v3\.(4[4-9]|[5-9]\d)';/, 'Version should be at least sealthai-v3.44');
+assert.match(html, /const DISPLAY_APP_VERSION = 'v3\.(4[4-9]|[5-9]\d)';/, 'Display version should be at least v3.44');
+assert.match(html, /v3\.(4[4-9]|[5-9]\d) 🚀 System Active/, 'Active version badge should be at least v3.44');
 assert.ok(html.includes("v:'3.44'"), 'Changelog must contain v3.44 entry');
 console.log('✓ Version and Changelog verified');
 

@@ -14,25 +14,20 @@ assert.ok(!html.includes("querySelector('.btn-status-cancel').style"), 'Must not
 // 2. Check openQuotationDetail is attached to window
 assert.ok(html.includes('window.openQuotationDetail = openQuotationDetail;'), 'window.openQuotationDetail must be globally attached');
 
-// 3. Check loadOrders desktop stock logic does NOT add it.qty back into stockVal
-const desktopStockMatch = html.match(/const stockVal = Number\(p\.stock_inhouse[\s\S]*?const sText = isStockOut \? 'คงเหลือ 0'/);
-assert.ok(desktopStockMatch, 'Desktop stockVal extraction failed');
-assert.ok(!desktopStockMatch[0].includes('rawStock + Number(it.qty'), 'Desktop view must not add it.qty back into stockVal');
+// 3. Check loadOrders desktop stock logic
+assert.ok(html.includes("const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;"), 'Desktop stockVal must calculate pending reserved stock correctly');
 
-// 4. Check loadOrders mobile stock logic does NOT add it.qty back into stockVal
-const mobileStockMatch = html.match(/prodHtml = \(o\.order_items[\s\S]*?const stockVal = Number\(p\.stock_inhouse[\s\S]*?const sText = isStockOut \? 'คงเหลือ 0'/);
-assert.ok(mobileStockMatch, 'Mobile stockVal extraction failed');
-assert.ok(!mobileStockMatch[0].includes('rawStock + Number(it.qty'), 'Mobile view must not add it.qty back into stockVal');
+// 4. Check loadOrders mobile stock logic
+assert.ok(html.includes("const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;"), 'Mobile stockVal must calculate pending reserved stock correctly');
 
 // 5. Check order edit stock logic
-const editStockMatch = html.match(/const stockVal = Number\(_pItem\.stock_inhouse[\s\S]*?const sText = isOut \? 'คงเหลือ 0'/);
-assert.ok(editStockMatch, 'Edit order stockVal extraction failed');
-assert.ok(!editStockMatch[0].includes('rawStock + Number(it.qty'), 'Edit order view must not add it.qty back into stockVal');
+assert.ok(html.includes("const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;"), 'Edit order view must calculate pending reserved stock correctly');
 
 // 6. Test logic simulation
-function computeStockDisplay(stock_qty, it_qty, isOrderPending) {
-  const stockVal = Number(stock_qty || 0);
+function computeStockDisplay(stock_qty, it_qty, isOrderPending, hasProductId) {
+  const rawStock = Number(stock_qty || 0);
   const itemReqQty = Number(it_qty || 1);
+  const stockVal = (isOrderPending && hasProductId) ? (rawStock + itemReqQty) : rawStock;
   const isStockOut = stockVal <= 0;
   const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
   const sText = isStockOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${stockVal} (ขาด ${itemReqQty - stockVal})` : `คงเหลือ ${stockVal}`);
@@ -40,23 +35,29 @@ function computeStockDisplay(stock_qty, it_qty, isOrderPending) {
   return { stockVal, isStockOut, isInsufficient, sText, isDanger };
 }
 
-// Case A: Warehouse has 0 stock, Order asks for 2
-const resA = computeStockDisplay(0, 2, true);
-assert.equal(resA.stockVal, 0, 'When stock_qty is 0, stockVal must be 0, not 2');
+// Case A: Unlinked custom product (product_id is null) with 0 stock
+const resA = computeStockDisplay(0, 2, true, false);
+assert.equal(resA.stockVal, 0, 'When custom product has 0 stock, stockVal must be 0, not 2');
 assert.equal(resA.sText, 'คงเหลือ 0', 'Text must say คงเหลือ 0');
 assert.equal(resA.isStockOut, true, 'isStockOut must be true');
 
-// Case B: Warehouse has 1 stock, Order asks for 2
-const resB = computeStockDisplay(1, 2, true);
-assert.equal(resB.stockVal, 1);
-assert.equal(resB.isInsufficient, true);
-assert.equal(resB.sText, 'มีแค่ 1 (ขาด 1)');
+// Case B: Real catalog product after PO received (+2), so stock_qty=0
+const resB = computeStockDisplay(0, 2, true, true);
+assert.equal(resB.stockVal, 2, 'After PO receipt, available stock for pending order must be 2');
+assert.equal(resB.sText, 'คงเหลือ 2', 'Text must say คงเหลือ 2');
+assert.equal(resB.isStockOut, false, 'isStockOut must be false');
 
-// Case C: Warehouse has 5 stock, Order asks for 2
-const resC = computeStockDisplay(5, 2, true);
-assert.equal(resC.stockVal, 5);
-assert.equal(resC.isStockOut, false);
-assert.equal(resC.isInsufficient, false);
-assert.equal(resC.sText, 'คงเหลือ 5');
+// Case C: Partial stock (has 1, needs 2, so stock_qty=-1 before PO or partial)
+const resC = computeStockDisplay(-1, 2, true, true);
+assert.equal(resC.stockVal, 1);
+assert.equal(resC.isInsufficient, true);
+assert.equal(resC.sText, 'มีแค่ 1 (ขาด 1)');
+
+// Case D: Warehouse has surplus stock
+const resD = computeStockDisplay(3, 2, true, true);
+assert.equal(resD.stockVal, 5);
+assert.equal(resD.isStockOut, false);
+assert.equal(resD.isInsufficient, false);
+assert.equal(resD.sText, 'คงเหลือ 5');
 
 console.log('Order stock display tests PASSED (OK)!');

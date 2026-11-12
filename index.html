@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.44';
-const DISPLAY_APP_VERSION = 'v3.44';
+const CURRENT_APP_VERSION = 'sealthai-v3.45';
+const DISPLAY_APP_VERSION = 'v3.45';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.44)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.44 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.45 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1362,7 +1362,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.38)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.38 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.45 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7191,7 +7191,7 @@ async function loadOrders() {
     sb.from('employees').select('id,name').eq('shop_id', currentShop.id).eq('active',true),
     Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation()]),
     sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
-    sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered)').eq('shop_id', currentShop.id).neq('status','cancelled'),
+    sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered,qty_received)').eq('shop_id', currentShop.id).neq('status','cancelled'),
     sb.from('products').select('*').eq('shop_id', currentShop.id),
     ensureLazadaSummary()
   ]);
@@ -7241,7 +7241,8 @@ async function loadOrders() {
             product_id: poi.product_id,
             clean_product_name: pName.replace(/\[SO:[^\]]*\]/gi, '').trim(),
             raw_product_name: pName,
-            qty_ordered: poi.qty_ordered
+            qty_ordered: poi.qty_ordered,
+            qty_received: Number(poi.qty_received || 0)
           });
         });
       }
@@ -7492,15 +7493,20 @@ async function loadOrders() {
             const partNoTxt = p?.part_no ? ` <span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)" title="Part No">#${escapeHTML(p.part_no)}</span>` : '';
             const skuTxt = (it.sku || p?.sku) ? ` <span style="font-size:9.5px;color:var(--accent);background:#eff6ff;padding:1px 4px;border-radius:3px;font-family:var(--mono)" title="SKU">[${escapeHTML(it.sku || p.sku)}]</span>` : '';
             const poMatch = isItemInPO(it);
+            const isPoReceived = poMatch && (poMatch.status === 'received' || poMatch.status === 'completed' || Number(poMatch.qty_received || 0) >= Number(it.qty || 1));
             const poTag = poMatch 
-              ? ` <span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:9.5px;padding:1px 4px;border-radius:4px;font-weight:700" title="เปิด PO แล้ว: ${escapeHTML(poMatch.po_no)}">🛒 PO</span>`
+              ? (isPoReceived
+                  ? ` <span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:9.5px;padding:1px 4px;border-radius:4px;font-weight:700" title="รับของเข้าสต๊อกแล้วจาก PO: ${escapeHTML(poMatch.po_no)} (รับแล้ว ${fmt(poMatch.qty_received)} ชิ้น)">✓ PO รับแล้ว</span>`
+                  : ` <span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:9.5px;padding:1px 4px;border-radius:4px;font-weight:700" title="เปิด PO แล้ว: ${escapeHTML(poMatch.po_no)}">🛒 PO</span>`
+                )
               : '';
             
             let stockHtml = '';
             let nameHtml = escapeHTML(it.product_name || p?.name || '');
             if (p && p.id) {
-              const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+              const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
               const itemReqQty = Number(it.qty || 1);
+              const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;
               const isStockOut = stockVal <= 0;
               const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
               const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
@@ -7529,7 +7535,13 @@ async function loadOrders() {
             ${shopeeReconciliationBadge(o)}
             ${lazadaReconciliationBadge(o)}
             ${hasAR?`<div style="margin-top:3px"><span class="badge badge-blue" style="font-size:10px;cursor:pointer" onclick="showPage('arinvoice');setTimeout(()=>openARDetail('${linkedAR.id}'),250)" title="คลิกดู AR Invoice ${escapeHTML(linkedAR.ar_no)}">📄 ${escapeHTML(linkedAR.ar_no)}</span></div>`:''}
-            ${hasPO?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${linkedPOs.map(po=>`<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;cursor:pointer;padding:1px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px" onclick="showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)" title="คลิกดูใบสั่งซื้อ PO: ${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')})">🛒 ${escapeHTML(po.po_no)}</span>`).join('')}</div>`:''}
+            ${hasPO?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:3px">${linkedPOs.map(po=>{
+              const isRec = po.status === 'received' || po.status === 'completed';
+              const bStyle = isRec ? 'background:#dcfce7;color:#166534;border:1px solid #86efac' : 'background:#f0fdf4;color:#15803d;border:1px solid #86efac';
+              const pIcon = isRec ? '✓' : '🛒';
+              const pLabel = isRec ? `${po.po_no} (รับแล้ว)` : po.po_no;
+              return `<span class="badge" style="${bStyle};font-size:10px;font-weight:700;cursor:pointer;padding:1px 6px;border-radius:6px;display:inline-flex;align-items:center;gap:3px" onclick="showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)" title="คลิกดูใบสั่งซื้อ PO: ${escapeHTML(po.po_no)} (${escapeHTML(po.supplier_name||'Supplier')}${isRec?' - รับเข้าแล้ว':''})">${pIcon} ${escapeHTML(pLabel)}</span>`;
+            }).join('')}</div>`:''}
             ${(()=>{
               const inote = getOrderInternalNote(o);
               return inote ? `<div style="margin-top:4px"><span class="badge" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10px;padding:2px 6px;border-radius:5px;display:inline-block;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="หมายเหตุหลังบ้าน: ${escapeHTML(inote)}">🔒 ${escapeHTML(inote)}</span></div>` : '';
@@ -7614,12 +7626,18 @@ async function loadOrders() {
           const partNoTxt = p?.part_no ? ` <span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)">#${escapeHTML(p.part_no)}</span>` : '';
           const skuTxt = (it.sku || p?.sku) ? ` <span style="font-size:9.5px;color:var(--accent);background:#eff6ff;padding:1px 4px;border-radius:3px;font-family:var(--mono)">[${escapeHTML(it.sku || p.sku)}]</span>` : '';
           const poMatch = isItemInPO(it);
-          const poTag = poMatch ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700">🛒 PO</span>' : '';
+          const isPoReceived = poMatch && (poMatch.status === 'received' || poMatch.status === 'completed' || Number(poMatch.qty_received || 0) >= Number(it.qty || 1));
+          const poTag = poMatch 
+            ? (isPoReceived 
+                ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700" title="รับของเข้าสต๊อกแล้ว">✓ PO รับแล้ว</span>'
+                : ' <span style="background:#f0fdf4;color:#15803d;padding:1px 4px;border-radius:3px;font-size:9.5px;font-weight:700">🛒 PO</span>')
+            : '';
           let stockHtml = '';
           let nameHtml = escapeHTML(it.product_name || p?.name || '');
           if (p && p.id) {
-            const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+            const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
             const itemReqQty = Number(it.qty || 1);
+            const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;
             const isStockOut = stockVal <= 0;
             const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
             const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
@@ -7634,7 +7652,13 @@ async function loadOrders() {
           return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}</div>`;
         }).join('') || '-';
         return `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${prodHtml}</div>` +
-          (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => `<span class="badge" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px" onclick="event.stopPropagation();showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)">🛒 PO: ${escapeHTML(po.po_no)}</span>`).join('')}</div>` : '');
+          (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => {
+            const isRec = po.status === 'received' || po.status === 'completed';
+            const bStyle = isRec ? 'background:#dcfce7;color:#166534;border:1px solid #86efac' : 'background:#f0fdf4;color:#15803d;border:1px solid #86efac';
+            const pIcon = isRec ? '✓' : '🛒';
+            const pLabel = isRec ? `${po.po_no} (รับแล้ว)` : po.po_no;
+            return `<span class="badge" style="${bStyle};font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px" onclick="event.stopPropagation();showPage('purchase');setTimeout(()=>viewPO('${po.po_id}'),250)">${pIcon} PO: ${escapeHTML(pLabel)}</span>`;
+          }).join('')}</div>` : '');
       })()}
       ${(()=>{
         const sale=Number(o.total_amount||0);
@@ -9246,8 +9270,9 @@ function renderEditItems() {
     if (_pItem && _pItem.id) {
       const edShipStatus = document.getElementById('ed-status')?.value || window._editingOrderForGP?.shipping_status;
       const isOrderPending = !edShipStatus || edShipStatus === 'pending';
-      const stockVal = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
+      const rawStock = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
       const itemReqQty = Number(it.qty || 1);
+      const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;
       const isOut = stockVal <= 0;
       const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
       const stockHint = document.createElement('div');
@@ -42854,7 +42879,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.44', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องทางและข้อมูลใบเสนอราคาให้ตรงกับใบออเดอร์ 100% เพื่อความสะดวกรวดเร็วในการ Convert (v3.44)', items:[
+    { v:'3.45', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'อัปเดตยอดสต๊อกคงเหลือของออเดอร์ทันทีเมื่อรับของเข้าสต๊อก (Goods Receipt / PO) พร้อมป้ายสถานะ PO รับแล้ว (v3.45)', items:[
+      '📦 <b>คำนวณสต๊อกคงเหลือสำหรับออเดอร์ที่รอจัดส่งอย่างแม่นยำ:</b> สำหรับออเดอร์รอจัดส่งที่มีการตัดจองสต๊อกไปแล้ว เมื่อมีการรับสินค้าเข้าคลังผ่านใบรับสินค้า (Goods Receipt / PO) ระบบจะนำสต๊อกคงเหลือในคลังมารวมกับจำนวนที่จองไว้ของออเดอร์นั้น ทำให้แสดงจำนวนคงเหลือจริงที่พร้อมแพ็คส่ง (เช่น <code>📦 คงเหลือ 2</code>) ทันที ไม่ค้างอยู่ที่ 0 ชิ้นอีกต่อไป',
+      '✓ <b>ป้ายสถานะ PO รับของแล้ว (PO Received Badge):</b> เมื่อใบสั่งซื้อ PO ได้รับสินค้าเข้าคลังเรียบร้อยแล้ว (Status: Received) ป้าย PO ทั้งในระดับรายการสินค้าและหัวบิลออเดอร์ จะเปลี่ยนเป็น <code>✓ PO รับแล้ว</code> พร้อมสีเขียวสดใส เพื่อให้พนักงานแพ็คของทราบทันทีว่าของมาถึงคลังแล้ว พร้อมจัดส่งได้เลย',
+      '🛡️ <b>แยกแยะสินค้าในคลัง vs สินค้าสั่งพิเศษอัตโนมัติ:</b> สำหรับสินค้าที่ไม่ได้ผูกรหัสในคลัง (Custom Products) ระบบจะแสดงยอดสต๊อกคลังจริงโดยไม่บวกหลอกตา ป้องกันการเข้าใจผิดว่ามีของในคลัง'
+    ]},
+    { v:'3.44', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มช่องทางและข้อมูลใบเสนอราคาให้ตรงกับใบออเดอร์ 100% เพื่อความสะดวกรวดเร็วในการ Convert (v3.44)', items:[
       '🛒 <b>ฟิลด์ครบครันเทียบเท่าหน้า Order:</b> เพิ่มช่องทางขาย (Channel: Facebook, Shopee, Lazada, LINE, TikTok, Thaimart, Offline, อื่นๆ), ช่องทางชำระเงิน (Payment Method: โอนเงิน, COD, บัตรเครดิต, เงินสด), ชื่อลูกค้า (User) Shopee/Lazada, และเลขที่ PO ของลูกค้า ลงในฟอร์มใบเสนอราคา',
       '🔄 <b>Seamless 1-to-1 Convert & Import:</b> เมื่อแปลงใบเสนอราคาเป็น Sales Order (หรือเลือกดึงข้อมูลจากใบเสนอราคาในหน้า Order) ระบบจะส่งต่อข้อมูลช่องทางขาย, ช่องทางการชำระเงิน, User ลูกค้า, และเลขที่ PO ไปยัง Sales Order ครบถ้วนอัตโนมัติ 100%',
       '⚡ <b>เสถียรภาพและระบบความปลอดภัย:</b> แก้ไขข้อผิดพลาดของลูป Convert to Order พร้อมระบบรองรับ Schema Cache ของ Supabase อย่างสมบูรณ์แบบ ไร้ปัญหาคอลัมน์ไม่ตรงกัน'
