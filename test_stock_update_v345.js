@@ -6,10 +6,10 @@ const html = fs.readFileSync('d:/Nature Online/Sealthai AI Ecosystem V1/Shop Das
 console.log('Testing v3.45 stock update & PO badge logic...');
 
 // 1. Version check
-assert.ok(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.45'"), 'CURRENT_APP_VERSION must be v3.45');
-assert.ok(html.includes("DISPLAY_APP_VERSION = 'v3.45'"), 'DISPLAY_APP_VERSION must be v3.45');
-assert.ok(html.includes("v3.45 🚀 System Active"), 'System Active badge must be v3.45');
-assert.ok(html.includes("v3.45 🚀"), 'Dashboard topbar badge must be v3.45');
+assert.match(html, /CURRENT_APP_VERSION = 'sealthai-v3\.(4[5-9]|[5-9]\d)'/, 'CURRENT_APP_VERSION must be at least v3.45');
+assert.match(html, /DISPLAY_APP_VERSION = 'v3\.(4[5-9]|[5-9]\d)'/, 'DISPLAY_APP_VERSION must be at least v3.45');
+assert.match(html, /v3\.(4[5-9]|[5-9]\d) 🚀 System Active/, 'System Active badge must be at least v3.45');
+assert.match(html, /v3\.(4[5-9]|[5-9]\d) 🚀/, 'Dashboard topbar badge must be at least v3.45');
 console.log('✓ Version assertions passed');
 
 // 2. PO query check

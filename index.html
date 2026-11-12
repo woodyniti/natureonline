@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.45';
-const DISPLAY_APP_VERSION = 'v3.45';
+const CURRENT_APP_VERSION = 'sealthai-v3.46';
+const DISPLAY_APP_VERSION = 'v3.46';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.45 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.46 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1362,7 +1362,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.45)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.45 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.46 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2345,6 +2345,22 @@ const INTERNAL_NOTE_TAG_RE = /(?:^|\n)\[\[INTERNAL_NOTE:([A-Za-z0-9%_\-.~]+)\]\]
 const INTERNAL_NOTE_TAG_GLOBAL_RE = /(?:^|\n)\[\[INTERNAL_NOTE:[A-Za-z0-9%_\-.~]+\]\](?=\n|$)/gi;
 const INTERNAL_NOTE_TEXT_RE = /(?:^|\n)\[(?:INTERNAL|INTERNAL_NOTE|หมายเหตุหลังบ้าน|หลังบ้าน):\s*([^\]]+)\](?=\n|$)/i;
 const INTERNAL_NOTE_TEXT_GLOBAL_RE = /(?:^|\n)\[(?:INTERNAL|INTERNAL_NOTE|หมายเหตุหลังบ้าน|หลังบ้าน):\s*[^\]]+\](?=\n|$)/gi;
+const DELIVERY_DATE_TAG_RE = /(?:^|\n)\[\[DELIVERY_DATE:([0-9]{4}-[0-9]{2}-[0-9]{2})\]\](?=\n|$)/i;
+const DELIVERY_DATE_TAG_GLOBAL_RE = /(?:^|\n)\[\[DELIVERY_DATE:[0-9]{4}-[0-9]{2}-[0-9]{2}\]\](?=\n|$)/gi;
+const DELIVERY_DATE_TEXT_RE = /(?:^|\n)\[(?:DELIVERY_DATE|วันที่ส่งสินค้า|วันส่งสินค้า|Delivery Date):\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\](?=\n|$)/i;
+const DELIVERY_DATE_TEXT_GLOBAL_RE = /(?:^|\n)\[(?:DELIVERY_DATE|วันที่ส่งสินค้า|วันส่งสินค้า|Delivery Date):\s*[0-9]{4}-[0-9]{2}-[0-9]{2}\](?=\n|$)/gi;
+
+function getOrderDeliveryDate(order) {
+  if (order?.delivery_date && String(order.delivery_date).trim()) {
+    return String(order.delivery_date).trim().slice(0, 10);
+  }
+  const raw = String(order?.note || '');
+  const mTag = raw.match(DELIVERY_DATE_TAG_RE);
+  if (mTag && mTag[1]) return mTag[1];
+  const mText = raw.match(DELIVERY_DATE_TEXT_RE);
+  if (mText && mText[1]) return mText[1];
+  return order?.order_date ? String(order.order_date).trim().slice(0, 10) : '';
+}
 
 function getOrderInternalNote(order) {
   if (order?.internal_note && String(order.internal_note).trim()) {
@@ -2370,9 +2386,11 @@ function cleanOrderNote(note) {
   let s = String(note || '')
     .replace(INTERNAL_NOTE_TAG_GLOBAL_RE, '')
     .replace(INTERNAL_NOTE_TEXT_GLOBAL_RE, '')
+    .replace(DELIVERY_DATE_TAG_GLOBAL_RE, '')
+    .replace(DELIVERY_DATE_TEXT_GLOBAL_RE, '')
     .replace(SHIPPING_FEE_NOTE_RE, '')
     .replace(COMPANY_NOTE_GLOBAL_RE, '')
-    .replace(/\[(?:บริษัท\/นิติบุคคล|Tax ID|ที่อยู่ออกบิล|หมายเหตุภายใน|PO ลูกค้า|ค่าจัดส่ง)\]:[^\n]*/gi, '')
+    .replace(/\[(?:บริษัท\/นิติบุคคล|Tax ID|ที่อยู่ออกบิล|หมายเหตุภายใน|PO ลูกค้า|ค่าจัดส่ง|วันที่ส่งสินค้า|วันส่งสินค้า)\]:[^\n]*/gi, '')
     .trim();
   const qm = s.match(/(?:Convert จาก|ดึงจากใบเสนอราคา)\s*(QT[0-9A-Za-z-]+)/i);
   if (qm && qm[1]) {
@@ -2398,16 +2416,18 @@ function getOrderCompanyName(order, customer = null) {
   return '';
 }
 
-function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null) {
+function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null, deliveryDate = null) {
   let clean = cleanOrderNote(note);
   const comp = (companyName || '').trim();
   const fee = Math.max(0, Number(shippingFee) || 0);
   const inote = internalNote !== null ? (internalNote || '').trim() : getOrderInternalNote({ note });
+  const dDate = (deliveryDate || '').trim();
   const parts = [];
   if (clean) parts.push(clean);
   if (comp) parts.push(`[บริษัท: ${comp}]`);
   if (fee > 0) parts.push(`[[SHIPPING_FEE:${fee}]]`);
   if (inote) parts.push(`[[INTERNAL_NOTE:${encodeURIComponent(inote)}]]`);
+  if (dDate) parts.push(`[[DELIVERY_DATE:${dDate}]]`);
   return parts.join('\n');
 }
 function getOrderShippingFee(order) {
@@ -6942,7 +6962,8 @@ async function orders() {
               <option value="">-- เลือกใบเสนอราคาเพื่อลดการกรอกข้อมูลซ้ำ --</option>
             </select>
           </div>
-          <div class="form-group"><label>วันที่</label><input type="date" id="o-date" value="${today()}"></div>
+          <div class="form-group"><label>วันที่เอกสาร (Order Date)</label><input type="date" id="o-date" value="${today()}"></div>
+          <div class="form-group"><label>วันที่ส่งสินค้า (Delivery Date)</label><input type="date" id="o-delivery-date" value="${today()}"></div>
           <div class="form-group"><label>ช่องทาง</label>
             <select id="o-channel">
               <option>Facebook</option><option selected>Shopee</option><option>Lazada</option><option>LINE</option>
@@ -7454,7 +7475,7 @@ async function loadOrders() {
     <table class="desktop-only orders-compact" id="tbl-orders">
       <thead><tr>
         <th style="width:36px;text-align:center"><input type="checkbox" id="so-select-all" onchange="toggleSelectAllSO(this.checked)" title="เลือกทั้งหมด"></th>
-        <th>ออเดอร์</th>
+        <th>ออเดอร์ / วันส่ง</th>
         <th>ลูกค้า / ช่องทาง</th>
         <th>รายการสินค้า</th>
         <th class="text-right">การเงิน</th>
@@ -7521,6 +7542,9 @@ async function loadOrders() {
             return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${poTag}</div>`;
           }).join('') || '-';
 
+          const delDate = getOrderDeliveryDate(o);
+          const delBadge = delDate ? `<div style="margin-top:2px"><span class="badge" style="background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;display:inline-flex;align-items:center;gap:3px" title="วันที่ส่งสินค้า (Delivery Date)">🚚 ส่ง: ${escapeHTML(delDate)}</span></div>` : '';
+
           return `<tr>
           <td style="text-align:center" onclick="event.stopPropagation()">
             ${hasAR
@@ -7531,6 +7555,7 @@ async function loadOrders() {
           <td class="col-order">
             <div style="font-weight:600">${o.order_date||'-'}</div>
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
+            ${delBadge}
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
             ${shopeeReconciliationBadge(o)}
             ${lazadaReconciliationBadge(o)}
@@ -7596,7 +7621,7 @@ async function loadOrders() {
           ${o.company_name ? `<div style="font-weight:700;font-size:14px;color:var(--text)">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
           <div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>
           ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date}${getOrderDeliveryDate(o)?' · <b style="color:#0f766e">🚚 ส่ง: '+escapeHTML(getOrderDeliveryDate(o))+'</b>':''} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
           ${shopeeReconciliationBadge(o)}
           ${lazadaReconciliationBadge(o)}
           ${(()=>{
@@ -7802,6 +7827,8 @@ async function openNewOrder() {
   ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-billing-address','o-track','o-note','o-internal-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  const elDate = document.getElementById('o-date'); if (elDate) elDate.value = today();
+  const elDelDate = document.getElementById('o-delivery-date'); if (elDelDate) elDelDate.value = today();
   const _dd = document.getElementById('o-cust-dd'); if (_dd) _dd.style.display = 'none';
   // reset discount
   const bd = document.getElementById('o-bill-disc');
@@ -7843,6 +7870,8 @@ async function importQuoteToOrder(qtId) {
   ]);
   if (qErr || iErr || !qt) { toast('ดึงใบเสนอราคาไม่สำเร็จ','error'); return; }
   const set = (id,value) => { const el=document.getElementById(id); if(el) el.value=value||''; };
+  set('o-date', today());
+  set('o-delivery-date', today());
   const qMeta = getQuoteMeta(qt);
   if (qMeta.channel) set('o-channel', qMeta.channel);
   if (qMeta.payment_method) set('o-pay', qMeta.payment_method);
@@ -8886,6 +8915,7 @@ async function saveOrder() {
     shop_id: currentShop.id,
     order_no: await generateOrderNo(document.getElementById('o-date').value),
     order_date: document.getElementById('o-date').value,
+    delivery_date: (document.getElementById('o-delivery-date')?.value || document.getElementById('o-date').value || today()).trim() || null,
     channel: document.getElementById('o-channel').value,
     customer_name: document.getElementById('o-cust').value,
     customer_username: document.getElementById('o-username').value, // ชื่อผู้ใช้ Shopee/Lazada
@@ -8901,7 +8931,7 @@ async function saveOrder() {
     tracking_no: document.getElementById('o-track').value,
     doc_status: 'confirmed',
     shipping_status: document.getElementById('o-status').value,
-    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote),
+    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote, document.getElementById('o-delivery-date')?.value || today()),
     internal_note: internalNote || null,
     employee_id: empId,
     bill_discount: billDisc,
@@ -8910,12 +8940,16 @@ async function saveOrder() {
     total_amount: grand,
     total_cost: totalCost
   };
-  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date
   let order, error;
-  for (let a = 0; a < 7; a++) {
+  for (let a = 0; a < 8; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
+    if (('delivery_date' in orderPayload) && (error.message||'').includes('delivery_date')) {
+      delete orderPayload.delivery_date;
+      continue;
+    }
     if (('customer_po_no' in orderPayload) && (error.message||'').includes('customer_po_no')) {
       if (orderPayload.customer_po_no) { toast('ยังไม่ได้เพิ่มคอลัมน์ PO ลูกค้า กรุณารัน supabase_orders_customer_po_v311.sql ก่อนบันทึกออเดอร์นี้','error'); return; }
       delete orderPayload.customer_po_no; continue;
@@ -9574,6 +9608,7 @@ async function viewOrder(orderId) {
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:13px">
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
         <div><span style="color:var(--text3)">วันที่เอกสาร</span><input type="date" id="ed-date" value="${order.order_date||''}" style="${iStyle}"></div>
+        <div><span style="color:var(--text3)">วันที่ส่งสินค้า (Delivery)</span><input type="date" id="ed-delivery-date" value="${getOrderDeliveryDate(order)}" style="${iStyle}"></div>
         <div style="position:relative"><span style="color:var(--text3)">ชื่อลูกค้า</span><input id="ed-cust" value="${(order.customer_name||'').replace(/"/g,'&quot;')}" autocomplete="off" oninput="searchEditCustomer(this.value)" onfocus="searchEditCustomer(this.value)" style="${iStyle}"><div id="ed-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:9999;max-height:220px;overflow-y:auto"></div></div>
         <div><span style="color:var(--text3)">User Shopee/Lazada</span><input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@username" style="${iStyle}"></div>
         <div><span style="color:var(--text3)">เลขอ้างอิงเอกสาร Shopee</span><input id="ed-ref" value="${(order.customer_social||'').replace(/"/g,'&quot;')}" placeholder="Customer Ref (เว้นว่างได้)" onchange="checkDupCustomerRef(this.value,'${order.id}');renderEditProfitBox()" style="${iStyle}"></div>
@@ -9749,6 +9784,7 @@ async function saveOrderEdit(orderId) {
   const editPayload = {
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
     order_date:       document.getElementById('ed-date')?.value || today(),
+    delivery_date:    (document.getElementById('ed-delivery-date')?.value || document.getElementById('ed-date')?.value || today()).trim() || null,
     customer_name:    document.getElementById('ed-cust').value,
     customer_username: document.getElementById('ed-username')?.value || '', // ชื่อผู้ใช้ Shopee/Lazada
     customer_social:  document.getElementById('ed-ref').value,             // Customer Ref
@@ -9763,7 +9799,7 @@ async function saveOrderEdit(orderId) {
     tracking_no: document.getElementById('ed-track').value,
     payment_method: document.getElementById('ed-pay').value,
     shipping_status: document.getElementById('ed-status').value,
-    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote),
+    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote, (document.getElementById('ed-delivery-date')?.value || '').trim()),
     internal_note: editInternalNote || null,
     employee_id: edEmpVal || null,
     bill_discount: editBillDisc,
@@ -9772,13 +9808,17 @@ async function saveOrderEdit(orderId) {
     total_amount: editGrand,
     total_cost: editTotalCost
   };
-  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note
+  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date
   let updErr;
-  for (let a = 0; a < 8; a++) {
+  for (let a = 0; a < 9; a++) {
     const r = await sb.from('orders').update(editPayload).eq('id', orderId);
     updErr = r.error;
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
+    if (('delivery_date' in editPayload) && msg.includes('delivery_date')) {
+      delete editPayload.delivery_date;
+      continue;
+    }
     if (('customer_po_no' in editPayload) && msg.includes('customer_po_no')) {
       if (editPayload.customer_po_no) { toast('ยังไม่ได้เพิ่มคอลัมน์ PO ลูกค้า กรุณารัน supabase_orders_customer_po_v311.sql ก่อนบันทึก','error'); return; }
       delete editPayload.customer_po_no; continue;
@@ -10208,6 +10248,10 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<div class="info-label">\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 (Document Details):</div>');
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.order_no||'-') + '</span></div>');
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date:</span><span class="doc-meta-val">' + thDate + '</span></div>');
+    const delDate = getOrderDeliveryDate(order);
+    if (delDate) {
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val font-mono">' + escapeHTML(delDate) + '</span></div>');
+    }
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
     if (order.customer_social) {
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e2d\u0e49\u0e32\u0e07\u0e2d\u0e34\u0e07 / Ref:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.customer_social) + '</span></div>');
@@ -21136,6 +21180,7 @@ async function convertToOrder(qtId) {
     shop_id: currentShop.id,
     order_no: orderNo,
     order_date: today(),
+    delivery_date: today(),
     channel: meta.channel || qt.channel || 'LINE',
     payment_method: meta.payment_method || 'โอนเงิน',
     customer_username: meta.customer_username || null,
@@ -42879,7 +42924,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.45', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'อัปเดตยอดสต๊อกคงเหลือของออเดอร์ทันทีเมื่อรับของเข้าสต๊อก (Goods Receipt / PO) พร้อมป้ายสถานะ PO รับแล้ว (v3.45)', items:[
+    { v:'3.46', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มวันที่ส่งสินค้า (Delivery Date) ในรายการออเดอร์ พร้อมกำหนดค่าเริ่มต้นเป็นวันปัจจุบัน (v3.46)', items:[
+      '🚚 <b>แสดงวันที่ส่งสินค้าในรายการออเดอร์ทันที:</b> แสดงป้าย <code>🚚 ส่ง: YYYY-MM-DD</code> ใต้เลขที่ออเดอร์ในตารางออเดอร์ (Desktop) และในการ์ดออเดอร์ (Mobile) ช่วยให้ฝ่ายจัดส่งและคลังสินค้าเห็นกำหนดส่งของทุกบิลได้อย่างชัดเจนรวดเร็ว',
+      '📅 <b>กำหนดค่าเริ่มต้นเป็นวันปัจจุบันอัตโนมัติ (Default to Today):</b> ฟอร์มสร้างออเดอร์ใหม่ (+ ออเดอร์ใหม่) และการแปลงใบเสนอราคาเป็น Sales Order จะตั้งค่าวันที่ส่งสินค้าเป็นวันปัจจุบันอัตโนมัติ โดยสามารถคลิกเลือกเปลี่ยนวันที่ตามต้องการได้',
+      '✏️ <b>แก้ไขและพิมพ์ลงบิลได้สะดวก:</b> เพิ่มช่องวันที่ส่งสินค้าในหน้าต่างดู/แก้ไขออเดอร์ พร้อมพิมพ์แสดงในบิล/ใบเสร็จรับเงิน (Receipt) และมีระบบสำรองข้อมูลในหมายเหตุเอกสารอัตโนมัติ'
+    ]},
+    { v:'3.45', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'อัปเดตยอดสต๊อกคงเหลือของออเดอร์ทันทีเมื่อรับของเข้าสต๊อก (Goods Receipt / PO) พร้อมป้ายสถานะ PO รับแล้ว (v3.45)', items:[
       '📦 <b>คำนวณสต๊อกคงเหลือสำหรับออเดอร์ที่รอจัดส่งอย่างแม่นยำ:</b> สำหรับออเดอร์รอจัดส่งที่มีการตัดจองสต๊อกไปแล้ว เมื่อมีการรับสินค้าเข้าคลังผ่านใบรับสินค้า (Goods Receipt / PO) ระบบจะนำสต๊อกคงเหลือในคลังมารวมกับจำนวนที่จองไว้ของออเดอร์นั้น ทำให้แสดงจำนวนคงเหลือจริงที่พร้อมแพ็คส่ง (เช่น <code>📦 คงเหลือ 2</code>) ทันที ไม่ค้างอยู่ที่ 0 ชิ้นอีกต่อไป',
       '✓ <b>ป้ายสถานะ PO รับของแล้ว (PO Received Badge):</b> เมื่อใบสั่งซื้อ PO ได้รับสินค้าเข้าคลังเรียบร้อยแล้ว (Status: Received) ป้าย PO ทั้งในระดับรายการสินค้าและหัวบิลออเดอร์ จะเปลี่ยนเป็น <code>✓ PO รับแล้ว</code> พร้อมสีเขียวสดใส เพื่อให้พนักงานแพ็คของทราบทันทีว่าของมาถึงคลังแล้ว พร้อมจัดส่งได้เลย',
       '🛡️ <b>แยกแยะสินค้าในคลัง vs สินค้าสั่งพิเศษอัตโนมัติ:</b> สำหรับสินค้าที่ไม่ได้ผูกรหัสในคลัง (Custom Products) ระบบจะแสดงยอดสต๊อกคลังจริงโดยไม่บวกหลอกตา ป้องกันการเข้าใจผิดว่ามีของในคลัง'
