@@ -6,10 +6,10 @@ const html = fs.readFileSync('d:/Nature Online/Sealthai AI Ecosystem V1/Shop Das
 console.log('Testing v3.46 Delivery Date in Order...');
 
 // 1. Version assertions
-assert.ok(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.46'"), 'CURRENT_APP_VERSION must be v3.46');
-assert.ok(html.includes("DISPLAY_APP_VERSION = 'v3.46'"), 'DISPLAY_APP_VERSION must be v3.46');
-assert.ok(html.includes("v3.46 🚀 System Active"), 'Active version badge must be v3.46');
-assert.ok(html.includes("v3.46 🚀"), 'Topbar badge must be v3.46');
+assert.ok(/CURRENT_APP_VERSION = 'sealthai-v3\.(?:4[6-9]|[5-9][0-9])'/.test(html), 'CURRENT_APP_VERSION must be >= v3.46');
+assert.ok(/DISPLAY_APP_VERSION = 'v3\.(?:4[6-9]|[5-9][0-9])'/.test(html), 'DISPLAY_APP_VERSION must be >= v3.46');
+assert.ok(/v3\.(?:4[6-9]|[5-9][0-9]) 🚀 System Active/.test(html), 'Active version badge must be >= v3.46');
+assert.ok(/v3\.(?:4[6-9]|[5-9][0-9]) 🚀/.test(html), 'Topbar badge must be >= v3.46');
 assert.ok(html.includes("v:'3.46'"), 'Changelog must include v3.46 entry');
 console.log('✓ Version assertions passed');
 

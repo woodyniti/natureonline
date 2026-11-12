@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.46';
-const DISPLAY_APP_VERSION = 'v3.46';
+const CURRENT_APP_VERSION = 'sealthai-v3.47';
+const DISPLAY_APP_VERSION = 'v3.47';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.46 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.47)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.47 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1362,7 +1362,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.46)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.46 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.47)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.47 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7544,6 +7544,8 @@ async function loadOrders() {
 
           const delDate = getOrderDeliveryDate(o);
           const delBadge = delDate ? `<div style="margin-top:2px"><span class="badge" style="background:#f0fdfa;color:#0f766e;border:1px solid #99f6e4;font-size:10px;font-weight:700;padding:1px 6px;border-radius:5px;display:inline-flex;align-items:center;gap:3px" title="วันที่ส่งสินค้า (Delivery Date)">🚚 ส่ง: ${escapeHTML(delDate)}</span></div>` : '';
+          const pLogCount = typeof getOrderPriceChangeCount === 'function' ? getOrderPriceChangeCount(o.id) : 0;
+          const pLogBadge = pLogCount > 0 ? `<div style="margin-top:2px"><span class="badge" onclick="event.stopPropagation();openOrderPriceHistoryModal('${o.id}')" style="cursor:pointer;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;display:inline-flex;align-items:center;gap:3px" title="คลิกดูประวัติการเปลี่ยนแปลงราคาในบิล (${pLogCount} ครั้ง)">📝 แก้ไขราคา (${pLogCount})</span></div>` : '';
 
           return `<tr>
           <td style="text-align:center" onclick="event.stopPropagation()">
@@ -7556,6 +7558,7 @@ async function loadOrders() {
             <div style="font-weight:600">${o.order_date||'-'}</div>
             <div class="font-mono" style="font-size:11px;color:var(--text3)">${o.order_no||'-'}</div>
             ${delBadge}
+            ${pLogBadge}
             ${o.customer_social?`<div class="font-mono" style="font-size:11px;color:var(--blue)">📄 ${o.customer_social}</div>`:''}
             ${shopeeReconciliationBadge(o)}
             ${lazadaReconciliationBadge(o)}
@@ -7621,7 +7624,7 @@ async function loadOrders() {
           ${o.company_name ? `<div style="font-weight:700;font-size:14px;color:var(--text)">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
           <div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>
           ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
-          <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date}${getOrderDeliveryDate(o)?' · <b style="color:#0f766e">🚚 ส่ง: '+escapeHTML(getOrderDeliveryDate(o))+'</b>':''} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date}${getOrderDeliveryDate(o)?' · <b style="color:#0f766e">🚚 ส่ง: '+escapeHTML(getOrderDeliveryDate(o))+'</b>':''}${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(o.id) > 0)?' · <span onclick="event.stopPropagation();openOrderPriceHistoryModal(\''+o.id+'\')" style="color:#991b1b;cursor:pointer;font-weight:700">📝 แก้ไขราคา ('+getOrderPriceChangeCount(o.id)+')</span>':''} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
           ${shopeeReconciliationBadge(o)}
           ${lazadaReconciliationBadge(o)}
           ${(()=>{
@@ -9604,6 +9607,17 @@ async function viewOrder(orderId) {
         </div>
       </div>`;
     })()}
+    ${(()=>{
+      const pCount = typeof getOrderPriceChangeCount === 'function' ? getOrderPriceChangeCount(order.id) : 0;
+      if (pCount <= 0) return '';
+      return `<div style="background:#fef2f2;border:1.5px solid #fecaca;border-radius:8px;padding:9px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;cursor:pointer" onclick="openOrderPriceHistoryModal('${order.id}')" title="คลิกเพื่อดูประวัติการแก้ไขราคาในบิล">
+        <div style="font-size:12.5px;color:#991b1b;font-weight:700;display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px">📜</span>
+          <span>ออเดอร์นี้มีการเปลี่ยนแปลงราคาในบิล <b>${pCount} ครั้ง</b> (คลิกดูประวัติและจุดที่เปลี่ยนแปลง)</span>
+        </div>
+        <button type="button" class="btn btn-sm" style="background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;font-weight:700;font-size:11px;padding:2px 8px">🔍 ดูประวัติราคา (Read Only) ➔</button>
+      </div>`;
+    })()}
     <div style="background:var(--bg3);border-radius:10px;padding:14px;margin-bottom:14px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;font-size:13px">
         <div><span style="color:var(--text3)">เลขออเดอร์</span><div class="font-mono">${order.order_no||'-'}</div></div>
@@ -9737,6 +9751,7 @@ async function viewOrder(orderId) {
     `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">ปิด</button>` +
     `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>` +
     `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openOrderPriceHistoryModal('${order.id}')" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;font-weight:700" title="คลิกเพื่อดูประวัติการเปลี่ยนแปลงราคาในบิล">📜 ประวัติแก้ไขราคา${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(order.id) > 0) ? ' ('+getOrderPriceChangeCount(order.id)+')' : ''}</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700">🖨️ พิมพ์บิล</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
@@ -9772,6 +9787,32 @@ async function saveOrderEdit(orderId) {
   const editShippingFee = Math.max(0, Number(document.getElementById('ed-shipping-fee')?.value||0));
   const editGrand = Math.max(0, editSubtotal - editBd) + editShippingFee;
   const editTotalCost = editItems.reduce((s,it)=>s+Number(it.qty||1)*Number(it.cost_per_unit||0),0);
+
+  // ── Price Audit Log Snapshot (v3.47) ──
+  const oldOrderSnapshot = window._editingOrderForGP || {};
+  const oldItemsSnapshot = Array.isArray(oldOrderSnapshot.order_items) ? oldOrderSnapshot.order_items.map(it => ({...it})) : [];
+  const oldBillDisc = Number(oldOrderSnapshot.bill_discount || 0);
+  const oldBillDiscType = oldOrderSnapshot.bill_discount_type || 'amount';
+  const oldShippingFee = Number(oldOrderSnapshot.shipping_fee || 0);
+  const oldSubtotal = oldItemsSnapshot.reduce((s, it) => s + (typeof itemNetEdit === 'function' ? itemNetEdit(it) : ((Number(it.qty)||1)*(Number(it.sell_price)||0))), 0);
+  const oldBdCalc = oldBillDiscType === 'percent' ? (oldSubtotal * oldBillDisc / 100) : oldBillDisc;
+  const oldGrand = Number(oldOrderSnapshot.total_amount != null ? oldOrderSnapshot.total_amount : Math.max(0, oldSubtotal - oldBdCalc) + oldShippingFee);
+
+  const priceDiffs = detectOrderPriceDiffs({
+    oldOrder: oldOrderSnapshot,
+    oldItems: oldItemsSnapshot,
+    oldSubtotal,
+    oldBillDisc,
+    oldBillDiscType,
+    oldShippingFee,
+    oldGrand,
+    newItems: editItems.map(it => ({...it})),
+    newSubtotal: editSubtotal,
+    newBillDisc: editBillDisc,
+    newBillDiscType: editBillDiscType,
+    newShippingFee: editShippingFee,
+    newGrand: editGrand
+  });
 
   // อัพเดท order totals + discount
   const edEmpVal = document.getElementById('ed-emp')?.value || null;
@@ -9918,6 +9959,37 @@ async function saveOrderEdit(orderId) {
     await recalcStockQty(productIds);
   }
 
+  // ── Record Price Change Audit Log (v3.47) ──
+  if (priceDiffs && priceDiffs.length > 0) {
+    try {
+      const editorName = currentUser?.name || currentUser?.email || (document.getElementById('user-name')?.textContent || '').trim() || 'Admin';
+      const logEntry = {
+        id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        shop_id: currentShop?.id || null,
+        order_id: orderId,
+        order_no: orderObj?.order_no || oldOrderSnapshot?.order_no || ('SO-' + String(orderId).slice(0, 8)),
+        changed_at: new Date().toISOString(),
+        changed_by: editorName,
+        old_grand: oldGrand,
+        new_grand: editGrand,
+        diff_grand: editGrand - oldGrand,
+        old_subtotal: oldSubtotal,
+        new_subtotal: editSubtotal,
+        diff_subtotal: editSubtotal - oldSubtotal,
+        old_shipping_fee: oldShippingFee,
+        new_shipping_fee: editShippingFee,
+        old_bill_discount: oldBillDisc,
+        new_bill_discount: editBillDisc,
+        diffs: priceDiffs,
+        old_items_snapshot: oldItemsSnapshot,
+        new_items_snapshot: editItems.map(it => ({...it}))
+      };
+      await recordOrderPriceChangeLog(logEntry);
+    } catch (e) {
+      console.warn('saveOrderEdit price audit log recording error:', e);
+    }
+  }
+
   unregisterUnsavedForm(document.getElementById('modal-order-detail'));
   closeModal('modal-order-detail');
   toast('บันทึกการแก้ไขสำเร็จ ✓','success');
@@ -9934,6 +10006,568 @@ async function saveOrderEdit(orderId) {
       order_items: editItems
     });
   }
+}
+
+// ════════════════════════════════════════════════════════════
+// ORDER PRICE CHANGE AUDIT TRAIL & READ-ONLY VIEWER (v3.47)
+// ════════════════════════════════════════════════════════════
+
+const ORDER_PRICE_LOGS_STORAGE_KEY = 'shopflow_order_price_logs';
+
+function getLocalOrderPriceLogsMap() {
+  try {
+    const raw = localStorage.getItem(ORDER_PRICE_LOGS_STORAGE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return (parsed && typeof parsed === 'object') ? parsed : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function getLocalOrderPriceLogs(orderId) {
+  if (!orderId) return [];
+  const map = getLocalOrderPriceLogsMap();
+  const list = map[orderId];
+  return Array.isArray(list) ? list : [];
+}
+
+function saveLocalOrderPriceLog(logEntry) {
+  if (!logEntry || !logEntry.order_id) return;
+  try {
+    const map = getLocalOrderPriceLogsMap();
+    if (!Array.isArray(map[logEntry.order_id])) {
+      map[logEntry.order_id] = [];
+    }
+    // Prepend (latest first)
+    map[logEntry.order_id].unshift(logEntry);
+    localStorage.setItem(ORDER_PRICE_LOGS_STORAGE_KEY, JSON.stringify(map));
+  } catch (e) {
+    console.warn('saveLocalOrderPriceLog error:', e);
+  }
+}
+
+async function recordOrderPriceChangeLog(logEntry) {
+  if (!logEntry || !logEntry.order_id) return;
+  
+  // 1. Save local snapshot immediately
+  saveLocalOrderPriceLog(logEntry);
+
+  // 2. Dual storage: Persist to Supabase order_price_logs table
+  try {
+    if (typeof sb !== 'undefined' && sb && currentShop?.id) {
+      const dbPayload = {
+        shop_id: currentShop.id,
+        order_id: logEntry.order_id,
+        order_no: logEntry.order_no || null,
+        changed_at: logEntry.changed_at || new Date().toISOString(),
+        changed_by: logEntry.changed_by || 'Admin',
+        old_grand: Number(logEntry.old_grand || 0),
+        new_grand: Number(logEntry.new_grand || 0),
+        diff_grand: Number(logEntry.diff_grand || 0),
+        old_subtotal: Number(logEntry.old_subtotal || 0),
+        new_subtotal: Number(logEntry.new_subtotal || 0),
+        diff_subtotal: Number(logEntry.diff_subtotal || 0),
+        old_shipping_fee: Number(logEntry.old_shipping_fee || 0),
+        new_shipping_fee: Number(logEntry.new_shipping_fee || 0),
+        old_bill_discount: Number(logEntry.old_bill_discount || 0),
+        new_bill_discount: Number(logEntry.new_bill_discount || 0),
+        diffs: logEntry.diffs || [],
+        old_items_snapshot: logEntry.old_items_snapshot || [],
+        new_items_snapshot: logEntry.new_items_snapshot || [],
+        note: logEntry.note || null
+      };
+      const { error } = await sb.from('order_price_logs').insert(dbPayload);
+      if (error) {
+        console.warn('Remote order_price_logs insert skipped:', error.message);
+      }
+    }
+  } catch (e) {
+    console.warn('recordOrderPriceChangeLog remote error:', e);
+  }
+}
+
+async function getOrderPriceLogs(orderId) {
+  if (!orderId) return [];
+  const localLogs = getLocalOrderPriceLogs(orderId);
+  try {
+    if (typeof sb !== 'undefined' && sb) {
+      const { data, error } = await sb.from('order_price_logs')
+        .select('*')
+        .eq('order_id', orderId)
+        .order('changed_at', { ascending: false });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const seen = new Set();
+        const merged = [];
+        for (const item of [...data, ...localLogs]) {
+          const key = item.id || (item.changed_at + '_' + item.diff_grand);
+          if (!seen.has(key)) {
+            seen.add(key);
+            merged.push(item);
+          }
+        }
+        merged.sort((a, b) => new Date(b.changed_at || b.created_at || 0) - new Date(a.changed_at || a.created_at || 0));
+        return merged;
+      }
+    }
+  } catch (e) {}
+  return localLogs;
+}
+
+function getOrderPriceChangeCount(orderId) {
+  if (!orderId) return 0;
+  const localLogs = getLocalOrderPriceLogs(orderId);
+  return localLogs.length;
+}
+
+function detectOrderPriceDiffs({
+  oldOrder = {},
+  oldItems = [],
+  oldSubtotal = 0,
+  oldBillDisc = 0,
+  oldBillDiscType = 'amount',
+  oldShippingFee = 0,
+  oldGrand = 0,
+  newItems = [],
+  newSubtotal = 0,
+  newBillDisc = 0,
+  newBillDiscType = 'amount',
+  newShippingFee = 0,
+  newGrand = 0
+}) {
+  const diffs = [];
+
+  // Helper to compute net of an item
+  const getItemNet = (it) => {
+    if (!it) return 0;
+    const q = Number(it.qty) || 1;
+    const p = Number(it.sell_price) || 0;
+    const d = Number(it.discount) || 0;
+    const dt = it.discount_type || 'amount';
+    const gross = q * p;
+    const disc = dt === 'percent' ? (gross * d / 100) : d;
+    return Math.max(0, gross - disc);
+  };
+
+  // 1. Grand Total
+  if (Math.abs(Number(oldGrand || 0) - Number(newGrand || 0)) > 0.009) {
+    diffs.push({
+      type: 'grand_total',
+      label: '💰 ยอดรวมสุทธิ (Grand Total)',
+      field: 'total_amount',
+      oldVal: Number(oldGrand || 0),
+      newVal: Number(newGrand || 0),
+      diff: Number(newGrand || 0) - Number(oldGrand || 0),
+      unit: '฿'
+    });
+  }
+
+  // 2. Subtotal
+  if (Math.abs(Number(oldSubtotal || 0) - Number(newSubtotal || 0)) > 0.009) {
+    diffs.push({
+      type: 'subtotal',
+      label: '📦 ยอดรวมสินค้า (Subtotal)',
+      field: 'subtotal',
+      oldVal: Number(oldSubtotal || 0),
+      newVal: Number(newSubtotal || 0),
+      diff: Number(newSubtotal || 0) - Number(oldSubtotal || 0),
+      unit: '฿'
+    });
+  }
+
+  // 3. Shipping Fee
+  if (Math.abs(Number(oldShippingFee || 0) - Number(newShippingFee || 0)) > 0.009) {
+    diffs.push({
+      type: 'shipping_fee',
+      label: '🚚 ค่าจัดส่ง (Shipping Fee)',
+      field: 'shipping_fee',
+      oldVal: Number(oldShippingFee || 0),
+      newVal: Number(newShippingFee || 0),
+      diff: Number(newShippingFee || 0) - Number(oldShippingFee || 0),
+      unit: '฿'
+    });
+  }
+
+  // 4. Bill Discount
+  const oldBdCalc = oldBillDiscType === 'percent' ? (Number(oldSubtotal || 0) * Number(oldBillDisc || 0) / 100) : Number(oldBillDisc || 0);
+  const newBdCalc = newBillDiscType === 'percent' ? (Number(newSubtotal || 0) * Number(newBillDisc || 0) / 100) : Number(newBillDisc || 0);
+  if (Math.abs(oldBdCalc - newBdCalc) > 0.009 || Math.abs(Number(oldBillDisc || 0) - Number(newBillDisc || 0)) > 0.009 || (Number(oldBillDisc || 0) > 0 && oldBillDiscType !== newBillDiscType)) {
+    diffs.push({
+      type: 'bill_discount',
+      label: '🏷️ ส่วนลดท้ายบิล (Bill Discount)',
+      field: 'bill_discount',
+      oldVal: Number(oldBillDisc || 0) + (oldBillDiscType === 'percent' ? '%' : '฿'),
+      newVal: Number(newBillDisc || 0) + (newBillDiscType === 'percent' ? '%' : '฿'),
+      diff: newBdCalc - oldBdCalc,
+      unit: '฿'
+    });
+  }
+
+  // 5. Items comparison
+  const oldMatchedIndices = new Set();
+  const newMatchedIndices = new Set();
+
+  function compareMatchedItems(oIt, nIt) {
+    const itName = (nIt.product_name || oIt.product_name || 'สินค้า').trim();
+
+    // Price change
+    const oPrice = Number(oIt.sell_price || 0);
+    const nPrice = Number(nIt.sell_price || 0);
+    if (Math.abs(oPrice - nPrice) > 0.009) {
+      diffs.push({
+        type: 'item_price',
+        label: `🏷️ ราคา/ชิ้น [${itName}]`,
+        itemName: itName,
+        oldVal: oPrice,
+        newVal: nPrice,
+        diff: nPrice - oPrice,
+        unit: '฿'
+      });
+    }
+
+    // Qty change
+    const oQty = Number(oIt.qty || 0);
+    const nQty = Number(nIt.qty || 0);
+    if (Math.abs(oQty - nQty) > 0.009) {
+      diffs.push({
+        type: 'item_qty',
+        label: `🔢 จำนวนชิ้น [${itName}]`,
+        itemName: itName,
+        oldVal: oQty,
+        newVal: nQty,
+        diff: nQty - oQty,
+        unit: 'ชิ้น'
+      });
+    }
+
+    // Discount change
+    const oDisc = Number(oIt.discount || 0);
+    const nDisc = Number(nIt.discount || 0);
+    const oDiscType = oIt.discount_type || 'amount';
+    const nDiscType = nIt.discount_type || 'amount';
+    if (Math.abs(oDisc - nDisc) > 0.009 || (oDisc > 0 && oDiscType !== nDiscType)) {
+      diffs.push({
+        type: 'item_discount',
+        label: `🎁 ส่วนลดรายการ [${itName}]`,
+        itemName: itName,
+        oldVal: oDisc + (oDiscType === 'percent' ? '%' : '฿'),
+        newVal: nDisc + (nDiscType === 'percent' ? '%' : '฿'),
+        diff: nDisc - oDisc,
+        unit: nDiscType === 'percent' ? '%' : '฿'
+      });
+    }
+
+    // Item Net change
+    const oNet = getItemNet(oIt);
+    const nNet = getItemNet(nIt);
+    if (Math.abs(oNet - nNet) > 0.009 && (Math.abs(oPrice - nPrice) > 0.009 || Math.abs(oQty - nQty) > 0.009 || Math.abs(oDisc - nDisc) > 0.009)) {
+      diffs.push({
+        type: 'item_net',
+        label: `💵 ยอดรวมรายการ [${itName}]`,
+        itemName: itName,
+        oldVal: oNet,
+        newVal: nNet,
+        diff: nNet - oNet,
+        unit: '฿'
+      });
+    }
+  }
+
+  // Try matching by item id first
+  newItems.forEach((nIt, nIdx) => {
+    if (nIt.id) {
+      const oIdx = oldItems.findIndex((oIt, idx) => !oldMatchedIndices.has(idx) && oIt.id === nIt.id);
+      if (oIdx >= 0) {
+        oldMatchedIndices.add(oIdx);
+        newMatchedIndices.add(nIdx);
+        compareMatchedItems(oldItems[oIdx], nIt);
+      }
+    }
+  });
+
+  // Match by product_id or exact name
+  newItems.forEach((nIt, nIdx) => {
+    if (newMatchedIndices.has(nIdx)) return;
+    const oIdx = oldItems.findIndex((oIt, idx) => {
+      if (oldMatchedIndices.has(idx)) return false;
+      if (nIt.product_id && oIt.product_id && nIt.product_id === oIt.product_id) return true;
+      if (nIt.product_name && oIt.product_name && nIt.product_name.trim().toLowerCase() === oIt.product_name.trim().toLowerCase()) return true;
+      return false;
+    });
+    if (oIdx >= 0) {
+      oldMatchedIndices.add(oIdx);
+      newMatchedIndices.add(nIdx);
+      compareMatchedItems(oldItems[oIdx], nIt);
+    }
+  });
+
+  // Added items
+  newItems.forEach((nIt, nIdx) => {
+    if (!newMatchedIndices.has(nIdx)) {
+      const net = getItemNet(nIt);
+      const itName = (nIt.product_name || 'สินค้าใหม่').trim();
+      diffs.push({
+        type: 'item_added',
+        label: `➕ เพิ่มสินค้า: ${itName}`,
+        itemName: itName,
+        oldVal: null,
+        newVal: `${nIt.qty || 1} ชิ้น @ ฿${fmt(nIt.sell_price || 0)} = ฿${fmt(net)}`,
+        diff: net,
+        unit: '฿'
+      });
+    }
+  });
+
+  // Removed items
+  oldItems.forEach((oIt, oIdx) => {
+    if (!oldMatchedIndices.has(oIdx)) {
+      const net = getItemNet(oIt);
+      const itName = (oIt.product_name || 'สินค้าเดิม').trim();
+      diffs.push({
+        type: 'item_removed',
+        label: `➖ ลบสินค้าออก: ${itName}`,
+        itemName: itName,
+        oldVal: `${oIt.qty || 1} ชิ้น @ ฿${fmt(oIt.sell_price || 0)} = ฿${fmt(net)}`,
+        newVal: null,
+        diff: -net,
+        unit: '฿'
+      });
+    }
+  });
+
+  return diffs;
+}
+
+async function openOrderPriceHistoryModal(orderId) {
+  if (!orderId) return;
+
+  const modalId = 'modal-order-price-history';
+  let modal = document.getElementById(modalId);
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'modal-overlay';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div class="modal-box" style="max-width:760px;width:95%;max-height:90vh;display:flex;flex-direction:column;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,0.2)">
+      <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:#fff;border-radius:14px 14px 0 0">
+        <div>
+          <div style="font-size:16px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
+            <span>📜 ประวัติการเปลี่ยนแปลงราคาในบิล</span>
+            <span style="font-size:11px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;padding:2px 8px;border-radius:6px;font-weight:700">🔒 Read Only</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">กำลังโหลดข้อมูลประวัติ...</div>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('${modalId}')" style="font-size:16px;padding:4px 10px;line-height:1">✕</button>
+      </div>
+      <div id="order-price-history-body" style="padding:20px;overflow-y:auto;flex:1;background:var(--bg3)">
+        <div class="loading"><div class="spinner"></div> กำลังโหลดประวัติ...</div>
+      </div>
+      <div style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;background:#fff;border-radius:0 0 14px 14px">
+        <button class="btn btn-secondary" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  `;
+
+  openModal(modalId);
+
+  // Load Order & Logs
+  let order = null;
+  if (window._editingOrderForGP && window._editingOrderForGP.id === orderId) {
+    order = window._editingOrderForGP;
+  } else {
+    try {
+      const { data } = await sb.from('orders').select('id,order_no,customer_name,company_name,total_amount').eq('id', orderId).single();
+      order = data;
+    } catch (e) {}
+  }
+
+  const logs = await getOrderPriceLogs(orderId);
+  const bodyEl = document.getElementById('order-price-history-body');
+  if (!bodyEl) return;
+
+  const orderTitle = order?.order_no ? `ออเดอร์ ${escapeHTML(order.order_no)}` : `Order #${orderId.slice(0, 8)}`;
+  const custTitle = order?.customer_name ? ` · ลูกค้า: ${escapeHTML(order.customer_name)}` : '';
+
+  if (!logs || logs.length === 0) {
+    bodyEl.innerHTML = `
+      <div style="text-align:center;padding:40px 20px;background:#fff;border:1px dashed var(--border);border-radius:10px">
+        <div style="font-size:40px;margin-bottom:12px">📭</div>
+        <div style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:6px">ยังไม่มีประวัติการแก้ไขราคาสำหรับ ${orderTitle}</div>
+        <div style="font-size:12.5px;color:var(--text3);max-width:440px;margin:0 auto;line-height:1.5">
+          ระบบจะบันทึกประวัติอัตโนมัติ (Audit Log) เมื่อมีการเปลี่ยนแปลงราคาสินค้า, จำนวนชิ้น, ส่วนลด, ค่าจัดส่ง หรือยอดรวมสุทธิในบิล พร้อมระบุจุดที่เปลี่ยนแปลงอย่างชัดเจน
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  const fmtVal = (val, unit = '฿') => {
+    if (val == null) return '-';
+    if (typeof val === 'number') {
+      return (unit === '฿' ? '฿' : '') + fmt(val) + (unit !== '฿' ? ' ' + unit : '');
+    }
+    return String(val);
+  };
+
+  const fmtDiff = (d) => {
+    const num = Number(d.diff);
+    if (isNaN(num)) return '-';
+    const sign = num > 0 ? '+' : '';
+    const color = num > 0 ? '#15803d' : (num < 0 ? '#b91c1c' : '#64748b');
+    const u = d.unit === '฿' ? '฿' : '';
+    const uSuffix = d.unit !== '฿' ? (' ' + d.unit) : '';
+    return `<span style="color:${color};font-weight:800;font-family:var(--mono)">${sign}${u}${fmt(num)}${uSuffix}</span>`;
+  };
+
+  const formatDateTimeThai = (isoStr) => {
+    if (!isoStr) return '-';
+    try {
+      const dt = new Date(isoStr);
+      if (isNaN(dt.getTime())) return isoStr;
+      return dt.toLocaleString('th-TH', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+    } catch (e) {
+      return isoStr;
+    }
+  };
+
+  bodyEl.innerHTML = `
+    <div style="margin-bottom:14px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-weight:800;font-size:14px;color:var(--text)">${orderTitle}${custTitle}</div>
+        <div style="font-size:11.5px;color:var(--text3);margin-top:2px">บันทึกประวัติการเปลี่ยนแปลงทั้งหมด <b>${logs.length} ครั้ง</b> (เรียงจากล่าสุดไปเก่าสุด)</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">
+          ยอดรวมปัจจุบัน: ${fmtB(order?.total_amount || logs[0]?.new_grand || 0)}
+        </span>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      ${logs.map((log, logIdx) => {
+        const diffList = Array.isArray(log.diffs) ? log.diffs : [];
+        const diffGrand = Number(log.diff_grand || 0);
+        const grandColor = diffGrand > 0 ? '#15803d' : (diffGrand < 0 ? '#b91c1c' : '#64748b');
+        const grandSign = diffGrand > 0 ? '+' : '';
+        const grandBadge = diffGrand !== 0
+          ? `<span style="background:${diffGrand > 0 ? '#dcfce7' : '#fee2e2'};color:${grandColor};border:1px solid ${diffGrand > 0 ? '#86efac' : '#fca5a5'};font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px;font-family:var(--mono)">ยอดสุทธิ: ${grandSign}฿${fmt(diffGrand)} (฿${fmt(log.old_grand)} ➔ ฿${fmt(log.new_grand)})</span>`
+          : `<span style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;font-family:var(--mono)">ยอดสุทธิคงเดิม: ฿${fmt(log.new_grand)}</span>`;
+
+        return `
+          <div style="background:#fff;border:1.5px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04)">
+            <!-- Header bar of log entry -->
+            <div style="background:#f8fafc;border-bottom:1px solid var(--border);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span class="badge" style="background:#0f172a;color:#fff;font-size:10.5px;font-weight:800;padding:2px 6px;border-radius:5px">ครั้งที่ ${logs.length - logIdx}</span>
+                <span style="font-size:12px;font-weight:700;color:var(--text)">🕒 ${formatDateTimeThai(log.changed_at)}</span>
+                <span style="font-size:11.5px;color:var(--text2);background:#fff;padding:1px 6px;border-radius:4px;border:1px solid var(--border)">👤 ผู้แก้ไข: <b>${escapeHTML(log.changed_by || 'Admin')}</b></span>
+              </div>
+              <div>${grandBadge}</div>
+            </div>
+
+            <!-- Points of Change (จุดที่เปลี่ยน) Highlight Section -->
+            <div style="padding:14px">
+              <div style="margin-bottom:8px;font-size:12px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px">
+                <span style="font-size:14px">🎯</span>
+                <span>จุดที่เปลี่ยนแปลง (Exact Points of Change)</span>
+                <span style="font-size:10.5px;color:var(--text3);font-weight:400">· พบ ${diffList.length} รายการ</span>
+              </div>
+
+              ${diffList.length > 0 ? `
+                <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                  <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left">
+                    <thead>
+                      <tr style="background:#f1f5f9;color:#334155;border-bottom:1px solid var(--border)">
+                        <th style="padding:7px 10px;font-weight:700">รายการ / จุดที่แก้ไข</th>
+                        <th style="padding:7px 10px;text-align:right;font-weight:700;width:150px">ค่าเดิม (ก่อนแก้)</th>
+                        <th style="padding:7px 6px;text-align:center;width:30px"></th>
+                        <th style="padding:7px 10px;text-align:right;font-weight:700;width:150px">ค่าใหม่ (หลังแก้)</th>
+                        <th style="padding:7px 10px;text-align:right;font-weight:700;width:100px">ผลต่าง</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${diffList.map((d, dIdx) => {
+                        const isEven = dIdx % 2 === 0;
+                        const oldStyle = d.oldVal != null
+                          ? 'background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:4px;font-weight:600;text-decoration:line-through;font-family:var(--mono);display:inline-block'
+                          : 'color:#94a3b8;font-style:italic';
+                        const newStyle = d.newVal != null
+                          ? 'background:#dcfce7;color:#166534;padding:2px 8px;border-radius:4px;font-weight:800;font-family:var(--mono);display:inline-block'
+                          : 'color:#94a3b8;font-style:italic';
+
+                        return `
+                          <tr style="background:${isEven ? '#fff' : '#fcfcfd'};border-bottom:1px solid #f1f5f9">
+                            <td style="padding:8px 10px;font-weight:600;color:var(--text)">
+                              ${escapeHTML(d.label || d.type || '-')}
+                            </td>
+                            <td style="padding:8px 10px;text-align:right">
+                              <span style="${oldStyle}">${d.oldVal != null ? fmtVal(d.oldVal, d.unit) : '(ไม่มี)'}</span>
+                            </td>
+                            <td style="padding:8px 6px;text-align:center;color:#64748b;font-weight:800">➔</td>
+                            <td style="padding:8px 10px;text-align:right">
+                              <span style="${newStyle}">${d.newVal != null ? fmtVal(d.newVal, d.unit) : '(ลบออก)'}</span>
+                            </td>
+                            <td style="padding:8px 10px;text-align:right">
+                              ${fmtDiff(d)}
+                            </td>
+                          </tr>
+                        `;
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              ` : `
+                <div style="font-size:12px;color:var(--text3);font-style:italic;padding:8px 0">ไม่มีข้อมูลจุดที่เปลี่ยนแปลงในบันทึกนี้</div>
+              `}
+
+              <!-- Full Snapshot Toggle -->
+              ${(Array.isArray(log.old_items_snapshot) && log.old_items_snapshot.length > 0) || (Array.isArray(log.new_items_snapshot) && log.new_items_snapshot.length > 0) ? `
+                <div style="margin-top:10px">
+                  <details style="font-size:11.5px">
+                    <summary style="cursor:pointer;color:var(--blue);font-weight:700;user-select:none;padding:4px 0">
+                      ▶ คลิกเพื่อดูรายการสินค้าทั้งหมดเปรียบเทียบ (Before vs After Snapshot)
+                    </summary>
+                    <div style="margin-top:8px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px">
+                      <!-- Before Snapshot -->
+                      <div style="background:#fff1f2;border:1px solid #fecdd3;border-radius:8px;padding:10px">
+                        <div style="font-weight:800;color:#9f1239;margin-bottom:6px">📋 รายการเดิมก่อนแก้ไข:</div>
+                        ${(log.old_items_snapshot || []).map(it => `
+                          <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #fecdd3;padding:3px 0">
+                            <span>${escapeHTML(it.product_name || '-')}</span>
+                            <span class="font-mono"><b>${it.qty || 1}</b> × ฿${fmt(it.sell_price || 0)}</span>
+                          </div>
+                        `).join('') || '<div style="color:#9f1239">(ไม่มีรายการ)</div>'}
+                      </div>
+                      <!-- After Snapshot -->
+                      <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px">
+                        <div style="font-weight:800;color:#166534;margin-bottom:6px">📋 รายการใหม่หลังแก้ไข:</div>
+                        ${(log.new_items_snapshot || []).map(it => `
+                          <div style="display:flex;justify-content:space-between;border-bottom:1px dashed #bbf7d0;padding:3px 0">
+                            <span>${escapeHTML(it.product_name || '-')}</span>
+                            <span class="font-mono"><b>${it.qty || 1}</b> × ฿${fmt(it.sell_price || 0)}</span>
+                          </div>
+                        `).join('') || '<div style="color:#166534">(ไม่มีรายการ)</div>'}
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
 }
 
 // ─── BAHT TEXT ────────────────────────────────────────
@@ -42924,7 +43558,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.46', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มวันที่ส่งสินค้า (Delivery Date) ในรายการออเดอร์ พร้อมกำหนดค่าเริ่มต้นเป็นวันปัจจุบัน (v3.46)', items:[
+    { v:'3.47', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบบันทึกประวัติแก้ไขราคาในบิล (Audit Log) & หน้าต่างดูจุดเปลี่ยนแปลง (Read Only) (v3.47)', items:[
+      '📜 <b>บันทึกประวัติการเปลี่ยนแปลงราคาในบิลอัตโนมัติ (Price Audit Trail):</b> เมื่อมีการแก้ไขออเดอร์แล้วมีการเปลี่ยนแปลงของราคาขาย, จำนวนชิ้น, ส่วนลดสินค้า, ส่วนลดท้ายบิล, ค่าจัดส่ง หรือยอดรวมสุทธิ ระบบจะบันทึกประวัติการแก้ไข ผู้แก้ไข วันเวลา และภาพรวมบิลก่อน-หลังแก้ไขทันที',
+      '🎯 <b>หน้าต่างดูประวัติระบุจุดที่เปลี่ยนแปลงชัดเจน (Read Only):</b> หน้าต่างดูประวัติการแก้ไขราคาจะไฮไลท์จุดที่มีการเปลี่ยนแปลงแบบอ่านอย่างเดียว (Read Only) โดยค่าเดิมก่อนแก้ไขจะขีดฆ่าด้วยแถบสีแดง <code>#fee2e2</code> และค่าใหม่จะแสดงด้วยตัวหนาสีเขียว <code>#dcfce7</code> พร้อมคำนวณผลต่าง (+ / -) อย่างแม่นยำ',
+      '🔍 <b>ปุ่มเปิดดูประวัติและป้ายแจ้งเตือน:</b> เพิ่มปุ่ม <code>📜 ประวัติแก้ไขราคา</code> ในหน้าต่างดู/แก้ไขออเดอร์, แถบแจ้งเตือนจำนวนครั้งที่แก้ไขในหัวบิล และป้าย <code>📝 แก้ไขราคา (N)</code> ในตารางออเดอร์เดสก์ท็อปและการ์ดมือถือ เพื่อความโปร่งใสและตรวจสอบย้อนหลังได้ 100%'
+    ]},
+    { v:'3.46', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มวันที่ส่งสินค้า (Delivery Date) ในรายการออเดอร์ พร้อมกำหนดค่าเริ่มต้นเป็นวันปัจจุบัน (v3.46)', items:[
       '🚚 <b>แสดงวันที่ส่งสินค้าในรายการออเดอร์ทันที:</b> แสดงป้าย <code>🚚 ส่ง: YYYY-MM-DD</code> ใต้เลขที่ออเดอร์ในตารางออเดอร์ (Desktop) และในการ์ดออเดอร์ (Mobile) ช่วยให้ฝ่ายจัดส่งและคลังสินค้าเห็นกำหนดส่งของทุกบิลได้อย่างชัดเจนรวดเร็ว',
       '📅 <b>กำหนดค่าเริ่มต้นเป็นวันปัจจุบันอัตโนมัติ (Default to Today):</b> ฟอร์มสร้างออเดอร์ใหม่ (+ ออเดอร์ใหม่) และการแปลงใบเสนอราคาเป็น Sales Order จะตั้งค่าวันที่ส่งสินค้าเป็นวันปัจจุบันอัตโนมัติ โดยสามารถคลิกเลือกเปลี่ยนวันที่ตามต้องการได้',
       '✏️ <b>แก้ไขและพิมพ์ลงบิลได้สะดวก:</b> เพิ่มช่องวันที่ส่งสินค้าในหน้าต่างดู/แก้ไขออเดอร์ พร้อมพิมพ์แสดงในบิล/ใบเสร็จรับเงิน (Receipt) และมีระบบสำรองข้อมูลในหมายเหตุเอกสารอัตโนมัติ'
