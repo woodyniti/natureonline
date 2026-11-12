@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.47';
-const DISPLAY_APP_VERSION = 'v3.47';
+const CURRENT_APP_VERSION = 'sealthai-v3.48';
+const DISPLAY_APP_VERSION = 'v3.48';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1263,7 +1263,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.47)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.47 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.48 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1362,7 +1362,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.47)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.47 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.48)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.48 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -6903,7 +6903,11 @@ async function orders() {
   setContent(`
     <!-- Quick filter รายเดือน/รายปี -->
     <div id="ord-quick-tabs" style="margin-bottom:10px;overflow-x:auto;white-space:nowrap;-webkit-overflow-scrolling:touch">
-      <div style="display:inline-flex;gap:4px;padding:2px">
+      <div style="display:inline-flex;gap:4px;padding:2px;align-items:center">
+        <button id="btn-ord-today" class="btn btn-sm btn-secondary" style="font-size:11px;padding:4px 10px;background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;font-weight:700;display:inline-flex;align-items:center;gap:4px" onclick="setOrdToday()" title="กดดูออเดอร์ของวันนี้ และจำนวนออเดอร์ทั้งหมดวันนี้">
+          📅 วันนี้ <span id="ord-today-badge" style="background:#0284c7;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:800;margin-left:2px">0 ใบ</span>
+        </button>
+        <span style="margin:0 4px;color:var(--border);align-self:center">|</span>
         ${(()=>{
           const yr = new Date().getFullYear();
           const thMonths = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -6925,6 +6929,9 @@ async function orders() {
     </div>
     <div id="ord-pending-card" class="ord-pending-card" aria-live="polite"><div style="color:#92400e;font-weight:700">📦 รอจัดส่งทุกเดือน</div><div style="font-size:12px;color:#92400e;margin-top:5px">กำลังตรวจรายการค้างส่ง...</div></div>
     <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+      <button type="button" class="btn btn-sm btn-secondary" id="btn-ord-filter-today" style="background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;font-weight:700;display:inline-flex;align-items:center;gap:4px" onclick="setOrdToday()" title="กรองดูเฉพาะออเดอร์ของวันนี้">
+        📅 วันนี้ (<span id="ord-filter-today-count">0 ใบ</span>)
+      </button>
       <input type="date" id="ord-from" value="${today().slice(0,7)+'-01'}">
       <span style="color:var(--text3);flex-shrink:0">ถึง</span>
       <input type="date" id="ord-to" value="${today()}">
@@ -7086,6 +7093,7 @@ async function orders() {
   loadOrders();
   loadPendingOrdersCard();
   loadEmployeeOptions('o-emp');
+  if (typeof updateTodayOrderCountBadge === 'function') updateTodayOrderCountBadge();
 }
 
 // ── Smart Wildcard & Flexible Dimension Matcher (*, -, x, X, space, /) ──
@@ -7465,6 +7473,8 @@ async function loadOrders() {
   const ordCardsEl = document.getElementById('ord-cards');
 
   if (!rows.length) {
+    window._lastLoadedOrders = [];
+    if (typeof updateTodayOrderCountBadge === 'function') updateTodayOrderCountBadge();
     if (ordTableEl) ordTableEl.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><div class="empty-text">ไม่พบออเดอร์</div></div>';
     if (ordCardsEl) ordCardsEl.innerHTML = '';
     return;
@@ -7718,6 +7728,8 @@ async function loadOrders() {
     </div>
   `).join('');
   }
+  window._lastLoadedOrders = rows;
+  if (typeof updateTodayOrderCountBadge === 'function') updateTodayOrderCountBadge();
 }
 
 function filterOrdersByChannel(ch) {
@@ -7752,6 +7764,14 @@ function clearOrdFilter() {
   if (c) c.value = '';
   if (d) d.value = '';
   if (s) s.value = '';
+  const todayBtn = document.getElementById('btn-ord-today');
+  if (todayBtn) {
+    todayBtn.classList.remove('btn-primary');
+    todayBtn.classList.add('btn-secondary');
+    todayBtn.style.background = '#e0f2fe';
+    todayBtn.style.color = '#0284c7';
+    todayBtn.style.borderColor = '#bae6fd';
+  }
   loadOrders();
   loadPendingOrdersCard();
 }
@@ -34014,6 +34034,14 @@ function setOrdMonth(year, month) {
   document.querySelectorAll('#ord-quick-tabs button').forEach(btn => {
     btn.className = btn.className.replace('btn-primary','btn-secondary');
   });
+  const todayBtn = document.getElementById('btn-ord-today');
+  if (todayBtn) {
+    todayBtn.classList.remove('btn-primary');
+    todayBtn.classList.add('btn-secondary');
+    todayBtn.style.background = '#e0f2fe';
+    todayBtn.style.color = '#0284c7';
+    todayBtn.style.borderColor = '#bae6fd';
+  }
   event?.target?.classList?.replace('btn-secondary','btn-primary');
   loadOrders();
 }
@@ -34028,8 +34056,79 @@ function setOrdYear(year) {
   document.querySelectorAll('#ord-quick-tabs button').forEach(btn => {
     btn.className = btn.className.replace('btn-primary','btn-secondary');
   });
+  const todayBtn = document.getElementById('btn-ord-today');
+  if (todayBtn) {
+    todayBtn.classList.remove('btn-primary');
+    todayBtn.classList.add('btn-secondary');
+    todayBtn.style.background = '#e0f2fe';
+    todayBtn.style.color = '#0284c7';
+    todayBtn.style.borderColor = '#bae6fd';
+  }
   event?.target?.classList?.replace('btn-secondary','btn-primary');
   loadOrders();
+}
+
+// ── Orders: Quick Today filter & badge counter (v3.48) ────────
+async function setOrdToday() {
+  _ordPendingOnly = false;
+  loadPendingOrdersCard();
+  const t = today();
+  const fromEl = document.getElementById('ord-from');
+  const toEl   = document.getElementById('ord-to');
+  if (fromEl) fromEl.value = t;
+  if (toEl)   toEl.value   = t;
+
+  // Update active buttons in quick tabs
+  document.querySelectorAll('#ord-quick-tabs button').forEach(btn => {
+    btn.className = btn.className.replace('btn-primary', 'btn-secondary');
+  });
+  const todayBtn = document.getElementById('btn-ord-today');
+  if (todayBtn) {
+    todayBtn.classList.remove('btn-secondary');
+    todayBtn.classList.add('btn-primary');
+    todayBtn.style.background = 'var(--accent)';
+    todayBtn.style.color = '#fff';
+    todayBtn.style.borderColor = 'var(--accent)';
+  }
+
+  await loadOrders();
+
+  const rows = window._lastLoadedOrders || [];
+  const todayRows = rows.filter(o => (o.order_date || '').slice(0, 10) === t);
+  const activeToday = todayRows.filter(o => !isOrderCancelled(o));
+  const totalSales = activeToday.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+
+  toast(`📅 ออเดอร์วันนี้ (${t}): ทั้งหมด ${todayRows.length} ใบ · ใช้งาน ${activeToday.length} ใบ (ยอดขายรวม ฿${fmt(totalSales)})`, 'info');
+}
+
+async function updateTodayOrderCountBadge() {
+  if (!currentShop?.id) return;
+  try {
+    const t = today();
+    const { data, count, error } = await sb.from('orders')
+      .select('id,order_date,total_amount,doc_status,shipping_status', { count: 'exact' })
+      .eq('shop_id', currentShop.id)
+      .eq('order_date', t);
+
+    if (!error) {
+      const allToday = data || [];
+      const totalCount = count != null ? count : allToday.length;
+      const activeCount = allToday.filter(o => !isOrderCancelled(o)).length;
+      const badge1 = document.getElementById('ord-today-badge');
+      const badge2 = document.getElementById('ord-filter-today-count');
+      const txt = `${totalCount} ใบ`;
+      if (badge1) {
+        badge1.textContent = txt;
+        badge1.title = `วันนี้มี ${totalCount} ออเดอร์ (ใช้งาน ${activeCount} ใบ)`;
+      }
+      if (badge2) {
+        badge2.textContent = txt;
+        badge2.title = `วันนี้มี ${totalCount} ออเดอร์ (ใช้งาน ${activeCount} ใบ)`;
+      }
+    }
+  } catch (e) {
+    console.warn('updateTodayOrderCountBadge error:', e);
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -43558,7 +43657,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.47', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบบันทึกประวัติแก้ไขราคาในบิล (Audit Log) & หน้าต่างดูจุดเปลี่ยนแปลง (Read Only) (v3.47)', items:[
+    { v:'3.48', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มปุ่มดูออเดอร์วันนี้ (Today Filter) พร้อมแสดงตัวเลขจำนวนออเดอร์แบบ Real-time (v3.48)', items:[
+      '📅 <b>ปุ่มดูออเดอร์วันนี้ในคลิกเดียว (1-Click Today Orders Filter):</b> เพิ่มปุ่ม <code>📅 วันนี้</code> ในแถบ Quick Filter รายเดือน/รายปี และในแถบค้นหาของหน้า Order ช่วยให้ผู้ใช้กดดูออเดอร์ของวันปัจจุบันได้ทันทีโดยไม่ต้องเลือกวันที่เอง',
+      '🔢 <b>ป้ายแสดงจำนวนออเดอร์วันนี้สดใหม่ (Live Today Order Count Badge):</b> บนปุ่มแสดงตัวเลขจำนวนออเดอร์ของวันนี้แบบ Real-time เช่น <code>📅 วันนี้ (5 ใบ)</code> ทำให้มองเห็นจำนวนออเดอร์ที่เข้ามาในวันนั้นได้ทันทีแม้ยังไม่ได้กดกรอง',
+      '📊 <b>สรุปยอดขายและแจ้งเตือนทันใจ:</b> เมื่อคลิกปุ่ม ระบบจะกรองและคำนวณการ์ดสรุปสถิติ (จำนวนออเดอร์, ยอดขายรวม, กำไร, จำนวนลูกค้า) ของวันนี้โดยเฉพาะ พร้อมแจ้งเตือนสรุปผ่าน Toast Bar ทันที'
+    ]},
+    { v:'3.47', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ระบบบันทึกประวัติแก้ไขราคาในบิล (Audit Log) & หน้าต่างดูจุดเปลี่ยนแปลง (Read Only) (v3.47)', items:[
       '📜 <b>บันทึกประวัติการเปลี่ยนแปลงราคาในบิลอัตโนมัติ (Price Audit Trail):</b> เมื่อมีการแก้ไขออเดอร์แล้วมีการเปลี่ยนแปลงของราคาขาย, จำนวนชิ้น, ส่วนลดสินค้า, ส่วนลดท้ายบิล, ค่าจัดส่ง หรือยอดรวมสุทธิ ระบบจะบันทึกประวัติการแก้ไข ผู้แก้ไข วันเวลา และภาพรวมบิลก่อน-หลังแก้ไขทันที',
       '🎯 <b>หน้าต่างดูประวัติระบุจุดที่เปลี่ยนแปลงชัดเจน (Read Only):</b> หน้าต่างดูประวัติการแก้ไขราคาจะไฮไลท์จุดที่มีการเปลี่ยนแปลงแบบอ่านอย่างเดียว (Read Only) โดยค่าเดิมก่อนแก้ไขจะขีดฆ่าด้วยแถบสีแดง <code>#fee2e2</code> และค่าใหม่จะแสดงด้วยตัวหนาสีเขียว <code>#dcfce7</code> พร้อมคำนวณผลต่าง (+ / -) อย่างแม่นยำ',
       '🔍 <b>ปุ่มเปิดดูประวัติและป้ายแจ้งเตือน:</b> เพิ่มปุ่ม <code>📜 ประวัติแก้ไขราคา</code> ในหน้าต่างดู/แก้ไขออเดอร์, แถบแจ้งเตือนจำนวนครั้งที่แก้ไขในหัวบิล และป้าย <code>📝 แก้ไขราคา (N)</code> ในตารางออเดอร์เดสก์ท็อปและการ์ดมือถือ เพื่อความโปร่งใสและตรวจสอบย้อนหลังได้ 100%'
