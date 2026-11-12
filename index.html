@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.50';
-const DISPLAY_APP_VERSION = 'v3.50';
+const CURRENT_APP_VERSION = 'sealthai-v3.51';
+const DISPLAY_APP_VERSION = 'v3.51';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1264,7 +1264,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.50 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.51 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1363,7 +1363,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.50)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.50 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.51 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7544,7 +7544,12 @@ async function loadOrders() {
           const sapCloseData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(o) : null;
           const products = (o.order_items||[]).map(it => {
             const qtyTxt = Number(it.qty) > 1 ? `<b style="color:var(--text);font-family:var(--mono)">${it.qty}×</b> ` : '';
-            const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
+            const cleanItemName = (it.product_name || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+            const p = (it.product_id ? prodMap[it.product_id] : null) || 
+                      (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || 
+                      (cleanItemName ? prodByName[cleanItemName] : null) || 
+                      (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null) ||
+                      (cleanItemName ? prodBySku[cleanItemName] : null);
             const partNoTxt = p?.part_no ? ` <span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)" title="Part No">#${escapeHTML(p.part_no)}</span>` : '';
             const skuTxt = (it.sku || p?.sku) ? ` <span style="font-size:9.5px;color:var(--accent);background:#eff6ff;padding:1px 4px;border-radius:3px;font-family:var(--mono)" title="SKU">[${escapeHTML(it.sku || p.sku)}]</span>` : '';
             const poMatch = isItemInPO(it);
@@ -7716,7 +7721,12 @@ async function loadOrders() {
         const sapCloseData = (typeof getSAPCloseData === 'function') ? getSAPCloseData(o) : null;
         const prodHtml = (o.order_items||[]).map(it => {
           const qtyTxt = Number(it.qty) > 1 ? `<b style="font-family:var(--mono)">${it.qty}×</b> ` : '';
-          const p = (it.product_id ? prodMap[it.product_id] : null) || (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null);
+          const cleanItemName = (it.product_name || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+          const p = (it.product_id ? prodMap[it.product_id] : null) || 
+                    (it.product_name ? prodByName[it.product_name.trim().toLowerCase()] : null) || 
+                    (cleanItemName ? prodByName[cleanItemName] : null) || 
+                    (it.sku ? prodBySku[it.sku.trim().toLowerCase()] : null) ||
+                    (cleanItemName ? prodBySku[cleanItemName] : null);
           const partNoTxt = p?.part_no ? ` <span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)">#${escapeHTML(p.part_no)}</span>` : '';
           const skuTxt = (it.sku || p?.sku) ? ` <span style="font-size:9.5px;color:var(--accent);background:#eff6ff;padding:1px 4px;border-radius:3px;font-family:var(--mono)">[${escapeHTML(it.sku || p.sku)}]</span>` : '';
           const poMatch = isItemInPO(it);
@@ -9428,9 +9438,12 @@ function renderEditItems() {
     tdProd.style.cssText = tdStyle + ';min-width:140px';
     tdProd.innerHTML = renderEditProdSearch(i);
 
+    const cleanItName = (it.product_name || '').replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
     const _pItem = (editProdList && editProdList.length ? editProdList.find(p => p.id === it.product_id) : null) || 
                    ((allProducts || []).find(p => p.id === it.product_id)) || 
-                   ((allProducts || []).find(p => p.name && it.product_name && p.name.trim().toLowerCase() === it.product_name.trim().toLowerCase()));
+                   ((allProducts || []).find(p => p.name && it.product_name && p.name.trim().toLowerCase() === it.product_name.trim().toLowerCase())) ||
+                   ((allProducts || []).find(p => p.name && cleanItName && p.name.trim().toLowerCase() === cleanItName)) ||
+                   ((allProducts || []).find(p => p.sku && cleanItName && p.sku.trim().toLowerCase() === cleanItName));
     if (_pItem && _pItem.id) {
       const edShipStatus = document.getElementById('ed-status')?.value || window._editingOrderForGP?.shipping_status;
       const isOrderPending = !edShipStatus || edShipStatus === 'pending';
@@ -44365,6 +44378,107 @@ async function openQuickProductModal(contextType = 'order', rowIdx = -1, initial
   }, 150);
 }
 
+// ── Bulletproof Link Product Master to Order Item ──
+async function linkProductToOrderItem(prod, ctx) {
+  if (!prod || !prod.id) return;
+  const orderId = ctx.order_id;
+  const targetItemId = ctx.item_id;
+  const rawName = (ctx.raw_product_name || ctx.raw_name || '').trim();
+  const cleanName = rawName.replace(/\[[^\]]*\]/g, '').replace(/\s+/g, ' ').trim();
+
+  try {
+    if (orderId) {
+      // 1. Fetch current items of this order from Supabase
+      const { data: dbItems, error: fetchErr } = await sb.from('order_items').select('*').eq('order_id', orderId);
+      if (dbItems && dbItems.length) {
+        let matched = null;
+        if (targetItemId) {
+          matched = dbItems.find(it => String(it.id) === String(targetItemId));
+        }
+        if (!matched && rawName) {
+          matched = dbItems.find(it => it.product_name === rawName) ||
+                    dbItems.find(it => it.product_name && it.product_name.trim().toLowerCase() === rawName.toLowerCase());
+        }
+        if (!matched && cleanName) {
+          matched = dbItems.find(it => it.product_name && (it.product_name.toLowerCase().includes(cleanName.toLowerCase()) || cleanName.toLowerCase().includes(it.product_name.toLowerCase())));
+        }
+
+        if (matched) {
+          // Attempt direct UPDATE first
+          const { error: updErr } = await sb.from('order_items')
+            .update({ product_id: prod.id, sku: prod.sku || null })
+            .eq('id', matched.id);
+
+          // If direct update failed (RLS restriction or similar), use the established delete+insert pattern
+          if (updErr) {
+            console.warn('Direct order_items update error, using delete+insert fallback:', updErr);
+            const newList = dbItems.map(it => {
+              if (it.id === matched.id) {
+                return { ...it, product_id: prod.id, sku: prod.sku || null };
+              }
+              return it;
+            });
+            await sb.from('order_items').delete().eq('order_id', orderId);
+            await sb.from('order_items').insert(newList.map(it => ({
+              order_id: it.order_id,
+              product_id: it.product_id || null,
+              product_name: it.product_name || '-',
+              sku: it.sku || null,
+              qty: Number(it.qty) || 1,
+              sell_price: Number(it.sell_price) || 0,
+              cost_per_unit: Number(it.cost_per_unit) || 0,
+              discount: Number(it.discount) || 0,
+              discount_type: it.discount_type || 'amount',
+              show_on_receipt: it.show_on_receipt !== false
+            })));
+          }
+        }
+      }
+    }
+
+    // 2. Link stock movements for this order if any
+    if (ctx.order_no) {
+      await sb.from('stock_movements')
+        .update({ product_id: prod.id })
+        .eq('shop_id', currentShop.id)
+        .like('note', `%${ctx.order_no}%`)
+        .is('product_id', null);
+    }
+
+    // 3. Link purchase order items if any
+    if (rawName) {
+      await sb.from('purchase_order_items')
+        .update({ product_id: prod.id })
+        .eq('product_name', rawName)
+        .is('product_id', null);
+    }
+  } catch (e) {
+    console.warn('linkProductToOrderItem error:', e);
+  }
+
+  // 4. Update memory caches
+  if (typeof prodMap !== 'undefined') prodMap[prod.id] = prod;
+  if (typeof prodByName !== 'undefined' && prod.name) prodByName[prod.name.trim().toLowerCase()] = prod;
+  if (typeof prodBySku !== 'undefined' && prod.sku) prodBySku[prod.sku.trim().toLowerCase()] = prod;
+
+  // 5. Update editItems in Order Detail modal if open
+  if (typeof editItems !== 'undefined' && Array.isArray(editItems)) {
+    const matchedEdit = editItems.find(x => (targetItemId && String(x.id) === String(targetItemId)) || (x.product_name && (x.product_name === rawName || x.product_name.includes(cleanName))));
+    if (matchedEdit) {
+      matchedEdit.product_id = prod.id;
+      matchedEdit.sku = prod.sku || '';
+      if (typeof renderEditItems === 'function') renderEditItems();
+    }
+  }
+
+  // 6. Reload orders to immediately reflect stock badges and item master data
+  if (typeof loadOrders === 'function') {
+    await loadOrders();
+  }
+
+  toast(`🎉 เชื่อมโยงสินค้า "${escapeHTML(prod.name)}" เข้ากับออเดอร์เรียบร้อยแล้วค่ะ ✓`, 'success');
+}
+
 // ── Open Quick Product Master Modal from Order Item ──
 async function openQuickProductFromOrderItem(triggerEl) {
   let data = null;
@@ -44384,6 +44498,41 @@ async function openQuickProductFromOrderItem(triggerEl) {
     .replace(/\[[^\]]*\]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+
+  // 1. Check if a product with this clean name, raw name, or SKU ALREADY exists in product master!
+  const cleanLow = cleanName.toLowerCase();
+  const rawLow = rawName.toLowerCase();
+  const existingProd = (allProducts || []).find(p => {
+    if (!p) return false;
+    const pNameLow = (p.name || '').trim().toLowerCase();
+    const pSkuLow = (p.sku || '').trim().toLowerCase();
+    return (cleanLow && pNameLow === cleanLow) ||
+           (cleanLow && pSkuLow === cleanLow) ||
+           (rawLow && pNameLow === rawLow) ||
+           (data.sku && pSkuLow === String(data.sku).trim().toLowerCase());
+  });
+
+  if (existingProd) {
+    const doLink = window.confirm(
+      `📦 พบสินค้าในฐานข้อมูลสินค้าอยู่แล้ว!\n\n` +
+      `ชื่อ: ${existingProd.name}\n` +
+      `SKU: ${existingProd.sku || '-'}\n` +
+      `สต๊อกคงเหลือ: ${existingProd.stock_qty || 0} ชิ้น\n\n` +
+      `กด "ตกลง" (OK) เพื่อเชื่อมโยงออเดอร์นี้เข้ากับสินค้านี้ทันที (ไม่สร้างสินค้าซ้ำซ้อน)\n` +
+      `กด "ยกเลิก" (Cancel) หากต้องการเปิดหน้าต่างสร้างเป็นสินค้าใหม่`
+    );
+
+    if (doLink) {
+      await linkProductToOrderItem(existingProd, {
+        order_id: data.order_id,
+        order_no: data.order_no,
+        item_id: data.item_id,
+        raw_product_name: rawName,
+        clean_product_name: cleanName
+      });
+      return;
+    }
+  }
 
   await openQuickProductModal('order_item_link', -1, cleanName || rawName);
 
@@ -44442,6 +44591,42 @@ async function saveQuickProduct() {
   const sell_price_thb = currency === 'USD' ? (rawSell * exRate) : rawSell;
   const current_cost_thb = currency === 'USD' ? (rawCost * exRate) : rawCost;
 
+  const ctx = _quickProdContext || {};
+
+  // Check if a product with the same SKU or Name already exists!
+  const targetName = name.trim().toLowerCase();
+  const targetSku = sku.trim().toLowerCase();
+  const existingProd = (allProducts || []).find(p => {
+    if (!p) return false;
+    const pNameLow = (p.name || '').trim().toLowerCase();
+    const pSkuLow = (p.sku || '').trim().toLowerCase();
+    return (targetSku && pSkuLow === targetSku) || (targetName && pNameLow === targetName);
+  });
+
+  if (existingProd) {
+    if (ctx && ctx.type === 'order_item_link') {
+      const useExisting = window.confirm(
+        `⚠️ พบสินค้าชื่อ/SKU นี้อยู่ในฐานข้อมูลแล้ว:\n\n` +
+        `"${existingProd.name}" (SKU: ${existingProd.sku || '-'})\n\n` +
+        `กด "ตกลง" (OK) เพื่อใช้สินค้านี้เชื่อมโยงกับออเดอร์ทันที (ป้องกันสร้างสินค้าซ้ำซ้อน)\n` +
+        `กด "ยกเลิก" (Cancel) หากต้องการกลับไปแก้ไขชื่อ/SKU ใหม่`
+      );
+      if (useExisting) {
+        closeModal('modal-quick-product');
+        await linkProductToOrderItem(existingProd, ctx);
+        return;
+      } else {
+        return;
+      }
+    } else {
+      const proceed = window.confirm(
+        `⚠️ คำเตือน: มีสินค้า "${existingProd.name}" (SKU: ${existingProd.sku || '-'}) อยู่ในฐานข้อมูลแล้ว\n\n` +
+        `ยืนยันที่จะสร้างสินค้าซ้ำอีกรายการหรือไม่?`
+      );
+      if (!proceed) return;
+    }
+  }
+
   const numVal = id => {
     const v = document.getElementById(id)?.value;
     return (v !== '' && v !== null && !isNaN(Number(v))) ? Number(v) : null;
@@ -44494,7 +44679,6 @@ async function saveQuickProduct() {
     }
 
     closeModal('modal-quick-product');
-    const ctx = _quickProdContext || {};
     if (ctx.type === 'order_item_link') {
       toast('🎉 สร้างสินค้า "' + escapeHTML(newProd.name) + '" เข้าคลังและเชื่อมโยงกับออเดอร์เรียบร้อยแล้วค่ะ ✓', 'success');
     } else {
@@ -44589,55 +44773,7 @@ async function saveQuickProduct() {
       renderPOItems();
       if (typeof calcPOTotal === 'function') calcPOTotal();
     } else if (ctx.type === 'order_item_link') {
-      try {
-        let updateData = {
-          product_id: newProd.id,
-          sku: newProd.sku || null
-        };
-        let updateQuery = sb.from('order_items').update(updateData);
-        if (ctx.item_id) {
-          updateQuery = updateQuery.eq('id', ctx.item_id);
-        } else if (ctx.order_id && ctx.raw_product_name) {
-          updateQuery = updateQuery.eq('order_id', ctx.order_id).eq('product_name', ctx.raw_product_name);
-        }
-        const { error: linkErr } = await updateQuery;
-        if (linkErr) console.warn('Link order_item warning:', linkErr);
-
-        // Link stock movements for this order if any
-        if (ctx.order_no) {
-          await sb.from('stock_movements')
-            .update({ product_id: newProd.id })
-            .eq('shop_id', currentShop.id)
-            .like('note', `%${ctx.order_no}%`)
-            .is('product_id', null);
-        }
-
-        // Link purchase_order_items if any had the same product name
-        if (ctx.raw_product_name) {
-          await sb.from('purchase_order_items')
-            .update({ product_id: newProd.id })
-            .eq('product_name', ctx.raw_product_name)
-            .is('product_id', null);
-        }
-      } catch (e) {
-        console.warn('Error linking order item to new product:', e);
-      }
-
-      // If editItems is currently active in Order Detail modal
-      if (typeof editItems !== 'undefined' && Array.isArray(editItems)) {
-        const matchedEdit = editItems.find(x => (ctx.item_id && x.id === ctx.item_id) || (x.product_name && x.product_name === ctx.raw_product_name));
-        if (matchedEdit) {
-          matchedEdit.product_id = newProd.id;
-          matchedEdit.sku = newProd.sku || '';
-          matchedEdit.product_name = newProd.name;
-          if (typeof renderEditItems === 'function') renderEditItems();
-        }
-      }
-
-      // Reload orders to reflect the newly linked product immediately
-      if (typeof loadOrders === 'function') {
-        loadOrders();
-      }
+      await linkProductToOrderItem(newProd, ctx);
     }
 
   } catch (err) {
@@ -44671,7 +44807,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.50', date:'2026-11-12', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มสินค้าเข้าฐานข้อมูลสินค้าด่วนจากรายการในหน้าออเดอร์ (Quick Add Product Master from Order Item) (v3.50)', items:[
+    { v:'3.51', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ป้องกันสินค้าซ้ำซ้อน (Duplicate Protection) & ดึงข้อมูล Item Master มาออเดอร์ทันที (v3.51)', items:[
+      '🛡️ <b>ระบบตรวจจับและป้องกันสินค้าซ้ำซ้อน (Duplicate Prevention):</b> เมื่อกดปุ่มเพิ่มสินค้าจากหน้าออเดอร์ หรือกดบันทึกสินค้าใหม่ ระบบจะตรวจสอบชื่อสินค้าและรหัส SKU เทียบกับฐานข้อมูลสินค้าทันที หากพบว่ามีสินค้านี้อยู่แล้ว ระบบจะแจ้งเตือนพร้อมเสนอทางเลือกให้กด <code>🔗 เชื่อมโยงทันที</code> โดยไม่สร้างรายการซ้ำซ้อนในฐานข้อมูล',
+      '🔍 <b>จับคู่ Item Master ดึงข้อมูลเข้าออเดอร์ทันที (Smart Clean Name Matching):</b> แก้ปัญหาออเดอร์ที่มีแท็กระยะเวลา เช่น <code>[รอสินค้า 15-20 วัน]</code> ทำให้ระบบไม่พบสินค้า โดยเพิ่มระบบถอดรหัสชื่อมาตรฐาน (Clean Name) มาจับคู่กับ Master Catalog แบบ Real-time ทันที ทำให้ดึงรหัส SKU, ป้ายสต๊อกคงเหลือจริง และประวัติ Inventory Movement มาแสดงในออเดอร์ได้ถูกต้อง 100%',
+      '⚡ <b>เชื่อมโยงข้อมูลแบบ Fail-safe (RLS Fallback & Instant Sync):</b> ปรับปรุงระบบบันทึกความเชื่อมโยงของ <code>order_items</code> ให้รองรับ RLS Policy แบบ Delete+Insert Fallback รับประกันว่าบันทึก <code>product_id</code> และ <code>sku</code> ลงฐานข้อมูล Supabase สำเร็จแน่นอน พร้อมอัปเดตหน้าจอทันทีโดยไม่ต้องรีโหลดหน้าเว็บใหม่'
+    ]},
+    { v:'3.50', date:'2026-11-12', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มสินค้าเข้าฐานข้อมูลสินค้าด่วนจากรายการในหน้าออเดอร์ (Quick Add Product Master from Order Item) (v3.50)', items:[
       '➕ <b>ปุ่มเพิ่มเข้าฐานข้อมูลสินค้าด่วน (1-Click Add to Database):</b> ในหน้ารายการออเดอร์ (ทั้งตาราง Desktop, การ์ด Mobile และหน้าต่างดู/แก้ไขออเดอร์) รายการสินค้าที่ยังไม่ได้ถูกสร้างในฐานข้อมูลสินค้า (Unlinked Products) จะแสดงปุ่มลัด <code>➕ เพิ่มเข้าฐานข้อมูล</code> ชัดเจน',
       '⚡ <b>ดึงข้อมูลสินค้าจากหน้ารายการขายอัตโนมัติ (Auto-Extract Specs & Prices):</b> เมื่อกดปุ่ม ระบบจะดึงชื่อสินค้ามาตัดคำบอกระยะเวลา/แท็กสั่งพิเศษ (เช่น <code>[รอสินค้า 15-20 วัน]</code>) อัตโนมัติ พร้อมตรวจจับขนาด (ID × OD × W), ประเภทซีล (TC/SC/ฯลฯ), ชนิดยาง/เนื้อวัสดุ (VITON/NBR/PU/ฯลฯ), หมวดหมู่สินค้า, ราคาขายต่อชิ้น และต้นทุน เพื่อกรอกลงในฟอร์มสร้างสินค้าให้อัตโนมัติทันที',
       '🔄 <b>บันทึกและเชื่อมโยงเข้าออเดอร์ทันที (Instant Master Link & Stock Sync):</b> ผู้ใช้สามารถตรวจสอบ แก้ไข หรือเพิ่มข้อมูลที่ยังไม่มี (เช่น SKU, Part No, หมวดหมู่, สต๊อกตั้งต้น) ได้ตามต้องการ เมื่อกดบันทึก ระบบจะสร้างสินค้าเข้าคลัง และผูก <code>product_id</code> เข้ากับออเดอร์นี้โดยอัตโนมัติ พร้อมรีเฟรชหน้าออเดอร์ให้แสดงรหัส SKU, ป้ายสต๊อกคงเหลือ และลิงก์ดูประวัติ Inventory Movement ทันที'

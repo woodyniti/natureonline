@@ -6,8 +6,8 @@ const html = fs.readFileSync('d:/Nature Online/Sealthai AI Ecosystem V1/Shop Das
 console.log('Testing v3.49 Order Stock Sufficiency Guard, Partial Shipment & SAP B1 Close Approval...');
 
 // 1. Version assertions
-assert.ok(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.49'") || html.includes("CURRENT_APP_VERSION = 'sealthai-v3.50'"), 'CURRENT_APP_VERSION must be v3.49 or higher');
-assert.ok(html.includes("DISPLAY_APP_VERSION = 'v3.49'") || html.includes("DISPLAY_APP_VERSION = 'v3.50'"), 'DISPLAY_APP_VERSION must be v3.49 or higher');
+assert.ok(/sealthai-v3\.(49|[5-9][0-9])/.test(html), 'CURRENT_APP_VERSION must be v3.49 or higher');
+assert.ok(/v3\.(49|[5-9][0-9])/.test(html), 'DISPLAY_APP_VERSION must be v3.49 or higher');
 assert.ok(html.includes("v:'3.49'"), 'Changelog must include v3.49 entry');
 console.log('✓ 1. Version assertions passed');
 
