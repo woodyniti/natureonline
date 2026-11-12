@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.51';
-const DISPLAY_APP_VERSION = 'v3.51';
+const CURRENT_APP_VERSION = 'sealthai-v3.52';
+const DISPLAY_APP_VERSION = 'v3.52';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1264,7 +1264,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.51 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.52 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1363,7 +1363,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.51)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.51 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.52)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.52 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7675,6 +7675,7 @@ async function loadOrders() {
             <div style="display:flex;flex-direction:column;gap:4px">
               <button class="btn btn-secondary btn-sm" onclick="viewOrder('${o.id}')">ดู/แก้</button>
               <div style="display:flex;gap:4px">
+                <button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${o.id}')" title="พิมพ์เอกสาร (บิลเงินสด / ใบแจ้งหนี้ / ใบส่งสินค้า)" style="background:#e8f5f0;color:#00a882;border-color:#00a882;padding:4px 9px">🖨️</button>
                 <button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${o.id}')" title="ใบปะหน้าพัสดุ" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;padding:4px 9px">📦</button>
                 <button class="btn btn-secondary btn-sm" onclick="openStickerModal('${o.id}')" title="สติกเกอร์สินค้า" style="background:#fff3e0;color:#e65100;border-color:#e65100;padding:4px 9px">🏷️</button>
               </div>
@@ -7802,9 +7803,10 @@ async function loadOrders() {
           ${docStatusBadge(o.doc_status||'draft')}
           ${shippingBadge(o.shipping_status)}
         </div>
-        <div style="display:flex;gap:4px;align-items:center">
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openShippingLabelModal('${o.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;font-size:11px;padding:4px 6px">📦 ใบปะหน้าพัสดุ</button>
-          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:11px;padding:4px 6px">🏷️ สติกเกอร์สินค้า</button>
+        <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openReceiptOptions('${o.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-size:11px;padding:4px 6px" title="พิมพ์บิล / ใบแจ้งหนี้ / ใบส่งสินค้า">🖨️ พิมพ์เอกสาร</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openShippingLabelModal('${o.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;font-size:11px;padding:4px 6px">📦 ใบปะหน้า</button>
+          <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:11px;padding:4px 6px">🏷️ สติกเกอร์</button>
           <select class="status-sel" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value,this)"
             style="border:1px solid;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;${shipSelStyle(o.shipping_status)}">
             ${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',partially_shipped:'⚠️ จัดส่งบางส่วน (ค้างส่ง)',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
@@ -9935,7 +9937,7 @@ async function viewOrder(orderId) {
     `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openOrderPriceHistoryModal('${order.id}')" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;font-weight:700" title="คลิกเพื่อดูประวัติการเปลี่ยนแปลงราคาในบิล">📜 ประวัติแก้ไขราคา${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(order.id) > 0) ? ' ('+getOrderPriceChangeCount(order.id)+')' : ''}</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openOrderFulfillmentModal('${order.id}')" style="background:#fffbeb;color:#92400e;border-color:#fde68a;font-weight:700" title="จัดการยอดค้างส่ง & อนุมัติปิดเอกสารแบบ SAP Business One">📦 ค้างส่ง / ปิดเอกสาร (SAP B1)</button>` +
-    `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700">🖨️ พิมพ์บิล</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700" title="พิมพ์บิลเงินสด / ใบแจ้งหนี้ (Invoice) / ใบส่งสินค้า (Delivery Note)">🖨️ พิมพ์เอกสาร (บิล/แจ้งหนี้/ส่งของ)</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openStickerModal('${order.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100">🏷️ สติกเกอร์สินค้า</button>` +
@@ -11534,69 +11536,103 @@ function bahtText(amount) {
   return result;
 }
 
-// ─── PRINT RECEIPT ────────────────────────────────────
-function openReceiptOptions(orderId) {
+// ─── PRINT ORDER DOCUMENTS (RECEIPT / INVOICE / DELIVERY NOTE) ──────────────────
+function toggleOrderPrintOptions(val) {
+  const priceWrap = document.getElementById('receipt-delivery-price-wrap');
+  if (priceWrap) {
+    priceWrap.style.display = (val === 'delivery') ? 'flex' : 'none';
+  }
+}
+
+function openReceiptOptions(orderId, defaultDocType='receipt') {
   document.getElementById('receipt-options-modal')?.remove();
   const modal = document.createElement('div');
   modal.id = 'receipt-options-modal';
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '320';
   modal.innerHTML = `
-    <div class="modal" style="max-width:460px">
-      <div class="modal-title">🖨️ ตัวเลือกการพิมพ์บิล</div>
+    <div class="modal" style="max-width:490px">
+      <div class="modal-title" style="display:flex;align-items:center;gap:8px">🖨️ ตัวเลือกการพิมพ์เอกสารออเดอร์</div>
       <div style="padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:14px">
-        <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">📄 ประเภทเอกสารที่ต้องการพิมพ์</div>
+        <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">📄 1. เลือกชนิดเอกสารที่ต้องการพิมพ์</div>
         <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px">
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-            <input type="radio" name="receipt-doc-copy" value="original" checked style="width:18px;height:18px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:${defaultDocType==='receipt'?'1.5px solid #00a882':'1px solid var(--border)'}">
+            <input type="radio" name="order-print-doctype" value="receipt" ${defaultDocType==='receipt'?'checked':''} style="width:18px;height:18px" onchange="toggleOrderPrintOptions(this.value)">
             <div>
-              <div style="font-weight:600;font-size:13px">🌟 ต้นฉบับเท่านั้น (ORIGINAL)</div>
-              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 1 ใบ สำหรับมอบให้ลูกค้า</div>
+              <div style="font-weight:700;font-size:13px;color:#008768">🧾 ใบเสร็จรับเงิน / บิลเงินสด (Receipt / Cash Sale)</div>
+              <div style="font-size:11.5px;color:var(--text3)">หลักฐานรับชำระเงินและบิลขายสินค้าสำหรับมอบให้ลูกค้า</div>
             </div>
           </label>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
-            <input type="radio" name="receipt-doc-copy" value="copy" style="width:18px;height:18px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:${defaultDocType==='invoice'?'1.5px solid #1e3a5f':'1px solid var(--border)'}">
+            <input type="radio" name="order-print-doctype" value="invoice" ${defaultDocType==='invoice'?'checked':''} style="width:18px;height:18px" onchange="toggleOrderPrintOptions(this.value)">
             <div>
-              <div style="font-weight:600;font-size:13px">📑 สำเนาเท่านั้น (COPY)</div>
-              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 1 ใบ สำหรับเก็บเข้าแฟ้มบัญชี/ร้านค้า</div>
+              <div style="font-weight:700;font-size:13px;color:#1e3a5f">📑 ใบแจ้งหนี้ / ใบเรียกเก็บเงิน (Invoice / Billing Note)</div>
+              <div style="font-size:11.5px;color:var(--text3)">แจ้งยอดชำระ มีเลขบัญชีธนาคารโอนเงิน กำหนดชำระ และช่องลงนามผู้วางบิล</div>
             </div>
           </label>
-          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1.5px solid #00a882">
-            <input type="radio" name="receipt-doc-copy" value="both" style="width:18px;height:18px">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:${defaultDocType==='delivery'?'1.5px solid #0284c7':'1px solid var(--border)'}">
+            <input type="radio" name="order-print-doctype" value="delivery" ${defaultDocType==='delivery'?'checked':''} style="width:18px;height:18px" onchange="toggleOrderPrintOptions(this.value)">
             <div>
-              <div style="font-weight:700;font-size:13px;color:#008768">✨ พิมพ์เป็นชุด (ต้นฉบับ + สำเนา)</div>
-              <div style="font-size:11.5px;color:var(--text3)">พิมพ์ 2 หน้า A4 ต่อกันในครั้งเดียว (ประหยัดเวลา)</div>
+              <div style="font-weight:700;font-size:13px;color:#0284c7">🚚 ใบส่งสินค้า / ใบส่งของ (Delivery Note / Packing Slip)</div>
+              <div style="font-size:11.5px;color:var(--text3)">เน้นที่อยู่จัดส่ง วันที่ส่ง ขนส่ง พัสดุ และช่องลงนามตรวจรับสินค้าปลายทาง</div>
             </div>
+          </label>
+        </div>
+
+        <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">📑 2. รูปแบบชุดเอกสาร</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:14px">
+          <label style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 6px;border-radius:8px;border:1px solid var(--border)">
+            <input type="radio" name="receipt-doc-copy" value="original" checked style="width:16px;height:16px">
+            <span style="font-weight:600;font-size:12px">🌟 ต้นฉบับ</span>
+            <span style="font-size:10.5px;color:var(--text3)">1 ใบ มอบลูกค้า</span>
+          </label>
+          <label style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 6px;border-radius:8px;border:1px solid var(--border)">
+            <input type="radio" name="receipt-doc-copy" value="copy" style="width:16px;height:16px">
+            <span style="font-weight:600;font-size:12px">📑 สำเนา</span>
+            <span style="font-size:10.5px;color:var(--text3)">1 ใบ เก็บเข้าแฟ้ม</span>
+          </label>
+          <label style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 6px;border-radius:8px;border:1.5px solid #00a882">
+            <input type="radio" name="receipt-doc-copy" value="both" style="width:16px;height:16px">
+            <span style="font-weight:700;font-size:12px;color:#008768">✨ เป็นชุด</span>
+            <span style="font-size:10.5px;color:var(--text3)">2 หน้า ต่อกัน</span>
           </label>
         </div>
 
         <div style="border-top:1px solid var(--border);padding-top:12px">
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
             <input type="checkbox" id="receipt-show-discount" checked style="width:18px;height:18px;margin-top:2px">
-            <span><strong>แสดงส่วนลดในบิล</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: แสดงยอดก่อนหักส่วนลด</span></span>
+            <span><strong>แสดงส่วนลดในเอกสาร</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงและคำนวณส่วนลด · ปิด: แสดงยอดก่อนหักส่วนลด</span></span>
           </label>
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
             <input type="checkbox" id="receipt-show-signature" style="width:18px;height:18px;margin-top:2px">
-            <span><strong>พิมพ์ลายเซ็นผู้รับเงิน</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัลสีน้ำเงิน · ปิด: ไม่พิมพ์ลายเซ็น (เว้นช่องไว้เซ็นด้วยมือ)</span></span>
+            <span><strong>พิมพ์ลายเซ็นดิจิทัล</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นผู้วางบิล/ผู้มีอำนาจลงนาม · ปิด: เว้นช่องไว้เซ็นด้วยมือ</span></span>
+          </label>
+          <label id="receipt-delivery-price-wrap" style="display:${defaultDocType==='delivery'?'flex':'none'};align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <input type="checkbox" id="receipt-show-delivery-price" checked style="width:18px;height:18px;margin-top:2px">
+            <span><strong>แสดงราคาในใบส่งสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงราคาและยอดรวม · ปิด: ซ่อนราคา (พิมพ์เฉพาะจำนวนสำหรับตรวจรับ/คลังสินค้า)</span></span>
           </label>
         </div>
       </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่งและหมายเหตุจะแสดงในบิลอัตโนมัติเมื่อมีข้อมูล</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่ง หมายเหตุ และรายละเอียดจัดส่งจะแสดงในเอกสารอัตโนมัติเมื่อมีข้อมูล</div>
       <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
+        <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="
+          const docType = document.querySelector('input[name=\\'order-print-doctype\\']:checked')?.value || 'receipt';
           const docCopy = document.querySelector('input[name=\\'receipt-doc-copy\\']:checked')?.value || 'original';
-          printReceipt('${orderId}', document.getElementById('receipt-show-discount').checked, document.getElementById('receipt-show-signature').checked, docCopy);
-        ">🖨️ พิมพ์บิล</button>
+          const showDisc = document.getElementById('receipt-show-discount').checked;
+          const showSig = document.getElementById('receipt-show-signature').checked;
+          const showPrice = document.getElementById('receipt-show-delivery-price')?.checked ?? true;
+          printReceipt('${orderId}', showDisc, showSig, docCopy, docType, showPrice);
+        ">🖨️ พิมพ์เอกสาร</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
-async function printReceipt(orderId, showDiscount=true, showSignature=false, docCopyType='original') {
+async function printReceipt(orderId, showDiscount=true, showSignature=false, docCopyType='original', docType='receipt', showPriceInDelivery=true) {
   const [{ data: order }, { data: linkedQuote }] = await Promise.all([
-    sb.from('orders').select('*,order_items(*,products(name))').eq('id',orderId).single(),
+    sb.from('orders').select('*,order_items(*,products(name,sku,part_no))').eq('id',orderId).single(),
     sb.from('quotations').select('id,quote_no').eq('shop_id', currentShop?.id).eq('converted_order_id', orderId).maybeSingle()
   ]);
   if (!order) { toast('ไม่พบออเดอร์','error'); return; }
@@ -11620,12 +11656,16 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const shipAddr = (order.customer_address || customer?.shipping_address || '').trim();
 
   const items = order.order_items || [];
+  const isDeliveryWithoutPrice = (docType === 'delivery' && !showPriceInDelivery);
   const printedLineValue = showDiscount
     ? itemNet
     : (it => Number(it.qty || 1) * Number(it.sell_price || 0));
-  if (!confirmHiddenPaidReceiptItems(items, printedLineValue)) return;
+  if (!isDeliveryWithoutPrice && !confirmHiddenPaidReceiptItems(items, printedLineValue)) return;
   const visibleItems = items.filter(showOrderItemOnReceipt);
   const shop  = currentShop || {};
+  const bank = (typeof getQuoteBankSettings === 'function')
+    ? getQuoteBankSettings(shop)
+    : { name: 'ธนาคารกสิกรไทย · KASIKORNBANK', accountName: 'MS. NUNTANA L', accountNumber: '128-8-23520-8' };
   const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
 
   // คำนวณส่วนลดรายรายการ
@@ -11652,7 +11692,6 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const d      = new Date(order.order_date+'T00:00:00');
   const thDate = d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
 
-  // สร้างแถวสินค้า (ขั้นต่ำ 8 แถว พอดีหน้ากระดาษ ไม่อัดแน่นและไม่เหลือที่ว่างเวิ้งว้าง)
   const MIN_ROWS = 8;
   const itemRows = visibleItems.map((it,i) => {
     const gross    = Number(it.qty||1) * Number(it.sell_price||0);
@@ -11663,9 +11702,23 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
           ? '- '+fmt(discAmt)+' <small style="color:#666">('+it.discount+'%)</small>'
           : '- '+fmt(discAmt))
       : '-';
+    const itName = escapeHTML(it.product_name||(it.products&&it.products.name)||'-');
+    const itSku = (it.sku || (it.products && it.products.sku) || '').trim();
+    const itDesc = itSku ? itName + ' <br><small style="color:#64748b;font-family:Courier,monospace">[' + escapeHTML(itSku) + ']</small>' : itName;
+
+    if (isDeliveryWithoutPrice) {
+      return '<tr>' +
+        '<td style="text-align:center">'+(i+1)+'</td>' +
+        '<td>'+itDesc+'</td>' +
+        '<td style="text-align:center;font-weight:700">'+fmt(it.qty)+'</td>' +
+        '<td style="text-align:center;color:#475569">ชิ้น</td>' +
+        '<td style="text-align:center;color:#64748b;font-size:11px">[ &nbsp; ] ตรวจรับแล้ว</td>' +
+        '</tr>';
+    }
+
     return '<tr>' +
       '<td style="text-align:center">'+(i+1)+'</td>' +
-      '<td>'+escapeHTML(it.product_name||(it.products&&it.products.name)||'-')+'</td>' +
+      '<td>'+itDesc+'</td>' +
       '<td style="text-align:center">'+fmt(it.qty)+'</td>' +
       '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
       (showDiscount ? '<td style="text-align:right;color:#c00">'+discCell+'</td>' : '') +
@@ -11674,11 +11727,13 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   });
 
   const emptyCount = Math.max(0, MIN_ROWS - visibleItems.length);
-  const emptyRows  = Array(emptyCount).fill(
-    showDiscount
-      ? '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
-      : '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>'
-  ).join('');
+  const emptyRows = isDeliveryWithoutPrice
+    ? Array(emptyCount).fill('<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>').join('')
+    : Array(emptyCount).fill(
+        showDiscount
+          ? '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>'
+          : '<tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>'
+      ).join('');
 
   let billShopName = (shop.name || 'sealthai').toUpperCase();
   if (!billShopName.endsWith('.COM')) billShopName += '.COM';
@@ -11686,19 +11741,22 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const receiptSellerTaxId = '1539900333644';
   const shopAddr = getShopAddress(shop).split('\n').join('<br>');
 
-  // รายการชุดเอกสารที่ต้องพิมพ์ (ต้นฉบับ / สำเนา / ทั้งคู่)
   const copies = docCopyType === 'both'
     ? [{ label: 'ต้นฉบับ / ORIGINAL', isCopy: false }, { label: 'สำเนา / COPY', isCopy: true }]
     : docCopyType === 'copy'
       ? [{ label: 'สำเนา / COPY', isCopy: true }]
       : [{ label: 'ต้นฉบับ / ORIGINAL', isCopy: false }];
 
-  // ──────── HTML บิล ────────
-  // ── สร้าง HTML บิลด้วย array เพื่อป้องกัน browser parser ──────
+  const docTitle = docType === 'invoice'
+    ? 'ใบแจ้งหนี้ / ใบเรียกเก็บเงิน ' + escapeHTML(order.order_no||'')
+    : (docType === 'delivery'
+        ? 'ใบส่งสินค้า / ใบส่งของ ' + escapeHTML(order.order_no||'')
+        : 'ใบเสร็จรับเงิน / บิลเงินสด ' + escapeHTML(order.order_no||''));
+
   const billParts = [];
   billParts.push('<!DOCTYPE html><html lang="th"><head>');
   billParts.push('<meta charset="UTF-8">');
-  billParts.push('<title>ใบเสร็จรับเงิน / บิลเงินสด ' + escapeHTML(order.order_no||'') + '</title>');
+  billParts.push('<title>' + docTitle + '</title>');
   billParts.push('<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">');
   billParts.push('<' + 'style>');
   billParts.push('* { box-sizing:border-box; margin:0; padding:0; }');
@@ -11718,7 +11776,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.seller-contact { font-size:11px; color:#1a1a1a; line-height:1.5; margin:-4px 0 10px; }');
   billParts.push('.seller-contact-line { white-space:nowrap; }');
   billParts.push('.bill-type { border:2.5px solid #00a882; color:#00a882; font-weight:700; font-size:14px; padding:6px 12px; border-radius:6px; text-align:center; line-height:1.3; flex-shrink:0; }');
-  billParts.push('.bill-type.copy { border:2.5px solid #475569; color:#334155; }');
+  billParts.push('.bill-type.copy { border:2.5px solid #475569 !important; color:#334155 !important; }');
+  billParts.push('.bill-type.invoice { border-color:#1e3a5f; color:#1e3a5f; }');
+  billParts.push('.bill-type.delivery { border-color:#0284c7; color:#0369a1; }');
   billParts.push('.bill-type .doc-en { font-size:11px; font-weight:600; margin-top:2px; }');
   billParts.push('.bill-type .doc-warning { font-size:9px; font-weight:400; color:#475569; margin-top:3px; }');
   billParts.push('.bill-type .doc-sub { font-size:11px; font-weight:700; letter-spacing:0.5px; opacity:0.95; margin-top:2px; }');
@@ -11770,16 +11830,26 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<div class="shop-info">' + shopAddr);
     if (shop.phone) billParts.push(' &nbsp;|&nbsp; โทร: ' + escapeHTML(shop.phone));
     billParts.push('</div></div></div>');
-    billParts.push('<div class="bill-type' + (cp.isCopy ? ' copy' : '') + '"><div>ใบเสร็จรับเงิน / บิลเงินสด</div><div class="doc-en">RECEIPT / CASH SALE</div><div class="doc-warning">ไม่ใช่ใบกำกับภาษี / NOT A TAX INVOICE</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
+
+    if (docType === 'invoice') {
+      billParts.push('<div class="bill-type invoice' + (cp.isCopy ? ' copy' : '') + '"><div>ใบแจ้งหนี้ / ใบเรียกเก็บเงิน</div><div class="doc-en">INVOICE / BILLING NOTE</div><div class="doc-warning">ไม่ใช่ใบกำกับภาษี / NOT A TAX INVOICE</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
+    } else if (docType === 'delivery') {
+      billParts.push('<div class="bill-type delivery' + (cp.isCopy ? ' copy' : '') + '"><div>ใบส่งสินค้า / ใบส่งของ</div><div class="doc-en">DELIVERY NOTE / PACKING SLIP</div><div class="doc-warning">ใบกำกับรายการสินค้า / PACKING LIST</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
+    } else {
+      billParts.push('<div class="bill-type' + (cp.isCopy ? ' copy' : '') + '"><div>ใบเสร็จรับเงิน / บิลเงินสด</div><div class="doc-en">RECEIPT / CASH SALE</div><div class="doc-warning">ไม่ใช่ใบกำกับภาษี / NOT A TAX INVOICE</div><div class="doc-sub">( ' + cp.label + ' )</div></div>');
+    }
     billParts.push('</div>');
     billParts.push('<div class="seller-contact"><div class="seller-contact-line">Line OA : @sealthai</div><div class="seller-contact-line">Website : www.sealthai.com &nbsp;|&nbsp; www.oilsealthai.com &nbsp;|&nbsp; www.oilsealthailand.com</div></div>');
 
     // Info card: Unified 2-column card with clean separation and zero empty gaps
     billParts.push('<div class="info-row">');
 
-    // Left Column: Customer & Billing Details
+    // Left Column: Customer & Billing/Shipping Details
     billParts.push('<div class="info-col-left">');
-    billParts.push('<div class="info-label">\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e25\u0e39\u0e01\u0e04\u0e49\u0e32 / \u0e1c\u0e39\u0e49\u0e0b\u0e37\u0e49\u0e2d (Customer / Buyer):</div>');
+    const customerCardHeader = (docType === 'delivery')
+      ? 'ข้อมูลผู้รับสินค้า / สถานที่จัดส่ง (Ship To / Consignee):'
+      : 'ข้อมูลลูกค้า / ผู้ซื้อ (Customer / Buyer):';
+    billParts.push('<div class="info-label">' + customerCardHeader + '</div>');
     if (companyName) {
       billParts.push('<div class="info-val">' + escapeHTML(companyName) + '</div>');
       if (customerName && customerName.toLowerCase() !== companyName.toLowerCase()) {
@@ -11800,21 +11870,47 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> <span class="font-mono" style="font-weight:700">' + escapeHTML(taxId) + '</span>' + branchDisplay + '</div>');
     }
     if (phone) billParts.push('<div class="info-sub"><strong>\u0e42\u0e17\u0e23:</strong> ' + escapeHTML(phone) + '</div>');
-    if (billAddr) {
-      billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
-    } else if (shipAddr) {
-      billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div>');
+    if (docType === 'delivery') {
+      if (shipAddr) {
+        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45"><strong>สถานที่จัดส่ง (Ship To):</strong> ' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div>');
+      } else if (billAddr) {
+        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45"><strong>สถานที่จัดส่ง (Ship To):</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
+      }
+    } else {
+      if (billAddr) {
+        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
+      } else if (shipAddr) {
+        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div>');
+      }
     }
     billParts.push('</div>'); // close info-col-left
 
     // Right Column: Document Details
     billParts.push('<div class="info-col-right">');
-    billParts.push('<div class="info-label">\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e40\u0e2d\u0e01\u0e2a\u0e32\u0e23 (Document Details):</div>');
-    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e17\u0e35\u0e48 / No.:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.order_no||'-') + '</span></div>');
-    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e27\u0e31\u0e19\u0e17\u0e35\u0e48 / Date:</span><span class="doc-meta-val">' + thDate + '</span></div>');
+    const docMetaTitle = (docType === 'invoice')
+      ? 'ข้อมูลใบแจ้งหนี้ (Invoice Details):'
+      : (docType === 'delivery'
+          ? 'ข้อมูลการจัดส่ง (Delivery Details):'
+          : 'ข้อมูลเอกสาร (Document Details):');
+    billParts.push('<div class="info-label">' + docMetaTitle + '</div>');
+    const docNoLabel = (docType === 'invoice')
+      ? 'เลขที่ใบแจ้งหนี้ / Inv No.:'
+      : (docType === 'delivery'
+          ? 'เลขที่ใบส่งของ / DN No.:'
+          : 'เลขที่ / No.:');
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">' + docNoLabel + '</span><span class="doc-meta-val font-mono">' + escapeHTML(order.order_no||'-') + '</span></div>');
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันที่ / Date:</span><span class="doc-meta-val">' + thDate + '</span></div>');
     const delDate = getOrderDeliveryDate(order);
-    if (delDate) {
+    if (docType === 'delivery') {
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val font-mono" style="color:#0369a1;font-weight:700">' + escapeHTML(delDate || thDate) + '</span></div>');
+      const carrierName = (typeof detectCarrier === 'function' && order.tracking_no && detectCarrier(order.tracking_no)?.name) || order.channel || '-';
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">ขนส่ง / Carrier:</span><span class="doc-meta-val">' + escapeHTML(carrierName) + '</span></div>');
+    } else if (delDate) {
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val font-mono">' + escapeHTML(delDate) + '</span></div>');
+    }
+    if (docType === 'invoice') {
+      const dueDate = delDate || thDate;
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">กำหนดชำระ / Due Date:</span><span class="doc-meta-val font-mono" style="color:#1e3a5f;font-weight:700">' + escapeHTML(dueDate) + '</span></div>');
     }
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
     if (order.customer_social) {
@@ -11831,40 +11927,108 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
 
     // Table
     billParts.push('<table><thead><tr>');
-    billParts.push('<th style="width:36px">\u0e25\u0e33\u0e14\u0e31\u0e1a<br><small>Item</small></th>');
-    billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>Descriptions</small></th>');
-    billParts.push('<th style="width:50px">\u0e08\u0e33\u0e19\u0e27\u0e19<br><small>Qty</small></th>');
-    billParts.push('<th class="right" style="width:68px">\u0e23\u0e32\u0e04\u0e32/\u0e0a\u0e34\u0e49\u0e19<br><small>Unit Price</small></th>');
-    if (showDiscount) billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
-    billParts.push('<th class="right" style="width:85px">\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19<br><small>Amount</small></th>');
+    if (isDeliveryWithoutPrice) {
+      billParts.push('<th style="width:36px">ลำดับ<br><small>Item</small></th>');
+      billParts.push('<th class="left">รายการสินค้า / รายละเอียด<br><small>Descriptions & SKU</small></th>');
+      billParts.push('<th style="width:60px">จำนวน<br><small>Qty</small></th>');
+      billParts.push('<th style="width:60px">หน่วย<br><small>Unit</small></th>');
+      billParts.push('<th style="width:120px">หมายเหตุ / ตรวจรับ<br><small>Remarks / Check</small></th>');
+    } else {
+      billParts.push('<th style="width:36px">\u0e25\u0e33\u0e14\u0e31\u0e1a<br><small>Item</small></th>');
+      billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>Descriptions</small></th>');
+      billParts.push('<th style="width:50px">\u0e08\u0e33\u0e19\u0e27\u0e19<br><small>Qty</small></th>');
+      billParts.push('<th class="right" style="width:68px">\u0e23\u0e32\u0e04\u0e32/\u0e0a\u0e34\u0e49\u0e19<br><small>Unit Price</small></th>');
+      if (showDiscount) billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
+      billParts.push('<th class="right" style="width:85px">\u0e08\u0e33\u0e19\u0e27\u0e19\u0e40\u0e07\u0e34\u0e19<br><small>Amount</small></th>');
+    }
     billParts.push('</tr></thead><tbody>');
     billParts.push(itemRows.join(''));
     billParts.push(emptyRows);
     billParts.push('</tbody></table>');
 
-    // Totals
-    billParts.push('<div class="total-wrap">');
-    billParts.push('<div class="total-row"><span>\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21 / Subtotal</span><span>' + fmt(subtotal) + '</span></div>');
-    if (showDiscount && billDiscAmt > 0) {
-      billParts.push('<div class="total-row disc"><span>\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14 / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
+    // Totals / Summary
+    if (isDeliveryWithoutPrice) {
+      const totalQty = visibleItems.reduce((s, it) => s + Number(it.qty || 1), 0);
+      billParts.push('<div class="total-wrap">');
+      billParts.push('<div class="total-row grand" style="background:#f0f9ff;border-top:2px solid #0284c7"><span>รวมสินค้าจัดส่งทั้งสิ้น / Total Delivered Items</span><span><strong>' + visibleItems.length + ' รายการ (รวม ' + fmt(totalQty) + ' ชิ้น)</strong></span></div>');
+      billParts.push('</div>');
+    } else {
+      billParts.push('<div class="total-wrap">');
+      billParts.push('<div class="total-row"><span>\u0e22\u0e2d\u0e14\u0e23\u0e27\u0e21 / Subtotal</span><span>' + fmt(subtotal) + '</span></div>');
+      if (showDiscount && billDiscAmt > 0) {
+        billParts.push('<div class="total-row disc"><span>\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14 / Discount' + (billDiscType==='percent'?' ('+billDisc+'%)':'') + '</span><span>- ' + fmt(billDiscAmt) + '</span></div>');
+      }
+      if (shippingFee > 0) billParts.push('<div class="total-row"><span>ค่าขนส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
+      const totalLabel = (docType === 'invoice')
+        ? 'ยอดรวมที่ต้องชำระ / Total Payable'
+        : '\u0e23\u0e27\u0e21\u0e40\u0e07\u0e34\u0e19 / Total';
+      const grandStyle = (docType === 'invoice')
+        ? 'background:#eff6ff;border-top:2.5px solid #1e3a5f'
+        : (docType === 'delivery' ? 'background:#f0f9ff;border-top:2.5px solid #0284c7' : 'background:#e8f5f0;border-top:2.5px solid #00a882');
+      billParts.push('<div class="total-row grand" style="' + grandStyle + '"><span>' + totalLabel + '</span><span>' + fmt(grandTotal) + '</span></div>');
+      billParts.push('</div>');
+      billParts.push('<div class="baht-text">\u0e15\u0e31\u0e27\u0e2d\u0e31\u0e01\u0e29\u0e23 / In Words &nbsp; <strong>( ' + bahtText(grandTotal) + ' )</strong></div>');
     }
-    if (shippingFee > 0) billParts.push('<div class="total-row"><span>ค่าขนส่ง / Shipping Fee</span><span>+ ' + fmt(shippingFee) + '</span></div>');
-    billParts.push('<div class="total-row grand"><span>\u0e23\u0e27\u0e21\u0e40\u0e07\u0e34\u0e19 / Total</span><span>' + fmt(grandTotal) + '</span></div>');
-    billParts.push('</div>');
-    billParts.push('<div class="baht-text">\u0e15\u0e31\u0e27\u0e2d\u0e31\u0e01\u0e29\u0e23 / In Words &nbsp; <strong>( ' + bahtText(grandTotal) + ' )</strong></div>');
+
     if (displayNote) billParts.push('<div class="note-box"><strong>หมายเหตุ / Note:</strong><br>' + escapeHTML(displayNote).replace(/\n/g,'<br>') + '</div>');
 
-    // Signature
-    billParts.push('<div class="sig-area"><div class="sig-box">');
-    if (showSignature) {
-      billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ลายเซ็นผู้รับเงิน"></div>');
-    } else {
-      billParts.push('<div class="sig-space"></div>');
+    // Bank transfer details for Invoice
+    if (docType === 'invoice') {
+      billParts.push('<div class="bank-box" style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;border:1.5px solid #86efac;border-radius:6px;padding:8px 12px">');
+      billParts.push('<div><div style="font-weight:700;font-size:11.5px;color:#166534">💳 ชำระเงินโดยการโอนเงินเข้าบัญชี (Bank Transfer):</div><div style="font-size:12px;color:#1e3a5f;font-weight:600">' + escapeHTML(bank.name) + '</div><div style="font-size:11.5px;color:#334155">ชื่อบัญชี: <strong>' + escapeHTML(bank.accountName) + '</strong></div></div>');
+      billParts.push('<div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:2px">เลขที่บัญชี / Account No.</div><div class="font-mono" style="font-size:15px;font-weight:700;color:#15803d;letter-spacing:0.5px">' + escapeHTML(bank.accountNumber) + '</div></div>');
+      billParts.push('</div>');
     }
-    billParts.push('<div class="sig-line"></div>');
-    billParts.push('<div class="sig-label">\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19 / Received By</div>');
-    billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM') + '</div>');
-    billParts.push('</div></div>');
+
+    // Signatures
+    if (docType === 'invoice') {
+      billParts.push('<div class="sig-area" style="justify-content:space-between;margin-top:16px">');
+      billParts.push('<div class="sig-box" style="width:200px">');
+      billParts.push('<div class="sig-space"></div>');
+      billParts.push('<div class="sig-line"></div>');
+      billParts.push('<div class="sig-label">ผู้รับใบแจ้งหนี้ / Received By</div>');
+      billParts.push('<div class="sig-sub">วันที่ / Date: _____/_____/_________</div>');
+      billParts.push('</div>');
+      billParts.push('<div class="sig-box" style="width:200px">');
+      if (showSignature) {
+        billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ผู้วางบิล"></div>');
+      } else {
+        billParts.push('<div class="sig-space"></div>');
+      }
+      billParts.push('<div class="sig-line"></div>');
+      billParts.push('<div class="sig-label">ผู้วางบิล / Authorized Signature</div>');
+      billParts.push('<div class="sig-sub">' + receiptSellerName + '</div>');
+      billParts.push('</div></div>');
+    } else if (docType === 'delivery') {
+      billParts.push('<div class="sig-area" style="justify-content:space-between;margin-top:16px">');
+      billParts.push('<div class="sig-box" style="width:200px">');
+      if (showSignature) {
+        billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ผู้ส่งสินค้า"></div>');
+      } else {
+        billParts.push('<div class="sig-space"></div>');
+      }
+      billParts.push('<div class="sig-line"></div>');
+      billParts.push('<div class="sig-label">ผู้ส่งสินค้า / Delivered By</div>');
+      billParts.push('<div class="sig-sub">วันที่ส่ง / Date: _____/_____/_________</div>');
+      billParts.push('</div>');
+      billParts.push('<div class="sig-box" style="width:230px">');
+      billParts.push('<div class="sig-space"></div>');
+      billParts.push('<div class="sig-line"></div>');
+      billParts.push('<div class="sig-label">ผู้รับสินค้า / Received By</div>');
+      billParts.push('<div class="sig-sub" style="font-size:11px">ได้รับสินค้าข้างต้นในสภาพเรียบร้อย ถูกต้อง ครบถ้วน<br>วันที่รับ / Date: _____/_____/_________</div>');
+      billParts.push('</div></div>');
+    } else {
+      billParts.push('<div class="sig-area"><div class="sig-box">');
+      if (showSignature) {
+        billParts.push('<div class="sig-image-wrap"><img class="sig-image" src="' + signatureUrl + '" alt="ลายเซ็นผู้รับเงิน"></div>');
+      } else {
+        billParts.push('<div class="sig-space"></div>');
+      }
+      billParts.push('<div class="sig-line"></div>');
+      billParts.push('<div class="sig-label">\u0e1c\u0e39\u0e49\u0e23\u0e31\u0e1a\u0e40\u0e07\u0e34\u0e19 / Received By</div>');
+      billParts.push('<div class="sig-sub">' + (shop.receipt_note||'ขอบพระคุณที่อุดหนุนสินค้าและบริการของเรา เราหวังเป็นอย่างยิ่งว่าจะได้ให้บริการคุณอีกในโอกาสต่อไป SEALTHAI.COM') + '</div>');
+      billParts.push('</div></div>');
+    }
 
     billParts.push('</div></div>'); // close page-border & bill-page
   });
@@ -11879,6 +12043,11 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   w.document.write(html);
   w.document.close();
 }
+window.openOrderPrintOptions = openReceiptOptions;
+window.printOrderDocument = printReceipt;
+window.printOrderInvoice = function(orderId) { openReceiptOptions(orderId, 'invoice'); };
+window.printOrderDeliveryNote = function(orderId) { openReceiptOptions(orderId, 'delivery'); };
+window.printOrderReceipt = function(orderId) { openReceiptOptions(orderId, 'receipt'); };
 
 async function deleteOrder(orderId) {
   if (!confirm('ต้องการลบออเดอร์นี้?')) return;
@@ -44807,7 +44976,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.51', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ป้องกันสินค้าซ้ำซ้อน (Duplicate Protection) & ดึงข้อมูล Item Master มาออเดอร์ทันที (v3.51)', items:[
+    { v:'3.52', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับการพิมพ์ใบแจ้งหนี้ (Invoice) & ใบส่งสินค้า (Delivery Note) จากหน้าออเดอร์ (v3.52)', items:[
+      '📑 <b>พิมพ์ใบแจ้งหนี้ / ใบเรียกเก็บเงิน (Invoice / Billing Note):</b> เพิ่มตัวเลือกการพิมพ์ใบแจ้งหนี้มาตรฐานจากหน้าออเดอร์ พร้อมแสดงข้อมูลลูกค้า/ผู้ซื้อ, เลขที่ใบแจ้งหนี้, กำหนดชำระเงิน (Due Date), รายการสินค้า ราคา ส่วนลด ค่าจัดส่ง ยอดรวมที่ต้องชำระ ตัวอักษรบาทไทย ข้อมูลบัญชีธนาคารสำหรับโอนเงิน และช่องลงนามผู้วางบิล/ผู้มีอำนาจลงนามและผู้รับใบแจ้งหนี้อย่างเป็นทางการ',
+      '🚚 <b>พิมพ์ใบส่งสินค้า / ใบส่งของ (Delivery Note / Packing Slip):</b> เพิ่มตัวเลือกการพิมพ์ใบส่งสินค้า เน้นแสดงสถานที่จัดส่งปลายทาง (Ship To), วันที่จัดส่ง (Delivery Date), ผู้ให้บริการขนส่งและเลขพัสดุ (Tracking No.), เลขที่ PO ลูกค้า พร้อมช่องลงนามผู้ส่งสินค้าและผู้ตรวจรับสินค้าปลายทาง และมีตัวเลือกให้เปิด/ปิดการแสดงราคาได้ตามต้องการ (เหมาะสำหรับใบส่งของฝ่ายคลัง/ตรวจนับสินค้า)',
+      '🖨️ <b>ปุ่มลัดพิมพ์เอกสารเข้าถึงง่ายในทุกหน้าจอ (1-Click Multi-Document Printing):</b> สามารถกดพิมพ์เอกสารได้โดยตรงจากปุ่ม <code>🖨️</code> ในตารางออเดอร์ Desktop, ปุ่ม <code>🖨️ พิมพ์เอกสาร</code> บนการ์ด Mobile และในหน้าต่างดู/แก้ไขออเดอร์ โดยสามารถเลือกพิมพ์ต้นฉบับ, สำเนา หรือพิมพ์เป็นชุด (ต้นฉบับ + สำเนา) ได้ทันที'
+    ]},
+    { v:'3.51', date:'2026-11-13', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ป้องกันสินค้าซ้ำซ้อน (Duplicate Protection) & ดึงข้อมูล Item Master มาออเดอร์ทันที (v3.51)', items:[
       '🛡️ <b>ระบบตรวจจับและป้องกันสินค้าซ้ำซ้อน (Duplicate Prevention):</b> เมื่อกดปุ่มเพิ่มสินค้าจากหน้าออเดอร์ หรือกดบันทึกสินค้าใหม่ ระบบจะตรวจสอบชื่อสินค้าและรหัส SKU เทียบกับฐานข้อมูลสินค้าทันที หากพบว่ามีสินค้านี้อยู่แล้ว ระบบจะแจ้งเตือนพร้อมเสนอทางเลือกให้กด <code>🔗 เชื่อมโยงทันที</code> โดยไม่สร้างรายการซ้ำซ้อนในฐานข้อมูล',
       '🔍 <b>จับคู่ Item Master ดึงข้อมูลเข้าออเดอร์ทันที (Smart Clean Name Matching):</b> แก้ปัญหาออเดอร์ที่มีแท็กระยะเวลา เช่น <code>[รอสินค้า 15-20 วัน]</code> ทำให้ระบบไม่พบสินค้า โดยเพิ่มระบบถอดรหัสชื่อมาตรฐาน (Clean Name) มาจับคู่กับ Master Catalog แบบ Real-time ทันที ทำให้ดึงรหัส SKU, ป้ายสต๊อกคงเหลือจริง และประวัติ Inventory Movement มาแสดงในออเดอร์ได้ถูกต้อง 100%',
       '⚡ <b>เชื่อมโยงข้อมูลแบบ Fail-safe (RLS Fallback & Instant Sync):</b> ปรับปรุงระบบบันทึกความเชื่อมโยงของ <code>order_items</code> ให้รองรับ RLS Policy แบบ Delete+Insert Fallback รับประกันว่าบันทึก <code>product_id</code> และ <code>sku</code> ลงฐานข้อมูล Supabase สำเร็จแน่นอน พร้อมอัปเดตหน้าจอทันทีโดยไม่ต้องรีโหลดหน้าเว็บใหม่'
