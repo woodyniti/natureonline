@@ -9908,12 +9908,15 @@ async function viewOrder(orderId) {
     showPage('orders');
   }
   await Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation(), ensureLazadaSummary()]);
-  const [{ data: order }, { data: orderPOItemsRaw }, { data: linkedQuote }] = await Promise.all([
+  const [{ data: order }, { data: orderPOItemsRaw }, { data: linkedQuote }, { data: existAR }] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('id',orderId).single(),
     sb.from('purchase_order_items').select('id, po_id, product_id, product_name, qty_ordered, purchase_orders(id, po_no, po_date, supplier_name, status)'),
-    sb.from('quotations').select('id,quote_no').eq('shop_id', currentShop?.id).eq('converted_order_id', orderId).maybeSingle()
+    sb.from('quotations').select('id,quote_no').eq('shop_id', currentShop?.id).eq('converted_order_id', orderId).maybeSingle(),
+    sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', orderId).neq('status','cancelled').limit(1)
   ]);
   if (!order) return;
+  const hasAR = !!(existAR && existAR.length > 0);
+  const firstAR = hasAR ? existAR[0] : null;
   
   // Filter PO items matching this order
   const thisOrderPOItems = (orderPOItemsRaw || []).filter(poi => {
@@ -10122,7 +10125,7 @@ async function viewOrder(orderId) {
           <div>
             <span class="sap-field-label">AR Invoice Status</span>
             <div style="margin-top:4px;font-size:12px;color:#475569">
-              ${hasAR ? '<span style="color:#16a34a;font-weight:700">✓ เชื่อมโยงกับ AR Invoice แล้ว</span>' : '<span style="color:#64748b">ยังไม่ได้สร้าง AR Invoice (สามารถกด Copy to Invoice ด้านล่างได้)</span>'}
+              ${hasAR ? '<span style="color:#16a34a;font-weight:700">✓ เชื่อมโยงกับ AR Invoice แล้ว' + (firstAR?.ar_no ? ' (' + escapeHTML(firstAR.ar_no) + ')' : '') + '</span>' : '<span style="color:#64748b">ยังไม่ได้สร้าง AR Invoice (สามารถกด Copy to Invoice ด้านล่างได้)</span>'}
             </div>
           </div>
         </div>
@@ -10267,11 +10270,9 @@ async function viewOrder(orderId) {
     }
   });
 
-  // เช็ค AR Invoice ที่ผูกกับ order นี้
-  const { data: existAR } = await sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', order.id).neq('status','cancelled').limit(1);
-  const hasAR = existAR && existAR.length > 0;
-  const arBtn = hasAR
-    ? `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="closeModal('modal-order-detail');showPage('arinvoice');setTimeout(()=>openARDetail('${existAR[0].id}'),250)" title="เปิดดู AR Invoice ${existAR[0].ar_no}">📄 ดู AR Invoice (${existAR[0].ar_no})</button>`
+  // AR Invoice ปุ่มและสถานะ (ดึงข้อมูลแล้วตั้งแต่ Promise.all เริ่มต้น)
+  const arBtn = hasAR && firstAR
+    ? `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="closeModal('modal-order-detail');showPage('arinvoice');setTimeout(()=>openARDetail('${firstAR.id}'),250)" title="เปิดดู AR Invoice ${escapeHTML(firstAR.ar_no)}">📄 ดู AR Invoice (${escapeHTML(firstAR.ar_no)})</button>`
     : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}',true)">📄 Copy to Invoice</button>`;
 
   document.getElementById('order-detail-footer').innerHTML =

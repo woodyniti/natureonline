@@ -119,6 +119,12 @@ assert(content.includes("switchSapTab(\\'sap-quote-view-window\\',\\'accounting\
 assert(content.includes("switchSapTab(\\'sap-quote-view-window\\',\\'notes\\')"), 'Quote view must have notes tab switch');
 console.log('✓ 6. Quotation Detail View SAP B1 layout verified');
 
+// 7. Verify hasAR TDZ fix in viewOrder
+assert(content.includes("sb.from('ar_invoices').select('id,ar_no,status').eq('order_id', orderId)"), 'viewOrder must query ar_invoices in initial Promise.all');
+assert(content.includes('const hasAR = !!(existAR && existAR.length > 0);'), 'hasAR must be initialized before __odEl.innerHTML is evaluated');
+assert(content.includes('const firstAR = hasAR ? existAR[0] : null;'), 'firstAR must be initialized alongside hasAR');
+console.log('✓ 7. hasAR Temporal Dead Zone (TDZ) fix verified in viewOrder');
+
 console.log('\n======================================================');
 console.log('🎉 ALL v3.53 SAP BUSINESS ONE LAYOUT TESTS PASSED 100%!');
 console.log('======================================================');
