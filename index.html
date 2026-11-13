@@ -452,9 +452,31 @@ tbody td:first-child { color: var(--text); }
   width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
-#modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); max-height:94vh; }
-#modal-quote .modal, #modal-quote-detail .modal { max-width:min(1400px,calc(100vw - 32px)); max-height:94vh; }
+#modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
+#modal-quote .modal, #modal-quote-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
 #order-detail-content, #ed-items, #qt-items { min-width:0; max-width:100%; }
+
+@media (min-width: 1200px) {
+  #modal-order-detail .modal,
+  #modal-quote .modal,
+  #modal-quote-detail .modal {
+    width: 1280px;
+    min-width: 1200px;
+    padding: 20px 24px;
+  }
+}
+
+#order-detail-footer,
+#qt-modal-footer,
+#qt-detail-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
 #qt-channel, #qt-pay {
   width: 100%;
   background: #fff;
@@ -469,6 +491,8 @@ tbody td:first-child { color: var(--text); }
 
 /* ── SAP Business One Form Styles ── */
 .sap-window {
+  width: 100%;
+  box-sizing: border-box;
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
@@ -489,6 +513,7 @@ tbody td:first-child { color: var(--text); }
   color: #1e293b;
 }
 .sap-panel {
+  box-sizing: border-box;
   padding: 12px 14px;
   background: #fff;
   border-bottom: 1px solid #e2e8f0;
@@ -497,6 +522,9 @@ tbody td:first-child { color: var(--text); }
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
   gap: 14px 20px;
+}
+.sap-form-grid > div {
+  min-width: 0;
 }
 @media (max-width: 820px) {
   .sap-form-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -508,6 +536,11 @@ tbody td:first-child { color: var(--text); }
   gap: 8px;
   margin-bottom: 6px;
   font-size: 12.5px;
+}
+.sap-field-row > div,
+.sap-field-row > input,
+.sap-field-row > select {
+  min-width: 0;
 }
 @media (max-width: 480px) {
   .sap-field-row { grid-template-columns: 105px 1fr; gap: 4px; }
@@ -572,6 +605,8 @@ tbody td:first-child { color: var(--text); }
   padding: 14px;
   background: #fff;
   min-height: 200px;
+  box-sizing: border-box;
+  overflow-x: auto;
 }
 .sap-tab-pane.active {
   display: block;
@@ -583,6 +618,10 @@ tbody td:first-child { color: var(--text); }
   padding: 12px 14px;
   background: #f8fafc;
   border-top: 1.5px solid #cbd5e1;
+  box-sizing: border-box;
+}
+.sap-footer > div {
+  min-width: 0;
 }
 @media (max-width: 820px) {
   .sap-footer { grid-template-columns: 1fr; }
@@ -634,7 +673,7 @@ tbody td:first-child { color: var(--text); }
   transform: scale(1.1);
 }
 .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; padding-right: 36px; }
-.modal-footer { margin-top: 20px; display: flex; justify-content: flex-end; gap: 8px; }
+.modal-footer { margin-top: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px; }
 
 /* Marketplace sale reconciliation: scoped so generic modal/table styles cannot squeeze the layout. */
 #modal-marketplace-sale-adjust .msa-dialog { box-sizing:border-box; width:min(1040px,calc(100vw - 32px)); max-width:none; max-height:min(92vh,900px); padding:0; overflow:hidden; display:flex; flex-direction:column; }
@@ -7246,7 +7285,7 @@ async function orders() {
 
     <!-- Modal: Order Detail / Edit -->
     <div class="modal-overlay" id="modal-order-detail" style="z-index:1300">
-      <div class="modal">
+      <div class="modal" style="width:min(1320px,calc(100vw - 32px));max-width:min(1400px,calc(100vw - 32px))">
         <div class="modal-title">📋 รายละเอียดออเดอร์</div>
         <div id="order-detail-content"></div>
         <div class="modal-footer" id="order-detail-footer">
@@ -21925,7 +21964,7 @@ async function quotations() {
 
     <!-- New/Edit Quote Modal (SAP Business One Layout) -->
     <div class="modal-overlay" id="modal-quote">
-      <div class="modal" style="max-width:min(1400px,calc(100vw - 32px))">
+      <div class="modal" style="width:min(1320px,calc(100vw - 32px));max-width:min(1400px,calc(100vw - 32px))">
         <div class="sap-window" id="sap-quote-window">
           <!-- 1. Header Bar -->
           <div class="sap-header-bar">
@@ -22145,7 +22184,7 @@ async function quotations() {
 
     <!-- View/Edit Quote Modal -->
     <div class="modal-overlay" id="modal-quote-detail">
-      <div class="modal" style="max-width:720px">
+      <div class="modal" style="width:min(1320px,calc(100vw - 32px));max-width:min(1400px,calc(100vw - 32px))">
         <div id="qt-detail-content"></div>
         <div class="modal-footer" id="qt-detail-footer"></div>
       </div>

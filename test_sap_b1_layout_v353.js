@@ -34,7 +34,11 @@ assert(content.includes('.sap-tab {'), '.sap-tab CSS class must exist');
 assert(content.includes('.sap-tab-pane {'), '.sap-tab-pane CSS class must exist');
 assert(content.includes('.sap-footer {'), '.sap-footer CSS class must exist');
 assert(content.includes('.btn-sap-update {'), '.btn-sap-update golden button CSS class must exist');
-console.log('✓ 3. SAP B1 CSS Styles verified');
+assert(content.includes('width: 1280px;'), 'Modal width on PC (>= 1200px) must be 1280px');
+assert(content.includes('min-width: 1200px;'), 'Modal min-width on PC must be at least 1200px');
+assert(content.includes('#order-detail-footer,') && content.includes('flex-wrap: wrap;'), 'Footers must have flex-wrap: wrap');
+assert(!content.includes('id="modal-quote-detail">\n      <div class="modal" style="max-width:720px">'), 'modal-quote-detail must not have restrictive 720px inline cap');
+console.log('✓ 3. SAP B1 CSS Styles and Modal Width (>=1200px) verified');
 
 // 4. Order Detail SAP B1 Structure
 assert(content.includes('id="sap-order-window"'), 'Order modal must contain sap-order-window');
