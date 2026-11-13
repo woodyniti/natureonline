@@ -34319,9 +34319,9 @@ async function openShippingLabelModal(orderId) {
         <div class="form-group">
           <label>ขนาดกระดาษ</label>
           <select id="ship-size" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 8px;font-size:13px;width:100%">
-            <option value="A6">A6 (10 &times; 15 cm)</option>
+            <option value="A6" selected>A6 (10 &times; 15 cm)</option>
             <option value="A5">A5 (15 &times; 21 cm)</option>
-            <option value="A4" selected>A4 (21 &times; 29.7 cm)</option>
+            <option value="A4">A4 (21 &times; 29.7 cm)</option>
           </select>
         </div>
         <div style="display:flex;flex-direction:column;justify-content:center;gap:6px">
@@ -34361,7 +34361,7 @@ async function printShippingLabel(orderId) {
   const order = window._shipOrder || {};
   const items = window._shipItems || [];
   
-  const size = document.getElementById('ship-size')?.value || 'A4';
+  const size = document.getElementById('ship-size')?.value || 'A6';
   const showItems = document.getElementById('ship-show-items')?.checked;
   const showCod = document.getElementById('ship-show-cod')?.checked;
   
