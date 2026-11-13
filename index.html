@@ -26346,6 +26346,7 @@ function getPOSupplierRef(po) {
 function getCleanPONote(note) {
   if (!note) return '';
   return note
+    .replace(/(?:<!--|\[)PO_ITEM_NOTES:(\{.*?\})(?:-->|\])/gi, '')
     .replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '')
     .replace(/\[(?:Supplier\s*Ref|Ref\s*No|Supplier\s*Ref\s*No|Ref):[^\]]+\]/gi, '')
     .replace(/\[PO (?:Discount|Shipping) THB:\s*[\d.]+\]/gi, '')
@@ -26353,6 +26354,33 @@ function getCleanPONote(note) {
     .replace(/\[PO FX USDTHB:\s*[\d.]+\]/gi, '')
     .trim();
 }
+
+function getPOItemNotesFallback(po) {
+  const note = String(po?.note || '');
+  const match = note.match(/(?:<!--|\[)PO_ITEM_NOTES:(\{.*?\})(?:-->|\])/);
+  if (!match) return {};
+  try {
+    return JSON.parse(match[1]);
+  } catch(e) {
+    return {};
+  }
+}
+
+function noteWithPOItemNotes(note, notesMap) {
+  let clean = String(note || '').replace(/(?:<!--|\[)PO_ITEM_NOTES:(\{.*?\})(?:-->|\])/g, '').trim();
+  const keys = Object.keys(notesMap || {});
+  if (!keys.length) return clean;
+  const cleanMap = {};
+  keys.forEach(k => {
+    if (notesMap[k] && String(notesMap[k]).trim()) {
+      cleanMap[k] = String(notesMap[k]).trim();
+    }
+  });
+  if (!Object.keys(cleanMap).length) return clean;
+  return clean + (clean ? '\n' : '') + '<!--PO_ITEM_NOTES:' + JSON.stringify(cleanMap) + '-->';
+}
+window.getPOItemNotesFallback = getPOItemNotesFallback;
+window.noteWithPOItemNotes = noteWithPOItemNotes;
 
 function getPOExchangeRate(po) {
   const note = String(po?.note || '');
@@ -28151,6 +28179,7 @@ async function viewPO(poId) {
     sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
   ]);
   if(!po) return;
+  const poFallbackNotes = getPOItemNotesFallback(po);
   const skuMap = await loadPOSkuMap(items);
   let actualReceiptDate = null;
   if (['partial','received'].includes(po.status)) {
@@ -28255,7 +28284,7 @@ async function viewPO(poId) {
 
       const supTHB = getProductSupplierTHB(product);
       const supUSD = getProductSupplierUSD(product);
-      const internalNote = String(it.internal_note || '').trim();
+      const internalNote = String(it.internal_note || poFallbackNotes[it.id] || poFallbackNotes[it.product_id] || poFallbackNotes[it.product_name] || poFallbackNotes[String(i)] || '').trim();
       const internalNoteHtml = '<div style="margin-top:5px;padding:5px 7px;background:#f5f3ff;border-radius:5px;color:#5b21b6;font-size:11px;white-space:pre-wrap">🔒 หมายเหตุภายใน: '+
         (internalNote ? escapeHTML(internalNote) : '<span style="color:#8b7ab8">ยังไม่มี</span>')+
         ' <button type="button" onclick="editPOItemInternalNote(&quot;'+poId+'&quot;,&quot;'+it.id+'&quot;)" style="border:0;background:none;color:#6d28d9;cursor:pointer;font-weight:700;text-decoration:underline">✏️ แก้ไข</button></div>';
@@ -28329,18 +28358,55 @@ async function viewPO(poId) {
 }
 
 async function editPOItemInternalNote(poId, itemId) {
+  let currentNote = '';
+  let dbColumnAvailable = true;
+
   const { data: item, error: loadError } = await sb.from('purchase_order_items')
     .select('internal_note').eq('po_id', poId).eq('id', itemId).single();
+
   if (loadError) {
-    toast('ยังแก้หมายเหตุรายสินค้าไม่ได้ กรุณารัน supabase_po_item_internal_note_v316.sql ก่อน: ' + loadError.message, 'error');
-    return;
+    dbColumnAvailable = false;
+    const { data: po } = await sb.from('purchase_orders').select('note').eq('id', poId).single();
+    const notesMap = getPOItemNotesFallback(po);
+    currentNote = notesMap[itemId] || '';
+  } else {
+    currentNote = item?.internal_note || '';
   }
-  const next = prompt('🔒 หมายเหตุภายในรายการสินค้า (ไม่แสดงบน PO ที่พิมพ์)', item?.internal_note || '');
+
+  const next = prompt('🔒 หมายเหตุภายในรายการสินค้า (ไม่แสดงบน PO ที่พิมพ์)', currentNote);
   if (next === null) return;
   if (next.length > 1000) { toast('หมายเหตุต้องไม่เกิน 1,000 ตัวอักษร', 'error'); return; }
-  const { error: updateError } = await sb.from('purchase_order_items')
-    .update({ internal_note:next.trim() }).eq('po_id', poId).eq('id', itemId);
-  if (updateError) { toast('บันทึกหมายเหตุไม่สำเร็จ: ' + updateError.message, 'error'); return; }
+
+  const trimmed = next.trim();
+
+  if (dbColumnAvailable) {
+    const { error: updateError } = await sb.from('purchase_order_items')
+      .update({ internal_note: trimmed }).eq('po_id', poId).eq('id', itemId);
+    if (!updateError) {
+      toast('บันทึกหมายเหตุภายในรายการแล้ว ✓', 'success');
+      viewPO(poId);
+      return;
+    }
+  }
+
+  // Fallback to purchase_orders.note
+  const { data: po, error: poLoadErr } = await sb.from('purchase_orders').select('id,note').eq('id', poId).single();
+  if (poLoadErr || !po) {
+    toast('บันทึกหมายเหตุไม่สำเร็จ: ' + (poLoadErr?.message || 'ไม่พบ PO'), 'error');
+    return;
+  }
+  const notesMap = getPOItemNotesFallback(po);
+  if (trimmed) {
+    notesMap[itemId] = trimmed;
+  } else {
+    delete notesMap[itemId];
+  }
+  const updatedNote = noteWithPOItemNotes(po.note, notesMap);
+  const { error: poUpdateErr } = await sb.from('purchase_orders').update({ note: updatedNote }).eq('id', poId);
+  if (poUpdateErr) {
+    toast('บันทึกหมายเหตุไม่สำเร็จ: ' + poUpdateErr.message, 'error');
+    return;
+  }
   toast('บันทึกหมายเหตุภายในรายการแล้ว ✓', 'success');
   viewPO(poId);
 }
