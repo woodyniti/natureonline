@@ -12165,6 +12165,10 @@ function openReceiptOptions(orderId, defaultDocType='receipt') {
             <input type="checkbox" id="receipt-show-delivery-price" checked style="width:18px;height:18px;margin-top:2px">
             <span><strong>แสดงราคาในใบส่งสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงราคาและยอดรวม · ปิด: ซ่อนราคา (พิมพ์เฉพาะจำนวนสำหรับตรวจรับ/คลังสินค้า)</span></span>
           </label>
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+            <input type="checkbox" id="receipt-show-sku" style="width:18px;height:18px;margin-top:2px">
+            <span><strong>แสดงรหัสสินค้า (SKU) ใต้ชื่อสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">ปิด (ค่าเริ่มต้น): แสดงเฉพาะชื่อสินค้าชัดเจน ไม่รกเอกสาร · เปิด: แสดง [รหัส SKU] ใต้ชื่อสินค้า</span></span>
+          </label>
         </div>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่ง หมายเหตุ และรายละเอียดจัดส่งจะแสดงในเอกสารอัตโนมัติเมื่อมีข้อมูล</div>
@@ -12247,6 +12251,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const thDate = d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
 
   const MIN_ROWS = 8;
+  const showSkuInBill = (typeof showSkuInDocument !== 'undefined')
+    ? showSkuInDocument
+    : (document.getElementById('receipt-show-sku')?.checked ?? false);
   const itemRows = visibleItems.map((it,i) => {
     const gross    = Number(it.qty||1) * Number(it.sell_price||0);
     const net      = showDiscount ? itemNet(it) : gross;
@@ -12258,7 +12265,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       : '-';
     const itName = escapeHTML(it.product_name||(it.products&&it.products.name)||'-');
     const itSku = (it.sku || (it.products && it.products.sku) || '').trim();
-    const itDesc = itSku ? itName + ' <br><small style="color:#64748b;font-family:Courier,monospace">[' + escapeHTML(itSku) + ']</small>' : itName;
+    const itDesc = (showSkuInBill && itSku) ? itName + ' <br><small style="color:#64748b;font-family:Courier,monospace">[' + escapeHTML(itSku) + ']</small>' : itName;
 
     if (isDeliveryWithoutPrice) {
       return '<tr>' +
@@ -12483,13 +12490,13 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     billParts.push('<table><thead><tr>');
     if (isDeliveryWithoutPrice) {
       billParts.push('<th style="width:36px">ลำดับ<br><small>Item</small></th>');
-      billParts.push('<th class="left">รายการสินค้า / รายละเอียด<br><small>Descriptions & SKU</small></th>');
+      billParts.push('<th class="left">รายการสินค้า / รายละเอียด<br><small>' + (showSkuInBill ? 'Descriptions & SKU' : 'Descriptions') + '</small></th>');
       billParts.push('<th style="width:60px">จำนวน<br><small>Qty</small></th>');
       billParts.push('<th style="width:60px">หน่วย<br><small>Unit</small></th>');
       billParts.push('<th style="width:120px">หมายเหตุ / ตรวจรับ<br><small>Remarks / Check</small></th>');
     } else {
       billParts.push('<th style="width:36px">\u0e25\u0e33\u0e14\u0e31\u0e1a<br><small>Item</small></th>');
-      billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>Descriptions</small></th>');
+      billParts.push('<th class="left">\u0e23\u0e32\u0e22\u0e01\u0e32\u0e23<br><small>' + (showSkuInBill ? 'Descriptions & SKU' : 'Descriptions') + '</small></th>');
       billParts.push('<th style="width:50px">\u0e08\u0e33\u0e19\u0e27\u0e19<br><small>Qty</small></th>');
       billParts.push('<th class="right" style="width:68px">\u0e23\u0e32\u0e04\u0e32/\u0e0a\u0e34\u0e49\u0e19<br><small>Unit Price</small></th>');
       if (showDiscount) billParts.push('<th class="right" style="width:68px">\u0e2a\u0e48\u0e27\u0e19\u0e25\u0e14<br><small>Discount</small></th>');
