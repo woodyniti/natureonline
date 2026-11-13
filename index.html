@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.54';
-const DISPLAY_APP_VERSION = 'v3.54';
+const CURRENT_APP_VERSION = 'sealthai-v3.55';
+const DISPLAY_APP_VERSION = 'v3.55';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -452,15 +452,31 @@ tbody td:first-child { color: var(--text); }
   width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
-#modal-order .modal, #modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
-#modal-quote .modal, #modal-quote-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
-#order-detail-content, #ed-items, #qt-items, #order-items-container { min-width:0; max-width:100%; }
+#modal-order .modal, #modal-order-detail .modal,
+#modal-quote .modal, #modal-quote-detail .modal,
+#modal-po .modal, #modal-po-detail .modal,
+#modal-grpo .modal, #modal-stock .modal,
+#modal-ar-detail .modal, #modal-ap-detail .modal,
+.sap-modal-large {
+  max-width: min(1400px, calc(100vw - 32px));
+  width: min(1320px, calc(100vw - 32px));
+  max-height: 94vh;
+  box-sizing: border-box;
+}
+#order-detail-content, #ed-items, #qt-items, #order-items-container, #po-detail-content, #gr-content, #stock-rows-wrap { min-width:0; max-width:100%; }
 
 @media (min-width: 1200px) {
   #modal-order .modal,
   #modal-order-detail .modal,
   #modal-quote .modal,
-  #modal-quote-detail .modal {
+  #modal-quote-detail .modal,
+  #modal-po .modal,
+  #modal-po-detail .modal,
+  #modal-grpo .modal,
+  #modal-stock .modal,
+  #modal-ar-detail .modal,
+  #modal-ap-detail .modal,
+  .sap-modal-large {
     width: 1280px;
     min-width: 1200px;
     padding: 20px 24px;
@@ -1448,7 +1464,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.54)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.54 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.55 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1547,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.54)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.54 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.55 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -16898,115 +16914,157 @@ async function stock() {
 
     <!-- Modal: Stock Receive (multi-row) -->
     <div class="modal-overlay" id="modal-stock">
-      <div class="modal" style="max-width:760px">
-        <div class="modal-title">🏭 รับสินค้าเข้าสต๊อก</div>
-        <!-- เลือก PO ได้หลายใบ (optional) -->
-        <div class="form-group" style="margin-bottom:12px">
-          <label>เชื่อมกับ PO <span style="font-size:11px;color:var(--text3);font-weight:400">(เลือกได้หลาย PO หรือไม่เลือกก็ได้ · เฉพาะ PO ที่ส่งสั่งซื้อแล้ว ไม่แสดงแบบร่าง)</span></label>
-          <div id="s-po-list" style="max-height:180px;overflow-y:auto;background:#fff;border:1px solid var(--border2);border-radius:8px;padding:6px">
-            <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">กำลังโหลด PO ที่รอรับ...</div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="applyPOsToStock()">📥 โหลดรายการจาก PO ที่เลือก</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="clearStockPOSelection()">ล้างการเลือก</button>
-          </div>
-          <div id="s-po-selection-summary" style="font-size:11px;color:var(--text3);margin-top:6px">ยังไม่ได้เลือก PO — สามารถเพิ่มสินค้าเองได้</div>
-        </div>
-        <div class="grid-2" style="margin-bottom:14px">
-          <div class="form-group">
-            <label>วันที่รับ</label>
-            <input type="date" id="s-date" value="${today()}">
-          </div>
-          <div class="form-group">
-            <label>ชื่อ Lot (ใช้ร่วมกันทุกรายการ)</label>
-            <input type="text" id="s-lot" placeholder="เช่น A01, รอบที่ 1 เมษา">
-          </div>
-          <div class="form-group">
-            <label>สกุลเงิน</label>
-            <select id="s-currency" onchange="toggleStockCurrency()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:14px">
-              <option value="THB">THB (บาท)</option>
-              <option value="USD">USD (ดอลลาร์)</option>
-            </select>
-          </div>
-          <div class="form-group" id="s-exrate-div" style="display:none">
-            <label>อัตราแลกเปลี่ยน (THB/USD)</label>
-            <input type="number" id="s-exrate" value="35.00" step="0.01" oninput="updateStockTotal(); updateStockLabels();" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:14px">
-          </div>
-        </div>
-
-        <div style="font-size:13px;font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-          <span>รายการสินค้า</span>
-          <button onclick="addStockRow()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:12px">+ เพิ่มรายการ</button>
-        </div>
-
-        <!-- Stock rows -->
-        <div id="stock-rows-wrap" style="display:flex;flex-direction:column;gap:10px"></div>
-
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:14px">
-          <div style="font-weight:600;font-size:13px;margin-bottom:7px">🏷️ ส่วนลดสินค้ารับเข้า</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <input type="number" id="s-discount" min="0" step="0.0001" value="0" inputmode="decimal" oninput="stockDiscountManual=true;updateStockTotal()" style="flex:1;min-width:110px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:14px;text-align:right">
-            <span id="s-discount-currency" style="font-size:12px;font-weight:700;color:var(--text2)">THB</span>
-            <select id="s-discount-type" onchange="stockDiscountManual=true;updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:13px">
-              <option value="amount">จำนวนเงิน (สกุลเงินรับเข้า)</option>
-              <option value="percent">เปอร์เซ็นต์ (%)</option>
-            </select>
-          </div>
-          <div id="s-discount-hint" style="font-size:11px;color:var(--text3);margin-top:5px">หักจากราคาสินค้าก่อน VAT และเฉลี่ยเข้าต้นทุนแต่ละรายการ · ถ้าโหลด PO จะดึงส่วนลดตามสัดส่วนที่รับ</div>
-        </div>
-
-        <!-- ── Landed Cost Section ── -->
-        <!-- VAT section -->
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-top:14px;margin-bottom:10px">
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div style="font-weight:600;font-size:13px">VAT</div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
-                <input type="checkbox" id="s-vat-on" onchange="updateStockTotal()"> มี VAT 7%
-              </label>
-              <select id="s-vat-type" onchange="updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
-                <option value="excluded">VAT แยก (บวกเพิ่ม)</option>
-                <option value="included">VAT รวมใน (ถอนออก)</option>
-              </select>
+      <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px))">
+        <div class="sap-window" id="sap-stock-window">
+          <!-- Header Bar -->
+          <div class="sap-header-bar">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="modal-title" style="margin:0;font-size:15px;font-weight:700">🏭 Goods Receipt · รับสินค้าเข้าสต๊อก</span>
+              <span style="font-size:11px;color:#64748b;font-weight:normal">SAP Business One Standard</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge badge-accent" style="font-size:11px">Inventory Posting</span>
             </div>
           </div>
-          <div id="s-vat-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px">
-            <div style="display:flex;justify-content:space-between">
-              <span style="color:var(--text3)">VAT 7%</span>
-              <span class="font-mono text-amber" id="s-vat-amt">฿0</span>
+
+          <!-- Top Panel: 2 Columns -->
+          <div class="sap-panel">
+            <div class="sap-form-grid">
+              <div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">วันที่รับ (Posting Date)</label>
+                  <input type="date" id="s-date" value="${today()}">
+                </div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">ชื่อ Lot</label>
+                  <input type="text" id="s-lot" placeholder="เช่น A01, รอบที่ 1 เมษา">
+                </div>
+              </div>
+              <div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">สกุลเงิน (Currency)</label>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="s-currency" onchange="toggleStockCurrency()" style="width:120px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:13px">
+                      <option value="THB">THB (บาท)</option>
+                      <option value="USD">USD (ดอลลาร์)</option>
+                    </select>
+                    <div id="s-exrate-div" style="display:none;flex:1;align-items:center;gap:4px">
+                      <span style="font-size:11px;color:var(--text3);white-space:nowrap">1 USD =</span>
+                      <input type="number" id="s-exrate" value="35.00" step="0.01" oninput="updateStockTotal(); updateStockLabels();" style="min-width:0;flex:1;padding:5px 7px;font-size:12.5px">
+                      <span style="font-size:11px;color:var(--text3)">THB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:0">
-          <div style="font-weight:600;font-size:13px;margin-bottom:12px">📦 Landed Cost (ค่าใช้จ่ายเพิ่มเติม)</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:10px">ค่าใช้จ่ายเหล่านี้จะถูกแบ่งตามสัดส่วนมูลค่าสินค้า เพื่อคำนวณต้นทุนที่แท้จริง</div>
-          <div id="landed-cost-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
-          <button onclick="addLandedCostRow()" style="background:#fff;border:1px dashed var(--border2);border-radius:6px;padding:6px 12px;color:var(--accent);cursor:pointer;font-size:12px;width:100%">+ เพิ่มค่าใช้จ่าย</button>
-          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border)">
-            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-              <span style="color:var(--text3)">มูลค่าสินค้ารวม</span>
-              <span class="font-mono" id="s-goods-total">฿0</span>
+          <!-- Tabs Navigation -->
+          <div class="sap-tabs">
+            <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-stock-window','contents')">📦 Contents (รายการสินค้ารับเข้า)</div>
+            <div class="sap-tab" data-tab="linkpo" onclick="switchSapTab('sap-stock-window','linkpo')">🔗 Link PO (เชื่อมโยงใบสั่งซื้อ)</div>
+            <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-stock-window','accounting')">💳 Accounting & Landed Cost (ภาษี & ค่าใช้จ่าย)</div>
+          </div>
+
+          <!-- Tab Contents -->
+          <div class="sap-tab-pane active" data-pane="contents">
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+              <span>รายการสินค้าที่ตรวจรับเข้าคลัง</span>
+              <button onclick="addStockRow()" style="background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:12px;font-weight:700">+ เพิ่มรายการ</button>
             </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;color:var(--red)">
-              <span>หักส่วนลดสินค้า</span>
-              <span class="font-mono" id="s-discount-total">-฿0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-              <span style="color:var(--text3)">Landed Cost รวม</span>
-              <span class="font-mono text-amber" id="s-landed-total">฿0</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px">
-              <span>ต้นทุนรวมทั้งสิ้น</span>
-              <span class="font-mono text-amber" id="s-grand-total">฿0</span>
+            <!-- Stock rows -->
+            <div id="stock-rows-wrap" style="display:flex;flex-direction:column;gap:10px"></div>
+          </div>
+
+          <!-- Tab Link PO -->
+          <div class="sap-tab-pane" data-pane="linkpo">
+            <div class="form-group" style="margin-bottom:12px;max-width:750px">
+              <label style="font-weight:700;font-size:13px">เลือก PO ที่ต้องการเชื่อมโยง <span style="font-size:11px;color:var(--text3);font-weight:400">(เลือกได้หลาย PO หรือไม่เลือกก็ได้ · เฉพาะ PO ที่ส่งสั่งซื้อแล้ว ไม่แสดงแบบร่าง)</span></label>
+              <div id="s-po-list" style="max-height:220px;overflow-y:auto;background:#fff;border:1px solid var(--border2);border-radius:8px;padding:6px;margin:8px 0">
+                <div style="padding:10px;color:var(--text3);font-size:12px;text-align:center">กำลังโหลด PO ที่รอรับ...</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="applyPOsToStock()">📥 โหลดรายการจาก PO ที่เลือก</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="clearStockPOSelection()">ล้างการเลือก</button>
+              </div>
+              <div id="s-po-selection-summary" style="font-size:12px;color:var(--blue);font-weight:600;margin-top:8px">ยังไม่ได้เลือก PO — สามารถเพิ่มสินค้าเองได้</div>
             </div>
           </div>
-        </div>
 
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('modal-stock')">ยกเลิก</button>
-          <button class="btn btn-secondary" onclick="printPendingStockLabels()">🏷️ พิมพ์ฉลากสินค้า A4</button>
-          <button class="btn btn-primary" onclick="saveStockBatch()">💾 บันทึกทั้งหมด</button>
+          <!-- Tab Accounting & Landed Cost -->
+          <div class="sap-tab-pane" data-pane="accounting">
+            <div style="max-width:750px;display:flex;flex-direction:column;gap:12px">
+              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
+                <div style="font-weight:700;font-size:13px;margin-bottom:7px;color:#1e293b">🏷️ ส่วนลดสินค้ารับเข้า</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                  <input type="number" id="s-discount" min="0" step="0.0001" value="0" inputmode="decimal" oninput="stockDiscountManual=true;updateStockTotal()" style="flex:1;min-width:110px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:14px;text-align:right">
+                  <span id="s-discount-currency" style="font-size:12px;font-weight:700;color:var(--text2)">THB</span>
+                  <select id="s-discount-type" onchange="stockDiscountManual=true;updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:13px">
+                    <option value="amount">จำนวนเงิน (สกุลเงินรับเข้า)</option>
+                    <option value="percent">เปอร์เซ็นต์ (%)</option>
+                  </select>
+                </div>
+                <div id="s-discount-hint" style="font-size:11px;color:var(--text3);margin-top:5px">หักจากราคาสินค้าก่อน VAT และเฉลี่ยเข้าต้นทุนแต่ละรายการ · ถ้าโหลด PO จะดึงส่วนลดตามสัดส่วนที่รับ</div>
+              </div>
+
+              <!-- VAT section -->
+              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between">
+                  <div style="font-weight:700;font-size:13px;color:#1e293b">ภาษีมูลค่าเพิ่ม (VAT)</div>
+                  <div style="display:flex;gap:8px;align-items:center">
+                    <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;cursor:pointer">
+                      <input type="checkbox" id="s-vat-on" onchange="updateStockTotal()"> มี VAT 7%
+                    </label>
+                    <select id="s-vat-type" onchange="updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
+                      <option value="excluded">VAT แยก (บวกเพิ่ม)</option>
+                      <option value="included">VAT รวมใน (ถอนออก)</option>
+                    </select>
+                  </div>
+                </div>
+                <div id="s-vat-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px">
+                  <div style="display:flex;justify-content:space-between">
+                    <span style="color:var(--text3)">VAT 7%</span>
+                    <span class="font-mono text-amber" id="s-vat-amt">฿0</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Landed Cost section -->
+              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px">
+                <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1e293b">📦 Landed Cost (ค่าใช้จ่ายเพิ่มเติม)</div>
+                <div style="font-size:12px;color:var(--text3);margin-bottom:10px">ค่าใช้จ่ายเหล่านี้จะถูกแบ่งตามสัดส่วนมูลค่าสินค้า เพื่อคำนวณต้นทุนที่แท้จริง</div>
+                <div id="landed-cost-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+                <button onclick="addLandedCostRow()" style="background:#fff;border:1px dashed var(--border2);border-radius:6px;padding:6px 12px;color:var(--accent);cursor:pointer;font-size:12px;width:100%">+ เพิ่มค่าใช้จ่าย</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SAP Footer -->
+          <div class="sap-footer">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-secondary" onclick="closeModal('modal-stock')">ยกเลิก</button>
+              <button class="btn btn-secondary" onclick="printPendingStockLabels()">🏷️ พิมพ์ฉลากสินค้า A4</button>
+              <button class="btn btn-primary btn-sap-update" onclick="saveStockBatch()" style="font-size:13.5px;padding:8px 20px">💾 บันทึกรับเข้าสต๊อก (Post)</button>
+            </div>
+            <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+                <span style="color:#64748b">มูลค่าสินค้ารวม</span>
+                <span class="font-mono" id="s-goods-total">฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;color:var(--red)">
+                <span>หักส่วนลดสินค้า</span>
+                <span class="font-mono" id="s-discount-total">-฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+                <span style="color:#64748b">Landed Cost รวม</span>
+                <span class="font-mono text-amber" id="s-landed-total">฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+                <span style="color:#0f172a">ต้นทุนรวมทั้งสิ้น</span>
+                <span class="font-mono text-amber" id="s-grand-total" style="font-size:17px">฿0</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -24305,9 +24363,9 @@ async function grpo() {
 
     <!-- Goods Receipt Modal -->
     <div class="modal-overlay" id="modal-grpo">
-      <div class="modal" style="max-width:680px;display:flex;flex-direction:column;max-height:90vh">
+      <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px));display:flex;flex-direction:column;max-height:94vh">
         <div id="gr-content" style="flex:1;overflow-y:auto"></div>
-        <div class="modal-footer" id="gr-footer" style="position:sticky;bottom:0;background:#fff;z-index:20;border-top:1px solid var(--border);padding-top:10px;margin-top:8px"></div>
+        <div class="modal-footer" id="gr-footer" style="display:none"></div>
       </div>
     </div>
   `);
@@ -24421,123 +24479,188 @@ async function openGR(poId) {
 
   const el = document.getElementById('gr-content');
   el.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <div>
-        <div class="modal-title" style="margin-bottom:2px">📦 บันทึกรับสินค้าเข้าสต๊อก</div>
-        <div style="font-size:13px;color:var(--text);font-weight:700">${escapeHTML(po.po_no||'-')} · <span style="color:var(--accent)">${escapeHTML(po.supplier_name||'')}</span></div>
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-grpo')" style="padding:4px 8px">✕ ปิด</button>
-    </div>
-
-    <!-- Mobile Header Card -->
-    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:12px">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));gap:10px;align-items:center">
-        <div class="form-group" style="margin:0">
-          <label style="font-size:11px;color:var(--text3);font-weight:700">📅 วันที่รับสินค้า</label>
-          <input type="date" id="gr-date" value="${today()}" style="width:100%;font-size:14px;padding:6px 8px">
+    <div class="sap-window" id="sap-grpo-window">
+      <!-- Header Bar -->
+      <div class="sap-header-bar">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px;font-weight:700">📦 Goods Receipt PO · ใบรับสินค้าจากการสั่งซื้อ (GRPO)</span>
+          <span style="font-size:12px;color:#64748b;font-family:var(--mono)">${escapeHTML(po.po_no||'-')}</span>
+          <span style="font-size:11px;color:#64748b;font-weight:normal">SAP Business One Standard</span>
         </div>
-        <div class="form-group" style="margin:0">
-          <label style="font-size:11px;color:var(--text3);font-weight:700">สกุลเงิน</label>
-          <select id="gr-currency" onchange="toggleGRCurrency()" style="width:100%;font-size:13px;padding:6px 8px;background:#fff;border:1px solid var(--border2);border-radius:6px">
-            <option value="THB" ${!isUSD?'selected':''}>THB (บาท)</option>
-            <option value="USD" ${isUSD?'selected':''}>USD (ดอลลาร์)</option>
-          </select>
-        </div>
-        <div class="form-group" id="gr-exrate-div" style="margin:0;display:${isUSD?'block':'none'}">
-          <label style="font-size:11px;color:var(--text3);font-weight:700">อัตราแลกเปลี่ยน (THB/USD)</label>
-          <input type="number" id="gr-exrate" value="${grRate}" step="0.01" oninput="updateGRPreview()" style="width:100%;font-size:13px;padding:6px 8px;background:#fff;border:1px solid var(--border2);border-radius:6px">
-        </div>
-        <div style="display:flex;gap:6px;align-items:flex-end">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="setAllGRQtyFull(${pending.length})" style="flex:1;background:#ecfdf5;border-color:#10b981;color:#047857;font-weight:700;padding:6px 4px;font-size:11px" title="ใส่จำนวนรับเต็มทุกรายการ">⚡ รับเต็มทุกตัว</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="resetAllGRQty(${pending.length})" style="flex:1;padding:6px 4px;font-size:11px">🧹 รีเซ็ต 0</button>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${poBadge(po.status)}
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-grpo')" style="padding:2px 8px;font-size:12px">✕ ปิด</button>
         </div>
       </div>
-    </div>
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
-      <div style="font-weight:700;font-size:13px">รายการสินค้าใน PO (${pending.length} รายการ)</div>
-      <div style="font-size:11px;color:var(--text3)">แตะปุ่มเพื่อปรับจำนวนรับ</div>
-    </div>
-
-    <div id="gr-items" style="display:flex;flex-direction:column;gap:10px;max-height:45vh;overflow-y:auto;padding-right:2px">
-      ${pending.map((it,i) => {
-        const remaining = Math.max(0,Number(it.qty_ordered) - Number(it.qty_received||0));
-        let rawName = it.product_name || 'สินค้า';
-        let soBadgeHTML = '';
-        const soMatch = rawName.match(/\[SO:\s*([^\]]+)\]/i);
-        if (soMatch) {
-          soBadgeHTML = `<div style="margin-top:2px"><span class="badge badge-blue font-mono" style="font-size:10px;font-weight:700">📄 SO: ${escapeHTML(soMatch[1])}</span></div>`;
-          rawName = rawName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
-        }
-
-        return `
-          <div class="gr-item-card" style="background:#fff;border:1px solid var(--border2);border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
-              <div>
-                <div style="font-weight:700;font-size:13px;color:var(--text);line-height:1.35"><span style="display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px;font-size:11px">#${it.po_line_no}</span>${escapeHTML(rawName)}</div>
-                ${soBadgeHTML}
-              </div>
-              <div class="font-mono text-amber gr-unit-cost-preview" data-raw-cost="${it.unit_cost}" style="font-size:11px;font-weight:700;white-space:nowrap">
-  ${isUSD ? `$${(Number(it.unit_cost||0)/grRate).toFixed(2)} <span style="font-size:10px;color:var(--text3)">(≈ ${fmtB(it.unit_cost)})</span>` : '@' + fmtB(it.unit_cost)}
-</div>
+      <!-- Top Panel: 2 Columns -->
+      <div class="sap-panel">
+        <div class="sap-form-grid">
+          <!-- Left: Supplier & PO info -->
+          <div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Supplier (ผู้ขาย):</span>
+              <span style="font-weight:700;color:#0f172a;font-size:13.5px">${escapeHTML(po.supplier_name||'-')}</span>
             </div>
-
-            <!-- Stats Bar -->
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--bg3);border-radius:8px;padding:6px 8px;margin-bottom:10px;text-align:center">
-              <div>
-                <div style="font-size:10px;color:var(--text3)">สั่งซื้อ</div>
-                <div class="font-mono" style="font-weight:700;font-size:12px">${fmt(it.qty_ordered)}</div>
-              </div>
-              <div>
-                <div style="font-size:10px;color:var(--text3)">รับแล้ว</div>
-                <div class="font-mono text-accent" style="font-weight:700;font-size:12px">${fmt(it.qty_received||0)}</div>
-              </div>
-              <div>
-                <div style="font-size:10px;color:var(--text3)">คงเหลือ</div>
-                <div class="font-mono text-red" style="font-weight:700;font-size:12px" id="gr-remain-txt-${i}">${fmt(remaining)}</div>
-              </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">ใบสั่งซื้ออ้างอิง:</span>
+              <span class="font-mono" style="color:var(--blue);font-weight:700">🛒 ${escapeHTML(po.po_no||'-')}</span>
             </div>
+          </div>
 
-            <!-- Touch Input Stepper Controls -->
-            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-              <div style="font-size:12px;font-weight:700;color:var(--text2)">จำนวนรับครั้งนี้ <span style="font-weight:400;color:var(--text3)">(รับเกินได้)</span>:</div>
-              <div style="display:flex;align-items:center;gap:5px">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, -1)" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">-</button>
-                <input type="number" id="gr-qty-${i}" data-item-id="${it.id}" data-product-id="${it.product_id||''}" data-unit-cost="${it.unit_cost}" data-max="${remaining}" data-product-name="${escapeHTML(rawName)}" value="${remaining}" min="0" step="any" oninput="updateGRShippingSuggestion()"
-                  style="width:70px;height:34px;background:#fff;border:1.5px solid var(--accent);border-radius:6px;padding:4px;font-size:16px;font-weight:700;text-align:center;color:var(--text)">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, 1)" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">+</button>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="setGRQtyFull(${i}, ${remaining})" style="height:34px;padding:0 8px;font-size:11px;font-weight:600;background:#f0fdf4;color:#15803d;border-color:#86efac">รับเต็ม</button>
+          <!-- Right: Receipt Date & Currency -->
+          <div>
+            <div class="sap-field-row">
+              <label class="sap-field-label">วันที่รับ (Posting Date)</label>
+              <input type="date" id="gr-date" value="${today()}">
+            </div>
+            <div class="sap-field-row">
+              <label class="sap-field-label">สกุลเงิน (Currency)</label>
+              <div style="display:flex;gap:6px;align-items:center">
+                <select id="gr-currency" onchange="toggleGRCurrency()" style="width:120px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:13px">
+                  <option value="THB" ${!isUSD?'selected':''}>THB (บาท)</option>
+                  <option value="USD" ${isUSD?'selected':''}>USD (ดอลลาร์)</option>
+                </select>
+                <div id="gr-exrate-div" style="display:${isUSD?'flex':'none'};align-items:center;gap:4px;flex:1">
+                  <span style="font-size:11px;color:var(--text3);white-space:nowrap">1 USD =</span>
+                  <input type="number" id="gr-exrate" value="${grRate}" step="0.01" oninput="updateGRPreview()" style="min-width:0;flex:1;padding:5px 7px;font-size:12.5px">
+                  <span style="font-size:11px;color:var(--text3)">THB</span>
+                </div>
               </div>
             </div>
           </div>
-        `;
-      }).join('')}
-    </div>
+        </div>
+      </div>
 
-    <!-- Landed Cost Collapsible / Mobile Card -->
-    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <div style="font-weight:700;font-size:13px">💸 ค่าใช้จ่ายเพิ่มเติม (Landed Cost)</div>
-        <button type="button" onclick="addGRLandedRow()" class="btn btn-secondary btn-sm" style="font-size:11px;padding:3px 8px;color:var(--accent)">+ เพิ่มค่าส่ง/ภาษี</button>
+      <!-- Tabs Navigation -->
+      <div class="sap-tabs">
+        <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-grpo-window','contents')">📦 Contents (รายการสินค้าที่จะรับเข้า)</div>
+        <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-grpo-window','accounting')">💳 Landed Cost (ค่าใช้จ่ายเพิ่มเติม & ค่าส่ง)</div>
+        <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-grpo-window','logistics')">🚚 Logistics (สถานที่ & การขนส่ง)</div>
       </div>
-      <div id="gr-landed-rows" style="display:flex;flex-direction:column;gap:6px">
-        ${poShippingTHB > 0 ? `<div class="gr-po-shipping-row" data-shipping-thb="${poShippingTHB}" data-ordered-value="${poOrderedValue}" data-ordered-qty="${poOrderedQty}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px">
-          <input type="text" value="ค่าส่งจาก PO (เฉลี่ยตามที่รับ)" readonly style="flex:2;min-width:170px;border:0;background:transparent;font-size:12px;font-weight:700;color:#1d4ed8">
-          <input type="number" id="gr-po-shipping-amt" value="0" readonly style="flex:1;min-width:85px;padding:6px 8px;border:1px solid #bfdbfe;border-radius:6px;text-align:right;background:#fff;font-size:13px">
-          <span style="font-size:12px;color:#1d4ed8">THB</span>
-          <label style="display:flex;gap:4px;align-items:center;font-size:11px;cursor:pointer"><input type="checkbox" id="gr-po-shipping-enabled" checked onchange="updateGRShippingSuggestion()"> บันทึกค่าส่ง</label>
-        </div>` : ''}
+
+      <!-- Tab Contents -->
+      <div class="sap-tab-pane active" data-pane="contents">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+          <div style="font-weight:700;font-size:13px;color:#1e293b">รายการสินค้าใน PO (${pending.length} รายการ)</div>
+          <div style="display:flex;gap:6px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="setAllGRQtyFull(${pending.length})" style="background:#ecfdf5;border-color:#10b981;color:#047857;font-weight:700;padding:5px 10px;font-size:12px" title="ใส่จำนวนรับเต็มทุกรายการ">⚡ รับเต็มทุกตัว</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="resetAllGRQty(${pending.length})" style="padding:5px 10px;font-size:12px">🧹 รีเซ็ต 0</button>
+          </div>
+        </div>
+        <div id="gr-items" style="display:flex;flex-direction:column;gap:10px;max-height:48vh;overflow-y:auto;padding-right:2px">
+          ${pending.map((it,i) => {
+            const remaining = Math.max(0,Number(it.qty_ordered) - Number(it.qty_received||0));
+            let rawName = it.product_name || 'สินค้า';
+            let soBadgeHTML = '';
+            const soMatch = rawName.match(/\[SO:\s*([^\]]+)\]/i);
+            if (soMatch) {
+              soBadgeHTML = `<div style="margin-top:2px"><span class="badge badge-blue font-mono" style="font-size:10px;font-weight:700">📄 SO: ${escapeHTML(soMatch[1])}</span></div>`;
+              rawName = rawName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
+            }
+
+            return `
+              <div class="gr-item-card" style="background:#fff;border:1px solid var(--border2);border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:8px">
+                  <div>
+                    <div style="font-weight:700;font-size:13px;color:var(--text);line-height:1.35"><span style="display:inline-block;background:#dbeafe;color:#1d4ed8;border-radius:5px;padding:2px 6px;margin-right:5px;font-size:11px">#${it.po_line_no}</span>${escapeHTML(rawName)}</div>
+                    ${soBadgeHTML}
+                  </div>
+                  <div class="font-mono text-amber gr-unit-cost-preview" data-raw-cost="${it.unit_cost}" style="font-size:11px;font-weight:700;white-space:nowrap">
+      ${isUSD ? `$${(Number(it.unit_cost||0)/grRate).toFixed(2)} <span style="font-size:10px;color:var(--text3)">(≈ ${fmtB(it.unit_cost)})</span>` : '@' + fmtB(it.unit_cost)}
+    </div>
+                </div>
+
+                <!-- Stats Bar -->
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:var(--bg3);border-radius:8px;padding:6px 8px;margin-bottom:10px;text-align:center">
+                  <div>
+                    <div style="font-size:10px;color:var(--text3)">สั่งซื้อ</div>
+                    <div class="font-mono" style="font-weight:700;font-size:12px">${fmt(it.qty_ordered)}</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text3)">รับแล้ว</div>
+                    <div class="font-mono text-accent" style="font-weight:700;font-size:12px">${fmt(it.qty_received||0)}</div>
+                  </div>
+                  <div>
+                    <div style="font-size:10px;color:var(--text3)">คงเหลือ</div>
+                    <div class="font-mono text-red" style="font-weight:700;font-size:12px" id="gr-remain-txt-${i}">${fmt(remaining)}</div>
+                  </div>
+                </div>
+
+                <!-- Touch Input Stepper Controls -->
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+                  <div style="font-size:12px;font-weight:700;color:var(--text2)">จำนวนรับครั้งนี้ <span style="font-weight:400;color:var(--text3)">(รับเกินได้)</span>:</div>
+                  <div style="display:flex;align-items:center;gap:5px">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, -1)" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">-</button>
+                    <input type="number" id="gr-qty-${i}" data-item-id="${it.id}" data-product-id="${it.product_id||''}" data-unit-cost="${it.unit_cost}" data-max="${remaining}" data-product-name="${escapeHTML(rawName)}" value="${remaining}" min="0" step="any" oninput="updateGRShippingSuggestion()"
+                      style="width:70px;height:34px;background:#fff;border:1.5px solid var(--accent);border-radius:6px;padding:4px;font-size:16px;font-weight:700;text-align:center;color:var(--text)">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="adjustGRQty(${i}, 1)" style="width:32px;height:34px;padding:0;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center">+</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="setGRQtyFull(${i}, ${remaining})" style="height:34px;padding:0 8px;font-size:11px;font-weight:600;background:#f0fdf4;color:#15803d;border-color:#86efac">รับเต็ม</button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
       </div>
-      <div style="margin-top:6px;font-size:11px;color:var(--text3)">💡 ระบบจะแบ่งค่าใช้จ่ายตามมูลค่าสินค้าที่รับและบันทึกแยกในประวัติรับสินค้า ยังไม่รวมในต้นทุนเฉลี่ยต่อหน่วยอัตโนมัติ</div>
+
+      <!-- Tab Landed Cost -->
+      <div class="sap-tab-pane" data-pane="accounting">
+        <div style="max-width:750px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-weight:700;font-size:13.5px;color:#1e293b">💸 ค่าใช้จ่ายเพิ่มเติม (Landed Cost)</div>
+            <button type="button" onclick="addGRLandedRow()" class="btn btn-secondary btn-sm" style="font-size:11.5px;padding:4px 10px;color:var(--accent);font-weight:700">+ เพิ่มค่าส่ง/ภาษี</button>
+          </div>
+          <div id="gr-landed-rows" style="display:flex;flex-direction:column;gap:8px">
+            ${poShippingTHB > 0 ? `<div class="gr-po-shipping-row" data-shipping-thb="${poShippingTHB}" data-ordered-value="${poOrderedValue}" data-ordered-qty="${poOrderedQty}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px">
+              <input type="text" value="ค่าส่งจาก PO (เฉลี่ยตามที่รับ)" readonly style="flex:2;min-width:170px;border:0;background:transparent;font-size:12px;font-weight:700;color:#1d4ed8">
+              <input type="number" id="gr-po-shipping-amt" value="0" readonly style="flex:1;min-width:85px;padding:6px 8px;border:1px solid #bfdbfe;border-radius:6px;text-align:right;background:#fff;font-size:13px">
+              <span style="font-size:12px;color:#1d4ed8">THB</span>
+              <label style="display:flex;gap:4px;align-items:center;font-size:11px;cursor:pointer"><input type="checkbox" id="gr-po-shipping-enabled" checked onchange="updateGRShippingSuggestion()"> บันทึกค่าส่ง</label>
+            </div>` : ''}
+          </div>
+          <div style="margin-top:10px;font-size:11.5px;color:var(--text3);line-height:1.5">💡 ระบบจะแบ่งค่าใช้จ่ายตามมูลค่าสินค้าที่รับและบันทึกแยกในประวัติรับสินค้า เพื่อความถูกต้องตามหลักการบัญชีสินค้าคงคลัง</div>
+        </div>
+      </div>
+
+      <!-- Tab Logistics -->
+      <div class="sap-tab-pane" data-pane="logistics">
+        <div style="max-width:700px;font-size:13px">
+          <div style="font-weight:700;margin-bottom:12px;color:#1e293b">ข้อมูลคลังสินค้าปลายทางและการขนส่ง</div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">คลังรับเข้า (Warehouse):</span>
+            <span style="font-weight:600;color:#047857">คลังหลัก SEALTHAI (Main Warehouse)</span>
+          </div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">ผู้ส่งมอบ (Vendor):</span>
+            <span>${escapeHTML(po.supplier_name||'-')}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAP Footer Bar -->
+      <div class="sap-footer">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="closeModal('modal-grpo')">ยกเลิก</button>
+          <button class="btn btn-primary btn-sap-update" onclick="confirmGR('${poId}',${pending.length})" style="font-size:13.5px;padding:8px 22px">📦 Add / Post GRPO (ยืนยันรับเข้าคลัง)</button>
+        </div>
+        <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px;text-align:right">
+          <div style="font-size:12px;color:#64748b">จำนวนรายการในเอกสาร</div>
+          <div style="font-size:16px;font-weight:800;color:#0f172a">${pending.length} SKU</div>
+        </div>
+      </div>
     </div>
   `;
 
-  document.getElementById('gr-footer').innerHTML = `
-    <div style="display:flex;gap:8px;width:100%">
-      <button class="btn btn-secondary" onclick="closeModal('modal-grpo')" style="flex:1;min-height:44px;font-size:14px">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="confirmGR('${poId}',${pending.length})" style="flex:2;min-height:44px;font-size:15px;font-weight:700;background:#16a34a;border-color:#15803d">✅ ยืนยันรับสินค้าเข้าคลัง</button>
-    </div>
-  `;
+  const grFooter = document.getElementById('gr-footer');
+  if (grFooter) {
+    grFooter.innerHTML = `
+      <div style="display:flex;gap:8px;width:100%">
+        <button class="btn btn-secondary" onclick="closeModal('modal-grpo')" style="flex:1;min-height:44px;font-size:14px">ยกเลิก</button>
+        <button class="btn btn-primary btn-sap-update" onclick="confirmGR('${poId}',${pending.length})" style="flex:2;min-height:44px;font-size:15px;font-weight:700">📦 Add / Post GRPO (ยืนยันรับเข้าคลัง)</button>
+      </div>
+    `;
+  }
 
   openModal('modal-grpo');
   updateGRShippingSuggestion();
@@ -26476,86 +26599,194 @@ async function purchase() {
 
     <!-- New PO Modal -->
     <div class="modal-overlay" id="modal-po" style="z-index:1300">
-      <div class="modal" style="max-width:680px">
-        <div class="modal-title" id="po-modal-title">🛒 Purchase Order ใหม่</div>
-        <div class="grid-2">
-          <div class="form-group"><label>วันที่</label><input type="date" id="po-date" value="${today()}"></div>
-          <div class="form-group"><label>คาดว่าจะรับ</label><input type="date" id="po-expected"></div>
-          <div class="form-group" style="grid-column:1/-1">
-            <label>Supplier <span style="color:var(--red)">*</span>
-              <a onclick="showPage('suppliers')" style="font-size:11px;color:var(--blue);cursor:pointer;margin-left:8px">+ เพิ่ม Supplier ใหม่</a>
-            </label>
-            <select id="po-supplier-sel" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:16px;color:var(--text)">
-              <option value="">-- เลือก Supplier --</option>
-            </select>
-            <input type="hidden" id="po-supplier-name">
+      <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px))">
+        <div class="sap-window" id="sap-po-edit-window">
+          <!-- Header Bar -->
+          <div class="sap-header-bar">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span id="po-modal-title" style="font-size:15px;font-weight:700">🛒 Purchase Order ใหม่</span>
+              <span style="font-size:11px;color:#64748b;font-weight:normal">SAP Business One Standard</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="badge badge-amber" style="font-size:11px">Purchasing Document</span>
+            </div>
           </div>
-          <div class="form-group"><label>เบอร์ติดต่อ</label><input type="text" id="po-sup-phone" placeholder="เบอร์โทร"></div>
-          <div class="form-group"><label>Ref No ของ Supplier</label><input type="text" id="po-supplier-ref" placeholder="เช่น PO/INV/QT ของ Supplier"></div>
-          <div class="form-group"><label>สกุลเงินสินค้า (Currency 1)</label>
-            <select id="po-currency" onchange="togglePoCurrency()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px;font-size:14px">
-              <option value="THB">THB (บาท)</option>
-              <option value="USD">USD (ดอลลาร์)</option>
-            </select>
+
+          <!-- Top Panel: 2 Columns (Vendor on left, Doc Info on right) -->
+          <div class="sap-panel">
+            <div class="sap-form-grid">
+              <!-- Left Column: Business Partner (Vendor / Supplier) -->
+              <div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">Supplier (ผู้ขาย) <span style="color:var(--red)">*</span></label>
+                  <div>
+                    <div style="display:flex;gap:4px;align-items:center">
+                      <select id="po-supplier-sel" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:13.5px;color:var(--text);font-weight:600">
+                        <option value="">-- เลือก Supplier --</option>
+                      </select>
+                      <button type="button" class="sap-link-btn" onclick="showPage('suppliers')" title="จัดการผู้ขาย (Suppliers)">➔</button>
+                    </div>
+                    <input type="hidden" id="po-supplier-name">
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">เบอร์ติดต่อ</label>
+                  <input type="text" id="po-sup-phone" placeholder="เบอร์โทร / ผู้ติดต่อ">
+                </div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">Ref ผู้ขาย</label>
+                  <input type="text" id="po-supplier-ref" placeholder="เช่น PO/INV/QT ของ Supplier">
+                </div>
+              </div>
+
+              <!-- Right Column: Document Details -->
+              <div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">วันที่สั่ง (Doc Date)</label>
+                  <input type="date" id="po-date" value="${today()}">
+                </div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">วันคาดรับ (Due Date)</label>
+                  <input type="date" id="po-expected">
+                </div>
+                <div class="sap-field-row">
+                  <label class="sap-field-label">สกุลเงิน (Currency)</label>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="po-currency" onchange="togglePoCurrency()" style="width:120px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:13px">
+                      <option value="THB">THB (บาท)</option>
+                      <option value="USD">USD (ดอลลาร์)</option>
+                    </select>
+                    <div id="po-exrate-div" style="display:flex;align-items:center;gap:4px;flex:1">
+                      <span style="font-size:11px;color:var(--text3);white-space:nowrap">1 USD =</span>
+                      <input type="number" id="po-exrate" value="35.00" min="0.0001" step="0.01" oninput="calcPOTotal(); renderPOItems();" style="min-width:0;flex:1;padding:5px 7px;font-size:12.5px">
+                      <span style="font-size:11px;color:var(--text3)">THB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="form-group" id="po-exrate-div">
-            <label>อัตราแลกเปลี่ยน · 1 USD = กี่ THB</label>
-            <div style="display:flex;align-items:center;gap:7px"><span style="white-space:nowrap;font-weight:600">1 USD =</span><input type="number" id="po-exrate" value="35.00" min="0.0001" step="0.01" oninput="calcPOTotal(); renderPOItems();" style="min-width:0;flex:1"><span style="font-weight:600">THB</span></div>
+
+          <!-- Tabs Navigation -->
+          <div class="sap-tabs">
+            <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-po-edit-window','contents')">📦 Contents (รายการสินค้าสั่งซื้อ)</div>
+            <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-po-edit-window','logistics')">🚚 Logistics (การจัดส่ง & ติดต่อ)</div>
+            <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-po-edit-window','accounting')">💳 Accounting (ภาษี & ส่วนลด)</div>
+            <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-po-edit-window','notes')">📝 Notes (หมายเหตุ)</div>
           </div>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0 8px;flex-wrap:wrap;gap:8px">
-          <div style="font-weight:600;font-size:14px">รายการ SKU ที่สั่งซื้อ</div>
-          <div style="display:flex;gap:6px">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('po', -1)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px">
-              ➕ สร้างสินค้าใหม่เข้าคลัง
-            </button>
-            <button type="button" onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">+ เพิ่ม SKU</button>
+
+          <!-- Tab Contents -->
+          <div class="sap-tab-pane active" data-pane="contents">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+              <div style="font-weight:700;font-size:13.5px;color:#1e293b">รายการ SKU ที่สั่งซื้อ</div>
+              <div style="display:flex;gap:6px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('po', -1)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px">
+                  ➕ สร้างสินค้าใหม่เข้าคลัง
+                </button>
+                <button type="button" onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:700">+ เพิ่ม SKU</button>
+              </div>
+            </div>
+            <div id="po-items"></div>
           </div>
-        </div>
-        <div id="po-items"></div>
-        <div style="background:var(--bg3);border-radius:8px;padding:12px;margin-top:8px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="po-vat-on" onchange="calcPOTotal()"> VAT 7%
-            </label>
-            <select id="po-vat-type" onchange="calcPOTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
-              <option value="excluded">VAT แยก (บวกเพิ่ม)</option>
-              <option value="included">VAT รวมใน (ถอนออก)</option>
-            </select>
+
+          <!-- Tab Logistics -->
+          <div class="sap-tab-pane" data-pane="logistics">
+            <div style="max-width:700px;font-size:13px">
+              <div style="font-weight:700;margin-bottom:12px;color:#1e293b">ข้อมูลการจัดส่งและผู้ติดต่อ</div>
+              <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+                <span class="sap-field-label">กำหนดส่งมอบสินค้า (Expected):</span>
+                <span style="font-weight:600;color:var(--blue)">ระบุในส่วนหัวเอกสาร (ขวาบน)</span>
+              </div>
+              <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+                <span class="sap-field-label">สถานที่ส่งมอบ (Ship-to):</span>
+                <span>สำนักงานใหญ่ / คลังสินค้า SEALTHAI (ตามที่อยู่ที่ลงทะเบียน)</span>
+              </div>
+              <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+                <span class="sap-field-label">การขนส่ง (Carrier):</span>
+                <span>จัดส่งโดยผู้ขาย / บริษัทขนส่งเอกชน</span>
+              </div>
+            </div>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-            <span style="color:var(--text3)">ยอดรวมสินค้า</span>
-            <span class="font-mono" id="po-subtotal">฿0</span>
+
+          <!-- Tab Accounting -->
+          <div class="sap-tab-pane" data-pane="accounting">
+            <div style="max-width:700px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px">
+              <div style="font-weight:700;margin-bottom:12px;color:#1e293b">การคำนวณภาษีมูลค่าเพิ่ม & ส่วนลดท้ายบิล</div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:#fff;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer">
+                  <input type="checkbox" id="po-vat-on" onchange="calcPOTotal()"> คำนวณ VAT 7%
+                </label>
+                <select id="po-vat-type" onchange="calcPOTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
+                  <option value="excluded">VAT แยก (บวกเพิ่มจากยอดสินค้า)</option>
+                  <option value="included">VAT รวมใน (ถอนออกจากยอดสินค้า)</option>
+                </select>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+                <div class="form-group" style="margin:0">
+                  <label style="font-size:12px;font-weight:600;color:#475569">ส่วนลดท้าย PO (<span class="po-currency-symbol">฿</span>)</label>
+                  <input type="number" id="po-discount" min="0" step="0.01" value="0" oninput="calcPOTotal()" style="width:100%;padding:6px 8px">
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label style="font-size:12px;font-weight:600;color:#475569">ค่าจัดส่ง</label>
+                  <div style="display:flex;gap:6px">
+                    <input type="number" id="po-shipping" min="0" step="0.01" value="0" oninput="calcPOTotal()" style="min-width:0;flex:1;padding:6px 8px">
+                    <select id="po-shipping-currency" onchange="togglePOShippingCurrency()" style="width:80px;background:#fff;border:1px solid var(--border2);border-radius:6px">
+                      <option value="THB">THB</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:8px 0">
-            <div class="form-group" style="margin:0"><label>ส่วนลดท้าย PO (<span class="po-currency-symbol">฿</span>)</label><input type="number" id="po-discount" min="0" step="0.01" value="0" oninput="calcPOTotal()" style="width:100%"></div>
-            <div class="form-group" style="margin:0"><label>ค่าส่ง (แยกสกุลเงินได้)</label><div style="display:flex;gap:6px"><input type="number" id="po-shipping" min="0" step="0.01" value="0" oninput="calcPOTotal()" style="min-width:0;flex:1"><select id="po-shipping-currency" onchange="togglePOShippingCurrency()" style="width:78px;background:#fff;border:1px solid var(--border2);border-radius:6px"><option value="THB">THB</option><option value="USD">USD</option></select></div></div>
+
+          <!-- Tab Notes -->
+          <div class="sap-tab-pane" data-pane="notes">
+            <div class="form-group" style="margin:0">
+              <label style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;display:block">หมายเหตุท้ายเอกสาร / บันทึกเพิ่มเติม</label>
+              <textarea id="po-note" rows="4" placeholder="ข้อความหมายเหตุที่จะระบุในใบสั่งซื้อ..." style="width:100%;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:13px"></textarea>
+            </div>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:var(--text3)">หักส่วนลด</span><span class="font-mono" id="po-discount-display">-฿0</span></div>
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="color:var(--text3)">บวกค่าส่ง</span><span class="font-mono" id="po-shipping-display">+฿0</span></div>
-          <div id="po-vat-row" style="display:none;display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-            <span style="color:var(--text3)">VAT 7%</span>
-            <span class="font-mono text-amber" id="po-vat-amt">฿0</span>
+
+          <!-- SAP Footer Bar -->
+          <div class="sap-footer">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-secondary" onclick="closeModal('modal-po')">ยกเลิก</button>
+              <button class="btn btn-secondary" onclick="savePO('draft')">💾 บันทึกแบบร่าง</button>
+              <button class="btn btn-primary btn-sap-update" onclick="savePO('sent')" style="font-size:13px;padding:7px 18px">📤 ส่ง PO (Add / Save)</button>
+            </div>
+            <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+                <span style="color:#64748b">ยอดรวมสินค้า (Subtotal)</span>
+                <span class="font-mono" id="po-subtotal" style="font-weight:600">฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+                <span style="color:#64748b">หักส่วนลด (Discount)</span>
+                <span class="font-mono text-red" id="po-discount-display">-฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+                <span style="color:#64748b">บวกค่าส่ง (Freight)</span>
+                <span class="font-mono" id="po-shipping-display">+฿0</span>
+              </div>
+              <div id="po-vat-row" style="display:none;display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+                <span style="color:#64748b">VAT 7%</span>
+                <span class="font-mono text-amber" id="po-vat-amt" style="font-weight:600">฿0</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+                <span style="color:#0f172a">ยอดรวมสุทธิ (Total)</span>
+                <span class="font-mono text-amber" id="po-total" style="font-size:17px">฿0</span>
+              </div>
+            </div>
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;border-top:1px solid var(--border);padding-top:6px;margin-top:4px">
-            <span>ยอดรวมสั่งซื้อ</span>
-            <span class="font-mono text-amber" id="po-total">฿0</span>
-          </div>
-        </div>
-        <div class="form-group" style="margin-top:10px"><label>หมายเหตุ</label><textarea id="po-note" rows="2" placeholder="หมายเหตุ..."></textarea></div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('modal-po')">ยกเลิก</button>
-          <button class="btn btn-secondary" onclick="savePO('draft')">💾 บันทึกแบบร่าง</button>
-          <button class="btn btn-primary" onclick="savePO('sent')">📤 ส่ง PO</button>
         </div>
       </div>
     </div>
 
     <!-- View PO Modal -->
     <div class="modal-overlay" id="modal-po-detail" style="z-index:1300">
-      <div class="modal" style="max-width:720px">
+      <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px))">
         <div id="po-detail-content"></div>
-        <div class="modal-footer" id="po-detail-footer"></div>
+        <div class="modal-footer" id="po-detail-footer" style="display:none"></div>
       </div>
     </div>
   `);
@@ -28219,141 +28450,266 @@ async function viewPO(poId) {
   const supRef = getPOSupplierRef(po);
   const cleanNote = getCleanPONote(po.note);
 
-  el.innerHTML=
-    '<div class="modal-title" style="margin-bottom:12px">🛒 '+( po.po_no||'-')+' · '+po.supplier_name+'</div>'+
-    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">'+
-      poBadge(po.status)+
-      '<span style="font-size:12px;color:var(--text3)">คาดรับ <b>'+escapeHTML(pendingPOReadableDate(po.expected_date))+'</b></span>'+
-      (actualReceiptDate ? '<span style="font-size:12px;color:#047857;font-weight:700">'+(po.status==='received'?'รับจริง':'รับบางส่วนล่าสุด')+' '+escapeHTML(pendingPOReadableDate(actualReceiptDate))+'</span>' : '')+
-      (['sent','partial'].includes(po.status)?'<button type="button" class="btn btn-secondary btn-sm" onclick="openPOExpectedDateEditor(&quot;'+poId+'&quot;)">✏️ แก้วันคาดรับ</button>':'')+
-      ((isUSD || poShippingCurrency === 'USD') ? `<span style="background:#f0fdf4;color:#166534;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #86efac">💵 1 USD = ฿${poRate.toFixed(2)}</span>` : '')+
-    '</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;font-size:13px">'+
-      '<div><span style="color:var(--text3)">Supplier</span><div style="font-weight:600">'+po.supplier_name+'</div>'+
-        (po.supplier_contact?'<div style="font-size:12px;color:var(--text2)">'+po.supplier_contact+'</div>':'')+
-      '</div>'+
-      '<div><span style="color:var(--text3)">วันที่สั่ง</span><div>'+po.po_date+'</div>'+
-        (supRef ? '<div style="font-size:12px;margin-top:2px"><span style="color:var(--text3)">Ref ของ Supplier:</span> <b style="color:var(--blue)">'+escapeHTML(supRef)+'</b></div>' : '')+
-      '</div>'+
-    '</div>'+
-    (hasDupItems
-      ? '<div style="background:#fee2e2;border:1.5px solid #ef4444;border-radius:8px;padding:8px 12px;margin-bottom:10px;color:#991b1b;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'+
-          '<span>🚨 ใบสั่งซื้อนี้มีรายการสินค้าซ้ำ (แถบสีแดงกำกับในตาราง) — กรุณาตรวจสอบก่อนส่งซื้อหรือรับเข้า</span>'+
-          '<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" style="background:#dc2626;color:#fff;border:none;font-weight:700;border-radius:6px;padding:4px 10px;cursor:pointer">🧹 ลบและรวมรายการซ้ำ</button>'+
-        '</div>'
-      : ''
-    )+
-    '<div style="font-weight:600;font-size:13px;margin-bottom:8px">รายการ SKU'+(hasDupItems?' <span style="color:var(--red);font-weight:700;font-size:12px">⚠️ (มีรายการสินค้าซ้ำ แถบสีแดง)</span>':'')+'</div>'+
-    '<div class="table-wrap"><table><thead><tr>'+
-      '<th>#</th><th class="left">SKU</th><th class="left">Supplier SKU (🇹🇭 ไทย / 🇺🇸 ตปท.)</th>'+
-      '<th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>'+
-      '<th class="right">'+(isUSD ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น')+'</th>'+
-      '<th class="right">'+(isUSD ? 'รวม (USD / THB)' : 'รวม')+'</th>'+
-    '</tr></thead><tbody>'+
-    (items||[]).map((it,i)=>{
-      const product = skuMap[it.product_id] || {};
-      const receivedQty=Number(it.qty_received||0);
-      const pending=Math.max(0,Number(it.qty_ordered)-receivedQty);
-      const overQty=Math.max(0,receivedQty-Number(it.qty_ordered));
-      const thbCost = Number(it.unit_cost || 0);
-      const usdCost = isUSD && poRate > 0 ? (thbCost / poRate) : 0;
-      const thbAmt = Number(it.qty_ordered)*thbCost;
-      const usdAmt = isUSD && poRate > 0 ? (thbAmt / poRate) : 0;
-
-      const unitCostDisplay = isUSD
-        ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
-        : `฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
-
-      const amtDisplay = isUSD
-        ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
-        : `฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
-
-      let displayName = it.product_name || product.sku || '-';
-      let soBadgeHTML = '';
-      const soMatch = displayName.match(/\[SO:\s*([^\]]+)\]/i);
-      if (soMatch) {
-        soBadgeHTML = '<div style="margin-top:3px"><span class="badge badge-blue font-mono" style="font-size:10px;font-weight:700">📄 SO: '+escapeHTML(soMatch[1])+'</span></div>';
-        displayName = displayName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
-      }
-      const itKey = (it.product_id && it.product_id !== '__custom__')
-        ? ('id:' + it.product_id)
-        : ('name:' + (it.product_name || '').trim().toLowerCase());
-      const isRowDup = Boolean(itKey && itKey !== 'name:' && itemKeyCounts[itKey] > 1);
-      const rowStyle = isRowDup ? 'background:#fee2e2 !important;border-left:5px solid #ef4444;box-shadow:inset 0 0 0 1px #fca5a5;' : '';
-      const dupBadge = isRowDup ? '<span class="badge" style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px">⚠️ ซ้ำ</span>' : '';
-
-      const supTHB = getProductSupplierTHB(product);
-      const supUSD = getProductSupplierUSD(product);
-      const internalNote = String(it.internal_note || poFallbackNotes[it.id] || poFallbackNotes[it.product_id] || poFallbackNotes[it.product_name] || poFallbackNotes[String(i)] || '').trim();
-      const internalNoteHtml = '<div style="margin-top:5px;padding:5px 7px;background:#f5f3ff;border-radius:5px;color:#5b21b6;font-size:11px;white-space:pre-wrap">🔒 หมายเหตุภายใน: '+
-        (internalNote ? escapeHTML(internalNote) : '<span style="color:#8b7ab8">ยังไม่มี</span>')+
-        ' <button type="button" onclick="editPOItemInternalNote(&quot;'+poId+'&quot;,&quot;'+it.id+'&quot;)" style="border:0;background:none;color:#6d28d9;cursor:pointer;font-weight:700;text-decoration:underline">✏️ แก้ไข</button></div>';
-      const supCell = `
-        <div style="display:flex;flex-direction:column;gap:3px">
-          ${supTHB ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇹🇭 THB:</span><b>${escapeHTML(supTHB)}</b>${poCopyButton(supTHB,'Sup THB')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇹🇭 THB: -</div>'}
-          ${supUSD ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇺🇸 USD:</span><b style="color:var(--purple,#7c3aed)">${escapeHTML(supUSD)}</b>${poCopyButton(supUSD,'Sup USD')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇺🇸 USD: -</div>'}
-        </div>
-      `;
-
-      return '<tr style="'+rowStyle+'">'+
-        '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+internalNoteHtml+'</td>'+
-        '<td>'+supCell+'</td>'+
-        '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
-        '<td style="text-align:right;color:var(--accent)">'+fmt(receivedQty)+(overQty>0?'<div style="font-size:10px;color:var(--amber)">รับเกิน +'+fmt(overQty)+'</div>':'')+'</td>'+
-        '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
-        '<td style="text-align:right font-mono">'+unitCostDisplay+'</td>'+
-        '<td style="text-align:right;font-weight:600" class="font-mono text-amber">'+amtDisplay+'</td></tr>';
-    }).join('')+
-    '</tbody></table></div>'+
-    '<div style="border-top:1px solid var(--border);margin-top:8px;padding:10px 0">'+
-      '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px">'+
-        '<span style="color:var(--text3)">ยอดรวมสินค้า</span>'+
-        '<span class="font-mono">'+(isUSD ? `$${totalOrderedUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:11px;color:var(--text3)">(฿${totalOrderedTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${totalOrderedTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+'</span>'+
-      '</div>'+
-      '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px"><span style="color:var(--text3)">หักส่วนลด</span><span class="font-mono">-'+formatPOAmount(discountTHB,isUSD,poRate)+'</span></div>'+
-      '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px"><span style="color:var(--text3)">บวกค่าส่ง</span><span class="font-mono">+'+formatPOShipping(po,poRate,isUSD?'USD':'THB')+'</span></div>'+
-      (vatTHB>0 ?
-        '<div style="display:flex;justify-content:flex-end;gap:12px;font-size:13px;margin-bottom:4px">'+
-          '<span style="color:var(--text3)">VAT 7% ('+( po.vat_type==='excluded'?'แยกออก':'รวมใน')+')' +'</span>'+
-          '<span class="font-mono text-accent">'+(isUSD ? `$${vatUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:11px;color:var(--text3)">(฿${vatTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${vatTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+'</span>'+
-        '</div>' : ''
-      )+
-      '<div style="display:flex;justify-content:flex-end;align-items:center;gap:12px">'+
-        '<span style="font-size:13px;color:var(--text3);font-weight:600">ยอดรวมสุทธิ</span>'+
-        '<span class="font-mono text-amber" style="font-size:20px;font-weight:700">'+
-          (isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:14px;font-weight:normal;color:var(--text2)">(฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`)+
-        '</span>'+
-      '</div>'+
-    '</div>'+
-    (cleanNote?'<div style="font-size:13px;color:var(--text2);background:var(--bg3);border-radius:8px;padding:10px">'+cleanNote+'</div>':'');
-
-  // Footer
-  const footer=document.getElementById('po-detail-footer');
-  if(footer){
-    let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-po-detail&quot;)">ปิด</button>';
-    if (hasDupItems) btns+='<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" title="พบรายการสินค้าซ้ำใน PO นี้">🧹 ลบรายการซ้ำ</button>';
-    btns+='<button class="btn btn-secondary btn-sm" onclick="printPO(&quot;'+poId+'&quot;)">🖨 พิมพ์ PO</button>';
-    btns+='<button class="btn btn-secondary btn-sm" onclick="printPOItemLabels(&quot;'+poId+'&quot;)">🏷️ พิมพ์ฉลากสินค้า A4</button>';
-    if (po.status === 'draft') {
-      btns+='<button class="btn btn-warning btn-sm" onclick="editPO(&quot;'+poId+'&quot;)">✏️ แก้ไขแบบร่าง</button>';
-    }
-    if(po.status!=='received'&&po.status!=='cancelled'&&po.status!=='draft')
-      btns+='<button class="btn btn-primary btn-sm" onclick="openGoodsReceipt(&quot;'+poId+'&quot;)">📦 รับสินค้า</button>';
-    if (po.status === 'partial') {
-      btns += '<button class="btn btn-success btn-sm" onclick="if(confirm(\'ยืนยันปิดใบสั่งซื้อที่ค้างรับ (ไม่ต้องรับสินค้าเข้าเพิ่ม)?\')) updatePOStatus(&quot;'+poId+'&quot;,&quot;received&quot;)">✔ ปิดค้างรับ</button>';
-    }
-    if(['received','partial'].includes(po.status)) {
-      const {data:existAP} = await sb.from('ap_invoices').select('id').eq('po_id',poId).limit(1);
-      if (existAP && existAP.length > 0) {
-        btns += '<button class="btn btn-secondary btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="สร้าง AP Invoice แล้ว">✅ AP Invoice แล้ว</button>';
-      } else {
-        btns += '<button class="btn btn-secondary btn-sm" onclick="createAPFromPO(&quot;'+poId+'&quot;)">📄 สร้าง AP Invoice</button>';
-      }
-    }
-    if(po.status!=='cancelled')
-      btns+='<button class="btn btn-danger btn-sm" onclick="updatePOStatus(&quot;'+poId+'&quot;,&quot;cancelled&quot;)">✕ ยกเลิก</button>';
-    footer.innerHTML=btns;
+  // Buttons for footer
+  let btns = '<button class="btn btn-secondary" onclick="closeModal(&quot;modal-po-detail&quot;)">ปิด</button>';
+  if (hasDupItems) btns += '<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" title="พบรายการสินค้าซ้ำใน PO นี้">🧹 ลบรายการซ้ำ</button>';
+  btns += '<button class="btn btn-secondary btn-sm" onclick="printPO(&quot;'+poId+'&quot;)">🖨 พิมพ์ PO</button>';
+  btns += '<button class="btn btn-secondary btn-sm" onclick="printPOItemLabels(&quot;'+poId+'&quot;)">🏷️ พิมพ์ฉลากสินค้า A4</button>';
+  if (po.status === 'draft') {
+    btns += '<button class="btn btn-warning btn-sm" onclick="editPO(&quot;'+poId+'&quot;)">✏️ แก้ไขแบบร่าง</button>';
   }
+  if (po.status !== 'received' && po.status !== 'cancelled' && po.status !== 'draft') {
+    btns += '<button class="btn btn-primary btn-sap-update btn-sm" onclick="openGoodsReceipt(&quot;'+poId+'&quot;)" style="font-weight:700">📦 รับสินค้า (GRPO)</button>';
+  }
+  if (po.status === 'partial') {
+    btns += '<button class="btn btn-success btn-sm" onclick="if(confirm(\'ยืนยันปิดใบสั่งซื้อที่ค้างรับ (ไม่ต้องรับสินค้าเข้าเพิ่ม)?\')) updatePOStatus(&quot;'+poId+'&quot;,&quot;received&quot;)">✔ ปิดค้างรับ</button>';
+  }
+  if (['received','partial'].includes(po.status)) {
+    const {data:existAP} = await sb.from('ap_invoices').select('id').eq('po_id',poId).limit(1);
+    if (existAP && existAP.length > 0) {
+      btns += '<button class="btn btn-secondary btn-sm" disabled style="opacity:.5;cursor:not-allowed" title="สร้าง AP Invoice แล้ว">✅ AP Invoice แล้ว</button>';
+    } else {
+      btns += '<button class="btn btn-secondary btn-sm" onclick="createAPFromPO(&quot;'+poId+'&quot;)">📄 สร้าง AP Invoice</button>';
+    }
+  }
+  if (po.status !== 'cancelled') {
+    btns += '<button class="btn btn-danger btn-sm" onclick="updatePOStatus(&quot;'+poId+'&quot;,&quot;cancelled&quot;)">✕ ยกเลิก</button>';
+  }
+
+  el.innerHTML = `
+    <div class="sap-window" id="sap-po-window">
+      <!-- Header Bar -->
+      <div class="sap-header-bar">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:15px;font-weight:700">🛒 Purchase Order · ${escapeHTML(po.po_no||'-')}</span>
+          <span style="font-size:12px;color:#64748b">${escapeHTML(po.supplier_name||'')}</span>
+          <span style="font-size:11px;color:#64748b;font-weight:normal">SAP Business One Standard</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${poBadge(po.status)}
+          ${(isUSD || poShippingCurrency === 'USD') ? `<span style="background:#f0fdf4;color:#166534;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:6px;border:1px solid #86efac">💵 1 USD = ฿${poRate.toFixed(2)}</span>` : ''}
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-po-detail')" style="padding:2px 8px;font-size:12px">✕ ปิด</button>
+        </div>
+      </div>
+
+      <!-- Top Panel: 2 Columns -->
+      <div class="sap-panel">
+        <div class="sap-form-grid">
+          <!-- Left: Business Partner (Supplier) -->
+          <div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Supplier (ผู้ขาย):</span>
+              <span style="font-weight:700;color:#0f172a;font-size:13.5px">${escapeHTML(po.supplier_name||'-')}</span>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">เบอร์ติดต่อ / ผู้ติดต่อ:</span>
+              <span>${escapeHTML(po.supplier_contact||'-')}</span>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">Ref ผู้ขาย:</span>
+              <span style="color:var(--blue);font-weight:600">${escapeHTML(supRef||'-')}</span>
+            </div>
+          </div>
+
+          <!-- Right: Document Details -->
+          <div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">เลขที่เอกสาร (PO No):</span>
+              <span class="font-mono" style="font-weight:700">${escapeHTML(po.po_no||'-')}</span>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">วันที่สั่ง (Doc Date):</span>
+              <span>${escapeHTML(po.po_date||'-')}</span>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">กำหนดรับ (Due Date):</span>
+              <div>
+                <b>${escapeHTML(pendingPOReadableDate(po.expected_date))}</b>
+                ${['sent','partial'].includes(po.status)?'<button type="button" class="btn btn-secondary btn-sm" style="padding:1px 6px;font-size:11px;margin-left:6px" onclick="openPOExpectedDateEditor(&quot;'+poId+'&quot;)">✏️ แก้วัน</button>':''}
+                ${actualReceiptDate ? '<span style="font-size:11.5px;color:#047857;font-weight:700;margin-left:6px">(' + (po.status==='received'?'รับจริง':'รับล่าสุด') + ' ' + escapeHTML(pendingPOReadableDate(actualReceiptDate)) + ')</span>' : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs Navigation -->
+      <div class="sap-tabs">
+        <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-po-window','contents')">📦 Contents (รายการสินค้าสั่งซื้อ)</div>
+        <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-po-window','logistics')">🚚 Logistics (การจัดส่ง & ติดต่อ)</div>
+        <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-po-window','accounting')">💳 Accounting (ภาษี & การเงิน)</div>
+        <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-po-window','notes')">📝 Notes (หมายเหตุ & บันทึก)</div>
+      </div>
+
+      <!-- Tab Contents -->
+      <div class="sap-tab-pane active" data-pane="contents">
+        ${hasDupItems ? `
+          <div style="background:#fee2e2;border:1.5px solid #ef4444;border-radius:8px;padding:8px 12px;margin-bottom:10px;color:#991b1b;font-size:12.5px;font-weight:700;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <span>🚨 ใบสั่งซื้อนี้มีรายการสินค้าซ้ำ (แถบสีแดงกำกับในตาราง) — กรุณาตรวจสอบก่อนส่งซื้อหรือรับเข้า</span>
+            <button class="btn btn-warning btn-sm" onclick="dedupePOItems('${poId}')" style="background:#dc2626;color:#fff;border:none;font-weight:700;border-radius:6px;padding:4px 10px;cursor:pointer">🧹 ลบและรวมรายการซ้ำ</button>
+          </div>
+        ` : ''}
+        <div class="table-wrap"><table><thead><tr>
+          <th>#</th><th class="left">SKU</th><th class="left">Supplier SKU (🇹🇭 ไทย / 🇺🇸 ตปท.)</th>
+          <th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>
+          <th class="right">${isUSD ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น'}</th>
+          <th class="right">${isUSD ? 'รวม (USD / THB)' : 'รวม'}</th>
+        </tr></thead><tbody>
+          ${(items||[]).map((it,i)=>{
+            const product = skuMap[it.product_id] || {};
+            const receivedQty=Number(it.qty_received||0);
+            const pending=Math.max(0,Number(it.qty_ordered)-receivedQty);
+            const overQty=Math.max(0,receivedQty-Number(it.qty_ordered));
+            const thbCost = Number(it.unit_cost || 0);
+            const usdCost = isUSD && poRate > 0 ? (thbCost / poRate) : 0;
+            const thbAmt = Number(it.qty_ordered)*thbCost;
+            const usdAmt = isUSD && poRate > 0 ? (thbAmt / poRate) : 0;
+
+            const unitCostDisplay = isUSD
+              ? `$${usdCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+              : `฿${thbCost.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+
+            const amtDisplay = isUSD
+              ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+              : `฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+
+            let displayName = it.product_name || product.sku || '-';
+            let soBadgeHTML = '';
+            const soMatch = displayName.match(/\[SO:\s*([^\]]+)\]/i);
+            if (soMatch) {
+              soBadgeHTML = '<div style="margin-top:3px"><span class="badge badge-blue font-mono" style="font-size:10px;font-weight:700">📄 SO: '+escapeHTML(soMatch[1])+'</span></div>';
+              displayName = displayName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
+            }
+            const itKey = (it.product_id && it.product_id !== '__custom__')
+              ? ('id:' + it.product_id)
+              : ('name:' + (it.product_name || '').trim().toLowerCase());
+            const isRowDup = Boolean(itKey && itKey !== 'name:' && itemKeyCounts[itKey] > 1);
+            const rowStyle = isRowDup ? 'background:#fee2e2 !important;border-left:5px solid #ef4444;box-shadow:inset 0 0 0 1px #fca5a5;' : '';
+            const dupBadge = isRowDup ? '<span class="badge" style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px">⚠️ ซ้ำ</span>' : '';
+
+            const supTHB = getProductSupplierTHB(product);
+            const supUSD = getProductSupplierUSD(product);
+            const internalNote = String(it.internal_note || poFallbackNotes[it.id] || poFallbackNotes[it.product_id] || poFallbackNotes[it.product_name] || poFallbackNotes[String(i)] || '').trim();
+            const internalNoteHtml = '<div style="margin-top:5px;padding:5px 7px;background:#f5f3ff;border-radius:5px;color:#5b21b6;font-size:11px;white-space:pre-wrap">🔒 หมายเหตุภายใน: '+
+              (internalNote ? escapeHTML(internalNote) : '<span style="color:#8b7ab8">ยังไม่มี</span>')+
+              ' <button type="button" onclick="editPOItemInternalNote(&quot;'+poId+'&quot;,&quot;'+it.id+'&quot;)" style="border:0;background:none;color:#6d28d9;cursor:pointer;font-weight:700;text-decoration:underline">✏️ แก้ไข</button></div>';
+            const supCell = `
+              <div style="display:flex;flex-direction:column;gap:3px">
+                ${supTHB ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇹🇭 THB:</span><b>${escapeHTML(supTHB)}</b>${poCopyButton(supTHB,'Sup THB')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇹🇭 THB: -</div>'}
+                ${supUSD ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇺🇸 USD:</span><b style="color:var(--purple,#7c3aed)">${escapeHTML(supUSD)}</b>${poCopyButton(supUSD,'Sup USD')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇺🇸 USD: -</div>'}
+              </div>
+            `;
+
+            return '<tr style="'+rowStyle+'">'+
+              '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+internalNoteHtml+'</td>'+
+              '<td>'+supCell+'</td>'+
+              '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
+              '<td style="text-align:right;color:var(--accent)">'+fmt(receivedQty)+(overQty>0?'<div style="font-size:10px;color:var(--amber)">รับเกิน +'+fmt(overQty)+'</div>':'')+'</td>'+
+              '<td style="text-align:right;color:'+(pending>0?'var(--red)':'var(--text3)')+'">'+fmt(pending)+'</td>'+
+              '<td style="text-align:right font-mono">'+unitCostDisplay+'</td>'+
+              '<td style="text-align:right;font-weight:600" class="font-mono text-amber">'+amtDisplay+'</td></tr>';
+          }).join('')}
+        </tbody></table></div>
+      </div>
+
+      <!-- Tab Logistics -->
+      <div class="sap-tab-pane" data-pane="logistics">
+        <div style="max-width:700px;font-size:13px">
+          <div style="font-weight:700;margin-bottom:12px;color:#1e293b">ข้อมูลการจัดส่งและผู้ติดต่อ</div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">กำหนดรับ (Expected Date):</span>
+            <span style="font-weight:600;color:var(--blue)">${escapeHTML(pendingPOReadableDate(po.expected_date))}</span>
+          </div>
+          ${actualReceiptDate ? `
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+              <span class="sap-field-label">วันที่รับสินค้าจริง:</span>
+              <span style="color:#047857;font-weight:700">${escapeHTML(pendingPOReadableDate(actualReceiptDate))}</span>
+            </div>
+          ` : ''}
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">ผู้ติดต่อ / โทรศัพท์:</span>
+            <span>${escapeHTML(po.supplier_contact || '-')}</span>
+          </div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">เลขอ้างอิง Supplier Ref:</span>
+            <span style="color:var(--blue);font-weight:600">${escapeHTML(supRef || '-')}</span>
+          </div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">สถานที่ส่งมอบ (Ship-to):</span>
+            <span>สำนักงานใหญ่ / คลังสินค้า SEALTHAI (ตามที่อยู่ที่ลงทะเบียน)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Accounting -->
+      <div class="sap-tab-pane" data-pane="accounting">
+        <div style="max-width:700px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px;font-size:13px">
+          <div style="font-weight:700;margin-bottom:12px;color:#1e293b">ข้อมูลภาษีมูลค่าเพิ่มและการเงิน</div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">สกุลเงินสั่งซื้อ:</span>
+            <span><b>${isUSD ? 'USD (ดอลลาร์สหรัฐฯ)' : 'THB (บาท)'}</b> ${isUSD ? `(อัตราแลกเปลี่ยน 1 USD = ฿${poRate.toFixed(2)})` : ''}</span>
+          </div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">การคำนวณ VAT 7%:</span>
+            <span>${vatTHB > 0 ? (po.vat_type === 'excluded' ? 'VAT แยก (บวกเพิ่มจากยอดสินค้า)' : 'VAT รวมใน (ถอนออกจากยอดสินค้า)') : 'ไม่มี VAT'}</span>
+          </div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">ส่วนลดท้าย PO:</span>
+            <span>${formatPOAmount(discountTHB, isUSD, poRate)}</span>
+          </div>
+          <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+            <span class="sap-field-label">ค่าจัดส่ง:</span>
+            <span>${formatPOShipping(po, poRate, isUSD ? 'USD' : 'THB')}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Notes -->
+      <div class="sap-tab-pane" data-pane="notes">
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px">
+          <div style="font-weight:700;margin-bottom:6px;color:#475569">หมายเหตุเอกสาร</div>
+          <div style="font-size:13px;color:var(--text);white-space:pre-wrap">${cleanNote ? escapeHTML(cleanNote) : 'ไม่มีหมายเหตุ'}</div>
+        </div>
+      </div>
+
+      <!-- SAP Footer Bar -->
+      <div class="sap-footer">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          ${btns}
+        </div>
+        <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+            <span style="color:#64748b">ยอดรวมสินค้า (Subtotal)</span>
+            <span class="font-mono">${isUSD ? `$${totalOrderedUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:11px;color:var(--text3)">(฿${totalOrderedTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${totalOrderedTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+            <span style="color:#64748b">หักส่วนลด (Discount)</span>
+            <span class="font-mono text-red">-${formatPOAmount(discountTHB,isUSD,poRate)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+            <span style="color:#64748b">บวกค่าส่ง (Freight)</span>
+            <span class="font-mono">+${formatPOShipping(po,poRate,isUSD?'USD':'THB')}</span>
+          </div>
+          ${vatTHB > 0 ? `
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+              <span style="color:#64748b">VAT 7% (${po.vat_type==='excluded'?'แยกออก':'รวมใน'})</span>
+              <span class="font-mono text-accent">${isUSD ? `$${vatUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:11px;color:var(--text3)">(฿${vatTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${vatTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`}</span>
+            </div>
+          ` : ''}
+          <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+            <span style="color:#0f172a">ยอดรวมสุทธิ (Grand Total)</span>
+            <span class="font-mono text-amber" style="font-size:17px">
+              ${isUSD ? `$${grandTotalUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:13px;font-weight:normal;color:var(--text2)">(฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>` : `฿${grandTotalTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Also support footer if present
+  const footer=document.getElementById('po-detail-footer');
+  if(footer) footer.innerHTML=btns;
   openModal('modal-po-detail');
 }
 
@@ -30388,6 +30744,168 @@ async function confirmPayAP(){
   loadAPs();
 }
 
+async function openAPDetail(apId) {
+  const { data: ap, error: apError } = await sb.from('ap_invoices').select('*').eq('id', apId).single();
+  if (apError || !ap) {
+    toast('ไม่พบข้อมูล AP Invoice', 'error');
+    return;
+  }
+  let linkedPO = null;
+  let poItems = [];
+  if (ap.po_id) {
+    const [{ data: poData }, { data: itemsData }] = await Promise.all([
+      sb.from('purchase_orders').select('*').eq('id', ap.po_id).single(),
+      sb.from('purchase_order_items').select('*').eq('po_id', ap.po_id).order('id')
+    ]);
+    linkedPO = poData;
+    poItems = itemsData || [];
+  }
+  const isPaid = ap.status === 'paid';
+  const remaining = Math.max(0, Number(ap.total_amount || 0) - Number(ap.paid_amount || 0));
+  const subtotal = Number(ap.total_amount || 0) / 1.07;
+  const vat = Number(ap.total_amount || 0) - subtotal;
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.id = 'modal-ap-detail';
+  modal.style.zIndex = '1300';
+  modal.innerHTML = `
+    <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px))">
+      <div class="sap-window" id="sap-ap-window">
+        <!-- Header Bar -->
+        <div class="sap-header-bar">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:15px;font-weight:700">📄 A/P Invoice · ใบแจ้งหนี้เจ้าหนี้การค้า</span>
+            <span style="font-size:12px;color:#64748b;font-family:var(--mono)">${escapeHTML(ap.ap_no || '-')}</span>
+            <span style="font-size:11px;color:#64748b;font-weight:normal">SAP Business One Standard</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            ${apBadge(ap.status)}
+            <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()" style="padding:2px 8px;font-size:12px">✕ ปิด</button>
+          </div>
+        </div>
+
+        <!-- Top Panel: 2 Columns -->
+        <div class="sap-panel">
+          <div class="sap-form-grid">
+            <!-- Left: Business Partner (Vendor) -->
+            <div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Supplier (เจ้าหนี้):</span>
+                <span style="font-weight:700;color:#0f172a;font-size:13.5px">${escapeHTML(ap.supplier_name || '-')}</span>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">อ้างอิง PO:</span>
+                <div>
+                  ${linkedPO ? `<a href="javascript:void(0)" onclick="document.querySelectorAll('#modal-ap-detail').forEach(m=>m.remove());viewPO('${linkedPO.id}')" style="color:var(--blue);font-weight:700;text-decoration:underline">🛒 ${escapeHTML(linkedPO.po_no || ap.note || '-')}</a>` : `<span>${escapeHTML(ap.note || '-')}</span>`}
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Document Info -->
+            <div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">เลขที่เอกสาร (AP No):</span>
+                <span class="font-mono" style="font-weight:700">${escapeHTML(ap.ap_no || '-')}</span>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">วันที่เอกสาร (Date):</span>
+                <span>${escapeHTML(ap.ap_date || '-')}</span>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">วันครบกำหนด (Due Date):</span>
+                <span>${escapeHTML(ap.due_date || '-')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="sap-tabs">
+          <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-ap-window','contents')">📦 Contents (รายการสินค้าตาม PO)</div>
+          <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-ap-window','accounting')">💳 Accounting & Payments (ประวัติ & ชำระเงิน)</div>
+          <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-ap-window','notes')">📝 Notes (หมายเหตุ)</div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="sap-tab-pane active" data-pane="contents">
+          ${poItems.length ? `
+            <div class="table-wrap"><table><thead><tr>
+              <th>#</th><th>รายการสินค้า</th><th class="text-right">จำนวนสั่ง</th><th class="text-right">รับแล้ว</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th>
+            </tr></thead><tbody>
+              ${poItems.map((it, idx) => `
+                <tr>
+                  <td style="text-align:center">${idx + 1}</td>
+                  <td style="font-weight:600">${escapeHTML(it.product_name || '-')}</td>
+                  <td class="text-right font-mono">${fmt(it.qty_ordered)}</td>
+                  <td class="text-right font-mono text-accent">${fmt(it.qty_received || 0)}</td>
+                  <td class="text-right font-mono">${fmtB(it.unit_cost)}</td>
+                  <td class="text-right font-mono text-amber" style="font-weight:700">${fmtB(Number(it.qty_ordered || 0) * Number(it.unit_cost || 0))}</td>
+                </tr>
+              `).join('')}
+            </tbody></table></div>
+          ` : `<div style="padding:24px;text-align:center;color:var(--text3)">${linkedPO ? 'ไม่มีรายการสินค้า' : 'ไม่มีรายการสินค้าเชื่อมโยง (สร้างจากยอดรวมภายนอก)'}</div>`}
+        </div>
+
+        <!-- Tab Accounting & Payments -->
+        <div class="sap-tab-pane" data-pane="accounting">
+          <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:14px">
+            <div class="stat-card" style="padding:10px"><div class="stat-label">ยอดรวม (Total)</div><div class="stat-value text-accent">${fmtB(ap.total_amount)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">ชำระแล้ว (Paid)</div><div class="stat-value text-green">${fmtB(ap.paid_amount || 0)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">ค้างชำระ (Balance Due)</div><div class="stat-value ${remaining > 0 ? 'text-red' : 'text-accent'}">${fmtB(remaining)}</div></div>
+          </div>
+          ${!isPaid && remaining > 0 ? `
+            <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px">
+              <div style="font-weight:700;margin-bottom:10px;color:#1e293b">💳 ทำรายการชำระเงินให้เจ้าหนี้</div>
+              <button type="button" class="btn btn-primary btn-sap-update" onclick="this.closest('.modal-overlay').remove();openPayAP('${ap.id}', ${remaining})" style="font-size:13px;padding:8px 20px">💳 บันทึกชำระเงิน (${fmtB(remaining)})</button>
+            </div>
+          ` : `<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px;text-align:center;color:#15803d;font-weight:700">✅ เอกสาร A/P Invoice ใบนี้ชำระเงินครบถ้วนแล้ว</div>`}
+        </div>
+
+        <!-- Tab Notes -->
+        <div class="sap-tab-pane" data-pane="notes">
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px">
+            <div style="font-weight:700;margin-bottom:6px;color:#475569">หมายเหตุเอกสาร</div>
+            <div style="font-size:13px;color:var(--text)">${escapeHTML(ap.note || 'ไม่มีหมายเหตุ')}</div>
+          </div>
+        </div>
+
+        <!-- SAP Footer Bar -->
+        <div class="sap-footer">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+            ${!isPaid && remaining > 0 ? `
+              <button class="btn btn-primary btn-sap-update" onclick="this.closest('.modal-overlay').remove();openPayAP('${ap.id}', ${remaining})">💳 ชำระเงิน (Pay AP)</button>
+            ` : ''}
+          </div>
+          <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+              <span style="color:#64748b">ก่อน VAT (Subtotal)</span>
+              <span class="font-mono">${fmtB(subtotal)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+              <span style="color:#64748b">ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
+              <span class="font-mono text-amber">${fmtB(vat)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+              <span style="color:#64748b">ยอดชำระแล้ว (Paid)</span>
+              <span class="font-mono text-accent">${fmtB(ap.paid_amount || 0)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+              <span style="color:#0f172a">ยอดคงค้าง (Balance Due)</span>
+              <span class="font-mono ${remaining > 0 ? 'text-red' : 'text-accent'}" style="font-size:17px">${fmtB(remaining)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+  ensureModalCloseButton(modal, () => modal.remove());
+  modal.style.zIndex = getNextModalZIndex();
+}
+window.openAPDetail = openAPDetail;
+
 async function loadAPs(){
   const from=document.getElementById('ap-from')?.value||'';
   const to=document.getElementById('ap-to')?.value||'';
@@ -30422,8 +30940,8 @@ async function loadAPs(){
       const remaining=Number(ap.total_amount)-Number(ap.paid_amount||0);
       return '<tr>'+
         '<td>'+ap.ap_date+'</td>'+
-        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(ap.ap_no||'-')+'</td>'+
-        '<td style="font-weight:500">'+(ap.supplier_name||'-')+'</td>'+
+        '<td class="font-mono" style="font-size:12px;color:var(--text3)"><a href="javascript:void(0)" onclick="openAPDetail(&quot;'+ap.id+'&quot;)" style="color:var(--blue);font-weight:700;text-decoration:underline">'+(ap.ap_no||'-')+'</a></td>'+
+        '<td style="font-weight:500"><a href="javascript:void(0)" onclick="openAPDetail(&quot;'+ap.id+'&quot;)" style="color:inherit;text-decoration:none;cursor:pointer">'+(ap.supplier_name||'-')+'</a></td>'+
         '<td style="font-size:12px;color:var(--text3)">'+(ap.note||'-')+'</td>'+
         '<td class="text-right font-mono">'+fmtB(Number(ap.total_amount)/1.07)+'</td>'+
         '<td class="text-right font-mono text-amber">'+fmtB(Number(ap.total_amount)-Number(ap.total_amount)/1.07)+'</td>'+
@@ -30431,7 +30949,7 @@ async function loadAPs(){
         '<td class="text-right font-mono text-accent">'+fmtB(ap.paid_amount||0)+'</td>'+
         '<td class="text-right font-mono '+(remaining>0?'text-red':'text-accent')+'">'+fmtB(remaining)+'</td>'+
         '<td>'+apBadge(ap.status)+'</td>'+
-        '<td>'+(ap.status!=='paid'?'<button class="btn btn-primary btn-sm" onclick="openPayAP(&quot;'+ap.id+'&quot;,'+remaining+')">💳 ชำระ</button>':'')+'</td>'+
+        '<td><div style="display:flex;gap:4px;justify-content:flex-end"><button class="btn btn-secondary btn-sm" onclick="openAPDetail(&quot;'+ap.id+'&quot;)">👁️ ดูบิล</button>'+(ap.status!=='paid'?'<button class="btn btn-primary btn-sm" onclick="openPayAP(&quot;'+ap.id+'&quot;,'+remaining+')">💳 ชำระ</button>':'')+'</div></td>'+
       '</tr>';
     }).join('')+
     '</tbody></table></div>'+
@@ -30440,13 +30958,13 @@ async function loadAPs(){
       const remaining=Number(ap.total_amount)-Number(ap.paid_amount||0);
       return '<div class="order-card">'+
         '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'+
-          '<div><div style="font-weight:600">'+(ap.supplier_name||'-')+'</div>'+
-          '<div style="font-size:11px;color:var(--text3)">'+ap.ap_date+' · '+(ap.ap_no||'-')+'</div></div>'+
+          '<div><div style="font-weight:600"><a href="javascript:void(0)" onclick="openAPDetail(&quot;'+ap.id+'&quot;)" style="color:inherit;text-decoration:none">'+(ap.supplier_name||'-')+'</a></div>'+
+          '<div style="font-size:11px;color:var(--text3)">'+ap.ap_date+' · <a href="javascript:void(0)" onclick="openAPDetail(&quot;'+ap.id+'&quot;)" style="color:var(--blue);font-weight:600">'+(ap.ap_no||'-')+'</a></div></div>'+
           '<div class="font-mono" style="font-size:15px;font-weight:700;color:'+(remaining>0?'var(--red)':'var(--accent)')+'">'+fmtB(remaining)+'</div>'+
         '</div>'+
         '<div style="display:flex;gap:6px;align-items:center;justify-content:space-between">'+
           apBadge(ap.status)+
-          (ap.status!=='paid'?'<button class="btn btn-primary btn-sm" onclick="openPayAP(&quot;'+ap.id+'&quot;,'+remaining+')">💳 ชำระ</button>':'')+
+          '<div style="display:flex;gap:4px"><button class="btn btn-secondary btn-sm" onclick="openAPDetail(&quot;'+ap.id+'&quot;)">👁️ ดูบิล</button>'+(ap.status!=='paid'?'<button class="btn btn-primary btn-sm" onclick="openPayAP(&quot;'+ap.id+'&quot;,'+remaining+')">💳 ชำระ</button>':'')+'</div>'+
         '</div></div>';
     }).join('')+
     '</div>';
@@ -33048,49 +33566,180 @@ async function openARDetail(arId) {
 
   const modal = document.createElement('div');
   modal.className = 'modal-overlay open';
-  modal.style.zIndex = '300';
+  modal.id = 'modal-ar-detail';
+  modal.style.zIndex = '1300';
   modal.innerHTML = `
-    <div class="modal" style="max-width:640px">
-      <div class="modal-title">📄 ${ar.ar_no||'-'} — ${ar.customer_name||'-'}</div>
-      <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(125px,1fr));margin-bottom:14px">
-        <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">ยอดรวม</div><div class="stat-value text-accent" style="font-size:18px">${fmtB(ar.total_amount)}</div></div>
-        <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">รับแล้ว</div><div class="stat-value ${isCancelled?'text-red':'text-green'}" style="font-size:18px">${fmtB(ar.paid_amount)}</div></div>
-        <div class="stat-card" style="padding:8px"><div class="stat-label" style="font-size:11px">ค้างรับ</div><div class="stat-value text-red" style="font-size:18px">${fmtB(remain)}</div></div>
-        ${overpaid>0.01?`<div class="stat-card" style="padding:8px;background:#fff7ed;border-color:#fdba74"><div class="stat-label" style="font-size:11px">⚠️ เงินรับเกิน</div><div class="stat-value" style="font-size:18px;color:#c2410c">${fmtB(overpaid)}</div></div>`:''}
-      </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:10px">ครบกำหนด: <strong>${escapeHTML(ar.due_date||'-')}</strong> | สถานะ: <strong>${isCancelled?'ยกเลิก / CN':escapeHTML(ar.status||'-')}</strong> | หมายเหตุ: ${escapeHTML(ar.note||'-')}</div>
-      ${isCancelled ? `<div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:10px;padding:12px;margin-bottom:14px"><strong>ยกเลิก Invoice แล้ว</strong>${cnNo?' · Credit Note '+escapeHTML(cnNo):''}<br><span style="font-size:12px">ยอดรับเงินของ Invoice นี้ถูกกลับรายการแล้ว และไม่นับรวมในลูกหนี้/ยอดรับ</span></div>` : ''}
-      ${overpaid>0.01?`<div style="background:#fff7ed;border:1px solid #fdba74;color:#92400e;border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px">⚠️ เงินรับเกิน ${fmtB(overpaid)} ยังอยู่ในประวัติรับเงินจริง ระบบไม่ได้คืนเงินหรือลดรายการรับให้อัตโนมัติ กรุณาตรวจการจัดการส่วนเกิน</div>`:''}
-      ${sourceBox}
-
-      ${(adjustments||[]).length?`<div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px"><b>ประวัติปรับยอดตาม Marketplace</b><div style="color:var(--text3);margin:4px 0">บันทึกภายใน ไม่ใช่ใบลดหนี้หรือใบเพิ่มหนี้ทางภาษี</div>${adjustments.map(a=>`<div style="border-top:1px solid var(--border);padding:7px 0">${escapeHTML(String(a.created_at||'').slice(0,10))} · ${escapeHTML(a.platform||'')} ${escapeHTML(a.source_ref||'')} · ${fmtB(a.old_total)} → <b>${fmtB(a.new_total)}</b> · รับไว้ ${fmtB(a.paid_amount_at_adjustment)}</div>`).join('')}</div>`:''}
-
-      <div style="font-weight:600;font-size:13px;margin-bottom:8px">ประวัติรับเงิน</div>
-      <div class="table-wrap" style="margin-bottom:14px">
-        ${payments?.length ? '<table><thead><tr><th>วันที่รับ</th><th class="text-right">จำนวน</th><th>วิธีชำระ</th><th>Ref</th><th>หมายเหตุ</th><th style="text-align:center">แก้ไข</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div style="color:var(--text3);font-size:13px;padding:8px">ยังไม่มีการรับเงิน</div>'}
-      </div>
-
-      ${!isCancelled && remain > 0 ? `
-      <div style="background:var(--bg3);border-radius:10px;padding:14px;border:1px solid var(--border)">
-        <div style="font-weight:600;font-size:13px;margin-bottom:10px">💰 บันทึกรับเงิน</div>
-        <div class="grid-2" style="gap:10px">
-          <div class="form-group"><label>วันที่รับ</label><input type="date" id="pay-date" value="${today()}"></div>
-          <div class="form-group"><label>จำนวน (บาท)</label><input type="number" id="pay-amount" value="${remain}" min="0" step="any"></div>
-          <div class="form-group"><label>วิธีชำระ</label>
-            <select id="pay-method"><option>โอนเงิน</option><option>เงินสด</option><option>บัตรเครดิต</option><option>เช็ค</option></select>
+    <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px))">
+      <div class="sap-window" id="sap-ar-window">
+        <!-- Header Bar -->
+        <div class="sap-header-bar">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:15px;font-weight:700">📄 A/R Invoice · ใบแจ้งหนี้ลูกหนี้การค้า</span>
+            <span style="font-size:12px;color:#64748b;font-family:var(--mono)">${escapeHTML(ar.ar_no||'-')}</span>
+            <span style="font-size:11px;color:#64748b;font-weight:normal">SAP Business One Standard</span>
           </div>
-          <div class="form-group"><label>เลข Ref</label><input type="text" id="pay-ref" placeholder="เลขอ้างอิง"></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="badge ${isCancelled?'badge-red':(remain<=0?'badge-green':'badge-amber')}">${isCancelled?'ยกเลิก / CN':escapeHTML(ar.status||'-')}</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()" style="padding:2px 8px;font-size:12px">✕ ปิด</button>
+          </div>
         </div>
-        <div class="form-group"><label>หมายเหตุ</label><input type="text" id="pay-note" placeholder="หมายเหตุ"></div>
-        <button class="btn btn-primary" style="width:100%" onclick="saveARPayment('${arId}', ${ar.total_amount})">✅ บันทึกรับเงิน</button>
-      </div>` : (!isCancelled ? `<div style="background:${overpaid>0.01?'#fff7ed':'#e8fdf0'};border-radius:10px;padding:12px;text-align:center;color:${overpaid>0.01?'#92400e':'var(--green)'};font-weight:600">${overpaid>0.01?'⚠️ รับเงินเกิน '+fmtB(overpaid):'✅ ชำระครบแล้ว'}</div>` : '')}
 
-      <div class="modal-footer" style="flex-wrap:wrap;gap:8px">
-        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ปิด</button>
-        ${!isCancelled ? `<button class="btn btn-danger" style="background:#fff1f2;color:#be123c;border-color:#fecdd3" onclick="openReturnFromAR('${arId}')">🧾 รับคืนสินค้า (CN)</button>` : ''}
-        ${!isCancelled && !sourceOrder ? `<button class="btn btn-secondary" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">ใบลดหนี้ / ยกเลิกบิล</button>` : ''}
+        <!-- Top Panel: 2 Columns -->
+        <div class="sap-panel">
+          <div class="sap-form-grid">
+            <!-- Left: Business Partner (Customer) -->
+            <div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Customer (ลูกค้า):</span>
+                <span style="font-weight:700;color:#0f172a;font-size:13.5px">${escapeHTML(ar.customer_name||'-')}</span>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Sales Order อ้างอิง:</span>
+                <div>
+                  ${sourceOrder ? `<a href="javascript:void(0)" onclick="document.querySelectorAll('.modal-overlay').forEach(m=>m.remove());viewOrder('${sourceOrder.id}')" style="color:var(--blue);font-weight:700;text-decoration:underline">🛒 ${escapeHTML(sourceOrder.order_no||'-')}</a>` : '<span style="color:var(--text3)">-</span>'}
+                </div>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">ช่องทาง (Channel):</span>
+                <span>${escapeHTML(sourceOrder?.channel || '-')}</span>
+              </div>
+            </div>
+
+            <!-- Right: Document Info -->
+            <div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">เลขที่เอกสาร (AR No):</span>
+                <span class="font-mono" style="font-weight:700">${escapeHTML(ar.ar_no||'-')}</span>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">วันที่เอกสาร (Date):</span>
+                <span>${escapeHTML(ar.ar_date||'-')}</span>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">วันครบกำหนด (Due Date):</span>
+                <span>${escapeHTML(ar.due_date||'-')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="sap-tabs">
+          <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-ar-window','contents')">📦 Contents (รายการสินค้าตาม Sales Order)</div>
+          <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-ar-window','accounting')">💳 Accounting & Payments (ประวัติ & รับชำระเงิน)</div>
+          <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-ar-window','notes')">📝 Notes & Adjustments (หมายเหตุ & ใบลดหนี้)</div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="sap-tab-pane active" data-pane="contents">
+          ${sourceOrder ? `
+            <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+              <div style="font-weight:700;font-size:13.5px;color:#1e293b">รายการสินค้าใน Sales Order (${escapeHTML(sourceOrder.order_no||'-')})</div>
+              <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.modal-overlay').forEach(m=>m.remove());viewOrder('${sourceOrder.id}')">🔍 เปิดดู Sales Order ต้นทาง</button>
+            </div>
+            <div class="table-wrap"><table><thead><tr>
+              <th>#</th><th>รายการสินค้า</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th>
+            </tr></thead><tbody>
+              ${sourceItems.map((it, idx) => {
+                const qty=Number(it.qty||0), price=Number(it.sell_price ?? it.unit_price ?? 0);
+                const gross=qty*price;
+                const disc=it.discount_type==='percent' ? gross*Number(it.discount||0)/100 : Number(it.discount||0);
+                return `<tr>
+                  <td style="text-align:center">${idx+1}</td>
+                  <td style="font-weight:600">${escapeHTML(it.product_name||'-')}</td>
+                  <td class="text-right font-mono">${fmt(qty)}</td>
+                  <td class="text-right font-mono">${fmtB(price)}</td>
+                  <td class="text-right font-mono text-amber" style="font-weight:700">${fmtB(Math.max(0,gross-disc))}</td>
+                </tr>`;
+              }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--text3)">ไม่มีรายการสินค้า</td></tr>'}
+            </tbody></table></div>
+          ` : '<div style="padding:24px;text-align:center;color:var(--text3)">ไม่มี Sales Order ต้นทางเชื่อมโยง (สร้างแบบระบุยอดรวมอิสระ)</div>'}
+        </div>
+
+        <!-- Tab Accounting & Payments -->
+        <div class="sap-tab-pane" data-pane="accounting">
+          <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:14px">
+            <div class="stat-card" style="padding:10px"><div class="stat-label">ยอดรวมเอกสาร (Total)</div><div class="stat-value text-accent">${fmtB(ar.total_amount)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">รับเงินแล้ว (Paid)</div><div class="stat-value ${isCancelled?'text-red':'text-green'}">${fmtB(ar.paid_amount)}</div></div>
+            <div class="stat-card" style="padding:10px"><div class="stat-label">ค้างรับ (Balance Due)</div><div class="stat-value text-red">${fmtB(remain)}</div></div>
+            ${overpaid>0.01?`<div class="stat-card" style="padding:10px;background:#fff7ed;border-color:#fdba74"><div class="stat-label">⚠️ เงินรับเกิน</div><div class="stat-value" style="color:#c2410c">${fmtB(overpaid)}</div></div>`:''}
+          </div>
+
+          <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1e293b">ประวัติรับเงิน</div>
+          <div class="table-wrap" style="margin-bottom:14px">
+            ${payments?.length ? '<table><thead><tr><th>วันที่รับ</th><th class="text-right">จำนวน</th><th>วิธีชำระ</th><th>Ref</th><th>หมายเหตุ</th><th style="text-align:center">แก้ไข</th></tr></thead><tbody>'+payRows+'</tbody></table>' : '<div style="color:var(--text3);font-size:13px;padding:12px;background:#f8fafc;border-radius:8px;text-align:center">ยังไม่มีการรับเงิน</div>'}
+          </div>
+
+          ${!isCancelled && remain > 0 ? `
+            <div style="background:#f8fafc;border-radius:10px;padding:14px;border:1px solid #cbd5e1">
+              <div style="font-weight:700;font-size:13px;margin-bottom:10px;color:#1e293b">💰 บันทึกรับเงิน</div>
+              <div class="grid-2" style="gap:10px">
+                <div class="form-group"><label>วันที่รับ</label><input type="date" id="pay-date" value="${today()}"></div>
+                <div class="form-group"><label>จำนวน (บาท)</label><input type="number" id="pay-amount" value="${remain}" min="0" step="any"></div>
+                <div class="form-group"><label>วิธีชำระ</label>
+                  <select id="pay-method"><option>โอนเงิน</option><option>เงินสด</option><option>บัตรเครดิต</option><option>เช็ค</option></select>
+                </div>
+                <div class="form-group"><label>เลข Ref</label><input type="text" id="pay-ref" placeholder="เลขอ้างอิง"></div>
+              </div>
+              <div class="form-group"><label>หมายเหตุ</label><input type="text" id="pay-note" placeholder="หมายเหตุ"></div>
+              <button class="btn btn-primary btn-sap-update" style="font-size:13px;padding:8px 22px" onclick="saveARPayment('${arId}', ${ar.total_amount})">✅ บันทึกรับเงิน (${fmtB(remain)})</button>
+            </div>
+          ` : (!isCancelled ? `<div style="background:${overpaid>0.01?'#fff7ed':'#e8fdf0'};border-radius:10px;padding:12px;text-align:center;color:${overpaid>0.01?'#92400e':'var(--green)'};font-weight:700">${overpaid>0.01?'⚠️ รับเงินเกิน '+fmtB(overpaid):'✅ ชำระครบถ้วนแล้ว'}</div>` : '')}
+        </div>
+
+        <!-- Tab Notes & Adjustments -->
+        <div class="sap-tab-pane" data-pane="notes">
+          <div style="display:flex;flex-direction:column;gap:12px;max-width:750px">
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:8px;padding:14px">
+              <div style="font-weight:700;margin-bottom:6px;color:#475569">หมายเหตุเอกสาร</div>
+              <div style="font-size:13px;color:var(--text)">${escapeHTML(ar.note||'ไม่มีหมายเหตุ')}</div>
+            </div>
+            ${isCancelled ? `
+              <div style="background:#fff1f2;border:1px solid #fecdd3;color:#be123c;border-radius:10px;padding:12px">
+                <strong>ยกเลิก Invoice แล้ว</strong>${cnNo?' · Credit Note '+escapeHTML(cnNo):''}<br>
+                <span style="font-size:12px">ยอดรับเงินของ Invoice นี้ถูกกลับรายการแล้ว และไม่นับรวมในลูกหนี้/ยอดรับ</span>
+              </div>
+            ` : ''}
+            ${overpaid>0.01?`
+              <div style="background:#fff7ed;border:1px solid #fdba74;color:#92400e;border-radius:10px;padding:10px 12px;font-size:12px">
+                ⚠️ เงินรับเกิน ${fmtB(overpaid)} ยังอยู่ในประวัติรับเงินจริง ระบบไม่ได้คืนเงินหรือลดรายการรับให้อัตโนมัติ กรุณาตรวจการจัดการส่วนเกิน
+              </div>
+            `:''}
+            ${(adjustments||[]).length?`
+              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:12px;font-size:12px">
+                <b>ประวัติปรับยอดตาม Marketplace</b>
+                <div style="color:var(--text3);margin:4px 0">บันทึกภายใน ไม่ใช่ใบลดหนี้หรือใบเพิ่มหนี้ทางภาษี</div>
+                ${adjustments.map(a=>`<div style="border-top:1px solid #e2e8f0;padding:7px 0">${escapeHTML(String(a.created_at||'').slice(0,10))} · ${escapeHTML(a.platform||'')} ${escapeHTML(a.source_ref||'')} · ${fmtB(a.old_total)} → <b>${fmtB(a.new_total)}</b> · รับไว้ ${fmtB(a.paid_amount_at_adjustment)}</div>`).join('')}
+              </div>
+            `:''}
+          </div>
+        </div>
+
+        <!-- SAP Footer Bar -->
+        <div class="sap-footer">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+            ${!isCancelled ? `<button class="btn btn-danger" style="background:#fff1f2;color:#be123c;border-color:#fecdd3" onclick="openReturnFromAR('${arId}')">🧾 รับคืนสินค้า (CN)</button>` : ''}
+            ${!isCancelled && !sourceOrder ? `<button class="btn btn-secondary" onclick="openCreditNoteModal('${arId}', '${escapeHTML(ar.ar_no||'')}', ${ar.total_amount||0}, ${ar.paid_amount||0})">ใบลดหนี้ / ยกเลิกบิล</button>` : ''}
+          </div>
+          <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+              <span style="color:#64748b">ยอดรวม (Total)</span>
+              <span class="font-mono text-accent" style="font-weight:700">${fmtB(ar.total_amount)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
+              <span style="color:#64748b">รับเงินแล้ว (Paid)</span>
+              <span class="font-mono text-green">${fmtB(ar.paid_amount)}</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+              <span style="color:#0f172a">ยอดคงค้าง (Balance Due)</span>
+              <span class="font-mono ${remain > 0 ? 'text-red' : 'text-accent'}" style="font-size:17px">${fmtB(remain)}</span>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>`;
+    </div>
+  `;
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
@@ -45735,7 +46384,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.54', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'คัดลอกข้อมูลสองทางระหว่างที่อยู่จัดส่งสินค้า (Ship-to) และชื่อบริษัท/ข้อมูลออกบิล (Bill-to) (v3.54)', items:[
+    { v:'3.55', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับโฉมหน้าต่าง PO, รับสินค้า (GRPO), AR Invoice และ AP Invoice เป็นมาตรฐาน SAP Business One ERP (v3.55)', items:[
+      '🏢 <b>ยกระดับสู่มาตรฐาน SAP Business One ERP เต็มรูปแบบ (Complete SAP B1 ERP Purchasing & Invoicing):</b> ปรับปรุงอินเตอร์เฟสเอกสารจัดซื้อและการเงิน 4 หมวด ได้แก่ <code>🛒 ใบสั่งซื้อ (Purchase Order)</code> ทั้งสร้าง/แก้ไข และดูรายละเอียด, <code>📦 รับสินค้าจากการสั่งซื้อ (Goods Receipt PO - GRPO)</code>, <code>📄 ใบแจ้งหนี้ลูกหนี้ (A/R Invoice)</code>, และ <code>📄 ใบแจ้งหนี้เจ้าหนี้ (A/P Invoice)</code>',
+      '🖥️ <b>ขยายขนาดหน้าต่างรองรับหน้าจอคอมพิวเตอร์ (PC ERP Layout $\\ge 1200$px):</b> ปรับความกว้างของโมดอลจัดซื้อและการเงินทั้งหมดเป็น 1,280 พิกเซล (ขั้นต่ำ 1,200px) สอดคล้องกับหน้าจอมาตรฐานระบบ ERP องค์กร ข้อมูลครบถ้วน ไม่ตกขอบและไม่ต้องเลื่อนตารางแนวนอน',
+      '📑 <b>ระบบ 4 แท็บมาตรฐาน SAP B1 (Contents, Logistics, Accounting, Notes):</b> แยกหมวดหมู่ข้อมูลเอกสารชัดเจนด้วยแท็บนำทาง ได้แก่ รายการสินค้าพร้อมราคา/ต้นทุน, ข้อมูลสถานที่ส่งมอบ/ผู้ติดต่อ/ขนส่ง, ข้อมูลบัญชี/ภาษี/เงื่อนไขการชำระเงิน, และหมายเหตุ/บันทึกภายใน',
+      '💰 <b>กล่องสรุปยอดและปุ่มสั่งการสีทองมาตรฐาน SAP (Golden Action Bar):</b> มาพร้อมกล่องสรุปยอด Subtotal, Discount, Freight, VAT 7% และ Grand Total พร้อมปุ่มสีทอง <code>btn-sap-update</code> สั่งการ Post/Save ได้สะดวกรวดเร็ว แม่นยำระดับมืออาชีพ'
+    ]},
+    { v:'3.54', date:'2026-11-13', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'คัดลอกข้อมูลสองทางระหว่างที่อยู่จัดส่งสินค้า (Ship-to) และชื่อบริษัท/ข้อมูลออกบิล (Bill-to) (v3.54)', items:[
       '🔄 <b>คัดลอกสองทางระหว่าง Ship-to ⇄ Bill-to (Two-Way Ship/Bill Synchronization):</b> เพิ่มปุ่มอำนวยความสะดวกในการถ่ายโอนข้อมูลระหว่าง <code>📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</code> และ <code>🏢 ข้อมูลออกบิล / ชื่อบริษัท (Bill-to & Company Info)</code> ได้ทั้งสองทิศทาง โดยไม่ต้องพิมพ์ซ้ำซ้อน',
       '📋 <b>คัดลอกข้อมูลออกบิล/บริษัท ➔ ที่อยู่จัดส่ง:</b> คัดลอกที่อยู่ออกบิล (หรือชื่อบริษัท) ไปยังช่องที่อยู่จัดส่ง และหากชื่อลูกค้ายังว่างอยู่ ระบบจะนำชื่อบริษัทมากรอกเป็นชื่อผู้รับสินค้าให้อัตโนมัติทันที',
       '📋 <b>คัดลอกที่อยู่จัดส่ง ➔ ข้อมูลออกบิล/บริษัท:</b> คัดลอกที่อยู่จัดส่งไปยังช่องที่อยู่ออกบิล และหากชื่อบริษัท/ชื่อออกบิลยังว่างอยู่ ระบบจะนำชื่อลูกค้ามากรอกเป็นชื่อออกบิลให้ทันที',
