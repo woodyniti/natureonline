@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.53';
-const DISPLAY_APP_VERSION = 'v3.53';
+const CURRENT_APP_VERSION = 'sealthai-v3.54';
+const DISPLAY_APP_VERSION = 'v3.54';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1448,7 +1448,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.53)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.53 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.54)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.54 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1547,7 +1547,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.53)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.53 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.54)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.54 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7286,7 +7286,13 @@ async function orders() {
           <div class="sap-tab-pane" data-pane="logistics">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
               <div>
-                <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+                  <div style="font-weight:700;font-size:12.5px;color:#1e293b">📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</div>
+                  <div style="display:flex;gap:4px">
+                    <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','o')" title="คัดลอกจากชื่อบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกจากออกบิล/บริษัท ➔ จัดส่ง</button>
+                    <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('ship-to-bill','o')" title="คัดลอกที่อยู่จัดส่ง → ข้อมูลออกบิลและชื่อบริษัท">📋 คัดลอกจัดส่ง ➔ ออกบิล/บริษัท</button>
+                  </div>
+                </div>
                 <textarea id="o-address" rows="3" placeholder="ที่อยู่จัดส่ง / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
               </div>
               <div>
@@ -7303,7 +7309,10 @@ async function orders() {
           <div class="sap-tab-pane" data-pane="accounting">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
               <div style="font-weight:700;font-size:13px;color:#1e293b">🏢 ข้อมูลออกบิล / ใบกำกับภาษี (Bill-to & Tax Invoice)</div>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('o-address','o-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+              <div style="display:flex;gap:4px">
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('ship-to-bill','o')" title="คัดลอกจากที่อยู่จัดส่งและชื่อลูกค้า → ออกบิล/บริษัท">📋 คัดลอกจากที่อยู่จัดส่ง ➔ ออกบิล/บริษัท</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','o')" title="คัดลอกข้อมูลบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกออกบิล/บริษัท ➔ ที่อยู่จัดส่ง</button>
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
               <div>
@@ -8498,14 +8507,67 @@ function _fillCustFields(c, ids) {
   markUnsavedForm(changedField?.closest('.modal-overlay'));
 }
 
-// คัดลอกที่อยู่จัดส่ง → ที่อยู่ออกบิล (ปุ่มในฟอร์ม)
+// คัดลอกข้อมูลสองทางระหว่าง Ship-to (ที่อยู่จัดส่ง) และ Bill-to (ชื่อบริษัท / ข้อมูลออกบิล)
+function copyBetweenShipAndBill(direction, prefix) {
+  const p = prefix || 'o';
+  const shipAddrEl = document.getElementById(`${p}-address`);
+  const billAddrEl = document.getElementById(`${p}-billing-address`);
+  const companyEl = document.getElementById(`${p}-company`);
+  const custEl = document.getElementById(`${p}-cust`);
+
+  if (direction === 'bill-to-ship') {
+    // ข้อมูลออกบิล / บริษัท → ที่อยู่จัดส่งสินค้า
+    const billVal = (billAddrEl?.value || '').trim();
+    const compVal = (companyEl?.value || '').trim();
+    if (!billVal && !compVal) {
+      toast('ข้อมูลออกบิล / บริษัท ยังว่างอยู่', 'error');
+      return;
+    }
+    if (shipAddrEl) {
+      shipAddrEl.value = billVal || compVal;
+      markUnsavedForm(shipAddrEl.closest('.modal-overlay'));
+    }
+    if (custEl && !custEl.value.trim() && compVal) {
+      custEl.value = compVal;
+      markUnsavedForm(custEl.closest('.modal-overlay'));
+    }
+    toast('คัดลอกข้อมูลออกบิล / บริษัท → ที่อยู่จัดส่งแล้ว ✓', 'success');
+  } else {
+    // ที่อยู่จัดส่งสินค้า → ข้อมูลออกบิล / บริษัท
+    const shipVal = (shipAddrEl?.value || '').trim();
+    const custVal = (custEl?.value || '').trim();
+    if (!shipVal && !custVal) {
+      toast('ที่อยู่จัดส่งสินค้ายังว่างอยู่', 'error');
+      return;
+    }
+    if (billAddrEl) {
+      billAddrEl.value = shipVal;
+      markUnsavedForm(billAddrEl.closest('.modal-overlay'));
+    }
+    if (companyEl && !companyEl.value.trim() && custVal) {
+      companyEl.value = custVal;
+      markUnsavedForm(companyEl.closest('.modal-overlay'));
+    }
+    toast('คัดลอกที่อยู่จัดส่ง → ข้อมูลออกบิล / บริษัทแล้ว ✓', 'success');
+  }
+}
+window.copyBetweenShipAndBill = copyBetweenShipAndBill;
+
+// คัดลอกที่อยู่จัดส่ง → ที่อยู่ออกบิล (ปุ่มเดิมในฟอร์มเพื่อ backward compatibility)
 function copyShipToBill(fromId, toId) {
   const from = document.getElementById(fromId), to = document.getElementById(toId);
   if (!from || !to) return;
   to.value = from.value;
+  const prefix = String(fromId).split('-')[0];
+  const custEl = document.getElementById(`${prefix}-cust`);
+  const compEl = document.getElementById(`${prefix}-company`);
+  if (compEl && !compEl.value.trim() && custEl?.value?.trim()) {
+    compEl.value = custEl.value.trim();
+  }
   markUnsavedForm(to.closest('.modal-overlay'));
-  toast(from.value.trim() ? 'คัดลอกที่อยู่จัดส่ง → ออกบิลแล้ว' : 'ที่อยู่จัดส่งยังว่างอยู่', from.value.trim()?'success':'error');
+  toast(from.value.trim() ? 'คัดลอกที่อยู่จัดส่ง → ออกบิลและบริษัทแล้ว ✓' : 'ที่อยู่จัดส่งยังว่างอยู่', from.value.trim()?'success':'error');
 }
+window.copyShipToBill = copyShipToBill;
 
 // ── หน้าบันทึกออเดอร์ใหม่ ──
 function searchOrderCustomer(q) { _renderCustDropdown('o-cust-dd', 'fillCustomerFromOrder', q); }
@@ -10173,7 +10235,13 @@ async function viewOrder(orderId) {
       <div class="sap-tab-pane" data-pane="logistics">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px">
           <div>
-            <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 Ship-to Address (ที่อยู่จัดส่งสินค้า)</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+              <div style="font-weight:700;font-size:12.5px;color:#1e293b">📦 Ship-to Address (ที่อยู่จัดส่งสินค้า)</div>
+              <div style="display:flex;gap:4px">
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','ed')" title="คัดลอกจากชื่อบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกจากออกบิล/บริษัท ➔ จัดส่ง</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('ship-to-bill','ed')" title="คัดลอกที่อยู่จัดส่ง → ข้อมูลออกบิลและชื่อบริษัท">📋 คัดลอกจัดส่ง ➔ ออกบิล/บริษัท</button>
+              </div>
+            </div>
             <textarea id="ed-address" rows="3" placeholder="ระบุที่อยู่จัดส่ง..." style="${iStyle};resize:vertical">${order.customer_address||''}</textarea>
           </div>
           <div>
@@ -10203,7 +10271,10 @@ async function viewOrder(orderId) {
       <div class="sap-tab-pane" data-pane="accounting">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
           <div style="font-weight:700;font-size:13px;color:#1e293b">🏢 Bill-to / Tax Invoice Information (ข้อมูลออกบิล & ใบกำกับภาษี)</div>
-          <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('ed-address','ed-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+          <div style="display:flex;gap:4px">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('ship-to-bill','ed')" title="คัดลอกจากที่อยู่จัดส่งและชื่อลูกค้า → ออกบิล/บริษัท">📋 คัดลอกจากที่อยู่จัดส่ง ➔ ออกบิล/บริษัท</button>
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','ed')" title="คัดลอกข้อมูลบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกออกบิล/บริษัท ➔ ที่อยู่จัดส่ง</button>
+          </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
           <div>
@@ -22180,7 +22251,13 @@ async function quotations() {
           <div class="sap-tab-pane" data-pane="logistics">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
               <div>
-                <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+                  <div style="font-weight:700;font-size:12.5px;color:#1e293b">📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</div>
+                  <div style="display:flex;gap:4px">
+                    <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','qt')" title="คัดลอกจากชื่อบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกจากออกบิล/บริษัท ➔ จัดส่ง</button>
+                    <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('ship-to-bill','qt')" title="คัดลอกที่อยู่จัดส่ง → ข้อมูลออกบิลและชื่อบริษัท">📋 คัดลอกจัดส่ง ➔ ออกบิล/บริษัท</button>
+                  </div>
+                </div>
                 <textarea id="qt-address" rows="3" placeholder="ที่อยู่จัดส่ง / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
               </div>
               <div>
@@ -22194,7 +22271,10 @@ async function quotations() {
           <div class="sap-tab-pane" data-pane="accounting">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
               <div style="font-weight:700;font-size:13px;color:#1e293b">🏢 ข้อมูลออกบิล / ใบกำกับภาษี (Bill-to & Tax Invoice)</div>
-              <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('qt-address','qt-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+              <div style="display:flex;gap:4px">
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('ship-to-bill','qt')" title="คัดลอกจากที่อยู่จัดส่งและชื่อลูกค้า → ออกบิล/บริษัท">📋 คัดลอกจากที่อยู่จัดส่ง ➔ ออกบิล/บริษัท</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','qt')" title="คัดลอกข้อมูลบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกออกบิล/บริษัท ➔ ที่อยู่จัดส่ง</button>
+              </div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
               <div>
@@ -45545,7 +45625,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.53', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับโฉมหน้าต่างบันทึก/แก้ไข Order & ใบเสนอราคา ตามมาตรฐาน SAP Business One ERP (v3.53)', items:[
+    { v:'3.54', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'คัดลอกข้อมูลสองทางระหว่างที่อยู่จัดส่งสินค้า (Ship-to) และชื่อบริษัท/ข้อมูลออกบิล (Bill-to) (v3.54)', items:[
+      '🔄 <b>คัดลอกสองทางระหว่าง Ship-to ⇄ Bill-to (Two-Way Ship/Bill Synchronization):</b> เพิ่มปุ่มอำนวยความสะดวกในการถ่ายโอนข้อมูลระหว่าง <code>📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</code> และ <code>🏢 ข้อมูลออกบิล / ชื่อบริษัท (Bill-to & Company Info)</code> ได้ทั้งสองทิศทาง โดยไม่ต้องพิมพ์ซ้ำซ้อน',
+      '📋 <b>คัดลอกข้อมูลออกบิล/บริษัท ➔ ที่อยู่จัดส่ง:</b> คัดลอกที่อยู่ออกบิล (หรือชื่อบริษัท) ไปยังช่องที่อยู่จัดส่ง และหากชื่อลูกค้ายังว่างอยู่ ระบบจะนำชื่อบริษัทมากรอกเป็นชื่อผู้รับสินค้าให้อัตโนมัติทันที',
+      '📋 <b>คัดลอกที่อยู่จัดส่ง ➔ ข้อมูลออกบิล/บริษัท:</b> คัดลอกที่อยู่จัดส่งไปยังช่องที่อยู่ออกบิล และหากชื่อบริษัท/ชื่อออกบิลยังว่างอยู่ ระบบจะนำชื่อลูกค้ามากรอกเป็นชื่อออกบิลให้ทันที',
+      '⚡ <b>ครอบคลุมทุกโมดอลทั้งแท็บ Logistics และ Accounting:</b> ติดตั้งปุ่มสั่งการทั้งในหน้าต่างสร้างออเดอร์ใหม่ (New Order), หน้าต่างดู/แก้ไขออเดอร์ (Edit Order) และหน้าต่างใบเสนอราคา (Quotation) ทั้งในแท็บ Logistics (Pane 2) และแท็บ Accounting (Pane 3) ไม่ต้องสลับแท็บไปมา'
+    ]},
+    { v:'3.53', date:'2026-11-13', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับโฉมหน้าต่างบันทึก/แก้ไข Order & ใบเสนอราคา ตามมาตรฐาน SAP Business One ERP (v3.53)', items:[
       '🏢 <b>หน้าต่างบันทึก/แก้ไขสไตล์ SAP Business One (SAP B1 ERP Interface):</b> ปรับปรุงการจัดวางหน้าต่างแก้ไขรายการ Order (Sales Order) และใบเสนอราคา (Sales Quotation) เป็นรูปแบบ 2 คอลัมน์บนมาตรฐาน SAP B1 แบ่งสัดส่วนข้อมูลคู่ค้า (Business Partner / Customer Info) ฝั่งซ้าย และข้อมูลเอกสาร (Document Header, No., Status, Posting Date, Delivery Date, Payment Method) ฝั่งขวาอย่างชัดเจนเป็นระเบียบ สวยงามและใช้งานง่ายระดับองค์กร',
       '📂 <b>ระบบแท็บนำทางแยกหมวดหมู่เอกสาร (SAP B1 Tabbed Navigation):</b> จัดระเบียบเนื้อหาเอกสารออกเป็น 4 แท็บมาตรฐาน ได้แก่ <code>📦 Contents</code> (ตารางรายการสินค้า ราคา ส่วนลด พร้อมปุ่มดึงต้นทุนล่าสุด), <code>🚚 Logistics</code> (ที่อยู่จัดส่งสินค้า, ขนส่ง Tracking, เลข PO ลูกค้า, กำหนดวันส่งมอบ), <code>💳 Accounting</code> (ข้อมูลออกบิล นิติบุคคล เลขประจำตัวผู้เสียภาษี 13 หลัก, พนักงานขาย, ลิงก์ AR Invoice), และ <code>📝 Notes & Audit</code> (หมายเหตุเอกสาร, หมายเหตุหลังบ้านเฉพาะภายใน, บันทึกการอนุมัติปิดเอกสาร SAP B1, ประวัติแก้ไขราคาในบิล)',
       '💰 <b>สรุปยอดท้ายบิล & ปุ่มสั่งการสีทองมาตรฐาน SAP (Golden Action Bar):</b> ด้านล่างแสดงสรุปยอดรวม Total Before Discount, Discount (% / ฿), Freight/Shipping Fee และ Grand Total พร้อมกล่องวิเคราะห์กำไรขั้นต้น (GP) และปุ่มสั่งการหลัก <code>Update (บันทึกการแก้ไข)</code> สีทองอร่ามตามมาตรฐาน SAP Business One พร้อมปุ่มพิมพ์เอกสาร, ค้างส่ง/ปิดเอกสาร, ใบปะหน้า, สติกเกอร์ และรับคืนสินค้า (CN)'

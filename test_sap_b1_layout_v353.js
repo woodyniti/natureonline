@@ -9,10 +9,10 @@ const rawContent = fs.readFileSync(htmlPath, 'utf8');
 const content = rawContent.replace(/\r\n/g, '\n');
 
 // 1. Version assertions
-assert(content.includes("const CURRENT_APP_VERSION = 'sealthai-v3.53';"), 'CURRENT_APP_VERSION should be sealthai-v3.53');
-assert(content.includes("const DISPLAY_APP_VERSION = 'v3.53';"), 'DISPLAY_APP_VERSION should be v3.53');
-assert(content.includes("v3.53 🚀 System Active"), 'Login version badge should be v3.53');
-assert(content.includes("v3.53 🚀</span>"), 'Topbar version badge should be v3.53');
+assert(content.match(/const CURRENT_APP_VERSION = 'sealthai-v3\.(?:5[3-9]|[6-9]\d)';/), 'CURRENT_APP_VERSION should be >= sealthai-v3.53');
+assert(content.match(/const DISPLAY_APP_VERSION = 'v3\.(?:5[3-9]|[6-9]\d)';/), 'DISPLAY_APP_VERSION should be >= v3.53');
+assert(content.match(/v3\.(?:5[3-9]|[6-9]\d) 🚀 System Active/), 'Login version badge should be >= v3.53');
+assert(content.match(/v3\.(?:5[3-9]|[6-9]\d) 🚀<\/span>/), 'Topbar version badge should be >= v3.53');
 assert(content.includes("{ v:'3.53', date:'2026-11-13'"), 'Changelog must include v3.53');
 console.log('✓ 1. Version and Changelog verified');
 
