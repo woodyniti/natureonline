@@ -125,6 +125,40 @@ assert(content.includes('const hasAR = !!(existAR && existAR.length > 0);'), 'ha
 assert(content.includes('const firstAR = hasAR ? existAR[0] : null;'), 'firstAR must be initialized alongside hasAR');
 console.log('✓ 7. hasAR Temporal Dead Zone (TDZ) fix verified in viewOrder');
 
+// 8. New Order Modal SAP B1 Structure
+assert(content.includes('id="sap-new-order-window"'), 'New Order modal must contain sap-new-order-window');
+assert(content.includes('Sales Order · บันทึกออเดอร์ใหม่'), 'New Order modal header must have Sales Order title');
+assert(content.includes("switchSapTab('sap-new-order-window','contents')"), 'New Order modal must have contents tab switch');
+assert(content.includes("switchSapTab('sap-new-order-window','logistics')"), 'New Order modal must have logistics tab switch');
+assert(content.includes("switchSapTab('sap-new-order-window','accounting')"), 'New Order modal must have accounting tab switch');
+assert(content.includes("switchSapTab('sap-new-order-window','notes')"), 'New Order modal must have notes tab switch');
+assert(content.includes('id="o-cust"'), 'o-cust must exist in new order modal');
+assert(content.includes('id="o-contact"'), 'o-contact must exist in new order modal');
+assert(content.includes('id="o-phone"'), 'o-phone must exist in new order modal');
+assert(content.includes('id="o-ref"'), 'o-ref must exist in new order modal');
+assert(content.includes('id="o-username"'), 'o-username must exist in new order modal');
+assert(content.includes('id="o-channel"'), 'o-channel must exist in new order modal');
+assert(content.includes('id="o-quote-source"'), 'o-quote-source must exist in new order modal');
+assert(content.includes('id="o-date"'), 'o-date must exist in new order modal');
+assert(content.includes('id="o-delivery-date"'), 'o-delivery-date must exist in new order modal');
+assert(content.includes('id="o-status"'), 'o-status must exist in new order modal');
+assert(content.includes('id="o-pay"'), 'o-pay must exist in new order modal');
+assert(content.includes('id="o-customer-po"'), 'o-customer-po must exist in new order modal');
+assert(content.includes('id="order-items-container"'), 'order-items-container must exist in new order modal');
+assert(content.includes('id="o-address"'), 'o-address must exist in new order modal');
+assert(content.includes('id="o-track"'), 'o-track must exist in new order modal');
+assert(content.includes('id="o-company"'), 'o-company must exist in new order modal');
+assert(content.includes('id="o-tax-id"'), 'o-tax-id must exist in new order modal');
+assert(content.includes('id="o-billing-address"'), 'o-billing-address must exist in new order modal');
+assert(content.includes('id="o-emp"'), 'o-emp must exist in new order modal');
+assert(content.includes('id="o-note"'), 'o-note must exist in new order modal');
+assert(content.includes('id="o-internal-note"'), 'o-internal-note must exist in new order modal');
+assert(content.includes('id="o-bill-disc"'), 'o-bill-disc must exist in new order modal');
+assert(content.includes('id="o-shipping-fee"'), 'o-shipping-fee must exist in new order modal');
+assert(content.includes('id="o-summary"'), 'o-summary must exist in new order modal');
+assert(content.includes('class="btn btn-sap-update" onclick="saveOrder()'), 'New Order footer must have golden btn-sap-update button');
+console.log('✓ 8. New Order Modal (modal-order) SAP B1 ERP layout verified');
+
 console.log('\n======================================================');
 console.log('🎉 ALL v3.53 SAP BUSINESS ONE LAYOUT TESTS PASSED 100%!');
 console.log('======================================================');

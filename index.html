@@ -452,11 +452,12 @@ tbody td:first-child { color: var(--text); }
   width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto;
   box-shadow: 0 20px 60px -10px rgba(15, 23, 42, 0.35), 0 10px 25px -5px rgba(0, 0, 0, 0.15);
 }
-#modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
+#modal-order .modal, #modal-order-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
 #modal-quote .modal, #modal-quote-detail .modal { max-width:min(1400px,calc(100vw - 32px)); width:min(1320px,calc(100vw - 32px)); max-height:94vh; box-sizing:border-box; }
-#order-detail-content, #ed-items, #qt-items { min-width:0; max-width:100%; }
+#order-detail-content, #ed-items, #qt-items, #order-items-container { min-width:0; max-width:100%; }
 
 @media (min-width: 1200px) {
+  #modal-order .modal,
   #modal-order-detail .modal,
   #modal-quote .modal,
   #modal-quote-detail .modal {
@@ -466,6 +467,7 @@ tbody td:first-child { color: var(--text); }
   }
 }
 
+#order-modal-footer,
 #order-detail-footer,
 #qt-modal-footer,
 #qt-detail-footer {
@@ -7162,123 +7164,222 @@ async function orders() {
       <div id="ord-cards"></div>
     </div>
 
-    <!-- Modal: New Order -->
+    <!-- Modal: New Order (SAP Business One ERP Layout) -->
     <div class="modal-overlay" id="modal-order">
-      <div class="modal" style="max-width:680px">
-        <div class="modal-title">🛒 บันทึกออเดอร์ใหม่</div>
-        <div class="grid-2">
-          <div class="form-group" style="grid-column:1/-1">
-            <label>ดึงข้อมูลจากใบเสนอราคา <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
-            <select id="o-quote-source" onchange="importQuoteToOrder(this.value)">
-              <option value="">-- เลือกใบเสนอราคาเพื่อลดการกรอกข้อมูลซ้ำ --</option>
-            </select>
-          </div>
-          <div class="form-group"><label>วันที่เอกสาร (Order Date)</label><input type="date" id="o-date" value="${today()}"></div>
-          <div class="form-group"><label>วันที่ส่งสินค้า (Delivery Date)</label><input type="date" id="o-delivery-date" value="${today()}"></div>
-          <div class="form-group"><label>ช่องทาง</label>
-            <select id="o-channel">
-              <option>Facebook</option><option selected>Shopee</option><option>Lazada</option><option>LINE</option>
-              <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
-            </select>
-          </div>
-          <div class="form-group" style="position:relative">
-            <label>ชื่อลูกค้า</label>
-            <input type="text" id="o-cust" placeholder="🔍 พิมพ์/คลิกเพื่อค้นหาลูกค้าเดิม..." autocomplete="off" oninput="searchOrderCustomer(this.value)" onfocus="searchOrderCustomer(this.value)">
-            <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
-          </div>
-          <div class="form-group"><label>ชื่อลูกค้า (User) Shopee/Lazada</label><input type="text" id="o-username" placeholder="@username Shopee / Lazada"></div>
-          <div class="form-group"><label>เลขอ้างอิงเอกสาร Shopee <span style="font-size:11px;color:var(--text3)">(Customer Ref · เว้นว่างได้)</span></label><input type="text" id="o-ref" placeholder="รหัสอ้างอิง / เลขที่คำสั่งซื้อ" onchange="checkDupCustomerRef(this.value,null)"></div>
-          <div class="form-group"><label>เลขที่ PO ของลูกค้า <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-customer-po" placeholder="เช่น PO-2026-001"></div>
-          <div class="form-group"><label>ชื่อผู้ติดต่อ <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ"></div>
-          <div class="form-group"><label>เบอร์โทร <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><input type="text" id="o-phone" placeholder="0x-xxxx-xxxx"></div>
-          <div class="form-group"><label>ช่องทางชำระ</label>
-            <select id="o-pay">
-              <option>โอนเงิน</option><option>COD</option><option>บัตรเครดิต</option><option>เงินสด</option>
-            </select>
-          </div>
-          <div class="form-group"><label>Tracking</label><input type="text" id="o-track" placeholder="เลขพัสดุ"></div>
-          <div class="form-group"><label>สถานะจัดส่ง</label>
-            <select id="o-status">
-              <option value="pending">รอจัดส่ง</option><option value="shipped">จัดส่งแล้ว</option>
-              <option value="delivered">ส่งถึงแล้ว</option><option value="cancelled">ยกเลิก</option>
-            </select>
-          </div>
-          <div class="form-group"><label>พนักงานขาย</label>
-            <select id="o-emp"><option value="">-- ไม่ระบุ --</option></select>
-          </div>
-        </div>
-        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
-          <div style="font-weight:700;font-size:13px;color:var(--text);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-            <span>🏢 ข้อมูลออกบิล / ใบกำกับภาษี <span style="font-size:11px;font-weight:400;color:var(--text3)">(ไม่บังคับ)</span></span>
-            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('o-address','o-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
-          </div>
-          <div class="grid-2" style="margin-bottom:8px">
-            <div class="form-group" style="margin-bottom:0">
-              <label>ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
-              <input type="text" id="o-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล">
+      <div class="modal" style="width:min(1320px,calc(100vw - 32px));max-width:min(1400px,calc(100vw - 32px))">
+        <div class="sap-window" id="sap-new-order-window">
+          <!-- 1. Header Bar -->
+          <div class="sap-header-bar">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:15px">🛒</span>
+              <span style="font-weight:700">Sales Order · บันทึกออเดอร์ใหม่</span>
+              <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:11px">SAP Business One Standard</span>
             </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>เลขประจำตัวผู้เสียภาษี (Tax ID) <span style="font-size:11px;color:var(--text3)">(13 หลัก)</span></label>
-              <input type="text" id="o-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา">
+            <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:#64748b;font-weight:600">
+              <span>Primary / New Sales Order</span>
             </div>
           </div>
-          <div class="grid-2">
-            <div class="form-group" style="margin-bottom:0"><label>ที่อยู่จัดส่ง <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label><textarea id="o-address" rows="2" placeholder="ที่อยู่ / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์"></textarea></div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>ที่อยู่ออกบิล <span style="font-size:11px;color:var(--text3)">(ไม่บังคับ)</span></label>
-              <textarea id="o-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกใบกำกับภาษี / ใบเสร็จตาม ภ.พ.20"></textarea>
-            </div>
-          </div>
-        </div>
-        <div class="grid-2" style="margin-bottom:12px">
-          <div class="form-group" style="margin-bottom:0">
-            <label>หมายเหตุเอกสาร <span style="font-size:11px;color:var(--text3)">(จะพิมพ์ลงในบิล/ใบเสร็จ)</span></label>
-            <textarea id="o-note" rows="2" placeholder="เช่น หมายเหตุสำหรับลูกค้า, เงื่อนไขจัดส่ง (แสดงในหน้าพิมพ์บิล)..."></textarea>
-          </div>
-          <div class="form-group" style="margin-bottom:0">
-            <label style="color:#b45309;font-weight:700">🔒 หมายเหตุหลังบ้าน <span style="font-size:11px;color:var(--text3);font-weight:400">(เฉพาะภายในร้าน · ไม่พิมพ์ลงบิล)</span></label>
-            <textarea id="o-internal-note" rows="2" placeholder="บันทึกช่วยจำสำหรับหลังบ้าน เช่น ข้อมูลลูกค้า, เกรด, กำชับทีมแพ็ค (ไม่นำไปพิมพ์บิล)..." style="background:#fffbeb;border:1px solid #fde68a"></textarea>
-          </div>
-        </div>
-        <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px">
-          <div class="card-title" style="margin:0">รายการสินค้า</div>
-          <div style="display:flex;gap:6px">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('order', -1)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px">
-              ➕ สร้างสินค้าใหม่เข้าคลัง
-            </button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="addOrderItem()">+ เพิ่มแถวสินค้า</button>
-          </div>
-        </div>
-        <div id="order-items-container"></div>
-        <div id="o-receipt-visibility-warning" style="display:none;margin:6px 0 12px;padding:9px 11px;border-radius:8px;font-size:12px"></div>
 
-        <!-- ส่วนลดทั้งบิล -->
-        <div style="margin-top:12px;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:10px">
-          <div style="display:flex;align-items:flex-end;gap:12px;margin-bottom:10px;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:13px;color:var(--text2);min-width:90px">ส่วนลดทั้งบิล</span>
-            <input type="number" id="o-bill-disc" value="0" min="0" step="any"
-              oninput="updateOrderSummary()"
-              style="width:90px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--red);font-size:14px;text-align:right">
-            <select id="o-bill-disc-type" onchange="updateOrderSummary()"
-              style="background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px">
-              <option value="amount">บาท (฿)</option>
-              <option value="percent">เปอร์เซ็นต์ (%)</option>
-            </select>
+          <!-- 2. Form Panel (2 columns: Customer BP on left, Document Details on right) -->
+          <div class="sap-panel">
+            <div class="sap-form-grid">
+              <!-- Left Column: Business Partner / Customer -->
+              <div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Customer</span>
+                  <div style="display:flex;gap:4px;align-items:center;position:relative;width:100%">
+                    <button type="button" class="sap-link-btn" title="เลือกลูกค้า" onclick="document.getElementById('o-cust')?.focus()">➔</button>
+                    <input type="text" id="o-cust" placeholder="🔍 พิมพ์/คลิกเพื่อค้นหาลูกค้าเดิม..." autocomplete="off" oninput="searchOrderCustomer(this.value)" onfocus="searchOrderCustomer(this.value)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <div id="o-cust-dd" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg2);border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:999;max-height:220px;overflow-y:auto"></div>
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Contact Person</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                    <input type="text" id="o-contact" placeholder="ชื่อผู้ติดต่อ (ไม่บังคับ)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <input type="text" id="o-phone" placeholder="เบอร์โทร 0x-xxxx-xxxx" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Customer Ref. No.</span>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                    <input type="text" id="o-ref" placeholder="Customer Ref (Shopee)" onchange="checkDupCustomerRef(this.value,null)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                    <input type="text" id="o-username" placeholder="@username Shopee/Lazada" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Channel / Cur.</span>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <select id="o-channel" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;font-weight:600">
+                      <option>Facebook</option><option selected>Shopee</option><option>Lazada</option><option>LINE</option>
+                      <option>TikTok</option><option>Thaimart</option><option>Offline</option><option>อื่นๆ</option>
+                    </select>
+                    <span style="font-size:11.5px;font-weight:700;color:#64748b;white-space:nowrap;padding:0 4px">THB (฿)</span>
+                  </div>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Copy from Quote</span>
+                  <select id="o-quote-source" onchange="importQuoteToOrder(this.value)" style="width:100%;background:#f0f9ff;border:1px solid #93c5fd;border-radius:6px;padding:5px 8px;color:#0369a1;font-size:12.5px;font-weight:600">
+                    <option value="">-- เลือกใบเสนอราคาเพื่อลดการกรอกข้อมูลซ้ำ --</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Right Column: Document Details -->
+              <div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Posting Date</span>
+                  <input type="date" id="o-date" value="${today()}" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label" style="color:#0284c7;font-weight:700">Delivery Date</span>
+                  <input type="date" id="o-delivery-date" value="${today()}" style="width:100%;background:#f0f9ff;border:1px solid #93c5fd;border-radius:6px;padding:5px 8px;color:#0369a1;font-size:13px;font-weight:700;box-sizing:border-box">
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Shipping Status</span>
+                  <select id="o-status" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px">
+                    <option value="pending" selected>รอจัดส่ง (Pending)</option>
+                    <option value="shipped">จัดส่งแล้ว (Shipped)</option>
+                    <option value="delivered">ส่งถึงแล้ว (Delivered)</option>
+                    <option value="cancelled">ยกเลิก (Cancelled)</option>
+                  </select>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Payment Method</span>
+                  <select id="o-pay" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px">
+                    <option selected>โอนเงิน</option><option>COD</option><option>บัตรเครดิต</option><option>เงินสด</option>
+                  </select>
+                </div>
+                <div class="sap-field-row">
+                  <span class="sap-field-label">Customer PO</span>
+                  <input type="text" id="o-customer-po" placeholder="เช่น PO-2026-001 (ไม่บังคับ)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                </div>
+              </div>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2)">
-              <span>ค่าขนส่ง</span>
-              <input type="number" id="o-shipping-fee" value="0" min="0" step="any" oninput="updateOrderSummary()"
-                style="width:100px;background:var(--bg4);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--blue);font-size:14px;text-align:right">
-              <span>บาท</span>
-            </label>
           </div>
-          <div id="o-summary" style="padding-top:4px"></div>
+
+          <!-- 3. Tabs Navigation -->
+          <div class="sap-tabs">
+            <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-new-order-window','contents')">📦 Contents (รายการสินค้า)</div>
+            <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-new-order-window','logistics')">🚚 Logistics (จัดส่ง & ขนส่ง)</div>
+            <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-new-order-window','accounting')">💳 Accounting (ออกบิล & ภาษี)</div>
+            <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-new-order-window','notes')">📝 Notes (หมายเหตุ)</div>
+          </div>
+
+          <!-- 4. Tab Panes -->
+          <!-- Pane 1: Contents -->
+          <div class="sap-tab-pane active" data-pane="contents">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap">
+              <div style="font-size:12.5px;color:#475569;font-weight:600">Item / Service Type: <span style="color:#0f172a;font-weight:700">Item (สินค้า)</span> · <span style="font-size:11.5px;color:#64748b">เลือกสินค้าจากระบบ หรือเพิ่มสินค้าใหม่เข้าคลังได้ทันที</span></div>
+              <div style="display:flex;gap:6px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('order', -1)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px">
+                  ➕ สร้างสินค้าใหม่เข้าคลัง
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addOrderItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);font-weight:700;font-size:12px">+ เพิ่มแถวสินค้า</button>
+              </div>
+            </div>
+            <div id="order-items-container"></div>
+            <div id="o-receipt-visibility-warning" style="display:none;margin:6px 0 12px;padding:9px 11px;border-radius:8px;font-size:12px"></div>
+          </div>
+
+          <!-- Pane 2: Logistics -->
+          <div class="sap-tab-pane" data-pane="logistics">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">📦 ที่อยู่จัดส่งสินค้า (Ship-to Address)</div>
+                <textarea id="o-address" rows="3" placeholder="ที่อยู่จัดส่ง / บ้านเลขที่ / แขวง / เขต / จังหวัด / รหัสไปรษณีย์" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+              </div>
+              <div>
+                <div style="font-weight:700;font-size:12.5px;color:#1e293b;margin-bottom:6px">🚚 ข้อมูลพัสดุ & ขนส่ง (Tracking)</div>
+                <div class="sap-field-row" style="margin-bottom:8px">
+                  <span class="sap-field-label">Tracking No.</span>
+                  <input type="text" id="o-track" placeholder="เลขพัสดุ / หมายเลขติดตามการจัดส่ง" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 3: Accounting -->
+          <div class="sap-tab-pane" data-pane="accounting">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+              <div style="font-weight:700;font-size:13px;color:#1e293b">🏢 ข้อมูลออกบิล / ใบกำกับภาษี (Bill-to & Tax Invoice)</div>
+              <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyShipToBill('o-address','o-billing-address')" title="คัดลอกจากที่อยู่จัดส่ง">📋 คัดลอกที่อยู่จัดส่ง → ออกบิล</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+              <div>
+                <span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
+                <input type="text" id="o-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+              </div>
+              <div>
+                <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
+                <input type="text" id="o-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+              </div>
+            </div>
+            <div style="margin-bottom:10px">
+              <span class="sap-field-label">ที่อยู่ในการออกบิล (Billing Address)</span>
+              <textarea id="o-billing-address" rows="2" placeholder="ที่อยู่สำหรับออกใบกำกับภาษี / ใบเสร็จตาม ภ.พ.20" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px;resize:vertical"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <span class="sap-field-label">Sales Employee (พนักงานขาย)</span>
+                <select id="o-emp" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;margin-top:3px"><option value="">-- ไม่ระบุ --</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pane 4: Notes -->
+          <div class="sap-tab-pane" data-pane="notes">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div>
+                <span class="sap-field-label" style="color:#1e293b">หมายเหตุที่แสดงในบิล (Remarks · พิมพ์ให้ลูกค้าเห็น)</span>
+                <textarea id="o-note" rows="3" placeholder="เช่น หมายเหตุสำหรับลูกค้า, เงื่อนไขจัดส่ง (แสดงในหน้าพิมพ์บิล)..." style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px;resize:vertical"></textarea>
+              </div>
+              <div>
+                <span class="sap-field-label" style="color:#b45309;font-weight:700">🔒 หมายเหตุหลังบ้าน (Internal Remarks · ไม่พิมพ์ลงบิล)</span>
+                <textarea id="o-internal-note" rows="3" placeholder="บันทึกช่วยจำสำหรับหลังบ้าน เช่น ข้อมูลลูกค้า, เกรด, กำชับทีมแพ็ค (ไม่นำไปพิมพ์บิล)..." style="width:100%;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px;resize:vertical"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Bottom Summary Footer -->
+          <div class="sap-footer">
+            <div>
+              <div class="sap-field-row" style="margin-bottom:8px">
+                <span class="sap-field-label">Document Type</span>
+                <div style="font-size:12.5px;font-weight:700;color:#1e293b">Sales Order (SO) · ใบสั่งขายใหม่</div>
+              </div>
+              <div class="sap-field-row" style="margin-bottom:6px">
+                <span class="sap-field-label">Status</span>
+                <div style="font-size:12px;color:#64748b">รอการจัดส่ง / ยืนยันคำสั่งซื้อ</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;color:var(--red);font-size:12.5px;margin-bottom:6px">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="color:#475569;font-weight:600">Discount</span>
+                  <input type="number" id="o-bill-disc" value="0" min="0" step="any" oninput="updateOrderSummary()" style="width:80px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:12px;color:var(--red)">
+                  <select id="o-bill-disc-type" onchange="updateOrderSummary()" style="background:#fff;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:11.5px">
+                    <option value="amount">บาท (฿)</option>
+                    <option value="percent">เปอร์เซ็นต์ (%)</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;font-size:12.5px">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="color:#475569;font-weight:600">Freight</span>
+                  <input type="number" id="o-shipping-fee" value="0" min="0" step="any" oninput="updateOrderSummary()" style="width:80px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:12px;color:var(--blue)">
+                  <span style="font-size:11.5px;color:#64748b">บาท (฿)</span>
+                </div>
+              </div>
+              <div id="o-summary" style="padding-top:4px"></div>
+            </div>
+          </div>
         </div>
 
-        <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeModal('modal-order')">ยกเลิก</button>
-          <button class="btn btn-primary" onclick="saveOrder()">💾 บันทึกออเดอร์</button>
+        <div class="modal-footer" id="order-modal-footer">
+          <button class="btn btn-sap-update" onclick="saveOrder()">💾 Add (บันทึกออเดอร์)</button>
+          <button class="btn btn-secondary" onclick="closeModal('modal-order')">Cancel (ยกเลิก)</button>
         </div>
       </div>
     </div>
@@ -8163,6 +8264,7 @@ async function openNewOrder() {
   if (sf) sf.value = '0';
   updateOrderSummary();
   openModal('modal-order');
+  if (typeof switchSapTab === 'function') switchSapTab('sap-new-order-window', 'contents');
   registerUnsavedForm(document.getElementById('modal-order'));
   loadOrderQuoteOptions();
 }
