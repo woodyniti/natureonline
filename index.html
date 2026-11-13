@@ -2608,6 +2608,43 @@ function getOrderCompanyName(order, customer = null) {
   return '';
 }
 
+function _normalizeCompName(str) {
+  return String(str || '')
+    .replace(/\s*\((?:สำนักงานใหญ่|สาขา(?:ที่\s*)?\d+|head\s*office)\)\s*/gi, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function formatCustomerDisplayName(customerName, companyName, contactPerson = '', escape = true) {
+  const cust = String(customerName || '').trim();
+  const comp = String(companyName || '').trim();
+  const contact = String(contactPerson || '').trim();
+
+  let result = '';
+  if (comp) {
+    const isSameAsComp = cust && (
+      cust.toLowerCase() === comp.toLowerCase() ||
+      _normalizeCompName(cust) === _normalizeCompName(comp)
+    );
+    const isSameAsContact = cust && contact && (
+      cust.toLowerCase() === contact.toLowerCase() ||
+      _normalizeCompName(cust) === _normalizeCompName(contact)
+    );
+    if (cust && !isSameAsComp && !isSameAsContact) {
+      result = `${comp} (${cust})`;
+    } else {
+      result = comp;
+    }
+  } else if (cust) {
+    result = cust;
+  }
+  if (!result) result = '-';
+  return escape ? escapeHTML(result) : result;
+}
+window.formatCustomerDisplayName = formatCustomerDisplayName;
+window._normalizeCompName = _normalizeCompName;
+
 function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null, deliveryDate = null, fulfillmentRaw = null, sapCloseRaw = null) {
   let clean = cleanOrderNote(note);
   const comp = (companyName || '').trim();
@@ -7938,7 +7975,7 @@ async function loadOrders() {
           </td>
           <td class="col-customer">
             ${o.company_name ? `<div style="font-weight:700;color:var(--text);font-size:13.5px">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
-            <div style="font-weight:${o.company_name?'500':'600'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'-')}</div>
+            ${(!o.company_name || (o.customer_name && o.customer_name.trim().toLowerCase() !== o.company_name.trim().toLowerCase() && _normalizeCompName(o.customer_name) !== _normalizeCompName(o.company_name))) ? `<div style="font-weight:${o.company_name?'500':'600'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'-')}</div>` : ''}
             ${o.customer_username?`<div style="font-size:11px;color:var(--text3)">👤 ${escapeHTML(o.customer_username)}</div>`:''}
             ${o.customer_address ? `<div style="font-size:10.5px;color:var(--text3);margin-top:2px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(o.customer_address)}">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
             <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel,true)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${escapeHTML(o.employees.name)}</span>`:''}</div>
@@ -7984,7 +8021,7 @@ async function loadOrders() {
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
         <div>
           ${o.company_name ? `<div style="font-weight:700;font-size:14px;color:var(--text)">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
-          <div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>
+          ${(!o.company_name || (o.customer_name && o.customer_name.trim().toLowerCase() !== o.company_name.trim().toLowerCase() && _normalizeCompName(o.customer_name) !== _normalizeCompName(o.company_name))) ? `<div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>` : ''}
           ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date}${getOrderDeliveryDate(o)?' · <b style="color:#0f766e">🚚 ส่ง: '+escapeHTML(getOrderDeliveryDate(o))+'</b>':''}${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(o.id) > 0)?' · <span onclick="event.stopPropagation();openOrderPriceHistoryModal(\''+o.id+'\')" style="color:#991b1b;cursor:pointer;font-weight:700">📝 แก้ไขราคา ('+getOrderPriceChangeCount(o.id)+')</span>':''} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
           ${shopeeReconciliationBadge(o)}
@@ -11512,7 +11549,7 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
     <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
       <div>
         <div style="font-size:15px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px">
-          <span>${escapeHTML(ord.company_name ? ord.company_name + ' (' + ord.customer_name + ')' : ord.customer_name || 'ไม่ระบุชื่อ')}</span>
+          <span>${formatCustomerDisplayName(ord.customer_name, ord.company_name, ord.customer_contact) === '-' ? 'ไม่ระบุชื่อ' : formatCustomerDisplayName(ord.customer_name, ord.company_name, ord.customer_contact)}</span>
           <span class="font-mono" style="font-size:12px;color:var(--text3)">#${escapeHTML(ord.order_no || ord.id)}</span>
         </div>
         <div style="font-size:12px;color:var(--text3);margin-top:3px">
@@ -23338,7 +23375,7 @@ async function viewQuote(qtId) {
       '<div class="sap-panel">' +
         '<div class="sap-form-grid">' +
           '<div>' +
-            '<div class="sap-field-row"><span class="sap-field-label">Customer</span><div style="font-weight:700;color:#0f172a">'+(meta.company_name ? escapeHTML(meta.company_name) + ' (' + (qt.customer_name||'-') + ')' : (qt.customer_name||'-'))+'</div></div>' +
+            '<div class="sap-field-row"><span class="sap-field-label">Customer</span><div style="font-weight:700;color:#0f172a">'+formatCustomerDisplayName(qt.customer_name, meta.company_name, qt.customer_contact)+'</div></div>' +
             '<div class="sap-field-row"><span class="sap-field-label">Contact Person</span><div style="color:#334155">'+(qt.customer_contact ? escapeHTML(qt.customer_contact)+(meta.contact_position ? ' ('+escapeHTML(meta.contact_position)+')' : '') : '-')+'</div></div>' +
             '<div class="sap-field-row"><span class="sap-field-label">Phone & Email</span><div style="color:#334155">'+(qt.customer_phone ? escapeHTML(qt.customer_phone) : '-')+(meta.contact_email ? ' · <span style="color:var(--blue)">'+escapeHTML(meta.contact_email)+'</span>' : '')+'</div></div>' +
             '<div class="sap-field-row"><span class="sap-field-label">Customer Ref.</span><div style="color:#334155">'+(qt.customer_social ? escapeHTML(qt.customer_social) : '-')+(meta.customer_username ? ' (@'+escapeHTML(meta.customer_username)+')' : '')+'</div></div>' +
@@ -23927,7 +23964,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     bp.push('<div class="info-row">');
     bp.push('<div class="info-box">');
     bp.push('<div class="info-label">ลูกค้า / Customer:</div>');
-    const custDispName = meta.company_name ? (escapeHTML(meta.company_name) + (qt.customer_name ? ' ('+escapeHTML(qt.customer_name)+')' : '')) : (qt.customer_name||'-');
+    const custDispName = formatCustomerDisplayName(qt.customer_name, meta.company_name, qt.customer_contact);
     bp.push('<div class="info-val">'+custDispName+'</div>');
     if(meta.tax_id) bp.push('<div class="info-sub">เลขประจำตัวผู้เสียภาษี: '+escapeHTML(meta.tax_id)+'</div>');
     if(qt.customer_contact) {
