@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.64';
-const DISPLAY_APP_VERSION = 'v3.64';
+const CURRENT_APP_VERSION = 'sealthai-v3.65';
+const DISPLAY_APP_VERSION = 'v3.65';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.64)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.64 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.65)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.65 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2989,7 +2989,45 @@ function normalizeProduct(p) {
   if (supTHB && !p.supplier_sku) {
     p.supplier_sku = supTHB;
   }
+  if (p.factory_stock !== undefined && p.factory_stock !== null) {
+    p.factory_stock = Number(p.factory_stock || 0);
+  }
   return p;
+}
+
+// โหลดรายการสินค้าทั้งหมดแบบ Chunked ขนานทีละ 1,000 รายการ รองรับแคตตาล็อกขนาดใหญ่กว่า 10,000 ชิ้น
+async function fetchAllProductsChunked(options = {}) {
+  const shopId = options.shopId || currentShop?.id;
+  if (!shopId) return { data: [] };
+  const select = options.select || '*';
+  const orderCol = options.order || 'name';
+  try {
+    const firstRes = await sb.from('products').select(select, { count: 'exact' })
+      .eq('shop_id', shopId)
+      .eq('active', true)
+      .order(orderCol)
+      .range(0, 999);
+    if (firstRes.error) throw firstRes.error;
+    const total = firstRes.count || (firstRes.data ? firstRes.data.length : 0);
+    if (total <= 1000) return { data: firstRes.data || [] };
+
+    const promises = [];
+    for (let offset = 1000; offset < total; offset += 1000) {
+      promises.push(
+        sb.from('products').select(select)
+          .eq('shop_id', shopId)
+          .eq('active', true)
+          .order(orderCol)
+          .range(offset, offset + 999)
+          .then(r => r.data || [])
+      );
+    }
+    const remaining = await Promise.all(promises);
+    return { data: [...(firstRes.data || []), ...remaining.flat()] };
+  } catch(err) {
+    console.error('fetchAllProductsChunked error:', err);
+    return sb.from('products').select(select).eq('shop_id', shopId).eq('active', true).order(orderCol);
+  }
 }
 
 const SHOPEE_GP_FALLBACK_PCT = 30.53;
@@ -8332,7 +8370,7 @@ let orderSourceQuoteId = null;
 async function openNewOrder() {
   orderItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, cost_per_unit: 0, discount: 0, discount_type: 'amount', show_on_receipt: true }];
   const [prodRes] = await Promise.all([
-    (allProducts && allProducts.length) ? Promise.resolve({ data: allProducts }) : sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true).order('name'),
+    (allProducts && allProducts.length) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
     loadOrderCustomerList()
   ]);
   productList = (prodRes && prodRes.data && prodRes.data.length) ? prodRes.data : (allProducts || []);
@@ -14661,7 +14699,7 @@ async function products() {
 async function loadProducts() {
   // โหลด categories, suppliers, cross-references, purchase_orders และ orders ที่ยังไม่จัดส่ง
   const [prodRes, catRes, xrefRes, supRes, poRes, ordersRes] = await Promise.all([
-    sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true).order('name'),
+    fetchAllProductsChunked(),
     allCategories.length ? Promise.resolve({data:allCategories}) : sb.from('categories').select('*').eq('shop_id',currentShop.id).order('sort_order'),
     sb.from('product_cross_references').select('*').eq('shop_id', currentShop.id),
     allSuppliers.length ? Promise.resolve({data:allSuppliers}) : sb.from('suppliers').select('*').eq('shop_id', currentShop.id).order('name'),
@@ -15248,6 +15286,7 @@ function renderProductTable(prods, requestedPage = 1) {
           '<div style="font-size:10.5px;color:var(--text3);margin-top:1px">' +
             'ร้าน: <b style="color:'+(stInhouse>0?'var(--green)':'inherit')+'">'+fmt(stInhouse)+'</b>' +
             (stEcoseal > 0 ? ' · Eco: <b style="color:var(--blue)">'+fmt(stEcoseal)+'</b>' : '') +
+            (Number(p.factory_stock || 0) > 0 ? ' · รง: <b style="color:#d97706" title="สต็อกโรงงาน / Supplier พร้อมขาย">'+fmt(p.factory_stock)+'</b>' : '') +
             (stockVal > 0 ? ' · <span class="text-amber">'+fmtB(stockVal)+'</span>' : '') +
           '</div>' +
         '</td>' +
@@ -46916,7 +46955,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.64', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับระยะขอบใบปะหน้าพัสดุ A6 (10x15 cm) เว้นขอบซ้ายขวา 0.5 ซม. (v3.64)', items:[
+    { v:'3.65', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับโหลดสินค้าแคตตาล็อก 10,000+ รายการ & สต็อกโรงงาน (v3.65)', items:[
+      '📦 <b>Chunked Parallel Product Loading:</b> อัปเกรดระบบโหลดสินค้าในหน้า "สินค้า" และ "สร้างออเดอร์" เป็นแบบขนานทีละ 1,000 รายการ รองรับแคตตาล็อกขนาดใหญ่กว่า 10,000 รายการ ค้นหาเจอครบทุกตัว 100%',
+      '🏭 <b>แสดงสต็อกโรงงาน / Supplier:</b> แสดงยอดสต็อกโรงงาน (รง) พร้อมขายในตารางสินค้าและค้นหาได้ทันที',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.65 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.64', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับระยะขอบใบปะหน้าพัสดุ A6 (10x15 cm) เว้นขอบซ้ายขวา 0.5 ซม. (v3.64)', items:[
       '📦 <b>ใบปะหน้าพัสดุ A6 (10x15 cm):</b> ปรับแต่งระยะขอบ (Margin / Padding) ซ้าย-ขวา ประมาณ 0.5 ซม. (5 มม.) ทั้งในหน้าพรีวิวและหน้าสั่งพิมพ์ลงสติกเกอร์ความร้อน ป้องกันข้อความชิดหรือตกขอบสติกเกอร์',
       '📏 <b>จัดสัดส่วนและขนาดตัวอักษรสำหรับสติกเกอร์ 100x150 มม.:</b> ปรับระยะห่างกล่องผู้ส่ง-ผู้รับ กล่อง COD และกล่องรายการสินค้าให้อ่านง่าย ชัดเจน สวยงาม พิมพ์จบใน 1 แผ่นพอดี 100%',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.64 และล้างแคชอัตโนมัติ'
