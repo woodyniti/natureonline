@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.60';
-const DISPLAY_APP_VERSION = 'v3.60';
+const CURRENT_APP_VERSION = 'sealthai-v3.61';
+const DISPLAY_APP_VERSION = 'v3.61';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.60)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.60 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.61)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.61 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2646,7 +2646,7 @@ window.formatCompanyWithBranch = formatCompanyWithBranch;
 
 function _normalizeCompName(str) {
   return String(str || '')
-    .replace(/\s*\((?:สำนักงานใหญ่|สาขา(?:ที่\s*)?\d+|head\s*office)\)\s*/gi, '')
+    .replace(/\s*\((?:สำนักงานใหญ่|สาขา(?:\s*ที่)?\s*[\w\d]+|head\s*office)\)\s*/gi, '')
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
@@ -2656,6 +2656,11 @@ function formatCustomerDisplayName(customerName, companyName, contactPerson = ''
   const cust = String(customerName || '').trim();
   let comp = String(companyName || '').trim();
   const contact = String(contactPerson || '').trim();
+
+  // If company is not explicitly set, but customerName looks like a company name (starts with บริษัท/หจก/บจก or ends with จำกัด) or branchCode is set
+  if (!comp && cust && (/^(?:บริษัท|หจก\.|บจก\.|ห้างหุ้นส่วน|บมจ\.)/i.test(cust) || /จำกัด\s*$/i.test(cust) || branchCode)) {
+    comp = cust;
+  }
 
   if (comp) {
     comp = formatCompanyWithBranch(comp, branchCode);
@@ -22999,7 +23004,7 @@ function selectQuoteProductById(rowIdx, prodId) {
   if (pImg && (!existingPhotos.length || !existingPhotos[0]?.url)) {
     existingPhotos[0] = {
       url: pImg,
-      title: 'รูปสินค้าจริง ' + (p.sku || p.name),
+      title: 'รูปประกอบสินค้า ' + (p.sku || p.name),
       desc: (p.brand ? p.brand + ' ' : '') + (p.material || '')
     };
   }
@@ -23359,7 +23364,7 @@ function renderQuoteItems() {
         pullBtn.onclick = () => {
           if (!it.photos[0]) it.photos[0] = { url: '', title: '', desc: '' };
           it.photos[0].url = getProductImageUrl(linked);
-          if (!it.photos[0].title) it.photos[0].title = 'รูปสินค้าจริง ' + (linked.sku || linked.name);
+          if (!it.photos[0].title) it.photos[0].title = 'รูปประกอบสินค้า ' + (linked.sku || linked.name);
           renderQuoteItems();
         };
         photoBody.appendChild(pullBtn);
@@ -23414,7 +23419,7 @@ function renderQuoteItems() {
             const { data: uData } = sb.storage.from('product-images').getPublicUrl(path);
             pSlot.url = uData.publicUrl;
             if (!pSlot.title) {
-              pSlot.title = slotIdx === 0 ? ('รูปสินค้าจริง ' + (linked ? (linked.sku || linked.name) : it.product_name)) : 'รูปประกอบเพิ่มเติม';
+              pSlot.title = slotIdx === 0 ? ('รูปประกอบสินค้า ' + (linked ? (linked.sku || linked.name) : it.product_name)) : 'รูปประกอบเพิ่มเติม';
             }
             if (linked && !linked.image_url) {
               try {
@@ -23937,7 +23942,7 @@ function openQuotePrintOptions(qtId, defaultLayout = 'standard') {
             <input type="radio" name="quote-layout-type" value="showcase" ${defaultLayout==='showcase'?'checked':''} style="width:18px;height:18px;margin-top:2px">
             <div>
               <div style="font-weight:700;font-size:12.5px;color:#059669">🖼️ แบบมีรูปประกอบ</div>
-              <div style="font-size:11px;color:var(--text3)">มีแถบภาพสินค้าจริง 1-2 รูป + ของแถม</div>
+              <div style="font-size:11px;color:var(--text3)">มีแถบรูปประกอบสินค้า 1-2 รูป + ของแถม</div>
             </div>
           </label>
         </div>
@@ -24492,7 +24497,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
         if (pImg) {
           photos.push({
             url: pImg,
-            title: 'รูปสินค้าจริง: ' + (targetItem.product_name || pMatched.name || ''),
+            title: 'รูปประกอบสินค้า: ' + (targetItem.product_name || pMatched.name || ''),
             desc: pMatched.description || (pMatched.brand ? 'แบรนด์: ' + pMatched.brand : '')
           });
         }
@@ -24530,7 +24535,8 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
         photos.slice(0, 2).forEach((ph, pIdx) => {
           bp.push('<div class="photo-card">');
           bp.push('<div class="photo-display"><img src="' + escapeHTML(ph.url) + '" alt="' + escapeHTML(ph.title||'รูปสินค้า') + '" onerror="this.alt=\'โหลดรูปไม่สำเร็จ\'"></div>');
-          bp.push('<div class="photo-title">' + (ph.title ? escapeHTML(ph.title) : ('รูปที่ ' + (pIdx+1) + ': รายละเอียดสินค้า')) + '</div>');
+          const cleanTitle = ph.title ? escapeHTML(ph.title.replace(/รูป(?:สินค้าจริง|จริงสินค้า)/g, 'รูปประกอบสินค้า')) : ('รูปที่ ' + (pIdx+1) + ': รายละเอียดสินค้า');
+          bp.push('<div class="photo-title">' + cleanTitle + '</div>');
           if (ph.desc) bp.push('<div class="photo-desc">' + escapeHTML(ph.desc) + '</div>');
           bp.push('</div>');
         });
@@ -24540,7 +24546,8 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
         const ph = photos[0];
         bp.push('<div class="photo-card">');
         bp.push('<div class="photo-display"><img src="' + escapeHTML(ph.url) + '" alt="' + escapeHTML(ph.title||'รูปสินค้า') + '" onerror="this.alt=\'โหลดรูปไม่สำเร็จ\'"></div>');
-        bp.push('<div class="photo-title">' + (ph.title ? escapeHTML(ph.title) : 'รูปสินค้าจริง') + '</div>');
+        const cleanTitle = escapeHTML((ph.title || 'รูปประกอบสินค้า').replace(/รูป(?:สินค้าจริง|จริงสินค้า)/g, 'รูปประกอบสินค้า'));
+        bp.push('<div class="photo-title">' + cleanTitle + '</div>');
         if (ph.desc) bp.push('<div class="photo-desc">' + escapeHTML(ph.desc) + '</div>');
         bp.push('</div>');
 
@@ -24561,7 +24568,8 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
         bp.push('<div class="gallery-cards" style="grid-template-columns:1fr">');
         bp.push('<div class="photo-card">');
         bp.push('<div class="photo-display"><img src="' + escapeHTML(ph.url) + '" alt="' + escapeHTML(ph.title||'รูปสินค้า') + '" onerror="this.alt=\'โหลดรูปไม่สำเร็จ\'"></div>');
-        bp.push('<div class="photo-title">' + (ph.title ? escapeHTML(ph.title) : 'รูปสินค้าจริง') + '</div>');
+        const cleanTitle = escapeHTML((ph.title || 'รูปประกอบสินค้า').replace(/รูป(?:สินค้าจริง|จริงสินค้า)/g, 'รูปประกอบสินค้า'));
+        bp.push('<div class="photo-title">' + cleanTitle + '</div>');
         if (ph.desc) bp.push('<div class="photo-desc">' + escapeHTML(ph.desc) + '</div>');
         bp.push('</div></div>');
       } else {
@@ -46888,7 +46896,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.60', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าในใบเสนอราคา (v3.60)', items:[
+    { v:'3.61', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เปลี่ยนหัวข้อรูปภาพในใบเสนอราคาเป็น "รูปประกอบสินค้า" และจัดรูปแบบชื่อบริษัทอัตโนมัติ (v3.61)', items:[
+      '📷 <b>เปลี่ยนข้อความหัวข้อรูปเป็น "รูปประกอบสินค้า":</b> ปรับปรุงหัวข้อรูปภาพในใบเสนอราคาทั้งหมด (แบบพิมพ์ Showcase, แผงแนบรูปภาพสินค้า, และการดึงรูปอัตโนมัติจากคลังสินค้า) จากเดิม "รูปสินค้าจริง" เป็น "รูปประกอบสินค้า" อย่างเป็นเอกภาพและสุภาพเป็นทางการ',
+      '🔄 <b>ปรับหัวข้อรูปเก่าที่เคยบันทึกไว้อัตโนมัติ:</b> ใบเสนอราคาเก่าที่เคยมีข้อความ "รูปสินค้าจริง..." เมื่อเปิดพิมพ์จะถูกแปลงเป็น "รูปประกอบสินค้า..." ให้ทันทีโดยไม่ต้องแก้ไขใหม่',
+      '🏢 <b>จัดรูปแบบชื่อบริษัทและสาขาอัจฉริยะ (Smart Company Formatting):</b> รองรับกรณีที่ผู้ใช้กรอกชื่อนิติบุคคล (บริษัท, หจก., บจก., จำกัด) ลงในช่องชื่อลูกค้า จะจัดรูปแบบสาขา <code>(สำนักงานใหญ่)</code> ให้อัตโนมัติ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.61 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.60', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าในใบเสนอราคา (v3.60)', items:[
       '🛡️ <b>เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</b> เพิ่มแถบข้อมูลเงื่อนไขอย่างเป็นทางการในใบเสนอราคา ทั้งฟอร์มพิมพ์เอกสารมาตรฐานและหน้าดูรายละเอียดใบเสนอราคา',
       '⏱️ <b>กำหนดเวลาตรวจสอบสินค้า 7 วัน:</b> ระบุการตรวจสอบสินค้าทันทีที่ได้รับ หากพบปัญหาแจ้งเปลี่ยน/คืนได้ภายใน 7 วัน เกิน 7 วันขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี',
       '📦 <b>ข้อกำหนดสภาพสินค้า 100%:</b> ระบุชัดเจนว่าสินค้าต้องอยู่ในสภาพสมบูรณ์ ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน หรือดัดแปลงใดๆ พร้อมบรรจุภัณฑ์เดิมครบถ้วน',
