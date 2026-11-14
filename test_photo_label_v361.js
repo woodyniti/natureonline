@@ -8,10 +8,10 @@ console.log('--- Testing Quotation Photo Label & Company Branch v3.61 ---');
 const content = fs.readFileSync('index.html', 'utf8');
 
 // 1. App Version Checks
-assert(content.includes("const CURRENT_APP_VERSION = 'sealthai-v3.61';"), 'CURRENT_APP_VERSION should be sealthai-v3.61');
-assert(content.includes("const DISPLAY_APP_VERSION = 'v3.61';"), 'DISPLAY_APP_VERSION should be v3.61');
-assert(content.includes("v3.61 🚀"), 'Topbar badge should show v3.61');
-console.log('✓ App Version is v3.61');
+assert(content.includes("const CURRENT_APP_VERSION = 'sealthai-v3.62';"), 'CURRENT_APP_VERSION should be sealthai-v3.62');
+assert(content.includes("const DISPLAY_APP_VERSION = 'v3.62';"), 'DISPLAY_APP_VERSION should be v3.62');
+assert(content.includes("v3.62 🚀"), 'Topbar badge should show v3.62');
+console.log('✓ App Version is v3.62');
 
 // 2. Format Customer Display Name & Company Branch Test
 // Extract functions

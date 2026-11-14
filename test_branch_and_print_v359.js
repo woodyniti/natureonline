@@ -58,16 +58,16 @@ if (!html.includes('id="qt-branch"')) {
 }
 console.log('PASS: All branch inputs (o-branch, ed-branch, qt-branch) exist.');
 
-// 4. Verify printReceipt contains shipAddr in right box and billAddr in left box
+// 4. Verify printReceipt contains billAddr in left box and NO shipAddr in right box (v3.62)
 if (!html.includes("billParts.push('<div class=\"info-sub\" style=\"margin-top:3px\"><strong>ที่อยู่ออกบิล:</strong> '")) {
   console.error('FAIL: printReceipt does not have ที่อยู่ออกบิล in left column');
   process.exit(1);
 }
-if (!html.includes("billParts.push('<div class=\"info-sub\" style=\"margin-top:8px;padding-top:6px;border-top:1px dashed #bbb;text-align:left\"><strong>ที่อยู่จัดส่ง (Ship To):</strong>")) {
-  console.error('FAIL: printReceipt does not have ที่อยู่จัดส่ง (Ship To) in right column');
+if (html.includes("billParts.push('<div class=\"info-sub\" style=\"margin-top:8px;padding-top:6px;border-top:1px dashed #bbb;text-align:left\"><strong>ที่อยู่จัดส่ง (Ship To):</strong>")) {
+  console.error('FAIL: printReceipt should NOT have ที่อยู่จัดส่ง (Ship To) in right column');
   process.exit(1);
 }
-console.log('PASS: printReceipt shipping address on right box and billing on left box verified.');
+console.log('PASS: printReceipt billing on left box and NO shipping on right box verified.');
 
 // 5. Verify syntax by checking script tag closure
 console.log('ALL TESTS PASSED SUCCESSFULLY! (100% GREEN)');

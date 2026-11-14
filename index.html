@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.61';
-const DISPLAY_APP_VERSION = 'v3.61';
+const CURRENT_APP_VERSION = 'sealthai-v3.62';
+const DISPLAY_APP_VERSION = 'v3.62';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.61)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.61 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.62)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.62 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -12536,9 +12536,6 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     }
     if (order.tracking_no) {
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.tracking_no) + '</span></div>');
-    }
-    if (shipAddr && shipAddr.trim()) {
-      billParts.push('<div class="info-sub" style="margin-top:8px;padding-top:6px;border-top:1px dashed #bbb;text-align:left"><strong>ที่อยู่จัดส่ง (Ship To):</strong><div style="margin-top:2px;line-height:1.45">' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div></div>');
     }
     billParts.push('</div>'); // close info-col-right
     billParts.push('</div>'); // close info-row
@@ -46896,7 +46893,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.61', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เปลี่ยนหัวข้อรูปภาพในใบเสนอราคาเป็น "รูปประกอบสินค้า" และจัดรูปแบบชื่อบริษัทอัตโนมัติ (v3.61)', items:[
+    { v:'3.62', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'นำส่วนแสดงที่อยู่จัดส่ง (Ship To) ออกจากหน้าพิมพ์บิลขาย (v3.62)', items:[
+      '🧾 <b>ปรับแต่งหน้าพิมพ์บิลขาย (Receipt / Cash Sale / Invoice):</b> นำส่วนแสดง <code>ที่อยู่จัดส่ง (Ship To):</code> ออกจากคอลัมน์ขวามือของหน้าพิมพ์บิล เพื่อให้เอกสารทางการเงินมีความสะอาด เรียบร้อย ตรงตามมาตรฐานบัญชีและภาษี โดยคงข้อมูลออกบิล ชื่อบริษัท และเลขประจำตัวผู้เสียภาษีไว้ครบถ้วน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.62 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.61', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เปลี่ยนหัวข้อรูปภาพในใบเสนอราคาเป็น "รูปประกอบสินค้า" และจัดรูปแบบชื่อบริษัทอัตโนมัติ (v3.61)', items:[
       '📷 <b>เปลี่ยนข้อความหัวข้อรูปเป็น "รูปประกอบสินค้า":</b> ปรับปรุงหัวข้อรูปภาพในใบเสนอราคาทั้งหมด (แบบพิมพ์ Showcase, แผงแนบรูปภาพสินค้า, และการดึงรูปอัตโนมัติจากคลังสินค้า) จากเดิม "รูปสินค้าจริง" เป็น "รูปประกอบสินค้า" อย่างเป็นเอกภาพและสุภาพเป็นทางการ',
       '🔄 <b>ปรับหัวข้อรูปเก่าที่เคยบันทึกไว้อัตโนมัติ:</b> ใบเสนอราคาเก่าที่เคยมีข้อความ "รูปสินค้าจริง..." เมื่อเปิดพิมพ์จะถูกแปลงเป็น "รูปประกอบสินค้า..." ให้ทันทีโดยไม่ต้องแก้ไขใหม่',
       '🏢 <b>จัดรูปแบบชื่อบริษัทและสาขาอัจฉริยะ (Smart Company Formatting):</b> รองรับกรณีที่ผู้ใช้กรอกชื่อนิติบุคคล (บริษัท, หจก., บจก., จำกัด) ลงในช่องชื่อลูกค้า จะจัดรูปแบบสาขา <code>(สำนักงานใหญ่)</code> ให้อัตโนมัติ',
