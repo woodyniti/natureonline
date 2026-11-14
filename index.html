@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.55';
-const DISPLAY_APP_VERSION = 'v3.55';
+const CURRENT_APP_VERSION = 'sealthai-v3.56';
+const DISPLAY_APP_VERSION = 'v3.56';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1464,7 +1464,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.55 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.56 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.55)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.55 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.56 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -24014,7 +24014,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     // Header
     bp.push('<div class="hd">');
     bp.push('<div class="hd-left">');
-    bp.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0;background:#f5f5f5;padding:4px;border-radius:6px">');
+    bp.push('<img src="assets/logo.png" style="width:64px;height:64px;object-fit:contain;flex-shrink:0">');
     bp.push('<div><div class="shop-name">'+qtShopName+'</div>');
     bp.push('<div class="shop-info">'+shopAddr);
     bp.push('<br>Line OA : @sealthai &nbsp;|&nbsp; โทร: 095 9901708');
@@ -24042,15 +24042,17 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     if(meta.billing_address) {
       bp.push('<div class="info-sub" style="margin-top:3px"><strong>ที่อยู่ออกบิล:</strong> '+escapeHTML(meta.billing_address).split('\n').join('<br>')+'</div>');
     }
-    if(qt.customer_address && (!meta.billing_address || qt.customer_address.trim() !== meta.billing_address.trim())) {
-      bp.push('<div class="info-sub" style="margin-top:3px"><strong>ที่อยู่จัดส่ง:</strong> '+escapeHTML(qt.customer_address).split('\n').join('<br>')+'</div>');
-    }
     bp.push('</div>');
-    bp.push('<div class="info-box" style="text-align:right">');
+    bp.push('<div class="info-box">');
+    bp.push('<div style="text-align:right">');
     bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">เลขที่ / No.</span>&nbsp;&nbsp;<strong>'+(qt.quote_no||'-')+'</strong></div>');
     bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">วันที่ / Date</span>&nbsp;&nbsp;<strong>'+qt.quote_date+'</strong></div>');
     if(qt.valid_until) bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">ใช้ได้ถึง / Valid Until</span>&nbsp;&nbsp;<strong>'+qt.valid_until+'</strong></div>');
     if(qt.customer_social) bp.push('<div><span style="font-size:11px;color:#1a1a1a">Ref / Social</span>&nbsp;&nbsp;<strong>'+escapeHTML(qt.customer_social)+'</strong></div>');
+    bp.push('</div>');
+    if(qt.customer_address && qt.customer_address.trim()) {
+      bp.push('<div class="info-sub" style="margin-top:8px;padding-top:6px;border-top:1px dashed #bbb;text-align:left"><strong>ที่อยู่จัดส่ง:</strong><div style="margin-top:2px;line-height:1.45">'+escapeHTML(qt.customer_address).split('\n').join('<br>')+'</div></div>');
+    }
     bp.push('</div></div>');
 
     // Items Table
@@ -46384,7 +46386,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.55', date:'2026-11-13', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับโฉมหน้าต่าง PO, รับสินค้า (GRPO), AR Invoice และ AP Invoice เป็นมาตรฐาน SAP Business One ERP (v3.55)', items:[
+    { v:'3.56', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงใบเสนอราคา (Quotation Layout): ย้ายที่อยู่จัดส่งไปด้านขวามือ และลบกรอบสีเทาของโลโก้ (v3.56)', items:[
+      '📦 <b>ย้ายที่อยู่จัดส่ง (Ship-to) ไปแสดงฝั่งขวามือ:</b> ปรับปรุงส่วนหัวใบเสนอราคา โดยแยกกล่องข้อมูลลูกค้า/ที่อยู่ออกบิลไว้ด้านซ้าย และย้ายที่อยู่จัดส่งสินค้าไปแสดงใต้ข้อมูลเอกสารด้านขวามืออย่างเป็นสัดส่วน สวยงาม สมดุลทั้งสองฝั่ง',
+      '🖼️ <b>ลบกรอบสีเทาของโลโก้ SEALTHAI:</b> ปรับแต่งโลโก้ SEALTHAI ให้โปร่งใส กลมกลืน สะอาดตา ไม่มีกรอบสี่เหลี่ยมสีเทามารบกวนความสวยงามของเอกสาร'
+    ]},
+    { v:'3.55', date:'2026-11-13', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับโฉมหน้าต่าง PO, รับสินค้า (GRPO), AR Invoice และ AP Invoice เป็นมาตรฐาน SAP Business One ERP (v3.55)', items:[
       '🏢 <b>ยกระดับสู่มาตรฐาน SAP Business One ERP เต็มรูปแบบ (Complete SAP B1 ERP Purchasing & Invoicing):</b> ปรับปรุงอินเตอร์เฟสเอกสารจัดซื้อและการเงิน 4 หมวด ได้แก่ <code>🛒 ใบสั่งซื้อ (Purchase Order)</code> ทั้งสร้าง/แก้ไข และดูรายละเอียด, <code>📦 รับสินค้าจากการสั่งซื้อ (Goods Receipt PO - GRPO)</code>, <code>📄 ใบแจ้งหนี้ลูกหนี้ (A/R Invoice)</code>, และ <code>📄 ใบแจ้งหนี้เจ้าหนี้ (A/P Invoice)</code>',
       '🖥️ <b>ขยายขนาดหน้าต่างรองรับหน้าจอคอมพิวเตอร์ (PC ERP Layout $\\ge 1200$px):</b> ปรับความกว้างของโมดอลจัดซื้อและการเงินทั้งหมดเป็น 1,280 พิกเซล (ขั้นต่ำ 1,200px) สอดคล้องกับหน้าจอมาตรฐานระบบ ERP องค์กร ข้อมูลครบถ้วน ไม่ตกขอบและไม่ต้องเลื่อนตารางแนวนอน',
       '📑 <b>ระบบ 4 แท็บมาตรฐาน SAP B1 (Contents, Logistics, Accounting, Notes):</b> แยกหมวดหมู่ข้อมูลเอกสารชัดเจนด้วยแท็บนำทาง ได้แก่ รายการสินค้าพร้อมราคา/ต้นทุน, ข้อมูลสถานที่ส่งมอบ/ผู้ติดต่อ/ขนส่ง, ข้อมูลบัญชี/ภาษี/เงื่อนไขการชำระเงิน, และหมายเหตุ/บันทึกภายใน',

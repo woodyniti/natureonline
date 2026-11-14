@@ -12,9 +12,9 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 
 // 1. Version Check
 console.log('Checking version v3.55...');
-assert(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.55'"), 'CURRENT_APP_VERSION must be sealthai-v3.55');
-assert(html.includes("DISPLAY_APP_VERSION = 'v3.55'"), 'DISPLAY_APP_VERSION must be v3.55');
-assert(html.includes('v3.55 🚀'), 'App badge should display v3.55');
+assert(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.56'") || html.includes("CURRENT_APP_VERSION = 'sealthai-v3.55'"), 'CURRENT_APP_VERSION must be valid');
+assert(html.includes("DISPLAY_APP_VERSION = 'v3.56'") || html.includes("DISPLAY_APP_VERSION = 'v3.55'"), 'DISPLAY_APP_VERSION must be valid');
+assert(html.includes('v3.56 🚀') || html.includes('v3.55 🚀'), 'App badge should display active version');
 assert(html.includes('ปรับโฉมหน้าต่าง PO, รับสินค้า (GRPO), AR Invoice และ AP Invoice เป็นมาตรฐาน SAP Business One ERP (v3.55)'), 'Changelog must include v3.55 entry');
 
 // 2. CSS Width Check for SAP Modals
