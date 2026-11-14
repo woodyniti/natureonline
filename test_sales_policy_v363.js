@@ -8,10 +8,10 @@ const content = fs.readFileSync(htmlPath, 'utf8');
 console.log('--- Testing v3.63 Return & Warranty Policy across Sales Documents ---');
 
 // 1. Version assertions
-assert.ok(content.includes("CURRENT_APP_VERSION = 'sealthai-v3.63'"), 'CURRENT_APP_VERSION should be sealthai-v3.63');
-assert.ok(content.includes("DISPLAY_APP_VERSION = 'v3.63'"), 'DISPLAY_APP_VERSION should be v3.63');
-assert.ok(content.includes('v3.63 🚀'), 'Topbar badge should display v3.63 🚀');
-console.log('✓ App version is v3.63');
+assert.ok(/CURRENT_APP_VERSION = 'sealthai-v3\.(6[3-9]|[7-9][0-9])'/.test(content), 'CURRENT_APP_VERSION should be >= sealthai-v3.63');
+assert.ok(/DISPLAY_APP_VERSION = 'v3\.(6[3-9]|[7-9][0-9])'/.test(content), 'DISPLAY_APP_VERSION should be >= v3.63');
+assert.ok(/v3\.(6[3-9]|[7-9][0-9]) 🚀/.test(content), 'Topbar badge should display >= v3.63 🚀');
+console.log('✓ App version verified');
 
 // 2. printReceipt contains policy-box
 assert.ok(content.includes("billParts.push('<div class=\"policy-box\">');"), 'printReceipt must include policy-box');
@@ -39,7 +39,7 @@ assert.strictEqual(minRowsMatch[1], '6', 'MIN_ROWS in printReceipt should be 6 t
 console.log('✓ MIN_ROWS is 6 in printReceipt (guarantees 1-page A4 layout)');
 
 // 6. Changelog contains v3.63
-assert.ok(content.includes("{ v:'3.63', date:'2026-11-14', badge:'Latest'"), 'Changelog must include v3.63 as Latest');
+assert.ok(content.includes("{ v:'3.63', date:'2026-11-14'"), 'Changelog must include v3.63');
 console.log('✓ Changelog contains v3.63 entry');
 
 console.log('\nAll tests in test_sales_policy_v363.js PASSED successfully!');

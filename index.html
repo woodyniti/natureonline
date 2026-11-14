@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.63';
-const DISPLAY_APP_VERSION = 'v3.63';
+const CURRENT_APP_VERSION = 'sealthai-v3.64';
+const DISPLAY_APP_VERSION = 'v3.64';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.63)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.63 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.64)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.64 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -35850,10 +35850,11 @@ async function printShippingLabel(orderId) {
     : '';
 
   // Determine page dimensions
-  let Wstr = '5.8in', Hstr = '8.3in';
-  if (size === 'A6') { Wstr = '4in'; Hstr = '6in'; }
-  else if (size === 'A4') { Wstr = '8.3in'; Hstr = '11.7in'; }
+  let Wstr = '148mm', Hstr = '210mm';
+  if (size === 'A6') { Wstr = '100mm'; Hstr = '150mm'; }
+  else if (size === 'A4') { Wstr = '210mm'; Hstr = '297mm'; }
   const isA4 = size === 'A4';
+  const isA6 = size === 'A6';
 
   // COD detection
   const isCOD = order.payment_method === 'COD';
@@ -35894,40 +35895,40 @@ async function printShippingLabel(orderId) {
     '<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">',
     '<style>',
     '* { box-sizing:border-box; margin:0; padding:0; }',
-    "body { font-family:'Sarabun',sans-serif; background:#fff; color:#000; padding: 0.1in; }",
-    '.label-page { width:'+(isA4?'170mm':Wstr)+'; min-height:'+(isA4?'257mm':'calc('+Hstr+' - 0.2in)')+'; margin:0 auto; padding:0.15in; display:flex; flex-direction:column; border:2px dashed #000; page-break-after:always; page-break-inside:avoid; box-sizing:border-box; }',
-    '.header-row { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:12px; }',
+    "body { font-family:'Sarabun',sans-serif; background:" + (isA6 ? '#f8fafc' : '#fff') + "; color:#000; padding: " + (isA6 ? '12px 8px' : '0.1in') + "; }",
+    '.label-page { width:' + (isA4 ? '170mm' : (isA6 ? '100mm' : Wstr)) + '; min-height:' + (isA4 ? '257mm' : (isA6 ? '148mm' : 'calc(' + Hstr + ' - 0.2in)')) + '; margin:0 auto; padding:' + (isA6 ? '4mm 0.5cm' : '0.15in') + '; display:flex; flex-direction:column; background:#fff; border:2px dashed #000; page-break-after:always; page-break-inside:avoid; box-sizing:border-box; }',
+    '.header-row { display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:' + (isA6 ? '6px' : '8px') + '; margin-bottom:' + (isA6 ? '8px' : '12px') + '; }',
     '.order-no { font-size:14px; font-weight:bold; font-family:monospace; }',
     '.carrier-info { font-size:13px; font-weight:bold; background:#000; color:#fff; padding:3px 8px; border-radius:4px; }',
     
-    // Address boxes layout
-    '.address-container { display:flex; flex-direction:column; gap:10px; margin-bottom:12px; }',
-    '.sender-box { border:1px solid #333; padding:8px; border-radius:4px; font-size:11px; color:#333; line-height:1.4; }',
-    '.receiver-box { border:2px solid #000; padding:12px; border-radius:6px; font-size:14px; color:#000; line-height:1.5; background:#f9f9f9; }',
-    '.title { font-weight:bold; font-size:12px; text-transform:uppercase; margin-bottom:4px; border-bottom:1px solid #ccc; padding-bottom:2px; display:inline-block; }',
-    '.recv-title { font-size:14px; border-bottom:2px solid #000; color:#000; }',
-    '.recv-name { font-size:16px; font-weight:700; margin-bottom:4px; }',
-    '.recv-contact { font-size:14px; margin-bottom:3px; }',
-    '.recv-addr { font-weight:500; font-size:15px; word-break:break-word; }',
-    '.recv-phone { font-size:16px; font-weight:700; margin-top:4px; border:1px solid #000; display:inline-block; padding:2px 8px; background:#fff; }',
+    // Address boxes layout (เว้นขอบซ้ายขวา 0.5 cm อย่างสมดุล)
+    '.address-container { display:flex; flex-direction:column; gap:' + (isA6 ? '8px' : '10px') + '; margin-bottom:' + (isA6 ? '8px' : '12px') + '; }',
+    '.sender-box { border:1px solid #444; padding:' + (isA6 ? '6px 8px' : '8px') + '; border-radius:4px; font-size:11px; color:#333; line-height:1.35; }',
+    '.receiver-box { border:2px solid #000; padding:' + (isA6 ? '8px 10px' : '12px') + '; border-radius:6px; font-size:' + (isA6 ? '13px' : '14px') + '; color:#000; line-height:1.45; background:#f9f9f9; }',
+    '.title { font-weight:bold; font-size:11px; text-transform:uppercase; margin-bottom:2px; border-bottom:1px solid #ccc; padding-bottom:1px; display:inline-block; }',
+    '.recv-title { font-size:13px; border-bottom:2px solid #000; color:#000; }',
+    '.recv-name { font-size:' + (isA6 ? '15px' : '16px') + '; font-weight:700; margin-bottom:3px; }',
+    '.recv-contact { font-size:' + (isA6 ? '13px' : '14px') + '; margin-bottom:2px; }',
+    '.recv-addr { font-weight:500; font-size:' + (isA6 ? '13.5px' : '15px') + '; word-break:break-word; }',
+    '.recv-phone { font-size:' + (isA6 ? '15px' : '16px') + '; font-weight:700; margin-top:4px; border:1px solid #000; display:inline-block; padding:2px 6px; background:#fff; }',
     
     // COD Badge
-    '.cod-badge { border:2px solid #000; background:#f0f0f0; padding:10px; text-align:center; font-size:16px; font-weight:bold; border-radius:6px; margin-bottom:12px; }',
-    '.cod-amount { color:#c00; font-size:22px; font-weight:800; font-family:monospace; margin-left:6px; }',
-    '.non-cod { border:1px solid #555; background:#fff; font-size:13px; font-weight:normal; padding:6px; }',
+    '.cod-badge { border:2px solid #000; background:#f0f0f0; padding:' + (isA6 ? '6px 8px' : '10px') + '; text-align:center; font-size:' + (isA6 ? '14px' : '16px') + '; font-weight:bold; border-radius:6px; margin-bottom:' + (isA6 ? '8px' : '12px') + '; }',
+    '.cod-amount { color:#c00; font-size:' + (isA6 ? '18px' : '22px') + '; font-weight:800; font-family:monospace; margin-left:6px; }',
+    '.non-cod { border:1px solid #555; background:#fff; font-size:' + (isA6 ? '12px' : '13px') + '; font-weight:normal; padding:' + (isA6 ? '5px' : '6px') + '; }',
     
     // Items checklist table
-    '.items-box { margin-top:auto; border-top:1px solid #000; padding-top:10px; }',
-    '.box-title { font-size:11px; font-weight:bold; margin-bottom:6px; }',
+    '.items-box { margin-top:auto; border-top:1.5px solid #000; padding-top:6px; }',
+    '.box-title { font-size:11px; font-weight:bold; margin-bottom:4px; }',
     '.items-table { width:100%; border-collapse:collapse; font-size:11px; }',
-    '.items-table th { border:1px solid #000; padding:3px; font-weight:bold; background:#eee; }',
-    '.items-table td { border:1px solid #000; padding:4px 3px; vertical-align:middle; }',
-    '.check-box { width:14px; height:14px; border:1px solid #000; margin:0 auto; }',
+    '.items-table th { border:1px solid #000; padding:2px 4px; font-weight:bold; background:#eee; }',
+    '.items-table td { border:1px solid #000; padding:3px 4px; vertical-align:middle; }',
+    '.check-box { width:12px; height:12px; border:1px solid #000; margin:0 auto; }',
     
     '@media print {',
-    '  body { margin:0; padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }',
-    '  .label-page { border:none !important; padding:0; width:100%; margin:0 auto; }',
-    '  @page { size:'+(isA4?'A4 portrait':Wstr+' '+Hstr)+'; margin:'+(isA4?'20mm':'0')+'; }',
+    '  body { margin:0; padding:0; background:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }',
+    '  .label-page { ' + (isA6 ? 'border:none !important; width:100% !important; max-width:100mm !important; min-height:148mm; height:148mm; padding:4mm 0.5cm !important; margin:0 auto !important; box-sizing:border-box !important;' : (isA4 ? 'border:1.5px dashed #000 !important; width:170mm !important; padding:0; margin:0 auto !important;' : 'border:none !important; padding:0; width:100%; margin:0 auto;')) + ' }',
+    '  @page { size:' + (isA4 ? 'A4 portrait; margin:15mm;' : (isA6 ? '100mm 150mm; margin:0;' : Wstr + ' ' + Hstr + '; margin:0;')) + ' }',
     '}',
     '</style></head><body>',
     '<div class="label-page">',
@@ -38006,7 +38007,7 @@ function printSelectedMarketplaceLabels(size = '100x150') {
 
   const isThermal = size === '100x150';
   const pageCss = isThermal 
-    ? '@page { size: 100mm 150mm; margin: 0; } .label-page { width: 100mm; height: 148mm; padding: 6mm; page-break-after: always; box-sizing: border-box; }'
+    ? '@page { size: 100mm 150mm; margin: 0; } .label-page { width: 100mm; height: 148mm; padding: 4mm 0.5cm; page-break-after: always; box-sizing: border-box; }'
     : '@page { size: A4; margin: 8mm; } .label-page { width: 100%; min-height: 130mm; padding: 8mm; border: 1.5px dashed #000; margin-bottom: 8mm; page-break-inside: avoid; box-sizing: border-box; }';
 
   const pagesHtml = selectedOrders.map(ord => {
@@ -46915,7 +46916,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.63', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าในเอกสารการขายทั้งหมด (v3.63)', items:[
+    { v:'3.64', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับระยะขอบใบปะหน้าพัสดุ A6 (10x15 cm) เว้นขอบซ้ายขวา 0.5 ซม. (v3.64)', items:[
+      '📦 <b>ใบปะหน้าพัสดุ A6 (10x15 cm):</b> ปรับแต่งระยะขอบ (Margin / Padding) ซ้าย-ขวา ประมาณ 0.5 ซม. (5 มม.) ทั้งในหน้าพรีวิวและหน้าสั่งพิมพ์ลงสติกเกอร์ความร้อน ป้องกันข้อความชิดหรือตกขอบสติกเกอร์',
+      '📏 <b>จัดสัดส่วนและขนาดตัวอักษรสำหรับสติกเกอร์ 100x150 มม.:</b> ปรับระยะห่างกล่องผู้ส่ง-ผู้รับ กล่อง COD และกล่องรายการสินค้าให้อ่านง่าย ชัดเจน สวยงาม พิมพ์จบใน 1 แผ่นพอดี 100%',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.64 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.63', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าในเอกสารการขายทั้งหมด (v3.63)', items:[
       '🛡️ <b>เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</b> บรรจุข้อกำหนดเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าลงในเอกสารงานขายครบทั้งระบบ ได้แก่ ใบส่งสินค้า / ใบส่งของ (Delivery Note), ใบแจ้งหนี้ / ใบวางบิล (Invoice), ใบเสร็จรับเงิน / บิลเงินสด (Receipt / Cash Sale), และแท็บ Notes ในหน้าดูรายละเอียดออเดอร์',
       '⏱️ <b>คุ้มครองความพึงพอใจและกำหนดเวลา 7 วัน:</b> ตรวจสอบสินค้าทันทีที่ได้รับ แจ้งเปลี่ยน/คืนได้ภายใน 7 วัน (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)',
       '📦 <b>ข้อกำหนดสภาพสินค้า 100%:</b> ต้องอยู่ในสภาพสมบูรณ์ ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน หรือดัดแปลง พร้อมบรรจุภัณฑ์เดิมครบถ้วน',
