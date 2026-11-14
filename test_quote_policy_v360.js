@@ -7,8 +7,8 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 console.log('--- TEST SUITE: v3.60 Quotation Return & Warranty Policy ---');
 
 // 1. Version check
-if (!html.includes("CURRENT_APP_VERSION = 'sealthai-v3.60'") && !html.includes("CURRENT_APP_VERSION = 'sealthai-v3.61'") && !html.includes("CURRENT_APP_VERSION = 'sealthai-v3.62'")) {
-  console.error('FAIL: CURRENT_APP_VERSION is not v3.60/v3.61/v3.62');
+if (!/CURRENT_APP_VERSION = 'sealthai-v3\.(6[0-9]|[7-9][0-9])'/.test(html)) {
+  console.error('FAIL: CURRENT_APP_VERSION is not v3.60+');
   process.exit(1);
 }
 console.log('PASS: Version bump verified.');

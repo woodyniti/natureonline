@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.62';
-const DISPLAY_APP_VERSION = 'v3.62';
+const CURRENT_APP_VERSION = 'sealthai-v3.63';
+const DISPLAY_APP_VERSION = 'v3.63';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.62)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.62 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.63)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.63 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -10470,6 +10470,14 @@ async function viewOrder(orderId) {
             <textarea id="ed-internal-note" rows="3" placeholder="บันทึกข้อความภายใน เช่น บัญชี/โกดัง/แอดมิน ทราบกันเอง ไม่ปรากฏบนเอกสาร" style="${iStyle};margin-top:4px;resize:vertical;border-color:#fde68a;background:#fffbeb">${escapeHTML(getOrderInternalNote(order))}</textarea>
           </div>
         </div>
+        <div style="font-size:12px;color:#334155;background:#f8fafc;border:1px solid #cbd5e1;border-left:3.5px solid #0284c7;border-radius:6px;padding:9px 12px;margin-top:12px;line-height:1.6">
+          <div style="font-weight:700;color:#0369a1;margin-bottom:4px">🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</div>
+          <div style="padding-left:14px">
+            1. <strong>กำหนดเวลาตรวจสอบ:</strong> แจ้งเปลี่ยน/คืนได้ภายใน <strong>7 วัน</strong> นับจากวันรับสินค้า (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)<br>
+            2. <strong>สภาพสินค้า:</strong> สินค้าต้องอยู่ในสภาพสมบูรณ์ 100% <strong>ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน</strong> หรือดัดแปลงใดๆ พร้อมบรรจุภัณฑ์เดิมครบถ้วน<br>
+            3. <strong>สินค้าสั่งผลิตพิเศษ / งานกลึง:</strong> สินค้าที่เป็นงานกลึง งานขึ้นรูป หรือสั่งผลิตใหม่ตามแบบ/ขนาดเฉพาะ ขอสงวนสิทธิ์ไม่รับเปลี่ยน คืน หรือยกเลิกทุกกรณี
+          </div>
+        </div>
       </div>
 
       <!-- 5. SAP B1 Bottom Summary Footer -->
@@ -12316,7 +12324,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const d      = new Date(order.order_date+'T00:00:00');
   const thDate = d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
 
-  const MIN_ROWS = 8;
+  const MIN_ROWS = 6;
   const showSkuInBill = (typeof showSkuInDocument !== 'undefined')
     ? showSkuInDocument
     : (document.getElementById('receipt-show-sku')?.checked ?? false);
@@ -12431,6 +12439,11 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.total-row.grand { background:#e8f5f0; font-size:15px; font-weight:700; border-top:2.5px solid #00a882; }');
   billParts.push('.baht-text { background:#eef0f2; border:1px solid #555; border-top:none; padding:6px 10px; font-size:12px; color:#000; }');
   billParts.push('.note-box { border:1px solid #777; border-top:none; padding:7px 10px; font-size:12px; line-height:1.55; background:#fffdf2; }');
+  billParts.push('.policy-box { margin-top:6px; background:#f8fafc; border:1px solid #cbd5e1; border-left:3.5px solid #0284c7; border-radius:4px; padding:5px 9px; font-size:10px; color:#334155; line-height:1.45; }');
+  billParts.push('.policy-title { font-weight:700; color:#0369a1; font-size:10.5px; margin-bottom:2px; display:flex; align-items:center; gap:4px; }');
+  billParts.push('.policy-list { margin:0; padding-left:14px; list-style-type:decimal; }');
+  billParts.push('.policy-list li { margin-bottom:1px; }');
+  billParts.push('.policy-list li strong { color:#0f172a; }');
   billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:20px; }');
   billParts.push('.sig-box { text-align:center; width:180px; }');
   billParts.push('.sig-image-wrap { height:26px; display:flex; align-items:flex-end; justify-content:center; overflow:visible; margin-bottom:2px; }');
@@ -12586,6 +12599,15 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     }
 
     if (displayNote) billParts.push('<div class="note-box"><strong>หมายเหตุ / Note:</strong><br>' + escapeHTML(displayNote).replace(/\n/g,'<br>') + '</div>');
+
+    // Return & Warranty Policy Box (Delivery Note, Invoice, Receipt)
+    billParts.push('<div class="policy-box">');
+    billParts.push('<div class="policy-title">🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</div>');
+    billParts.push('<ol class="policy-list">');
+    billParts.push('<li><strong>กำหนดเวลาตรวจสอบ:</strong> กรุณาตรวจสอบสินค้าทันทีที่ได้รับ หากพบปัญหาแจ้งเปลี่ยน/คืนได้ภายใน <strong>7 วัน</strong> (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)</li>');
+    billParts.push('<li><strong>สภาพสินค้า:</strong> สินค้าที่ขอเปลี่ยนหรือคืน ต้องอยู่ในสภาพสมบูรณ์ 100% <strong>ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน</strong> หรือดัดแปลงใดๆ พร้อมบรรจุภัณฑ์เดิมครบถ้วน</li>');
+    billParts.push('<li><strong>สินค้าสั่งผลิตพิเศษ / งานกลึง:</strong> สินค้าที่เป็น<strong>งานกลึง งานขึ้นรูป หรือสั่งผลิตใหม่ตามแบบ/ขนาดเฉพาะ</strong> ขอสงวนสิทธิ์ไม่รับเปลี่ยน คืน หรือยกเลิกคำสั่งซื้อทุกกรณี (เว้นแต่กรณีผลิตผิดสเปกจากแบบที่ตกลงกัน)</li>');
+    billParts.push('</ol></div>');
 
     // Bank transfer details for Invoice
     if (docType === 'invoice') {
@@ -46893,7 +46915,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.62', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'นำส่วนแสดงที่อยู่จัดส่ง (Ship To) ออกจากหน้าพิมพ์บิลขาย (v3.62)', items:[
+    { v:'3.63', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าในเอกสารการขายทั้งหมด (v3.63)', items:[
+      '🛡️ <b>เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</b> บรรจุข้อกำหนดเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าลงในเอกสารงานขายครบทั้งระบบ ได้แก่ ใบส่งสินค้า / ใบส่งของ (Delivery Note), ใบแจ้งหนี้ / ใบวางบิล (Invoice), ใบเสร็จรับเงิน / บิลเงินสด (Receipt / Cash Sale), และแท็บ Notes ในหน้าดูรายละเอียดออเดอร์',
+      '⏱️ <b>คุ้มครองความพึงพอใจและกำหนดเวลา 7 วัน:</b> ตรวจสอบสินค้าทันทีที่ได้รับ แจ้งเปลี่ยน/คืนได้ภายใน 7 วัน (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)',
+      '📦 <b>ข้อกำหนดสภาพสินค้า 100%:</b> ต้องอยู่ในสภาพสมบูรณ์ ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน หรือดัดแปลง พร้อมบรรจุภัณฑ์เดิมครบถ้วน',
+      '⚙️ <b>ข้อกำหนดสินค้าสั่งผลิตพิเศษ / งานกลึง:</b> งานกลึง งานขึ้นรูป หรือสั่งผลิตใหม่ตามแบบเฉพาะ ขอสงวนสิทธิ์ไม่รับเปลี่ยน คืน หรือยกเลิกทุกกรณี (เว้นแต่ผลิตผิดสเปกจากแบบที่ตกลงกัน)',
+      '📄 <b>ควบคุมฟอร์แมตพิมพ์ 1 หน้า A4:</b> ปรับจำนวนแถวเริ่มต้นในตารางสินค้าเป็น 6 แถว ทำให้ทุกเอกสารพิมพ์จบในหน้าเดียวอย่างสวยงามและสมบูรณ์แบบ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.63 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.62', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'นำส่วนแสดงที่อยู่จัดส่ง (Ship To) ออกจากหน้าพิมพ์บิลขาย (v3.62)', items:[
       '🧾 <b>ปรับแต่งหน้าพิมพ์บิลขาย (Receipt / Cash Sale / Invoice):</b> นำส่วนแสดง <code>ที่อยู่จัดส่ง (Ship To):</code> ออกจากคอลัมน์ขวามือของหน้าพิมพ์บิล เพื่อให้เอกสารทางการเงินมีความสะอาด เรียบร้อย ตรงตามมาตรฐานบัญชีและภาษี โดยคงข้อมูลออกบิล ชื่อบริษัท และเลขประจำตัวผู้เสียภาษีไว้ครบถ้วน',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.62 และล้างแคชอัตโนมัติ'
     ]},
