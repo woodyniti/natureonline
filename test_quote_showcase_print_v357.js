@@ -10,10 +10,10 @@ const html = fs.readFileSync(htmlPath, 'utf8');
 
 console.log('--- Testing Quotation Showcase Print & Item Photos (v3.57) ---');
 
-// 1. Version assertions
-assert(html.includes("const CURRENT_APP_VERSION = 'sealthai-v3.57';"), 'CURRENT_APP_VERSION must be sealthai-v3.57');
-assert(html.includes("const DISPLAY_APP_VERSION = 'v3.57';"), 'DISPLAY_APP_VERSION must be v3.57');
-console.log('✓ 1. App version bumped to v3.57');
+// 1. Version assertions (v3.57 or newer)
+assert(html.includes("const CURRENT_APP_VERSION = 'sealthai-v3.57';") || html.includes("const CURRENT_APP_VERSION = 'sealthai-v3.58';"), 'CURRENT_APP_VERSION must be at least sealthai-v3.57');
+assert(html.includes("const DISPLAY_APP_VERSION = 'v3.57';") || html.includes("const DISPLAY_APP_VERSION = 'v3.58';"), 'DISPLAY_APP_VERSION must be at least v3.57');
+console.log('✓ 1. App version verified');
 
 // 2. Test getQuoteMeta parses item_photos
 const startIdx = html.indexOf('function getQuoteMeta(qt) {');

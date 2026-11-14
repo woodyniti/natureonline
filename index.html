@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.57';
-const DISPLAY_APP_VERSION = 'v3.57';
+const CURRENT_APP_VERSION = 'sealthai-v3.58';
+const DISPLAY_APP_VERSION = 'v3.58';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.57 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.58)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.58 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -22949,6 +22949,17 @@ function selectQuoteProductById(rowIdx, prodId) {
   const p = prods.find(x => String(x.id) === String(prodId));
   if (!p) return;
   if (!quoteItems[rowIdx]) quoteItems[rowIdx] = {};
+
+  const existingPhotos = quoteItems[rowIdx]?.photos ? [...quoteItems[rowIdx].photos] : [];
+  const pImg = getProductImageUrl(p);
+  if (pImg && (!existingPhotos.length || !existingPhotos[0]?.url)) {
+    existingPhotos[0] = {
+      url: pImg,
+      title: 'รูปสินค้าจริง ' + (p.sku || p.name),
+      desc: (p.brand ? p.brand + ' ' : '') + (p.material || '')
+    };
+  }
+
   quoteItems[rowIdx] = {
     product_id: p.id,
     product_name: p.name,
@@ -22956,7 +22967,9 @@ function selectQuoteProductById(rowIdx, prodId) {
     sell_price: Number(p.sell_price) || 0,
     discount: quoteItems[rowIdx]?.discount || 0,
     discount_type: quoteItems[rowIdx]?.discount_type || 'amount',
-    is_custom: false
+    is_custom: false,
+    photos: existingPhotos,
+    _showPhotos: true
   };
   const inp = document.getElementById('qt-prod-inp-' + rowIdx);
   if (inp) inp.value = p.name;
@@ -23038,6 +23051,71 @@ function syncQuoteItemInputs(idx) {
     quoteItems[idx].product_name = prodInp.value;
   }
 }
+
+async function saveQuoteItemPhotoToProduct(rowIdx, slotIdx) {
+  const it = quoteItems[rowIdx];
+  if (!it) return;
+  const pSlot = it.photos && it.photos[slotIdx];
+  if (!pSlot || !pSlot.url) {
+    toast('ยังไม่มีรูปภาพในช่องนี้ กรุณาอัปโหลดรูปภาพก่อนบันทึก', 'warning');
+    return;
+  }
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  let targetProd = it.product_id ? prods.find(p => String(p.id) === String(it.product_id)) : null;
+  if (!targetProd && it.product_name) {
+    const cleanName = it.product_name.trim().toLowerCase();
+    targetProd = prods.find(p => (p.name||'').trim().toLowerCase() === cleanName || (p.sku||'').trim().toLowerCase() === cleanName);
+  }
+
+  if (!targetProd) {
+    const doCreate = confirm(`ไม่พบสินค้า "${it.product_name || 'นี้'}" ในคลังสินค้า\n\nต้องการสร้างเป็นสินค้าใหม่ในคลังพร้อมบันทึกรูปภาพนี้ไว้ใช้ในอนาคตใช่หรือไม่?`);
+    if (!doCreate) return;
+    try {
+      toast('กำลังสร้างและบันทึกสินค้าใหม่ในคลัง...', 'info');
+      const newProdPayload = {
+        shop_id: currentShop.id,
+        name: it.product_name || 'สินค้าใหม่',
+        sku: (it.product_name || 'PROD').replace(/[^a-zA-Z0-9ก-๙]/g, '-').slice(0, 30),
+        sell_price: Number(it.sell_price) || 0,
+        image_url: pSlot.url,
+        active: true
+      };
+      const { data: newProd, error: createErr } = await sb.from('products').insert(newProdPayload).select().single();
+      if (createErr) throw createErr;
+      if (newProd) {
+        it.product_id = newProd.id;
+        it.is_custom = false;
+        if (productList) productList.push(newProd);
+        if (allProducts) allProducts.push(newProd);
+        pSlot._savedToProduct = true;
+        toast(`สร้างและบันทึกสินค้า "${newProd.name}" พร้อมรูปภาพลงคลังเรียบร้อยแล้ว! สามารถเรียกใช้ได้ตลอดไป ✓`, 'success');
+        renderQuoteItems();
+      }
+    } catch(err) {
+      console.error('Create product error:', err);
+      toast('สร้างสินค้าไม่สำเร็จ: ' + err.message, 'error');
+    }
+    return;
+  }
+
+  try {
+    toast('กำลังบันทึกรูปภาพลงสินค้าในคลัง...', 'info');
+    const { error: updErr } = await sb.from('products').update({ image_url: pSlot.url }).eq('id', targetProd.id);
+    if (updErr) throw updErr;
+
+    // Update in-memory product cache
+    targetProd.image_url = pSlot.url;
+    it.product_id = targetProd.id;
+    pSlot._savedToProduct = true;
+
+    toast(`บันทึกรูปภาพลงสินค้า "${targetProd.sku ? targetProd.sku + ' · ' : ''}${targetProd.name}" ในคลังเรียบร้อยแล้ว! ในอนาคตเมื่อเลือกสินค้านี้รูปจะมาอัตโนมัติ ✓`, 'success');
+    renderQuoteItems();
+  } catch(err) {
+    console.error('saveQuoteItemPhotoToProduct error:', err);
+    toast('บันทึกรูปภาพลงสินค้าไม่สำเร็จ: ' + err.message, 'error');
+  }
+}
+window.saveQuoteItemPhotoToProduct = saveQuoteItemPhotoToProduct;
 
 function renderQuoteItems() {
   const el = document.getElementById('qt-items');
@@ -23199,35 +23277,40 @@ function renderQuoteItems() {
     // ── แนบรูปประกอบสินค้า (สำหรับพิมพ์แบบ Showcase) ──
     if (!it.photos) it.photos = [];
     const photoSection = document.createElement('div');
-    photoSection.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2);font-size:12px';
+    photoSection.style.cssText = 'margin-top:10px;padding:10px 12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:9px';
 
     const hasPhotos = it.photos.some(p => p && p.url && String(p.url).trim());
+    
+    // Header
     const photoHeader = document.createElement('div');
-    photoHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:5px 8px;border-radius:6px;background:' + (hasPhotos ? '#f0fdf4' : '#f8fafc') + ';border:1px solid ' + (hasPhotos ? '#86efac' : '#e2e8f0');
+    photoHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;cursor:pointer';
     photoHeader.innerHTML = `
-      <div style="font-weight:700;color:${hasPhotos ? '#15803d' : '#0369a1'};display:flex;align-items:center;gap:6px">
-        <span>📷 ภาพประกอบสินค้า (1-2 รูปสำหรับพิมพ์แบบ Showcase)${hasPhotos ? ` <span class="badge" style="background:#dcfce7;color:#15803d;font-size:10px;padding:1px 6px">✓ แนบแล้ว ${it.photos.filter(p=>p&&p.url).length} รูป</span>` : ''}</span>
+      <div style="font-weight:700;font-size:12.5px;color:#0369a1;display:flex;align-items:center;gap:6px">
+        <span style="font-size:15px">📷</span>
+        <span>รูปภาพประกอบสินค้า (สำหรับพิมพ์ Showcase)</span>
+        ${hasPhotos ? `<span class="badge" style="background:#dcfce7;color:#15803d;font-size:10.5px;padding:2px 8px;border:1px solid #86efac;font-weight:700">✓ มีรูปภาพแล้ว ${it.photos.filter(p=>p&&p.url).length} รูป</span>` : '<span style="font-size:11px;color:#64748b;font-weight:normal">(แนบ 1-2 รูปเพื่อพิมพ์แบบ Showcase)</span>'}
       </div>
-      <div style="font-size:11px;color:${hasPhotos ? '#15803d' : 'var(--text3)'};font-weight:600">
-        ${it._showPhotos ? '▲ ซ่อน' : (hasPhotos ? '▼ แก้ไขรูป' : '▼ + แนบรูป')}
+      <div style="font-size:11.5px;color:#0284c7;font-weight:700">
+        ${it._showPhotos === false ? '▼ คลิกเพื่อเปิดแผงรูป' : '▲ ย่อแผงรูป'}
       </div>
     `;
     photoHeader.onclick = () => {
-      it._showPhotos = !it._showPhotos;
+      it._showPhotos = (it._showPhotos === false) ? true : false;
       renderQuoteItems();
     };
     photoSection.appendChild(photoHeader);
 
-    if (it._showPhotos) {
+    // If not explicitly collapsed (default to OPEN so user sees it immediately!)
+    if (it._showPhotos !== false) {
       const photoBody = document.createElement('div');
-      photoBody.style.cssText = 'margin-top:8px;padding:10px;background:#fff;border:1px solid #cbd5e1;border-radius:8px';
+      photoBody.style.cssText = 'margin-top:4px';
       
       // Auto-pull from linked product if available
       if (linked && getProductImageUrl(linked) && (!it.photos[0] || !it.photos[0].url)) {
         const pullBtn = document.createElement('button');
         pullBtn.type = 'button';
         pullBtn.className = 'btn btn-secondary btn-sm';
-        pullBtn.style.cssText = 'margin-bottom:10px;width:100%;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-size:11.5px;display:flex;align-items:center;justify-content:center;gap:6px';
+        pullBtn.style.cssText = 'margin-bottom:10px;width:100%;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-size:12px;font-weight:700;padding:6px;display:flex;align-items:center;justify-content:center;gap:6px';
         pullBtn.innerHTML = '⚡ ดึงรูปจากคลังสินค้าอัตโนมัติ (' + escapeHTML(linked.sku || linked.name) + ')';
         pullBtn.onclick = () => {
           if (!it.photos[0]) it.photos[0] = { url: '', title: '', desc: '' };
@@ -23240,37 +23323,33 @@ function renderQuoteItems() {
 
       // 2 Photo Slots
       const slotsGrid = document.createElement('div');
-      slotsGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px';
+      slotsGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px';
 
       [0, 1].forEach(slotIdx => {
         if (!it.photos[slotIdx]) it.photos[slotIdx] = { url: '', title: '', desc: '' };
         const pSlot = it.photos[slotIdx];
         const slotBox = document.createElement('div');
-        slotBox.style.cssText = 'border:1px solid #e2e8f0;border-radius:6px;padding:8px;background:#f8fafc';
+        slotBox.style.cssText = 'border:1.5px solid ' + (pSlot.url ? '#93c5fd' : '#e2e8f0') + ';border-radius:8px;padding:10px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.03)';
 
         const sTitle = document.createElement('div');
-        sTitle.style.cssText = 'font-weight:700;font-size:11px;color:#1e293b;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center';
-        sTitle.innerHTML = `<span>รูปที่ ${slotIdx+1} ${slotIdx===0?'(มุมมองหลัก/ด้านหน้า)':'(มุมมองเสริม/ด้านข้าง/สเปก)'}</span>` +
-          (pSlot.url ? `<button type="button" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:11px" onclick="quoteItems[${i}].photos[${slotIdx}]={url:'',title:'',desc:''};renderQuoteItems()">✕ ลบรูป</button>` : '');
+        sTitle.style.cssText = 'font-weight:700;font-size:11.5px;color:#1e293b;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center';
+        const slotLabel = slotIdx === 0 ? 'รูปที่ 1 (รูปสินค้าหลัก / ด้านหน้า)' : 'รูปที่ 2 (รูปเสริม / ของแถม / สเปก)';
+        sTitle.innerHTML = `<span style="color:#0369a1">${slotLabel}</span>` +
+          (pSlot.url ? `<button type="button" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:11px;font-weight:700" onclick="quoteItems[${i}].photos[${slotIdx}]={url:'',title:'',desc:''};renderQuoteItems()">✕ ลบรูป</button>` : '');
         slotBox.appendChild(sTitle);
 
-        // Preview if exists
+        // Preview or placeholder
         if (pSlot.url) {
           const prev = document.createElement('div');
-          prev.style.cssText = 'width:100%;height:80px;background:#fff;border:1px solid #cbd5e1;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:6px';
+          prev.style.cssText = 'width:100%;height:100px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:8px';
           prev.innerHTML = `<img src="${escapeHTML(pSlot.url)}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.src='';this.alt='โหลดรูปไม่สำเร็จ'">`;
           slotBox.appendChild(prev);
+        } else {
+          const placeholder = document.createElement('div');
+          placeholder.style.cssText = 'width:100%;height:75px;border:2px dashed #cbd5e1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:8px;background:#f8fafc;color:#94a3b8';
+          placeholder.innerHTML = '<span style="font-size:22px">📷</span><span style="font-size:11px;margin-top:2px">ยังไม่มีรูปภาพ</span>';
+          slotBox.appendChild(placeholder);
         }
-
-        // URL input
-        const urlInp = document.createElement('input');
-        urlInp.type = 'text';
-        urlInp.placeholder = 'URL รูปภาพ หรือกดปุ่มอัปโหลด';
-        urlInp.value = pSlot.url || '';
-        urlInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:5px 7px;font-size:11.5px;box-sizing:border-box;margin-bottom:4px';
-        urlInp.oninput = () => { pSlot.url = urlInp.value.trim(); };
-        urlInp.onblur = () => renderQuoteItems();
-        slotBox.appendChild(urlInp);
 
         // File upload button
         const upWrap = document.createElement('div');
@@ -23290,7 +23369,21 @@ function renderQuoteItems() {
             if (upErr) throw upErr;
             const { data: uData } = sb.storage.from('product-images').getPublicUrl(path);
             pSlot.url = uData.publicUrl;
-            toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
+            if (!pSlot.title) {
+              pSlot.title = slotIdx === 0 ? ('รูปสินค้าจริง ' + (linked ? (linked.sku || linked.name) : it.product_name)) : 'รูปประกอบเพิ่มเติม';
+            }
+            if (linked && !linked.image_url) {
+              try {
+                await sb.from('products').update({ image_url: pSlot.url }).eq('id', linked.id);
+                linked.image_url = pSlot.url;
+                pSlot._savedToProduct = true;
+                toast('อัปโหลดและบันทึกรูปภาพลงสินค้าในคลังเรียบร้อยแล้ว ✓', 'success');
+              } catch(e) {
+                toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
+              }
+            } else {
+              toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
+            }
             renderQuoteItems();
           } catch(err) {
             toast('อัปโหลดไม่สำเร็จ: ' + err.message, 'error');
@@ -23298,18 +23391,48 @@ function renderQuoteItems() {
         };
         const upBtn = document.createElement('button');
         upBtn.type = 'button';
-        upBtn.className = 'btn btn-secondary btn-sm';
-        upBtn.style.cssText = 'width:100%;font-size:11px;padding:3px 6px';
-        upBtn.textContent = '📁 อัปโหลดรูปจากเครื่อง';
+        upBtn.className = 'btn btn-primary btn-sm';
+        upBtn.style.cssText = 'width:100%;font-size:11.5px;font-weight:700;padding:5px 8px;display:flex;align-items:center;justify-content:center;gap:5px';
+        upBtn.innerHTML = pSlot.url ? '📁 เปลี่ยนรูปภาพจากเครื่อง' : '📁 + อัปโหลดรูปภาพจากเครื่อง';
         upBtn.onclick = () => fileInp.click();
         upWrap.appendChild(fileInp);
         upWrap.appendChild(upBtn);
         slotBox.appendChild(upWrap);
 
+        // URL input
+        const urlInp = document.createElement('input');
+        urlInp.type = 'text';
+        urlInp.placeholder = 'หรือวาง URL รูปภาพ...';
+        urlInp.value = pSlot.url || '';
+        urlInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;box-sizing:border-box;margin-bottom:6px';
+        urlInp.oninput = () => { pSlot.url = urlInp.value.trim(); };
+        urlInp.onblur = () => renderQuoteItems();
+        slotBox.appendChild(urlInp);
+
+        // ── ปุ่มสำคัญ: บันทึกรูปนี้ลงสินค้าในคลัง (สำหรับใช้ในอนาคต) ──
+        if (pSlot.url) {
+          const saveToProdBtn = document.createElement('button');
+          saveToProdBtn.type = 'button';
+          saveToProdBtn.className = 'btn btn-sm';
+          const isCurrentProdImg = linked && linked.image_url === pSlot.url;
+          if (isCurrentProdImg || pSlot._savedToProduct) {
+            saveToProdBtn.style.cssText = 'width:100%;margin-bottom:6px;background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-size:11px;font-weight:700;padding:4px 6px;display:flex;align-items:center;justify-content:center;gap:4px';
+            saveToProdBtn.innerHTML = '✅ บันทึกเป็นรูปสินค้าในคลังแล้ว';
+            saveToProdBtn.disabled = true;
+          } else {
+            saveToProdBtn.style.cssText = 'width:100%;margin-bottom:6px;background:#ecfdf5;color:#047857;border:1.5px solid #10b981;font-size:11px;font-weight:700;padding:4px 6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px';
+            const prodLabel = linked ? (linked.sku || linked.name) : 'สินค้าในคลัง';
+            saveToProdBtn.innerHTML = `💾 บันทึกรูปนี้ลงคลัง (${prodLabel})`;
+            saveToProdBtn.title = 'บันทึกรูปนี้เป็นรูปสินค้าหลักในคลังสินค้า เพื่อให้ในอนาคตสามารถดึงมาใช้อัตโนมัติ';
+            saveToProdBtn.onclick = () => saveQuoteItemPhotoToProduct(i, slotIdx);
+          }
+          slotBox.appendChild(saveToProdBtn);
+        }
+
         // Caption / Title
         const titleInp = document.createElement('input');
         titleInp.type = 'text';
-        titleInp.placeholder = slotIdx === 0 ? 'หัวข้อรูป (เช่น มุมมองด้านหน้า)' : 'หัวข้อรูป (เช่น ภาพตัดขวาง/ขอบสเปก)';
+        titleInp.placeholder = slotIdx === 0 ? 'หัวข้อรูป (เช่น มุมมองด้านหน้า)' : 'หัวข้อรูป (เช่น ของแถมฟรี / ภาพตัดขวาง)';
         titleInp.value = pSlot.title || '';
         titleInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:11px;box-sizing:border-box;margin-bottom:4px';
         titleInp.oninput = () => { pSlot.title = titleInp.value; };
@@ -23318,7 +23441,7 @@ function renderQuoteItems() {
         // Description
         const descInp = document.createElement('input');
         descInp.type = 'text';
-        descInp.placeholder = 'คำบรรยาย (เช่น ขอบเหล็กหนา 20mm)';
+        descInp.placeholder = 'คำบรรยาย (เช่น NBR ขอบเหล็กหนา 20mm)';
         descInp.value = pSlot.desc || '';
         descInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:11px;box-sizing:border-box';
         descInp.oninput = () => { pSlot.desc = descInp.value; };
@@ -23330,6 +23453,7 @@ function renderQuoteItems() {
       photoSection.appendChild(photoBody);
     }
 
+    card.appendChild(photoSection);
     el.appendChild(card);
   });
 
@@ -23630,8 +23754,17 @@ async function viewQuote(qtId) {
           const g=Number(it.qty||1)*Number(it.sell_price||0), d=Number(it.discount||0);
           const net=it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d);
           const discStr=d>0?(it.discount_type==='percent'?d+'%':'฿'+fmt(d)):'-';
+          const itemPhotos = (meta.item_photos && (meta.item_photos[i] || meta.item_photos[it.id])) || [];
+          let photoThumbHtml = '';
+          if (Array.isArray(itemPhotos) && itemPhotos.some(p => p && p.url)) {
+            const validPhotos = itemPhotos.filter(p => p && p.url);
+            photoThumbHtml = '<div style="display:flex;gap:6px;align-items:center;margin-top:4px">' +
+              validPhotos.map(p => `<img src="${escapeHTML(p.url)}" style="width:34px;height:34px;object-fit:contain;border:1px solid #cbd5e1;border-radius:4px;background:#fff" title="${escapeHTML(p.title||'')}">`).join('') +
+              `<span style="font-size:10.5px;color:#0369a1;font-weight:700">📷 รูปภาพแนบ ${validPhotos.length} รูป (สำหรับพิมพ์ Showcase)</span>` +
+            '</div>';
+          }
           return '<tr><td style="text-align:center">'+(i+1)+'</td>' +
-            '<td>'+escapeHTML(it.product_name)+'</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
+            '<td>'+escapeHTML(it.product_name) + photoThumbHtml + '</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
             '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
             '<td style="text-align:right;color:var(--red)">'+discStr+'</td>' +
             '<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>';
@@ -46685,7 +46818,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.57', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ฟอร์มพิมพ์ใบเสนอราคาแบบมีภาพประกอบสินค้า (Quotation Showcase) และระบบแนบรูปประกอบรายสินค้า (v3.57)', items:[
+    { v:'3.58', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เปิดแผงเพิ่มรูปประกอบใบเสนอราคาทันที & บันทึกรูปภาพลงสินค้าในคลังสำหรับใช้งานในอนาคต (v3.58)', items:[
+      '📸 <b>แผงเพิ่มรูปภาพประกอบสินค้าเปิดพร้อมใช้งานทันที (Always Visible Photo Panel):</b> ปรับปรุงส่วนแนบรูปภาพในแต่ละรายการสินค้าของใบเสนอราคาให้แสดงผลชัดเจน โดดเด่น ไม่ซ่อนตัวอยู่ในแถบพับ โดยมีพรีวิวรูปภาพ กล่องอัปโหลดตรงจากเครื่อง และช่องใส่ URL ที่มองเห็นได้ทันที',
+      '💾 <b>บันทึกรูปภาพลงสินค้าในคลังสำหรับอนาคต (Save Photo to Master Catalog):</b> เพิ่มปุ่ม <code>💾 บันทึกรูปนี้ลงคลัง</code> ในแต่ละช่องรูปภาพ เมื่อกดแล้วระบบจะอัปเดต <code>products.image_url</code> ในฐานข้อมูล Supabase และหน่วยความจำทันที ทำให้ในอนาคตเมื่อเลือกสินค้านี้ในใบเสนอราคาหรือบิลขาย รูปจะถูกดึงมาใช้อัตโนมัติ 100%',
+      '⚡ <b>ดึงรูปจากคลังสินค้าอัตโนมัติเมื่อเลือกสินค้า (Auto-Fill Item Photo):</b> เมื่อพิมพ์ค้นหาหรือเลือกสินค้าที่มีรูปภาพในคลังอยู่แล้ว ระบบจะดึงรูปภาพหลักมาใส่ในช่องรูปประกอบของรายการใบเสนอราคาให้อัตโนมัติทันที',
+      '🖼️ <b>แสดงรูปภาพย่อในหน้ารายละเอียดใบเสนอราคา (Quotation Detail Photo Previews):</b> ในหน้าดูรายละเอียดใบเสนอราคา (SAP Contents Tab) จะแสดง Thumbnail รูปภาพสินค้าประกอบของแต่ละรายการอย่างชัดเจน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.58 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.57', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ฟอร์มพิมพ์ใบเสนอราคาแบบมีภาพประกอบสินค้า (Quotation Showcase) และระบบแนบรูปประกอบรายสินค้า (v3.57)', items:[
       '🖼️ <b>ฟอร์มพิมพ์แบบมีภาพประกอบสินค้า (Showcase Print Form):</b> เพิ่มตัวเลือกรูปแบบการพิมพ์ใบเสนอราคา โดยแปลงพื้นที่ว่างใต้รายการสินค้าเป็นแถบ "ภาพประกอบสินค้า" พร้อมรูปภาพขนาดใหญ่ความละเอียดสูง 1-2 รูป และการ์ดของแถมพิเศษ สวยงาม จบใน 1 หน้า A4 100%',
       '📷 <b>ระบบแนบรูปประกอบรายสินค้า (1-2 รูป/รายการ):</b> ในหน้าสร้างและแก้ไขใบเสนอราคา สามารถแนบรูปถ่ายสินค้าจริง ภาพตัดขวาง หรือสเปก พร้อมคำบรรยายใต้รูป โดยเลือกอัปโหลดจากเครื่อง หรือดึงรูปจากคลังสินค้าหลักอัตโนมัติ (1-Click Auto-Pull)',
       '⚡ <b>ปุ่มพิมพ์ทางลัดในหน้ารายละเอียดใบเสนอราคา:</b> เพิ่มปุ่ม "🖼️ พิมพ์แบบมีรูป" คู่กับปุ่ม "🖨 พิมพ์มาตรฐาน" ในหน้าดูรายละเอียดใบเสนอราคา ให้เลือกพิมพ์ตามรูปแบบที่ต้องการได้ทันที',
