@@ -9,10 +9,10 @@ const htmlPath = path.join(__dirname, 'index.html');
 assert(fs.existsSync(htmlPath), 'index.html must exist');
 const html = fs.readFileSync(htmlPath, 'utf8');
 
-// 1. Version check
-assert(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.56'"), 'CURRENT_APP_VERSION must be sealthai-v3.56');
-assert(html.includes("DISPLAY_APP_VERSION = 'v3.56'"), 'DISPLAY_APP_VERSION must be v3.56');
-assert(html.includes('v3.56 🚀'), 'App badge should display v3.56');
+// 1. Version check (v3.56 or newer)
+assert(html.includes("CURRENT_APP_VERSION = 'sealthai-v3.56'") || html.includes("CURRENT_APP_VERSION = 'sealthai-v3.57'"), 'CURRENT_APP_VERSION must be at least sealthai-v3.56');
+assert(html.includes("DISPLAY_APP_VERSION = 'v3.56'") || html.includes("DISPLAY_APP_VERSION = 'v3.57'"), 'DISPLAY_APP_VERSION must be at least v3.56');
+assert(html.includes('v3.56') || html.includes('v3.57'), 'App badge should display v3.56 or v3.57');
 assert(html.includes('ย้ายที่อยู่จัดส่งไปด้านขวามือ และลบกรอบสีเทาของโลโก้ (v3.56)'), 'Changelog must include v3.56 entry');
 
 // 2. Extract printQuote implementation

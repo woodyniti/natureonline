@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.56';
-const DISPLAY_APP_VERSION = 'v3.56';
+const CURRENT_APP_VERSION = 'sealthai-v3.57';
+const DISPLAY_APP_VERSION = 'v3.57';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1464,7 +1464,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="auth-logo-text" style="font-size:22px">SEALTHAI</div>
         <div class="auth-logo-sub">Sealing Solution · ระบบจัดการร้านค้า</div>
         <div style="margin-top:6px;display:flex;justify-content:center">
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.56 🚀 System Active</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 10px;border-radius:8px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd;box-shadow:0 1px 3px rgba(2,132,199,0.1);display:inline-flex;align-items:center;gap:4px">v3.57 🚀 System Active</span>
         </div>
       </div>
     </div>
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.56)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.56 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.57)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.57 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -22691,11 +22691,12 @@ function getQuoteMeta(qt) {
   let companyName = String(qt?.company_name || '');
   let taxId = String(qt?.tax_id || '');
   let billingAddress = String(qt?.billing_address || '');
+  let itemPhotos = {};
   let cleanNote = String(qt?.note || '');
 
   if (cleanNote.includes('<!--QT_META:') || cleanNote.includes('[QT_META:')) {
     try {
-      const match = cleanNote.match(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/);
+      const match = cleanNote.match(/<!--QT_META:([\s\S]*?)-->/) || cleanNote.match(/\[QT_META:([\s\S]*?)\]/);
       if (match) {
         const meta = JSON.parse(match[1]);
         if (meta.channel) channel = meta.channel;
@@ -22712,7 +22713,8 @@ function getQuoteMeta(qt) {
         if (meta.company_name != null && !companyName) companyName = meta.company_name;
         if (meta.tax_id != null && !taxId) taxId = meta.tax_id;
         if (meta.billing_address != null && !billingAddress) billingAddress = meta.billing_address;
-        cleanNote = cleanNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
+        if (meta.item_photos && typeof meta.item_photos === 'object') itemPhotos = meta.item_photos;
+        cleanNote = cleanNote.replace(/<!--QT_META:[\s\S]*?-->/g, '').replace(/\[QT_META:[\s\S]*?\]/g, '').trim();
       }
     } catch(e) {}
   }
@@ -22737,6 +22739,7 @@ function getQuoteMeta(qt) {
     company_name: companyName,
     tax_id: taxId,
     billing_address: billingAddress,
+    item_photos: itemPhotos,
     note: cleanNote
   };
 }
@@ -22804,14 +22807,15 @@ async function openEditQuote(qtId) {
   set('qt-shipping-type', meta.shipping_type || 'custom');
   set('qt-shipping-fee', meta.shipping_fee);
   handleQuoteShippingTypeChange();
-  quoteItems = (items||[]).map(it=>({
+  quoteItems = (items||[]).map((it, idx)=>({
     product_id: it.product_id||null,
     product_name: it.product_name,
     qty: it.qty,
     sell_price: it.sell_price,
     discount: it.discount||0,
     discount_type: it.discount_type||'amount',
-    is_custom: !it.product_id
+    is_custom: !it.product_id,
+    photos: (meta.item_photos && (meta.item_photos[idx] || meta.item_photos[it.id])) ? JSON.parse(JSON.stringify(meta.item_photos[idx] || meta.item_photos[it.id])) : []
   }));
   const t=document.getElementById('qt-modal-title'); if(t) t.textContent='✏️ แก้ไขใบเสนอราคา · '+(qt.quote_no||'');
   _setQuoteFooter('edit');
@@ -23190,7 +23194,143 @@ function renderQuoteItems() {
     const gross=Number(it.qty||1)*Number(it.sell_price||0);const disc=Number(it.discount||0);
     const net=it.discount_type==='percent'?Math.max(0,gross-gross*disc/100):Math.max(0,gross-disc);
     tv.textContent=fmtB(net);tw.appendChild(tl);tw.appendChild(tv);r2.appendChild(tw);
-    card.appendChild(r2); el.appendChild(card);
+    card.appendChild(r2);
+
+    // ── แนบรูปประกอบสินค้า (สำหรับพิมพ์แบบ Showcase) ──
+    if (!it.photos) it.photos = [];
+    const photoSection = document.createElement('div');
+    photoSection.style.cssText = 'margin-top:8px;padding-top:8px;border-top:1px dashed var(--border2);font-size:12px';
+
+    const hasPhotos = it.photos.some(p => p && p.url && String(p.url).trim());
+    const photoHeader = document.createElement('div');
+    photoHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:5px 8px;border-radius:6px;background:' + (hasPhotos ? '#f0fdf4' : '#f8fafc') + ';border:1px solid ' + (hasPhotos ? '#86efac' : '#e2e8f0');
+    photoHeader.innerHTML = `
+      <div style="font-weight:700;color:${hasPhotos ? '#15803d' : '#0369a1'};display:flex;align-items:center;gap:6px">
+        <span>📷 ภาพประกอบสินค้า (1-2 รูปสำหรับพิมพ์แบบ Showcase)${hasPhotos ? ` <span class="badge" style="background:#dcfce7;color:#15803d;font-size:10px;padding:1px 6px">✓ แนบแล้ว ${it.photos.filter(p=>p&&p.url).length} รูป</span>` : ''}</span>
+      </div>
+      <div style="font-size:11px;color:${hasPhotos ? '#15803d' : 'var(--text3)'};font-weight:600">
+        ${it._showPhotos ? '▲ ซ่อน' : (hasPhotos ? '▼ แก้ไขรูป' : '▼ + แนบรูป')}
+      </div>
+    `;
+    photoHeader.onclick = () => {
+      it._showPhotos = !it._showPhotos;
+      renderQuoteItems();
+    };
+    photoSection.appendChild(photoHeader);
+
+    if (it._showPhotos) {
+      const photoBody = document.createElement('div');
+      photoBody.style.cssText = 'margin-top:8px;padding:10px;background:#fff;border:1px solid #cbd5e1;border-radius:8px';
+      
+      // Auto-pull from linked product if available
+      if (linked && getProductImageUrl(linked) && (!it.photos[0] || !it.photos[0].url)) {
+        const pullBtn = document.createElement('button');
+        pullBtn.type = 'button';
+        pullBtn.className = 'btn btn-secondary btn-sm';
+        pullBtn.style.cssText = 'margin-bottom:10px;width:100%;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-size:11.5px;display:flex;align-items:center;justify-content:center;gap:6px';
+        pullBtn.innerHTML = '⚡ ดึงรูปจากคลังสินค้าอัตโนมัติ (' + escapeHTML(linked.sku || linked.name) + ')';
+        pullBtn.onclick = () => {
+          if (!it.photos[0]) it.photos[0] = { url: '', title: '', desc: '' };
+          it.photos[0].url = getProductImageUrl(linked);
+          if (!it.photos[0].title) it.photos[0].title = 'รูปสินค้าจริง ' + (linked.sku || linked.name);
+          renderQuoteItems();
+        };
+        photoBody.appendChild(pullBtn);
+      }
+
+      // 2 Photo Slots
+      const slotsGrid = document.createElement('div');
+      slotsGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px';
+
+      [0, 1].forEach(slotIdx => {
+        if (!it.photos[slotIdx]) it.photos[slotIdx] = { url: '', title: '', desc: '' };
+        const pSlot = it.photos[slotIdx];
+        const slotBox = document.createElement('div');
+        slotBox.style.cssText = 'border:1px solid #e2e8f0;border-radius:6px;padding:8px;background:#f8fafc';
+
+        const sTitle = document.createElement('div');
+        sTitle.style.cssText = 'font-weight:700;font-size:11px;color:#1e293b;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center';
+        sTitle.innerHTML = `<span>รูปที่ ${slotIdx+1} ${slotIdx===0?'(มุมมองหลัก/ด้านหน้า)':'(มุมมองเสริม/ด้านข้าง/สเปก)'}</span>` +
+          (pSlot.url ? `<button type="button" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:11px" onclick="quoteItems[${i}].photos[${slotIdx}]={url:'',title:'',desc:''};renderQuoteItems()">✕ ลบรูป</button>` : '');
+        slotBox.appendChild(sTitle);
+
+        // Preview if exists
+        if (pSlot.url) {
+          const prev = document.createElement('div');
+          prev.style.cssText = 'width:100%;height:80px;background:#fff;border:1px solid #cbd5e1;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:6px';
+          prev.innerHTML = `<img src="${escapeHTML(pSlot.url)}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.src='';this.alt='โหลดรูปไม่สำเร็จ'">`;
+          slotBox.appendChild(prev);
+        }
+
+        // URL input
+        const urlInp = document.createElement('input');
+        urlInp.type = 'text';
+        urlInp.placeholder = 'URL รูปภาพ หรือกดปุ่มอัปโหลด';
+        urlInp.value = pSlot.url || '';
+        urlInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:5px 7px;font-size:11.5px;box-sizing:border-box;margin-bottom:4px';
+        urlInp.oninput = () => { pSlot.url = urlInp.value.trim(); };
+        urlInp.onblur = () => renderQuoteItems();
+        slotBox.appendChild(urlInp);
+
+        // File upload button
+        const upWrap = document.createElement('div');
+        upWrap.style.cssText = 'display:flex;gap:4px;margin-bottom:6px';
+        const fileInp = document.createElement('input');
+        fileInp.type = 'file';
+        fileInp.accept = 'image/*';
+        fileInp.style.display = 'none';
+        fileInp.onchange = async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          try {
+            toast('กำลังอัปโหลดรูปภาพ...', 'info');
+            const ext = file.name.split('.').pop() || 'jpg';
+            const path = `${currentShop.id}/quotations/qt-item-${i}-${slotIdx}-${Date.now()}.${ext}`;
+            const { error: upErr } = await sb.storage.from('product-images').upload(path, file, { cacheControl:'3600', upsert:true });
+            if (upErr) throw upErr;
+            const { data: uData } = sb.storage.from('product-images').getPublicUrl(path);
+            pSlot.url = uData.publicUrl;
+            toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
+            renderQuoteItems();
+          } catch(err) {
+            toast('อัปโหลดไม่สำเร็จ: ' + err.message, 'error');
+          }
+        };
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.className = 'btn btn-secondary btn-sm';
+        upBtn.style.cssText = 'width:100%;font-size:11px;padding:3px 6px';
+        upBtn.textContent = '📁 อัปโหลดรูปจากเครื่อง';
+        upBtn.onclick = () => fileInp.click();
+        upWrap.appendChild(fileInp);
+        upWrap.appendChild(upBtn);
+        slotBox.appendChild(upWrap);
+
+        // Caption / Title
+        const titleInp = document.createElement('input');
+        titleInp.type = 'text';
+        titleInp.placeholder = slotIdx === 0 ? 'หัวข้อรูป (เช่น มุมมองด้านหน้า)' : 'หัวข้อรูป (เช่น ภาพตัดขวาง/ขอบสเปก)';
+        titleInp.value = pSlot.title || '';
+        titleInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:11px;box-sizing:border-box;margin-bottom:4px';
+        titleInp.oninput = () => { pSlot.title = titleInp.value; };
+        slotBox.appendChild(titleInp);
+
+        // Description
+        const descInp = document.createElement('input');
+        descInp.type = 'text';
+        descInp.placeholder = 'คำบรรยาย (เช่น ขอบเหล็กหนา 20mm)';
+        descInp.value = pSlot.desc || '';
+        descInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:11px;box-sizing:border-box';
+        descInp.oninput = () => { pSlot.desc = descInp.value; };
+        slotBox.appendChild(descInp);
+
+        slotsGrid.appendChild(slotBox);
+      });
+      photoBody.appendChild(slotsGrid);
+      photoSection.appendChild(photoBody);
+    }
+
+    el.appendChild(card);
   });
 
   // + เพิ่มสินค้า buttons footer
@@ -23214,7 +23354,7 @@ function renderQuoteItems() {
   el.appendChild(btnWrap);
 }
 
-function addQuoteItem(){quoteItems.push({product_id:null,product_name:'',qty:1,sell_price:0,discount:0,discount_type:'amount',is_custom:false});renderQuoteItems();}
+function addQuoteItem(){quoteItems.push({product_id:null,product_name:'',qty:1,sell_price:0,discount:0,discount_type:'amount',is_custom:false,photos:[]});renderQuoteItems();}
 
 function calcQuoteTotal(){
   const subtotal = quoteItems.reduce((s,it)=>{
@@ -23262,7 +23402,7 @@ async function saveQuote(status) {
   const total = calcQuoteTotal();
 
   let rawNote = document.getElementById('qt-note')?.value || '';
-  rawNote = rawNote.replace(/(?:<!--|\[)QT_META:(\{.*?\})(?:-->|\])/g, '').trim();
+  rawNote = rawNote.replace(/<!--QT_META:[\s\S]*?-->/g, '').replace(/\[QT_META:[\s\S]*?\]/g, '').trim();
   const channel = document.getElementById('qt-channel')?.value || 'LINE';
   const paymentMethod = document.getElementById('qt-pay')?.value || 'โอนเงิน';
   const customerUsername = document.getElementById('qt-username')?.value || '';
@@ -23290,6 +23430,24 @@ async function saveQuote(status) {
     tax_id: taxId,
     billing_address: billingAddress
   };
+
+  const itemPhotos = {};
+  (quoteItems || []).forEach((it, idx) => {
+    if (it.photos && Array.isArray(it.photos)) {
+      const valid = it.photos.filter(p => p && p.url && String(p.url).trim());
+      if (valid.length) {
+        itemPhotos[idx] = valid.map(p => ({
+          url: String(p.url).trim(),
+          title: String(p.title || '').trim(),
+          desc: String(p.desc || '').trim()
+        }));
+      }
+    }
+  });
+  if (Object.keys(itemPhotos).length) {
+    metaObj.item_photos = itemPhotos;
+  }
+
   const noteWithMeta = (rawNote ? rawNote + '\n' : '') + '<!--QT_META:' + JSON.stringify(metaObj) + '-->';
 
   let payload = {
@@ -23549,7 +23707,8 @@ async function viewQuote(qtId) {
   const footer=document.getElementById('qt-detail-footer');
   if(footer){
     let btns='<button class="btn btn-secondary" onclick="closeModal(&quot;modal-quote-detail&quot;)">ปิด</button>';
-    btns+='<button class="btn btn-secondary btn-sm" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;)">🖨 พิมพ์</button>';
+    btns+='<button class="btn btn-secondary btn-sm" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;,&quot;standard&quot;)">🖨 พิมพ์มาตรฐาน</button>';
+    btns+='<button class="btn btn-secondary btn-sm" style="color:#047857;background:#f0fdf4;border-color:#86efac;font-weight:700" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;,&quot;showcase&quot;)">🖼️ พิมพ์แบบมีรูป (Showcase)</button>';
     btns+='<button class="btn btn-secondary btn-sm" onclick="duplicateQuote(&quot;'+qtId+'&quot;)" title="ทำซ้ำ (Duplicate) เป็นใบเสนอราคาใหม่">📋 ทำซ้ำ (Duplicate)</button>';
     if (!isClosed) {
       btns+='<button class="btn btn-secondary btn-sm" onclick="openEditQuote(&quot;'+qtId+'&quot;)">✏️ แก้ไข</button>';
@@ -23566,16 +23725,35 @@ async function viewQuote(qtId) {
   openModal('modal-quote-detail');
 }
 
-function openQuotePrintOptions(qtId) {
+function openQuotePrintOptions(qtId, defaultLayout = 'standard') {
   document.getElementById('quote-options-modal')?.remove();
   const modal = document.createElement('div');
   modal.id = 'quote-options-modal';
   modal.className = 'modal-overlay open';
   modal.style.zIndex = '320';
   modal.innerHTML = `
-    <div class="modal" style="max-width:460px">
+    <div class="modal" style="max-width:480px">
       <div class="modal-title">🖨️ ตัวเลือกการพิมพ์ใบเสนอราคา</div>
       <div style="padding:14px;background:var(--bg3);border-radius:10px;margin-bottom:14px">
+        
+        <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">🎨 รูปแบบเอกสารการพิมพ์ (Print Form)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 10px;border-radius:8px;border:1.5px solid ${defaultLayout==='standard'?'#0284c7':'var(--border)'}">
+            <input type="radio" name="quote-layout-type" value="standard" ${defaultLayout==='standard'?'checked':''} style="width:18px;height:18px;margin-top:2px">
+            <div>
+              <div style="font-weight:700;font-size:12.5px;color:#0369a1">📄 แบบมาตรฐาน</div>
+              <div style="font-size:11px;color:var(--text3)">ตาราง 10 แถว บรรทัดว่างมาตรฐาน</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 10px;border-radius:8px;border:1.5px solid ${defaultLayout==='showcase'?'#059669':'var(--border)'}">
+            <input type="radio" name="quote-layout-type" value="showcase" ${defaultLayout==='showcase'?'checked':''} style="width:18px;height:18px;margin-top:2px">
+            <div>
+              <div style="font-weight:700;font-size:12.5px;color:#059669">🖼️ แบบมีรูปประกอบ</div>
+              <div style="font-size:11px;color:var(--text3)">มีแถบภาพสินค้าจริง 1-2 รูป + ของแถม</div>
+            </div>
+          </label>
+        </div>
+
         <div style="font-weight:700;font-size:13px;color:var(--text1);margin-bottom:8px">📄 ประเภทเอกสารที่ต้องการพิมพ์</div>
         <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:14px">
           <label style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--card-bg,#fff);padding:8px 12px;border-radius:8px;border:1px solid var(--border)">
@@ -23617,7 +23795,8 @@ function openQuotePrintOptions(qtId) {
         <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
         <button class="btn btn-primary" onclick="
           const docCopy = document.querySelector('input[name=\\'quote-doc-copy\\']:checked')?.value || 'original';
-          printQuote('${qtId}', document.getElementById('quote-show-discount').checked, document.getElementById('quote-show-signature').checked, docCopy);
+          const layoutType = document.querySelector('input[name=\\'quote-layout-type\\']:checked')?.value || 'standard';
+          printQuote('${qtId}', document.getElementById('quote-show-discount').checked, document.getElementById('quote-show-signature').checked, docCopy, layoutType);
         ">🖨️ พิมพ์ใบเสนอราคา</button>
       </div>
     </div>`;
@@ -23849,14 +24028,15 @@ async function duplicateQuote(qtId) {
   set('qt-shipping-fee', meta.shipping_fee || 0);
   handleQuoteShippingTypeChange();
 
-  quoteItems = (items || []).map(it => ({
+  quoteItems = (items || []).map((it, idx) => ({
     product_id: it.product_id || null,
     product_name: it.product_name,
     qty: it.qty,
     sell_price: it.sell_price,
     discount: it.discount || 0,
     discount_type: it.discount_type || 'amount',
-    is_custom: !it.product_id
+    is_custom: !it.product_id,
+    photos: (meta.item_photos && (meta.item_photos[idx] || meta.item_photos[it.id])) ? JSON.parse(JSON.stringify(meta.item_photos[idx] || meta.item_photos[it.id])) : []
   }));
 
   const t = document.getElementById('qt-modal-title');
@@ -23922,7 +24102,7 @@ function getQuoteBankSettings(shop = currentShop) {
   };
 }
 
-async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original') {
+async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original', layoutType='standard') {
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
     sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
@@ -23932,6 +24112,14 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
   const shop = currentShop||{};
   const bank = getQuoteBankSettings(shop);
   const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
+
+  let prods = (productList && productList.length) ? productList : (allProducts || []);
+  if ((!prods || !prods.length) && layoutType === 'showcase') {
+    try {
+      const { data: pData } = await sb.from('products').select('*').limit(3000);
+      if (pData) prods = pData;
+    } catch(e) {}
+  }
 
   function itemNet(it) {
     const gross = Number(it.qty||1) * Number(it.sell_price||0);
@@ -23997,6 +24185,13 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
   bp.push('.bank-title{font-size:13px;font-weight:700;color:#166534;margin-bottom:3px}.bank-name{font-size:13px;font-weight:700;color:#111}.bank-detail{font-size:12px;color:#333;line-height:1.65}.bank-account{font-family:\'JetBrains Mono\',Consolas,\'Segoe UI Mono\',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:"zero" 1;font-size:24px;font-weight:800;color:#047857;letter-spacing:2.5px;white-space:nowrap;background:#ffffff;border:1.5px solid #86efac;border-radius:6px;padding:3px 12px;display:inline-block;box-shadow:0 1px 3px rgba(0,0,0,0.05)}');
   bp.push('.sig-area{display:flex;justify-content:space-between;margin-top:24px}');
   bp.push('.sig-box{text-align:center;width:180px}.sig-image-wrap{height:26px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;margin-bottom:2px}.sig-image{display:block;max-width:72px;max-height:24px;object-fit:contain}.sig-space{height:26px}.sig-line{border-top:1.5px solid #1d4ed8;margin-bottom:5px}.sig-label{font-size:12px;color:#1d4ed8;font-weight:700}');
+  bp.push('.gallery-row td{padding:6px 10px !important;background:#f8fafc;border-left:1px solid #555;border-right:1px solid #555}');
+  bp.push('.gallery-container{width:100%}.gallery-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:3px;border-bottom:1px dashed #cbd5e1}.gallery-title{font-size:11px;font-weight:700;color:#0369a1}.gallery-sub{font-size:9.5px;color:#64748b}.gallery-cards{display:grid;gap:8px}');
+  bp.push('.photo-card{background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:6px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.04)}');
+  bp.push('.photo-display{width:100%;height:130px;display:flex;align-items:center;justify-content:center;background:#f8fafc;border-radius:4px;overflow:hidden;margin-bottom:4px}.photo-display img{max-width:100%;max-height:100%;object-fit:contain}');
+  bp.push('.photo-title{font-size:11px;font-weight:700;color:#0f172a;margin-bottom:2px}.photo-desc{font-size:9.5px;color:#64748b;line-height:1.3}');
+  bp.push('.gift-card{background:#fff;border:1.5px solid #f59e0b;border-radius:6px;padding:6px;text-align:center;box-shadow:0 1px 3px rgba(245,158,11,0.1)}');
+  bp.push('.gift-badge{display:inline-block;background:#fef3c7;color:#b45309;border:1px solid #fde68a;font-size:10px;font-weight:700;padding:1px 8px;border-radius:20px;margin-bottom:4px}');
   bp.push('@media print{body{background:#fff;padding:0;margin:0}.qt-page{width:100%;min-height:281mm;box-shadow:none;padding:0;margin:0;page-break-after:always;break-after:page}.page-border{min-height:281mm}.qt-page:last-child{page-break-after:avoid;break-after:avoid}@page{size:A4 portrait;margin:8mm}}');
   bp.push('</'+'style></head><body>');
 
@@ -24081,7 +24276,111 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
       if (showDiscount) bp.push('<td style="text-align:right;color:#c00">'+discCell+'</td>');
       bp.push('<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>');
     });
-    bp.push(emptyRows);
+    if (layoutType === 'showcase') {
+      let targetIdx = 0;
+      let targetItem = (items||[])[0];
+      let pList = meta.item_photos?.[0] || meta.item_photos?.[targetItem?.id] || [];
+      if (!pList.length) {
+        for (let idx = 0; idx < (items||[]).length; idx++) {
+          const cand = meta.item_photos?.[idx] || meta.item_photos?.[items[idx]?.id] || [];
+          if (cand && cand.length && cand.some(p => p && p.url)) {
+            targetIdx = idx;
+            targetItem = items[idx];
+            pList = cand;
+            break;
+          }
+        }
+      }
+      let photos = (pList||[]).filter(p => p && p.url && String(p.url).trim());
+      if (!photos.length && targetItem) {
+        const pMatched = prods.find(p => String(p.id) === String(targetItem.product_id));
+        const pImg = pMatched ? getProductImageUrl(pMatched) : '';
+        if (pImg) {
+          photos.push({
+            url: pImg,
+            title: 'รูปสินค้าจริง: ' + (targetItem.product_name || pMatched.name || ''),
+            desc: pMatched.description || (pMatched.brand ? 'แบรนด์: ' + pMatched.brand : '')
+          });
+        }
+      }
+
+      // Check gift item
+      let giftItem = null;
+      (items||[]).forEach((it, idx) => {
+        if (idx !== targetIdx && !giftItem) {
+          const isGift = /(แถม|ฟรี|free|gift)/i.test(it.product_name || '') ||
+                         (it.discount > 0 && it.discount === it.sell_price) ||
+                         (it.discount_type === 'percent' && Number(it.discount) === 100);
+          if (isGift) {
+            const gProd = prods.find(p => String(p.id) === String(it.product_id));
+            giftItem = {
+              item: it,
+              img: gProd ? getProductImageUrl(gProd) : ''
+            };
+          }
+        }
+      });
+
+      const colSpan = showDiscount ? 6 : 5;
+      const itemNameDisp = targetItem ? escapeHTML(targetItem.product_name || '') : '';
+      
+      bp.push('<tr class="gallery-row"><td colspan="' + colSpan + '">');
+      bp.push('<div class="gallery-container">');
+      bp.push('<div class="gallery-header">');
+      bp.push('<div class="gallery-title">📷 ภาพประกอบสินค้า ' + (targetItem ? '(รายการที่ ' + (targetIdx+1) + ': ' + itemNameDisp + ')' : '') + '</div>');
+      bp.push('<div class="gallery-sub">แนบรูปภาพสินค้าและสเปกประกอบการพิจารณา</div>');
+      bp.push('</div>');
+
+      if (photos.length >= 2) {
+        bp.push('<div class="gallery-cards" style="grid-template-columns:1fr 1fr">');
+        photos.slice(0, 2).forEach((ph, pIdx) => {
+          bp.push('<div class="photo-card">');
+          bp.push('<div class="photo-display"><img src="' + escapeHTML(ph.url) + '" alt="' + escapeHTML(ph.title||'รูปสินค้า') + '" onerror="this.alt=\'โหลดรูปไม่สำเร็จ\'"></div>');
+          bp.push('<div class="photo-title">' + (ph.title ? escapeHTML(ph.title) : ('รูปที่ ' + (pIdx+1) + ': รายละเอียดสินค้า')) + '</div>');
+          if (ph.desc) bp.push('<div class="photo-desc">' + escapeHTML(ph.desc) + '</div>');
+          bp.push('</div>');
+        });
+        bp.push('</div>');
+      } else if (photos.length === 1 && giftItem) {
+        bp.push('<div class="gallery-cards" style="grid-template-columns:1fr 1fr">');
+        const ph = photos[0];
+        bp.push('<div class="photo-card">');
+        bp.push('<div class="photo-display"><img src="' + escapeHTML(ph.url) + '" alt="' + escapeHTML(ph.title||'รูปสินค้า') + '" onerror="this.alt=\'โหลดรูปไม่สำเร็จ\'"></div>');
+        bp.push('<div class="photo-title">' + (ph.title ? escapeHTML(ph.title) : 'รูปสินค้าจริง') + '</div>');
+        if (ph.desc) bp.push('<div class="photo-desc">' + escapeHTML(ph.desc) + '</div>');
+        bp.push('</div>');
+
+        // Gift Card
+        bp.push('<div class="gift-card">');
+        bp.push('<div class="gift-badge">🎁 แถมฟรี! 100%</div>');
+        if (giftItem.img) {
+          bp.push('<div class="photo-display"><img src="' + escapeHTML(giftItem.img) + '" alt="ของแถม" onerror="this.alt=\'รูปของแถม\'"></div>');
+        } else {
+          bp.push('<div class="photo-display" style="font-size:38px">🎁</div>');
+        }
+        bp.push('<div class="photo-title" style="color:#b45309">' + escapeHTML(giftItem.item.product_name) + '</div>');
+        bp.push('<div class="photo-desc">สิทธิพิเศษสำหรับคำสั่งซื้อตามใบเสนอราคานี้</div>');
+        bp.push('</div>');
+        bp.push('</div>');
+      } else if (photos.length === 1) {
+        const ph = photos[0];
+        bp.push('<div class="gallery-cards" style="grid-template-columns:1fr">');
+        bp.push('<div class="photo-card">');
+        bp.push('<div class="photo-display"><img src="' + escapeHTML(ph.url) + '" alt="' + escapeHTML(ph.title||'รูปสินค้า') + '" onerror="this.alt=\'โหลดรูปไม่สำเร็จ\'"></div>');
+        bp.push('<div class="photo-title">' + (ph.title ? escapeHTML(ph.title) : 'รูปสินค้าจริง') + '</div>');
+        if (ph.desc) bp.push('<div class="photo-desc">' + escapeHTML(ph.desc) + '</div>');
+        bp.push('</div></div>');
+      } else {
+        bp.push('<div style="text-align:center;padding:16px;background:#fff;border:1px dashed #cbd5e1;border-radius:6px;color:#64748b;font-size:11.5px">');
+        bp.push('<div>📷 ยังไม่ได้แนบรูปประกอบสินค้าสำหรับใบเสนอราคานี้</div>');
+        bp.push('<div style="font-size:10px;color:#94a3b8;margin-top:2px">(สามารถกด "✏️ แก้ไข" เพื่อแนบรูปประกอบ 1-2 รูป หรือดึงรูปจากคลังสินค้าอัตโนมัติ)</div>');
+        bp.push('</div>');
+      }
+
+      bp.push('</div></td></tr>');
+    } else {
+      bp.push(emptyRows);
+    }
     bp.push('</tbody></table>');
 
     // Totals
@@ -46386,7 +46685,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.56', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงใบเสนอราคา (Quotation Layout): ย้ายที่อยู่จัดส่งไปด้านขวามือ และลบกรอบสีเทาของโลโก้ (v3.56)', items:[
+    { v:'3.57', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ฟอร์มพิมพ์ใบเสนอราคาแบบมีภาพประกอบสินค้า (Quotation Showcase) และระบบแนบรูปประกอบรายสินค้า (v3.57)', items:[
+      '🖼️ <b>ฟอร์มพิมพ์แบบมีภาพประกอบสินค้า (Showcase Print Form):</b> เพิ่มตัวเลือกรูปแบบการพิมพ์ใบเสนอราคา โดยแปลงพื้นที่ว่างใต้รายการสินค้าเป็นแถบ "ภาพประกอบสินค้า" พร้อมรูปภาพขนาดใหญ่ความละเอียดสูง 1-2 รูป และการ์ดของแถมพิเศษ สวยงาม จบใน 1 หน้า A4 100%',
+      '📷 <b>ระบบแนบรูปประกอบรายสินค้า (1-2 รูป/รายการ):</b> ในหน้าสร้างและแก้ไขใบเสนอราคา สามารถแนบรูปถ่ายสินค้าจริง ภาพตัดขวาง หรือสเปก พร้อมคำบรรยายใต้รูป โดยเลือกอัปโหลดจากเครื่อง หรือดึงรูปจากคลังสินค้าหลักอัตโนมัติ (1-Click Auto-Pull)',
+      '⚡ <b>ปุ่มพิมพ์ทางลัดในหน้ารายละเอียดใบเสนอราคา:</b> เพิ่มปุ่ม "🖼️ พิมพ์แบบมีรูป" คู่กับปุ่ม "🖨 พิมพ์มาตรฐาน" ในหน้าดูรายละเอียดใบเสนอราคา ให้เลือกพิมพ์ตามรูปแบบที่ต้องการได้ทันที',
+      '🔒 <b>ปลอดภัยด้วย QT_META Storage:</b> บันทึกข้อมูลรูปภาพประกอบผ่านระบบแท็กสำรองอัตโนมัติ ไม่ต้องปรับแก้ Schema ตารางในฐานข้อมูล Supabase',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.57 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.56', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับปรุงใบเสนอราคา (Quotation Layout): ย้ายที่อยู่จัดส่งไปด้านขวามือ และลบกรอบสีเทาของโลโก้ (v3.56)', items:[
       '📦 <b>ย้ายที่อยู่จัดส่ง (Ship-to) ไปแสดงฝั่งขวามือ:</b> ปรับปรุงส่วนหัวใบเสนอราคา โดยแยกกล่องข้อมูลลูกค้า/ที่อยู่ออกบิลไว้ด้านซ้าย และย้ายที่อยู่จัดส่งสินค้าไปแสดงใต้ข้อมูลเอกสารด้านขวามืออย่างเป็นสัดส่วน สวยงาม สมดุลทั้งสองฝั่ง',
       '🖼️ <b>ลบกรอบสีเทาของโลโก้ SEALTHAI:</b> ปรับแต่งโลโก้ SEALTHAI ให้โปร่งใส กลมกลืน สะอาดตา ไม่มีกรอบสี่เหลี่ยมสีเทามารบกวนความสวยงามของเอกสาร'
     ]},
