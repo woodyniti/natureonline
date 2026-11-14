@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.58';
-const DISPLAY_APP_VERSION = 'v3.58';
+const CURRENT_APP_VERSION = 'sealthai-v3.59';
+const DISPLAY_APP_VERSION = 'v3.59';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.58)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.58 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.59)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.59 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2624,6 +2624,26 @@ function getOrderCompanyName(order, customer = null) {
   return '';
 }
 
+function formatCompanyWithBranch(companyName, branchCode = '') {
+  let comp = String(companyName || '').trim();
+  if (!comp) return '';
+  let b = String(branchCode || '').trim();
+
+  // Strip existing branch suffix if user already typed it in the company field
+  comp = comp.replace(/\s*[\(\[]?\s*(?:สำนักงานใหญ่|head\s*office|สาขา\s*[:\s]?\s*[\w\d]+|สาขาที่\s*[\w\d]+)\s*[\)\]]?\s*$/i, '').trim();
+
+  let branchSuffix = '';
+  if (!b || b === '00000' || b === 'สำนักงานใหญ่' || b.toLowerCase() === 'head office') {
+    branchSuffix = 'สำนักงานใหญ่';
+  } else {
+    const cleanNum = b.replace(/^สาขา(?:ที่)?\s*[:\s]?\s*/i, '').trim();
+    branchSuffix = 'สาขา ' + (cleanNum || b);
+  }
+
+  return `${comp} (${branchSuffix})`;
+}
+window.formatCompanyWithBranch = formatCompanyWithBranch;
+
 function _normalizeCompName(str) {
   return String(str || '')
     .replace(/\s*\((?:สำนักงานใหญ่|สาขา(?:ที่\s*)?\d+|head\s*office)\)\s*/gi, '')
@@ -2632,10 +2652,14 @@ function _normalizeCompName(str) {
     .toLowerCase();
 }
 
-function formatCustomerDisplayName(customerName, companyName, contactPerson = '', escape = true) {
+function formatCustomerDisplayName(customerName, companyName, contactPerson = '', escape = true, branchCode = '') {
   const cust = String(customerName || '').trim();
-  const comp = String(companyName || '').trim();
+  let comp = String(companyName || '').trim();
   const contact = String(contactPerson || '').trim();
+
+  if (comp) {
+    comp = formatCompanyWithBranch(comp, branchCode);
+  }
 
   let result = '';
   if (comp) {
@@ -7367,14 +7391,18 @@ async function orders() {
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','o')" title="คัดลอกข้อมูลบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกออกบิล/บริษัท ➔ ที่อยู่จัดส่ง</button>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+            <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:12px;margin-bottom:10px">
               <div>
                 <span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
-                <input type="text" id="o-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+                <input type="text" id="o-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
               </div>
               <div>
-                <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
-                <input type="text" id="o-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+                <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก)</span>
+                <input type="text" id="o-tax-id" placeholder="01055xxxxxxxx" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+              </div>
+              <div>
+                <span class="sap-field-label">สาขา (Branch) <span style="font-size:11px;color:#64748b">(00000 / สาขา)</span></span>
+                <input type="text" id="o-branch" placeholder="00000 / สำนักงานใหญ่" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
               </div>
             </div>
             <div style="margin-bottom:10px">
@@ -8311,7 +8339,7 @@ async function openNewOrder() {
   orderSourceQuoteId = null;
   renderOrderItems();
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-billing-address','o-track','o-note','o-internal-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-branch','o-billing-address','o-track','o-note','o-internal-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const elDate = document.getElementById('o-date'); if (elDate) elDate.value = today();
@@ -8374,6 +8402,7 @@ async function importQuoteToOrder(qtId) {
   if (qMeta.internal_note) set('o-internal-note', qMeta.internal_note);
   if (qMeta.company_name) set('o-company', qMeta.company_name);
   if (qMeta.tax_id) set('o-tax-id', qMeta.tax_id);
+  if (qMeta.branch_code) set('o-branch', qMeta.branch_code);
   if (qMeta.billing_address) set('o-billing-address', qMeta.billing_address);
   if (qt.employee_id) set('o-emp', qt.employee_id);
   orderItems = (items||[]).map(it => {
@@ -8555,6 +8584,7 @@ function _fillCustFields(c, ids) {
   set(ids.addr,    c.customer_address);
   set(ids.company, c.company_name || (c.source === 'crm' && c.customer_type === 'company' ? c.customer_name : ''));
   set(ids.tax,     c.tax_id);
+  if (ids.branch)  set(ids.branch, c.branch_code || (c.company_name ? '00000' : ''));
   set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
   const changedField = document.getElementById(ids.name);
   markUnsavedForm(changedField?.closest('.modal-overlay'));
@@ -8635,6 +8665,7 @@ function fillCustomerFromOrder(idx) {
     addr: 'o-address',
     company: 'o-company',
     tax: 'o-tax-id',
+    branch: 'o-branch',
     billing: 'o-billing-address'
   });
   if (dd) dd.style.display = 'none';
@@ -8653,6 +8684,7 @@ function fillEditCustomer(idx) {
     addr: 'ed-address',
     company: 'ed-company',
     tax: 'ed-tax-id',
+    branch: 'ed-branch',
     billing: 'ed-billing-address'
   });
   if (dd) dd.style.display = 'none';
@@ -8671,6 +8703,7 @@ function fillQuoteCustomer(idx) {
     addr: 'qt-address',
     company: 'qt-company',
     tax: 'qt-tax-id',
+    branch: 'qt-branch',
     billing: 'qt-billing-address'
   });
   if (dd) dd.style.display = 'none';
@@ -9467,6 +9500,7 @@ async function saveOrder() {
     customer_address: document.getElementById('o-address')?.value || '',
     company_name:     (document.getElementById('o-company')?.value || '').trim() || null,
     tax_id:           (document.getElementById('o-tax-id')?.value || '').trim() || null,
+    branch_code:      (document.getElementById('o-branch')?.value || '').trim() || null,
     billing_address:  document.getElementById('o-billing-address')?.value || '',  // ที่อยู่ออกบิล
     payment_method: document.getElementById('o-pay').value,
     tracking_no: document.getElementById('o-track').value,
@@ -9498,6 +9532,7 @@ async function saveOrder() {
     if (('internal_note' in orderPayload) && (error.message||'').includes('internal_note')) { delete orderPayload.internal_note; continue; }
     if (('company_name' in orderPayload) && (error.message||'').includes('company_name')) { delete orderPayload.company_name; continue; }
     if (('tax_id' in orderPayload) && (error.message||'').includes('tax_id')) { delete orderPayload.tax_id; continue; }
+    if (('branch_code' in orderPayload) && (error.message||'').includes('branch_code')) { delete orderPayload.branch_code; continue; }
     if (('billing_address' in orderPayload) && (error.message||'').includes('billing_address')) { delete orderPayload.billing_address; continue; }
     if (('shipping_fee' in orderPayload) && (error.message||'').includes('shipping_fee')) {
       delete orderPayload.shipping_fee;
@@ -10329,14 +10364,18 @@ async function viewOrder(orderId) {
             <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','ed')" title="คัดลอกข้อมูลบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกออกบิล/บริษัท ➔ ที่อยู่จัดส่ง</button>
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+        <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:12px;margin-bottom:10px">
           <div>
             <span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
             <input id="ed-company" value="${(getOrderCompanyName(order)).replace(/"/g,'&quot;')}" placeholder="ชื่อบริษัท / ชื่อออกบิล (ไม่บังคับ)" style="${iStyle};margin-top:3px">
           </div>
           <div>
-            <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
-            <input id="ed-tax-id" value="${(order.tax_id||'').replace(/"/g,'&quot;')}" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="${iStyle};margin-top:3px">
+            <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก)</span>
+            <input id="ed-tax-id" value="${(order.tax_id||'').replace(/"/g,'&quot;')}" placeholder="01055xxxxxxxx" style="${iStyle};margin-top:3px">
+          </div>
+          <div>
+            <span class="sap-field-label">สาขา (Branch) <span style="font-size:11px;color:#64748b">(00000 / สาขา)</span></span>
+            <input id="ed-branch" value="${(order.branch_code||'').replace(/"/g,'&quot;')}" placeholder="00000 / สำนักงานใหญ่" style="${iStyle};margin-top:3px">
           </div>
         </div>
         <div style="margin-bottom:10px">
@@ -10597,6 +10636,7 @@ async function saveOrderEdit(orderId) {
   const edEmpVal = document.getElementById('ed-emp')?.value || null;
   const editCompanyName = (document.getElementById('ed-company')?.value || '').trim();
   const editTaxId = (document.getElementById('ed-tax-id')?.value || '').trim();
+  const editBranchCode = (document.getElementById('ed-branch')?.value || '').trim();
   const editBillingAddress = document.getElementById('ed-billing-address')?.value || '';
   const editRawNote = document.getElementById('ed-note')?.value || '';
   const editInternalNote = (document.getElementById('ed-internal-note')?.value || '').trim();
@@ -10614,6 +10654,7 @@ async function saveOrderEdit(orderId) {
     customer_address: document.getElementById('ed-address')?.value || '',
     company_name:     editCompanyName || null,
     tax_id:           editTaxId || null,
+    branch_code:      editBranchCode || null,
     billing_address:  editBillingAddress,  // ที่อยู่ออกบิล
     channel: document.getElementById('ed-ch').value,
     tracking_no: document.getElementById('ed-track').value,
@@ -10656,6 +10697,10 @@ async function saveOrderEdit(orderId) {
         editPayload.note = [editPayload.note, `[Tax ID: ${editPayload.tax_id}]`].filter(Boolean).join('\n');
       }
       delete editPayload.tax_id;
+      continue;
+    }
+    if (('branch_code' in editPayload) && msg.includes('branch_code')) {
+      delete editPayload.branch_code;
       continue;
     }
     if (('billing_address' in editPayload) && msg.includes('billing_address')) {
@@ -12427,8 +12472,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       ? 'ข้อมูลผู้รับสินค้า / สถานที่จัดส่ง (Ship To / Consignee):'
       : 'ข้อมูลลูกค้า / ผู้ซื้อ (Customer / Buyer):';
     billParts.push('<div class="info-label">' + customerCardHeader + '</div>');
-    if (companyName) {
-      billParts.push('<div class="info-val">' + escapeHTML(companyName) + '</div>');
+    const displayCompany = companyName ? formatCompanyWithBranch(companyName, branchCode) : '';
+    if (displayCompany) {
+      billParts.push('<div class="info-val">' + escapeHTML(displayCompany) + '</div>');
       if (customerName && customerName.toLowerCase() !== companyName.toLowerCase()) {
         billParts.push('<div class="info-sub" style="font-weight:600;color:#222">\u0e1c\u0e39\u0e49\u0e2a\u0e31\u0e48\u0e07\u0e0b\u0e37\u0e49\u0e2d / \u0e1c\u0e39\u0e49\u0e15\u0e34\u0e14\u0e15\u0e48\u0e2d: ' + escapeHTML(customerName) + (contactPerson && contactPerson !== customerName ? ' (' + escapeHTML(contactPerson) + ')' : '') + '</div>');
       } else if (contactPerson) {
@@ -12441,24 +12487,11 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       }
     }
     if (taxId) {
-      const branchDisplay = (branchCode && branchCode !== '00000' && !branchCode.toLowerCase().includes('head') && branchCode !== 'สำนักงานใหญ่')
-        ? ' (สาขา: ' + escapeHTML(branchCode) + ')'
-        : '';
-      billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> <span class="font-mono" style="font-weight:700">' + escapeHTML(taxId) + '</span>' + branchDisplay + '</div>');
+      billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> <span class="font-mono" style="font-weight:700">' + escapeHTML(taxId) + '</span></div>');
     }
     if (phone) billParts.push('<div class="info-sub"><strong>\u0e42\u0e17\u0e23:</strong> ' + escapeHTML(phone) + '</div>');
-    if (docType === 'delivery') {
-      if (shipAddr) {
-        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45"><strong>สถานที่จัดส่ง (Ship To):</strong> ' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div>');
-      } else if (billAddr) {
-        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45"><strong>สถานที่จัดส่ง (Ship To):</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
-      }
-    } else {
-      if (billAddr) {
-        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
-      } else if (shipAddr) {
-        billParts.push('<div class="info-sub" style="margin-top:2px;line-height:1.45">' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div>');
-      }
+    if (billAddr) {
+      billParts.push('<div class="info-sub" style="margin-top:3px"><strong>ที่อยู่ออกบิล:</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
     }
     billParts.push('</div>'); // close info-col-left
 
@@ -12498,6 +12531,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     }
     if (order.tracking_no) {
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e40\u0e25\u0e02\u0e1e\u0e31\u0e2a\u0e14\u0e38 / Tracking:</span><span class="doc-meta-val font-mono">' + escapeHTML(order.tracking_no) + '</span></div>');
+    }
+    if (shipAddr && shipAddr.trim()) {
+      billParts.push('<div class="info-sub" style="margin-top:8px;padding-top:6px;border-top:1px dashed #bbb;text-align:left"><strong>ที่อยู่จัดส่ง (Ship To):</strong><div style="margin-top:2px;line-height:1.45">' + escapeHTML(shipAddr).split('\n').join('<br>') + '</div></div>');
     }
     billParts.push('</div>'); // close info-col-right
     billParts.push('</div>'); // close info-row
@@ -22378,14 +22414,18 @@ async function quotations() {
                 <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px;font-size:11px;font-weight:600" onclick="copyBetweenShipAndBill('bill-to-ship','qt')" title="คัดลอกข้อมูลบริษัทและที่อยู่ออกบิล → ที่อยู่จัดส่ง">📋 คัดลอกออกบิล/บริษัท ➔ ที่อยู่จัดส่ง</button>
               </div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+            <div style="display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:12px;margin-bottom:10px">
               <div>
                 <span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
-                <input type="text" id="qt-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด / ชื่อออกบิล" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+                <input type="text" id="qt-company" placeholder="เช่น บริษัท สยามซีล เอ็นจิเนียริ่ง จำกัด" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
               </div>
               <div>
-                <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก) <span style="font-size:11px;color:#64748b">(ไม่บังคับ)</span></span>
-                <input type="text" id="qt-tax-id" placeholder="01055xxxxxxxx / สำนักงานใหญ่หรือสาขา" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+                <span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID 13 หลัก)</span>
+                <input type="text" id="qt-tax-id" placeholder="01055xxxxxxxx" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
+              </div>
+              <div>
+                <span class="sap-field-label">สาขา (Branch) <span style="font-size:11px;color:#64748b">(00000 / สาขา)</span></span>
+                <input type="text" id="qt-branch" placeholder="00000 / สำนักงานใหญ่" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box;margin-top:3px">
               </div>
             </div>
             <div>
@@ -22690,6 +22730,7 @@ function getQuoteMeta(qt) {
   let contactEmail = String(qt?.contact_email || '');
   let companyName = String(qt?.company_name || '');
   let taxId = String(qt?.tax_id || '');
+  let branchCode = String(qt?.branch_code || '');
   let billingAddress = String(qt?.billing_address || '');
   let itemPhotos = {};
   let cleanNote = String(qt?.note || '');
@@ -22712,6 +22753,7 @@ function getQuoteMeta(qt) {
         if (meta.contact_email != null && !contactEmail) contactEmail = meta.contact_email;
         if (meta.company_name != null && !companyName) companyName = meta.company_name;
         if (meta.tax_id != null && !taxId) taxId = meta.tax_id;
+        if (meta.branch_code != null && !branchCode) branchCode = meta.branch_code;
         if (meta.billing_address != null && !billingAddress) billingAddress = meta.billing_address;
         if (meta.item_photos && typeof meta.item_photos === 'object') itemPhotos = meta.item_photos;
         cleanNote = cleanNote.replace(/<!--QT_META:[\s\S]*?-->/g, '').replace(/\[QT_META:[\s\S]*?\]/g, '').trim();
@@ -22738,6 +22780,7 @@ function getQuoteMeta(qt) {
     contact_email: contactEmail,
     company_name: companyName,
     tax_id: taxId,
+    branch_code: branchCode,
     billing_address: billingAddress,
     item_photos: itemPhotos,
     note: cleanNote
@@ -22753,7 +22796,7 @@ async function openNewQuote() {
   set('qt-valid', new Date(Date.now()+30*86400000).toISOString().slice(0,10));
   set('qt-channel', 'LINE');
   set('qt-pay', 'โอนเงิน');
-  ['qt-cust','qt-username','qt-ref','qt-customer-po','qt-contact','qt-phone','qt-contact-position','qt-contact-email','qt-company','qt-tax-id','qt-address','qt-billing-address','qt-note','qt-internal-note'].forEach(id=>set(id,''));
+  ['qt-cust','qt-username','qt-ref','qt-customer-po','qt-contact','qt-phone','qt-contact-position','qt-contact-email','qt-company','qt-tax-id','qt-branch','qt-address','qt-billing-address','qt-note','qt-internal-note'].forEach(id=>set(id,''));
   set('qt-bill-discount', 0);
   set('qt-bill-discount-type', 'amount');
   set('qt-shipping-fee', 0);
@@ -22798,6 +22841,7 @@ async function openEditQuote(qtId) {
   set('qt-contact-email', meta.contact_email);
   set('qt-company', meta.company_name);
   set('qt-tax-id', meta.tax_id);
+  set('qt-branch', meta.branch_code);
   set('qt-address', qt.customer_address);
   set('qt-billing-address', meta.billing_address);
   set('qt-note', meta.note);
@@ -23536,6 +23580,7 @@ async function saveQuote(status) {
   const contactEmail = document.getElementById('qt-contact-email')?.value || '';
   const companyName = document.getElementById('qt-company')?.value || '';
   const taxId = document.getElementById('qt-tax-id')?.value || '';
+  const branchCode = (document.getElementById('qt-branch')?.value || '').trim();
   const billingAddress = document.getElementById('qt-billing-address')?.value || '';
 
   const metaObj = {
@@ -23552,6 +23597,7 @@ async function saveQuote(status) {
     contact_email: contactEmail,
     company_name: companyName,
     tax_id: taxId,
+    branch_code: branchCode,
     billing_address: billingAddress
   };
 
@@ -23778,9 +23824,10 @@ async function viewQuote(qtId) {
       '</div>' +
 
       '<div class="sap-tab-pane" data-pane="accounting">' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">' +
-          '<div><span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล:</span><div style="font-weight:600;font-size:13px">'+(meta.company_name ? escapeHTML(meta.company_name) : '-')+'</div></div>' +
+        '<div style="display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:12px;margin-bottom:12px">' +
+          '<div><span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล:</span><div style="font-weight:600;font-size:13px">'+(meta.company_name ? escapeHTML(formatCompanyWithBranch(meta.company_name, meta.branch_code)) : '-')+'</div></div>' +
           '<div><span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID):</span><div style="font-weight:600;font-size:13px">'+(meta.tax_id ? escapeHTML(meta.tax_id) : '-')+'</div></div>' +
+          '<div><span class="sap-field-label">สาขา (Branch):</span><div style="font-weight:600;font-size:13px">'+(meta.branch_code ? escapeHTML(meta.branch_code) : '00000 (สำนักงานใหญ่)')+'</div></div>' +
         '</div>' +
         '<div style="margin-bottom:12px"><span class="sap-field-label">ที่อยู่ออกบิล (Billing Address):</span><div style="background:#f8fafc;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;line-height:1.5">'+(meta.billing_address ? escapeHTML(meta.billing_address).replace(/\n/g, '<br>') : '<span style="color:#94a3b8">ไม่ได้ระบุที่อยู่ออกบิล</span>')+'</div></div>' +
         '<div style="border:1.5px solid #16a34a;border-radius:8px;padding:10px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
@@ -24151,6 +24198,7 @@ async function duplicateQuote(qtId) {
   set('qt-contact-email', meta.contact_email || '');
   set('qt-company', meta.company_name || '');
   set('qt-tax-id', meta.tax_id || '');
+  set('qt-branch', meta.branch_code || '');
   set('qt-address', qt.customer_address || '');
   set('qt-billing-address', meta.billing_address || '');
   set('qt-note', meta.note || '');
@@ -24357,7 +24405,7 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     bp.push('<div class="info-row">');
     bp.push('<div class="info-box">');
     bp.push('<div class="info-label">ลูกค้า / Customer:</div>');
-    const custDispName = formatCustomerDisplayName(qt.customer_name, meta.company_name, qt.customer_contact);
+    const custDispName = formatCustomerDisplayName(qt.customer_name, meta.company_name, qt.customer_contact, true, meta.branch_code);
     bp.push('<div class="info-val">'+custDispName+'</div>');
     if(meta.tax_id) bp.push('<div class="info-sub">เลขประจำตัวผู้เสียภาษี: '+escapeHTML(meta.tax_id)+'</div>');
     if(qt.customer_contact) {
@@ -46818,7 +46866,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.58', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เปิดแผงเพิ่มรูปประกอบใบเสนอราคาทันที & บันทึกรูปภาพลงสินค้าในคลังสำหรับใช้งานในอนาคต (v3.58)', items:[
+    { v:'3.59', date:'2026-11-14', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องสาขาในแท็บ Accounting (ออกบิล & ภาษี) & จัดการแสดงผลชื่อบริษัทและที่อยู่จัดส่งฝั่งขวา (v3.59)', items:[
+      '🏢 <b>เพิ่มช่องสาขา (Branch) ในแท็บ Accounting (ออกบิล & ภาษี):</b> เพิ่มช่องระบุสาขาในหน้าใบเสนอราคา (สร้าง/แก้ไข/ดูรายละเอียด) และหน้าออเดอร์ (สร้าง/แก้ไข) รองรับการระบุเลขสาขาหรือสำนักงานใหญ่',
+      '🏷️ <b>ต่อท้ายชื่อบริษัทอัตโนมัติตามมาตรฐานภาษี:</b> หากระบุ 00000, เว้นว่าง, หรือระบุคำว่า สำนักงานใหญ่ ระบบจะต่อท้ายชื่อบริษัทเป็น <code>(สำนักงานใหญ่)</code> อัตโนมัติ แต่หากระบุเลข เช่น 00001 ระบบจะต่อท้ายเป็น <code>(สาขา 00001)</code> อย่างถูกต้องและสวยงามในทุกเอกสาร',
+      '📦 <b>แสดงที่อยู่จัดส่งฝั่งขวามือในบิลขาย (Invoice / Delivery / Receipt):</b> ปรับปรุงส่วนหัวของใบแจ้งหนี้, ใบส่งของ, และใบเสร็จรับเงิน/บิลเงินสด ให้แสดงที่อยู่ออกบิลในกล่องซ้าย และแสดงที่อยู่จัดส่งสินค้า (Ship To) ใต้ข้อมูลเอกสารฝั่งขวาเหมือนใบเสนอราคาอย่างสมดุล สมบูรณ์แบบ 1 หน้า A4',
+      '🔄 <b>ส่งต่อข้อมูลสาขาอัตโนมัติ (Quote-to-Order & Auto-Fill):</b> เมื่อเลือกดึงลูกค้าเก่าหรือแปลงใบเสนอราคาเป็นออเดอร์ ข้อมูลสาขาจะถูกคัดลอกและเติมให้อัตโนมัติทันที',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.59 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.58', date:'2026-11-14', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เปิดแผงเพิ่มรูปประกอบใบเสนอราคาทันที & บันทึกรูปภาพลงสินค้าในคลังสำหรับใช้งานในอนาคต (v3.58)', items:[
       '📸 <b>แผงเพิ่มรูปภาพประกอบสินค้าเปิดพร้อมใช้งานทันที (Always Visible Photo Panel):</b> ปรับปรุงส่วนแนบรูปภาพในแต่ละรายการสินค้าของใบเสนอราคาให้แสดงผลชัดเจน โดดเด่น ไม่ซ่อนตัวอยู่ในแถบพับ โดยมีพรีวิวรูปภาพ กล่องอัปโหลดตรงจากเครื่อง และช่องใส่ URL ที่มองเห็นได้ทันที',
       '💾 <b>บันทึกรูปภาพลงสินค้าในคลังสำหรับอนาคต (Save Photo to Master Catalog):</b> เพิ่มปุ่ม <code>💾 บันทึกรูปนี้ลงคลัง</code> ในแต่ละช่องรูปภาพ เมื่อกดแล้วระบบจะอัปเดต <code>products.image_url</code> ในฐานข้อมูล Supabase และหน่วยความจำทันที ทำให้ในอนาคตเมื่อเลือกสินค้านี้ในใบเสนอราคาหรือบิลขาย รูปจะถูกดึงมาใช้อัตโนมัติ 100%',
       '⚡ <b>ดึงรูปจากคลังสินค้าอัตโนมัติเมื่อเลือกสินค้า (Auto-Fill Item Photo):</b> เมื่อพิมพ์ค้นหาหรือเลือกสินค้าที่มีรูปภาพในคลังอยู่แล้ว ระบบจะดึงรูปภาพหลักมาใส่ในช่องรูปประกอบของรายการใบเสนอราคาให้อัตโนมัติทันที',
