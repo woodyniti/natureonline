@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.83';
-const DISPLAY_APP_VERSION = 'v3.83';
+const CURRENT_APP_VERSION = 'sealthai-v3.84';
+const DISPLAY_APP_VERSION = 'v3.84';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.83)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.83 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.84)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.84 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -48694,7 +48694,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.83', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขฟังก์ชัน Position Portal และเพิ่มระบบหน้าต่างแคตตาล็อกสินค้า SAP B1 เต็มรูปแบบ (v3.83)', items:[
+    { v:'3.84', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'นำเข้าและอัปเดตข้อมูลสินค้า HS-RP-1203 (K21 70-85-7.5 NBR) เข้าสู่ฐานข้อมูลหลัก (v3.84)', items:[
+      '📦 <b>นำเข้ารหัสสินค้า Supplier SKU: HS-RP-1203:</b> ตรวจสอบและนำเข้าซีลไฮดรอลิก <code>K21 NBR 70-85-7.5(H) ROD/PISTON</code> (Supplier Part No: <code>K21-070/11</code>, ยี่ห้อ KASTAS, สต๊อกโรงงาน 24 ชิ้น) เข้าสู่ฐานข้อมูล Supabase เพื่อให้สามารถค้นหาผ่าน Item Code, Supplier SKU, และขนาด 70x85x7.5 ได้ทันทีในทุกหน้าเอกสาร',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.84 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.83', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขฟังก์ชัน Position Portal และเพิ่มระบบหน้าต่างแคตตาล็อกสินค้า SAP B1 เต็มรูปแบบ (v3.83)', items:[
       '🛡️ <b>แก้ไขข้อผิดพลาด positionProductAutocompletePortal is not defined:</b> เพิ่มการประกาศฟังก์ชัน <code>positionProductAutocompletePortal</code> ในขอบเขตส่วนกลาง (Global Scope) แก้ไขปัญหาแจ้งเตือนข้อผิดพลาดขณะพิมพ์ค้นหาสินค้าในหน้าออเดอร์และเอกสารต่างๆ',
       '📋 <b>ระบบหน้าต่างแคตตาล็อกเลือกสินค้า (SAP B1 Choose From List):</b> เพิ่มหน้าต่าง <code>openProductPickerModal</code> สำหรับปุ่ม <code>[ 📋 แคตตาล็อก ]</code> ให้สามารถค้นหา กรองหมวดหมู่ กรองสต๊อกหน้าร้าน/โรงงาน และกดเลือกสินค้าลงในเอกสารได้ทันที รองรับทั้ง Sales Order, Quotation และ Purchase Order',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.83 และล้างแคชอัตโนมัติ'
