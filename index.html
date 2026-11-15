@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.89';
-const DISPLAY_APP_VERSION = 'v3.89';
+const CURRENT_APP_VERSION = 'sealthai-v3.90';
+const DISPLAY_APP_VERSION = 'v3.90';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.89)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.89 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.90)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.90 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -11009,6 +11009,9 @@ async function viewOrder(orderId) {
         </div>
       </div>
 
+      <!-- Document Relationship Breadcrumb Bar -->
+      <div id="order-doc-relation-bar" style="margin:8px 0 12px 0"></div>
+
       <!-- 2. SAP B1 Upper Form Panel (2 columns: Customer BP on left, Document Info on right) -->
       <div class="sap-panel">
         <div class="sap-form-grid">
@@ -11348,12 +11351,14 @@ async function viewOrder(orderId) {
     `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700" title="พิมพ์บิลเงินสด / ใบแจ้งหนี้ (Invoice) / ใบส่งสินค้า (Delivery Note)">🖨️ พิมพ์เอกสาร (บิล/แจ้งหนี้/ส่งของ)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openOrderFulfillmentModal('${order.id}')" style="background:#fffbeb;color:#92400e;border-color:#fde68a;font-weight:700" title="จัดการยอดค้างส่ง & อนุมัติปิดเอกสารแบบ SAP Business One">📦 ค้างส่ง / ปิดเอกสาร (SAP B1)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openOrderPriceHistoryModal('${order.id}')" style="background:#fef2f2;color:#991b1b;border-color:#fecaca;font-weight:700" title="คลิกเพื่อดูประวัติการเปลี่ยนแปลงราคาในบิล">📜 ประวัติแก้ไขราคา${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(order.id) > 0) ? ' ('+getOrderPriceChangeCount(order.id)+')' : ''}</button>` +
+    `<button class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: 'order', docId: '${order.id}', docNo: '${escapeHTML(order.order_no||'')}' })" style="background:#e0f2fe;color:#0369a1;border-color:#7dd3fc;font-weight:700" title="ดูผังความสัมพันธ์เอกสาร (Relationship Map)">🗺️ ผังเอกสาร (Map)</button>` +
     arBtn +
     `<button class="btn btn-secondary btn-sm" onclick="openShippingLabelModal('${order.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1">📦 ใบปะหน้าพัสดุ</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openStickerModal('${order.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100">🏷️ สติกเกอร์สินค้า</button>` +
     `<button class="btn btn-danger btn-sm" onclick="openReturnFromOrder('${order.id}')" style="background:#fff1f2;color:#be123c;border-color:#fecdd3">🧾 รับคืนสินค้า (CN)</button>` +
     `<button class="btn btn-danger btn-sm" onclick="deleteOrder('${order.id}')">🗑️ ลบ</button>`;
 
+  renderDocRelationBar('order-doc-relation-bar', { docType: 'order', docId: order.id, docNo: order.order_no, currentShopId: currentShop?.id });
   openModal('modal-order-detail');
   registerUnsavedForm(document.getElementById('modal-order-detail'));
 }
@@ -25064,6 +25069,7 @@ async function viewQuote(qtId) {
         '</div>' +
         '<div style="font-size:11.5px;color:#64748b;font-weight:600">SAP Business One Standard</div>' +
       '</div>' +
+      '<div id="quote-doc-relation-bar" style="margin:8px 0 12px 0"></div>' +
 
       '<div class="sap-panel">' +
         '<div class="sap-form-grid">' +
@@ -25199,6 +25205,7 @@ async function viewQuote(qtId) {
     btns+='<button class="btn btn-secondary btn-sm" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;,&quot;standard&quot;)">🖨 พิมพ์มาตรฐาน</button>';
     btns+='<button class="btn btn-secondary btn-sm" style="color:#047857;background:#f0fdf4;border-color:#86efac;font-weight:700" onclick="openQuotePrintOptions(&quot;'+qtId+'&quot;,&quot;showcase&quot;)">🖼️ พิมพ์แบบมีรูป (Showcase)</button>';
     btns+='<button class="btn btn-secondary btn-sm" onclick="duplicateQuote(&quot;'+qtId+'&quot;)" title="ทำซ้ำ (Duplicate) เป็นใบเสนอราคาใหม่">📋 ทำซ้ำ (Duplicate)</button>';
+    btns+='<button class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: &quot;quote&quot;, docId: &quot;'+qtId+'&quot;, docNo: &quot;'+escapeHTML(qt.quote_no||'')+'&quot; })" style="background:#e0f2fe;color:#0369a1;border-color:#7dd3fc;font-weight:700" title="ดูผังความสัมพันธ์เอกสาร (Relationship Map)">🗺️ ผังเอกสาร (Map)</button>';
     if (!isClosed) {
       btns+='<button class="btn btn-secondary btn-sm" onclick="openEditQuote(&quot;'+qtId+'&quot;)">✏️ แก้ไข</button>';
       btns+='<button class="btn btn-danger btn-sm" onclick="deleteQuote(&quot;'+qtId+'&quot;)">🗑 ลบ</button>';
@@ -25211,6 +25218,7 @@ async function viewQuote(qtId) {
     }
     footer.innerHTML=btns;
   }
+  renderDocRelationBar('quote-doc-relation-bar', { docType: 'quote', docId: qt.id, docNo: qt.quote_no, currentShopId: currentShop?.id });
   openModal('modal-quote-detail');
 }
 
@@ -30988,6 +30996,7 @@ async function viewPO(poId) {
   if (hasDupItems) btns += '<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" title="พบรายการสินค้าซ้ำใน PO นี้">🧹 ลบรายการซ้ำ</button>';
   btns += '<button class="btn btn-secondary btn-sm" onclick="printPO(&quot;'+poId+'&quot;)">🖨 พิมพ์ PO</button>';
   btns += '<button class="btn btn-secondary btn-sm" onclick="printPOItemLabels(&quot;'+poId+'&quot;)">🏷️ พิมพ์ฉลากสินค้า A4</button>';
+  btns += '<button class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: &quot;po&quot;, docId: &quot;'+poId+'&quot;, docNo: &quot;'+escapeHTML(po.po_no||'')+'&quot; })" style="background:#e0f2fe;color:#0369a1;border-color:#7dd3fc;font-weight:700" title="ดูผังความสัมพันธ์เอกสาร (Relationship Map)">🗺️ ผังเอกสาร (Map)</button>';
   if (po.status === 'draft') {
     btns += '<button class="btn btn-warning btn-sm" onclick="editPO(&quot;'+poId+'&quot;)">✏️ แก้ไขแบบร่าง</button>';
   }
@@ -31024,6 +31033,9 @@ async function viewPO(poId) {
           <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-po-detail')" style="padding:2px 8px;font-size:12px">✕ ปิด</button>
         </div>
       </div>
+
+      <!-- Document Relationship Breadcrumb Bar -->
+      <div id="po-doc-relation-bar" style="margin:8px 0 12px 0"></div>
 
       <!-- Top Panel: 2 Columns -->
       <div class="sap-panel">
@@ -31244,6 +31256,7 @@ async function viewPO(poId) {
   // Also support footer if present
   const footer=document.getElementById('po-detail-footer');
   if(footer) footer.innerHTML=btns;
+  renderDocRelationBar('po-doc-relation-bar', { docType: 'po', docId: po.id, docNo: po.po_no, currentShopId: currentShop?.id });
   openModal('modal-po-detail');
 }
 
@@ -33477,6 +33490,9 @@ async function openAPDetail(apId) {
           </div>
         </div>
 
+        <!-- Document Relationship Breadcrumb Bar -->
+        <div id="ap-doc-relation-bar" style="margin:8px 12px 12px 12px"></div>
+
         <!-- Top Panel: 2 Columns -->
         <div class="sap-panel">
           <div class="sap-form-grid">
@@ -33594,6 +33610,7 @@ async function openAPDetail(apId) {
   `;
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove());
+  renderDocRelationBar('ap-doc-relation-bar', { docType: 'ap', docId: ap.id, docNo: ap.ap_no, currentShopId: currentShop?.id });
   modal.style.zIndex = getNextModalZIndex();
 }
 window.openAPDetail = openAPDetail;
@@ -36292,6 +36309,9 @@ async function openARDetail(arId) {
           </div>
         </div>
 
+        <!-- Document Relationship Breadcrumb Bar -->
+        <div id="ar-doc-relation-bar" style="margin:8px 12px 12px 12px"></div>
+
         <!-- Top Panel: 2 Columns -->
         <div class="sap-panel">
           <div class="sap-form-grid">
@@ -36450,6 +36470,7 @@ async function openARDetail(arId) {
   `;
   document.body.appendChild(modal);
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
+  renderDocRelationBar('ar-doc-relation-bar', { docType: 'ar', docId: ar.id, docNo: ar.ar_no, currentShopId: currentShop?.id });
 }
 
 async function saveARPayment(arId, totalAmt) {
@@ -45862,6 +45883,690 @@ async function confirmSaveCreditNote(arId) {
   loadAR();
 }
 
+// ─── DOCUMENT RELATIONSHIP & TRACEABILITY ENGINE (SAP Business One Standard) ───
+// Universal Resolver: traverses across Quotation (SQ) -> Sales Order (SO) -> AR Invoice -> Credit Note (CN)
+// and Sales Order (SO) -> Purchase Order (PO) -> AP Invoice
+
+async function resolveDocumentRelations({ docType, docId, docNo, currentShopId = null }) {
+  const shopId = currentShopId || (typeof currentShop !== 'undefined' ? currentShop?.id : null);
+  const result = {
+    activeDoc: { docType, docId, docNo },
+    quotes: [],
+    orders: [],
+    arInvoices: [],
+    creditNotes: [],
+    purchaseOrders: [],
+    apInvoices: []
+  };
+
+  try {
+    let initialOrders = [];
+    let initialPOs = [];
+
+    // Step 1: Fetch starting document and identify pivot anchor(s)
+    if (docType === 'order' || docType === 'so') {
+      const { data: ord } = await sb.from('orders').select('*').eq('id', docId).maybeSingle();
+      if (ord) initialOrders.push(ord);
+    } else if (docType === 'quote' || docType === 'quotation' || docType === 'sq') {
+      const { data: qt } = await sb.from('quotations').select('*').eq('id', docId).maybeSingle();
+      if (qt) {
+        result.quotes.push(qt);
+        if (qt.converted_order_id) {
+          const { data: ord } = await sb.from('orders').select('*').eq('id', qt.converted_order_id).maybeSingle();
+          if (ord) initialOrders.push(ord);
+        } else if (qt.quote_no) {
+          const { data: ords } = await sb.from('orders').select('*').ilike('note', `%${qt.quote_no}%`).limit(3);
+          if (ords && ords.length) initialOrders.push(...ords);
+        }
+      }
+    } else if (docType === 'ar' || docType === 'arinvoice') {
+      const { data: ar } = await sb.from('ar_invoices').select('*').eq('id', docId).maybeSingle();
+      if (ar) {
+        result.arInvoices.push(ar);
+        if (ar.order_id) {
+          const { data: ord } = await sb.from('orders').select('*').eq('id', ar.order_id).maybeSingle();
+          if (ord) initialOrders.push(ord);
+        }
+      }
+    } else if (docType === 'cn' || docType === 'creditnote' || docType === 'goodsreturn') {
+      const { data: gr } = await sb.from('goods_returns').select('*').eq('id', docId).maybeSingle();
+      if (gr) {
+        result.creditNotes.push(gr);
+        const reasonText = gr.reason || '';
+        const soMatch = reasonText.match(/SO-\d{4}\d{2}-\d+|\b\d{11}\b|INV\w+/g);
+        if (soMatch && soMatch.length) {
+          for (const ref of soMatch) {
+            const { data: ords } = await sb.from('orders').select('*').eq('order_no', ref).limit(2);
+            if (ords && ords.length) initialOrders.push(...ords);
+          }
+        }
+      }
+    } else if (docType === 'po' || docType === 'purchaseorder') {
+      const [{ data: po }, { data: poItems }] = await Promise.all([
+        sb.from('purchase_orders').select('*').eq('id', docId).maybeSingle(),
+        sb.from('purchase_order_items').select('*').eq('po_id', docId)
+      ]);
+      if (po) {
+        po.purchase_order_items = poItems || [];
+        initialPOs.push(po);
+      }
+    } else if (docType === 'ap' || docType === 'apinvoice') {
+      const { data: ap } = await sb.from('ap_invoices').select('*').eq('id', docId).maybeSingle();
+      if (ap) {
+        result.apInvoices.push(ap);
+        if (ap.po_id) {
+          const [{ data: po }, { data: poItems }] = await Promise.all([
+            sb.from('purchase_orders').select('*').eq('id', ap.po_id).maybeSingle(),
+            sb.from('purchase_order_items').select('*').eq('po_id', ap.po_id)
+          ]);
+          if (po) {
+            po.purchase_order_items = poItems || [];
+            initialPOs.push(po);
+          }
+        }
+      }
+    }
+
+    // Step 2: If we started from PO or AP, extract linked Sales Orders from PO notes / items
+    if (initialOrders.length === 0 && initialPOs.length > 0) {
+      for (const po of initialPOs) {
+        if (!result.purchaseOrders.some(p => p.id === po.id)) result.purchaseOrders.push(po);
+        const textToSearch = (po.note || '') + ' ' + (po.purchase_order_items || []).map(i => (i.product_name || '') + ' ' + (i.internal_note || '')).join(' ');
+        const soMatches = Array.from(new Set(textToSearch.match(/SO-\d{8}-\d+|SO-\d{6}-\d+|\b\d{11}\b|INV\w+/g) || []));
+        for (const ref of soMatches) {
+          const { data: ords } = await sb.from('orders').select('*').eq('order_no', ref).limit(3);
+          if (ords && ords.length) {
+            ords.forEach(o => { if (!initialOrders.some(x => x.id === o.id)) initialOrders.push(o); });
+          }
+        }
+      }
+    }
+
+    // Step 3: Expand bidirectionally from all identified Sales Orders
+    for (const ord of initialOrders) {
+      if (!result.orders.some(o => o.id === ord.id)) result.orders.push(ord);
+
+      // A. Quotations linked to this Order
+      const { data: qts } = await sb.from('quotations').select('*').eq('converted_order_id', ord.id);
+      if (qts && qts.length) {
+        qts.forEach(q => { if (!result.quotes.some(x => x.id === q.id)) result.quotes.push(q); });
+      }
+      if (ord.note) {
+        const qMatch = ord.note.match(/QT-?\d{4,8}-?\d+|SQ-?\d{4,8}-?\d+/gi);
+        if (qMatch) {
+          for (const qRef of qMatch) {
+            const { data: qByNo } = await sb.from('quotations').select('*').eq('quote_no', qRef).limit(1);
+            if (qByNo && qByNo.length) {
+              qByNo.forEach(q => { if (!result.quotes.some(x => x.id === q.id)) result.quotes.push(q); });
+            }
+          }
+        }
+      }
+
+      // B. AR Invoices linked to this Order
+      const { data: ars } = await sb.from('ar_invoices').select('*').eq('order_id', ord.id);
+      if (ars && ars.length) {
+        ars.forEach(a => { if (!result.arInvoices.some(x => x.id === a.id)) result.arInvoices.push(a); });
+      }
+
+      // C. Credit Notes (goods_returns & AR cancellations)
+      if (ord.order_no) {
+        const { data: grs } = await sb.from('goods_returns').select('*').ilike('reason', `%${ord.order_no}%`);
+        if (grs && grs.length) {
+          grs.forEach(g => { if (!result.creditNotes.some(x => x.id === g.id)) result.creditNotes.push(g); });
+        }
+      }
+
+      // D. Purchase Orders linked to this Order
+      if (ord.order_no) {
+        // Direct match in purchase_orders.note
+        const { data: posByNote } = await sb.from('purchase_orders').select('*').ilike('note', `%${ord.order_no}%`);
+        if (posByNote && posByNote.length) {
+          posByNote.forEach(p => { if (!result.purchaseOrders.some(x => x.id === p.id)) result.purchaseOrders.push(p); });
+        }
+
+        // Match in purchase_order_items (product_name or internal_note)
+        const [{ data: poiByName }, { data: poiByNote }] = await Promise.all([
+          sb.from('purchase_order_items').select('po_id').ilike('product_name', `%${ord.order_no}%`).limit(20),
+          sb.from('purchase_order_items').select('po_id').ilike('internal_note', `%${ord.order_no}%`).limit(20)
+        ]);
+
+        const extraPoIds = Array.from(new Set([
+          ...(poiByName || []).map(i => i.po_id),
+          ...(poiByNote || []).map(i => i.po_id)
+        ])).filter(id => !result.purchaseOrders.some(p => p.id === id));
+
+        if (extraPoIds.length) {
+          const { data: extraPOs } = await sb.from('purchase_orders').select('*').in('id', extraPoIds);
+          if (extraPOs && extraPOs.length) {
+            extraPOs.forEach(p => { if (!result.purchaseOrders.some(x => x.id === p.id)) result.purchaseOrders.push(p); });
+          }
+        }
+      }
+    }
+
+    // Step 4: For all linked Purchase Orders, fetch corresponding AP Invoices
+    const allPoIds = Array.from(new Set([
+      ...initialPOs.map(p => p.id),
+      ...result.purchaseOrders.map(p => p.id)
+    ])).filter(Boolean);
+
+    if (allPoIds.length) {
+      const { data: aps } = await sb.from('ap_invoices').select('*').in('po_id', allPoIds);
+      if (aps && aps.length) {
+        aps.forEach(a => { if (!result.apInvoices.some(x => x.id === a.id)) result.apInvoices.push(a); });
+      }
+    }
+
+    // Check if AR has internal CN tag [CN:...]
+    for (const ar of result.arInvoices) {
+      const cnMatch = String(ar.note || '').match(/\[CN:\s*([^\]]+)\]/i);
+      if (cnMatch && cnMatch[1]) {
+        const cnNo = cnMatch[1].trim();
+        if (!result.creditNotes.some(c => (c.gr_no === cnNo || c.reason?.includes(cnNo)))) {
+          result.creditNotes.push({
+            id: 'cn_ar_' + ar.id,
+            gr_no: cnNo,
+            gr_date: ar.ar_date || '',
+            return_type: 'sale',
+            customer_name: ar.customer_name || '',
+            total_amount: Number(ar.total_amount || 0),
+            reason: `ใบลดหนี้จาก AR Invoice (${ar.ar_no})`,
+            status: 'done'
+          });
+        }
+      }
+    }
+
+  } catch (err) {
+    console.error('resolveDocumentRelations error:', err);
+  }
+
+  return result;
+}
+
+// ── Quick In-Header Relation Bar Helper ──
+async function renderDocRelationBar(containerId, { docType, docId, docNo }) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px">
+      <div style="display:flex;align-items:center;gap:6px;color:#64748b;font-weight:600">
+        <span class="spinner" style="width:12px;height:12px;border-width:2px"></span>
+        <span>กำลังเชื่อมโยงสายสัมพันธ์เอกสาร...</span>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: '${docType}', docId: '${docId}', docNo: '${escapeHTML(docNo||'')}' })" style="padding:2px 8px;font-size:11.5px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-weight:700">
+        🗺️ แผนผังเอกสาร
+      </button>
+    </div>
+  `;
+
+  try {
+    const rel = await resolveDocumentRelations({ docType, docId, docNo });
+    if (!container.isConnected) return;
+
+    const pills = [];
+
+    // 1. Quotations
+    if (rel.quotes && rel.quotes.length) {
+      rel.quotes.forEach(q => {
+        const isActive = docType === 'quote' && q.id === docId;
+        pills.push(`
+          <span onclick="navigateToDoc('quote', '${q.id}')" class="badge font-mono" style="cursor:pointer;background:${isActive?'#0284c7':'#f1f5f9'};color:${isActive?'#fff':'#334155'};border:1px solid ${isActive?'#0284c7':'#cbd5e1'};padding:2px 7px;border-radius:5px" title="เปิดดูใบเสนอราคา ${escapeHTML(q.quote_no)}">
+            📋 ${escapeHTML(q.quote_no)}${isActive?' 🎯':''}
+          </span>
+        `);
+      });
+    }
+
+    // 2. Orders
+    if (rel.orders && rel.orders.length) {
+      rel.orders.forEach(o => {
+        const isActive = docType === 'order' && o.id === docId;
+        pills.push(`
+          <span onclick="navigateToDoc('order', '${o.id}')" class="badge font-mono" style="cursor:pointer;background:${isActive?'#0284c7':'#eff6ff'};color:${isActive?'#fff':'#1d4ed8'};border:1px solid ${isActive?'#0284c7':'#bfdbfe'};padding:2px 7px;border-radius:5px" title="เปิดดู Sales Order ${escapeHTML(o.order_no)}">
+            📑 ${escapeHTML(o.order_no)}${isActive?' 🎯':''}
+          </span>
+        `);
+      });
+    }
+
+    // 3. AR Invoices
+    if (rel.arInvoices && rel.arInvoices.length) {
+      rel.arInvoices.forEach(a => {
+        const isActive = docType === 'ar' && a.id === docId;
+        pills.push(`
+          <span onclick="navigateToDoc('ar', '${a.id}')" class="badge font-mono" style="cursor:pointer;background:${isActive?'#0284c7':'#f0fdf4'};color:${isActive?'#fff':'#15803d'};border:1px solid ${isActive?'#0284c7':'#86efac'};padding:2px 7px;border-radius:5px" title="เปิดดู A/R Invoice ${escapeHTML(a.ar_no)}">
+            📄 ${escapeHTML(a.ar_no)}${isActive?' 🎯':''}
+          </span>
+        `);
+      });
+    }
+
+    // 4. Credit Notes
+    if (rel.creditNotes && rel.creditNotes.length) {
+      rel.creditNotes.forEach(c => {
+        const isActive = docType === 'cn' && c.id === docId;
+        pills.push(`
+          <span class="badge font-mono" style="background:${isActive?'#0284c7':'#fff1f2'};color:${isActive?'#fff':'#be123c'};border:1px solid ${isActive?'#0284c7':'#fecdd3'};padding:2px 7px;border-radius:5px" title="ใบลดหนี้ ${escapeHTML(c.gr_no)}">
+            🧾 ${escapeHTML(c.gr_no)}${isActive?' 🎯':''}
+          </span>
+        `);
+      });
+    }
+
+    // 5. Purchase Orders
+    const poPills = [];
+    if (rel.purchaseOrders && rel.purchaseOrders.length) {
+      rel.purchaseOrders.forEach(p => {
+        const isActive = docType === 'po' && p.id === docId;
+        poPills.push(`
+          <span onclick="navigateToDoc('po', '${p.id}')" class="badge font-mono" style="cursor:pointer;background:${isActive?'#0284c7':'#fffbeb'};color:${isActive?'#fff':'#b45309'};border:1px solid ${isActive?'#0284c7':'#fde68a'};padding:2px 7px;border-radius:5px" title="เปิดดูใบสั่งซื้อ PO ${escapeHTML(p.po_no)}">
+            🛒 ${escapeHTML(p.po_no)}${isActive?' 🎯':''}
+          </span>
+        `);
+      });
+    }
+
+    // 6. AP Invoices
+    const apPills = [];
+    if (rel.apInvoices && rel.apInvoices.length) {
+      rel.apInvoices.forEach(ap => {
+        const isActive = docType === 'ap' && ap.id === docId;
+        apPills.push(`
+          <span onclick="navigateToDoc('ap', '${ap.id}')" class="badge font-mono" style="cursor:pointer;background:${isActive?'#0284c7':'#f5f3ff'};color:${isActive?'#fff':'#6d28d9'};border:1px solid ${isActive?'#0284c7':'#ddd6fe'};padding:2px 7px;border-radius:5px" title="เปิดดู A/P Invoice ${escapeHTML(ap.ap_no)}">
+            📥 ${escapeHTML(ap.ap_no)}${isActive?' 🎯':''}
+          </span>
+        `);
+      });
+    }
+
+    let summaryHTML = '';
+    if (pills.length === 0 && poPills.length === 0 && apPills.length === 0) {
+      summaryHTML = '<span style="color:#94a3b8;font-size:11.5px">เอกสารนี้ยังไม่ได้เชื่อมโยงกับเอกสารอื่น</span>';
+    } else {
+      const parts = [];
+      if (pills.length) parts.push(pills.join(' <span style="color:#cbd5e1;font-weight:700">➔</span> '));
+      const purParts = [];
+      if (poPills.length) purParts.push(poPills.join(', '));
+      if (apPills.length) purParts.push(apPills.join(', '));
+      if (purParts.length) {
+        parts.push('<span style="color:#94a3b8;font-weight:800">|</span> 🏭 ' + purParts.join(' <span style="color:#cbd5e1;font-weight:700">➔</span> '));
+      }
+      summaryHTML = parts.join(' ');
+    }
+
+    container.innerHTML = `
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-weight:700;color:#475569;display:inline-flex;align-items:center;gap:3px">
+            🔗 สายสัมพันธ์:
+          </span>
+          ${summaryHTML}
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: '${docType}', docId: '${docId}', docNo: '${escapeHTML(docNo||'')}' })" style="padding:2px 8px;font-size:11.5px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-weight:700;display:inline-flex;align-items:center;gap:3px;cursor:pointer">
+          🗺️ แผนผังเอกสาร (Relationship Map)
+        </button>
+      </div>
+    `;
+  } catch (e) {
+    console.error('renderDocRelationBar error:', e);
+  }
+}
+
+// Helper to switch between documents safely without dialog collision
+function navigateToDoc(targetType, targetId) {
+  // Close any relationship map modal if open
+  document.querySelectorAll('.doc-rel-map-modal').forEach(m => m.remove());
+  
+  if (targetType === 'quote') {
+    closeModal('modal-order-detail');
+    closeModal('modal-po-detail');
+    document.querySelectorAll('#modal-ar-detail, #modal-ap-detail').forEach(m => m.remove());
+    if (typeof viewQuote === 'function') viewQuote(targetId);
+  } else if (targetType === 'order') {
+    closeModal('modal-quote-detail');
+    closeModal('modal-po-detail');
+    document.querySelectorAll('#modal-ar-detail, #modal-ap-detail').forEach(m => m.remove());
+    if (typeof viewOrder === 'function') viewOrder(targetId);
+  } else if (targetType === 'ar') {
+    closeModal('modal-order-detail');
+    closeModal('modal-quote-detail');
+    closeModal('modal-po-detail');
+    if (typeof openARDetail === 'function') openARDetail(targetId);
+  } else if (targetType === 'po') {
+    closeModal('modal-order-detail');
+    closeModal('modal-quote-detail');
+    document.querySelectorAll('#modal-ar-detail, #modal-ap-detail').forEach(m => m.remove());
+    if (typeof viewPO === 'function') viewPO(targetId);
+  } else if (targetType === 'ap') {
+    closeModal('modal-order-detail');
+    closeModal('modal-quote-detail');
+    closeModal('modal-po-detail');
+    if (typeof openAPDetail === 'function') openAPDetail(targetId);
+  }
+}
+
+// ── Full Visual Relationship Map Modal (SAP Business One Standard) ──
+async function openDocumentRelationshipMap({ docType, docId, docNo }) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open doc-rel-map-modal';
+  modal.style.zIndex = '9999';
+  modal.innerHTML = `
+    <div class="modal" style="width:min(1140px,calc(100vw - 32px));max-width:1140px;padding:0;overflow:hidden;border-radius:14px;background:#f8fafc">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,#0284c7 0%,#0369a1 100%);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:22px">🗺️</span>
+          <div>
+            <div style="font-size:16px;font-weight:800;letter-spacing:-0.2px">แผนผังความสัมพันธ์เอกสาร (Document Relationship Map)</div>
+            <div style="font-size:12px;opacity:0.9">SAP Business One Standard Document Flow & Relationship Tree</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700">
+            🎯 เอกสารปัจจุบัน: ${escapeHTML(docNo || (docType.toUpperCase() + ' ' + (docId?docId.slice(0,8):'')))}
+          </span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.doc-rel-map-modal').remove()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font-weight:700;font-size:12px">
+            ✕ ปิด
+          </button>
+        </div>
+      </div>
+
+      <!-- Body / Dynamic Content Container -->
+      <div id="doc-rel-map-body" style="padding:20px;max-height:calc(88vh - 80px);overflow-y:auto">
+        <div style="padding:48px 24px;text-align:center;color:#64748b;font-weight:600">
+          <div class="spinner" style="margin:0 auto 12px;width:32px;height:32px;border-width:3px"></div>
+          <div>กำลังประมวลผลสายสัมพันธ์เอกสารทั้งระบบ...</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
+
+  try {
+    const rel = await resolveDocumentRelations({ docType, docId, docNo });
+    const bodyEl = document.getElementById('doc-rel-map-body');
+    if (!bodyEl) return;
+
+    // Financial Metrics
+    const totalSales = rel.orders.reduce((s,o)=>s+Number(o.total_amount||0),0) || rel.quotes.reduce((s,q)=>s+Number(q.grand_total||q.total_amount||0),0);
+    const totalAR = rel.arInvoices.reduce((s,a)=>s+Number(a.total_amount||0),0);
+    const totalPaidAR = rel.arInvoices.reduce((s,a)=>s+Number(a.paid_amount||0),0);
+    const totalCN = rel.creditNotes.reduce((s,c)=>s+Number(c.total_amount||0),0);
+    const totalPO = rel.purchaseOrders.reduce((s,p)=>s+Number(p.total_amount||0),0);
+    const totalAP = rel.apInvoices.reduce((s,a)=>s+Number(a.total_amount||0),0);
+    const totalPaidAP = rel.apInvoices.reduce((s,a)=>s+Number(a.paid_amount||0),0);
+    const estMargin = Math.max(0, totalSales - totalPO);
+    const marginPct = totalSales > 0 ? ((estMargin / totalSales) * 100).toFixed(1) : '0.0';
+
+    // Helper: render document card
+    const renderCard = ({ id, type, title, subtitle, date, statusText, statusBg, statusColor, amount, isCurrent, openAction }) => {
+      return `
+        <div style="background:#fff;border:${isCurrent?'2px solid #0284c7':'1.5px solid #cbd5e1'};border-radius:9px;padding:11px 12px;margin-bottom:8px;box-shadow:${isCurrent?'0 0 0 3px rgba(2,132,199,0.18)':'0 2px 4px rgba(0,0,0,0.04)'};background:${isCurrent?'#f0f9ff':'#ffffff'};transition:all 0.15s">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span class="font-mono" style="font-weight:800;font-size:13px;color:#0284c7">${escapeHTML(title)}</span>
+            ${isCurrent ? '<span class="badge" style="background:#0284c7;color:#fff;font-size:9.5px;padding:1px 6px;border-radius:4px">🎯 ปัจจุบัน</span>' : (statusText ? `<span class="badge" style="background:${statusBg||'#f1f5f9'};color:${statusColor||'#334155'};font-size:10px;padding:1px 6px;border-radius:4px">${escapeHTML(statusText)}</span>` : '')}
+          </div>
+          <div style="font-size:12px;color:#334155;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px" title="${escapeHTML(subtitle||'-')}">
+            ${escapeHTML(subtitle||'-')}
+          </div>
+          <div style="font-size:11px;color:#64748b;display:flex;justify-content:space-between;margin-bottom:6px">
+            <span>📅 ${escapeHTML(date||'-')}</span>
+            ${statusText && isCurrent ? `<span style="font-weight:700;color:${statusColor||'#0284c7'}">${escapeHTML(statusText)}</span>` : ''}
+          </div>
+          <div style="font-size:13px;font-weight:800;font-family:var(--mono);color:#0f172a;display:flex;justify-content:space-between;align-items:baseline;border-top:1px dashed #e2e8f0;padding-top:6px">
+            <span style="font-size:11px;color:#64748b;font-weight:normal">ยอดเงิน:</span>
+            <span>${fmtB(amount||0)}</span>
+          </div>
+          ${openAction ? `
+            <button type="button" class="btn btn-secondary btn-sm" onclick="${openAction}" style="width:100%;margin-top:8px;padding:3px 8px;font-size:11px;font-weight:700;background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;display:flex;align-items:center;justify-content:center;gap:4px">
+              👁️ เปิดดูเอกสาร
+            </button>
+          ` : ''}
+        </div>
+      `;
+    };
+
+    const renderEmpty = (message, actionText = null, actionClick = null) => {
+      return `
+        <div style="border:1.5px dashed #cbd5e1;border-radius:8px;padding:16px 12px;text-align:center;color:#94a3b8;font-size:12px;background:rgba(255,255,255,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;flex:1;min-height:110px">
+          <div>${message}</div>
+          ${(actionText && actionClick) ? `
+            <button type="button" class="btn btn-secondary btn-sm" onclick="${actionClick}" style="padding:2px 8px;font-size:11px;font-weight:700;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1">
+              ${actionText}
+            </button>
+          ` : ''}
+        </div>
+      `;
+    };
+
+    bodyEl.innerHTML = `
+      <!-- Top KPIs Strip -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:20px">
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-bottom:2px">🛒 ยอดขาย Sales (SO)</div>
+          <div class="font-mono" style="font-size:16px;font-weight:800;color:#0284c7">${fmtB(totalSales)}</div>
+          <div style="font-size:11px;color:#94a3b8">${rel.orders.length} SO · ${rel.quotes.length} SQ</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-bottom:2px">📄 แจ้งหนี้ A/R Invoice</div>
+          <div class="font-mono" style="font-size:16px;font-weight:800;color:#16a34a">${fmtB(totalAR)}</div>
+          <div style="font-size:11px;color:#94a3b8">รับชำระแล้ว ${fmtB(totalPaidAR)}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-bottom:2px">🧾 ใบลดหนี้ Credit Note</div>
+          <div class="font-mono" style="font-size:16px;font-weight:800;color:${totalCN>0?'#be123c':'#64748b'}">${fmtB(totalCN)}</div>
+          <div style="font-size:11px;color:#94a3b8">${rel.creditNotes.length} รายการลดหนี้</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-bottom:2px">🛒 จัดซื้อ Purchase (PO)</div>
+          <div class="font-mono" style="font-size:16px;font-weight:800;color:#d97706">${fmtB(totalPO)}</div>
+          <div style="font-size:11px;color:#94a3b8">${rel.purchaseOrders.length} ใบสั่งซื้อ</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-bottom:2px">📥 เจ้าหนี้ A/P Invoice</div>
+          <div class="font-mono" style="font-size:16px;font-weight:800;color:#7c3aed">${fmtB(totalAP)}</div>
+          <div style="font-size:11px;color:#94a3b8">จ่ายแล้ว ${fmtB(totalPaidAP)}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+          <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-bottom:2px">📊 กำไรขั้นต้น (Est. Margin)</div>
+          <div class="font-mono" style="font-size:16px;font-weight:800;color:#059669">${fmtB(estMargin)}</div>
+          <div style="font-size:11px;color:#16a34a;font-weight:700">${marginPct}% Margin</div>
+        </div>
+      </div>
+
+      <!-- Track 1: Sales Flow -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:20px;box-shadow:0 2px 6px rgba(0,0,0,0.03)">
+        <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+          <span>🛒 สายงานขายและลูกหนี้การค้า (Sales & Receivable Flow)</span>
+        </div>
+        <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;align-items:stretch">
+          
+          <!-- SQ Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>1. ใบเสนอราคา (SQ)</span>
+              <span style="font-size:11px;color:#94a3b8">${rel.quotes.length} ใบ</span>
+            </div>
+            ${rel.quotes.length ? rel.quotes.map(q => renderCard({
+              id: q.id,
+              type: 'quote',
+              title: `📋 ${q.quote_no||'SQ'}`,
+              subtitle: `👤 ${q.customer_name||'ลูกค้าทั่วไป'}`,
+              date: q.quote_date,
+              statusText: q.status === 'closed' ? 'ปิดแล้ว (แปลง SO)' : (q.status === 'accepted' ? 'อนุมัติ' : q.status),
+              statusBg: q.status === 'closed' ? '#f1f5f9' : '#dcfce7',
+              statusColor: q.status === 'closed' ? '#475569' : '#15803d',
+              amount: q.grand_total || q.total_amount,
+              isCurrent: docType === 'quote' && q.id === docId,
+              openAction: `navigateToDoc('quote', '${q.id}')`
+            })).join('') : renderEmpty('ไม่มีใบเสนอราคา')}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:20px;font-weight:800">➔</div>
+
+          <!-- SO Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>2. ใบสั่งขาย (SO)</span>
+              <span style="font-size:11px;color:#0284c7;font-weight:700">${rel.orders.length} ใบ</span>
+            </div>
+            ${rel.orders.length ? rel.orders.map(o => renderCard({
+              id: o.id,
+              type: 'order',
+              title: `📑 ${o.order_no||'SO'}`,
+              subtitle: `👤 ${o.customer_name||'ลูกค้าทั่วไป'} (${o.channel||'Offline'})`,
+              date: o.order_date,
+              statusText: statusLabels[o.shipping_status] || o.shipping_status || 'pending',
+              statusBg: '#e0f2fe',
+              statusColor: '#0369a1',
+              amount: o.total_amount,
+              isCurrent: docType === 'order' && o.id === docId,
+              openAction: `navigateToDoc('order', '${o.id}')`
+            })).join('') : renderEmpty('ไม่มี Sales Order')}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:20px;font-weight:800">➔</div>
+
+          <!-- AR Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>3. ใบแจ้งหนี้ (A/R)</span>
+              <span style="font-size:11px;color:#16a34a;font-weight:700">${rel.arInvoices.length} ใบ</span>
+            </div>
+            ${rel.arInvoices.length ? rel.arInvoices.map(a => renderCard({
+              id: a.id,
+              type: 'ar',
+              title: `📄 ${a.ar_no||'AR'}`,
+              subtitle: `👤 ${a.customer_name||'ลูกค้า'}`,
+              date: a.ar_date,
+              statusText: a.status === 'paid' ? 'ชำระแล้ว' : (a.status === 'cancelled' ? 'ยกเลิก (CN)' : (a.status === 'partial' ? 'ค้างบางส่วน' : 'รอชำระ')),
+              statusBg: a.status === 'paid' ? '#dcfce7' : (a.status === 'cancelled' ? '#fee2e2' : '#fef3c7'),
+              statusColor: a.status === 'paid' ? '#15803d' : (a.status === 'cancelled' ? '#b91c1c' : '#b45309'),
+              amount: a.total_amount,
+              isCurrent: docType === 'ar' && a.id === docId,
+              openAction: `navigateToDoc('ar', '${a.id}')`
+            })).join('') : renderEmpty('ยังไม่ออก A/R Invoice', (rel.orders[0] ? '➕ ออกบิล AR' : null), (rel.orders[0] ? `document.querySelectorAll('.doc-rel-map-modal').forEach(m=>m.remove());convertSOtoAR('${rel.orders[0].id}')` : null))}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:20px;font-weight:800">➔</div>
+
+          <!-- CN Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>4. ใบลดหนี้ (CN)</span>
+              <span style="font-size:11px;color:#be123c;font-weight:700">${rel.creditNotes.length} ใบ</span>
+            </div>
+            ${rel.creditNotes.length ? rel.creditNotes.map(c => renderCard({
+              id: c.id,
+              type: 'cn',
+              title: `🧾 ${c.gr_no||'CN'}`,
+              subtitle: `👤 ${c.customer_name||'ลูกค้า'}`,
+              date: c.gr_date,
+              statusText: 'รับคืน / ลดหนี้',
+              statusBg: '#fff1f2',
+              statusColor: '#be123c',
+              amount: c.total_amount,
+              isCurrent: docType === 'cn' && c.id === docId,
+              openAction: null
+            })).join('') : renderEmpty('ไม่มีการลดหนี้ หรือรับคืน')}
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Track 2: Purchasing Flow -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;box-shadow:0 2px 6px rgba(0,0,0,0.03)">
+        <div style="font-size:14px;font-weight:800;color:#1e293b;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+          <span>🏭 สายงานจัดซื้อและเจ้าหนี้การค้า (Purchasing & Payable Flow)</span>
+        </div>
+        <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px;align-items:stretch">
+          
+          <!-- Demand SO Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>1. ออเดอร์ขายต้นทาง</span>
+              <span style="font-size:11px;color:#0284c7;font-weight:700">Demand</span>
+            </div>
+            ${rel.orders.length ? rel.orders.map(o => renderCard({
+              id: o.id,
+              type: 'order',
+              title: `📑 ${o.order_no||'SO'}`,
+              subtitle: `👤 ${o.customer_name||'ลูกค้า'}`,
+              date: o.order_date,
+              statusText: rel.purchaseOrders.length ? 'เปิด PO แล้ว' : 'ยังไม่เปิด PO',
+              statusBg: rel.purchaseOrders.length ? '#f0fdf4' : '#fffbeb',
+              statusColor: rel.purchaseOrders.length ? '#15803d' : '#b45309',
+              amount: o.total_amount,
+              isCurrent: docType === 'order' && o.id === docId,
+              openAction: `navigateToDoc('order', '${o.id}')`
+            })).join('') : renderEmpty('ไม่มีออเดอร์ต้นทาง')}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:20px;font-weight:800">➔</div>
+
+          <!-- PO Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>2. ใบสั่งซื้อ (PO)</span>
+              <span style="font-size:11px;color:#d97706;font-weight:700">${rel.purchaseOrders.length} ใบ</span>
+            </div>
+            ${rel.purchaseOrders.length ? rel.purchaseOrders.map(p => renderCard({
+              id: p.id,
+              type: 'po',
+              title: `🛒 ${p.po_no||'PO'}`,
+              subtitle: `🏢 ${p.supplier_name||'Supplier'}`,
+              date: p.po_date,
+              statusText: p.status === 'received' ? 'รับของแล้ว' : (p.status === 'partial' ? 'รับบางส่วน' : 'อนุมัติ/สั่งแล้ว'),
+              statusBg: p.status === 'received' ? '#dcfce7' : '#fef3c7',
+              statusColor: p.status === 'received' ? '#15803d' : '#b45309',
+              amount: p.total_amount,
+              isCurrent: docType === 'po' && p.id === docId,
+              openAction: `navigateToDoc('po', '${p.id}')`
+            })).join('') : renderEmpty('ยังไม่มีการออก PO', (rel.orders[0] ? '➕ สร้าง PO จาก SO' : null), (rel.orders[0] ? `document.querySelectorAll('.doc-rel-map-modal').forEach(m=>m.remove());openBatchSOtoPOModal(['${rel.orders[0].id}'])` : null))}
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:center;color:#94a3b8;font-size:20px;font-weight:800">➔</div>
+
+          <!-- AP Column -->
+          <div style="flex:1;min-width:230px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;display:flex;flex-direction:column">
+            <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:10px;display:flex;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:6px">
+              <span>3. ใบแจ้งหนี้เจ้าหนี้ (A/P)</span>
+              <span style="font-size:11px;color:#7c3aed;font-weight:700">${rel.apInvoices.length} ใบ</span>
+            </div>
+            ${rel.apInvoices.length ? rel.apInvoices.map(ap => renderCard({
+              id: ap.id,
+              type: 'ap',
+              title: `📥 ${ap.ap_no||'AP'}`,
+              subtitle: `🏢 ${ap.supplier_name||'Supplier'}`,
+              date: ap.ap_date,
+              statusText: ap.status === 'paid' ? 'ชำระแล้ว' : (ap.status === 'partial' ? 'จ่ายบางส่วน' : 'รอชำระ'),
+              statusBg: ap.status === 'paid' ? '#dcfce7' : '#f5f3ff',
+              statusColor: ap.status === 'paid' ? '#15803d' : '#7c3aed',
+              amount: ap.total_amount,
+              isCurrent: docType === 'ap' && ap.id === docId,
+              openAction: `navigateToDoc('ap', '${ap.id}')`
+            })).join('') : renderEmpty('ยังไม่มี A/P Invoice จากผู้ขาย')}
+          </div>
+
+        </div>
+      </div>
+    `;
+
+  } catch (err) {
+    console.error('openDocumentRelationshipMap render error:', err);
+  }
+}
+
+
+
+
+
+
 
 // ══════════════════════════════════════════════════════════════
 // SEALTHAI AI ENGINE: CHAT-TO-QUOTE & SUBSTITUTION SYSTEM (v1.38+)
@@ -49306,7 +50011,7 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.89', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับแต่งและแก้ไขข้อความเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าได้เอง (v3.89)', items:[
+    { v:'3.89', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับแต่งและแก้ไขข้อความเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าได้เอง (v3.89)', items:[
       '✏️ <b>แก้ไขข้อความเงื่อนไขการรับประกันได้เองทั้งระบบ (Custom Policy Editor):</b> เพิ่มเมนูปรับแต่งข้อความในหน้า Settings (ตั้งค่า) ให้ผู้ใช้สามารถพิมพ์แก้ไขหัวข้อและข้อกำหนดเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy) ได้อย่างอิสระ พร้อมปุ่มบันทึกและปุ่มรีเซ็ตเป็นค่าเริ่มต้น',
       '📝 <b>แก้ไขข้อความเฉพาะบิลในหน้าต่างพิมพ์ได้ทันที:</b> ในหน้าต่างพิมพ์เอกสาร (ทั้งใบเสนอราคาและเอกสารออเดอร์) เมื่อติ๊กเปิดแสดงเงื่อนไข จะมีกล่องข้อความให้ตรวจดูและแก้ไขคำได้ทันทีเฉพาะเอกสารใบนั้น หรือกดปุ่ม "↺ คืนค่าเดิม" เพื่อดึงข้อความมาตรฐานของร้าน',
       '🛡️ <b>จัดรูปแบบรายการอัตโนมัติ:</b> ระบบแปลงแต่ละบรรทัดเป็นรายการลำดับเลขอัตโนมัติ พร้อมทำตัวหนาคำสำคัญให้อ่านง่าย สวยงาม เข้ากับมาตรฐานแบบฟอร์มเอกสารของระบบ',
