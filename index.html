@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.81';
-const DISPLAY_APP_VERSION = 'v3.81';
+const CURRENT_APP_VERSION = 'sealthai-v3.82';
+const DISPLAY_APP_VERSION = 'v3.82';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.81)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.81 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.82)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.82 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -29937,19 +29937,40 @@ function calcPOTotal(){
   const vatType = document.getElementById('po-vat-type')?.value || 'excluded';
   const { vatAmount: vatAmt, total } = calculatePOAmounts(subtotal, discountTHB, shippingTHB, vatOn, vatType);
 
+  const totalUSD = rate > 0 ? (total / rate) : 0;
+  const vatUSD = rate > 0 ? (vatAmt / rate) : 0;
+
   const stEl=document.getElementById('po-subtotal'); 
   if(stEl) {
-    stEl.innerHTML = cur === 'USD' ? `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <div style="font-size:10px;color:var(--text3)">($${rawSubtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>` : `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+    stEl.innerHTML = cur === 'USD'
+      ? `$${rawSubtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <div style="font-size:10.5px;color:var(--text3);font-weight:600">(฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+      : `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
   }
   const discountEl = document.getElementById('po-discount-display');
-  if (discountEl) discountEl.textContent = `-฿${discountTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+  if (discountEl) {
+    discountEl.innerHTML = cur === 'USD'
+      ? `-$${discountRaw.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <small style="color:var(--text3)">(≈ -฿${discountTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</small>`
+      : `-฿${discountTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+  }
   const shippingEl = document.getElementById('po-shipping-display');
   if (shippingEl) shippingEl.innerHTML = shippingCurrency === 'USD'
     ? `+$${shippingRaw.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <small style="color:var(--text3)">(≈ ฿${shippingTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</small>`
     : `+฿${shippingTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
-  const vaEl=document.getElementById('po-vat-amt');  if(vaEl) vaEl.textContent=`฿${vatAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+  const vaEl=document.getElementById('po-vat-amt');
+  if(vaEl) {
+    vaEl.innerHTML = cur === 'USD'
+      ? `$${vatUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <small style="color:var(--text3);font-size:10.5px">(฿${vatAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</small>`
+      : `฿${vatAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+  }
   const vrEl=document.getElementById('po-vat-row');  if(vrEl) vrEl.style.display=vatOn?'flex':'none';
-  const tEl =document.getElementById('po-total');    if(tEl)  tEl.textContent=`฿${total.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+  const tEl =document.getElementById('po-total');
+  if(tEl) {
+    if (cur === 'USD') {
+      tEl.innerHTML = `$${totalUSD.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})} <span style="font-size:13.5px;font-weight:700;color:#0284c7;margin-left:6px">(฿${total.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</span>`;
+    } else {
+      tEl.textContent = `฿${total.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
+    }
+  }
   return total;
 }
 
@@ -48427,7 +48448,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.81', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'หน้าต่างใบสั่งซื้อ (PO) สไตล์ SAP Business One เต็มรูปแบบ & เพิ่มช่องใส่ค่าส่ง (Freight) (v3.81)', items:[
+    { v:'3.82', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'สรุปยอดใบสั่งซื้อ (PO) แสดงคู่ทั้งสกุลเงิน USD และ THB (v3.82)', items:[
+      '💵 <b>แสดงยอดรวมสุทธิทั้ง USD และ (THB) แบบเรียลไทม์:</b> ในหน้าสร้าง/แก้ไขใบสั่งซื้อ เมื่อเลือกสกุลเงินเป็น USD ยอดรวมสุทธิ (Total) จะแสดงยอดดอลลาร์ $ และยอดเงินบาทกำกับ <code>$XX.XXX (฿YY,YYY.YYY)</code> อย่างชัดเจน สอดคล้องกับมาตรฐาน SAP Business One Foreign Currency',
+      '🏷️ <b>แสดงยอดรวมก่อนหักส่วนลด & ภาษีคู่สองสกุล:</b> ทั้งยอดรวมสินค้า (Total Before Discount), ส่วนลด (Discount) และภาษีมูลค่าเพิ่ม (VAT 7%) จะแสดงยอด USD พร้อมค่าแปลงบาท (THB) ให้เห็นอย่างครบถ้วน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.82 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.81', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'หน้าต่างใบสั่งซื้อ (PO) สไตล์ SAP Business One เต็มรูปแบบ & เพิ่มช่องใส่ค่าส่ง (Freight) (v3.81)', items:[
       '📊 <b>หน้าต่างใบสั่งซื้อแบบ SAP Business One Matrix Grid:</b> ปรับปรุงพื้นที่รายการสินค้า (Contents) ในหน้าต่างสร้าง/แก้ไขใบสั่งซื้อ (Purchase Order) ให้เป็นตาราง Spreadsheet สไตล์ SAP B1 พร้อมคอลัมน์ # (ลำดับ 36px), Item No. / Description, Quantity, Unit Cost ($/฿), Total และปุ่ม Actions (▲/▼/✕)',
       '🚚 <b>เพิ่มช่องกรอกค่าส่ง (Freight / ค่าจัดส่ง) โดยตรงที่ส่วนสรุปยอด:</b> เพิ่มช่องกรอกค่าจัดส่งและตัวเลือกสกุลเงิน (฿ THB / $ USD) ที่กล่องสรุปยอดมุมขวาล่างของเอกสาร คำนวณยอดรวมสุทธิได้ทันทีในหน้าแรกโดยไม่ต้องสลับแท็บ',
       '📋 <b>ปุ่มเลือกสินค้าจากคลังมาตรฐาน SAP B1 (Choose From List):</b> เพิ่มปุ่ม <code>[ 📋 แคตตาล็อก ]</code> ข้างช่องค้นหาในทุกแถวรายการสั่งซื้อ เพื่อเปิดหน้าต่างค้นหาสินค้าขนาดใหญ่ กรองหมวดหมู่และสต๊อกได้ทันที',
