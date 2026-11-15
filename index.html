@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.86';
-const DISPLAY_APP_VERSION = 'v3.86';
+const CURRENT_APP_VERSION = 'sealthai-v3.87';
+const DISPLAY_APP_VERSION = 'v3.87';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.86)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.86 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.87)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.87 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -28310,6 +28310,17 @@ async function purchase() {
               <!-- Right Column: Document Details -->
               <div>
                 <div class="sap-field-row">
+                  <label class="sap-field-label" style="color:#0284c7;font-weight:700">ดึงข้อมูลจาก SO</label>
+                  <div style="display:flex;gap:4px;align-items:center">
+                    <select id="po-so-source" onchange="importSOToPO(this.value)" style="width:100%;background:#f0f9ff;border:1px solid #93c5fd;border-radius:6px;padding:5px 8px;font-size:12.5px;color:#0369a1;font-weight:600">
+                      <option value="">-- เลือก Sales Order (SO) เพื่อดึงรายการสินค้า --</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="openSelectSOModalForPO()" title="ค้นหาและเลือก SO แบบละเอียด" style="padding:4px 8px;font-size:11.5px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-weight:700">
+                      🔍 ค้นหา SO
+                    </button>
+                  </div>
+                </div>
+                <div class="sap-field-row">
                   <label class="sap-field-label">วันที่สั่ง (Doc Date)</label>
                   <input type="date" id="po-date" value="${today()}">
                 </div>
@@ -28348,6 +28359,9 @@ async function purchase() {
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
               <div style="font-weight:700;font-size:13.5px;color:#1e293b">รายการ SKU ที่สั่งซื้อ</div>
               <div style="display:flex;gap:6px">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openSelectSOModalForPO()" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px" title="ดึงรายการสินค้าจาก Sales Order (SO) เข้า PO นี้">
+                  📥 ดึงสินค้าจาก SO
+                </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('po', -1)" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px">
                   ➕ สร้างสินค้าใหม่เข้าคลัง
                 </button>
@@ -28934,6 +28948,8 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   document.getElementById('po-sup-phone').value = '';
   const refEl = document.getElementById('po-supplier-ref');
   if (refEl) refEl.value = '';
+  const soSourceEl = document.getElementById('po-so-source');
+  if (soSourceEl) soSourceEl.value = '';
   const curEl = document.getElementById('po-currency');
   if (curEl) curEl.value = 'THB';
   const exDiv = document.getElementById('po-exrate-div');
@@ -28998,7 +29014,335 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   openModal('modal-po');
   // โหลด supplier dropdown หลัง modal เปิด
   await loadSupplierDropdown('po-supplier-sel', preferredSupplierId || null);
+  await loadPOSOSources();
 }
+
+// ── SO Source Integration for PO (ดึงข้อมูลสินค้าจาก Sales Order เข้า PO) ──
+let _poRecentOrders = [];
+
+async function loadPOSOSources(selectedOrderId = null) {
+  const sel = document.getElementById('po-so-source');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">⏳ กำลังโหลดรายการ Sales Order...</option>';
+  
+  try {
+    let q = sb.from('orders')
+      .select('id, order_no, order_date, customer_name, total_amount, status, shipping_status, doc_status, note, customer_ref, order_items(id, product_id, product_name, sku, qty, cost_per_unit, purchase_price, buy_price)')
+      .neq('status', 'cancelled')
+      .order('order_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(80);
+      
+    if (typeof currentShop !== 'undefined' && currentShop?.id) {
+      q = q.eq('shop_id', currentShop.id);
+    }
+    
+    const { data, error } = await q;
+    if (error) {
+      console.error('Error loading SO for PO:', error);
+      sel.innerHTML = '<option value="">-- ไม่สามารถโหลด Sales Order ได้ --</option>';
+      return;
+    }
+    
+    _poRecentOrders = (data || []).filter(o => o.order_items && o.order_items.length > 0);
+    
+    if (_poRecentOrders.length === 0) {
+      sel.innerHTML = '<option value="">-- ไม่พบรายการ Sales Order --</option>';
+      return;
+    }
+    
+    let html = '<option value="">-- เลือก Sales Order (SO) เพื่อดึงรายการสินค้า --</option>';
+    _poRecentOrders.forEach(o => {
+      const oNo = o.order_no || ('SO-' + o.id.slice(0, 8));
+      const cust = o.customer_name || 'ลูกค้าทั่วไป';
+      const itemCount = (o.order_items || []).length;
+      const oDate = o.order_date || '';
+      const totalStr = typeof fmtB === 'function' ? fmtB(o.total_amount || 0) : ('฿' + (o.total_amount || 0).toLocaleString());
+      const isSelected = selectedOrderId && o.id === selectedOrderId ? 'selected' : '';
+      html += '<option value="' + escapeHTML(o.id) + '" ' + isSelected + '>' + escapeHTML(oNo) + ' · ' + escapeHTML(cust) + ' (' + itemCount + ' รายการ, ' + totalStr + ' - ' + oDate + ')</option>';
+    });
+    sel.innerHTML = html;
+  } catch (err) {
+    console.error('loadPOSOSources err:', err);
+    sel.innerHTML = '<option value="">-- เกิดข้อผิดพลาดในการโหลด SO --</option>';
+  }
+}
+
+async function importSOToPO(orderId) {
+  if (!orderId) return;
+  
+  // 1. หาข้อมูล order จาก cache หรือ query ใหม่
+  let ord = (_poRecentOrders || []).find(o => o.id === orderId);
+  if (!ord || !ord.order_items || ord.order_items.length === 0) {
+    const { data, error } = await sb.from('orders')
+      .select('id, order_no, order_date, customer_name, total_amount, status, note, customer_ref, order_items(*)')
+      .eq('id', orderId)
+      .single();
+    if (error || !data) {
+      toast('ไม่สามารถดึงข้อมูล Sales Order ได้', 'error');
+      return;
+    }
+    ord = data;
+  }
+
+  const items = ord.order_items || [];
+  if (items.length === 0) {
+    toast('Sales Order นี้ไม่มีรายการสินค้า', 'warning');
+    return;
+  }
+
+  // 2. ตรวจสอบรายการเดิมใน poItems
+  let replace = false;
+  if (poItems && poItems.length > 0) {
+    const ans = confirm('ขณะนี้มีรายการสินค้าในใบสั่งซื้อ (PO) อยู่แล้ว ' + poItems.length + ' รายการ\n\n• กด [ ตกลง (OK) ] = เพิ่มสินค้าจาก SO ต่อท้ายรายการเดิม (Append)\n• กด [ ยกเลิก (Cancel) ] = ต้องการแทนที่รายการเดิมทั้งหมด (Replace)');
+    if (!ans) {
+      const confirmReplace = confirm('ยืนยันลบรายการเดิมทั้งหมด และแทนที่ด้วยสินค้าจาก SO "' + (ord.order_no || 'SO') + '" (' + items.length + ' รายการ)?');
+      if (!confirmReplace) {
+        // คืนค่า select กลับ
+        const sel = document.getElementById('po-so-source');
+        if (sel) sel.value = '';
+        return;
+      }
+      replace = true;
+    }
+  }
+
+  // 3. เตรียมข้อมูลสินค้า Master
+  if (!productList || productList.length === 0) {
+    const pRes = (allProducts && allProducts.length > 1000) ? { data: allProducts } : await fetchAllProductsChunked();
+    productList = (pRes.data || []).map(normalizeProduct);
+  }
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const cur = document.getElementById('po-currency')?.value || 'THB';
+  const rate = Number(document.getElementById('po-exrate')?.value || 35);
+
+  const oNo = ord.order_no || ('SO-' + ord.id.slice(0, 8));
+  const oCust = ord.customer_name || 'ทั่วไป';
+
+  // 4. แปลงรายการสินค้าจาก Order เป็น PO Items
+  const newItems = items.map(it => {
+    const itProdName = (it.product_name || '').trim();
+    const itSKU = (it.sku || '').trim();
+    const itSKUClean = cleanSKUStr(itSKU);
+
+    // ค้นหาสินค้า Master ในคลัง
+    const master = prods.find(p => {
+      if (it.product_id && p.id === it.product_id) return true;
+      if (itSKU && (p.sku === itSKU || p.item_no === itSKU || p.part_no === itSKU || p.supplier_sku === itSKU)) return true;
+      if (itSKUClean && (cleanSKUStr(p.sku) === itSKUClean || cleanSKUStr(p.supplier_sku) === itSKUClean || cleanSKUStr(p.part_no) === itSKUClean || cleanSKUStr(p.item_no) === itSKUClean)) return true;
+      if (itProdName && (p.name === itProdName || p.sku === itProdName)) return true;
+      if (itProdName && p.name && p.name.trim().toLowerCase() === itProdName.toLowerCase()) return true;
+      return false;
+    });
+
+    // ราคาซื้อ (Buy Price)
+    let buyPrice = getPOProductBuyPrice(master, cur, rate);
+    if (buyPrice <= 0 && it.purchase_price && Number(it.purchase_price) > 0) buyPrice = Number(it.purchase_price);
+    if (buyPrice <= 0 && it.buy_price && Number(it.buy_price) > 0) buyPrice = Number(it.buy_price);
+    if (buyPrice <= 0) buyPrice = Number(it.cost_per_unit || 0);
+    if (buyPrice > 0 && cur === 'USD' && buyPrice > 100 && rate > 0) {
+      buyPrice = +(buyPrice / rate).toFixed(3);
+    }
+
+    // รหัสและสเปก Supplier
+    const suppSku = master?.supplier_sku || master?.supplier_sku_usd || master?.part_no || '';
+    const suppDesc = (master?.supplier_description || '').trim();
+    
+    // ตั้งชื่อแสดงผล: ถ้ามีรหัส Supplier หรือสเปก Supplier ให้ใช้ข้อมูล Supplier เป็นหลัก
+    let displayName = master?.name || itProdName || 'สินค้า';
+    if (suppSku) {
+      displayName = suppSku + (suppDesc ? ' - ' + suppDesc : '');
+    } else if (suppDesc) {
+      displayName = suppDesc;
+    }
+
+    return {
+      product_id: it.product_id || master?.id || null,
+      product_name: displayName,
+      sku: master?.sku || itSKU || suppSku || '',
+      qty_ordered: Number(it.qty) || 1,
+      unit_cost: buyPrice > 0 ? buyPrice : '',
+      internal_note: 'อ้างอิง SO: ' + oNo + ' (ลูกค้า: ' + oCust + ')'
+    };
+  });
+
+  // 5. อัปเดต poItems
+  if (replace) {
+    poItems = newItems;
+  } else {
+    poItems = poItems.concat(newItems);
+  }
+
+  // 6. แนะนำ / เลือก Supplier อัตโนมัติ (หากยังไม่ได้เลือก)
+  const supSel = document.getElementById('po-supplier-sel');
+  if (supSel && !supSel.value) {
+    const prefSupIds = items.map(it => {
+      const m = prods.find(p => p.id === it.product_id || (it.sku && p.sku === it.sku));
+      return m?.preferred_supplier_id;
+    }).filter(Boolean);
+    if (prefSupIds.length > 0) {
+      const commonSupId = prefSupIds[0];
+      supSel.value = commonSupId;
+      const supObj = (allSuppliers || []).find(s => s.id === commonSupId);
+      if (supObj) {
+        const supNameInp = document.getElementById('po-supplier-name');
+        if (supNameInp) supNameInp.value = supObj.name;
+        const supPhoneInp = document.getElementById('po-sup-phone');
+        if (supPhoneInp) supPhoneInp.value = supObj.phone || '';
+      }
+    }
+  }
+
+  // 7. หมายเหตุ PO
+  const noteEl = document.getElementById('po-note');
+  if (noteEl) {
+    if (!noteEl.value.trim()) {
+      noteEl.value = 'สั่งซื้อสินค้าตามออเดอร์ ' + oNo + ' (ลูกค้า: ' + oCust + ')';
+    } else if (!noteEl.value.includes(oNo)) {
+      noteEl.value = noteEl.value.trim() + ' / อ้างอิง SO: ' + oNo;
+    }
+  }
+
+  // 8. ซิงก์ค่าใน select dropdown ให้ตรงกับ orderId
+  const sourceSel = document.getElementById('po-so-source');
+  if (sourceSel && sourceSel.value !== orderId) {
+    sourceSel.value = orderId;
+  }
+
+  // 9. แสดงผลและคำนวณยอด
+  renderPOItems();
+  calcPOTotal();
+  markUnsavedForm(document.getElementById('modal-po'));
+  toast('ดึงข้อมูลสินค้าจาก ' + oNo + ' สำเร็จ (' + newItems.length + ' รายการ) ✓', 'success');
+}
+
+function openSelectSOModalForPO() {
+  const existing = document.getElementById('modal-select-so-for-po');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.id = 'modal-select-so-for-po';
+  modal.style.zIndex = '1350';
+  modal.innerHTML = `
+    <div class="modal" style="max-width:920px;width:95vw;max-height:90vh;display:flex;flex-direction:column">
+      <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:6px">
+          <span>📥 ดึงรายการสินค้าจาก Sales Order (SO) เข้าสู่ใบสั่งซื้อ (PO)</span>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+
+      <div style="padding:12px 16px;background:#f8fafc;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div style="flex:1;min-width:260px;position:relative">
+          <input type="text" id="so-search-for-po-inp" placeholder="🔍 ค้นหาเลขที่ SO, ชื่อลูกค้า, หรือชื่อสินค้า..." 
+            style="width:100%;padding:7px 12px;font-size:13px;border:1px solid var(--border2);border-radius:6px"
+            oninput="renderSOListForPO(this.value)">
+        </div>
+        <div style="font-size:12px;color:var(--text3)" id="so-list-count-badge">กำลังโหลดรายการ...</div>
+      </div>
+
+      <div style="flex:1;overflow-y:auto;padding:12px 16px" id="so-list-for-po-container">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+
+      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;color:var(--text3)">💡 คลิก "📥 ดึงเข้า PO" เพื่อนำรายการสินค้าและจำนวนในออเดอร์เข้าสู่เอกสารใบสั่งซื้อ</div>
+        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิด</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  setTimeout(() => {
+    document.getElementById('so-search-for-po-inp')?.focus();
+  }, 100);
+
+  if (_poRecentOrders && _poRecentOrders.length > 0) {
+    renderSOListForPO('');
+  } else {
+    loadPOSOSources().then(() => {
+      renderSOListForPO('');
+    });
+  }
+}
+
+function renderSOListForPO(keyword) {
+  const container = document.getElementById('so-list-for-po-container');
+  const countBadge = document.getElementById('so-list-count-badge');
+  if (!container) return;
+
+  const kw = (keyword || '').trim().toLowerCase();
+  const orders = (_poRecentOrders || []).filter(o => {
+    if (!kw) return true;
+    const oNo = (o.order_no || '').toLowerCase();
+    const cust = (o.customer_name || '').toLowerCase();
+    const ref = (o.customer_ref || '').toLowerCase();
+    if (oNo.includes(kw) || cust.includes(kw) || ref.includes(kw)) return true;
+    return (o.order_items || []).some(it => {
+      const pName = (it.product_name || '').toLowerCase();
+      const sku = (it.sku || '').toLowerCase();
+      return pName.includes(kw) || sku.includes(kw);
+    });
+  });
+
+  if (countBadge) countBadge.textContent = 'พบ ' + orders.length + ' ออเดอร์';
+
+  if (!orders.length) {
+    container.innerHTML = `
+      <div style="padding:40px 20px;text-align:center;color:var(--text3)">
+        <div style="font-size:28px;margin-bottom:8px">📭</div>
+        <div style="font-size:14px;font-weight:600">ไม่พบ Sales Order ตามคำค้นหา "${escapeHTML(keyword || '')}"</div>
+        <div style="font-size:12px;margin-top:4px">ลองค้นหาด้วยคำอื่น หรือตรวจสอบสถานะออเดอร์</div>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = orders.map(o => {
+    const oNo = o.order_no || ('SO-' + o.id.slice(0, 8));
+    const cust = o.customer_name || 'ลูกค้าทั่วไป';
+    const oDate = o.order_date || '';
+    const totalStr = typeof fmtB === 'function' ? fmtB(o.total_amount || 0) : ('฿' + (o.total_amount || 0).toLocaleString());
+    const items = o.order_items || [];
+    const itemCount = items.length;
+
+    const itemBadges = items.slice(0, 4).map(it => {
+      const pName = it.product_name || it.sku || 'สินค้า';
+      const qty = it.qty || 1;
+      return '<span style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;padding:2px 6px;border-radius:4px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;display:inline-block">' + escapeHTML(pName) + ' <b style="color:#0284c7">x' + qty + '</b></span>';
+    }).join(' ');
+
+    const moreItemsBadge = items.length > 4 ? ('<span style="font-size:10.5px;color:var(--text3)">+ อีก ' + (items.length - 4) + ' รายการ</span>') : '';
+
+    return `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:12px;box-shadow:0 1px 3px rgba(0,0,0,0.03)"
+        onmouseover="this.style.borderColor='#93c5fd';this.style.background='#f8fafc'" onmouseout="this.style.borderColor='var(--border)';this.style.background='#fff'">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:700;font-size:13.5px;color:#0284c7">📄 ${escapeHTML(oNo)}</span>
+            <span style="font-size:11.5px;color:#64748b">📅 ${escapeHTML(oDate)}</span>
+            <span style="font-weight:600;font-size:13px;color:#0f172a">👤 ${escapeHTML(cust)}</span>
+            <span style="font-size:11px;background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-weight:600">${itemCount} รายการ</span>
+            <span style="font-weight:700;font-size:12.5px;color:#16a34a">${totalStr}</span>
+          </div>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            ${itemBadges} ${moreItemsBadge}
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="importSOToPO('${o.id}'); document.getElementById('modal-select-so-for-po')?.remove();"
+          style="background:#0284c7;border-color:#0284c7;font-weight:700;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;padding:6px 12px;font-size:12px">
+          📥 ดึงเข้า PO
+        </button>
+      </div>
+    `;
+  }).join('');
+}
+
+window.openSelectSOModalForPO = openSelectSOModalForPO;
+window.importSOToPO = importSOToPO;
+window.loadPOSOSources = loadPOSOSources;
+window.renderSOListForPO = renderSOListForPO;
 
 window.togglePoCurrency = function() {
   const cur = document.getElementById('po-currency')?.value || 'THB';
@@ -30901,6 +31245,10 @@ async function editPO(poId) {
     supSel.value = po.supplier_id;
   }
   if (supNameInp) supNameInp.value = po.supplier_name || (allSuppliers.find(s=>s.id===po.supplier_id)?.name || '');
+  
+  const soSourceEl = document.getElementById('po-so-source');
+  if (soSourceEl) soSourceEl.value = '';
+  await loadPOSOSources();
   
   renderPOItems();
   calcPOTotal();
@@ -48787,7 +49135,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.86', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'สร้าง PO จากออเดอร์ด้วย Item Code & Item Description ของ Supplier (v3.86)', items:[
+    { v:'3.87', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มฟังก์ชันดึงข้อมูลสินค้าจาก Sales Order (SO) เข้าสู่ใบสั่งซื้อ PO ทั้งตอนสร้างและแก้ไข (v3.87)', items:[
+      '📥 <b>ดึงข้อมูลจาก Sales Order (SO) เข้า PO โดยตรง:</b> ในหน้าต่างเพิ่มและแก้ไขใบสั่งซื้อ (Purchase Order) สามารถเลือก Sales Order จากเมนูดรอปดาวน์ "ดึงข้อมูลจาก SO" เพื่อนำรายการสินค้า จำนวน และราคาซื้อเข้าสู่ PO ได้ทันที',
+      '🔍 <b>หน้าต่างค้นหา SO แบบละเอียด (Choose SO Modal):</b> เพิ่มปุ่ม <code>[ 🔍 ค้นหา SO ]</code> และปุ่ม <code>[ 📥 ดึงสินค้าจาก SO ]</code> ในแท็บ Contents เพื่อเปิดหน้าต่างค้นหาตามเลขที่ SO, ชื่อลูกค้า, หรือรหัสสินค้า พร้อมดูพรีวิวรายการสินค้าก่อนกดดึงเข้า PO',
+      '🏷️ <b>เชื่อมโยง Item Code & Description ของ Supplier อัตโนมัติ:</b> แปลงสินค้าใน SO เป็นรหัสผู้ขาย (Supplier SKU) และคำอธิบายผู้ขาย (Supplier Description) พร้อมบันทึกเลขอ้างอิง SO ในหมายเหตุภายในของแต่ละรายการและในหมายเหตุใบสั่งซื้อ',
+      '🔄 <b>รองรับทั้งแบบต่อท้าย (Append) และแทนที่ (Replace):</b> หากมีรายการใน PO อยู่แล้ว ระบบจะให้เลือกว่าต้องการเพิ่มสินค้าต่อท้ายรายการเดิม หรือแทนที่รายการเดิมทั้งหมดอย่างปลอดภัย',
+      '🏢 <b>Auto-Suggest Preferred Supplier:</b> หากสินค้าใน SO มีระบุผู้ขายหลัก (Preferred Supplier) ระบบจะเลือก Supplier ให้อัตโนมัติหากยังไม่ได้เลือก',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.87 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.86', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'สร้าง PO จากออเดอร์ด้วย Item Code & Item Description ของ Supplier (v3.86)', items:[
       '🏷️ <b>ใช้ Item Code & Item Description ของ Supplier ในการเปิด PO:</b> เมื่อเลือกออเดอร์จากหน้า Order แล้วกด "สร้าง PO จากออเดอร์" ระบบจะดึงรหัสผู้ขาย (Supplier SKU / Code เช่น <code>HS-RP-1203</code>) และคำอธิบายสินค้าของผู้ขาย (Supplier Item Description เช่น <code>K21 U-RING 70X85X7.5 NBR</code>) มาแสดงและสร้างรายการในใบสั่งซื้อ (PO) ให้โดยอัตโนมัติ',
       '🔄 <b>มีสวิตช์เลือกรูปแบบชื่อสินค้า:</b> เพิ่มตัวเลือก <code>🏷️ ใช้ Item Code & Description ของ Supplier ใน PO</code> ในหน้าต่างเตรียมออก PO เพื่อให้ผู้ใช้งานสามารถเลือกระหว่างการใช้ชื่อ/รหัสของผู้ขาย หรือชื่อสินค้าภายในคลังได้อย่างยืดหยุ่น',
       '🏢 <b>Auto-Select Preferred Supplier:</b> หากสินค้าในออเดอร์มีระบุ Preferred Supplier ที่ตรงกัน ระบบจะเลือก Supplier นั้นในช่องผู้จัดจำหน่ายให้อัตโนมัติทันที',
