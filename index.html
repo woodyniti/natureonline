@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.67';
-const DISPLAY_APP_VERSION = 'v3.67';
+const CURRENT_APP_VERSION = 'sealthai-v3.68';
+const DISPLAY_APP_VERSION = 'v3.68';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.67)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.67 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.68)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.68 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7662,7 +7662,7 @@ async function loadOrders() {
     Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation()]),
     sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
     sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered,qty_received)').eq('shop_id', currentShop.id).neq('status','cancelled'),
-    sb.from('products').select('*').eq('shop_id', currentShop.id),
+    (allProducts && allProducts.length > 1000) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
     ensureLazadaSummary()
   ]);
 
@@ -7737,7 +7737,7 @@ async function loadOrders() {
   });
 
   // บันทึกและ normalize allProducts เพื่อให้ทุกฟังก์ชันในหน้าบันทึกออเดอร์ใช้งานได้ทันที
-  if (prodRes?.data && prodRes.data.length) {
+  if (prodRes?.data && prodRes.data.length && (!allProducts || allProducts.length < prodRes.data.length)) {
     allProducts = prodRes.data.map(normalizeProduct);
   }
 
@@ -8373,11 +8373,11 @@ let orderSourceQuoteId = null;
 async function openNewOrder() {
   orderItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, cost_per_unit: 0, discount: 0, discount_type: 'amount', show_on_receipt: true }];
   const [prodRes] = await Promise.all([
-    (allProducts && allProducts.length) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
+    (allProducts && allProducts.length > 1000) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
     loadOrderCustomerList()
   ]);
   productList = (prodRes && prodRes.data && prodRes.data.length) ? prodRes.data : (allProducts || []);
-  if (prodRes && prodRes.data && prodRes.data.length && (!allProducts || !allProducts.length)) {
+  if (prodRes && prodRes.data && prodRes.data.length && (!allProducts || allProducts.length < prodRes.data.length)) {
     allProducts = prodRes.data.map(normalizeProduct);
   }
   await loadEmployeeOptions('o-emp');
@@ -8921,6 +8921,11 @@ function searchOrderProduct(rowIdx, q) {
           ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`
           : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">⚠️ หมด (0)</span>`;
 
+        const fStock = Number(p.factory_stock || 0);
+        const fStockBadge = fStock > 0
+          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;border:1px solid #fde68a;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
+          : '';
+
         const badges = [];
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
@@ -8938,7 +8943,7 @@ function searchOrderProduct(rowIdx, q) {
               <div style="font-weight:700;color:#0f172a;font-size:13px;line-height:1.4;white-space:normal;word-break:break-word">${escapeHTML(p.name)}</div>
               ${badgeHtml}
             </div>
-            <div style="margin-top:2px;flex-shrink:0">${stockBadge}</div>
+            <div style="margin-top:2px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${fStockBadge}</div>
           </div>`;
       }).join('');
     }
@@ -8967,11 +8972,12 @@ function searchOrderProduct(rowIdx, q) {
     if (_orderSearchTimer) clearTimeout(_orderSearchTimer);
     _orderSearchTimer = setTimeout(async () => {
       try {
+        const cleanQ = ql.replace(/[(),]/g, ' ').trim();
         const { data } = await sb.from('products')
           .select('*')
           .eq('shop_id', currentShop.id)
           .eq('active', true)
-          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .or(`name.ilike.%${cleanQ}%,sku.ilike.%${cleanQ}%,supplier_sku.ilike.%${cleanQ}%,supplier_description.ilike.%${cleanQ}%,part_no.ilike.%${cleanQ}%`)
           .limit(40);
         
         if (data && data.length) {
@@ -9707,18 +9713,16 @@ function itemNetEdit(it) {
 let editProdList = []; // โหลดครั้งเดียวตอน viewOrder
 
 async function loadEditProdList() {
-  if (editProdList && editProdList.length) return;
-  if (allProducts && allProducts.length) {
+  if (editProdList && editProdList.length > 1000) return;
+  if (allProducts && allProducts.length > 1000) {
     editProdList = allProducts;
     return;
   }
-  const { data } = await sb.from('products')
-    .select('*')
-    .eq('shop_id', currentShop.id)
-    .eq('active', true)
-    .order('name')
-    .limit(10000);
-  editProdList = data || [];
+  const pRes = await fetchAllProductsChunked();
+  editProdList = pRes.data || [];
+  if (!allProducts || allProducts.length < editProdList.length) {
+    allProducts = editProdList.map(normalizeProduct);
+  }
 }
 
 let _editOrderSearchTimer = null;
@@ -9833,11 +9837,12 @@ function searchEditProd(rowIdx, q) {
     if (_editOrderSearchTimer) clearTimeout(_editOrderSearchTimer);
     _editOrderSearchTimer = setTimeout(async () => {
       try {
+        const cleanQ = ql.replace(/[(),]/g, ' ').trim();
         const { data } = await sb.from('products')
           .select('*')
           .eq('shop_id', currentShop.id)
           .eq('active', true)
-          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .or(`name.ilike.%${cleanQ}%,sku.ilike.%${cleanQ}%,supplier_sku.ilike.%${cleanQ}%,supplier_description.ilike.%${cleanQ}%,part_no.ilike.%${cleanQ}%`)
           .limit(40);
         
         if (data && data.length) {
@@ -28026,11 +28031,12 @@ function searchPOProduct(rowIdx, q) {
     if (_poSearchTimer) clearTimeout(_poSearchTimer);
     _poSearchTimer = setTimeout(async () => {
       try {
+        const cleanQ = ql.replace(/[(),]/g, ' ').trim();
         const { data } = await sb.from('products')
           .select('*')
           .eq('shop_id', currentShop.id)
           .eq('active', true)
-          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_code.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .or(`name.ilike.%${cleanQ}%,sku.ilike.%${cleanQ}%,supplier_sku.ilike.%${cleanQ}%,supplier_description.ilike.%${cleanQ}%,part_no.ilike.%${cleanQ}%`)
           .limit(40);
         
         if (data && data.length) {
@@ -47013,7 +47019,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.67', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับโหลดสินค้าแคตตาล็อกเต็ม 23,220 รายการในหน้าหมวดหมู่ & ค้นหาหมวดหมู่ (v3.67)', items:[
+    { v:'3.68', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการค้นหาสินค้าในหน้าบันทึกออเดอร์ใหม่ & แสดงสต็อกโรงงาน (v3.68)', items:[
+      '🛒 <b>โหลดแคตตาล็อกสินค้าเต็ม 23,220 รายการในหน้าบันทึกออเดอร์:</b> แก้ไขฟังก์ชัน <code>openNewOrder()</code> และ <code>loadOrders()</code> ให้ดึงสินค้าครบถ้วนแบบ Chunked Loading แทนการถูกจำกัด 1,000 รายการเดิม ทำให้ค้นหารหัสใดก็เจอทันที 100%',
+      '🔍 <b>แก้ไข Server-side Fallback Search:</b> แก้ไขข้อผิดพลาดคอลัมน์ PostgREST ให้ค้นหาครอบคลุมทั้งชื่อสินค้า, SKU, Supplier SKU, Supplier Description และ Part No ได้อย่างสมบูรณ์แบบ',
+      '🏭 <b>แสดงป้ายสต็อกโรงงาน (รง.) ใน Dropdown ค้นหาสินค้าของออเดอร์:</b> แสดงป้าย <code>🏭 รง. XX</code> ชัดเจนควบคู่กับสต็อกหน้าร้าน เพื่อให้ฝ่ายขายทราบจำนวนสินค้าที่พร้อมสั่งจากโรงงานได้ทันทีแม้สต็อกหน้าร้านจะเป็น 0',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.68 และรีเฟรชแคชอัตโนมัติ'
+    ]},
+    { v:'3.67', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'รองรับโหลดสินค้าแคตตาล็อกเต็ม 23,220 รายการในหน้าหมวดหมู่ & ค้นหาหมวดหมู่ (v3.67)', items:[
       '🗂️ <b>หน้าหมวดหมู่สินค้าแสดงสินค้าเต็ม 23,220 รายการ:</b> ปรับปรุงระบบโหลดสินค้าในหน้าหมวดหมู่สินค้า (Categories) เป็นแบบขนาน Chunked Loading ไม่จำกัด 1,000 รายการอีกต่อไป พร้อมแสดงยอดสินค้ารวมและนับสินค้าแยกตามหมวดหมู่ตรงตามจริง 100%',
       '🔍 <b>เพิ่มช่องค้นหาหมวดหมู่สินค้า (Search Categories):</b> เพิ่มกล่องค้นหาชื่อหมวดหมู่ที่หัวหน้าเว็บ ค้นหาจาก 237 หมวดหมู่ได้อย่างรวดเร็วทันที',
       '📦 <b>ซิงค์หมวดหมู่ทั้งหมด 237 หมวดเข้าสู่ระบบ:</b> ตรวจสอบและบันทึกหมวดหมู่ใหม่ทั้งหมดจากสินค้าซีลทั้ง 4 กลุ่มเข้าตาราง categories ครบถ้วน',
