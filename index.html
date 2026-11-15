@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.66';
-const DISPLAY_APP_VERSION = 'v3.66';
+const CURRENT_APP_VERSION = 'sealthai-v3.67';
+const DISPLAY_APP_VERSION = 'v3.67';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.66)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.66 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.67)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.67 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3901,7 +3901,7 @@ async function dashboard() {
   ] = await Promise.all([
     sb.from('orders').select('*,order_items(*)').eq('shop_id', currentShop.id).gte('order_date',ms).lte('order_date',me),
     sb.from('expenses').select('*').eq('shop_id', currentShop.id).gte('expense_date',ms).lte('expense_date',me),
-    sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true),
+    (allProducts && allProducts.length > 1000) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
     sb.from('employees').select('id,name,commission_rate').eq('shop_id', currentShop.id).eq('active',true),
     sb.from('purchase_orders').select('*,purchase_order_items(*)').eq('shop_id', currentShop.id).gte('po_date',ms).lte('po_date',me),
     // สินค้าซื้อซ้ำ: ต้องดูข้ามทุกช่วงเวลา (ไม่ใช่แค่ในช่วงที่เลือก) ลูกค้าถึงจะซื้อสินค้าเดิมซ้ำได้
@@ -25519,7 +25519,7 @@ async function loadStockPlanningData() {
   const d180Str = d180.toISOString().slice(0,10);
 
   const [prodsRes, ordersRes, posRes, xrefRes, supRes] = await Promise.all([
-    sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true),
+    (allProducts && allProducts.length > 1000) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
     sb.from('orders').select('id,order_date,customer_name,order_items(product_id,qty,sell_price,cost_per_unit)')
       .eq('shop_id', currentShop.id).gte('order_date', d180Str),
     sb.from('purchase_orders').select('id,po_no,po_date,expected_date,status,supplier_id,purchase_order_items(product_id,qty_ordered,qty_received)')
@@ -25528,7 +25528,7 @@ async function loadStockPlanningData() {
     sb.from('suppliers').select('*').eq('shop_id', currentShop.id).order('name')
   ]);
 
-  allProducts = prodsRes.data || [];
+  allProducts = (prodsRes.data || []).map(normalizeProduct);
   allCrossReferences = xrefRes?.data || [];
   allSuppliers = supRes?.data || [];
 
@@ -27835,8 +27835,8 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   const vatTypeEl = document.getElementById('po-vat-type');
   if (vatTypeEl) vatTypeEl.value = 'excluded';
 
-  const {data}=await sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true).order('name');
-  productList=data||[];
+  const pRes = (allProducts && allProducts.length > 1000) ? { data: allProducts } : await fetchAllProductsChunked();
+  productList = (pRes.data || []).map(normalizeProduct);
 
   if (Array.isArray(prefilledItems) && prefilledItems.length > 0) {
     poItems = prefilledItems.map(it => {
@@ -29357,8 +29357,8 @@ async function editPO(poId) {
   editingPOId = po.id;
   editingPONo = po.po_no;
   
-  const {data}=await sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active',true).order('name');
-  productList=data||[];
+  const pRes = (allProducts && allProducts.length > 1000) ? { data: allProducts } : await fetchAllProductsChunked();
+  productList = (pRes.data || []).map(normalizeProduct);
 
   const titleEl = document.getElementById('po-modal-title');
   if (titleEl) titleEl.textContent = '✏️ แก้ไขแบบร่าง Purchase Order' + (po.po_no ? ' (' + po.po_no + ')' : '');
@@ -36286,23 +36286,41 @@ async function categories() {
     '<button class="btn btn-primary btn-sm" onclick="openCatModal()">+ เพิ่มหมวดหมู่</button>';
   setContent(`
     <div id="cat-dup-banner"></div>
-    <div class="stat-grid mb-4" id="cat-page-stats"></div>
-    <div id="cat-page-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
+    <div class="stat-grid mb-4" id="cat-page-stats">
+      <div class="stat-card"><div class="stat-label">🗂️ หมวดหมู่ทั้งหมด</div><div class="stat-value">...</div></div>
+      <div class="stat-card"><div class="stat-label">📦 สินค้าทั้งหมด</div><div class="stat-value">กำลังโหลด...</div></div>
+    </div>
+    <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <div style="position:relative;flex:1;min-width:240px">
+        <input type="text" id="cat-filter-input" placeholder="🔍 ค้นหาชื่อหมวดหมู่สินค้า..."
+          style="width:100%;height:40px;padding:0 36px 0 12px;border:1.5px solid var(--border2);border-radius:8px;font-size:13.5px;outline:none"
+          oninput="filterCategoriesPage(this.value)">
+        <span style="position:absolute;right:10px;top:10px;color:var(--text3);cursor:pointer;font-size:14px" onclick="document.getElementById('cat-filter-input').value='';filterCategoriesPage('')">✕</span>
+      </div>
+    </div>
+    <div id="cat-page-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px">
+      <div class="loading"><div class="spinner"></div> กำลังโหลดหมวดหมู่และสินค้า...</div>
+    </div>
   `);
   await loadCategories();
 }
 
-async function loadCategories() {
-  // โหลดใหม่ทุกครั้ง เพื่อให้รูปที่เพิ่งอัปโหลดในหน้าสินค้าแสดงทันที ไม่ใช้ cache เก่าใน allProducts
+async function loadCategories(forceReload = false) {
+  // หาก allProducts มีแคตตาล็อกขนาดใหญ่ (>1,000 รายการ) โหลดไว้อยู่แล้ว สามารถนำมาใช้ต่อได้เลย ไม่ต้องดาวน์โหลดใหม่ทั้งหมด
+  // เว้นแต่ยังไม่มี หรือมีน้อยกว่าหรือเท่ากับ 1,000 (ถูกแคชไม่ครบ) หรือมีพารามิเตอร์ forceReload = true
+  const needFetchProds = forceReload || !allProducts || allProducts.length <= 1000;
+  
   const [catRes, prodRes] = await Promise.all([
-    sb.from('categories').select('*').eq('shop_id', currentShop.id).order('sort_order').order('name'),
-    sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true).order('name')
+    sb.from('categories').select('*').eq('shop_id', currentShop.id).order('sort_order').order('name').limit(5000),
+    needFetchProds ? fetchAllProductsChunked() : Promise.resolve({ data: allProducts })
   ]);
-  if (catRes.error || prodRes.error) {
-    toast('โหลดหมวดหมู่/รูปสินค้าไม่สำเร็จ: '+(catRes.error?.message||prodRes.error?.message||''), 'error');
+  if (catRes.error || (prodRes && prodRes.error)) {
+    toast('โหลดหมวดหมู่/รูปสินค้าไม่สำเร็จ: '+(catRes.error?.message||prodRes?.error?.message||''), 'error');
   }
   allCategories = catRes.data || [];
-  allProducts = prodRes.data || [];
+  if (prodRes && prodRes.data) {
+    allProducts = prodRes.data.map(normalizeProduct);
+  }
   productCategories = [...new Set(allProducts.map(p => p.category).filter(Boolean))].sort();
 
   // sync: หา categories จาก products ที่ยังไม่มีใน table โดยใช้ชื่อที่ normalize เว้นวรรคแล้ว
@@ -36325,8 +36343,10 @@ async function loadCategories() {
 
   if (trulyMissingCats.length) {
     const inserts = trulyMissingCats.map(name => ({ shop_id: currentShop.id, name, sort_order: 0 }));
-    const { data: newCats } = await sb.from('categories').insert(inserts).select();
-    if (newCats) allCategories = [...allCategories, ...newCats];
+    for (let i = 0; i < inserts.length; i += 50) {
+      const { data: newCats } = await sb.from('categories').insert(inserts.slice(i, i + 50)).select();
+      if (newCats) allCategories = [...allCategories, ...newCats];
+    }
   }
 
   renderCategoriesPage();
@@ -36370,19 +36390,39 @@ function renderCategoriesPage() {
   if (statsEl) {
     const totalProds = allProducts.length;
     statsEl.innerHTML =
-      '<div class="stat-card"><div class="stat-label">🗂️ หมวดหมู่ทั้งหมด</div><div class="stat-value">' + allCategories.length + (dupGroups.length > 0 ? ` <span style="font-size:12px;color:#d97706;font-weight:600">(${dupGroups.length} กลุ่มซ้ำ)</span>` : '') + '</div></div>' +
-      '<div class="stat-card"><div class="stat-label">📦 สินค้าทั้งหมด</div><div class="stat-value">' + totalProds + '</div></div>';
+      '<div class="stat-card"><div class="stat-label">🗂️ หมวดหมู่ทั้งหมด</div><div class="stat-value">' + fmt(allCategories.length) + (dupGroups.length > 0 ? ` <span style="font-size:12px;color:#d97706;font-weight:600">(${dupGroups.length} กลุ่มซ้ำ)</span>` : '') + '</div></div>' +
+      '<div class="stat-card"><div class="stat-label">📦 สินค้าทั้งหมด</div><div class="stat-value">' + fmt(totalProds) + '</div></div>';
   }
 
+  const searchInp = document.getElementById('cat-filter-input');
+  if (searchInp && searchInp.value.trim()) {
+    filterCategoriesPage(searchInp.value);
+  } else {
+    renderCategoriesGrid(allCategories);
+  }
+}
+
+function filterCategoriesPage(query) {
+  const q = (query || '').trim().toLowerCase();
+  const filtered = q
+    ? allCategories.filter(cat => (cat.name || '').toLowerCase().includes(q) || (cat.description || '').toLowerCase().includes(q))
+    : allCategories;
+  renderCategoriesGrid(filtered);
+}
+
+function renderCategoriesGrid(catsToRender) {
   const grid = document.getElementById('cat-page-grid');
   if (!grid) return;
 
-  if (!allCategories.length) {
-    grid.innerHTML = '<div class="empty"><div class="empty-icon">🗂️</div><div class="empty-text">ยังไม่มีหมวดหมู่<br><small>กด + เพิ่มหมวดหมู่</small></div></div>';
+  const cats = catsToRender || allCategories;
+  if (!cats.length) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🗂️</div><div class="empty-text">ไม่พบหมวดหมู่สินค้าที่ค้นหา<br><small>กด + เพิ่มหมวดหมู่</small></div></div>';
     return;
   }
 
-  grid.innerHTML = allCategories.map(cat => {
+  const dupGroups = getDuplicateCategoryGroups();
+
+  grid.innerHTML = cats.map(cat => {
     const catNorm = normalizeCategoryName(cat.name);
     const prods = (allProducts || []).filter(p => normalizeCategoryName(p.category) === catNorm);
     const prodImgs = prods.map(p=>({product:p,url:getProductImageUrl(p)})).filter(x=>x.url).slice(0, 4);
@@ -36406,7 +36446,7 @@ function renderCategoriesPage() {
         }
         ${cat.image_url ? `<img src="${escapeHTML(cat.image_url)}" alt="${escapeHTML(cat.name||'รูปหมวดหมู่')}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1" onerror="this.remove()">` : ''}
         <div style="position:absolute;top:8px;left:8px;z-index:2;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-family:var(--mono)">${allCategories.indexOf(cat)+1}</div>
-        <div style="position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${cat.image_url?'🖼️ ภาพหมวด · ':''}${prods.length} สินค้า</div>
+        <div style="position:absolute;top:8px;right:8px;z-index:2;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 8px;border-radius:20px">${cat.image_url?'🖼️ ภาพหมวด · ':''}${fmt(prods.length)} สินค้า</div>
       </div>
       <!-- ข้อมูล -->
       <div style="padding:12px 14px;flex:1;display:flex;flex-direction:column;justify-content:space-between">
@@ -36424,7 +36464,7 @@ function renderCategoriesPage() {
         <!-- ปุ่มดำเนินการ: ดูสินค้า, แก้ไข, รวมหมวด -->
         <div style="display:grid;grid-template-columns:1fr auto auto;gap:6px;border-top:1px solid var(--border);padding-top:10px;margin-top:auto">
           <button class="btn btn-primary btn-sm" onclick="openCategoryProductsModal('${cat.id}')" style="font-size:12px;padding:4px 8px;font-weight:600" title="ดูรายการสินค้าทั้งหมดในหมวดนี้">
-            📦 ดูสินค้า (${prods.length})
+            📦 ดูสินค้า (${fmt(prods.length)})
           </button>
           <button class="btn btn-secondary btn-sm" onclick="editCatModal('${cat.id}')" style="font-size:12px;padding:4px 8px" title="แก้ไขข้อมูลหมวดหมู่">
             ✏️ แก้ไข
@@ -36452,17 +36492,19 @@ function openCategoryProductsModal(catId) {
   modal.style.zIndex = '310';
 
   const totalStock = prods.reduce((s, p) => s + Number(p.stock_qty || 0), 0);
+  const totalFactoryStock = prods.reduce((s, p) => s + Number(p.factory_stock || 0), 0);
   const stockVal = prods.reduce((s, p) => s + Number(p.current_cost || 0) * Number(p.stock_qty || 0), 0);
 
   modal.innerHTML = `
-    <div class="modal" style="max-width:900px;width:95%;max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal" style="max-width:960px;width:95%;max-height:90vh;display:flex;flex-direction:column">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:10px;flex-wrap:wrap">
         <div>
           <div class="modal-title" style="margin-bottom:4px">🗂️ หมวดหมู่: ${escapeHTML(cat.name)}</div>
           <div style="font-size:12.5px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             ${cat.description ? `<span>${escapeHTML(cat.description)}</span> · ` : ''}
-            <span><strong>${prods.length}</strong> รายการสินค้า</span> ·
-            <span>สต๊อกรวม <strong>${fmt(totalStock)}</strong> ชิ้น</span> ·
+            <span><strong>${fmt(prods.length)}</strong> รายการสินค้า</span> ·
+            <span>สต๊อกร้าน <strong>${fmt(totalStock)}</strong> ชิ้น</span> ·
+            ${totalFactoryStock > 0 ? `<span>สต๊อกโรงงาน <strong>${fmt(totalFactoryStock)}</strong> ชิ้น</span> · ` : ''}
             <span style="color:var(--accent);font-weight:700">มูลค่าสต๊อก ${fmtB(stockVal)}</span>
           </div>
         </div>
@@ -36476,7 +36518,7 @@ function openCategoryProductsModal(catId) {
 
       <!-- ค้นหาในหมวดหมู่นี้ -->
       <div style="margin-bottom:12px">
-        <input type="text" id="cat-prod-search" placeholder="🔍 ค้นหาสินค้าในหมวดหมู่นี้ (ชื่อ, รหัส, SKU, Part No)..."
+        <input type="text" id="cat-prod-search" placeholder="🔍 ค้นหาสินค้าในหมวดหมู่นี้ (ชื่อ, รหัส, SKU, Part No, Item Description)..."
           style="width:100%;height:38px;padding:0 12px;border:1.5px solid var(--border2);border-radius:8px;font-size:13px;outline:none"
           oninput="filterCategoryProductsList('${cat.id}', this.value)">
       </div>
@@ -36487,7 +36529,7 @@ function openCategoryProductsModal(catId) {
       </div>
 
       <div class="modal-footer" style="margin-top:12px;justify-content:space-between">
-        <span style="font-size:12px;color:var(--text3)" id="cat-prod-count-lbl">แสดง ${prods.length} รายการ</span>
+        <span style="font-size:12px;color:var(--text3)" id="cat-prod-count-lbl">แสดง ${fmt(prods.length)} รายการ</span>
         <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">ปิดหน้าต่าง</button>
       </div>
     </div>
@@ -36512,7 +36554,8 @@ function renderCategoryProductsTable(prods, cat) {
           <th style="padding:8px 10px;text-align:left">ชื่อสินค้า / ขนาด / Part No</th>
           <th style="padding:8px 10px;text-align:left;width:130px">SKU / รหัส</th>
           <th style="padding:8px 10px;text-align:right;width:100px">ราคาขาย</th>
-          <th style="padding:8px 10px;text-align:center;width:95px">คงเหลือ</th>
+          <th style="padding:8px 10px;text-align:center;width:85px">ร้าน</th>
+          <th style="padding:8px 10px;text-align:center;width:95px">รง.</th>
           <th style="padding:8px 10px;text-align:center;width:130px">จัดการ</th>
         </tr>
       </thead>
@@ -36520,9 +36563,13 @@ function renderCategoryProductsTable(prods, cat) {
         ${prods.map((p, idx) => {
           const imgUrl = getProductImageUrl(p);
           const stock = Number(p.stock_qty || 0);
+          const fStock = Number(p.factory_stock || 0);
           const stockBadge = stock > 0
             ? `<span style="background:#dcfce7;color:#166534;font-weight:700;padding:2px 7px;border-radius:6px;font-size:11px;font-family:var(--mono)">${fmt(stock)}</span>`
             : `<span style="background:#fee2e2;color:#991b1b;font-weight:700;padding:2px 7px;border-radius:6px;font-size:11px;font-family:var(--mono)">0</span>`;
+          const fStockBadge = fStock > 0
+            ? `<span style="background:#fef3c7;color:#b45309;font-weight:700;padding:2px 7px;border-radius:6px;font-size:11px;font-family:var(--mono)" title="สต็อกโรงงานพร้อมสั่ง">${fmt(fStock)}</span>`
+            : `<span style="color:var(--text3);font-size:11px">-</span>`;
           return `
             <tr style="border-bottom:1px solid var(--border);${idx % 2 === 1 ? 'background:rgba(0,0,0,0.015)' : ''}">
               <td style="padding:6px 10px;text-align:center">
@@ -36534,6 +36581,7 @@ function renderCategoryProductsTable(prods, cat) {
                 <div style="font-weight:600;color:var(--text);cursor:pointer" onclick="editProduct('${p.id}')" title="คลิกเพื่อแก้ไขสินค้า">${escapeHTML(p.name)}</div>
                 <div style="font-size:11px;color:var(--text3);display:flex;gap:6px;margin-top:2px;font-family:var(--mono);flex-wrap:wrap">
                   ${p.part_no ? `<span style="color:var(--purple,#7c3aed)">Part: ${escapeHTML(p.part_no)}</span>` : ''}
+                  ${p.supplier_description && p.supplier_description !== p.name ? `<span style="color:#d97706">Desc: ${escapeHTML(p.supplier_description)}</span>` : ''}
                   ${(p.inner_diameter || p.outer_diameter) ? `<span>ขนาด: ${p.inner_diameter||'-'}*${p.outer_diameter||'-'}*${p.width||'-'} ${p.unit_dim||'mm'}</span>` : ''}
                 </div>
               </td>
@@ -36546,6 +36594,9 @@ function renderCategoryProductsTable(prods, cat) {
               </td>
               <td style="padding:6px 10px;text-align:center">
                 ${stockBadge}
+              </td>
+              <td style="padding:6px 10px;text-align:center">
+                ${fStockBadge}
               </td>
               <td style="padding:6px 10px;text-align:center">
                 <div style="display:flex;gap:4px;justify-content:center">
@@ -36572,14 +36623,15 @@ function filterCategoryProductsList(catId, q) {
         (p.name || '').toLowerCase().includes(query) ||
         (p.sku || '').toLowerCase().includes(query) ||
         (p.supplier_sku || '').toLowerCase().includes(query) ||
+        (p.supplier_description || '').toLowerCase().includes(query) ||
         (p.part_no || '').toLowerCase().includes(query)
       )
     : catProds;
 
   const container = document.getElementById('cat-prod-list-container');
   if (container) container.innerHTML = renderCategoryProductsTable(filtered, cat);
-  const lbl = document.getElementById('cat-prod-count-lbl');
-  if (lbl) lbl.textContent = `แสดง ${filtered.length} จากทั้งหมด ${catProds.length} รายการ`;
+  const countLbl = document.getElementById('cat-prod-count-lbl');
+  if (countLbl) countLbl.textContent = `แสดง ${fmt(filtered.length)} จาก ${fmt(catProds.length)} รายการ`;
 }
 
 function viewProductsInCategory(catName) {
@@ -43822,8 +43874,8 @@ let _currentParsedQuoteItems = [];
 async function openAIChatToQuoteModal() {
   // Ensure product cache
   if (!window._allProductsCache || !window._allProductsCache.length) {
-    const { data } = await sb.from('products').select('*').eq('shop_id', currentShop.id).eq('active', true);
-    window._allProductsCache = data || [];
+    const pRes = (allProducts && allProducts.length > 1000) ? { data: allProducts } : await fetchAllProductsChunked();
+    window._allProductsCache = (pRes.data || []).map(normalizeProduct);
   }
 
   // Load approved substitutes
@@ -46961,7 +47013,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.66', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'นำเข้าแคตตาล็อกซีลรวม 23,220 รายการ & รองรับค้นหาด้วย Item Description ของ Supplier (v3.66)', items:[
+    { v:'3.67', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'รองรับโหลดสินค้าแคตตาล็อกเต็ม 23,220 รายการในหน้าหมวดหมู่ & ค้นหาหมวดหมู่ (v3.67)', items:[
+      '🗂️ <b>หน้าหมวดหมู่สินค้าแสดงสินค้าเต็ม 23,220 รายการ:</b> ปรับปรุงระบบโหลดสินค้าในหน้าหมวดหมู่สินค้า (Categories) เป็นแบบขนาน Chunked Loading ไม่จำกัด 1,000 รายการอีกต่อไป พร้อมแสดงยอดสินค้ารวมและนับสินค้าแยกตามหมวดหมู่ตรงตามจริง 100%',
+      '🔍 <b>เพิ่มช่องค้นหาหมวดหมู่สินค้า (Search Categories):</b> เพิ่มกล่องค้นหาชื่อหมวดหมู่ที่หัวหน้าเว็บ ค้นหาจาก 237 หมวดหมู่ได้อย่างรวดเร็วทันที',
+      '📦 <b>ซิงค์หมวดหมู่ทั้งหมด 237 หมวดเข้าสู่ระบบ:</b> ตรวจสอบและบันทึกหมวดหมู่ใหม่ทั้งหมดจากสินค้าซีลทั้ง 4 กลุ่มเข้าตาราง categories ครบถ้วน',
+      '🏭 <b>แสดงสต็อกโรงงานและข้อมูล Supplier ในหมวดหมู่:</b> ในหน้าต่างดูสินค้าในหมวด (View Category Products) แสดงยอดสต็อกโรงงาน (รง.) พร้อมสั่ง และแสดง Item Description จาก Supplier',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.67 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.66', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'นำเข้าแคตตาล็อกซีลรวม 23,220 รายการ & รองรับค้นหาด้วย Item Description ของ Supplier (v3.66)', items:[
       '📦 <b>นำเข้าสินค้าครบทุกหมวดหมู่ (23,220 รายการ):</b> นำเข้า Hydraulic Seal (4,304 รายการ), O-Ring (7,691 รายการ), Other Seal (466 รายการ) รวมกับ Oil Seal เดิมเป็น 23,220 รายการพร้อมข้อมูลราคาทุนและราคาขาย',
       '🔍 <b>ค้นหาด้วย Item Description ของ Supplier:</b> เพิ่มการเชื่อมโยงข้อมูลและระบบค้นหาแบบอัจฉริยะ (Wildcard / Multi-token) ด้วย Item Description เช่น "OIL SEAL NBR 55X90X8 TC" ค้นหาเจอทันที 100%',
       '🏭 <b>แสดงข้อมูลสต็อกโรงงาน & รายละเอียด Supplier:</b> แสดงสต็อกโรงงาน (รง) และรหัส Part No / Item Description ของผู้ผลิตในตารางสินค้า',
