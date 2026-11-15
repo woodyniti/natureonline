@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.85';
-const DISPLAY_APP_VERSION = 'v3.85';
+const CURRENT_APP_VERSION = 'sealthai-v3.86';
+const DISPLAY_APP_VERSION = 'v3.86';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.85)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.85 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.86)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.86 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -29408,7 +29408,7 @@ function renderPOItems() {
       inp.id = 'po-prod-inp-' + i;
       inp.className = 'sap-matrix-inp';
       inp.placeholder = '🔍 1. พิมพ์ค้นหาชื่อคลัง / SKU / Supplier (THB/USD)... หรือพิมพ์ชื่อเอง';
-      inp.value = (selectedProduct ? selectedProduct.name : (it.product_name || ''));
+      inp.value = it.product_name || (selectedProduct ? selectedProduct.name : '');
       inp.style.cssText = 'flex:1;min-width:0;font-size:12.5px;padding:5px 8px;font-weight:600';
 
       const cflBtn = document.createElement('button');
@@ -30425,9 +30425,9 @@ async function dedupePOItems(poId) {
 async function loadPOSkuMap(items) {
   const productIds = [...new Set((items||[]).map(it=>it.product_id).filter(Boolean))];
   if (!productIds.length) return {};
-  let { data, error } = await sb.from('products').select('id,sku,supplier_sku,supplier_sku_usd,part_no,application_note').eq('shop_id',currentShop.id).in('id', productIds);
+  let { data, error } = await sb.from('products').select('id,name,sku,supplier_sku,supplier_sku_usd,supplier_description,part_no,application_note').eq('shop_id',currentShop.id).in('id', productIds);
   if (error) {
-    const res = await sb.from('products').select('id,sku,supplier_sku,part_no,application_note').eq('shop_id',currentShop.id).in('id', productIds);
+    const res = await sb.from('products').select('id,name,sku,supplier_sku,supplier_sku_usd,part_no,application_note').eq('shop_id',currentShop.id).in('id', productIds);
     data = res.data;
   }
   return Object.fromEntries((data||[]).map(p=>[p.id,p]));
@@ -30634,8 +30634,9 @@ async function viewPO(poId) {
               </div>
             `;
 
+            const storeSku = (product.sku && product.sku !== displayName) ? '<div style="font-size:10.5px;color:var(--text3);margin-top:2px">ชื่อคลัง: '+escapeHTML(product.sku)+'</div>' : '';
             return '<tr style="'+rowStyle+'">'+
-              '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span>'+escapeHTML(product.sku||displayName)+'</span>'+poCopyButton(product.sku||displayName,'SKU')+'</div>'+soBadgeHTML+internalNoteHtml+'</td>'+
+              '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-weight:700;font-size:12.5px;color:#0f172a">'+escapeHTML(displayName)+'</span>'+poCopyButton(displayName,'Item')+'</div>'+storeSku+soBadgeHTML+internalNoteHtml+'</td>'+
               '<td>'+supCell+'</td>'+
               '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
               '<td style="text-align:right;color:var(--accent)">'+fmt(receivedQty)+(overQty>0?'<div style="font-size:10px;color:var(--amber)">รับเกิน +'+fmt(overQty)+'</div>':'')+'</td>'+
@@ -31117,7 +31118,7 @@ async function printPO(poId) {
       ? `$${usdAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:9.5px;color:#555">(฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
       : `฿${thbAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
-    let displayName = product.sku || it.product_name || '-';
+    let displayName = it.product_name || product.sku || '-';
     let soPrintHTML = '';
     const soMatch = (it.product_name || '').match(/\[SO:\s*([^\]]+)\]/i);
     if (soMatch) {
@@ -36393,6 +36394,7 @@ async function batchConvertSOtoAR() {
 // ══════════════════════════════════════════════════════════
 let _batchPOItems = [];
 let _batchPOGroupBySKU = true;
+let _batchPOUseSupplierNaming = true;
 
 async function openBatchSOtoPOModal() {
   updateSOSelectCount();
@@ -36401,7 +36403,7 @@ async function openBatchSOtoPOModal() {
   if (!orderIds.length) {
     const visibleCheckboxes = Array.from(document.querySelectorAll('.chk-so-select'));
     if (visibleCheckboxes.length) {
-      const ok = confirm(`ยังไม่ได้เลือกออเดอร์ (Checkbox)\\nต้องการดึงรายการสินค้าจากออเดอร์ทั้งหมดที่แสดงอยู่ในหน้านี้ (${visibleCheckboxes.length} ออเดอร์) มาทำ PO หรือไม่?`);
+      const ok = confirm(`ยังไม่ได้เลือกออเดอร์ (Checkbox)\nต้องการดึงรายการสินค้าจากออเดอร์ทั้งหมดที่แสดงอยู่ในหน้านี้ (${visibleCheckboxes.length} ออเดอร์) มาทำ PO หรือไม่?`);
       if (ok) {
         toggleSelectAllSO(true);
         orderIds = Array.from(_selectedSOIds);
@@ -36420,9 +36422,9 @@ async function openBatchSOtoPOModal() {
     allSuppliers = sups || [];
   }
 
-  // Always query latest products to get the exact purchase_price and current_cost set for each product
+  // Always query latest products to get the exact purchase_price, current_cost, and supplier info set for each product
   const { data: latestProds } = await sb.from('products')
-    .select('id, name, sku, supplier_sku, part_no, item_no, purchase_price, current_cost, preferred_supplier_id')
+    .select('id, name, sku, supplier_sku, supplier_sku_usd, supplier_description, part_no, item_no, purchase_price, buy_price, cost_price, current_cost, preferred_supplier_id')
     .eq('shop_id', currentShop.id);
   const prodLookup = latestProds || allProducts || [];
 
@@ -36465,6 +36467,8 @@ async function openBatchSOtoPOModal() {
 
       const sku = prod?.sku || prod?.supplier_sku || prod?.item_no || itSKU || '';
       const pName = itProdName || prod?.name || 'สินค้า';
+      const suppSku = prod?.supplier_sku || prod?.supplier_sku_usd || prod?.part_no || '';
+      const suppDesc = (prod?.supplier_description || '').trim();
 
       // ── ดึงราคาซื้อ / ราคาซื้อเข้า (Purchase Price) ที่ตั้งไว้สำหรับอ้างอิง Supplier โดยตรง ──
       // 1. ดึง purchase_price หรือ buy_price ที่ตั้งไว้ในฐานข้อมูลสินค้า (เช่น ราคาซื้อเข้า = 9)
@@ -36486,6 +36490,10 @@ async function openBatchSOtoPOModal() {
         product_id: it.product_id || prod?.id || null,
         product_name: pName,
         sku: sku,
+        supplier_sku: suppSku,
+        supplier_description: suppDesc,
+        part_no: prod?.part_no || '',
+        preferred_supplier_id: prod?.preferred_supplier_id || null,
         qty_sold: qtySold,
         qty_po: qtySold,
         unit_cost: buyPrice,
@@ -36509,7 +36517,7 @@ async function openBatchSOtoPOModal() {
   modal.id = 'modal-batch-po';
   modal.style.zIndex = '450';
   modal.innerHTML = `
-    <div class="modal" style="max-width:920px;width:95vw">
+    <div class="modal" style="max-width:940px;width:95vw">
       <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
         <span>🛒 สร้างใบสั่งซื้อ (PO) จากรายการขาย (${ordersData.length} ออเดอร์)</span>
         <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>
@@ -36536,12 +36544,15 @@ async function openBatchSOtoPOModal() {
 
       <!-- Controls & Toggle Grouping -->
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;background:var(--bg3);padding:8px 12px;border-radius:8px">
-        <div style="display:flex;align-items:center;gap:12px">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px">
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer">
             <input type="checkbox" id="bpo-select-all" checked onchange="toggleAllBatchPOItems(this.checked)"> เลือกทั้งหมด
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer">
             <input type="checkbox" id="bpo-group-toggle" ${_batchPOGroupBySKU?'checked':''} onchange="toggleBatchPOGrouping(this.checked)"> 🔄 รวมจำนวนตามรหัส SKU / สินค้าเดียวกัน
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#0284c7;background:#e0f2fe;padding:3px 8px;border-radius:6px;border:1px solid #7dd3fc;cursor:pointer" title="ใช้ Item Code (Supplier SKU) และ Item Description ของ Supplier ในการออก PO">
+            <input type="checkbox" id="bpo-supplier-naming-toggle" ${_batchPOUseSupplierNaming?'checked':''} onchange="toggleBatchPOSupplierNaming(this.checked)"> 🏷️ ใช้ Item Code & Description ของ Supplier
           </label>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
@@ -36620,6 +36631,17 @@ async function openBatchSOtoPOModal() {
   `;
   document.body.appendChild(modal);
 
+  // Auto-select common preferred supplier if all items match
+  const prefSupIds = rawItems.map(it => it.preferred_supplier_id).filter(Boolean);
+  const commonSupId = (prefSupIds.length > 0 && prefSupIds.every(id => id === prefSupIds[0])) ? prefSupIds[0] : '';
+  if (commonSupId) {
+    const supSel = document.getElementById('bpo-supplier-sel');
+    if (supSel && !supSel.value) {
+      supSel.value = commonSupId;
+      onBatchPOSupplierChange();
+    }
+  }
+
   renderBatchPOItemsTable();
 }
 
@@ -36637,6 +36659,11 @@ function onBatchPOSupplierChange() {
 
 function toggleBatchPOGrouping(isGroup) {
   _batchPOGroupBySKU = isGroup;
+  renderBatchPOItemsTable();
+}
+
+function toggleBatchPOSupplierNaming(isSupp) {
+  _batchPOUseSupplierNaming = isSupp;
   renderBatchPOItemsTable();
 }
 
@@ -36661,6 +36688,9 @@ function renderBatchPOItemsTable() {
           product_id: it.product_id,
           product_name: it.product_name,
           sku: it.sku,
+          supplier_sku: it.supplier_sku || '',
+          supplier_description: it.supplier_description || '',
+          part_no: it.part_no || '',
           qty_sold: 0,
           qty_po: 0,
           unit_cost: it.unit_cost,
@@ -36690,6 +36720,33 @@ function renderBatchPOItemsTable() {
 
   tbody.innerHTML = displayItems.map((item) => {
     const lineTotal = (Number(item.qty_po) || 0) * (Number(item.unit_cost) || 0);
+    const useSupp = _batchPOUseSupplierNaming;
+    const hasSuppDesc = Boolean(item.supplier_description && item.supplier_description.trim());
+    const hasSuppSku = Boolean(item.supplier_sku && item.supplier_sku.trim());
+
+    let itemDescHTML = '';
+    if (useSupp && (hasSuppDesc || hasSuppSku)) {
+      const mainName = hasSuppDesc ? item.supplier_description : item.product_name;
+      const codeBadge = hasSuppSku ? `<span class="badge font-mono" style="background:#0284c7;color:#fff;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px" title="Supplier Item Code">🏷️ ${escapeHTML(item.supplier_sku)}</span>` : '';
+      itemDescHTML = `
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:13px;color:#0f172a">${escapeHTML(mainName)}</span>
+          ${codeBadge}
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">
+          ชื่อสินค้าในคลัง: ${escapeHTML(item.product_name)} ${item.sku ? ('['+escapeHTML(item.sku)+']') : ''}
+        </div>
+      `;
+    } else {
+      itemDescHTML = `
+        <div style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(item.product_name)}</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
+          ${item.sku ? `<span class="badge badge-gray font-mono" style="font-size:10px">${escapeHTML(item.sku)}</span>` : ''}
+          ${hasSuppSku ? `<span class="badge font-mono" style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:600">Sup: ${escapeHTML(item.supplier_sku)}</span>` : ''}
+        </div>
+      `;
+    }
+
     return `
       <tr style="${item.selected ? '' : 'opacity:0.4;background:#f1f5f9'}">
         <td style="text-align:center">
@@ -36699,8 +36756,7 @@ function renderBatchPOItemsTable() {
           <div style="font-weight:600;color:var(--text)">${escapeHTML(item.order_no_display)}</div>
         </td>
         <td>
-          <div style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(item.product_name)}</div>
-          ${item.sku ? `<span class="badge badge-gray font-mono" style="font-size:10px">${escapeHTML(item.sku)}</span>` : ''}
+          ${itemDescHTML}
         </td>
         <td style="text-align:right;font-size:12px;color:var(--text3);font-family:monospace">
           ${item.qty_sold}
@@ -36815,6 +36871,11 @@ function confirmAddProductToBatchPO() {
 
   if (!pname) { toast('กรุณาระบุสินค้า', 'error'); return; }
 
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === pid);
+  const suppSku = p?.supplier_sku || p?.supplier_sku_usd || p?.part_no || '';
+  const suppDesc = (p?.supplier_description || '').trim();
+
   _batchPOItems.push({
     id: 'bpoi_' + Math.random().toString(36).slice(2, 9),
     order_id: null,
@@ -36824,6 +36885,9 @@ function confirmAddProductToBatchPO() {
     product_id: pid || null,
     product_name: pname,
     sku: sku,
+    supplier_sku: suppSku,
+    supplier_description: suppDesc,
+    part_no: p?.part_no || '',
     qty_sold: 0,
     qty_po: Math.max(1, qty),
     unit_cost: cost,
@@ -36993,6 +37057,7 @@ async function saveBatchPOFromOrders(status = 'sent') {
       return;
     }
 
+    const useSupp = _batchPOUseSupplierNaming;
     let itemsToInsert = [];
     if (_batchPOGroupBySKU) {
       const groupMap = {};
@@ -37003,6 +37068,9 @@ async function saveBatchPOFromOrders(status = 'sent') {
             po_id: po.id,
             product_id: it.product_id || null,
             product_name: it.product_name,
+            sku: it.sku || '',
+            supplier_sku: it.supplier_sku || '',
+            supplier_description: it.supplier_description || '',
             qty_ordered: 0,
             qty_received: 0,
             unit_cost: it.unit_cost,
@@ -37014,24 +37082,44 @@ async function saveBatchPOFromOrders(status = 'sent') {
       });
       itemsToInsert = Object.values(groupMap).map(g => {
         const soStr = Array.from(g.order_refs).join(', ');
+        let pName = g.product_name;
+        if (useSupp) {
+          if (g.supplier_description) {
+            pName = g.supplier_description;
+          } else if (g.supplier_sku) {
+            pName = `[${g.supplier_sku}] ${g.product_name}`;
+          }
+        }
         return {
           po_id: g.po_id,
           product_id: g.product_id,
-          product_name: g.product_name + (soStr ? ` [SO: ${soStr}]` : ''),
+          product_name: pName + (soStr ? ` [SO: ${soStr}]` : ''),
           qty_ordered: g.qty_ordered,
           qty_received: 0,
-          unit_cost: g.unit_cost
+          unit_cost: g.unit_cost,
+          internal_note: (g.supplier_sku || g.supplier_description) ? `Item Code: ${g.supplier_sku || '-'} | Desc: ${g.supplier_description || '-'}` : ''
         };
       });
     } else {
-      itemsToInsert = selectedItems.map(it => ({
-        po_id: po.id,
-        product_id: it.product_id || null,
-        product_name: it.product_name + (it.order_no ? ` [SO: ${it.order_no}]` : ''),
-        qty_ordered: it.qty_po,
-        qty_received: 0,
-        unit_cost: it.unit_cost
-      }));
+      itemsToInsert = selectedItems.map(it => {
+        let pName = it.product_name;
+        if (useSupp) {
+          if (it.supplier_description) {
+            pName = it.supplier_description;
+          } else if (it.supplier_sku) {
+            pName = `[${it.supplier_sku}] ${it.product_name}`;
+          }
+        }
+        return {
+          po_id: po.id,
+          product_id: it.product_id || null,
+          product_name: pName + (it.order_no ? ` [SO: ${it.order_no}]` : ''),
+          qty_ordered: it.qty_po,
+          qty_received: 0,
+          unit_cost: it.unit_cost,
+          internal_note: (it.supplier_sku || it.supplier_description) ? `Item Code: ${it.supplier_sku || '-'} | Desc: ${it.supplier_description || '-'}` : ''
+        };
+      });
     }
 
     const { error: itemsErr } = await sb.from('purchase_order_items').insert(itemsToInsert);
@@ -48699,7 +48787,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.85', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'รองรับการค้นหาและแสดงผล Item Code & Item Description ของ Supplier ครบทุกระบบ (v3.85)', items:[
+    { v:'3.86', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'สร้าง PO จากออเดอร์ด้วย Item Code & Item Description ของ Supplier (v3.86)', items:[
+      '🏷️ <b>ใช้ Item Code & Item Description ของ Supplier ในการเปิด PO:</b> เมื่อเลือกออเดอร์จากหน้า Order แล้วกด "สร้าง PO จากออเดอร์" ระบบจะดึงรหัสผู้ขาย (Supplier SKU / Code เช่น <code>HS-RP-1203</code>) และคำอธิบายสินค้าของผู้ขาย (Supplier Item Description เช่น <code>K21 U-RING 70X85X7.5 NBR</code>) มาแสดงและสร้างรายการในใบสั่งซื้อ (PO) ให้โดยอัตโนมัติ',
+      '🔄 <b>มีสวิตช์เลือกรูปแบบชื่อสินค้า:</b> เพิ่มตัวเลือก <code>🏷️ ใช้ Item Code & Description ของ Supplier ใน PO</code> ในหน้าต่างเตรียมออก PO เพื่อให้ผู้ใช้งานสามารถเลือกระหว่างการใช้ชื่อ/รหัสของผู้ขาย หรือชื่อสินค้าภายในคลังได้อย่างยืดหยุ่น',
+      '🏢 <b>Auto-Select Preferred Supplier:</b> หากสินค้าในออเดอร์มีระบุ Preferred Supplier ที่ตรงกัน ระบบจะเลือก Supplier นั้นในช่องผู้จัดจำหน่ายให้อัตโนมัติทันที',
+      '📄 <b>แสดงผลชัดเจนในทุกมุมมอง:</b> ทั้งหน้าดูรายละเอียดใบสั่งซื้อ (viewPO), พิมพ์ใบสั่งซื้อ (printPO), และหน้าแก้ไขแบบร่าง จะแสดงชื่อและรหัสตามที่เปิด PO ไว้อย่างถูกต้องแม่นยำ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.86 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.85', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'รองรับการค้นหาและแสดงผล Item Code & Item Description ของ Supplier ครบทุกระบบ (v3.85)', items:[
       '🔍 <b>ค้นหาผ่าน Item Code และ Supplier Item Description ได้ 100%:</b> รองรับการค้นหาสินค้าด้วยรหัสผู้ขาย (Supplier SKU / Code เช่น <code>HS-RP-1203</code>, <code>OS-NB-1203</code>) และชื่อสินค้าของซัพพลายเออร์ (Supplier Item Description เช่น <code>K21 U-RING 70X85X7.5 NBR</code>) ครอบคลุมทั้งระบบกรองในเครื่องและ Server-side Search ในหน้าออเดอร์, ใบเสนอราคา, ใบสั่งซื้อ และหน้าต่างแคตตาล็อกสินค้า',
       '🏷️ <b>แสดงป้ายกำกับ Desc ใต้รายการผลลัพธ์:</b> เพิ่มป้ายแสดง <code>Desc: [Supplier Description]</code> สีน้ำตาลอ่อนใต้ชื่อสินค้าในกล่องค้นหาแบบเรียลไทม์ เพื่อให้ผู้ใช้มองเห็นและตรวจสอบชื่อสินค้าของซัพพลายเออร์ได้อย่างชัดเจน',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.85 และล้างแคชอัตโนมัติ'
