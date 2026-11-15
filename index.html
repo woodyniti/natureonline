@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.79';
-const DISPLAY_APP_VERSION = 'v3.79';
+const CURRENT_APP_VERSION = 'sealthai-v3.80';
+const DISPLAY_APP_VERSION = 'v3.80';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.79)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.79 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.80)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.80 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9073,14 +9073,21 @@ function newOrderProdSearch(rowIdx) {
   const val = (linkedProd?.name || it?.product_name || '').replace(/"/g, '&quot;');
 
   return `
-    <div style="position:relative;flex:2;min-width:140px">
-      <input id="${pid}" type="text" autocomplete="off" value="${val}"
-        placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด..."
-        style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box"
-        oninput="searchOrderProduct(${rowIdx}, this.value)"
-        onfocus="searchOrderProduct(${rowIdx}, this.value)"
-        onblur="handleOrderProdBlur(${rowIdx}, this.value)">
-      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
+    <div style="position:relative;width:100%">
+      <div style="display:flex;gap:4px;align-items:center;width:100%">
+        <input id="${pid}" type="text" autocomplete="off" value="${val}"
+          placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด..."
+          style="flex:1;min-width:0;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;font-weight:600;box-sizing:border-box"
+          oninput="searchOrderProduct(${rowIdx}, this.value)"
+          onfocus="searchOrderProduct(${rowIdx}, this.value)"
+          onblur="handleOrderProdBlur(${rowIdx}, this.value)">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openProductPickerModal('order', ${rowIdx}, document.getElementById('${pid}').value)"
+          title="ค้นหาและเลือกสินค้าจากคลัง (SAP B1 Choose From List)"
+          style="padding:5px 8px;font-size:11.5px;font-weight:700;border-radius:4px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;white-space:nowrap;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:3px">
+          📋 แคตตาล็อก
+        </button>
+      </div>
+      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
     </div>`;
 }
 
@@ -9088,8 +9095,10 @@ let _orderSearchTimer = null;
 
 function searchOrderProduct(rowIdx, q) {
   const ddid = 'o-prod-dd-' + rowIdx;
+  const inpid = 'o-prod-inp-' + rowIdx;
   const dd = document.getElementById(ddid);
-  if (!dd) return;
+  const inp = document.getElementById(inpid);
+  if (!dd || !inp) return;
 
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
@@ -9142,7 +9151,7 @@ function searchOrderProduct(rowIdx, q) {
         <span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>
       </div>`;
     dd.innerHTML += quickAddHtml;
-    dd.style.display = 'block';
+    positionProductAutocompletePortal(inp, dd);
   }
 
   // 1. In-memory filter
@@ -10291,7 +10300,7 @@ function searchEditProd(rowIdx, q) {
     html += quickAddHtml;
 
     dd.innerHTML = html;
-    dd.style.display = 'block';
+    positionProductAutocompletePortal(inp, dd);
   }
 
   // 1. In-memory filter
@@ -10464,7 +10473,7 @@ function renderEditItems() {
       tdProd.appendChild(unlinkedHint);
     }
     const receiptLabel = document.createElement('label');
-    receiptLabel.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin-top:6px;padding:4px 7px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:11px;font-weight:700;color:#334155;cursor:pointer';
+    receiptLabel.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:2px 7px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;font-size:10.5px;font-weight:700;color:#334155;cursor:pointer;white-space:nowrap;user-select:none;margin-top:4px';
     const receiptCheck = document.createElement('input');
     receiptCheck.type = 'checkbox';
     receiptCheck.checked = showOrderItemOnReceipt(it);
@@ -23436,8 +23445,10 @@ window._quoteAutocompleteClicking = false;
 
 async function searchQuoteProduct(rowIdx, q) {
   const ddid = 'qt-prod-dd-' + rowIdx;
+  const inpid = 'qt-prod-inp-' + rowIdx;
   const dd = document.getElementById(ddid);
-  if (!dd) return;
+  const inp = document.getElementById(inpid);
+  if (!dd || !inp) return;
 
   if ((!productList || !productList.length) && (!allProducts || !allProducts.length)) {
     await ensureQuoteProductList();
@@ -23907,6 +23918,7 @@ function renderQuoteItemPhotoSection(it, i, linked, isMatrix = false) {
 function renderQuoteItems() {
   const el = document.getElementById('qt-items');
   if(!el) return;
+  document.querySelectorAll('body > [id^="qt-prod-dd-"]').forEach(x => x.remove());
   el.innerHTML='';
   const mob = window.innerWidth <= 768;
   const prods = (productList && productList.length) ? productList : (allProducts || []);
@@ -23953,9 +23965,10 @@ function renderQuoteItems() {
       const tdDesc = document.createElement('td');
       tdDesc.style.cssText = 'vertical-align:top';
 
-      // 1. Autocomplete Search Input + Dropdown
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'position:relative;width:100%';
+      // 1. Top Bar: Autocomplete Search Input + Choose From List (Catalog) Button
+      const searchRow = document.createElement('div');
+      searchRow.style.cssText = 'display:flex;gap:4px;align-items:center;width:100%';
+
       const inp = document.createElement('input');
       inp.type = 'text';
       inp.autocomplete = 'off';
@@ -23963,11 +23976,30 @@ function renderQuoteItems() {
       inp.className = 'sap-matrix-inp';
       inp.placeholder = '🔍 1. พิมพ์ค้นหาชื่อคลัง / SKU / ขนาด... หรือพิมพ์ชื่อสินค้าเอง';
       inp.value = (linked ? linked.name : (it.product_name || ''));
-      inp.style.cssText = 'width:100%;font-size:13px;padding:6px 8px;font-weight:600';
+      inp.style.cssText = 'flex:1;min-width:0;font-size:13px;padding:6px 8px;font-weight:600';
 
-      const dd = document.createElement('div');
-      dd.id = 'qt-prod-dd-' + i;
-      dd.className = 'prod-autocomplete-dropdown'; dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+      const cflBtn = document.createElement('button');
+      cflBtn.type = 'button';
+      cflBtn.className = 'btn btn-secondary btn-sm';
+      cflBtn.title = 'ค้นหาและเลือกสินค้าจากคลัง (SAP B1 Choose From List)';
+      cflBtn.style.cssText = 'padding:5px 8px;font-size:11.5px;font-weight:700;border-radius:4px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;white-space:nowrap;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:3px';
+      cflBtn.innerHTML = '📋 แคตตาล็อก';
+      cflBtn.onclick = () => {
+        openProductPickerModal('quote', i, inp.value);
+      };
+
+      searchRow.appendChild(inp);
+      searchRow.appendChild(cflBtn);
+      tdDesc.appendChild(searchRow);
+
+      // Autocomplete Dropdown
+      let dd = document.getElementById('qt-prod-dd-' + i);
+      if (!dd) {
+        dd = document.createElement('div');
+        dd.id = 'qt-prod-dd-' + i;
+        dd.className = 'prod-autocomplete-dropdown';
+        dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+      }
 
       inp.oninput = () => {
         quoteItems[i].product_name = inp.value;
@@ -23977,10 +24009,6 @@ function renderQuoteItems() {
       };
       inp.onfocus = () => searchQuoteProduct(i, inp.value);
       inp.onblur = () => handleQuoteProdBlur(i, inp.value);
-
-      wrap.appendChild(inp);
-      wrap.appendChild(dd);
-      tdDesc.appendChild(wrap);
 
       // Badges: Status, Inhouse Stock, Factory Stock, Showcase Photos button
       const badgeRow = document.createElement('div');
