@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.90';
-const DISPLAY_APP_VERSION = 'v3.90';
+const CURRENT_APP_VERSION = 'sealthai-v3.91';
+const DISPLAY_APP_VERSION = 'v3.91';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.90)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.90 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.91)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.91 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -30932,12 +30932,17 @@ async function dedupePOItems(poId) {
 async function loadPOSkuMap(items) {
   const productIds = [...new Set((items||[]).map(it=>it.product_id).filter(Boolean))];
   if (!productIds.length) return {};
-  let { data, error } = await sb.from('products').select('id,name,sku,supplier_sku,supplier_sku_usd,supplier_description,part_no,application_note').eq('shop_id',currentShop.id).in('id', productIds);
-  if (error) {
-    const res = await sb.from('products').select('id,name,sku,supplier_sku,supplier_sku_usd,part_no,application_note').eq('shop_id',currentShop.id).in('id', productIds);
-    data = res.data;
+  try {
+    let { data, error } = await sb.from('products').select('id,name,sku,supplier_sku,supplier_description,part_no,application_note').in('id', productIds);
+    if (error || !data) {
+      const res = await sb.from('products').select('id,name,sku,supplier_sku,part_no,application_note').in('id', productIds);
+      data = res.data;
+    }
+    return Object.fromEntries((data||[]).map(p=>[p.id,p]));
+  } catch(e) {
+    console.error('loadPOSkuMap error:', e);
+    return {};
   }
-  return Object.fromEntries((data||[]).map(p=>[p.id,p]));
 }
 
 async function viewPO(poId) {
@@ -31095,7 +31100,7 @@ async function viewPO(poId) {
           </div>
         ` : ''}
         <div class="table-wrap"><table><thead><tr>
-          <th>#</th><th class="left">SKU</th><th class="left">Supplier SKU (🇹🇭 ไทย / 🇺🇸 ตปท.)</th>
+          <th>#</th><th class="left">SKU</th><th class="left" style="min-width:180px">Item Code Supplier (รหัส & สเปกผู้ขาย)</th>
           <th class="right">สั่ง</th><th class="right">รับแล้ว</th><th class="right">คงเหลือ</th>
           <th class="right">${isUSD ? 'ราคาซื้อ/ชิ้น (USD)' : 'ราคาซื้อ/ชิ้น'}</th>
           <th class="right">${isUSD ? 'รวม (USD / THB)' : 'รวม'}</th>
@@ -31132,22 +31137,51 @@ async function viewPO(poId) {
             const rowStyle = isRowDup ? 'background:#fee2e2 !important;border-left:5px solid #ef4444;box-shadow:inset 0 0 0 1px #fca5a5;' : '';
             const dupBadge = isRowDup ? '<span class="badge" style="background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:4px">⚠️ ซ้ำ</span>' : '';
 
-            const supTHB = getProductSupplierTHB(product);
-            const supUSD = getProductSupplierUSD(product);
+            let supTHB = getProductSupplierTHB(product);
+            let supUSD = getProductSupplierUSD(product);
+            let supDesc = String(product.supplier_description || '').trim();
+
             const internalNote = String(it.internal_note || poFallbackNotes[it.id] || poFallbackNotes[it.product_id] || poFallbackNotes[it.product_name] || poFallbackNotes[String(i)] || '').trim();
+            if (!supTHB && internalNote) {
+              const codeMatch = internalNote.match(/(?:Item Code|Code|รหัสผู้ขาย|Supplier Code|Supplier SKU):\s*([^|\n]+)/i);
+              if (codeMatch) supTHB = codeMatch[1].trim();
+            }
+            if (!supDesc && internalNote) {
+              const descMatch = internalNote.match(/(?:Desc|Description|สเปก|ชื่อผู้ขาย):\s*([^|\n]+)/i);
+              if (descMatch) supDesc = descMatch[1].trim();
+            }
+            if (!supTHB && it.sku) {
+              supTHB = it.sku;
+            }
+
             const internalNoteHtml = '<div style="margin-top:5px;padding:5px 7px;background:#f5f3ff;border-radius:5px;color:#5b21b6;font-size:11px;white-space:pre-wrap">🔒 หมายเหตุภายใน: '+
               (internalNote ? escapeHTML(internalNote) : '<span style="color:#8b7ab8">ยังไม่มี</span>')+
               ' <button type="button" onclick="editPOItemInternalNote(&quot;'+poId+'&quot;,&quot;'+it.id+'&quot;)" style="border:0;background:none;color:#6d28d9;cursor:pointer;font-weight:700;text-decoration:underline">✏️ แก้ไข</button></div>';
+
+            const supCodeBadge = supTHB
+              ? `<div style="display:flex;align-items:center;gap:4px"><span class="badge font-mono" style="background:#0284c7;color:#fff;font-size:11.5px;font-weight:800;padding:2px 7px;border-radius:4px;letter-spacing:0.3px" title="Supplier Item Code / รหัสสินค้าผู้ขาย">🏷️ ${escapeHTML(supTHB)}</span>${poCopyButton(supTHB,'Supplier Code')}</div>`
+              : '<div style="font-size:11px;color:#94a3b8">- ไม่ระบุรหัสผู้ขาย -</div>';
+            
+            const supDescHTML = supDesc
+              ? `<div style="font-size:11.5px;color:#1e293b;font-weight:600;margin-top:2px;line-height:1.3" title="Supplier Item Description / สเปกสินค้าผู้ขาย">📝 ${escapeHTML(supDesc)}</div>`
+              : '';
+
+            const supUSDHTML = (supUSD && supUSD !== supTHB)
+              ? `<div style="display:flex;align-items:center;gap:4px;margin-top:2px"><span style="font-size:10.5px;color:#6d28d9;font-weight:700">🌐 Part: ${escapeHTML(supUSD)}</span>${poCopyButton(supUSD,'Part No')}</div>`
+              : '';
+
             const supCell = `
-              <div style="display:flex;flex-direction:column;gap:3px">
-                ${supTHB ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇹🇭 THB:</span><b>${escapeHTML(supTHB)}</b>${poCopyButton(supTHB,'Sup THB')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇹🇭 THB: -</div>'}
-                ${supUSD ? `<div style="display:flex;align-items:center;gap:4px"><span style="font-size:10.5px;color:var(--text3)">🇺🇸 USD:</span><b style="color:var(--purple,#7c3aed)">${escapeHTML(supUSD)}</b>${poCopyButton(supUSD,'Sup USD')}</div>` : '<div style="font-size:11px;color:var(--text3)">🇺🇸 USD: -</div>'}
+              <div style="display:flex;flex-direction:column;gap:2px">
+                ${supCodeBadge}
+                ${supDescHTML}
+                ${supUSDHTML}
               </div>
             `;
 
+            const itemCodeBadgeInCol2 = supTHB ? `<span class="badge font-mono" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-size:11px;font-weight:800;padding:1px 6px;border-radius:4px" title="Supplier Item Code">🏷️ ${escapeHTML(supTHB)}</span>` : '';
             const storeSku = (product.sku && product.sku !== displayName) ? '<div style="font-size:10.5px;color:var(--text3);margin-top:2px">ชื่อคลัง: '+escapeHTML(product.sku)+'</div>' : '';
             return '<tr style="'+rowStyle+'">'+
-              '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-weight:700;font-size:12.5px;color:#0f172a">'+escapeHTML(displayName)+'</span>'+poCopyButton(displayName,'Item')+'</div>'+storeSku+soBadgeHTML+internalNoteHtml+'</td>'+
+              '<td style="text-align:center">'+(i+1)+dupBadge+'</td><td><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><span style="font-weight:700;font-size:12.5px;color:#0f172a">'+escapeHTML(displayName)+'</span>'+itemCodeBadgeInCol2+poCopyButton(displayName,'Item')+'</div>'+storeSku+soBadgeHTML+internalNoteHtml+'</td>'+
               '<td>'+supCell+'</td>'+
               '<td style="text-align:right">'+fmt(it.qty_ordered)+'</td>'+
               '<td style="text-align:right;color:var(--accent)">'+fmt(receivedQty)+(overQty>0?'<div style="font-size:10px;color:var(--amber)">รับเกิน +'+fmt(overQty)+'</div>':'')+'</td>'+
@@ -31641,15 +31675,27 @@ async function printPO(poId) {
       soPrintHTML = '<div style="font-size:10px;color:#1e40af;font-weight:600;margin-top:2px">📄 SO: '+escapeHTML(soMatch[1])+'</div>';
       displayName = displayName.replace(/\[SO:\s*([^\]]+)\]/i, '').trim();
     }
-    const supTHB = getProductSupplierTHB(product);
-    const supUSD = getProductSupplierUSD(product);
+    let supTHB = getProductSupplierTHB(product);
+    let supUSD = getProductSupplierUSD(product);
+    let supDesc = String(product.supplier_description || '').trim();
+    const internalNote = String(it.internal_note || '').trim();
+    if (!supTHB && internalNote) {
+      const codeMatch = internalNote.match(/(?:Item Code|Code|รหัสผู้ขาย|Supplier Code|Supplier SKU):\s*([^|\n]+)/i);
+      if (codeMatch) supTHB = codeMatch[1].trim();
+    }
+    if (!supDesc && internalNote) {
+      const descMatch = internalNote.match(/(?:Desc|Description|สเปก|ชื่อผู้ขาย):\s*([^|\n]+)/i);
+      if (descMatch) supDesc = descMatch[1].trim();
+    }
+    if (!supTHB && it.sku) supTHB = it.sku;
+
     let supPrintStr = '-';
-    if (supTHB && supUSD) {
-      supPrintStr = '🇹🇭 ' + escapeHTML(supTHB) + '<br><span style="color:#581c87;font-weight:600">🇺🇸 ' + escapeHTML(supUSD) + '</span>';
-    } else if (supUSD) {
-      supPrintStr = '🇺🇸 ' + escapeHTML(supUSD);
+    if (supTHB && supDesc) {
+      supPrintStr = '<b>' + escapeHTML(supTHB) + '</b><br><span style="font-size:11px;color:#333">' + escapeHTML(supDesc) + '</span>';
     } else if (supTHB) {
-      supPrintStr = '🇹🇭 ' + escapeHTML(supTHB);
+      supPrintStr = '<b>' + escapeHTML(supTHB) + '</b>' + (supUSD && supUSD !== supTHB ? '<br><span style="font-size:10px;color:#666">Part: ' + escapeHTML(supUSD) + '</span>' : '');
+    } else if (supUSD) {
+      supPrintStr = escapeHTML(supUSD);
     }
     bp.push('<tr><td style="text-align:center">'+(i+1)+'</td><td>'+escapeHTML(displayName)+soPrintHTML+'</td><td>'+supPrintStr+'</td><td style="text-align:center">'+fmt(it.qty_ordered)+'</td><td style="text-align:right">'+unitCostText+'</td><td style="text-align:right;font-weight:600">'+amtText+'</td></tr>');
   });
@@ -36964,7 +37010,7 @@ async function openBatchSOtoPOModal() {
 
   // Always query latest products to get the exact purchase_price, current_cost, and supplier info set for each product
   const { data: latestProds } = await sb.from('products')
-    .select('id, name, sku, supplier_sku, supplier_sku_usd, supplier_description, part_no, item_no, purchase_price, buy_price, cost_price, current_cost, preferred_supplier_id')
+    .select('id, name, sku, supplier_sku, supplier_description, part_no, purchase_price, current_cost, preferred_supplier_id, application_note')
     .eq('shop_id', currentShop.id);
   const prodLookup = latestProds || allProducts || [];
 
