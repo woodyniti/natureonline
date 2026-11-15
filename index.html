@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.76';
-const DISPLAY_APP_VERSION = 'v3.76';
+const CURRENT_APP_VERSION = 'sealthai-v3.77';
+const DISPLAY_APP_VERSION = 'v3.77';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1690,7 +1690,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.76)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.76 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.77)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.77 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -23684,10 +23684,512 @@ async function saveQuoteItemPhotoToProduct(rowIdx, slotIdx) {
 }
 window.saveQuoteItemPhotoToProduct = saveQuoteItemPhotoToProduct;
 
+// ── Helper สำหรับแสดงแผงแนบรูปประกอบสินค้า (สำหรับพิมพ์แบบ Showcase) ──
+function renderQuoteItemPhotoSection(it, i, linked, isMatrix = false) {
+  if (!it.photos) it.photos = [];
+  const photoSection = document.createElement('div');
+  photoSection.style.cssText = isMatrix 
+    ? 'margin-top:8px;padding:8px 10px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px'
+    : 'margin-top:10px;padding:10px 12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:9px';
+
+  const hasPhotos = it.photos.some(p => p && p.url && String(p.url).trim());
+
+  // Header
+  const photoHeader = document.createElement('div');
+  photoHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:5px;border-bottom:1px solid #e2e8f0;cursor:pointer';
+  photoHeader.innerHTML = `
+    <div style="font-weight:700;font-size:12px;color:#0369a1;display:flex;align-items:center;gap:6px">
+      <span style="font-size:14px">📷</span>
+      <span>รูปภาพประกอบสินค้า (สำหรับพิมพ์ Showcase)</span>
+      ${hasPhotos ? `<span class="badge" style="background:#dcfce7;color:#15803d;font-size:10.5px;padding:2px 8px;border:1px solid #86efac;font-weight:700">✓ มี ${it.photos.filter(p=>p&&p.url).length} รูป</span>` : '<span style="font-size:11px;color:#64748b;font-weight:normal">(แนบ 1-2 รูป)</span>'}
+    </div>
+    <div style="font-size:11px;color:#0284c7;font-weight:700">
+      ${it._showPhotos === false ? '▼ คลิกเพื่อเปิดแผงรูป' : '▲ ย่อแผงรูป'}
+    </div>
+  `;
+  photoHeader.onclick = () => {
+    it._showPhotos = (it._showPhotos === false) ? true : false;
+    renderQuoteItems();
+  };
+  photoSection.appendChild(photoHeader);
+
+  if (it._showPhotos !== false) {
+    const photoBody = document.createElement('div');
+    photoBody.style.cssText = 'margin-top:4px';
+
+    // Auto-pull from linked product if available
+    if (linked && getProductImageUrl(linked) && (!it.photos[0] || !it.photos[0].url)) {
+      const pullBtn = document.createElement('button');
+      pullBtn.type = 'button';
+      pullBtn.className = 'btn btn-secondary btn-sm';
+      pullBtn.style.cssText = 'margin-bottom:8px;width:100%;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-size:11.5px;font-weight:700;padding:5px;display:flex;align-items:center;justify-content:center;gap:5px';
+      pullBtn.innerHTML = '⚡ ดึงรูปจากคลังสินค้าอัตโนมัติ (' + escapeHTML(linked.sku || linked.name) + ')';
+      pullBtn.onclick = () => {
+        if (!it.photos[0]) it.photos[0] = { url: '', title: '', desc: '' };
+        it.photos[0].url = getProductImageUrl(linked);
+        if (!it.photos[0].title) it.photos[0].title = 'รูปประกอบสินค้า ' + (linked.sku || linked.name);
+        renderQuoteItems();
+      };
+      photoBody.appendChild(pullBtn);
+    }
+
+    // 2 Photo Slots
+    const slotsGrid = document.createElement('div');
+    slotsGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px';
+
+    [0, 1].forEach(slotIdx => {
+      if (!it.photos[slotIdx]) it.photos[slotIdx] = { url: '', title: '', desc: '' };
+      const pSlot = it.photos[slotIdx];
+      const slotBox = document.createElement('div');
+      slotBox.style.cssText = 'border:1.5px solid ' + (pSlot.url ? '#93c5fd' : '#e2e8f0') + ';border-radius:6px;padding:8px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.03)';
+
+      const sTitle = document.createElement('div');
+      sTitle.style.cssText = 'font-weight:700;font-size:11px;color:#1e293b;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center';
+      const slotLabel = slotIdx === 0 ? 'รูปที่ 1 (รูปหลัก/ด้านหน้า)' : 'รูปที่ 2 (รูปเสริม/สเปก)';
+      sTitle.innerHTML = `<span style="color:#0369a1">${slotLabel}</span>` +
+        (pSlot.url ? `<button type="button" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:10.5px;font-weight:700" onclick="quoteItems[${i}].photos[${slotIdx}]={url:'',title:'',desc:''};renderQuoteItems()">✕ ลบรูป</button>` : '');
+      slotBox.appendChild(sTitle);
+
+      // Preview or placeholder
+      if (pSlot.url) {
+        const prev = document.createElement('div');
+        prev.style.cssText = 'width:100%;height:85px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:5px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:6px';
+        prev.innerHTML = `<img src="${escapeHTML(pSlot.url)}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.src='';this.alt='โหลดรูปไม่สำเร็จ'">`;
+        slotBox.appendChild(prev);
+      } else {
+        const placeholder = document.createElement('div');
+        placeholder.style.cssText = 'width:100%;height:65px;border:2px dashed #cbd5e1;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:6px;background:#f8fafc;color:#94a3b8';
+        placeholder.innerHTML = '<span style="font-size:18px">📷</span><span style="font-size:10.5px;margin-top:2px">ยังไม่มีรูปภาพ</span>';
+        slotBox.appendChild(placeholder);
+      }
+
+      // File upload button
+      const upWrap = document.createElement('div');
+      upWrap.style.cssText = 'display:flex;gap:4px;margin-bottom:5px';
+      const fileInp = document.createElement('input');
+      fileInp.type = 'file';
+      fileInp.accept = 'image/*';
+      fileInp.style.display = 'none';
+      fileInp.onchange = async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          toast('กำลังอัปโหลดรูปภาพ...', 'info');
+          const ext = file.name.split('.').pop() || 'jpg';
+          const path = `${currentShop.id}/quotations/qt-item-${i}-${slotIdx}-${Date.now()}.${ext}`;
+          const { error: upErr } = await sb.storage.from('product-images').upload(path, file, { cacheControl:'3600', upsert:true });
+          if (upErr) throw upErr;
+          const { data: uData } = sb.storage.from('product-images').getPublicUrl(path);
+          pSlot.url = uData.publicUrl;
+          if (!pSlot.title) {
+            pSlot.title = slotIdx === 0 ? ('รูปประกอบสินค้า ' + (linked ? (linked.sku || linked.name) : it.product_name)) : 'รูปประกอบเพิ่มเติม';
+          }
+          if (linked && !linked.image_url) {
+            try {
+              await sb.from('products').update({ image_url: pSlot.url }).eq('id', linked.id);
+              linked.image_url = pSlot.url;
+              pSlot._savedToProduct = true;
+              toast('อัปโหลดและบันทึกรูปภาพลงสินค้าในคลังเรียบร้อยแล้ว ✓', 'success');
+            } catch(e) {
+              toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
+            }
+          } else {
+            toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
+          }
+          renderQuoteItems();
+        } catch(err) {
+          toast('อัปโหลดไม่สำเร็จ: ' + err.message, 'error');
+        }
+      };
+      const upBtn = document.createElement('button');
+      upBtn.type = 'button';
+      upBtn.className = 'btn btn-primary btn-sm';
+      upBtn.style.cssText = 'width:100%;font-size:11px;font-weight:700;padding:4px 6px;display:flex;align-items:center;justify-content:center;gap:4px';
+      upBtn.innerHTML = pSlot.url ? '📁 เปลี่ยนรูป' : '📁 + อัปโหลดรูป';
+      upBtn.onclick = () => fileInp.click();
+      upWrap.appendChild(fileInp);
+      upWrap.appendChild(upBtn);
+      slotBox.appendChild(upWrap);
+
+      // URL input
+      const urlInp = document.createElement('input');
+      urlInp.type = 'text';
+      urlInp.placeholder = 'หรือวาง URL รูปภาพ...';
+      urlInp.value = pSlot.url || '';
+      urlInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 6px;font-size:10.5px;box-sizing:border-box;margin-bottom:5px';
+      urlInp.oninput = () => { pSlot.url = urlInp.value.trim(); };
+      urlInp.onblur = () => renderQuoteItems();
+      slotBox.appendChild(urlInp);
+
+      // Save to product button
+      if (pSlot.url) {
+        const saveToProdBtn = document.createElement('button');
+        saveToProdBtn.type = 'button';
+        saveToProdBtn.className = 'btn btn-sm';
+        const isCurrentProdImg = linked && linked.image_url === pSlot.url;
+        if (isCurrentProdImg || pSlot._savedToProduct) {
+          saveToProdBtn.style.cssText = 'width:100%;margin-bottom:5px;background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-size:10.5px;font-weight:700;padding:3px 5px;display:flex;align-items:center;justify-content:center;gap:3px';
+          saveToProdBtn.innerHTML = '✅ บันทึกเป็นรูปคลังแล้ว';
+          saveToProdBtn.disabled = true;
+        } else {
+          saveToProdBtn.style.cssText = 'width:100%;margin-bottom:5px;background:#ecfdf5;color:#047857;border:1.5px solid #10b981;font-size:10.5px;font-weight:700;padding:3px 5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px';
+          const prodLabel = linked ? (linked.sku || linked.name) : 'สินค้าในคลัง';
+          saveToProdBtn.innerHTML = `💾 บันทึกลงคลัง (${prodLabel})`;
+          saveToProdBtn.title = 'บันทึกรูปนี้เป็นรูปสินค้าหลักในคลังสินค้า';
+          saveToProdBtn.onclick = () => saveQuoteItemPhotoToProduct(i, slotIdx);
+        }
+        slotBox.appendChild(saveToProdBtn);
+      }
+
+      // Caption / Title
+      const titleInp = document.createElement('input');
+      titleInp.type = 'text';
+      titleInp.placeholder = slotIdx === 0 ? 'หัวข้อรูป (เช่น มุมมองด้านหน้า)' : 'หัวข้อรูป (เช่น สเปก / ภาพตัดขวาง)';
+      titleInp.value = pSlot.title || '';
+      titleInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:10.5px;box-sizing:border-box;margin-bottom:4px';
+      titleInp.oninput = () => { pSlot.title = titleInp.value; };
+      slotBox.appendChild(titleInp);
+
+      // Description
+      const descInp = document.createElement('input');
+      descInp.type = 'text';
+      descInp.placeholder = 'คำบรรยาย (เช่น NBR ขอบเหล็กหนา 20mm)';
+      descInp.value = pSlot.desc || '';
+      descInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:3px 6px;font-size:10.5px;box-sizing:border-box';
+      descInp.oninput = () => { pSlot.desc = descInp.value; };
+      slotBox.appendChild(descInp);
+
+      slotsGrid.appendChild(slotBox);
+    });
+    photoBody.appendChild(slotsGrid);
+    photoSection.appendChild(photoBody);
+  }
+
+  return photoSection;
+}
+
 function renderQuoteItems() {
   const el = document.getElementById('qt-items');
   if(!el) return;
   el.innerHTML='';
+  const mob = window.innerWidth <= 768;
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 1. Desktop / PC View: SAP Business One Matrix Grid Table
+  // ══════════════════════════════════════════════════════════════════════════
+  if (!mob) {
+    const matrixWrap = document.createElement('div');
+    matrixWrap.className = 'sap-matrix-wrap';
+
+    const table = document.createElement('table');
+    table.className = 'sap-matrix-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th class="sap-matrix-num-cell" style="width:36px;min-width:36px;max-width:42px;text-align:center">#</th>
+          <th style="min-width:340px;text-align:left">Item No. / Description (รหัสและชื่อสินค้า)</th>
+          <th style="width:105px;text-align:right">Quantity</th>
+          <th style="width:115px;text-align:right">Unit Price</th>
+          <th style="width:125px;text-align:right">Discount</th>
+          <th style="width:125px;text-align:right">Total (THB)</th>
+          <th style="width:85px;text-align:center">Actions</th>
+        </tr>
+      </thead>
+    `;
+
+    const tbody = document.createElement('tbody');
+
+    quoteItems.forEach((it, i) => {
+      const tr = document.createElement('tr');
+      const linked = it.product_id ? prods.find(p => String(p.id) === String(it.product_id)) : null;
+      const stockVal = linked 
+        ? Number(linked.stock_inhouse !== undefined && linked.stock_inhouse !== null ? linked.stock_inhouse : (linked.stock_qty || 0))
+        : null;
+
+      // ── Cell 1: # (Row number 36px) ──
+      const tdNum = document.createElement('td');
+      tdNum.className = 'sap-matrix-num-cell';
+      tdNum.textContent = i + 1;
+      tr.appendChild(tdNum);
+
+      // ── Cell 2: Item No. / Description ──
+      const tdDesc = document.createElement('td');
+      tdDesc.style.cssText = 'vertical-align:top';
+
+      // 1. Autocomplete Search Input + Dropdown
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:relative;width:100%';
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.autocomplete = 'off';
+      inp.id = 'qt-prod-inp-' + i;
+      inp.className = 'sap-matrix-inp';
+      inp.placeholder = '🔍 1. พิมพ์ค้นหาชื่อคลัง / SKU / ขนาด... หรือพิมพ์ชื่อสินค้าเอง';
+      inp.value = (linked ? linked.name : (it.product_name || ''));
+      inp.style.cssText = 'width:100%;font-size:13px;padding:6px 8px;font-weight:600';
+
+      const dd = document.createElement('div');
+      dd.id = 'qt-prod-dd-' + i;
+      dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:380px;max-width:min(580px,90vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,0.22)';
+
+      inp.oninput = () => {
+        quoteItems[i].product_name = inp.value;
+        const customInp = document.getElementById('qt-custom-inp-' + i);
+        if (customInp && !customInp.value) customInp.value = inp.value;
+        searchQuoteProduct(i, inp.value);
+      };
+      inp.onfocus = () => searchQuoteProduct(i, inp.value);
+      inp.onblur = () => handleQuoteProdBlur(i, inp.value);
+
+      wrap.appendChild(inp);
+      wrap.appendChild(dd);
+      tdDesc.appendChild(wrap);
+
+      // Badges: Status, Inhouse Stock, Factory Stock, Showcase Photos button
+      const badgeRow = document.createElement('div');
+      badgeRow.style.cssText = 'font-size:11px;margin-top:4px;display:flex;align-items:center;flex-wrap:wrap;gap:5px';
+
+      if (it.is_custom && (it.product_name||'').trim()) {
+        badgeRow.innerHTML = '<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">📝 สินค้าชั่วคราว · ไม่มีในระบบ</span>';
+      } else if (linked) {
+        const skuTxt = linked.sku ? ` · SKU: ${escapeHTML(linked.sku)}` : '';
+        let stockBadge = '';
+        if (stockVal !== null) {
+          if (stockVal > 0) {
+            stockBadge = `<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`;
+          } else {
+            stockBadge = `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #fca5a5;display:inline-flex;align-items:center;gap:3px">⚠️ สต๊อก 0</span>`;
+          }
+        }
+        let fStockBadge = '';
+        if (linked.factory_stock !== undefined && linked.factory_stock !== null) {
+          const fStock = Number(linked.factory_stock || 0);
+          fStockBadge = fStock > 0
+            ? `<span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;white-space:nowrap">🏭 รง. ${fmt(fStock)}</span>`
+            : `<span style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:10.5px;padding:1px 5px;border-radius:4px;white-space:nowrap">🏭 รง. 0</span>`;
+        }
+        badgeRow.innerHTML = `<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;border:1px solid #86efac;font-weight:700">✓ คลัง${skuTxt}</span> ${stockBadge} ${fStockBadge}`;
+      } else {
+        badgeRow.innerHTML = '<span style="color:#64748b;font-size:11px">ค้นหาจากคลัง / พิมพ์ชื่ออิสระ</span>';
+      }
+
+      // Compact Showcase photo button
+      if (!it.photos) it.photos = [];
+      const validPhotoCount = it.photos.filter(p => p && p.url && String(p.url).trim()).length;
+      const photoBtn = document.createElement('button');
+      photoBtn.type = 'button';
+      photoBtn.className = 'btn btn-secondary btn-sm';
+      photoBtn.style.cssText = `padding:1px 7px;font-size:11px;font-weight:700;border-radius:4px;background:${validPhotoCount ? '#f0fdf4' : '#eff6ff'};color:${validPhotoCount ? '#15803d' : '#1d4ed8'};border-color:${validPhotoCount ? '#86efac' : '#bfdbfe'};cursor:pointer`;
+      photoBtn.innerHTML = `📷 รูป Showcase (${validPhotoCount}) ${it._showPhotos ? '▲' : '▼'}`;
+      photoBtn.title = 'เปิด/ปิด แผงแนบรูปประกอบสินค้าสำหรับพิมพ์ใบเสนอราคาแบบ Showcase';
+      photoBtn.onclick = () => {
+        syncQuoteItemInputs(i);
+        it._showPhotos = !it._showPhotos;
+        renderQuoteItems();
+      };
+      badgeRow.appendChild(photoBtn);
+      tdDesc.appendChild(badgeRow);
+
+      // Line 2: Custom wording input (ข้อความบรรทัดสองหน้าบิล)
+      const customWrap = document.createElement('div');
+      customWrap.style.cssText = 'margin-top:4px';
+      const customInp = document.createElement('input');
+      customInp.type = 'text';
+      customInp.id = 'qt-custom-inp-' + i;
+      customInp.className = 'sap-matrix-inp';
+      customInp.value = it.product_name || '';
+      customInp.placeholder = '🏷️ 2. ข้อความพิมพ์หน้าบิล / ชื่อตามลูกค้า (เว้นว่างไว้จะใช้ชื่อคลัง)...';
+      customInp.style.cssText = 'font-size:11.5px;padding:3px 7px;background:#f8fafc';
+      customInp.oninput = () => {
+        quoteItems[i].product_name = customInp.value;
+      };
+      customWrap.appendChild(customInp);
+      tdDesc.appendChild(customWrap);
+
+      // Inline Showcase Photo Uploader (if opened)
+      if (it._showPhotos) {
+        const photoSection = renderQuoteItemPhotoSection(it, i, linked, true);
+        tdDesc.appendChild(photoSection);
+      }
+
+      tr.appendChild(tdDesc);
+
+      // ── Cell 3: Quantity ──
+      const tdQty = document.createElement('td');
+      tdQty.style.cssText = 'text-align:right;vertical-align:top';
+      const qtyInp = document.createElement('input');
+      qtyInp.type = 'number';
+      qtyInp.value = it.qty || 1;
+      qtyInp.min = '0';
+      qtyInp.step = 'any';
+      qtyInp.className = 'sap-matrix-inp font-mono';
+      qtyInp.style.cssText = 'text-align:right;font-weight:700;font-size:13px';
+      qtyInp.oninput = () => {
+        quoteItems[i].qty = Number(qtyInp.value);
+        calcQuoteTotal();
+      };
+      tdQty.appendChild(qtyInp);
+      if (stockVal !== null) {
+        const qSub = document.createElement('div');
+        qSub.style.cssText = 'font-size:10px;font-weight:700;margin-top:2px;text-align:right';
+        if (stockVal <= 0) {
+          qSub.style.color = '#dc2626';
+          qSub.textContent = '(สต๊อก 0)';
+        } else if ((it.qty || 1) > stockVal) {
+          qSub.style.color = '#dc2626';
+          qSub.textContent = `(ขาด ${fmt((it.qty || 1) - stockVal)})`;
+        } else {
+          qSub.style.color = '#15803d';
+          qSub.textContent = `(คงเหลือ ${fmt(stockVal)})`;
+        }
+        tdQty.appendChild(qSub);
+      }
+      tr.appendChild(tdQty);
+
+      // ── Cell 4: Unit Price ──
+      const tdPrice = document.createElement('td');
+      tdPrice.style.cssText = 'text-align:right;vertical-align:top';
+      const priceInp = document.createElement('input');
+      priceInp.type = 'number';
+      priceInp.value = it.sell_price || 0;
+      priceInp.min = '0';
+      priceInp.step = 'any';
+      priceInp.className = 'sap-matrix-inp font-mono';
+      priceInp.style.cssText = 'text-align:right;font-weight:700;font-size:13px';
+      priceInp.oninput = () => {
+        quoteItems[i].sell_price = Number(priceInp.value);
+        calcQuoteTotal();
+      };
+      tdPrice.appendChild(priceInp);
+      tr.appendChild(tdPrice);
+
+      // ── Cell 5: Discount ──
+      const tdDisc = document.createElement('td');
+      tdDisc.style.cssText = 'text-align:right;vertical-align:top';
+      const discWrap = document.createElement('div');
+      discWrap.style.cssText = 'display:flex;gap:3px;align-items:center';
+
+      const discInp = document.createElement('input');
+      discInp.type = 'number';
+      discInp.value = it.discount || 0;
+      discInp.min = '0';
+      discInp.step = 'any';
+      discInp.className = 'sap-matrix-inp font-mono';
+      discInp.style.cssText = 'text-align:right;color:#dc2626;font-size:12.5px;font-weight:600';
+      discInp.oninput = () => {
+        quoteItems[i].discount = Number(discInp.value);
+        calcQuoteTotal();
+      };
+
+      const discSel = document.createElement('select');
+      discSel.className = 'sap-matrix-sel';
+      discSel.style.cssText = 'padding:4px 3px;font-size:12px;width:46px;flex-shrink:0';
+      ['฿','%'].forEach((lbl,idx)=>{
+        const o=document.createElement('option');
+        o.value=idx===0?'amount':'percent';
+        o.textContent=lbl;
+        if((it.discount_type||'amount')===(idx===0?'amount':'percent')) o.selected=true;
+        discSel.appendChild(o);
+      });
+      discSel.onchange = () => {
+        quoteItems[i].discount_type = discSel.value;
+        calcQuoteTotal();
+      };
+
+      discWrap.appendChild(discInp);
+      discWrap.appendChild(discSel);
+      tdDisc.appendChild(discWrap);
+      tr.appendChild(tdDisc);
+
+      // ── Cell 6: Total (THB) ──
+      const gross = Number(it.qty||1)*Number(it.sell_price||0);
+      const disc = Number(it.discount||0);
+      const net = it.discount_type==='percent'?Math.max(0,gross-gross*disc/100):Math.max(0,gross-disc);
+      const tdTotal = document.createElement('td');
+      tdTotal.id = 'qt-row-total-' + i;
+      tdTotal.className = 'font-mono text-accent';
+      tdTotal.style.cssText = 'text-align:right;vertical-align:top;padding-top:10px;font-size:13.5px;font-weight:700';
+      tdTotal.textContent = fmtB(net);
+      tr.appendChild(tdTotal);
+
+      // ── Cell 7: Actions ──
+      const tdActions = document.createElement('td');
+      tdActions.style.cssText = 'text-align:center;vertical-align:top;padding-top:6px;white-space:nowrap';
+
+      if (i > 0) {
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.innerHTML = '▲';
+        upBtn.title = 'สลับขึ้นด้านบน';
+        upBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:11px;cursor:pointer;color:var(--text);margin-right:2px';
+        upBtn.onclick = () => {
+          syncQuoteItemInputs(i);
+          syncQuoteItemInputs(i - 1);
+          const temp = quoteItems[i];
+          quoteItems[i] = quoteItems[i-1];
+          quoteItems[i-1] = temp;
+          renderQuoteItems();
+          calcQuoteTotal();
+        };
+        tdActions.appendChild(upBtn);
+      }
+      if (i < quoteItems.length - 1) {
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.innerHTML = '▼';
+        downBtn.title = 'สลับลงด้านล่าง';
+        downBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:11px;cursor:pointer;color:var(--text);margin-right:4px';
+        downBtn.onclick = () => {
+          syncQuoteItemInputs(i);
+          syncQuoteItemInputs(i + 1);
+          const temp = quoteItems[i];
+          quoteItems[i] = quoteItems[i+1];
+          quoteItems[i+1] = temp;
+          renderQuoteItems();
+          calcQuoteTotal();
+        };
+        tdActions.appendChild(downBtn);
+      }
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'sap-matrix-del-btn';
+      delBtn.textContent = '✕';
+      delBtn.title = `ลบรายการที่ ${i+1}`;
+      delBtn.onclick = () => {
+        quoteItems.splice(i, 1);
+        renderQuoteItems();
+        calcQuoteTotal();
+      };
+      tdActions.appendChild(delBtn);
+
+      tr.appendChild(tdActions);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    matrixWrap.appendChild(table);
+
+    // Matrix footer toolbar
+    const footerBar = document.createElement('div');
+    footerBar.className = 'sap-matrix-footer';
+    footerBar.innerHTML = `
+      <div style="display:flex;gap:6px">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addQuoteItem()" style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">+ เพิ่มรายการในใบเสนอราคา (Add Row)</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('quote', -1, '')" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">⚡ + สร้างสินค้าใหม่เข้าคลัง (Quick Product)</button>
+      </div>
+      <div style="font-size:11.5px;color:#64748b;font-weight:600">${quoteItems.length} รายการ</div>
+    `;
+    matrixWrap.appendChild(footerBar);
+    el.appendChild(matrixWrap);
+    calcQuoteTotal();
+    return;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 2. Mobile View (<= 768px): Touch-friendly stacked cards
+  // ══════════════════════════════════════════════════════════════════════════
   quoteItems.forEach((it,i)=>{
     const card = document.createElement('div');
     card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px';
@@ -23755,7 +24257,6 @@ function renderQuoteItems() {
     const pw=document.createElement('div'); pw.style.cssText='flex:1;min-width:0';
     const pl=document.createElement('div'); pl.style.cssText='font-size:11px;color:var(--text3);margin-bottom:3px;font-weight:600;display:flex;align-items:center;gap:6px';
     
-    const prods = (productList && productList.length) ? productList : (allProducts || []);
     const linked = it.product_id ? prods.find(p => String(p.id) === String(it.product_id)) : null;
     if (it.is_custom && (it.product_name||'').trim()) {
       pl.innerHTML = '<span style="background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;border:1px solid #fde68a">📝 สินค้าชั่วคราว · ไม่มีในระบบ</span>';
@@ -23790,7 +24291,7 @@ function renderQuoteItems() {
 
     wrap.appendChild(inp); wrap.appendChild(dd); pw.appendChild(wrap);
 
-    // ── บรรทัดสอง: ข้อความพิมพ์หน้าบิล / แก้ไขข้อความตามที่ลูกค้าต้องการ ทำเหมือน ออเดอร์ ──
+    // ── บรรทัดสอง: ข้อความพิมพ์หน้าบิล / แก้ไขข้อความตามที่ลูกค้าต้องการ ──
     const customNameWrap = document.createElement('div');
     customNameWrap.style.cssText = 'margin-top:6px;display:flex;flex-direction:column;gap:2px;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:6px;padding:6px 8px';
     const customNameLabel = document.createElement('div');
@@ -23809,10 +24310,6 @@ function renderQuoteItems() {
     customNameWrap.appendChild(customNameLabel);
     customNameWrap.appendChild(customNameInp);
     pw.appendChild(customNameWrap);
-
-
-
-
 
     r1.appendChild(pw); card.appendChild(r1);
 
@@ -23842,185 +24339,9 @@ function renderQuoteItems() {
     card.appendChild(r2);
 
     // ── แนบรูปประกอบสินค้า (สำหรับพิมพ์แบบ Showcase) ──
-    if (!it.photos) it.photos = [];
-    const photoSection = document.createElement('div');
-    photoSection.style.cssText = 'margin-top:10px;padding:10px 12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:9px';
-
-    const hasPhotos = it.photos.some(p => p && p.url && String(p.url).trim());
-    
-    // Header
-    const photoHeader = document.createElement('div');
-    photoHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;cursor:pointer';
-    photoHeader.innerHTML = `
-      <div style="font-weight:700;font-size:12.5px;color:#0369a1;display:flex;align-items:center;gap:6px">
-        <span style="font-size:15px">📷</span>
-        <span>รูปภาพประกอบสินค้า (สำหรับพิมพ์ Showcase)</span>
-        ${hasPhotos ? `<span class="badge" style="background:#dcfce7;color:#15803d;font-size:10.5px;padding:2px 8px;border:1px solid #86efac;font-weight:700">✓ มีรูปภาพแล้ว ${it.photos.filter(p=>p&&p.url).length} รูป</span>` : '<span style="font-size:11px;color:#64748b;font-weight:normal">(แนบ 1-2 รูปเพื่อพิมพ์แบบ Showcase)</span>'}
-      </div>
-      <div style="font-size:11.5px;color:#0284c7;font-weight:700">
-        ${it._showPhotos === false ? '▼ คลิกเพื่อเปิดแผงรูป' : '▲ ย่อแผงรูป'}
-      </div>
-    `;
-    photoHeader.onclick = () => {
-      it._showPhotos = (it._showPhotos === false) ? true : false;
-      renderQuoteItems();
-    };
-    photoSection.appendChild(photoHeader);
-
-    // If not explicitly collapsed (default to OPEN so user sees it immediately!)
-    if (it._showPhotos !== false) {
-      const photoBody = document.createElement('div');
-      photoBody.style.cssText = 'margin-top:4px';
-      
-      // Auto-pull from linked product if available
-      if (linked && getProductImageUrl(linked) && (!it.photos[0] || !it.photos[0].url)) {
-        const pullBtn = document.createElement('button');
-        pullBtn.type = 'button';
-        pullBtn.className = 'btn btn-secondary btn-sm';
-        pullBtn.style.cssText = 'margin-bottom:10px;width:100%;background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;font-size:12px;font-weight:700;padding:6px;display:flex;align-items:center;justify-content:center;gap:6px';
-        pullBtn.innerHTML = '⚡ ดึงรูปจากคลังสินค้าอัตโนมัติ (' + escapeHTML(linked.sku || linked.name) + ')';
-        pullBtn.onclick = () => {
-          if (!it.photos[0]) it.photos[0] = { url: '', title: '', desc: '' };
-          it.photos[0].url = getProductImageUrl(linked);
-          if (!it.photos[0].title) it.photos[0].title = 'รูปประกอบสินค้า ' + (linked.sku || linked.name);
-          renderQuoteItems();
-        };
-        photoBody.appendChild(pullBtn);
-      }
-
-      // 2 Photo Slots
-      const slotsGrid = document.createElement('div');
-      slotsGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:12px';
-
-      [0, 1].forEach(slotIdx => {
-        if (!it.photos[slotIdx]) it.photos[slotIdx] = { url: '', title: '', desc: '' };
-        const pSlot = it.photos[slotIdx];
-        const slotBox = document.createElement('div');
-        slotBox.style.cssText = 'border:1.5px solid ' + (pSlot.url ? '#93c5fd' : '#e2e8f0') + ';border-radius:8px;padding:10px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.03)';
-
-        const sTitle = document.createElement('div');
-        sTitle.style.cssText = 'font-weight:700;font-size:11.5px;color:#1e293b;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center';
-        const slotLabel = slotIdx === 0 ? 'รูปที่ 1 (รูปสินค้าหลัก / ด้านหน้า)' : 'รูปที่ 2 (รูปเสริม / ของแถม / สเปก)';
-        sTitle.innerHTML = `<span style="color:#0369a1">${slotLabel}</span>` +
-          (pSlot.url ? `<button type="button" style="color:#ef4444;background:none;border:none;cursor:pointer;font-size:11px;font-weight:700" onclick="quoteItems[${i}].photos[${slotIdx}]={url:'',title:'',desc:''};renderQuoteItems()">✕ ลบรูป</button>` : '');
-        slotBox.appendChild(sTitle);
-
-        // Preview or placeholder
-        if (pSlot.url) {
-          const prev = document.createElement('div');
-          prev.style.cssText = 'width:100%;height:100px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;margin-bottom:8px';
-          prev.innerHTML = `<img src="${escapeHTML(pSlot.url)}" style="max-width:100%;max-height:100%;object-fit:contain" onerror="this.src='';this.alt='โหลดรูปไม่สำเร็จ'">`;
-          slotBox.appendChild(prev);
-        } else {
-          const placeholder = document.createElement('div');
-          placeholder.style.cssText = 'width:100%;height:75px;border:2px dashed #cbd5e1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:8px;background:#f8fafc;color:#94a3b8';
-          placeholder.innerHTML = '<span style="font-size:22px">📷</span><span style="font-size:11px;margin-top:2px">ยังไม่มีรูปภาพ</span>';
-          slotBox.appendChild(placeholder);
-        }
-
-        // File upload button
-        const upWrap = document.createElement('div');
-        upWrap.style.cssText = 'display:flex;gap:4px;margin-bottom:6px';
-        const fileInp = document.createElement('input');
-        fileInp.type = 'file';
-        fileInp.accept = 'image/*';
-        fileInp.style.display = 'none';
-        fileInp.onchange = async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          try {
-            toast('กำลังอัปโหลดรูปภาพ...', 'info');
-            const ext = file.name.split('.').pop() || 'jpg';
-            const path = `${currentShop.id}/quotations/qt-item-${i}-${slotIdx}-${Date.now()}.${ext}`;
-            const { error: upErr } = await sb.storage.from('product-images').upload(path, file, { cacheControl:'3600', upsert:true });
-            if (upErr) throw upErr;
-            const { data: uData } = sb.storage.from('product-images').getPublicUrl(path);
-            pSlot.url = uData.publicUrl;
-            if (!pSlot.title) {
-              pSlot.title = slotIdx === 0 ? ('รูปประกอบสินค้า ' + (linked ? (linked.sku || linked.name) : it.product_name)) : 'รูปประกอบเพิ่มเติม';
-            }
-            if (linked && !linked.image_url) {
-              try {
-                await sb.from('products').update({ image_url: pSlot.url }).eq('id', linked.id);
-                linked.image_url = pSlot.url;
-                pSlot._savedToProduct = true;
-                toast('อัปโหลดและบันทึกรูปภาพลงสินค้าในคลังเรียบร้อยแล้ว ✓', 'success');
-              } catch(e) {
-                toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
-              }
-            } else {
-              toast('อัปโหลดรูปภาพสำเร็จ ✓', 'success');
-            }
-            renderQuoteItems();
-          } catch(err) {
-            toast('อัปโหลดไม่สำเร็จ: ' + err.message, 'error');
-          }
-        };
-        const upBtn = document.createElement('button');
-        upBtn.type = 'button';
-        upBtn.className = 'btn btn-primary btn-sm';
-        upBtn.style.cssText = 'width:100%;font-size:11.5px;font-weight:700;padding:5px 8px;display:flex;align-items:center;justify-content:center;gap:5px';
-        upBtn.innerHTML = pSlot.url ? '📁 เปลี่ยนรูปภาพจากเครื่อง' : '📁 + อัปโหลดรูปภาพจากเครื่อง';
-        upBtn.onclick = () => fileInp.click();
-        upWrap.appendChild(fileInp);
-        upWrap.appendChild(upBtn);
-        slotBox.appendChild(upWrap);
-
-        // URL input
-        const urlInp = document.createElement('input');
-        urlInp.type = 'text';
-        urlInp.placeholder = 'หรือวาง URL รูปภาพ...';
-        urlInp.value = pSlot.url || '';
-        urlInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:5px;padding:5px 8px;font-size:11px;box-sizing:border-box;margin-bottom:6px';
-        urlInp.oninput = () => { pSlot.url = urlInp.value.trim(); };
-        urlInp.onblur = () => renderQuoteItems();
-        slotBox.appendChild(urlInp);
-
-        // ── ปุ่มสำคัญ: บันทึกรูปนี้ลงสินค้าในคลัง (สำหรับใช้ในอนาคต) ──
-        if (pSlot.url) {
-          const saveToProdBtn = document.createElement('button');
-          saveToProdBtn.type = 'button';
-          saveToProdBtn.className = 'btn btn-sm';
-          const isCurrentProdImg = linked && linked.image_url === pSlot.url;
-          if (isCurrentProdImg || pSlot._savedToProduct) {
-            saveToProdBtn.style.cssText = 'width:100%;margin-bottom:6px;background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-size:11px;font-weight:700;padding:4px 6px;display:flex;align-items:center;justify-content:center;gap:4px';
-            saveToProdBtn.innerHTML = '✅ บันทึกเป็นรูปสินค้าในคลังแล้ว';
-            saveToProdBtn.disabled = true;
-          } else {
-            saveToProdBtn.style.cssText = 'width:100%;margin-bottom:6px;background:#ecfdf5;color:#047857;border:1.5px solid #10b981;font-size:11px;font-weight:700;padding:4px 6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px';
-            const prodLabel = linked ? (linked.sku || linked.name) : 'สินค้าในคลัง';
-            saveToProdBtn.innerHTML = `💾 บันทึกรูปนี้ลงคลัง (${prodLabel})`;
-            saveToProdBtn.title = 'บันทึกรูปนี้เป็นรูปสินค้าหลักในคลังสินค้า เพื่อให้ในอนาคตสามารถดึงมาใช้อัตโนมัติ';
-            saveToProdBtn.onclick = () => saveQuoteItemPhotoToProduct(i, slotIdx);
-          }
-          slotBox.appendChild(saveToProdBtn);
-        }
-
-        // Caption / Title
-        const titleInp = document.createElement('input');
-        titleInp.type = 'text';
-        titleInp.placeholder = slotIdx === 0 ? 'หัวข้อรูป (เช่น มุมมองด้านหน้า)' : 'หัวข้อรูป (เช่น ของแถมฟรี / ภาพตัดขวาง)';
-        titleInp.value = pSlot.title || '';
-        titleInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:11px;box-sizing:border-box;margin-bottom:4px';
-        titleInp.oninput = () => { pSlot.title = titleInp.value; };
-        slotBox.appendChild(titleInp);
-
-        // Description
-        const descInp = document.createElement('input');
-        descInp.type = 'text';
-        descInp.placeholder = 'คำบรรยาย (เช่น NBR ขอบเหล็กหนา 20mm)';
-        descInp.value = pSlot.desc || '';
-        descInp.style.cssText = 'width:100%;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:4px 7px;font-size:11px;box-sizing:border-box';
-        descInp.oninput = () => { pSlot.desc = descInp.value; };
-        slotBox.appendChild(descInp);
-
-        slotsGrid.appendChild(slotBox);
-      });
-      photoBody.appendChild(slotsGrid);
-      photoSection.appendChild(photoBody);
-    }
-
+    const photoSection = renderQuoteItemPhotoSection(it, i, linked, false);
     card.appendChild(photoSection);
+
     el.appendChild(card);
   });
 
@@ -24043,15 +24364,19 @@ function renderQuoteItems() {
   btnWrap.appendChild(qkBtn);
   btnWrap.appendChild(ab);
   el.appendChild(btnWrap);
+  calcQuoteTotal();
 }
 
 function addQuoteItem(){quoteItems.push({product_id:null,product_name:'',qty:1,sell_price:0,discount:0,discount_type:'amount',is_custom:false,photos:[]});renderQuoteItems();}
 
 function calcQuoteTotal(){
-  const subtotal = quoteItems.reduce((s,it)=>{
+  const subtotal = quoteItems.reduce((s,it,idx)=>{
     const g=Number(it.qty||1)*Number(it.sell_price||0);
     const d=Number(it.discount||0);
-    return s+(it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d));
+    const rowNet = it.discount_type==='percent'?Math.max(0,g-g*d/100):Math.max(0,g-d);
+    const rowTotalEl = document.getElementById('qt-row-total-' + idx);
+    if (rowTotalEl) rowTotalEl.textContent = fmtB(rowNet);
+    return s + rowNet;
   },0);
   const billDisc = Number(document.getElementById('qt-bill-discount')?.value||0);
   const billDiscType = document.getElementById('qt-bill-discount-type')?.value||'amount';
@@ -24316,8 +24641,8 @@ async function viewQuote(qtId) {
 
       '<div class="sap-tab-pane active" data-pane="contents">' +
         '<div style="font-size:12.5px;color:#475569;margin-bottom:8px">Item / Service Type: <strong style="color:#0f172a">Item (สินค้า)</strong> · '+items.length+' รายการ</div>' +
-        '<div class="table-wrap"><table><thead><tr>' +
-          '<th>#</th><th class="left">สินค้า</th><th>จำนวน</th><th class="right">ราคา/ชิ้น</th><th class="right">ส่วนลด</th><th class="right">รวม</th>' +
+        '<div class="sap-matrix-wrap"><table class="sap-matrix-table"><thead><tr>' +
+          '<th class="sap-matrix-num-cell" style="width:36px;min-width:36px;max-width:42px;text-align:center">#</th><th style="min-width:340px;text-align:left">Item No. / Description (รหัสและชื่อสินค้า)</th><th style="width:105px;text-align:right">Quantity</th><th style="width:115px;text-align:right">Unit Price</th><th style="width:115px;text-align:right">Discount</th><th style="width:125px;text-align:right">Total (THB)</th>' +
         '</tr></thead><tbody>' +
         (items||[]).map((it,i)=>{
           const g=Number(it.qty||1)*Number(it.sell_price||0), d=Number(it.discount||0);
@@ -24332,11 +24657,12 @@ async function viewQuote(qtId) {
               `<span style="font-size:10.5px;color:#0369a1;font-weight:700">📷 รูปภาพแนบ ${validPhotos.length} รูป (สำหรับพิมพ์ Showcase)</span>` +
             '</div>';
           }
-          return '<tr><td style="text-align:center">'+(i+1)+'</td>' +
-            '<td>'+escapeHTML(it.product_name) + photoThumbHtml + '</td><td style="text-align:center">'+fmt(it.qty)+'</td>' +
-            '<td style="text-align:right">'+fmt(it.sell_price)+'</td>' +
-            '<td style="text-align:right;color:var(--red)">'+discStr+'</td>' +
-            '<td style="text-align:right;font-weight:600">'+fmt(net)+'</td></tr>';
+          return '<tr><td class="sap-matrix-num-cell">'+(i+1)+'</td>' +
+            '<td><div style="font-weight:600;color:#0f172a">'+escapeHTML(it.product_name)+'</div>' + photoThumbHtml + '</td>' +
+            '<td style="text-align:right;font-family:var(--mono);font-weight:600">'+fmt(it.qty)+'</td>' +
+            '<td style="text-align:right;font-family:var(--mono)">'+fmtB(it.sell_price)+'</td>' +
+            '<td style="text-align:right;font-family:var(--mono);color:var(--red)">'+discStr+'</td>' +
+            '<td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--accent)">'+fmtB(net)+'</td></tr>';
         }).join('')+
         '</tbody></table></div>' +
       '</div>' +
@@ -47696,7 +48022,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.76', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับขนาดคอลัมน์ # ให้เหมาะสม & กำหนดความกว้างหน้าต่างโมดอลในมุมมอง PC ต่ำสุด 1200px (v3.76)', items:[
+        { v:'3.77', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'หน้าต่างใบเสนอราคา (Quotation) ปรับเปลี่ยนหน้าตาเป็น SAP Business One Matrix Grid สำหรับ PC (v3.77)', items:[
+      '📊 <b>หน้าใบเสนอราคาแบบ SAP Business One Matrix Grid:</b> ปรับปรุงพื้นที่รายการสินค้า (Contents) ในหน้าต่างสร้าง/แก้ไขใบเสนอราคา (Sales Quotation) ให้เป็นตาราง Spreadsheet สไตล์ SAP B1 พร้อมคอลัมน์ # (ลำดับ 36px), Item No. / Description, Quantity, Unit Price, Discount, Total (THB) และปุ่ม Actions (▲/▼/✕)',
+      '📷 <b>รองรับแนบรูปภาพ Showcase แบบ Inline สะดวกเรียบร้อย:</b> รวมปุ่มพับ/เปิดแผงรูปภาพ Showcase (📷 รูป Showcase) ไว้ในแถวรายการสินค้า สามารถอัปโหลดหรือดึงรูปจากคลังสินค้าได้ทันทีโดยไม่บดบังตาราง',
+      '📋 <b>อัปเกรดหน้าต่างดูรายละเอียดใบเสนอราคา (Quotation Detail):</b> เปลี่ยนตารางแสดงรายการสินค้าเป็น SAP Business One Matrix Grid Table ให้เป็นมาตรฐานเดียวกันทั้งระบบ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.77 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.76', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับขนาดคอลัมน์ # ให้เหมาะสม & กำหนดความกว้างหน้าต่างโมดอลในมุมมอง PC ต่ำสุด 1200px (v3.76)', items:[
       '📏 <b>ปรับขนาดคอลัมน์ # (ลำดับแถว) ให้กะทัดรัดพอดี:</b> แก้ไขข้อกำหนดความกว้างคอลัมน์ลำดับแถว # เป็น 36px พอดีตัวเลข พร้อมยกเลิก CSS เก่าที่เคยดันความกว้างเป็น 40% ช่วยให้คอลัมน์ Item No. / Description มีพื้นที่กว้างขวาง แสดงชื่อ ป้ายสต็อก และปุ่มต่างๆ สวยงามเป็นแถวแนวนอนอย่างถูกต้อง',
       '🖥️ <b>กำหนดขนาดหน้าต่างโมดอลเอกสารในมุมมอง PC ต่ำสุด 1200px:</b> ปรับแต่งให้หน้าต่าง Popup เอกสาร (Sales Order, Order Detail, Quotation, PO ฯลฯ) ในมุมมอง PC กว้างอย่างน้อย 1200px (min-width: 1200px) เพื่อให้เปิดตาราง SAP B1 Matrix Grid ได้กว้างเต็มตา และมีระบบ Scroll แนวนอนหากหน้าจอเล็กกว่า',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.76 และล้างแคชอัตโนมัติ'
