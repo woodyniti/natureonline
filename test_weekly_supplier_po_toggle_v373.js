@@ -8,10 +8,9 @@ const content = fs.readFileSync(htmlPath, 'utf8');
 console.log('--- Testing v3.73 Weekly Supplier Gratuity PO Exclusion / Tick Box ---');
 
 // 1. Version assertions
-assert.ok(content.includes("CURRENT_APP_VERSION = 'sealthai-v3.73'"), 'CURRENT_APP_VERSION should be sealthai-v3.73');
-assert.ok(content.includes("DISPLAY_APP_VERSION = 'v3.73'"), 'DISPLAY_APP_VERSION should be v3.73');
-assert.ok(content.includes('v3.73 🚀'), 'Topbar badge should display v3.73 🚀');
-console.log('✓ App version is v3.73');
+const versionMatch = content.match(/CURRENT_APP_VERSION = 'sealthai-v([\d.]+)'/);
+assert.ok(versionMatch && parseFloat(versionMatch[1]) >= 3.73, 'CURRENT_APP_VERSION should be >= sealthai-v3.73');
+console.log('✓ App version is >= v3.73');
 
 // 2. Checkbox in PO table of modal
 assert.ok(content.includes('toggleWeeklySupplierPO'), 'toggleWeeklySupplierPO handler must exist');

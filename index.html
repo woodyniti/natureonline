@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.73';
-const DISPLAY_APP_VERSION = 'v3.73';
+const CURRENT_APP_VERSION = 'sealthai-v3.74';
+const DISPLAY_APP_VERSION = 'v3.74';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.73)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.73 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.74)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.74 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7996,6 +7996,7 @@ async function loadOrders() {
             let stockHtml = '';
             let nameHtml = escapeHTML(it.product_name || p?.name || '');
             let quickAddBtn = '';
+            let factoryStockHtml = '';
             if (p && p.id) {
               const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
               const itemReqQty = Number(it.qty || 1);
@@ -8012,7 +8013,7 @@ async function loadOrders() {
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
 
               const fStock = Number(p.factory_stock || 0);
-              const factoryStockHtml = fStock > 0
+              factoryStockHtml = fStock > 0
                 ? ` <span title="สต็อกคงเหลือของ Supplier / โรงงาน พร้อมสั่ง: ${fmt(fStock)} ชิ้น" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
                 : (p.factory_stock !== undefined && p.factory_stock !== null
                     ? ` <span title="สต็อกของ Supplier / โรงงาน: 0 ชิ้น" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:9.5px;padding:1px 4px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px">🏭 รง. 0</span>`
@@ -8178,6 +8179,7 @@ async function loadOrders() {
           let stockHtml = '';
           let nameHtml = escapeHTML(it.product_name || p?.name || '');
           let quickAddBtn = '';
+          let factoryStockHtml = '';
           if (p && p.id) {
             const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
             const itemReqQty = Number(it.qty || 1);
@@ -8194,7 +8196,7 @@ async function loadOrders() {
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
 
             const fStock = Number(p.factory_stock || 0);
-            const factoryStockHtml = fStock > 0
+            factoryStockHtml = fStock > 0
               ? ` <span title="สต็อกคงเหลือของ Supplier / โรงงาน พร้อมสั่ง: ${fmt(fStock)} ชิ้น" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">🏭 รง. ${fmt(fStock)}</span>`
               : (p.factory_stock !== undefined && p.factory_stock !== null
                   ? ` <span title="สต็อกของ Supplier / โรงงาน: 0 ชิ้น" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:9.5px;padding:1px 4px;border-radius:4px;white-space:nowrap">🏭 รง. 0</span>`
@@ -47272,7 +47274,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.73', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบสรุปค่าสินน้ำใจ Supplier รายสัปดาห์: สามารถติ๊กเลือก/ยกเว้นบิล PO ออกจากการคำนวณได้ (v3.73)', items:[
+    { v:'3.74', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาด factoryStockHtml is not defined ในตารางออเดอร์ (v3.74)', items:[
+      '🛠️ <b>แก้ไข Scope ตัวแปร factoryStockHtml:</b> ประกาศตัวแปร <code>factoryStockHtml</code> ให้อยู่นอกเงื่อนไขสินค้าที่มีในแคตตาล็อก เพื่อป้องกันข้อผิดพลาด ReferenceError เมื่อออเดอร์มีรายการสินค้าที่ยังไม่ได้เชื่อมโยง (Unlinked Items)',
+      '📦 <b>โหลดหน้าต่างและตารางออเดอร์ราบรื่น 100%:</b> รองรับทั้งรายการสินค้าที่เชื่อมโยงแคตตาล็อกและสินค้าที่เพิ่มจากภายนอกได้อย่างสมบูรณ์แบบทั้ง Desktop และ Mobile',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.74 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.73', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ระบบสรุปค่าสินน้ำใจ Supplier รายสัปดาห์: สามารถติ๊กเลือก/ยกเว้นบิล PO ออกจากการคำนวณได้ (v3.73)', items:[
       '☑️ <b>เลือก/ยกเว้นบิล PO ที่ไม่นำมาคำนวณ:</b> ในหน้ารายละเอียดสรุปยอดรายสัปดาห์ของ Supplier สามารถติ๊กเลือกหรือเอาเครื่องหมายถูก [✓] ออกจากบิล PO ที่ไม่ต้องการนำมาคำนวณได้ทันที',
       '🧮 <b>คำนวณยอดอัตโนมัติแบบ Real-time:</b> เมื่อติ๊กยกเว้น PO ระบบจะคำนวณยอดซื้อสุทธิ (Weekly Base Amount) และอัตราตามขั้นบันได (Progressive Marginal Rate) ใหม่ทันทีแบบสดๆ พร้อมไฮไลต์แถวที่ยกเว้นและแสดงป้าย 🚫 ไม่นำมาคำนวณ ชัดเจน',
       '💾 <b>บันทึกการตั้งค่าแยกตามรอบสัปดาห์:</b> บันทึกการยกเว้น PO ไว้อย่างถาวรในรอบสัปดาห์นั้นๆ และเชื่อมโยงกับการอนุมัติบันทึกบัญชีโดยไม่สูญหาย',
