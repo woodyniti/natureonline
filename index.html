@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.84';
-const DISPLAY_APP_VERSION = 'v3.84';
+const CURRENT_APP_VERSION = 'sealthai-v3.85';
+const DISPLAY_APP_VERSION = 'v3.85';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.84)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.84 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.85)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.85 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9251,6 +9251,7 @@ function renderProductPickerList(target, rowIdx) {
     const badges = [];
     if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:1px 5px;border-radius:4px;border:1px solid #bfdbfe;font-size:11px">SKU: ${escapeHTML(p.sku)}</span>`);
     if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:1px 5px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+    if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:1px 5px;border-radius:4px;border:1px solid #fde68a;font-size:11px;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
     if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:1px 5px;border-radius:4px;border:1px solid #fef08a;font-size:11px;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
     const badgeHtml = badges.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">${badges.join('')}</div>` : '';
 
@@ -9368,6 +9369,7 @@ function searchOrderProduct(rowIdx, q) {
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
         if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
         if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
@@ -10516,6 +10518,7 @@ function searchEditProd(rowIdx, q) {
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
         if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
         if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
@@ -23718,6 +23721,7 @@ async function searchQuoteProduct(rowIdx, q) {
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
         if (p.supplier_sku) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku)}</span>`);
+        if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
         if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
@@ -23777,7 +23781,7 @@ async function searchQuoteProduct(rowIdx, q) {
           .select('*')
           .eq('shop_id', currentShop.id)
           .eq('active', true)
-          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,part_no.ilike.%${ql}%`)
+          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,supplier_description.ilike.%${ql}%,part_no.ilike.%${ql}%`)
           .limit(40);
         
         if (data && data.length) {
@@ -29108,6 +29112,7 @@ function searchPOProduct(rowIdx, q) {
         if (supTHB) codes.push('<span style="color:#1d4ed8;font-weight:700">🇹🇭 ' + escapeHTML(supTHB) + '</span>');
         if (supUSD) codes.push('<span style="color:#86198f;font-weight:700">🇺🇸 ' + escapeHTML(supUSD) + '</span>');
         if (p.part_no && p.part_no !== supUSD) codes.push('Part: ' + escapeHTML(p.part_no));
+        if (p.supplier_description && p.supplier_description !== p.name) codes.push('<span style="color:#b45309;font-weight:600">Desc: ' + escapeHTML(p.supplier_description) + '</span>');
         codes.push('ราคาซื้อ: ' + priceLabel);
         if (p.current_cost) codes.push('ทุนเฉลี่ย: ฿' + Number(p.current_cost).toFixed(3));
         const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
@@ -48694,7 +48699,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.84', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'นำเข้าและอัปเดตข้อมูลสินค้า HS-RP-1203 (K21 70-85-7.5 NBR) เข้าสู่ฐานข้อมูลหลัก (v3.84)', items:[
+    { v:'3.85', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'รองรับการค้นหาและแสดงผล Item Code & Item Description ของ Supplier ครบทุกระบบ (v3.85)', items:[
+      '🔍 <b>ค้นหาผ่าน Item Code และ Supplier Item Description ได้ 100%:</b> รองรับการค้นหาสินค้าด้วยรหัสผู้ขาย (Supplier SKU / Code เช่น <code>HS-RP-1203</code>, <code>OS-NB-1203</code>) และชื่อสินค้าของซัพพลายเออร์ (Supplier Item Description เช่น <code>K21 U-RING 70X85X7.5 NBR</code>) ครอบคลุมทั้งระบบกรองในเครื่องและ Server-side Search ในหน้าออเดอร์, ใบเสนอราคา, ใบสั่งซื้อ และหน้าต่างแคตตาล็อกสินค้า',
+      '🏷️ <b>แสดงป้ายกำกับ Desc ใต้รายการผลลัพธ์:</b> เพิ่มป้ายแสดง <code>Desc: [Supplier Description]</code> สีน้ำตาลอ่อนใต้ชื่อสินค้าในกล่องค้นหาแบบเรียลไทม์ เพื่อให้ผู้ใช้มองเห็นและตรวจสอบชื่อสินค้าของซัพพลายเออร์ได้อย่างชัดเจน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.85 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.84', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'นำเข้าและอัปเดตข้อมูลสินค้า HS-RP-1203 (K21 70-85-7.5 NBR) เข้าสู่ฐานข้อมูลหลัก (v3.84)', items:[
       '📦 <b>นำเข้ารหัสสินค้า Supplier SKU: HS-RP-1203:</b> ตรวจสอบและนำเข้าซีลไฮดรอลิก <code>K21 NBR 70-85-7.5(H) ROD/PISTON</code> (Supplier Part No: <code>K21-070/11</code>, ยี่ห้อ KASTAS, สต๊อกโรงงาน 24 ชิ้น) เข้าสู่ฐานข้อมูล Supabase เพื่อให้สามารถค้นหาผ่าน Item Code, Supplier SKU, และขนาด 70x85x7.5 ได้ทันทีในทุกหน้าเอกสาร',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.84 และล้างแคชอัตโนมัติ'
     ]},
