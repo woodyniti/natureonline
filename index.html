@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.68';
-const DISPLAY_APP_VERSION = 'v3.68';
+const CURRENT_APP_VERSION = 'sealthai-v3.69';
+const DISPLAY_APP_VERSION = 'v3.69';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.68)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.68 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.69)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.69 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7995,14 +7995,14 @@ async function loadOrders() {
             if (p && p.id) {
               const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
               const itemReqQty = Number(it.qty || 1);
-              const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;
+              const stockVal = rawStock;
               const isStockOut = stockVal <= 0;
               const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
               const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
               const sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
               const sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
               const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
-              const sText = isStockOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+              const sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
               const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
               stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
@@ -8170,14 +8170,14 @@ async function loadOrders() {
           if (p && p.id) {
             const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
             const itemReqQty = Number(it.qty || 1);
-            const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;
+            const stockVal = rawStock;
             const isStockOut = stockVal <= 0;
             const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
             const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
             const sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
             const sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
             const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
-            const sText = isStockOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+            const sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
             const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
             stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
@@ -9936,7 +9936,7 @@ function renderEditItems() {
       const isOrderPending = !edShipStatus || edShipStatus === 'pending';
       const rawStock = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
       const itemReqQty = Number(it.qty || 1);
-      const stockVal = (isOrderPending && it.product_id) ? (rawStock + itemReqQty) : rawStock;
+      const stockVal = rawStock;
       const isOut = stockVal <= 0;
       const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
       const stockHint = document.createElement('div');
@@ -9946,7 +9946,7 @@ function renderEditItems() {
       const sColor = isOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
       const sBdr = isOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
       const sIcon = isOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
-      const sText = isOut ? 'คงเหลือ 0' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ: ${fmt(stockVal)} ชิ้น`);
+      const sText = isOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ: ${fmt(stockVal)} ชิ้น`);
       stockHint.innerHTML = `
         <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)${tipPending}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
           ${sIcon} ${sText}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
@@ -11546,8 +11546,8 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
     const alreadyShipped = Number(prevItemFulfill?.shipped_qty || 0);
     const reqQty = prevItemFulfill ? Math.max(0, orderedQty - alreadyShipped) : orderedQty;
 
-    // Physical available stock: in this system, pending orders already had an 'out' movement, so physical = rawStock + orderedQty
-    const stockVal = isOrderPending ? (rawStock + orderedQty) : rawStock;
+    // Physical available stock: use actual warehouse on-hand stock
+    const stockVal = rawStock;
     const available = Math.max(0, stockVal - alreadyShipped);
 
     if (available < reqQty) {
@@ -11636,7 +11636,7 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
     const prevItemFulfill = fulfillment?.items?.find(f => (it.product_id && f.product_id === it.product_id) || (f.sku && f.sku === it.sku));
     const alreadyShipped = Number(prevItemFulfill?.shipped_qty || 0);
     const reqQty = prevItemFulfill ? Math.max(0, orderedQty - alreadyShipped) : orderedQty;
-    const stockVal = isOrderPending ? (rawStock + orderedQty) : rawStock;
+    const stockVal = rawStock;
     const available = Math.max(0, stockVal - alreadyShipped);
     const defaultFulfill = Math.min(reqQty, available);
     const shortfall = Math.max(0, reqQty - available);
@@ -47019,7 +47019,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.68', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการค้นหาสินค้าในหน้าบันทึกออเดอร์ใหม่ & แสดงสต็อกโรงงาน (v3.68)', items:[
+    { v:'3.69', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการแสดงสต๊อกคงเหลือของสินค้าในรายการออเดอร์ให้ตรงตามคลังจริง (v3.69)', items:[
+      '📦 <b>แก้ไขป้ายสต๊อกในตารางออเดอร์ให้ตรงตามคลังจริง 100%:</b> แก้ไขการนำจำนวนที่ออเดอร์ต้องการไปบวกเพิ่มสต๊อกโดยอัตโนมัติ ซึ่งเคยทำให้สินค้าที่สต๊อกหมด (0 ชิ้น) แสดงผลหลอกตาเป็นป้ายสีเขียว "📦 คงเหลือ N"',
+      '🛡️ <b>แจ้งเตือนสถานะสต๊อกแม่นยำ (Real-Time Stock Alert):</b> อ้างอิงยอดสต๊อกคงเหลือจริงในคลังร้าน (<code>stock_inhouse</code>) หากสินค้าในคลังหมด จะแสดงป้ายสีแดง <code>⚠️ สต๊อกหมด (0)</code> หรือหากไม่พอส่งจะแสดงป้ายสีส้ม <code>⚠️ มีแค่ X (ขาด Y)</code> ตรงกับหน้าบัตรสต๊อก (Stock Card) ทุกประการ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.69 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.68', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขการค้นหาสินค้าในหน้าบันทึกออเดอร์ใหม่ & แสดงสต็อกโรงงาน (v3.68)', items:[
       '🛒 <b>โหลดแคตตาล็อกสินค้าเต็ม 23,220 รายการในหน้าบันทึกออเดอร์:</b> แก้ไขฟังก์ชัน <code>openNewOrder()</code> และ <code>loadOrders()</code> ให้ดึงสินค้าครบถ้วนแบบ Chunked Loading แทนการถูกจำกัด 1,000 รายการเดิม ทำให้ค้นหารหัสใดก็เจอทันที 100%',
       '🔍 <b>แก้ไข Server-side Fallback Search:</b> แก้ไขข้อผิดพลาดคอลัมน์ PostgREST ให้ค้นหาครอบคลุมทั้งชื่อสินค้า, SKU, Supplier SKU, Supplier Description และ Part No ได้อย่างสมบูรณ์แบบ',
       '🏭 <b>แสดงป้ายสต็อกโรงงาน (รง.) ใน Dropdown ค้นหาสินค้าของออเดอร์:</b> แสดงป้าย <code>🏭 รง. XX</code> ชัดเจนควบคู่กับสต็อกหน้าร้าน เพื่อให้ฝ่ายขายทราบจำนวนสินค้าที่พร้อมสั่งจากโรงงานได้ทันทีแม้สต็อกหน้าร้านจะเป็น 0',
