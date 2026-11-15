@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.88';
-const DISPLAY_APP_VERSION = 'v3.88';
+const CURRENT_APP_VERSION = 'sealthai-v3.89';
+const DISPLAY_APP_VERSION = 'v3.89';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.88)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.88 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.89)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.89 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -12953,6 +12953,131 @@ function bahtText(amount) {
   return result;
 }
 
+// ─── RETURN & WARRANTY POLICY DEFINITIONS & HELPERS ──────────────────────
+const DEFAULT_WARRANTY_POLICY_TITLE = '🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):';
+
+const DEFAULT_WARRANTY_POLICY_TEXT = '1. กำหนดเวลาตรวจสอบ: กรุณาตรวจสอบสินค้าทันทีที่ได้รับ หากพบปัญหาแจ้งเปลี่ยน/คืนได้ภายใน 7 วัน (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)\n' +
+  '2. สภาพสินค้า: สินค้าที่ขอเปลี่ยนหรือคืน ต้องอยู่ในสภาพสมบูรณ์ 100% ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน หรือดัดแปลงใดๆ พร้อมบรรจุภัณฑ์เดิมครบถ้วน\n' +
+  '3. สินค้าสั่งผลิตพิเศษ / งานกลึง: สินค้าที่เป็นงานกลึง งานขึ้นรูป หรือสั่งผลิตใหม่ตามแบบ/ขนาดเฉพาะ ขอสงวนสิทธิ์ไม่รับเปลี่ยน คืน หรือยกเลิกคำสั่งซื้อทุกกรณี (เว้นแต่กรณีผลิตผิดสเปกจากแบบที่ตกลงกัน)';
+
+function getShopWarrantyPolicy(shop = currentShop) {
+  let savedTitle = shop?.warranty_policy_title || localStorage.getItem('sealthai_warranty_policy_title') || '';
+  let savedText = shop?.warranty_policy_text || localStorage.getItem('sealthai_warranty_policy_text') || '';
+
+  return {
+    title: savedTitle.trim() || DEFAULT_WARRANTY_POLICY_TITLE,
+    text: savedText.trim() || DEFAULT_WARRANTY_POLICY_TEXT
+  };
+}
+
+function formatWarrantyPolicyHTML(policyTitle, policyText) {
+  const title = (policyTitle || DEFAULT_WARRANTY_POLICY_TITLE).trim();
+  const rawText = (policyText || DEFAULT_WARRANTY_POLICY_TEXT).trim();
+  const lines = rawText.split('\n').map(l => l.trim()).filter(Boolean);
+
+  let listHtml = '';
+  if (lines.length > 0) {
+    listHtml = '<ol class="policy-list">' + lines.map(line => {
+      let formattedLine = escapeHTML(line);
+      formattedLine = formattedLine.replace(/^(\d+\.?\s*[^:：]+[:：])/, '<strong>$1</strong>');
+      return '<li>' + formattedLine + '</li>';
+    }).join('') + '</ol>';
+  }
+
+  return '<div class="policy-box">' +
+    '<div class="policy-title">' + escapeHTML(title) + '</div>' +
+    listHtml +
+    '</div>';
+}
+
+function toggleReceiptPolicyCustom(checked) {
+  const wrap = document.getElementById('receipt-policy-custom-wrap');
+  if (!wrap) return;
+  wrap.style.display = checked ? 'block' : 'none';
+  if (checked) {
+    const txt = document.getElementById('receipt-policy-custom-text');
+    if (txt && !txt.value.trim()) {
+      txt.value = getShopWarrantyPolicy().text;
+    }
+  }
+}
+
+function resetReceiptPolicyDefault() {
+  const txt = document.getElementById('receipt-policy-custom-text');
+  if (txt) {
+    txt.value = getShopWarrantyPolicy().text;
+    if (typeof toast === 'function') toast('ดึงข้อความเงื่อนไขมาตรฐานแล้ว ✓', 'info');
+  }
+}
+
+function toggleQuotePolicyCustom(checked) {
+  const wrap = document.getElementById('quote-policy-custom-wrap');
+  if (!wrap) return;
+  wrap.style.display = checked ? 'block' : 'none';
+  if (checked) {
+    const txt = document.getElementById('quote-policy-custom-text');
+    if (txt && !txt.value.trim()) {
+      txt.value = getShopWarrantyPolicy().text;
+    }
+  }
+}
+
+function resetQuotePolicyDefault() {
+  const txt = document.getElementById('quote-policy-custom-text');
+  if (txt) {
+    txt.value = getShopWarrantyPolicy().text;
+    if (typeof toast === 'function') toast('ดึงข้อความเงื่อนไขมาตรฐานแล้ว ✓', 'info');
+  }
+}
+
+async function saveShopWarrantyPolicy() {
+  const title = (document.getElementById('s-policy-title')?.value || '').trim() || DEFAULT_WARRANTY_POLICY_TITLE;
+  const text = (document.getElementById('s-policy-text')?.value || '').trim() || DEFAULT_WARRANTY_POLICY_TEXT;
+
+  localStorage.setItem('sealthai_warranty_policy_title', title);
+  localStorage.setItem('sealthai_warranty_policy_text', text);
+
+  if (currentShop?.id && sb) {
+    try {
+      const { data, error } = await sb.from('shops')
+        .update({ warranty_policy_title: title, warranty_policy_text: text })
+        .eq('id', currentShop.id)
+        .select()
+        .single();
+      if (!error && data) {
+        currentShop = { ...currentShop, ...data };
+      }
+    } catch (e) {
+      console.warn('Shop warranty columns not present in DB, persisted in localStorage', e);
+    }
+  }
+
+  currentShop = {
+    ...currentShop,
+    warranty_policy_title: title,
+    warranty_policy_text: text
+  };
+
+  toast('บันทึกเงื่อนไขการรับประกันและเปลี่ยน/คืนสินค้าแล้ว ✓', 'success');
+}
+
+function restoreShopWarrantyPolicyDefaults() {
+  const tEl = document.getElementById('s-policy-title');
+  const txtEl = document.getElementById('s-policy-text');
+  if (tEl) tEl.value = DEFAULT_WARRANTY_POLICY_TITLE;
+  if (txtEl) txtEl.value = DEFAULT_WARRANTY_POLICY_TEXT;
+  toast('รีเซ็ตข้อความเป็นค่าเริ่มต้นแล้ว กรุณากด "บันทึกเงื่อนไขรับประกัน" เพื่อยืนยัน', 'info');
+}
+
+window.getShopWarrantyPolicy = getShopWarrantyPolicy;
+window.formatWarrantyPolicyHTML = formatWarrantyPolicyHTML;
+window.toggleReceiptPolicyCustom = toggleReceiptPolicyCustom;
+window.resetReceiptPolicyDefault = resetReceiptPolicyDefault;
+window.toggleQuotePolicyCustom = toggleQuotePolicyCustom;
+window.resetQuotePolicyDefault = resetQuotePolicyDefault;
+window.saveShopWarrantyPolicy = saveShopWarrantyPolicy;
+window.restoreShopWarrantyPolicyDefaults = restoreShopWarrantyPolicyDefaults;
+
 // ─── PRINT ORDER DOCUMENTS (RECEIPT / INVOICE / DELIVERY NOTE) ──────────────────
 function toggleOrderPrintOptions(val) {
   const priceWrap = document.getElementById('receipt-delivery-price-wrap');
@@ -13033,9 +13158,17 @@ function openReceiptOptions(orderId, defaultDocType='receipt') {
             <span><strong>แสดงรหัสสินค้า (SKU) ใต้ชื่อสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">ปิด (ค่าเริ่มต้น): แสดงเฉพาะชื่อสินค้าชัดเจน ไม่รกเอกสาร · เปิด: แสดง [รหัส SKU] ใต้ชื่อสินค้า</span></span>
           </label>
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <input type="checkbox" id="receipt-show-policy" style="width:18px;height:18px;margin-top:2px">
-            <span><strong>🛡️ แสดงเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">ปิด (ค่าเริ่มต้น): ไม่แสดง · เปิด: แสดงกล่อง Return & Warranty Policy ท้ายเอกสาร</span></span>
+            <input type="checkbox" id="receipt-show-policy" onchange="toggleReceiptPolicyCustom(this.checked)" style="width:18px;height:18px;margin-top:2px">
+            <span><strong>🛡️ แสดงเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">ปิด (ค่าเริ่มต้น): ไม่แสดง · เปิด: แสดงกล่อง Return & Warranty Policy ท้ายเอกสาร (แก้ไขข้อความได้)</span></span>
           </label>
+          <div id="receipt-policy-custom-wrap" style="display:none;margin-top:8px;padding-left:28px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:11.5px;font-weight:700;color:#0369a1">✏️ ข้อความเงื่อนไขการรับประกัน (แก้ไขได้อิสระ):</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="resetReceiptPolicyDefault()" style="padding:1px 6px;font-size:10px">↺ คืนค่าเดิม</button>
+            </div>
+            <textarea id="receipt-policy-custom-text" rows="4" style="width:100%;font-size:11.5px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;line-height:1.5;box-sizing:border-box" placeholder="ระบุเงื่อนไขการรับประกัน..."></textarea>
+            <div style="font-size:10.5px;color:var(--text3);margin-top:3px">💡 แก้ไขข้อความเฉพาะเอกสารนี้ได้ทันที หรือกด "↺ คืนค่าเดิม" เพื่อดึงข้อความมาตรฐาน</div>
+          </div>
         </div>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าขนส่ง หมายเหตุ และรายละเอียดจัดส่งจะแสดงในเอกสารอัตโนมัติเมื่อมีข้อมูล</div>
@@ -13048,7 +13181,8 @@ function openReceiptOptions(orderId, defaultDocType='receipt') {
           const showSig = document.getElementById('receipt-show-signature').checked;
           const showPrice = document.getElementById('receipt-show-delivery-price')?.checked ?? true;
           const showPolicy = document.getElementById('receipt-show-policy')?.checked ?? false;
-          printReceipt('${orderId}', showDisc, showSig, docCopy, docType, showPrice, showPolicy);
+          const customPolicyText = document.getElementById('receipt-policy-custom-text')?.value;
+          printReceipt('${orderId}', showDisc, showSig, docCopy, docType, showPrice, showPolicy, customPolicyText);
         ">🖨️ พิมพ์เอกสาร</button>
       </div>
     </div>`;
@@ -13056,7 +13190,7 @@ function openReceiptOptions(orderId, defaultDocType='receipt') {
   ensureModalCloseButton(modal, () => modal.remove()); modal.style.zIndex = getNextModalZIndex();
 }
 
-async function printReceipt(orderId, showDiscount=true, showSignature=false, docCopyType='original', docType='receipt', showPriceInDelivery=true, showPolicy=false) {
+async function printReceipt(orderId, showDiscount=true, showSignature=false, docCopyType='original', docType='receipt', showPriceInDelivery=true, showPolicy=false, customPolicyText=null) {
   const [{ data: order }, { data: linkedQuote }] = await Promise.all([
     sb.from('orders').select('*,order_items(*,products(name,sku,part_no))').eq('id',orderId).single(),
     sb.from('quotations').select('id,quote_no').eq('shop_id', currentShop?.id).eq('converted_order_id', orderId).maybeSingle()
@@ -13399,13 +13533,9 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       ? Boolean(showPolicy)
       : (document.getElementById('receipt-show-policy')?.checked ?? false);
     if (shouldShowPolicyInBill) {
-      billParts.push('<div class="policy-box">');
-      billParts.push('<div class="policy-title">🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</div>');
-      billParts.push('<ol class="policy-list">');
-      billParts.push('<li><strong>กำหนดเวลาตรวจสอบ:</strong> กรุณาตรวจสอบสินค้าทันทีที่ได้รับ หากพบปัญหาแจ้งเปลี่ยน/คืนได้ภายใน <strong>7 วัน</strong> (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)</li>');
-      billParts.push('<li><strong>สภาพสินค้า:</strong> สินค้าที่ขอเปลี่ยนหรือคืน ต้องอยู่ในสภาพสมบูรณ์ 100% <strong>ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน</strong> หรือดัดแปลงใดๆ พร้อมบรรจุภัณฑ์เดิมครบถ้วน</li>');
-      billParts.push('<li><strong>สินค้าสั่งผลิตพิเศษ / งานกลึง:</strong> สินค้าที่เป็น<strong>งานกลึง งานขึ้นรูป หรือสั่งผลิตใหม่ตามแบบ/ขนาดเฉพาะ</strong> ขอสงวนสิทธิ์ไม่รับเปลี่ยน คืน หรือยกเลิกคำสั่งซื้อทุกกรณี (เว้นแต่กรณีผลิตผิดสเปกจากแบบที่ตกลงกัน)</li>');
-      billParts.push('</ol></div>');
+      const policyObj = getShopWarrantyPolicy(shop);
+      const textToUse = (typeof customPolicyText === 'string' && customPolicyText.trim()) ? customPolicyText : policyObj.text;
+      billParts.push(formatWarrantyPolicyHTML(policyObj.title, textToUse));
     }
 
     // Bank transfer details for Invoice
@@ -25148,9 +25278,17 @@ function openQuotePrintOptions(qtId, defaultLayout = 'standard') {
             <span><strong>พิมพ์ลายเซ็นดิจิทัลผู้เสนอราคา</strong><br><span style="font-size:12px;color:var(--text3)">เปิด: แสดงลายเซ็นดิจิทัลสีน้ำเงิน · ปิด: เว้นช่องไว้เซ็นด้วยปากกา</span></span>
           </label>
           <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
-            <input type="checkbox" id="quote-show-policy" style="width:18px;height:18px;margin-top:2px">
-            <span><strong>🛡️ แสดงเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">ปิด (ค่าเริ่มต้น): ไม่แสดง · เปิด: แสดงกล่อง Return & Warranty Policy ท้ายใบเสนอราคา</span></span>
+            <input type="checkbox" id="quote-show-policy" onchange="toggleQuotePolicyCustom(this.checked)" style="width:18px;height:18px;margin-top:2px">
+            <span><strong>🛡️ แสดงเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า</strong><br><span style="font-size:12px;color:var(--text3)">ปิด (ค่าเริ่มต้น): ไม่แสดง · เปิด: แสดงกล่อง Return & Warranty Policy ท้ายใบเสนอราคา (แก้ไขข้อความได้)</span></span>
           </label>
+          <div id="quote-policy-custom-wrap" style="display:none;margin-top:8px;padding-left:28px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:11.5px;font-weight:700;color:#0369a1">✏️ ข้อความเงื่อนไขการรับประกัน (แก้ไขได้อิสระ):</span>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="resetQuotePolicyDefault()" style="padding:1px 6px;font-size:10px">↺ คืนค่าเดิม</button>
+            </div>
+            <textarea id="quote-policy-custom-text" rows="4" style="width:100%;font-size:11.5px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;line-height:1.5;box-sizing:border-box" placeholder="ระบุเงื่อนไขการรับประกัน..."></textarea>
+            <div style="font-size:10.5px;color:var(--text3);margin-top:3px">💡 แก้ไขข้อความเฉพาะใบเสนอราคานี้ได้ทันที หรือกด "↺ คืนค่าเดิม" เพื่อดึงข้อความมาตรฐาน</div>
+          </div>
         </div>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:8px">ค่าจัดส่งและหมายเหตุจะแสดงในใบเสนอราคาอัตโนมัติเมื่อมีข้อมูล</div>
@@ -25160,7 +25298,8 @@ function openQuotePrintOptions(qtId, defaultLayout = 'standard') {
           const docCopy = document.querySelector('input[name=\\'quote-doc-copy\\']:checked')?.value || 'original';
           const layoutType = document.querySelector('input[name=\\'quote-layout-type\\']:checked')?.value || 'standard';
           const showPolicy = document.getElementById('quote-show-policy')?.checked ?? false;
-          printQuote('${qtId}', document.getElementById('quote-show-discount').checked, document.getElementById('quote-show-signature').checked, docCopy, layoutType, showPolicy);
+          const customPolicyText = document.getElementById('quote-policy-custom-text')?.value;
+          printQuote('${qtId}', document.getElementById('quote-show-discount').checked, document.getElementById('quote-show-signature').checked, docCopy, layoutType, showPolicy, customPolicyText);
         ">🖨️ พิมพ์ใบเสนอราคา</button>
       </div>
     </div>`;
@@ -25467,7 +25606,7 @@ function getQuoteBankSettings(shop = currentShop) {
   };
 }
 
-async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original', layoutType='standard', showPolicy=false) {
+async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original', layoutType='standard', showPolicy=false, customPolicyText=null) {
   const [{data:qt},{data:items}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
     sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
@@ -25781,13 +25920,9 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
       ? Boolean(showPolicy)
       : (document.getElementById('quote-show-policy')?.checked ?? false);
     if (shouldShowPolicyInQuote) {
-      bp.push('<div class="policy-box">');
-      bp.push('<div class="policy-title">🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):</div>');
-      bp.push('<ol class="policy-list">');
-      bp.push('<li><strong>กำหนดเวลาตรวจสอบ:</strong> กรุณาตรวจสอบสินค้าทันทีที่ได้รับ หากพบปัญหาแจ้งเปลี่ยน/คืนได้ภายใน <strong>7 วัน</strong> (เกิน 7 วัน ขอสงวนสิทธิ์ไม่รับเปลี่ยนหรือคืนทุกกรณี)</li>');
-      bp.push('<li><strong>สภาพสินค้า:</strong> สินค้าที่ขอเปลี่ยนหรือคืน ต้องอยู่ในสภาพสมบูรณ์ 100% <strong>ไม่ผ่านการทดลองใส่ ไม่ผ่านการใช้งาน</strong> หรือดัดแปลงใดๆ พร้อมบรรจุภัณฑ์เดิมครบถ้วน</li>');
-      bp.push('<li><strong>สินค้าสั่งผลิตพิเศษ / งานกลึง:</strong> สินค้าที่เป็น<strong>งานกลึง งานขึ้นรูป หรือสั่งผลิตใหม่ตามแบบ/ขนาดเฉพาะ</strong> ขอสงวนสิทธิ์ไม่รับเปลี่ยน คืน หรือยกเลิกคำสั่งซื้อทุกกรณี (เว้นแต่กรณีผลิตผิดสเปกจากแบบที่ตกลงกัน)</li>');
-      bp.push('</ol></div>');
+      const policyObj = getShopWarrantyPolicy(shop);
+      const textToUse = (typeof customPolicyText === 'string' && customPolicyText.trim()) ? customPolicyText : policyObj.text;
+      bp.push(formatWarrantyPolicyHTML(policyObj.title, textToUse));
     }
 
     // Bank transfer details
@@ -35330,6 +35465,22 @@ async function settings() {
           <input type="text" id="s-quote-bank-account-number" value="${escapeHTML(quoteBank.accountNumber)}" inputmode="numeric" placeholder="เลขที่บัญชี" style="font-family:'JetBrains Mono',Consolas,'Segoe UI Mono',monospace;font-variant-numeric:slashed-zero tabular-nums;font-feature-settings:'zero' 1;font-size:18px;font-weight:700;letter-spacing:1.5px;color:#047857;background:#f0fdf4;border:1.5px solid #86efac;border-radius:6px;padding:6px 10px"></div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:10px">ข้อมูลนี้จะแสดงในใบเสนอราคาที่พิมพ์หลังบันทึก</div>
         <button class="btn btn-primary" onclick="saveQuoteBankSettings()">💾 บันทึกบัญชีธนาคาร</button>
+        <div class="card-title" style="margin-top:24px">🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy)</div>
+        <div class="form-group">
+          <label>หัวข้อเงื่อนไข (Title)</label>
+          <input type="text" id="s-policy-title" value="${escapeHTML(getShopWarrantyPolicy(currentShop).title)}" placeholder="เช่น 🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy):">
+        </div>
+        <div class="form-group">
+          <label>ข้อความเงื่อนไข (แต่ละข้อขึ้นบรรทัดใหม่)</label>
+          <textarea id="s-policy-text" rows="5" placeholder="ระบุเงื่อนไขการรับประกัน..." style="resize:vertical;font-size:12px;line-height:1.6">${escapeHTML(getShopWarrantyPolicy(currentShop).text)}</textarea>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
+          💡 ข้อความนี้จะถูกนำไปใช้เป็นข้อความเริ่มต้นเมื่อเลือกติ๊กพิมพ์ "🛡️ เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า" ในใบเสนอราคา (Quotation) และเอกสารการขาย (บิลเงินสด, ใบส่งของ, ใบแจ้งหนี้)
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveShopWarrantyPolicy()">💾 บันทึกเงื่อนไขรับประกัน</button>
+          <button class="btn btn-secondary" onclick="restoreShopWarrantyPolicyDefaults()">↺ รีเซ็ตเป็นค่าเริ่มต้น</button>
+        </div>
       </div>
       <div class="card">
         <div class="card-title">👁️ ตัวอย่างหัวบิล</div>
@@ -49155,7 +49306,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.88', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าสามารถเลือกติ๊กแสดง/ไม่แสดงได้ (v3.88)', items:[
+    { v:'3.89', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับแต่งและแก้ไขข้อความเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าได้เอง (v3.89)', items:[
+      '✏️ <b>แก้ไขข้อความเงื่อนไขการรับประกันได้เองทั้งระบบ (Custom Policy Editor):</b> เพิ่มเมนูปรับแต่งข้อความในหน้า Settings (ตั้งค่า) ให้ผู้ใช้สามารถพิมพ์แก้ไขหัวข้อและข้อกำหนดเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy) ได้อย่างอิสระ พร้อมปุ่มบันทึกและปุ่มรีเซ็ตเป็นค่าเริ่มต้น',
+      '📝 <b>แก้ไขข้อความเฉพาะบิลในหน้าต่างพิมพ์ได้ทันที:</b> ในหน้าต่างพิมพ์เอกสาร (ทั้งใบเสนอราคาและเอกสารออเดอร์) เมื่อติ๊กเปิดแสดงเงื่อนไข จะมีกล่องข้อความให้ตรวจดูและแก้ไขคำได้ทันทีเฉพาะเอกสารใบนั้น หรือกดปุ่ม "↺ คืนค่าเดิม" เพื่อดึงข้อความมาตรฐานของร้าน',
+      '🛡️ <b>จัดรูปแบบรายการอัตโนมัติ:</b> ระบบแปลงแต่ละบรรทัดเป็นรายการลำดับเลขอัตโนมัติ พร้อมทำตัวหนาคำสำคัญให้อ่านง่าย สวยงาม เข้ากับมาตรฐานแบบฟอร์มเอกสารของระบบ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.89 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.88', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าสามารถเลือกติ๊กแสดง/ไม่แสดงได้ (v3.88)', items:[
       '🛡️ <b>เลือกติ๊กแสดง/ไม่แสดงเงื่อนไขการรับประกัน (Return & Warranty Policy):</b> ในหน้าต่างพิมพ์เอกสาร ทั้งใบเสนอราคา (Quotation) และเอกสารออเดอร์ (ใบเสร็จรับเงิน, ใบแจ้งหนี้, ใบส่งสินค้า) เพิ่มตัวเลือกติ๊ก <code>[ ] แสดงเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า</code> โดยตั้งค่าเริ่มต้นเป็น "ไม่แสดง" ตามความต้องการของผู้ใช้',
       '📄 <b>ควบคุมการพิมพ์ได้ยืดหยุ่น:</b> หากไม่ติ๊กเลือก เอกสารจะพิมพ์สะอาด ไม่มีกล่องข้อกำหนด 7 วัน ท้ายบิล ช่วยประหยัดพื้นที่กระดาษและรักษาความกระชับ หากต้องการพิมพ์มอบให้ลูกค้าหรือแนบเงื่อนไขอย่างเป็นทางการ ก็สามารถติ๊กเปิดได้ทันทีในคลิกเดียว',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.88 และล้างแคชอัตโนมัติ'
