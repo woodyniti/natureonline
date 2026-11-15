@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.91';
-const DISPLAY_APP_VERSION = 'v3.91';
+const CURRENT_APP_VERSION = 'sealthai-v3.92';
+const DISPLAY_APP_VERSION = 'v3.92';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.91)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.91 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.92)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.92 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -10950,7 +10950,8 @@ window.switchSapTab = switchSapTab;
 async function viewOrder(orderId) {
   const _iplModal = document.getElementById('modal-inventory-posting');
   const _isIplOpen = _iplModal && _iplModal.classList.contains('open');
-  if (currentPage !== 'orders' && !_isIplOpen) {
+  const _hasModalOpen = Boolean(document.querySelector('.modal-overlay.open:not(#modal-order-detail)'));
+  if (currentPage !== 'orders' && !_isIplOpen && !_hasModalOpen && !window._isNavigatingRefDoc) {
     showPage('orders');
   }
   await Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation(), ensureLazadaSummary()]);
@@ -11342,7 +11343,7 @@ async function viewOrder(orderId) {
 
   // AR Invoice ปุ่มและสถานะ (ดึงข้อมูลแล้วตั้งแต่ Promise.all เริ่มต้น)
   const arBtn = hasAR && firstAR
-    ? `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="closeModal('modal-order-detail');showPage('arinvoice');setTimeout(()=>openARDetail('${firstAR.id}'),250)" title="เปิดดู AR Invoice ${escapeHTML(firstAR.ar_no)}">📄 ดู AR Invoice (${escapeHTML(firstAR.ar_no)})</button>`
+    ? `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="navigateToDoc('ar', '${firstAR.id}')" title="เปิดดู AR Invoice ${escapeHTML(firstAR.ar_no)}">📄 ดู AR Invoice (${escapeHTML(firstAR.ar_no)})</button>`
     : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}',true)">📄 Copy to Invoice</button>`;
 
   document.getElementById('order-detail-footer').innerHTML =
@@ -30948,7 +30949,8 @@ async function loadPOSkuMap(items) {
 async function viewPO(poId) {
   const _iplModal = document.getElementById('modal-inventory-posting');
   const _isIplOpen = _iplModal && _iplModal.classList.contains('open');
-  if (currentPage !== 'purchase' && !_isIplOpen) {
+  const _hasModalOpen = Boolean(document.querySelector('.modal-overlay.open:not(#modal-po-detail)'));
+  if (currentPage !== 'purchase' && !_isIplOpen && !_hasModalOpen && !window._isNavigatingRefDoc) {
     showPage('purchase');
   }
   const [{data:po},{data:items}]=await Promise.all([
@@ -36323,7 +36325,7 @@ async function openARDetail(arId) {
     <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
         <div><strong>Sales Order ต้นทาง:</strong> <span class="font-mono" style="color:var(--blue)">${escapeHTML(sourceOrder.order_no||'-')}</span></div>
-        <button class="btn btn-secondary btn-sm" onclick="document.querySelectorAll('.modal-overlay').forEach(m=>m.remove());viewOrder('${sourceOrder.id}')">เปิด Sales Order</button>
+        <button class="btn btn-secondary btn-sm" onclick="navigateToDoc('order', '${sourceOrder.id}')">เปิด Sales Order</button>
       </div>
       <div class="table-wrap"><table><thead><tr><th>สินค้า</th><th class="text-right">จำนวน</th><th class="text-right">ราคา/หน่วย</th><th class="text-right">รวม</th></tr></thead><tbody>
         ${sourceItems.map(it => {
@@ -46251,9 +46253,14 @@ async function renderDocRelationBar(containerId, { docType, docId, docNo }) {
           </span>
           ${summaryHTML}
         </div>
-        <button type="button" class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: '${docType}', docId: '${docId}', docNo: '${escapeHTML(docNo||'')}' })" style="padding:2px 8px;font-size:11.5px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-weight:700;display:inline-flex;align-items:center;gap:3px;cursor:pointer">
-          🗺️ แผนผังเอกสาร (Relationship Map)
-        </button>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="const ov = this.closest('.modal-overlay'); if (ov) { if (ov.id) closeModal(ov.id); else ov.remove(); }" style="padding:2px 8px;font-size:11.5px;background:#f8fafc;color:#475569;border:1px solid #cbd5e1;font-weight:700;display:inline-flex;align-items:center;gap:3px;cursor:pointer" title="ปิดหน้าต่างนี้เพื่อกลับไปทำงานต่อในหน้าต่างเดิม">
+            ⬅️ ปิดและกลับหน้าต่างเดิม
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: '${docType}', docId: '${docId}', docNo: '${escapeHTML(docNo||'')}' })" style="padding:2px 8px;font-size:11.5px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-weight:700;display:inline-flex;align-items:center;gap:3px;cursor:pointer">
+            🗺️ แผนผังเอกสาร
+          </button>
+        </div>
       </div>
     `;
   } catch (e) {
@@ -46263,34 +46270,28 @@ async function renderDocRelationBar(containerId, { docType, docId, docNo }) {
 
 // Helper to switch between documents safely without dialog collision
 function navigateToDoc(targetType, targetId) {
-  // Close any relationship map modal if open
+  // Close relationship map modal if open so the target doc modal takes focus cleanly
   document.querySelectorAll('.doc-rel-map-modal').forEach(m => m.remove());
   
-  if (targetType === 'quote') {
-    closeModal('modal-order-detail');
-    closeModal('modal-po-detail');
-    document.querySelectorAll('#modal-ar-detail, #modal-ap-detail').forEach(m => m.remove());
-    if (typeof viewQuote === 'function') viewQuote(targetId);
-  } else if (targetType === 'order') {
-    closeModal('modal-quote-detail');
-    closeModal('modal-po-detail');
-    document.querySelectorAll('#modal-ar-detail, #modal-ap-detail').forEach(m => m.remove());
-    if (typeof viewOrder === 'function') viewOrder(targetId);
-  } else if (targetType === 'ar') {
-    closeModal('modal-order-detail');
-    closeModal('modal-quote-detail');
-    closeModal('modal-po-detail');
-    if (typeof openARDetail === 'function') openARDetail(targetId);
-  } else if (targetType === 'po') {
-    closeModal('modal-order-detail');
-    closeModal('modal-quote-detail');
-    document.querySelectorAll('#modal-ar-detail, #modal-ap-detail').forEach(m => m.remove());
-    if (typeof viewPO === 'function') viewPO(targetId);
-  } else if (targetType === 'ap') {
-    closeModal('modal-order-detail');
-    closeModal('modal-quote-detail');
-    closeModal('modal-po-detail');
-    if (typeof openAPDetail === 'function') openAPDetail(targetId);
+  // Set flag so viewOrder / viewPO won't switch background page, keeping existing windows completely intact!
+  window._isNavigatingRefDoc = true;
+
+  try {
+    if (targetType === 'quote') {
+      if (typeof viewQuote === 'function') viewQuote(targetId);
+    } else if (targetType === 'order') {
+      if (typeof viewOrder === 'function') viewOrder(targetId);
+    } else if (targetType === 'ar') {
+      if (typeof openARDetail === 'function') openARDetail(targetId);
+    } else if (targetType === 'po') {
+      if (typeof viewPO === 'function') viewPO(targetId);
+    } else if (targetType === 'ap') {
+      if (typeof openAPDetail === 'function') openAPDetail(targetId);
+    }
+  } catch(e) {
+    console.error('navigateToDoc error:', e);
+  } finally {
+    setTimeout(() => { window._isNavigatingRefDoc = false; }, 800);
   }
 }
 
@@ -50057,6 +50058,21 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.92', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'เปิดดูเอกสารสายสัมพันธ์แบบ Stacked Modal หน้าต่างซ้อนหน้าต่าง ไม่ปิดหน้าต่างเดิม (v3.92)', items:[
+      '🗂️ <b>เปิดหน้าต่างซ้อนหน้าต่าง (Stacked Modal):</b> เมื่อคลิกเปิดเอกสารที่เชื่อมโยงกันในแถบสายสัมพันธ์ (เช่น จาก PO คลิกดู SO หรือจาก SO คลิกดู PO/AR/Quote) ระบบจะเปิดหน้าต่างเอกสารอ้างอิงซ้อนขึ้นมาด้านบน โดยคงหน้าต่างเดิมไว้ด้านล่าง ไม่มีการปิดหน้าต่างเดิมและไม่มีการสลับเปลี่ยนหน้าเมนูหลัก',
+      '⬅️ <b>ปิดแล้วกลับมาทำงานต่อได้ทันที:</b> เมื่อผู้ใช้งานดูข้อมูลหรือตรวจสอบเอกสารอ้างอิงเสร็จสิ้น แล้วกดปุ่ม <code>[ ✕ ]</code> หรือปุ่ม <code>[ ⬅️ ปิดและกลับหน้าต่างเดิม ]</code> หน้าต่างอ้างอิงจะปิดลงและกลับสู่หน้าต่างเอกสารเดิมที่เปิดค้างไว้ทันทีโดยไม่ต้องค้นหาหรือเปิดใหม่',
+      '🎯 <b>Navigation Persistence:</b> ปรับปรุง <code>navigateToDoc</code> ให้รักษา Context ของหน้าต่างเดิมและเปิดเอกสารใหม่ด้วย Z-Index สูงสุดอย่างราบรื่น',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.92 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.91', date:'2026-11-15', badge:'Stable', color:'#059669', bg:'#ecfdf5', title:'แสดงรหัสและสเปกผู้ขาย (Supplier SKU) ในหน้าเปิดดู PO พร้อมระบบค้นหา (v3.91)', items:[
+      '🏷️ <b>แสดงข้อมูล Supplier SKU ในตาราง PO:</b> แสดงรหัสผู้ขาย (THB/USD) และคำอธิบายสเปกสินค้าของ Supplier อย่างครบถ้วนในตารางรายการสินค้าของ PO พร้อมปุ่มคัดลอกสะดวกและแก้ไขหมายเหตุได้',
+      '🔍 <b>ค้นหาด้วย Item Code Supplier:</b> รองรับการค้นหาและจับคู่รหัสสินค้าของผู้ขายอัตโนมัติจากทั้งฐานข้อมูลสินค้าและหมายเหตุภายใน',
+      '🛡️ <b>Database Compatibility:</b> ปรับปรุงคิวรีความเข้ากันได้ของฐานข้อมูลเพื่อความเสถียรสูงสุด'
+    ]},
+    { v:'3.90', date:'2026-11-15', badge:'Stable', color:'#7c3aed', bg:'#f5f3ff', title:'ระบบสายสัมพันธ์เอกสารแบบครบวงจร (Document Relationship Map) มาตรฐาน SAP B1 (v3.90)', items:[
+      '🔗 <b>แถบสายสัมพันธ์ (Document Relation Bar):</b> แสดงความเชื่อมโยงของเอกสารทุกระดับด้านบนหัวเอกสาร ทั้งใบเสนอราคา (SQ), ใบสั่งขาย (SO), ใบกำกับภาษี (AR), ใบลดหนี้ (CN), ใบสั่งซื้อ (PO), และใบแจ้งหนี้ผู้ขาย (AP)',
+      '🗺️ <b>แผนผังเอกสารเชิงภาพ (Relationship Map):</b> แสดงแผนผังโฟลว์เอกสารแบบ Interactive ตามมาตรฐาน SAP Business One คลิกเปิดดูเอกสารแต่ละขั้นตอนได้ทันที'
+    ]},
     { v:'3.89', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับแต่งและแก้ไขข้อความเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้าได้เอง (v3.89)', items:[
       '✏️ <b>แก้ไขข้อความเงื่อนไขการรับประกันได้เองทั้งระบบ (Custom Policy Editor):</b> เพิ่มเมนูปรับแต่งข้อความในหน้า Settings (ตั้งค่า) ให้ผู้ใช้สามารถพิมพ์แก้ไขหัวข้อและข้อกำหนดเงื่อนไขการรับประกันและการเปลี่ยน/คืนสินค้า (Return & Warranty Policy) ได้อย่างอิสระ พร้อมปุ่มบันทึกและปุ่มรีเซ็ตเป็นค่าเริ่มต้น',
       '📝 <b>แก้ไขข้อความเฉพาะบิลในหน้าต่างพิมพ์ได้ทันที:</b> ในหน้าต่างพิมพ์เอกสาร (ทั้งใบเสนอราคาและเอกสารออเดอร์) เมื่อติ๊กเปิดแสดงเงื่อนไข จะมีกล่องข้อความให้ตรวจดูและแก้ไขคำได้ทันทีเฉพาะเอกสารใบนั้น หรือกดปุ่ม "↺ คืนค่าเดิม" เพื่อดึงข้อความมาตรฐานของร้าน',
