@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.77';
-const DISPLAY_APP_VERSION = 'v3.77';
+const CURRENT_APP_VERSION = 'sealthai-v3.78';
+const DISPLAY_APP_VERSION = 'v3.78';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -483,6 +483,7 @@ tbody td:first-child { color: var(--text); }
     max-width: 98vw !important;
     padding: 20px 24px;
     box-sizing: border-box;
+    min-height: 580px;
   }
 }
 
@@ -517,7 +518,7 @@ tbody td:first-child { color: var(--text); }
   border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
-  overflow: hidden;
+  overflow: visible !important;
   box-shadow: 0 4px 14px rgba(0,0,0,0.06);
   margin-bottom: 8px;
 }
@@ -625,7 +626,8 @@ tbody td:first-child { color: var(--text); }
   display: none;
   padding: 14px;
   background: #fff;
-  min-height: 200px;
+  min-height: 420px;
+  overflow: visible !important;
   box-sizing: border-box;
   overflow-x: auto;
 }
@@ -676,6 +678,44 @@ tbody td:first-child { color: var(--text); }
 #ed-items tr.ed-item-row td:last-child > div { flex-wrap: wrap; }
 
 /* ==========================================================================
+   Product Autocomplete Dropdown (Spacious & Responsive ~10 items visible)
+   ========================================================================== */
+.prod-autocomplete-dropdown,
+[id^="qt-prod-dd-"],
+[id^="o-prod-dd-"],
+[id^="ep-dd-"],
+[id^="po-prod-dd-"],
+[id^="sr-dd-"],
+[id^="gi-dd-"],
+#bpo-add-dd {
+  min-width: 580px !important;
+  max-width: min(850px, 94vw) !important;
+  max-height: 520px !important;
+  overflow-y: auto !important;
+  z-index: 99999 !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+}
+@media (min-width: 769px) {
+  .sap-matrix-wrap {
+    overflow: visible !important;
+  }
+}
+@media (max-width: 640px) {
+  .prod-autocomplete-dropdown,
+  [id^="qt-prod-dd-"],
+  [id^="o-prod-dd-"],
+  [id^="ep-dd-"],
+  [id^="po-prod-dd-"],
+  [id^="sr-dd-"],
+  [id^="gi-dd-"],
+  #bpo-add-dd {
+    min-width: 320px !important;
+    max-width: calc(100vw - 32px) !important;
+    max-height: 420px !important;
+  }
+}
+
+/* ==========================================================================
    SAP Business One Matrix Grid Styles (PC / Desktop View)
    ========================================================================== */
 .sap-matrix-wrap {
@@ -683,7 +723,7 @@ tbody td:first-child { color: var(--text); }
   border-radius: 6px;
   background: #ffffff;
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
-  overflow-x: auto;
+  overflow: visible;
   margin-bottom: 10px;
 }
 .sap-matrix-table {
@@ -1690,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.77)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.77 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.78)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.78 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9040,9 +9080,7 @@ function newOrderProdSearch(rowIdx) {
         oninput="searchOrderProduct(${rowIdx}, this.value)"
         onfocus="searchOrderProduct(${rowIdx}, this.value)"
         onblur="handleOrderProdBlur(${rowIdx}, this.value)">
-      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:380px;max-width:min(580px,90vw);width:max-content;
-        background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;
-        box-shadow:0 12px 32px rgba(0,0,0,0.22)"></div>
+      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
     </div>`;
 }
 
@@ -10185,8 +10223,8 @@ function renderEditProdSearch(rowIdx) {
     ' style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:5px;padding:4px 7px;color:var(--text);font-size:12px;box-sizing:border-box"' +
     ' oninput="searchEditProd('+rowIdx+',this.value)" onfocus="searchEditProd('+rowIdx+',this.value)">' +
     '<div id="'+ddId+'" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;' +
-    'width:min(500px,calc(100vw - 64px));max-width:100%;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;' +
-    'box-shadow:0 12px 32px rgba(0,0,0,0.22)"></div>' +
+    'min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;' +
+    'box-shadow:0 16px 40px rgba(0,0,0,0.25)" class="prod-autocomplete-dropdown"></div>' +
     '<div style="font-size:10px;margin-top:2px;margin-bottom:4px;color:'+statusColor+';font-weight:600">'+statusText+'</div>' +
     poBadgeHtml +
     '<div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:5px;padding:4px 6px;margin-top:4px">' +
@@ -17718,9 +17756,7 @@ function makeProductSearch(rowIdx) {
       <input id="${pid}" placeholder="พิมพ์ค้นหาสินค้า..." autocomplete="off"
         style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;box-sizing:border-box"
         oninput="searchStockProduct(${rowIdx},this.value)" onfocus="searchStockProduct(${rowIdx},this.value)">
-      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:400;
-        background:var(--bg2);border:1px solid var(--border2);border-radius:8px;max-height:200px;overflow-y:auto;
-        box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
+      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
     </div>`;
 }
 
@@ -20102,7 +20138,7 @@ function makeGISearch(idx) {
     + '<input id="gi-prod-'+idx+'" placeholder="พิมพ์ค้นหาสินค้า..."'
     + ' oninput="searchGIProduct('+idx+',this.value)" onfocus="searchGIProduct('+idx+',this.value)"'
     + ' style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text)">'
-    + '<div id="gi-dd-'+idx+'" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border2);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.12);z-index:200;max-height:220px;overflow-y:auto"></div>'
+    + '<div id="gi-dd-'+idx+'" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>'
     + '</div>';
 }
 
@@ -23931,7 +23967,7 @@ function renderQuoteItems() {
 
       const dd = document.createElement('div');
       dd.id = 'qt-prod-dd-' + i;
-      dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:380px;max-width:min(580px,90vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,0.22)';
+      dd.className = 'prod-autocomplete-dropdown'; dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
 
       inp.oninput = () => {
         quoteItems[i].product_name = inp.value;
@@ -24278,7 +24314,7 @@ function renderQuoteItems() {
     
     const dd=document.createElement('div');
     dd.id = 'qt-prod-dd-' + i;
-    dd.style.cssText='display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:9999;min-width:380px;max-width:min(580px,90vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:300px;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,0.22)';
+    dd.className = 'prod-autocomplete-dropdown'; dd.style.cssText = 'display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
     
     inp.oninput=()=>{
       quoteItems[i].product_name=inp.value;
@@ -28723,9 +28759,7 @@ function newPOProdSearch(rowIdx) {
         oninput="searchPOProduct(${rowIdx}, this.value)"
         onfocus="searchPOProduct(${rowIdx}, this.value)"
         onblur="handlePOProdBlur(${rowIdx}, this.value)">
-      <div id="${ddid}" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:900;
-        background:#fff;border:1.5px solid var(--border2);border-radius:8px;max-height:260px;overflow-y:auto;
-        box-shadow:0 8px 24px rgba(0,0,0,0.18)"></div>
+      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
     </div>`;
 }
 
@@ -36060,7 +36094,7 @@ function openAddProductToBatchPOModal() {
           <input type="text" id="bpo-add-search" placeholder="🔍 พิมพ์ชื่อ / SKU / Supplier SKU / ขนาด..."
             style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px"
             oninput="searchBatchPOAddProd(this.value)">
-          <div id="bpo-add-dd" style="display:none;position:absolute;top:calc(100% + 3px);left:0;right:0;z-index:600;background:#fff;border:1px solid var(--border2);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.15)"></div>
+          <div id="bpo-add-dd" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
         </div>
       </div>
       <div id="bpo-add-selected-info" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:12px">
@@ -48022,7 +48056,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-        { v:'3.77', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'หน้าต่างใบเสนอราคา (Quotation) ปรับเปลี่ยนหน้าตาเป็น SAP Business One Matrix Grid สำหรับ PC (v3.77)', items:[
+            { v:'3.78', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ขยายขนาดกล่องค้นหาสินค้า (Autocomplete) ให้ใหญ่ขึ้น มองเห็นได้ 10+ รายการ และแก้ปัญหาถูกตัดขอบ (v3.78)', items:[
+      '🔍 <b>ขยายขนาดกล่องผลการค้นหาสินค้า (Product Search Dropdown):</b> เพิ่มความสูงสูงสุดเป็น 520px (จากเดิม 260-300px) และเพิ่มความกว้างเป็น 580 - 850px เพื่อให้สามารถมองเห็นผลการค้นหาสินค้าได้ 10 รายการขึ้นไปอย่างสบายตา พร้อมแสดงชื่อสินค้า สเปก SKU ป้ายสต็อกหน้าร้าน และสต็อกโรงงานได้อย่างครบถ้วน',
+      '🛡️ <b>ปลดล็อคการแสดงผลไม่ให้ถูกตัดขอบ (No Overflow Clipping):</b> ปรับแต่งให้ <code>.sap-matrix-wrap</code>, <code>.sap-window</code> และ <code>.sap-tab-pane</code> แสดงผลแบบ <code>overflow: visible</code> ในมุมมอง PC ทำให้กล่องผลการค้นหาลอยทับองค์ประกอบต่างๆ ได้อย่างอิสระ ไม่ถูกขอบตารางตัดขาดแม้จะมีรายการสินค้าเพียง 1 แถว',
+      '📑 <b>ครอบคลุมทุกโมดูลเอกสาร:</b> ใช้งานได้ทันทีในหน้าใบเสนอราคา (Quotation), หน้าสั่งขาย / ออเดอร์ (Sales Order), ใบสั่งซื้อ (PO), ปรับปรุงสต็อก (Stock), และเบิกสินค้า (Goods Issue)',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.78 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.77', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'หน้าต่างใบเสนอราคา (Quotation) ปรับเปลี่ยนหน้าตาเป็น SAP Business One Matrix Grid สำหรับ PC (v3.77)', items:[
       '📊 <b>หน้าใบเสนอราคาแบบ SAP Business One Matrix Grid:</b> ปรับปรุงพื้นที่รายการสินค้า (Contents) ในหน้าต่างสร้าง/แก้ไขใบเสนอราคา (Sales Quotation) ให้เป็นตาราง Spreadsheet สไตล์ SAP B1 พร้อมคอลัมน์ # (ลำดับ 36px), Item No. / Description, Quantity, Unit Price, Discount, Total (THB) และปุ่ม Actions (▲/▼/✕)',
       '📷 <b>รองรับแนบรูปภาพ Showcase แบบ Inline สะดวกเรียบร้อย:</b> รวมปุ่มพับ/เปิดแผงรูปภาพ Showcase (📷 รูป Showcase) ไว้ในแถวรายการสินค้า สามารถอัปโหลดหรือดึงรูปจากคลังสินค้าได้ทันทีโดยไม่บดบังตาราง',
       '📋 <b>อัปเกรดหน้าต่างดูรายละเอียดใบเสนอราคา (Quotation Detail):</b> เปลี่ยนตารางแสดงรายการสินค้าเป็น SAP Business One Matrix Grid Table ให้เป็นมาตรฐานเดียวกันทั้งระบบ',
