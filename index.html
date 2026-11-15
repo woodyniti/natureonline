@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.71';
-const DISPLAY_APP_VERSION = 'v3.71';
+const CURRENT_APP_VERSION = 'sealthai-v3.72';
+const DISPLAY_APP_VERSION = 'v3.72';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.71)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.71 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.72 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8006,6 +8006,13 @@ async function loadOrders() {
               const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
               stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
+
+              const fStock = Number(p.factory_stock || 0);
+              const factoryStockHtml = fStock > 0
+                ? ` <span title="สต็อกคงเหลือของ Supplier / โรงงาน พร้อมสั่ง: ${fmt(fStock)} ชิ้น" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
+                : (p.factory_stock !== undefined && p.factory_stock !== null
+                    ? ` <span title="สต็อกของ Supplier / โรงงาน: 0 ชิ้น" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:9.5px;padding:1px 4px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:2px">🏭 รง. 0</span>`
+                    : '');
             } else {
               const itemPayload = JSON.stringify({
                 order_id: o.id || '',
@@ -8018,7 +8025,7 @@ async function loadOrders() {
               }).replace(/"/g, '&quot;');
               quickAddBtn = ` <span class="badge" onclick="event.stopPropagation();openQuickProductFromOrderItem(this)" data-item="${itemPayload}" style="cursor:pointer;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;transition:all 0.15s;vertical-align:middle" title="สินค้านี้ยังไม่ได้อยู่ในฐานข้อมูลสินค้า (คลิกเพื่อสร้างเข้าคลังและเชื่อมโยงกับออเดอร์นี้)" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">➕ เพิ่มเข้าฐานข้อมูล</span>`;
             }
-            return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${quickAddBtn}${poTag}${backorderTag}</div>`;
+            return `<div style="margin-bottom:3px;line-height:1.4">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${factoryStockHtml}${quickAddBtn}${poTag}${backorderTag}</div>`;
           }).join('') || '-';
 
           const delDate = getOrderDeliveryDate(o);
@@ -8181,6 +8188,13 @@ async function loadOrders() {
             const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
             stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
+
+            const fStock = Number(p.factory_stock || 0);
+            const factoryStockHtml = fStock > 0
+              ? ` <span title="สต็อกคงเหลือของ Supplier / โรงงาน พร้อมสั่ง: ${fmt(fStock)} ชิ้น" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">🏭 รง. ${fmt(fStock)}</span>`
+              : (p.factory_stock !== undefined && p.factory_stock !== null
+                  ? ` <span title="สต็อกของ Supplier / โรงงาน: 0 ชิ้น" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;font-size:9.5px;padding:1px 4px;border-radius:4px;white-space:nowrap">🏭 รง. 0</span>`
+                  : '');
           } else {
             const itemPayload = JSON.stringify({
               order_id: o.id || '',
@@ -8193,7 +8207,7 @@ async function loadOrders() {
             }).replace(/"/g, '&quot;');
             quickAddBtn = ` <span class="badge" onclick="event.stopPropagation();openQuickProductFromOrderItem(this)" data-item="${itemPayload}" style="cursor:pointer;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:9.5px;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-flex;align-items:center;gap:3px;vertical-align:middle" title="สินค้านี้ยังไม่ได้อยู่ในฐานข้อมูลสินค้า (คลิกเพื่อสร้างเข้าคลังและเชื่อมโยงกับออเดอร์นี้)">➕ เพิ่มเข้าฐานข้อมูล</span>`;
           }
-          return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${quickAddBtn}${poTag}${backorderTag}</div>`;
+          return `<div style="margin-bottom:3px">${qtyTxt}${nameHtml}${skuTxt}${partNoTxt}${stockHtml}${factoryStockHtml}${quickAddBtn}${poTag}${backorderTag}</div>`;
         }).join('') || '-';
         return `<div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.4">🛍 ${prodHtml}</div>` +
           (linkedPOs.length ? `<div style="margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px">${linkedPOs.map(po => {
@@ -9947,10 +9961,17 @@ function renderEditItems() {
       const sBdr = isOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
       const sIcon = isOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
       const sText = isOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ: ${fmt(stockVal)} ชิ้น`);
+      const fStock = Number(_pItem.factory_stock || 0);
+      const fStockHtml = fStock > 0
+        ? `<span title="สต็อกคงเหลือของ Supplier / โรงงาน พร้อมสั่ง: ${fmt(fStock)} ชิ้น" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
+        : (_pItem.factory_stock !== undefined && _pItem.factory_stock !== null
+            ? `<span title="สต็อกของ Supplier / โรงงาน: 0 ชิ้น" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;padding:2px 6px;border-radius:5px;font-size:11px;display:inline-flex;align-items:center;gap:3px">🏭 รง. 0</span>`
+            : '');
       stockHint.innerHTML = `
         <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)${tipPending}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
           ${sIcon} ${sText}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
         </span>
+        ${fStockHtml}
         <button type="button" class="btn btn-secondary btn-sm" onclick="quickAdjustProductStock('${_pItem.id}')" title="ปรับยอดสต๊อกสินค้าจริงทันที" style="padding:1px 6px;font-size:10.5px;background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700">
           ⚖️ ปรับสต๊อก
         </button>
@@ -47093,7 +47114,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.71', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มแสดงชื่อลูกค้าและเลขอ้างอิง Shopee ใต้เลข SO บนสติกเกอร์สินค้า (v3.71)', items:[
+    { v:'3.72', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงสต็อกคงเหลือของ Supplier / โรงงาน (รง.) ในคอลัมน์รายการสินค้าของหน้าออเดอร์ (v3.72)', items:[
+      '🏭 <b>แสดงสต็อกคงเหลือของ Supplier / โรงงาน ในรายการสินค้า:</b> เพิ่มป้าย <code>🏭 รง. XX</code> ควบคู่กับป้ายสต็อกหน้าร้าน ในคอลัมน์ "รายการสินค้า" ของหน้าออเดอร์ (ทั้ง Desktop, Mobile และหน้าต่างแก้ไขออเดอร์)',
+      '📦 <b>เห็นสินค้าพร้อมสั่งทันที:</b> ช่วยให้ฝ่ายขายและแอดมินเห็นยอดสต็อกของ Supplier ได้ทันทีแม้สต็อกในคลังร้านจะเป็น 0 ชิ้น โดยไม่ต้องเปิดค้นหาในแคตตาล็อกแยก',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.72 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.71', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มแสดงชื่อลูกค้าและเลขอ้างอิง Shopee ใต้เลข SO บนสติกเกอร์สินค้า (v3.71)', items:[
       '👤 <b>แสดงชื่อลูกค้าใต้เลข SO:</b> เพิ่มชื่อลูกค้า (<code>customer_name</code>) ไว้อย่างชัดเจนใต้เลขที่เอกสาร SO บนสติกเกอร์สินค้าทุกดวง ช่วยให้ฝ่ายแพ็กของตรวจสอบชื่อผู้รับได้ทันที',
       '🛒 <b>แสดงเลขอ้างอิง Shopee (ถ้ามี):</b> หากเป็นคำสั่งซื้อจาก Shopee ระบบจะแสดงเลขอ้างอิงคำสั่งซื้อ Shopee (<code>Shopee: XXXXXXXXX</code>) ควบคู่กับชื่อลูกค้าอัตโนมัติ',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.71 และล้างแคชอัตโนมัติ'
