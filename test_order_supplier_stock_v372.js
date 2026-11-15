@@ -8,10 +8,9 @@ const content = fs.readFileSync(htmlPath, 'utf8');
 console.log('--- Testing v3.72 Supplier / Factory Stock in Orders Table ---');
 
 // 1. Version assertions
-assert.ok(content.includes("CURRENT_APP_VERSION = 'sealthai-v3.72'"), 'CURRENT_APP_VERSION should be sealthai-v3.72');
-assert.ok(content.includes("DISPLAY_APP_VERSION = 'v3.72'"), 'DISPLAY_APP_VERSION should be v3.72');
-assert.ok(content.includes('v3.72 🚀'), 'Topbar badge should display v3.72 🚀');
-console.log('✓ App version is v3.72');
+const versionMatch = content.match(/CURRENT_APP_VERSION = 'sealthai-v([\d.]+)'/);
+assert.ok(versionMatch && parseFloat(versionMatch[1]) >= 3.72, 'CURRENT_APP_VERSION should be >= sealthai-v3.72');
+console.log('✓ App version is >= v3.72');
 
 // 2. Desktop orders table includes factory_stock
 assert.ok(content.includes("${stockHtml}${factoryStockHtml}"), 'Desktop orders must include factoryStockHtml after stockHtml');
@@ -30,7 +29,7 @@ assert.ok(content.includes("🏭 รง. ${fmt(fStock)}"), 'Must render factory 
 console.log('✓ Factory stock renders with 🏭 รง. badge');
 
 // 6. Changelog contains v3.72
-assert.ok(content.includes("{ v:'3.72', date:'2026-11-15', badge:'Latest'"), 'Changelog must include v3.72 as Latest');
+assert.ok(content.includes("{ v:'3.72'"), 'Changelog must include v3.72');
 console.log('✓ Changelog contains v3.72 entry');
 
 console.log('\nAll tests in test_order_supplier_stock_v372.js PASSED successfully!');

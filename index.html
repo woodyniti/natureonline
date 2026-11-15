@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.72';
-const DISPLAY_APP_VERSION = 'v3.72';
+const CURRENT_APP_VERSION = 'sealthai-v3.73';
+const DISPLAY_APP_VERSION = 'v3.73';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1563,7 +1563,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.72)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.72 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.73)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.73 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3742,6 +3742,10 @@ function calculatePeriodSupplierWeeklyExpenses(pos) {
     const supName = po.supplier_name || 'ไม่ระบุ Supplier';
     const week = getWeekRange(po.po_date, cycle);
     const groupKey = `${supId}_${week.week_key}`;
+
+    const saved = savedRecords[groupKey] || {};
+    const excludedPoIds = Array.isArray(saved.excluded_po_ids) ? saved.excluded_po_ids : [];
+    if (excludedPoIds.includes(String(po.id))) return; // ข้าม PO ที่ติ๊กไม่นำมาคำนวณ
 
     if (!groups[groupKey]) {
       groups[groupKey] = {
@@ -30141,9 +30145,12 @@ async function loadWeeklySupplierExpenses() {
     }
 
     const { subtotal: poSubtotal, discount: poDiscount, net: poNet } = getPOGoodsForReporting(po);
+    const saved = savedRecords[groupKey] || {};
+    const excludedPoIds = Array.isArray(saved.excluded_po_ids) ? saved.excluded_po_ids.map(String) : [];
+    const isExcluded = excludedPoIds.includes(String(po.id));
 
     groups[groupKey].po_list.push({
-      id: po.id,
+      id: String(po.id),
       po_no: po.po_no || '-',
       po_date: po.po_date,
       status: po.status,
@@ -30151,13 +30158,21 @@ async function loadWeeklySupplierExpenses() {
       discount: poDiscount,
       vat_amount: Number(po.vat_amount || 0),
       total_amount: Number(po.total_amount || 0),
-      net_amount: poNet
+      net_amount: poNet,
+      is_excluded: isExcluded
     });
 
-    groups[groupKey].gross_amount += poSubtotal;
-    groups[groupKey].discount_amount += poDiscount;
-    groups[groupKey].vat_amount += Number(po.vat_amount || 0);
-    groups[groupKey].net_purchase_amount += poNet;
+    // Track total across all POs
+    groups[groupKey].total_gross_amount = (groups[groupKey].total_gross_amount || 0) + poSubtotal;
+    groups[groupKey].total_net_amount = (groups[groupKey].total_net_amount || 0) + poNet;
+
+    // Only non-excluded POs count towards the calculation base!
+    if (!isExcluded) {
+      groups[groupKey].gross_amount += poSubtotal;
+      groups[groupKey].discount_amount += poDiscount;
+      groups[groupKey].vat_amount += Number(po.vat_amount || 0);
+      groups[groupKey].net_purchase_amount += poNet;
+    }
   });
 
   // Calculate Progressive & Sync with Database Expenses (Single Source of Truth)
@@ -30231,6 +30246,8 @@ async function loadWeeklySupplierExpenses() {
       ...g,
       ...saved,
       po_count: g.po_list.length,
+      included_po_count: g.po_list.filter(p => !p.is_excluded).length,
+      excluded_po_count: g.po_list.filter(p => p.is_excluded).length,
       weekly_base_amount: g.net_purchase_amount,
       calculated_expense_amount: calculatedExpense,
       top_up_amount: topUp,
@@ -30440,7 +30457,7 @@ function renderWeeklySupplierTable(rows) {
               <td>
                 <b style="font-size:13px;color:var(--text)">${escapeHTML(r.supplier_name)}</b>
                 <div style="font-size:10.5px;color:var(--text3);margin-top:2px">
-                  📦 ${r.po_count} บิล PO ${r.is_recorded_in_db ? '· <span style="color:#0284c7;font-weight:600">📌 บันทึกในบัญชีแล้ว</span>' : ''}
+                  📦 ${r.po_count} บิล PO ${r.excluded_po_count > 0 ? `<span style="color:#ef4444;font-weight:700" title="มี ${r.excluded_po_count} บิลที่ยกเว้นไม่นำมาคำนวณ">(เว้น ${r.excluded_po_count})</span>` : ''} ${r.is_recorded_in_db ? '· <span style="color:#0284c7;font-weight:600">📌 บันทึกในบัญชีแล้ว</span>' : ''}
                 </div>
               </td>
               <td class="text-right font-mono" style="font-size:13px;font-weight:700">
@@ -30489,7 +30506,7 @@ function renderWeeklySupplierTable(rows) {
           <!-- Supplier Name & POs -->
           <div style="margin-bottom:10px">
             <div style="font-size:14.5px;font-weight:700;color:#0f172a">${escapeHTML(r.supplier_name)}</div>
-            <div style="font-size:11px;color:var(--text3);margin-top:1px">📦 รวม ${r.po_count} บิล PO ${r.is_recorded_in_db ? '· <span style="color:#0284c7;font-weight:600">📌 บันทึกในบัญชีแล้ว</span>' : ''}</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:1px">📦 รวม ${r.po_count} บิล PO ${r.excluded_po_count > 0 ? `<span style="color:#ef4444;font-weight:700">(เว้น ${r.excluded_po_count})</span>` : ''} ${r.is_recorded_in_db ? '· <span style="color:#0284c7;font-weight:600">📌 บันทึกในบัญชีแล้ว</span>' : ''}</div>
           </div>
 
           <!-- 3-Box Financial Grid -->
@@ -30767,28 +30784,56 @@ function viewWeeklySupplierDetail(id) {
 
     <!-- Linked Purchase Orders -->
     <div style="margin-bottom:14px">
-      <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#1e293b">
-        📦 รายการบิล PO ที่รวมในรอบนี้ (${row.po_list.length} บิล)
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+        <div style="font-weight:700;font-size:13px;color:#1e293b">
+          📦 รายการบิล PO ที่รวมในรอบนี้ (${row.po_list.length} บิล)
+          ${row.excluded_po_count > 0 ? `
+            <span style="font-size:11.5px;color:#ef4444;font-weight:700;margin-left:6px">
+              (นำมาคิด ${row.included_po_count} บิล · ยกเว้น ${row.excluded_po_count} บิล)
+            </span>
+          ` : ''}
+        </div>
+        ${!isApprovedOrPaid && row.po_list.length > 1 ? `
+          <div style="display:flex;gap:6px;align-items:center">
+            <button type="button" class="btn btn-secondary" onclick="toggleAllWeeklySupplierPOs('${escapeHTML(row.id)}', true)" style="font-size:11px;padding:3px 8px;border-radius:5px">✓ เลือกทั้งหมด</button>
+            <button type="button" class="btn btn-secondary" onclick="toggleAllWeeklySupplierPOs('${escapeHTML(row.id)}', false)" style="font-size:11px;padding:3px 8px;border-radius:5px;color:#dc2626">✕ ยกเลิกทั้งหมด</button>
+          </div>
+        ` : ''}
       </div>
-      <div class="table-wrap" style="max-height:160px;overflow-y:auto">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">
+        💡 ติ๊กเลือก <b>[✓]</b> เฉพาะ PO ที่ต้องการนำมาคำนวณ (หากเอาเครื่องหมายถูกออก จะไม่นำยอด PO นั้นมาคิดเงินพิเศษ)
+      </div>
+      <div class="table-wrap" style="max-height:220px;overflow-y:auto;border:1px solid var(--border2);border-radius:8px">
         <table style="font-size:11.5px">
           <thead>
-            <tr>
+            <tr style="background:#f8fafc">
+              <th style="width:65px;text-align:center">นำมาคิด</th>
               <th>เลขที่ PO</th>
               <th>วันที่</th>
               <th class="text-right">ยอดก่อน VAT</th>
               <th class="text-right">ส่วนลด</th>
               <th class="text-right">ยอดซื้อสุทธิ (Net Base)</th>
+              <th style="text-align:center;width:105px">สถานะการคิด</th>
             </tr>
           </thead>
           <tbody>
             ${row.po_list.map(p => `
-              <tr>
-                <td><b>${escapeHTML(p.po_no)}</b></td>
-                <td>${p.po_date}</td>
-                <td class="text-right font-mono">${fmtB(p.subtotal)}</td>
+              <tr style="${p.is_excluded ? 'background:#fef2f2;opacity:0.75;' : ''}">
+                <td style="text-align:center">
+                  <input type="checkbox" ${p.is_excluded ? '' : 'checked'} ${isApprovedOrPaid ? 'disabled title="รายการนี้ล็อคแล้ว"' : ''} onchange="toggleWeeklySupplierPO('${escapeHTML(row.id)}', '${escapeHTML(p.id)}', this.checked)" style="width:16px;height:16px;cursor:${isApprovedOrPaid?'not-allowed':'pointer'}">
+                </td>
+                <td>
+                  <b style="${p.is_excluded ? 'text-decoration:line-through;color:#94a3b8' : 'color:var(--text)'}">${escapeHTML(p.po_no)}</b>
+                </td>
+                <td style="color:${p.is_excluded ? '#94a3b8' : 'inherit'}">${p.po_date}</td>
+                <td class="text-right font-mono" style="color:${p.is_excluded ? '#94a3b8' : 'inherit'}">${fmtB(p.subtotal)}</td>
                 <td class="text-right font-mono text-red">${p.discount > 0 ? '-' + fmtB(p.discount) : '—'}</td>
-                <td class="text-right font-mono text-blue" style="font-weight:700">${fmtB(p.net_amount)}</td>
+                <td class="text-right font-mono ${p.is_excluded ? '' : 'text-blue'}" style="font-weight:700;${p.is_excluded ? 'text-decoration:line-through;color:#94a3b8' : ''}">${fmtB(p.net_amount)}</td>
+                <td style="text-align:center">
+                  ${p.is_excluded 
+                    ? '<span class="badge" style="font-size:10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;padding:2px 6px;white-space:nowrap">🚫 ไม่นำมาคำนวณ</span>' 
+                    : '<span class="badge" style="font-size:10px;background:#dcfce7;color:#15803d;border:1px solid #86efac;padding:2px 6px;white-space:nowrap">✓ คำนวณยอด</span>'}
+                </td>
               </tr>
             `).join('')}
           </tbody>
@@ -30849,6 +30894,111 @@ function calcModalSWAmounts() {
   if (prevFinalEl) prevFinalEl.textContent = fmtB(finalAmt);
 }
 
+function toggleWeeklySupplierPO(groupId, poId, isIncluded) {
+  const row = weeklySupplierData.find(x => x.id === groupId);
+  if (!row) return;
+
+  if (['approved', 'paid'].includes(row.status)) {
+    toast('ไม่สามารถเปลี่ยนการเลือกได้เนื่องจากรายการนี้บันทึกหรือชำระเงินแล้ว (กรุณากดยกเลิกการบันทึกก่อน)', 'warning');
+    viewWeeklySupplierDetail(groupId);
+    return;
+  }
+
+  // Preserve any in-progress Top Up edits in modal
+  const curTopUpInput = document.getElementById('sw-edit-topup-amt');
+  if (curTopUpInput) row.top_up_amount = Math.max(0, Number(curTopUpInput.value || 0));
+  const curNoteInput = document.getElementById('sw-edit-topup-note');
+  if (curNoteInput) row.top_up_note = curNoteInput.value;
+  const curReasonInput = document.getElementById('sw-edit-topup-reason');
+  if (curReasonInput) row.top_up_reason = curReasonInput.value;
+
+  const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+
+  savedRecords[groupId] = savedRecords[groupId] || {};
+  let excluded = new Set((savedRecords[groupId].excluded_po_ids || []).map(String));
+
+  if (isIncluded) {
+    excluded.delete(String(poId));
+  } else {
+    excluded.add(String(poId));
+  }
+  savedRecords[groupId].excluded_po_ids = Array.from(excluded);
+  localStorage.setItem(key, JSON.stringify(savedRecords));
+
+  const po = row.po_list.find(p => String(p.id) === String(poId));
+  if (po) po.is_excluded = !isIncluded;
+
+  recalcWeeklySupplierRow(row);
+  renderWeeklySupplierView();
+  viewWeeklySupplierDetail(groupId);
+  toast(isIncluded ? 'นำบิล PO กลับมาคำนวณยอดแล้ว ✓' : 'ยกเว้นบิล PO ออกจากการคำนวณแล้ว ✓', 'info');
+}
+
+function toggleAllWeeklySupplierPOs(groupId, selectAll) {
+  const row = weeklySupplierData.find(x => x.id === groupId);
+  if (!row) return;
+
+  if (['approved', 'paid'].includes(row.status)) {
+    toast('ไม่สามารถเปลี่ยนการเลือกได้เนื่องจากรายการนี้บันทึกหรือชำระเงินแล้ว', 'warning');
+    return;
+  }
+
+  const curTopUpInput = document.getElementById('sw-edit-topup-amt');
+  if (curTopUpInput) row.top_up_amount = Math.max(0, Number(curTopUpInput.value || 0));
+  const curNoteInput = document.getElementById('sw-edit-topup-note');
+  if (curNoteInput) row.top_up_note = curNoteInput.value;
+  const curReasonInput = document.getElementById('sw-edit-topup-reason');
+  if (curReasonInput) row.top_up_reason = curReasonInput.value;
+
+  const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
+  let savedRecords = {};
+  try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
+
+  savedRecords[groupId] = savedRecords[groupId] || {};
+  if (selectAll) {
+    savedRecords[groupId].excluded_po_ids = [];
+    row.po_list.forEach(p => p.is_excluded = false);
+  } else {
+    savedRecords[groupId].excluded_po_ids = row.po_list.map(p => String(p.id));
+    row.po_list.forEach(p => p.is_excluded = true);
+  }
+  localStorage.setItem(key, JSON.stringify(savedRecords));
+
+  recalcWeeklySupplierRow(row);
+  renderWeeklySupplierView();
+  viewWeeklySupplierDetail(groupId);
+  toast(selectAll ? 'นำทุกบิล PO กลับมาคำนวณแล้ว ✓' : 'ยกเว้นทุกบิล PO ออกจากการคำนวณแล้ว ✓', 'info');
+}
+
+function recalcWeeklySupplierRow(row) {
+  const tiers = getSupplierProgressiveTiers();
+  const effectiveTiers = row.calculation_snapshot || tiers;
+
+  row.included_po_count = row.po_list.filter(p => !p.is_excluded).length;
+  row.excluded_po_count = row.po_list.filter(p => p.is_excluded).length;
+
+  row.gross_amount = row.po_list.filter(p => !p.is_excluded).reduce((s, p) => s + p.subtotal, 0);
+  row.discount_amount = row.po_list.filter(p => !p.is_excluded).reduce((s, p) => s + p.discount, 0);
+  row.vat_amount = row.po_list.filter(p => !p.is_excluded).reduce((s, p) => s + p.vat_amount, 0);
+  row.net_purchase_amount = row.po_list.filter(p => !p.is_excluded).reduce((s, p) => s + p.net_amount, 0);
+  row.weekly_base_amount = row.net_purchase_amount;
+
+  const isAgreementEnabled = isSupplierWeeklyExpenseEnabled(row.supplier_id, row.supplier_name);
+  row.is_agreement_enabled = isAgreementEnabled;
+
+  const calcResult = isAgreementEnabled
+    ? calculateProgressiveSupplierExpense(row.net_purchase_amount, effectiveTiers)
+    : { total_expense: 0, tier_breakdown: [] };
+
+  row.calculated_expense_amount = calcResult.total_expense;
+  row.tier_breakdown = calcResult.tier_breakdown;
+
+  const topUp = Math.max(0, Number(row.top_up_amount || 0));
+  row.final_expense_amount = row.calculated_expense_amount + topUp;
+}
+
 function saveWeeklySupplierTopUp(id) {
   const row = weeklySupplierData.find(x => x.id === id);
   if (!row) return;
@@ -30863,6 +31013,7 @@ function saveWeeklySupplierTopUp(id) {
 
   savedRecords[id] = {
     ...(savedRecords[id] || {}),
+    excluded_po_ids: row.po_list.filter(p => p.is_excluded).map(p => String(p.id)),
     top_up_amount: topUp,
     top_up_reason: reason,
     top_up_note: note,
@@ -30916,7 +31067,7 @@ async function approveWeeklySupplierExpense(id) {
     recurrence: 'one_time',
     include_in_profit: true,
     review_status: 'approved',
-    note: `ค่าใช้จ่ายยอดซื้อ Supplier รอบสัปดาห์ (${row.week_start} ถึง ${row.week_end}) ยอดซื้อสุทธิ ฿${fmt(row.weekly_base_amount)} [สูตร: ฿${fmt(row.calculated_expense_amount)}${topUp>0?` + Top Up: ฿${fmt(topUp)} (${reason})`:''}] [supplier_weekly_id:${id}] [gratuity]`,
+    note: `ค่าใช้จ่ายยอดซื้อ Supplier รอบสัปดาห์ (${row.week_start} ถึง ${row.week_end}) ยอดซื้อสุทธิ ฿${fmt(row.weekly_base_amount)} [สูตร: ฿${fmt(row.calculated_expense_amount)}${topUp>0?` + Top Up: ฿${fmt(topUp)} (${reason})`:''}]${row.excluded_po_count > 0 ? ` [ยกเว้น ${row.excluded_po_count} PO]` : ''} [supplier_weekly_id:${id}] [gratuity]`,
     created_by: currentUser?.id || null,
     updated_at: new Date().toISOString()
   };
@@ -30929,6 +31080,7 @@ async function approveWeeklySupplierExpense(id) {
 
   savedRecords[id] = {
     ...(savedRecords[id] || {}),
+    excluded_po_ids: row.po_list.filter(p => p.is_excluded).map(p => String(p.id)),
     top_up_amount: topUp,
     top_up_reason: reason,
     top_up_note: note,
@@ -30966,7 +31118,13 @@ async function cancelWeeklySupplierExpense(id) {
   const key = 'supplier_weekly_records_' + (currentShop?.id || 'default');
   let savedRecords = {};
   try { savedRecords = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e){}
-  delete savedRecords[id];
+  if (savedRecords[id]) {
+    delete savedRecords[id].expense_id;
+    delete savedRecords[id].status;
+    delete savedRecords[id].approved_by;
+    delete savedRecords[id].approved_at;
+    delete savedRecords[id].calculation_snapshot;
+  }
   localStorage.setItem(key, JSON.stringify(savedRecords));
 
   toast('ยกเลิกการบันทึกเรียบร้อยแล้ว ระบบจะคำนวณยอดใหม่อัตโนมัติ ✓', 'success');
@@ -47114,7 +47272,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.72', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงสต็อกคงเหลือของ Supplier / โรงงาน (รง.) ในคอลัมน์รายการสินค้าของหน้าออเดอร์ (v3.72)', items:[
+    { v:'3.73', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบสรุปค่าสินน้ำใจ Supplier รายสัปดาห์: สามารถติ๊กเลือก/ยกเว้นบิล PO ออกจากการคำนวณได้ (v3.73)', items:[
+      '☑️ <b>เลือก/ยกเว้นบิล PO ที่ไม่นำมาคำนวณ:</b> ในหน้ารายละเอียดสรุปยอดรายสัปดาห์ของ Supplier สามารถติ๊กเลือกหรือเอาเครื่องหมายถูก [✓] ออกจากบิล PO ที่ไม่ต้องการนำมาคำนวณได้ทันที',
+      '🧮 <b>คำนวณยอดอัตโนมัติแบบ Real-time:</b> เมื่อติ๊กยกเว้น PO ระบบจะคำนวณยอดซื้อสุทธิ (Weekly Base Amount) และอัตราตามขั้นบันได (Progressive Marginal Rate) ใหม่ทันทีแบบสดๆ พร้อมไฮไลต์แถวที่ยกเว้นและแสดงป้าย 🚫 ไม่นำมาคำนวณ ชัดเจน',
+      '💾 <b>บันทึกการตั้งค่าแยกตามรอบสัปดาห์:</b> บันทึกการยกเว้น PO ไว้อย่างถาวรในรอบสัปดาห์นั้นๆ และเชื่อมโยงกับการอนุมัติบันทึกบัญชีโดยไม่สูญหาย',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.73 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.72', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แสดงสต็อกคงเหลือของ Supplier / โรงงาน (รง.) ในคอลัมน์รายการสินค้าของหน้าออเดอร์ (v3.72)', items:[
       '🏭 <b>แสดงสต็อกคงเหลือของ Supplier / โรงงาน ในรายการสินค้า:</b> เพิ่มป้าย <code>🏭 รง. XX</code> ควบคู่กับป้ายสต็อกหน้าร้าน ในคอลัมน์ "รายการสินค้า" ของหน้าออเดอร์ (ทั้ง Desktop, Mobile และหน้าต่างแก้ไขออเดอร์)',
       '📦 <b>เห็นสินค้าพร้อมสั่งทันที:</b> ช่วยให้ฝ่ายขายและแอดมินเห็นยอดสต็อกของ Supplier ได้ทันทีแม้สต็อกในคลังร้านจะเป็น 0 ชิ้น โดยไม่ต้องเปิดค้นหาในแคตตาล็อกแยก',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.72 และล้างแคชอัตโนมัติ'
