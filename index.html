@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.80';
-const DISPLAY_APP_VERSION = 'v3.80';
+const CURRENT_APP_VERSION = 'sealthai-v3.81';
+const DISPLAY_APP_VERSION = 'v3.81';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.80)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.80 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.81)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.81 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -28131,31 +28131,17 @@ async function purchase() {
           <!-- Tab Accounting -->
           <div class="sap-tab-pane" data-pane="accounting">
             <div style="max-width:700px;background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px">
-              <div style="font-weight:700;margin-bottom:12px;color:#1e293b">การคำนวณภาษีมูลค่าเพิ่ม & ส่วนลดท้ายบิล</div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:#fff;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px">
-                <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer">
-                  <input type="checkbox" id="po-vat-on" onchange="calcPOTotal()"> คำนวณ VAT 7%
-                </label>
-                <select id="po-vat-type" onchange="calcPOTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
-                  <option value="excluded">VAT แยก (บวกเพิ่มจากยอดสินค้า)</option>
-                  <option value="included">VAT รวมใน (ถอนออกจากยอดสินค้า)</option>
-                </select>
+              <div style="font-weight:700;margin-bottom:8px;color:#1e293b;font-size:13.5px">💳 ข้อมูลบัญชีและการชำระเงิน (Accounting & Payment Terms)</div>
+              <div style="font-size:12.5px;color:#64748b;line-height:1.6;margin-bottom:12px">
+                ระบบคำนวณภาษีมูลค่าเพิ่ม (VAT 7%), ส่วนลดท้าย PO (Discount) และค่าจัดส่ง (Freight) สามารถกรอกและปรับแต่งได้โดยตรงที่ <b>กล่องสรุปยอดมุมขวาล่างของเอกสาร</b> ได้ตลอดเวลาโดยไม่ต้องสลับหน้าแท็บค่ะ
               </div>
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
-                <div class="form-group" style="margin:0">
-                  <label style="font-size:12px;font-weight:600;color:#475569">ส่วนลดท้าย PO (<span class="po-currency-symbol">฿</span>)</label>
-                  <input type="number" id="po-discount" min="0" step="0.01" value="0" oninput="calcPOTotal()" style="width:100%;padding:6px 8px">
-                </div>
-                <div class="form-group" style="margin:0">
-                  <label style="font-size:12px;font-weight:600;color:#475569">ค่าจัดส่ง</label>
-                  <div style="display:flex;gap:6px">
-                    <input type="number" id="po-shipping" min="0" step="0.01" value="0" oninput="calcPOTotal()" style="min-width:0;flex:1;padding:6px 8px">
-                    <select id="po-shipping-currency" onchange="togglePOShippingCurrency()" style="width:80px;background:#fff;border:1px solid var(--border2);border-radius:6px">
-                      <option value="THB">THB</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-                </div>
+              <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:8px">
+                <span class="sap-field-label">เงื่อนไขการชำระเงิน:</span>
+                <span style="font-weight:600;color:#1e293b">ตามรอบเครดิตของ Supplier / โอนชำระเงิน</span>
+              </div>
+              <div class="sap-field-row" style="grid-template-columns:160px 1fr">
+                <span class="sap-field-label">การผูกบันทึกบัญชี AP:</span>
+                <span style="color:#0284c7;font-weight:600">จะสร้างตั้งหนี้ AP Invoice อัตโนมัติหลังรับสินค้าเข้าคลัง (GRPO)</span>
               </div>
             </div>
           </div>
@@ -28168,33 +28154,77 @@ async function purchase() {
             </div>
           </div>
 
-          <!-- SAP Footer Bar -->
+          <!-- SAP Footer Bar (พร้อมช่องกรอกส่วนลด, ค่าส่ง Freight, และ VAT ครบถ้วนตามมาตรฐาน SAP B1) -->
           <div class="sap-footer">
-            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-              <button class="btn btn-secondary" onclick="closeModal('modal-po')">ยกเลิก</button>
-              <button class="btn btn-secondary" onclick="savePO('draft')">💾 บันทึกแบบร่าง</button>
-              <button class="btn btn-primary btn-sap-update" onclick="savePO('sent')" style="font-size:13px;padding:7px 18px">📤 ส่ง PO (Add / Save)</button>
+            <div>
+              <div class="sap-field-row" style="margin-bottom:8px">
+                <span class="sap-field-label">Document Type</span>
+                <div style="font-size:12.5px;font-weight:700;color:#1e293b">Purchase Order (PO) · ใบสั่งซื้อ</div>
+              </div>
+              <div class="sap-field-row" style="margin-bottom:10px">
+                <span class="sap-field-label">Status</span>
+                <div style="font-size:12px;color:#64748b">ร่างเอกสาร / ส่งสั่งซื้อผู้ขาย</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modal-po')">ยกเลิก</button>
+                <button type="button" class="btn btn-secondary" onclick="savePO('draft')">💾 บันทึกแบบร่าง</button>
+                <button type="button" class="btn btn-primary btn-sap-update" onclick="savePO('sent')" style="font-size:13px;padding:7px 18px">📤 ส่ง PO (Add / Save)</button>
+              </div>
             </div>
-            <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
-              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
-                <span style="color:#64748b">ยอดรวมสินค้า (Subtotal)</span>
-                <span class="font-mono" id="po-subtotal" style="font-weight:600">฿0</span>
+
+            <!-- กล่องสรุปยอดเงินและช่องกรอกค่าส่ง (Freight / Shipping Fee) -->
+            <div style="background:#fff;border:1.5px solid #cbd5e1;border-radius:8px;padding:12px 16px;min-width:340px">
+              <!-- Subtotal -->
+              <div style="display:flex;justify-content:space-between;align-items:center;color:#475569;font-size:12.5px;margin-bottom:5px">
+                <span>ยอดรวมสินค้า (Total Before Discount)</span>
+                <span class="font-mono" id="po-subtotal" style="font-weight:700">฿0</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
-                <span style="color:#64748b">หักส่วนลด (Discount)</span>
-                <span class="font-mono text-red" id="po-discount-display">-฿0</span>
+
+              <!-- Discount -->
+              <div style="display:flex;justify-content:space-between;align-items:center;color:var(--red);font-size:12.5px;margin-bottom:5px">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span>Discount</span>
+                  <input type="number" id="po-discount" value="0" min="0" step="any" oninput="calcPOTotal()"
+                    style="width:75px;text-align:right;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:2px 6px;font-size:12px;color:var(--red)">
+                  <span class="po-currency-symbol" style="font-weight:700">฿</span>
+                </div>
+                <span class="font-mono text-red" id="po-discount-display" style="min-width:70px;text-align:right">-฿0</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
-                <span style="color:#64748b">บวกค่าส่ง (Freight)</span>
-                <span class="font-mono" id="po-shipping-display">+฿0</span>
+
+              <!-- Freight / ค่าจัดส่ง (ช่องใส่ค่าส่งที่ผู้ใช้ร้องขอ) -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px;font-size:12.5px">
+                <div style="display:flex;align-items:center;gap:4px">
+                  <span style="font-weight:700;color:#0369a1">🚚 Freight (ค่าส่ง)</span>
+                  <input type="number" id="po-shipping" value="0" min="0" step="any" oninput="calcPOTotal()" placeholder="0"
+                    style="width:80px;text-align:right;background:#fff;border:1.5px solid #0284c7;border-radius:4px;padding:2px 6px;font-size:12px;font-weight:700;color:#0f172a">
+                  <select id="po-shipping-currency" onchange="togglePOShippingCurrency()"
+                    style="background:#fff;border:1px solid var(--border2);border-radius:4px;padding:2px 4px;font-size:11.5px;font-weight:600">
+                    <option value="THB">฿ THB</option>
+                    <option value="USD">$ USD</option>
+                  </select>
+                </div>
+                <span class="font-mono" id="po-shipping-display" style="font-weight:700;color:#0369a1;min-width:70px;text-align:right">+฿0</span>
               </div>
-              <div id="po-vat-row" style="display:none;display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
-                <span style="color:#64748b">VAT 7%</span>
-                <span class="font-mono text-amber" id="po-vat-amt" style="font-weight:600">฿0</span>
+
+              <!-- VAT 7% -->
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:12px">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;color:#475569;user-select:none">
+                    <input type="checkbox" id="po-vat-on" onchange="calcPOTotal()" style="accent-color:#f59e0b;width:14px;height:14px">
+                    <span>VAT 7%</span>
+                  </label>
+                  <select id="po-vat-type" onchange="calcPOTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:4px;padding:1px 4px;font-size:11px">
+                    <option value="excluded">แยกนอก</option>
+                    <option value="included">รวมใน</option>
+                  </select>
+                </div>
+                <span class="font-mono text-amber" id="po-vat-amt" style="font-weight:700;min-width:70px;text-align:right">฿0</span>
               </div>
-              <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+
+              <!-- Grand Total -->
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:16px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
                 <span style="color:#0f172a">ยอดรวมสุทธิ (Total)</span>
-                <span class="font-mono text-amber" id="po-total" style="font-size:17px">฿0</span>
+                <span class="font-mono text-amber" id="po-total" style="font-size:18px">฿0</span>
               </div>
             </div>
           </div>
@@ -28780,14 +28810,21 @@ function newPOProdSearch(rowIdx) {
   const val = (linkedProd?.name || it?.product_name || '').replace(/"/g, '&quot;');
 
   return `
-    <div style="position:relative;flex:2;min-width:140px">
-      <input id="${pid}" type="text" autocomplete="off" value="${val}"
-        placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / Supplier (THB/USD) / ขนาด..."
-        style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-size:14px;box-sizing:border-box"
-        oninput="searchPOProduct(${rowIdx}, this.value)"
-        onfocus="searchPOProduct(${rowIdx}, this.value)"
-        onblur="handlePOProdBlur(${rowIdx}, this.value)">
-      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;z-index:99999;min-width:580px;max-width:min(850px,94vw);width:max-content;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
+    <div style="position:relative;width:100%">
+      <div style="display:flex;gap:4px;align-items:center;width:100%">
+        <input id="${pid}" type="text" autocomplete="off" value="${val}"
+          placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / Supplier (THB/USD)... หรือพิมพ์ชื่อเอง"
+          style="flex:1;min-width:0;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12.5px;font-weight:600;box-sizing:border-box"
+          oninput="searchPOProduct(${rowIdx}, this.value)"
+          onfocus="searchPOProduct(${rowIdx}, this.value)"
+          onblur="handlePOProdBlur(${rowIdx}, this.value)">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openProductPickerModal('po', ${rowIdx}, document.getElementById('${pid}').value)"
+          title="ค้นหาและเลือกสินค้าจากคลัง (SAP B1 Choose From List)"
+          style="padding:4px 8px;font-size:11.5px;font-weight:700;border-radius:4px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;white-space:nowrap;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:3px">
+          📋 แคตตาล็อก
+        </button>
+      </div>
+      <div id="${ddid}" class="prod-autocomplete-dropdown" style="display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)"></div>
     </div>`;
 }
 
@@ -29013,6 +29050,8 @@ function autoMergePOItems() {
 function renderPOItems() {
   const el = document.getElementById('po-items');
   if (!el) return;
+  document.querySelectorAll('body > [id^="po-prod-dd-"]').forEach(x => x.remove());
+
   if (!poItems.length) {
     el.innerHTML = '<div style="padding:16px;color:var(--text3);font-size:13px;text-align:center">กด "+ เพิ่มรายการสินค้า" เพื่อเพิ่มรายการสั่งซื้อ</div>';
     calcPOTotal();
@@ -29020,6 +29059,7 @@ function renderPOItems() {
   }
 
   el.innerHTML = '';
+  const mob = window.innerWidth <= 768;
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const cur = document.getElementById('po-currency')?.value || 'THB';
   const rate = Number(document.getElementById('po-exrate')?.value || 35);
@@ -29038,19 +29078,337 @@ function renderPOItems() {
 
   if (totalDupTypes > 0) {
     const alertDiv = document.createElement('div');
-    alertDiv.style.cssText = 'background:#fee2e2;border:1.5px solid #ef4444;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px';
+    alertDiv.style.cssText = 'background:#fee2e2;border:1.5px solid #ef4444;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px';
     alertDiv.innerHTML = `
-      <div style="color:#991b1b;font-weight:700;font-size:13px;display:flex;align-items:center;gap:6px">
-        <span style="font-size:16px">🚨</span>
-        <span>พบรายการสินค้าซ้ำในใบสั่งซื้อ (${totalDupTypes} ชนิดสินค้า) — มีแถบสีแดงกำกับทุกแถวที่ซ้ำ</span>
+      <div style="color:#991b1b;font-weight:700;font-size:12.5px;display:flex;align-items:center;gap:6px">
+        <span style="font-size:15px">🚨</span>
+        <span>พบรายการสินค้าซ้ำในใบสั่งซื้อ (${totalDupTypes} ชนิดสินค้า)</span>
       </div>
-      <button type="button" onclick="autoMergePOItems()" class="btn btn-warning btn-sm" style="background:#dc2626;color:#fff;border:none;font-weight:700;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;box-shadow:0 1px 3px rgba(0,0,0,0.15)">
+      <button type="button" onclick="autoMergePOItems()" class="btn btn-warning btn-sm" style="background:#dc2626;color:#fff;border:none;font-weight:700;border-radius:6px;padding:4px 12px;font-size:11.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;box-shadow:0 1px 3px rgba(0,0,0,0.15)">
         🧹 รวมรายการซ้ำ (รวมจำนวนชิ้นอัตโนมัติ)
       </button>
     `;
     el.appendChild(alertDiv);
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // 1. Desktop / PC View: SAP Business One Matrix Grid Table
+  // ══════════════════════════════════════════════════════════════════════════
+  if (!mob) {
+    const matrixWrap = document.createElement('div');
+    matrixWrap.className = 'sap-matrix-wrap';
+
+    const table = document.createElement('table');
+    table.className = 'sap-matrix-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th class="sap-matrix-num-cell" style="width:36px;min-width:36px;max-width:42px;text-align:center">#</th>
+          <th style="min-width:340px;text-align:left">Item No. / Description (รหัสและชื่อสินค้า)</th>
+          <th style="width:110px;text-align:right">Quantity</th>
+          <th style="width:130px;text-align:right">Unit Cost (${cur === 'USD' ? 'USD' : 'THB'})</th>
+          <th style="width:135px;text-align:right">Total (${cur === 'USD' ? 'USD / THB' : 'THB'})</th>
+          <th style="width:85px;text-align:center">Actions</th>
+        </tr>
+      </thead>
+    `;
+
+    const tbody = document.createElement('tbody');
+
+    poItems.forEach((it, i) => {
+      const tr = document.createElement('tr');
+      const selectedProduct = it.product_id && it.product_id !== '__custom__' 
+        ? prods.find(p => p.id === it.product_id) 
+        : null;
+      const stockVal = selectedProduct 
+        ? Number(selectedProduct.stock_inhouse !== undefined && selectedProduct.stock_inhouse !== null ? selectedProduct.stock_inhouse : (selectedProduct.stock_qty || 0)) 
+        : null;
+
+      const itKey = (it.product_id && it.product_id !== '__custom__')
+        ? ('id:' + it.product_id)
+        : ('name:' + (it.product_name || '').trim().toLowerCase());
+      const isDuplicate = Boolean(itKey && itKey !== 'name:' && dupKeyCounts[itKey] > 1);
+      if (isDuplicate) {
+        tr.style.background = '#fff1f2';
+      }
+
+      // ── Cell 1: # (Row number 36px) ──
+      const tdNum = document.createElement('td');
+      tdNum.className = 'sap-matrix-num-cell';
+      if (isDuplicate) {
+        tdNum.style.cssText = 'background:#fee2e2;color:#b91c1c;font-weight:800';
+        tdNum.innerHTML = `<span title="รายการสินค้าซ้ำใน PO">⚠️ ${i + 1}</span>`;
+      } else {
+        tdNum.textContent = i + 1;
+      }
+      tr.appendChild(tdNum);
+
+      // ── Cell 2: Item No. / Description ──
+      const tdDesc = document.createElement('td');
+      tdDesc.style.cssText = 'vertical-align:top';
+
+      // Top line: Search Input + [ 📋 แคตตาล็อก ]
+      const searchRow = document.createElement('div');
+      searchRow.style.cssText = 'display:flex;gap:4px;align-items:center;width:100%';
+
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.autocomplete = 'off';
+      inp.id = 'po-prod-inp-' + i;
+      inp.className = 'sap-matrix-inp';
+      inp.placeholder = '🔍 1. พิมพ์ค้นหาชื่อคลัง / SKU / Supplier (THB/USD)... หรือพิมพ์ชื่อเอง';
+      inp.value = (selectedProduct ? selectedProduct.name : (it.product_name || ''));
+      inp.style.cssText = 'flex:1;min-width:0;font-size:12.5px;padding:5px 8px;font-weight:600';
+
+      const cflBtn = document.createElement('button');
+      cflBtn.type = 'button';
+      cflBtn.className = 'btn btn-secondary btn-sm';
+      cflBtn.title = 'ค้นหาและเลือกสินค้าจากคลัง (SAP B1 Choose From List)';
+      cflBtn.style.cssText = 'padding:4px 8px;font-size:11.5px;font-weight:700;border-radius:4px;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;white-space:nowrap;cursor:pointer;flex-shrink:0;display:inline-flex;align-items:center;gap:3px';
+      cflBtn.innerHTML = '📋 แคตตาล็อก';
+      cflBtn.onclick = () => {
+        openProductPickerModal('po', i, inp.value);
+      };
+
+      searchRow.appendChild(inp);
+      searchRow.appendChild(cflBtn);
+      tdDesc.appendChild(searchRow);
+
+      // Autocomplete Dropdown
+      let dd = document.getElementById('po-prod-dd-' + i);
+      if (!dd) {
+        dd = document.createElement('div');
+        dd.id = 'po-prod-dd-' + i;
+        dd.className = 'prod-autocomplete-dropdown';
+        dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+      }
+
+      inp.oninput = () => {
+        poItems[i].product_name = inp.value;
+        const customInp = document.getElementById('po-custom-inp-' + i);
+        if (customInp && !customInp.value) customInp.value = inp.value;
+        searchPOProduct(i, inp.value);
+      };
+      inp.onfocus = () => searchPOProduct(i, inp.value);
+      inp.onblur = () => handlePOProdBlur(i, inp.value);
+
+      // Badges: Status, Inhouse Stock, Factory Stock, Buy Price info
+      const badgeRow = document.createElement('div');
+      badgeRow.style.cssText = 'font-size:11px;margin-top:4px;display:flex;align-items:center;flex-wrap:wrap;gap:4px';
+
+      if (it.product_id && it.product_id !== '__custom__' && selectedProduct) {
+        const skuTxt = selectedProduct.sku ? ` · SKU: ${escapeHTML(selectedProduct.sku)}` : '';
+        let stockBadge = '';
+        if (stockVal !== null) {
+          stockBadge = stockVal > 0
+            ? `<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #86efac">📦 สต๊อก ${fmt(stockVal)}</span>`
+            : `<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #fca5a5">⚠️ สต๊อก 0</span>`;
+        }
+        let fStockBadge = '';
+        if (selectedProduct.factory_stock !== undefined && selectedProduct.factory_stock !== null) {
+          const fStock = Number(selectedProduct.factory_stock || 0);
+          fStockBadge = fStock > 0
+            ? `<span style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:1px 5px;border-radius:4px;font-weight:700">🏭 รง. ${fmt(fStock)}</span>`
+            : `<span style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;padding:1px 5px;border-radius:4px">🏭 รง. 0</span>`;
+        }
+
+        const buyTHB = Number(selectedProduct?.purchase_price ?? selectedProduct?.buy_price ?? selectedProduct?.cost_price ?? 0);
+        const buyUSD = getProductPurchasePriceUSD(selectedProduct);
+        const hasMasterBuyPrice = (buyTHB > 0 || buyUSD > 0);
+        const buyBadge = hasMasterBuyPrice
+          ? `<span style="background:#fefce8;color:#a16207;padding:1px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:600">🏷️ ซื้อเข้า: ${buyUSD > 0 ? `฿${buyTHB.toFixed(2)} | $${buyUSD.toFixed(2)}` : `฿${buyTHB.toFixed(2)}`}</span>`
+          : `<button type="button" onclick="openPOProductQuickPriceModal('${selectedProduct.id}', ${i})" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:4px;padding:1px 6px;font-size:10.5px;font-weight:700;cursor:pointer">⚠️ ยังไม่มีราคาซื้อ ✏️</button>`;
+
+        badgeRow.innerHTML = `<span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:4px;border:1px solid #86efac;font-weight:700">✓ คลัง${skuTxt}</span> ${stockBadge} ${fStockBadge} ${buyBadge}`;
+
+        // Quick price update button
+        const qpBtn = document.createElement('button');
+        qpBtn.type = 'button';
+        qpBtn.className = 'btn btn-secondary btn-sm';
+        qpBtn.style.cssText = 'padding:1px 6px;font-size:10.5px;background:#f0fdf4;color:#166534;border-color:#86efac;cursor:pointer;font-weight:600;border-radius:4px';
+        qpBtn.innerHTML = '✏️ ราคา Master';
+        qpBtn.title = 'เปิดหน้าต่างอัปเดตราคาซื้อ Master ในระบบ';
+        qpBtn.onclick = () => openPOProductQuickPriceModal(selectedProduct.id, i);
+        badgeRow.appendChild(qpBtn);
+      } else {
+        badgeRow.innerHTML = '<span style="color:#f59e0b;font-weight:600;font-size:11px">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
+      }
+      tdDesc.appendChild(badgeRow);
+
+      // Line 2: Custom wording input (ข้อความระบุถึง Supplier / สเปกหน้าบิล)
+      const customWrap = document.createElement('div');
+      customWrap.style.cssText = 'margin-top:4px';
+      const customInp = document.createElement('input');
+      customInp.type = 'text';
+      customInp.id = 'po-custom-inp-' + i;
+      customInp.className = 'sap-matrix-inp';
+      customInp.value = it.product_name || '';
+      customInp.placeholder = '🏷️ 2. ข้อความพิมพ์ในเอกสาร PO / สเปกส่ง Supplier (เว้นว่างไว้จะใช้ชื่อคลัง)...';
+      customInp.style.cssText = 'font-size:11.5px;padding:3px 7px;background:#f8fafc';
+      customInp.oninput = () => {
+        poItems[i].product_name = customInp.value;
+      };
+      customWrap.appendChild(customInp);
+      tdDesc.appendChild(customWrap);
+
+      // Line 3: Internal Note (บันทึกภายใน)
+      const noteWrap = document.createElement('div');
+      noteWrap.style.cssText = 'margin-top:3px';
+      const noteInp = document.createElement('input');
+      noteInp.type = 'text';
+      noteInp.id = 'po-note-inp-' + i;
+      noteInp.className = 'sap-matrix-inp';
+      noteInp.value = it.internal_note || '';
+      noteInp.placeholder = '📝 บันทึกภายในสำหรับรายการนี้ (Internal Note เช่น เลข Order ที่สั่งให้ลูกค้า)...';
+      noteInp.style.cssText = 'font-size:11px;padding:2px 6px;background:#fafafa;color:#475569;border-style:dashed';
+      noteInp.oninput = () => {
+        poItems[i].internal_note = noteInp.value;
+      };
+      noteWrap.appendChild(noteInp);
+      tdDesc.appendChild(noteWrap);
+
+      tr.appendChild(tdDesc);
+
+      // ── Cell 3: Quantity ──
+      const tdQty = document.createElement('td');
+      tdQty.style.cssText = 'text-align:right;vertical-align:top';
+      const qtyInp = document.createElement('input');
+      qtyInp.type = 'number';
+      qtyInp.value = (it.qty_ordered !== undefined && it.qty_ordered !== null && it.qty_ordered !== '') ? it.qty_ordered : 1;
+      qtyInp.min = '0';
+      qtyInp.step = 'any';
+      qtyInp.className = 'sap-matrix-inp font-mono';
+      qtyInp.style.cssText = 'text-align:right;font-weight:700;font-size:13px';
+      qtyInp.oninput = () => {
+        poItems[i].qty_ordered = qtyInp.value === '' ? '' : Math.max(0, +qtyInp.value);
+        calcPOTotal();
+      };
+      tdQty.appendChild(qtyInp);
+      tr.appendChild(tdQty);
+
+      // ── Cell 4: Unit Cost ──
+      const tdCost = document.createElement('td');
+      tdCost.style.cssText = 'text-align:right;vertical-align:top';
+      const costInp = document.createElement('input');
+      costInp.type = 'number';
+      const hasCostVal = it.unit_cost !== undefined && it.unit_cost !== null && it.unit_cost !== '' && Number(it.unit_cost) > 0;
+      costInp.value = hasCostVal ? it.unit_cost : '';
+      costInp.placeholder = '0.00';
+      costInp.min = '0';
+      costInp.step = 'any';
+      costInp.className = 'sap-matrix-inp font-mono';
+      costInp.style.cssText = hasCostVal
+        ? 'text-align:right;font-weight:700;font-size:13px'
+        : 'text-align:right;font-weight:700;font-size:13px;background:#fff8f8;border-color:#fca5a5';
+      costInp.oninput = () => {
+        poItems[i].unit_cost = costInp.value === '' ? '' : +costInp.value;
+        if (costInp.value === '') {
+          costInp.style.background = '#fff8f8';
+          costInp.style.borderColor = '#fca5a5';
+        } else {
+          costInp.style.background = '#fff';
+          costInp.style.borderColor = '#cbd5e1';
+        }
+        calcPOTotal();
+      };
+      tdCost.appendChild(costInp);
+
+      if (cur === 'USD' && hasCostVal && rate > 0) {
+        const thbMini = document.createElement('div');
+        thbMini.style.cssText = 'font-size:10px;color:#64748b;margin-top:2px;text-align:right';
+        thbMini.textContent = `≈ ฿${fmtB(Number(it.unit_cost) * rate)}`;
+        tdCost.appendChild(thbMini);
+      }
+      tr.appendChild(tdCost);
+
+      // ── Cell 5: Total (THB / USD) ──
+      const rowRaw = Number(it.qty_ordered || 0) * Number(it.unit_cost || 0);
+      const tdTotal = document.createElement('td');
+      tdTotal.id = 'po-item-total-' + i;
+      tdTotal.className = 'font-mono text-accent';
+      tdTotal.style.cssText = 'text-align:right;vertical-align:top;padding-top:10px;font-size:13px;font-weight:700';
+      if (cur === 'USD') {
+        tdTotal.innerHTML = `$${rowRaw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}<div style="font-size:10px;color:var(--text3);font-weight:normal">≈ ฿${fmtB(rowRaw * rate)}</div>`;
+      } else {
+        tdTotal.textContent = `฿${fmtB(rowRaw)}`;
+      }
+      tr.appendChild(tdTotal);
+
+      // ── Cell 6: Actions ──
+      const tdActions = document.createElement('td');
+      tdActions.style.cssText = 'text-align:center;vertical-align:top;padding-top:6px;white-space:nowrap';
+
+      if (i > 0) {
+        const upBtn = document.createElement('button');
+        upBtn.type = 'button';
+        upBtn.innerHTML = '▲';
+        upBtn.title = 'สลับขึ้นด้านบน';
+        upBtn.className = 'sap-matrix-del-btn';
+        upBtn.style.color = '#475569';
+        upBtn.onclick = () => {
+          const t = poItems[i];
+          poItems[i] = poItems[i-1];
+          poItems[i-1] = t;
+          renderPOItems();
+          calcPOTotal();
+        };
+        tdActions.appendChild(upBtn);
+      }
+      if (i < poItems.length - 1) {
+        const downBtn = document.createElement('button');
+        downBtn.type = 'button';
+        downBtn.innerHTML = '▼';
+        downBtn.title = 'สลับลงด้านล่าง';
+        downBtn.className = 'sap-matrix-del-btn';
+        downBtn.style.color = '#475569';
+        downBtn.onclick = () => {
+          const t = poItems[i];
+          poItems[i] = poItems[i+1];
+          poItems[i+1] = t;
+          renderPOItems();
+          calcPOTotal();
+        };
+        tdActions.appendChild(downBtn);
+      }
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'sap-matrix-del-btn';
+      delBtn.textContent = '✕';
+      delBtn.title = `ลบรายการที่ ${i+1}`;
+      delBtn.onclick = () => {
+        poItems.splice(i, 1);
+        renderPOItems();
+        calcPOTotal();
+      };
+      tdActions.appendChild(delBtn);
+
+      tr.appendChild(tdActions);
+      tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    matrixWrap.appendChild(table);
+
+    // Matrix footer toolbar
+    const footerBar = document.createElement('div');
+    footerBar.className = 'sap-matrix-footer';
+    footerBar.innerHTML = `
+      <div style="display:flex;gap:6px">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addPOItem()" style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">+ เพิ่มรายการใน PO (Add Row)</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('po', -1, '')" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">⚡ + สร้างสินค้าใหม่เข้าคลัง (Quick Product)</button>
+      </div>
+      <div style="font-size:11.5px;color:#64748b;font-weight:600">${poItems.length} รายการ</div>
+    `;
+    matrixWrap.appendChild(footerBar);
+    el.appendChild(matrixWrap);
+    calcPOTotal();
+    return;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 2. Mobile View (<= 768px): Touch-friendly stacked cards
+  // ══════════════════════════════════════════════════════════════════════════
   poItems.forEach((it, i) => {
     const selectedProduct = it.product_id && it.product_id !== '__custom__' 
       ? prods.find(p => p.id === it.product_id) 
@@ -29175,7 +29533,7 @@ function renderPOItems() {
       const hasMasterBuyPrice = (buyTHB > 0 || buyUSD > 0);
 
       const buyBadge = hasMasterBuyPrice
-        ? `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600;display:inline-flex;align-items:center;gap:4px">
+        ? `<span style="background:#fefce8;color:#92400e;padding:2px 8px;border-radius:12px;border:1px solid #fde68a;font-weight:600;display:inline-flex;align-items:center;gap:4px">
             🏷️ ซื้อเข้า: ${buyUSD > 0 ? `฿${buyTHB.toFixed(3)} | $${buyUSD.toFixed(3)}` : `฿${buyTHB.toFixed(3)}`}
             <a href="javascript:void(0)" onclick="openPOProductQuickPriceModal('${selectedProduct.id}', ${i})" style="color:var(--accent);font-size:11px;margin-left:4px;text-decoration:underline" title="แก้ไขราคาซื้อของสินค้านี้">✏️ แก้ไข</a>
           </span>`
@@ -29282,52 +29640,35 @@ function renderPOItems() {
     };
     costWrap.appendChild(costLbl);
     costWrap.appendChild(costInp);
-
-    if (selectedProduct) {
-      const qpLink = document.createElement('div');
-      qpLink.style.cssText = 'font-size:10.5px;margin-top:3px;text-align:right';
-      qpLink.innerHTML = `<a href="javascript:void(0)" onclick="openPOProductQuickPriceModal('${selectedProduct.id}', ${i})" style="color:var(--accent);font-weight:600;text-decoration:underline" title="คลิกเพื่อบันทึกราคาซื้อเข้าข้อมูลสินค้าหลักโดยไม่ปิดหน้า PO">✏️ บันทึกราคาซื้อเข้าระบบสินค้า</a>`;
-      costWrap.appendChild(qpLink);
-    }
     r2.appendChild(costWrap);
 
-    // Line Total
-    const tw = document.createElement('div');
-    tw.style.cssText = 'text-align:right;padding-top:18px';
-    const tl = document.createElement('div');
-    tl.style.cssText = 'font-size:11px;color:var(--text3);margin-bottom:3px';
-    tl.textContent = 'รวมราคาซื้อ';
-    const tv = document.createElement('div');
-    tv.className = 'font-mono text-amber';
-    tv.style.cssText = 'font-size:15px;font-weight:700';
-    tv.id = 'po-item-total-' + i;
-    
-    const rowCost = Number(it.unit_cost || 0);
-    const rowTotal = Number(it.qty_ordered || 0) * rowCost;
-    if (cur === 'USD') {
-      tv.innerHTML = `$${rowTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3)">≈ ฿${(rowTotal * rate).toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}</div>`;
-    } else {
-      tv.textContent = `฿${rowTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
-    }
-    tw.appendChild(tl);
-    tw.appendChild(tv);
-    r2.appendChild(tw);
+    // Line Total display
+    const totalWrap = document.createElement('div');
+    totalWrap.style.cssText = 'min-width:110px;text-align:right;padding-top:22px';
+    const totalDisplay = document.createElement('div');
+    totalDisplay.id = 'po-item-total-' + i;
+    totalDisplay.className = 'font-mono text-accent';
+    totalDisplay.style.cssText = 'font-size:16px;font-weight:700';
+    totalDisplay.textContent = '฿0';
+    totalWrap.appendChild(totalDisplay);
+    r2.appendChild(totalWrap);
 
     card.appendChild(r2);
-    const noteWrap = document.createElement('div');
-    noteWrap.style.cssText = 'margin-top:10px;padding:9px 10px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:8px';
-    const noteLabel = document.createElement('label');
-    noteLabel.style.cssText = 'display:block;color:#5b21b6;font-size:11px;font-weight:700;margin-bottom:5px';
-    noteLabel.textContent = '🔒 หมายเหตุภายในรายการนี้ (ไม่พิมพ์ใน PO)';
-    const noteInput = document.createElement('textarea');
-    noteInput.rows = 2;
-    noteInput.maxLength = 1000;
-    noteInput.value = it.internal_note || '';
-    noteInput.placeholder = 'เช่น ลูกค้า ABC ขอสินค้ารุ่นนี้ไว้ / สั่งเติมสต๊อกขั้นต่ำ';
-    noteInput.style.cssText = 'width:100%;box-sizing:border-box;background:#fff;border:1px solid #c4b5fd;border-radius:6px;padding:7px 9px;font:inherit;font-size:12px;resize:vertical';
-    noteInput.oninput = () => { poItems[i].internal_note = noteInput.value; };
-    noteWrap.append(noteLabel, noteInput);
-    card.appendChild(noteWrap);
+
+    // ── Row 3: Internal Note per Item ──
+    const r3 = document.createElement('div');
+    r3.style.cssText = 'margin-top:8px;padding-top:6px;border-top:1px dashed var(--border2)';
+    const noteInp = document.createElement('input');
+    noteInp.type = 'text';
+    noteInp.value = it.internal_note || '';
+    noteInp.placeholder = '📝 บันทึกภายในสำหรับรายการนี้ (Internal Note เช่น เลข Order ที่สั่งให้ลูกค้า)...';
+    noteInp.style.cssText = 'width:100%;background:#fafafa;border:1px solid var(--border2);border-radius:5px;padding:4px 8px;font-size:11.5px;color:var(--text);box-sizing:border-box';
+    noteInp.oninput = () => {
+      poItems[i].internal_note = noteInp.value;
+    };
+    r3.appendChild(noteInp);
+    card.appendChild(r3);
+
     el.appendChild(card);
   });
 
@@ -29337,6 +29678,8 @@ function renderPOItems() {
   ab.style.cssText = 'width:100%;background:#f0fdf4;border:1px dashed #16a34a;border-radius:8px;padding:10px;color:#15803d;cursor:pointer;font-size:14px;font-weight:700;margin-top:4px';
   ab.onclick = addPOItem;
   el.appendChild(ab);
+
+  calcPOTotal();
 }
 
 function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:'',internal_note:''});renderPOItems();}
@@ -48084,6 +48427,13 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'3.81', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'หน้าต่างใบสั่งซื้อ (PO) สไตล์ SAP Business One เต็มรูปแบบ & เพิ่มช่องใส่ค่าส่ง (Freight) (v3.81)', items:[
+      '📊 <b>หน้าต่างใบสั่งซื้อแบบ SAP Business One Matrix Grid:</b> ปรับปรุงพื้นที่รายการสินค้า (Contents) ในหน้าต่างสร้าง/แก้ไขใบสั่งซื้อ (Purchase Order) ให้เป็นตาราง Spreadsheet สไตล์ SAP B1 พร้อมคอลัมน์ # (ลำดับ 36px), Item No. / Description, Quantity, Unit Cost ($/฿), Total และปุ่ม Actions (▲/▼/✕)',
+      '🚚 <b>เพิ่มช่องกรอกค่าส่ง (Freight / ค่าจัดส่ง) โดยตรงที่ส่วนสรุปยอด:</b> เพิ่มช่องกรอกค่าจัดส่งและตัวเลือกสกุลเงิน (฿ THB / $ USD) ที่กล่องสรุปยอดมุมขวาล่างของเอกสาร คำนวณยอดรวมสุทธิได้ทันทีในหน้าแรกโดยไม่ต้องสลับแท็บ',
+      '📋 <b>ปุ่มเลือกสินค้าจากคลังมาตรฐาน SAP B1 (Choose From List):</b> เพิ่มปุ่ม <code>[ 📋 แคตตาล็อก ]</code> ข้างช่องค้นหาในทุกแถวรายการสั่งซื้อ เพื่อเปิดหน้าต่างค้นหาสินค้าขนาดใหญ่ กรองหมวดหมู่และสต๊อกได้ทันที',
+      '🏷️ <b>ระบบตรวจจับรายการซ้ำ & รวมจำนวนอัตโนมัติ:</b> ตรวจจับแถวสินค้าที่ซ้ำกันแบบเรียลไทม์พร้อมปุ่ม <code>[ 🧹 รวมรายการซ้ำ ]</code> รวมจำนวนชิ้นให้อัตโนมัติในคลิกเดียว',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.81 และล้างแคชอัตโนมัติ'
+    ]},
             { v:'3.78', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ขยายขนาดกล่องค้นหาสินค้า (Autocomplete) ให้ใหญ่ขึ้น มองเห็นได้ 10+ รายการ และแก้ปัญหาถูกตัดขอบ (v3.78)', items:[
       '🔍 <b>ขยายขนาดกล่องผลการค้นหาสินค้า (Product Search Dropdown):</b> เพิ่มความสูงสูงสุดเป็น 520px (จากเดิม 260-300px) และเพิ่มความกว้างเป็น 580 - 850px เพื่อให้สามารถมองเห็นผลการค้นหาสินค้าได้ 10 รายการขึ้นไปอย่างสบายตา พร้อมแสดงชื่อสินค้า สเปก SKU ป้ายสต็อกหน้าร้าน และสต็อกโรงงานได้อย่างครบถ้วน',
       '🛡️ <b>ปลดล็อคการแสดงผลไม่ให้ถูกตัดขอบ (No Overflow Clipping):</b> ปรับแต่งให้ <code>.sap-matrix-wrap</code>, <code>.sap-window</code> และ <code>.sap-tab-pane</code> แสดงผลแบบ <code>overflow: visible</code> ในมุมมอง PC ทำให้กล่องผลการค้นหาลอยทับองค์ประกอบต่างๆ ได้อย่างอิสระ ไม่ถูกขอบตารางตัดขาดแม้จะมีรายการสินค้าเพียง 1 แถว',
