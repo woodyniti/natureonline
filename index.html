@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.82';
-const DISPLAY_APP_VERSION = 'v3.82';
+const CURRENT_APP_VERSION = 'sealthai-v3.83';
+const DISPLAY_APP_VERSION = 'v3.83';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.82)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.82 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.83)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.83 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9063,6 +9063,250 @@ function updateOrderSummary() {
     receiptWarning.textContent = message;
   }
 }
+
+// ── SAP B1 Autocomplete Dropdown Positioning Portal ──
+function positionProductAutocompletePortal(inp, dd) {
+  if (!inp || !dd) return;
+
+  const rect = inp.getBoundingClientRect();
+  const vw = window.innerWidth || document.documentElement.clientWidth;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+
+  dd.style.display = 'block';
+  dd.style.position = 'fixed';
+  dd.style.zIndex = '2147483647';
+
+  // Desired width: match input or min 580px, max 850px, clamped to viewport
+  const desiredWidth = Math.min(Math.max(rect.width, 580), Math.min(850, vw - 24));
+
+  // Horizontal position: align with input left, ensure fits on screen
+  let left = rect.left;
+  if (left + desiredWidth > vw - 12) {
+    left = Math.max(12, vw - desiredWidth - 12);
+  }
+
+  // Vertical position: below if sufficient space (>= 220px) or more than above
+  const spaceBelow = vh - rect.bottom;
+  const spaceAbove = rect.top;
+
+  if (spaceBelow >= 220 || spaceBelow >= spaceAbove) {
+    dd.style.top = Math.round(rect.bottom + 4) + 'px';
+    dd.style.bottom = 'auto';
+    dd.style.maxHeight = Math.min(520, Math.max(160, spaceBelow - 16)) + 'px';
+  } else {
+    dd.style.bottom = Math.round(vh - rect.top + 4) + 'px';
+    dd.style.top = 'auto';
+    dd.style.maxHeight = Math.min(520, Math.max(160, spaceAbove - 16)) + 'px';
+  }
+
+  dd.style.left = Math.round(left) + 'px';
+  dd.style.width = Math.round(desiredWidth) + 'px';
+  dd.style.overflowY = 'auto';
+}
+window.positionProductAutocompletePortal = positionProductAutocompletePortal;
+
+// ── SAP B1 Choose From List (Product Catalog Modal) ──
+function openProductPickerModal(target, rowIdx, initialQuery = '') {
+  const modalId = 'modal-product-picker';
+  let modalEl = document.getElementById(modalId);
+  if (!modalEl) {
+    modalEl = document.createElement('div');
+    modalEl.id = modalId;
+    modalEl.className = 'modal-overlay';
+    modalEl.style.zIndex = '3000';
+    document.body.appendChild(modalEl);
+  }
+
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const targetLabel = target === 'quote' ? 'ใบเสนอราคา (Quotation)' : (target === 'po' ? 'ใบสั่งซื้อ (Purchase Order)' : 'ออเดอร์ (Sales Order)');
+
+  modalEl.innerHTML = `
+    <div class="modal sap-modal-large" style="max-width:1100px;width:calc(100vw - 32px);max-height:92vh;display:flex;flex-direction:column;padding:20px;border-radius:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5px solid #cbd5e1;padding-bottom:12px;margin-bottom:12px">
+        <div>
+          <div style="font-size:17px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px">
+            <span>📋 เลือกสินค้าจากแคตตาล็อก (SAP B1 Choose From List)</span>
+            <span style="font-size:11.5px;font-weight:700;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:6px;border:1px solid #7dd3fc">${targetLabel}</span>
+          </div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">ค้นหาและเลือกสินค้าที่ต้องการลงในเอกสารแถวที่ ${rowIdx + 1}</div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('${modalId}')" style="font-size:15px;line-height:1;padding:4px 9px;border-radius:6px">✕</button>
+      </div>
+
+      <!-- Filter Controls -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0">
+        <div style="flex:2;min-width:240px;position:relative">
+          <input type="text" id="picker-search-input" value="${escapeHTML(initialQuery || '')}"
+            placeholder="🔍 พิมพ์ชื่อสินค้า / SKU / สเปก / ขนาด..."
+            style="width:100%;padding:7px 10px;font-size:13px;border:1.5px solid #94a3b8;border-radius:6px;box-sizing:border-box;font-weight:600"
+            oninput="renderProductPickerList('${target}', ${rowIdx})">
+        </div>
+        <div style="flex:1;min-width:140px">
+          <select id="picker-category-filter" style="width:100%;padding:7px 10px;font-size:12.5px;border:1px solid #cbd5e1;border-radius:6px;background:#fff"
+            onchange="renderProductPickerList('${target}', ${rowIdx})">
+            <option value="">📁 ทุกหมวดหมู่ (All)</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:130px">
+          <select id="picker-stock-filter" style="width:100%;padding:7px 10px;font-size:12.5px;border:1px solid #cbd5e1;border-radius:6px;background:#fff"
+            onchange="renderProductPickerList('${target}', ${rowIdx})">
+            <option value="all">📦 สต๊อกทั้งหมด</option>
+            <option value="in_stock">📦 มีสต๊อกหน้าร้าน (>0)</option>
+            <option value="factory">🏭 มีสต๊อกโรงงาน (>0)</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" onclick="openQuickProductModal('${target}', ${rowIdx}, document.getElementById('picker-search-input').value); closeModal('${modalId}');"
+          style="padding:7px 12px;font-size:12px;font-weight:700;white-space:nowrap;background:#10b981;border-color:#059669">
+          ➕ สร้างสินค้าใหม่
+        </button>
+      </div>
+
+      <!-- Table Container -->
+      <div style="flex:1;min-height:300px;max-height:55vh;overflow-y:auto;border:1px solid #cbd5e1;border-radius:8px">
+        <table class="sap-table" style="width:100%;border-collapse:collapse;font-size:12.5px">
+          <thead style="position:sticky;top:0;background:#f1f5f9;z-index:2">
+            <tr>
+              <th style="padding:8px 10px;text-align:left;border-bottom:1.5px solid #cbd5e1;width:45%">ชื่อสินค้า / SKU / สเปก</th>
+              <th style="padding:8px 10px;text-align:left;border-bottom:1.5px solid #cbd5e1;width:15%">หมวดหมู่</th>
+              <th style="padding:8px 10px;text-align:right;border-bottom:1.5px solid #cbd5e1;width:12%">สต๊อกหน้าร้าน</th>
+              <th style="padding:8px 10px;text-align:right;border-bottom:1.5px solid #cbd5e1;width:12%">สต๊อก รง.</th>
+              <th style="padding:8px 10px;text-align:center;border-bottom:1.5px solid #cbd5e1;width:16%">การเลือก</th>
+            </tr>
+          </thead>
+          <tbody id="picker-table-body">
+            <!-- Rendered by renderProductPickerList -->
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #e2e8f0;font-size:12px;color:var(--text3)">
+        <span id="picker-count-label">แสดง 0 รายการ</span>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  `;
+
+  // Populate categories
+  const catSel = document.getElementById('picker-category-filter');
+  if (catSel) {
+    const cats = [...new Set(prods.map(p => p.category).filter(Boolean))].sort();
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = `📁 ${c}`;
+      catSel.appendChild(opt);
+    });
+  }
+
+  openModal(modalId);
+  renderProductPickerList(target, rowIdx);
+  setTimeout(() => {
+    const inp = document.getElementById('picker-search-input');
+    if (inp) { inp.focus(); inp.select(); }
+  }, 100);
+}
+
+function renderProductPickerList(target, rowIdx) {
+  const tbody = document.getElementById('picker-table-body');
+  const countLabel = document.getElementById('picker-count-label');
+  if (!tbody) return;
+
+  const q = (document.getElementById('picker-search-input')?.value || '').trim().toLowerCase();
+  const cat = document.getElementById('picker-category-filter')?.value || '';
+  const stockFilter = document.getElementById('picker-stock-filter')?.value || 'all';
+
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  let filtered = prods.filter(p => {
+    if (cat && p.category !== cat) return false;
+    const inStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+    const fStock = Number(p.factory_stock || 0);
+    if (stockFilter === 'in_stock' && inStock <= 0) return false;
+    if (stockFilter === 'factory' && fStock <= 0) return false;
+    if (!q) return true;
+    return wcProdMatch(p, q);
+  });
+
+  const displayList = filtered.slice(0, 100);
+  if (countLabel) {
+    countLabel.textContent = `พบ ${fmt(filtered.length)} รายการ (แสดง ${fmt(displayList.length)} รายการแรก)`;
+  }
+
+  if (!displayList.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text3)">ไม่พบสินค้าที่ตรงกับเงื่อนไขการค้นหา</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = displayList.map(p => {
+    const inStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+    const fStock = Number(p.factory_stock || 0);
+
+    const stockBadge = inStock > 0
+      ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;border:1px solid #86efac">📦 ${fmt(inStock)}</span>`
+      : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px;border:1px solid #fca5a5">0</span>`;
+
+    const fStockBadge = fStock > 0
+      ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;border:1px solid #fde68a">🏭 ${fmt(fStock)}</span>`
+      : `<span style="color:#94a3b8;font-size:11px">-</span>`;
+
+    const badges = [];
+    if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:1px 5px;border-radius:4px;border:1px solid #bfdbfe;font-size:11px">SKU: ${escapeHTML(p.sku)}</span>`);
+    if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:1px 5px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+    if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:1px 5px;border-radius:4px;border:1px solid #fef08a;font-size:11px;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
+    const badgeHtml = badges.length ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">${badges.join('')}</div>` : '';
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;transition:background 0.12s ease" onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+        <td style="padding:8px 10px;vertical-align:middle">
+          <div style="font-weight:700;color:#0f172a;line-height:1.3">${escapeHTML(p.name)}</div>
+          ${badgeHtml}
+        </td>
+        <td style="padding:8px 10px;vertical-align:middle;color:#475569">
+          ${p.category ? `<span style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px">📁 ${escapeHTML(p.category)}</span>` : '-'}
+        </td>
+        <td style="padding:8px 10px;text-align:right;vertical-align:middle">${stockBadge}</td>
+        <td style="padding:8px 10px;text-align:right;vertical-align:middle">${fStockBadge}</td>
+        <td style="padding:8px 10px;text-align:center;vertical-align:middle">
+          <button type="button" class="btn btn-primary btn-sm" onclick="selectProductFromPicker('${target}', ${rowIdx}, '${p.id}')"
+            style="padding:4px 10px;font-size:11.5px;font-weight:700;white-space:nowrap;border-radius:4px;background:#0284c7;border-color:#0369a1">
+            เลือกสินค้านี้ ↵
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function selectProductFromPicker(target, rowIdx, productId) {
+  closeModal('modal-product-picker');
+  if (target === 'quote') {
+    if (rowIdx === -1 || !quoteItems[rowIdx]) {
+      quoteItems.push({});
+      rowIdx = quoteItems.length - 1;
+    }
+    if (typeof selectQuoteProductById === 'function') selectQuoteProductById(rowIdx, productId);
+  } else if (target === 'po') {
+    if (rowIdx === -1 || !poItems[rowIdx]) {
+      poItems.push({});
+      rowIdx = poItems.length - 1;
+    }
+    if (typeof selectNewPOProductById === 'function') selectNewPOProductById(rowIdx, productId);
+  } else if (target === 'edit_order') {
+    if (rowIdx === -1 || !editItems[rowIdx]) {
+      editItems.push({});
+      rowIdx = editItems.length - 1;
+    }
+    if (typeof selectEditProd === 'function') selectEditProd(rowIdx, productId);
+  } else {
+    if (rowIdx === -1 || !orderItems[rowIdx]) {
+      orderItems.push({});
+      rowIdx = orderItems.length - 1;
+    }
+    if (typeof selectNewOrderProductById === 'function') selectNewOrderProductById(rowIdx, productId);
+  }
+}
+window.openProductPickerModal = openProductPickerModal;
+window.renderProductPickerList = renderProductPickerList;
+window.selectProductFromPicker = selectProductFromPicker;
 
 // ── New order product search ────────────────────────────
 function newOrderProdSearch(rowIdx) {
@@ -23514,7 +23758,7 @@ async function searchQuoteProduct(rowIdx, q) {
       </div>`;
 
     dd.innerHTML = html;
-    dd.style.display = 'block';
+    positionProductAutocompletePortal(inp, dd);
   }
 
   // 1. In-memory filter
@@ -28832,8 +29076,10 @@ let _poSearchTimer = null;
 
 function searchPOProduct(rowIdx, q) {
   const ddid = 'po-prod-dd-' + rowIdx;
+  const inpid = 'po-prod-inp-' + rowIdx;
   const dd = document.getElementById(ddid);
-  if (!dd) return;
+  const inp = document.getElementById(inpid);
+  if (!dd || !inp) return;
 
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
@@ -28890,7 +29136,7 @@ function searchPOProduct(rowIdx, q) {
         <span style="font-size:10px;background:#dcfce7;padding:2px 6px;border-radius:4px;border:1px solid #86efac">กดสร้าง</span>
       </div>`;
     dd.innerHTML += quickAddHtml;
-    dd.style.display = 'block';
+    positionProductAutocompletePortal(inp, dd);
   }
 
   // 1. In-memory filter
@@ -48448,7 +48694,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.82', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'สรุปยอดใบสั่งซื้อ (PO) แสดงคู่ทั้งสกุลเงิน USD และ THB (v3.82)', items:[
+    { v:'3.83', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขฟังก์ชัน Position Portal และเพิ่มระบบหน้าต่างแคตตาล็อกสินค้า SAP B1 เต็มรูปแบบ (v3.83)', items:[
+      '🛡️ <b>แก้ไขข้อผิดพลาด positionProductAutocompletePortal is not defined:</b> เพิ่มการประกาศฟังก์ชัน <code>positionProductAutocompletePortal</code> ในขอบเขตส่วนกลาง (Global Scope) แก้ไขปัญหาแจ้งเตือนข้อผิดพลาดขณะพิมพ์ค้นหาสินค้าในหน้าออเดอร์และเอกสารต่างๆ',
+      '📋 <b>ระบบหน้าต่างแคตตาล็อกเลือกสินค้า (SAP B1 Choose From List):</b> เพิ่มหน้าต่าง <code>openProductPickerModal</code> สำหรับปุ่ม <code>[ 📋 แคตตาล็อก ]</code> ให้สามารถค้นหา กรองหมวดหมู่ กรองสต๊อกหน้าร้าน/โรงงาน และกดเลือกสินค้าลงในเอกสารได้ทันที รองรับทั้ง Sales Order, Quotation และ Purchase Order',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.83 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.82', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'สรุปยอดใบสั่งซื้อ (PO) แสดงคู่ทั้งสกุลเงิน USD และ THB (v3.82)', items:[
       '💵 <b>แสดงยอดรวมสุทธิทั้ง USD และ (THB) แบบเรียลไทม์:</b> ในหน้าสร้าง/แก้ไขใบสั่งซื้อ เมื่อเลือกสกุลเงินเป็น USD ยอดรวมสุทธิ (Total) จะแสดงยอดดอลลาร์ $ และยอดเงินบาทกำกับ <code>$XX.XXX (฿YY,YYY.YYY)</code> อย่างชัดเจน สอดคล้องกับมาตรฐาน SAP Business One Foreign Currency',
       '🏷️ <b>แสดงยอดรวมก่อนหักส่วนลด & ภาษีคู่สองสกุล:</b> ทั้งยอดรวมสินค้า (Total Before Discount), ส่วนลด (Discount) และภาษีมูลค่าเพิ่ม (VAT 7%) จะแสดงยอด USD พร้อมค่าแปลงบาท (THB) ให้เห็นอย่างครบถ้วน',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.82 และล้างแคชอัตโนมัติ'
