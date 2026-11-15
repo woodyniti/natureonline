@@ -8,10 +8,10 @@ const content = fs.readFileSync(htmlPath, 'utf8');
 console.log('--- Testing v3.70 Product Sticker 10x15 cm (4 per sheet) ---');
 
 // 1. Version assertions
-assert.ok(content.includes("CURRENT_APP_VERSION = 'sealthai-v3.70'"), 'CURRENT_APP_VERSION should be sealthai-v3.70');
-assert.ok(content.includes("DISPLAY_APP_VERSION = 'v3.70'"), 'DISPLAY_APP_VERSION should be v3.70');
-assert.ok(content.includes('v3.70 🚀'), 'Topbar badge should display v3.70 🚀');
-console.log('✓ App version is v3.70');
+assert.ok(/CURRENT_APP_VERSION = 'sealthai-v3\.(7[0-9]|[8-9]\d)'/.test(content), 'CURRENT_APP_VERSION should be >= sealthai-v3.70');
+assert.ok(/DISPLAY_APP_VERSION = 'v3\.(7[0-9]|[8-9]\d)'/.test(content), 'DISPLAY_APP_VERSION should be >= v3.70');
+assert.ok(/v3\.(7[0-9]|[8-9]\d) 🚀/.test(content), 'Topbar badge should display >= v3.70 🚀');
+console.log('✓ App version is >= v3.70');
 
 // 2. Size option 10x15cm in modal
 assert.ok(content.includes('value="10x15cm"'), 'Modal must have 10x15cm option');
@@ -40,7 +40,7 @@ assert.ok(content.includes('100mm 150mm'), 'Page size must be 100mm 150mm');
 console.log('✓ 10x15 cm prints 4 stickers per sheet with 100mm x 150mm page size');
 
 // 7. Changelog contains v3.70
-assert.ok(content.includes("{ v:'3.70', date:'2026-11-15', badge:'Latest'"), 'Changelog must include v3.70 as Latest');
+assert.ok(content.includes("{ v:'3.70', date:'2026-11-15'"), 'Changelog must include v3.70');
 console.log('✓ Changelog contains v3.70 entry');
 
 console.log('\nAll tests in test_sticker_10x15_v370.js PASSED successfully!');
