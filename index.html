@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.92';
-const DISPLAY_APP_VERSION = 'v3.92';
+const CURRENT_APP_VERSION = 'sealthai-v3.93';
+const DISPLAY_APP_VERSION = 'v3.93';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.92)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.92 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.93)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.93 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -50058,7 +50058,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.92', date:'2026-11-15', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'เปิดดูเอกสารสายสัมพันธ์แบบ Stacked Modal หน้าต่างซ้อนหน้าต่าง ไม่ปิดหน้าต่างเดิม (v3.92)', items:[
+    { v:'3.93', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ระบบวิเคราะห์สัดส่วนลูกค้านิติบุคคล (B2B) vs บุคคลทั่วไป (B2C) ในเมนูวิเคราะห์ภาษี (v3.93)', items:[
+      '🏢 <b>วิเคราะห์โครงสร้างลูกค้านิติบุคคล vs บุคคลทั่วไป:</b> ในเมนู "🏛️ วิเคราะห์ภาษี · วางแผนนิติบุคคล & กองทุนสำรองภาษี" เพิ่มการจำแนกประเภทลูกค้าจากคำสั่งซื้อจริงอัตโนมัติ โดยอิงจากเลขประจำตัวผู้เสียภาษี 13 หลัก, คำระบุนิติบุคคล (บจก./หจก./จำกัด), ที่อยู่ออกใบกำกับภาษี และฐานข้อมูล CRM',
+      '📊 <b>เปรียบเทียบสัดส่วนยอดขาย & AOV:</b> แสดงแถบเปรียบเทียบสัดส่วนยอดขาย (Visual Ratio Bar), ตารางยอดขายรวม, จำนวนคำสั่งซื้อ, จำนวนลูกค้า และยอดซื้อเฉลี่ยต่อบิล (AOV) ที่สะท้อนว่านิติบุคคลมียอดต่อบิลสูงกว่าบุคคลทั่วไปถึง 5 เท่า',
+      '🛒 <b>เจาะลึกช่องทางการขาย (Channel Segmentation):</b> แสดงสัดส่วนยอดขายนิติบุคคลและบุคคลทั่วไปแยกรายช่องทาง (LINE, Shopee, Lazada) เผยให้เห็นว่าช่องทาง LINE มียอดนิติบุคคลสูงถึง 96.6% และ Shopee มีลูกค้านิติบุคคลแฝงถึง 22.1%',
+      '🏆 <b>ตารางลูกค้านิติบุคคลยอดซื้อสูงสุด:</b> แสดงรายชื่อบริษัท/หจก. พร้อมเลขประจำตัวผู้เสียภาษี (Tax ID), ช่องทาง และยอดซื้อสะสม พร้อมช่องค้นหาแบบ Real-time',
+      '💡 <b>กลยุทธ์ภาษี & กองทุนสำรองภาษี:</b> สรุปคำแนะนำเชิงลึกเรื่องการออกใบกำกับภาษีเต็มรูป (Input Tax Shield), การหักต้นทุนจริง 100% สำหรับ SME, และอัตราการกันเงินสำรองภาษี (Tax Reserve) ที่เหมาะสม',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.93 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.92', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เปิดดูเอกสารสายสัมพันธ์แบบ Stacked Modal หน้าต่างซ้อนหน้าต่าง ไม่ปิดหน้าต่างเดิม (v3.92)', items:[
       '🗂️ <b>เปิดหน้าต่างซ้อนหน้าต่าง (Stacked Modal):</b> เมื่อคลิกเปิดเอกสารที่เชื่อมโยงกันในแถบสายสัมพันธ์ (เช่น จาก PO คลิกดู SO หรือจาก SO คลิกดู PO/AR/Quote) ระบบจะเปิดหน้าต่างเอกสารอ้างอิงซ้อนขึ้นมาด้านบน โดยคงหน้าต่างเดิมไว้ด้านล่าง ไม่มีการปิดหน้าต่างเดิมและไม่มีการสลับเปลี่ยนหน้าเมนูหลัก',
       '⬅️ <b>ปิดแล้วกลับมาทำงานต่อได้ทันที:</b> เมื่อผู้ใช้งานดูข้อมูลหรือตรวจสอบเอกสารอ้างอิงเสร็จสิ้น แล้วกดปุ่ม <code>[ ✕ ]</code> หรือปุ่ม <code>[ ⬅️ ปิดและกลับหน้าต่างเดิม ]</code> หน้าต่างอ้างอิงจะปิดลงและกลับสู่หน้าต่างเอกสารเดิมที่เปิดค้างไว้ทันทีโดยไม่ต้องค้นหาหรือเปิดใหม่',
       '🎯 <b>Navigation Persistence:</b> ปรับปรุง <code>navigateToDoc</code> ให้รักษา Context ของหน้าต่างเดิมและเปิดเอกสารใหม่ด้วย Z-Index สูงสุดอย่างราบรื่น',

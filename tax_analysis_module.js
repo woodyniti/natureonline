@@ -14,6 +14,10 @@ var _taxSimSocialSecurity = true; // สิทธิลดหย่อนปร�
 var _taxAnalysisOrders = [];
 var _taxAnalysisLoaded = false;
 var _taxAnalysisCharts = {};
+var _taxAnalysisCustMap = {};
+var _taxAnalysisCustMapLoaded = false;
+var _taxCustomerSegmentFilter = 'all'; // 'all' | 'corp' | 'indiv'
+var _taxCustomerSearchQuery = '';
 
 // ── Tax Constant Definitions (ตามประมวลรัษฎากรและเกณฑ์ SME) ──
 const TAX_CONSTANTS = {
@@ -81,15 +85,26 @@ async function initTaxAnalysis(forceReload = false) {
     const startYear = `${yStr}-01-01`;
     const endYear = `${yStr}-12-31`;
 
-    const { data, error } = await sb.from('orders')
-      .select('id,order_no,order_date,total_amount,doc_status,shipping_status,channel')
-      .eq('shop_id', currentShop?.id)
-      .gte('order_date', startYear)
-      .lte('order_date', endYear)
-      .limit(10000);
+    const [{ data, error }, custRes] = await Promise.all([
+      sb.from('orders')
+        .select('id,order_no,order_date,total_amount,doc_status,shipping_status,channel,customer_name,tax_id,billing_address,customer_id')
+        .eq('shop_id', currentShop?.id)
+        .gte('order_date', startYear)
+        .lte('order_date', endYear)
+        .limit(10000),
+      (!_taxAnalysisCustMapLoaded && sb.from('customers')
+        ? sb.from('customers').select('id,name,customer_type,tax_id').eq('shop_id', currentShop?.id).limit(5000)
+        : Promise.resolve({ data: [] }))
+    ]);
 
     if (error) throw error;
     _taxAnalysisOrders = (data || []).filter(o => o.doc_status !== 'cancelled' && o.shipping_status !== 'cancelled');
+
+    if (custRes && custRes.data && Array.isArray(custRes.data)) {
+      _taxAnalysisCustMap = {};
+      custRes.data.forEach(c => { _taxAnalysisCustMap[c.id] = c; });
+      _taxAnalysisCustMapLoaded = true;
+    }
 
   } catch (err) {
     console.warn('Tax orders fetch error, falling back to local preloaded:', err);
@@ -306,6 +321,151 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
     corpStatusBg
   };
 }
+
+// ── Corporate vs Individual Customer Classification Engine ──
+const CORP_REGEX = /(บริษัท|บจก|บจ\.|ห้างหุ้นส่วน|หจก|หจ\.|หสน\.|จำกัด|จำกัด\s*\(มหาชน\)|บมจ|co\.,?\s*ltd|company|corp|inc\.|โรงงาน|วิทยาลัย|มหาวิทยาลัย|สหกรณ์|สถาบัน)/i;
+
+function isCorporateCustomer(order, custMap = {}) {
+  const taxId = (order.tax_id || '').trim();
+  const custName = (order.customer_name || '').trim();
+  const billingAddr = (order.billing_address || '').trim();
+  const custId = order.customer_id;
+
+  // 1. Valid Tax ID check (10 digits or more)
+  if (taxId && taxId.replace(/\D/g, '').length >= 10) {
+    return { isCorp: true, reason: 'tax_id', label: 'มีเลขผู้เสียภาษี 13 หลัก' };
+  }
+
+  // 2. Customer Name keyword check
+  if (CORP_REGEX.test(custName)) {
+    return { isCorp: true, reason: 'name_keyword', label: 'ชื่อระบุนิติบุคคล (บจก./หจก.)' };
+  }
+
+  // 3. Billing Address keyword check
+  if (CORP_REGEX.test(billingAddr) || billingAddr.includes('เลขประจำตัวผู้เสียภาษี')) {
+    return { isCorp: true, reason: 'billing_address', label: 'ที่อยู่ออกใบกำกับภาษีระบุนิติบุคคล' };
+  }
+
+  // 4. CRM Customer record check
+  if (custId && custMap[custId]) {
+    const c = custMap[custId];
+    const cTax = (c.tax_id || '').trim();
+    const cName = (c.name || '').trim();
+    const cType = (c.customer_type || '').toLowerCase();
+    if (cTax && cTax.replace(/\D/g, '').length >= 10) {
+      return { isCorp: true, reason: 'crm_tax', label: 'CRM ระบุเลขผู้เสียภาษี' };
+    }
+    if (CORP_REGEX.test(cName)) {
+      return { isCorp: true, reason: 'crm_name', label: 'CRM ระบุชื่อนิติบุคคล' };
+    }
+    if (['corporate', 'company', 'business', 'b2b'].includes(cType)) {
+      return { isCorp: true, reason: 'crm_type', label: 'CRM จัดประเภทเป็นลูกค้าธุรกิจ' };
+    }
+  }
+
+  return { isCorp: false, reason: 'individual', label: 'บุคคลทั่วไป' };
+}
+
+function analyzeCustomerTaxSegments(orders, custMap = {}) {
+  const corpOrders = [];
+  const indivOrders = [];
+  const channelMap = {};
+  const buyersMap = {};
+
+  orders.forEach(o => {
+    const classification = isCorporateCustomer(o, custMap);
+    const amt = Number(o.total_amount || 0);
+    const ch = (o.channel || 'Other').trim();
+    const buyerKey = (o.customer_name || o.tax_id || 'ไม่ระบุชื่อ').trim();
+
+    const tagged = {
+      ...o,
+      _amt: amt,
+      _isCorp: classification.isCorp,
+      _reason: classification.reason,
+      _label: classification.label
+    };
+
+    if (classification.isCorp) {
+      corpOrders.push(tagged);
+    } else {
+      indivOrders.push(tagged);
+    }
+
+    // Channels
+    if (!channelMap[ch]) {
+      channelMap[ch] = { channel: ch, total: 0, corpAmt: 0, indivAmt: 0, corpCount: 0, indivCount: 0 };
+    }
+    channelMap[ch].total += amt;
+    if (classification.isCorp) {
+      channelMap[ch].corpAmt += amt;
+      channelMap[ch].corpCount++;
+    } else {
+      channelMap[ch].indivAmt += amt;
+      channelMap[ch].indivCount++;
+    }
+
+    // Buyers
+    if (!buyersMap[buyerKey]) {
+      buyersMap[buyerKey] = {
+        name: buyerKey,
+        isCorp: classification.isCorp,
+        taxId: (o.tax_id || '').trim(),
+        totalAmt: 0,
+        orderCount: 0,
+        channels: new Set(),
+        lastDate: o.order_date || ''
+      };
+    }
+    buyersMap[buyerKey].totalAmt += amt;
+    buyersMap[buyerKey].orderCount++;
+    if (ch) buyersMap[buyerKey].channels.add(ch);
+    if (o.tax_id && !buyersMap[buyerKey].taxId) buyersMap[buyerKey].taxId = o.tax_id.trim();
+    if (o.order_date && (!buyersMap[buyerKey].lastDate || o.order_date > buyersMap[buyerKey].lastDate)) {
+      buyersMap[buyerKey].lastDate = o.order_date;
+    }
+  });
+
+  const totalSales = orders.reduce((s, o) => s + Number(o.total_amount || 0), 0);
+  const corpSales = corpOrders.reduce((s, o) => s + o._amt, 0);
+  const indivSales = indivOrders.reduce((s, o) => s + o._amt, 0);
+
+  const corpPct = totalSales > 0 ? (corpSales / totalSales * 100) : 0;
+  const indivPct = totalSales > 0 ? (indivSales / totalSales * 100) : 0;
+
+  const corpAOV = corpOrders.length > 0 ? (corpSales / corpOrders.length) : 0;
+  const indivAOV = indivOrders.length > 0 ? (indivSales / indivOrders.length) : 0;
+  const aovMultiple = indivAOV > 0 ? (corpAOV / indivAOV) : 0;
+
+  const salesRatio = indivSales > 0 ? (corpSales / indivSales) : 0;
+
+  const corpBuyersList = Object.values(buyersMap).filter(b => b.isCorp).sort((a,b) => b.totalAmt - a.totalAmt);
+  const indivBuyersList = Object.values(buyersMap).filter(b => !b.isCorp).sort((a,b) => b.totalAmt - a.totalAmt);
+
+  return {
+    totalSales,
+    totalOrders: orders.length,
+    corpSales,
+    indivSales,
+    corpPct,
+    indivPct,
+    salesRatio,
+    corpOrders,
+    indivOrders,
+    corpCount: corpOrders.length,
+    indivCount: indivOrders.length,
+    corpUniqueCustCount: corpBuyersList.length,
+    indivUniqueCustCount: indivBuyersList.length,
+    corpAOV,
+    indivAOV,
+    aovMultiple,
+    channelMap,
+    buyersMap,
+    corpBuyersList,
+    indivBuyersList
+  };
+}
+
 // ── Render Full Dashboard ──
 function renderTaxAnalysisDashboard() {
   const container = document.getElementById('page-content');
@@ -340,6 +500,9 @@ function renderTaxAnalysisDashboard() {
     salaryMonthly: _taxSimSalaryMonthly,
     hasSocialSecurity: _taxSimSocialSecurity
   });
+
+  // Calculate Customer Tax Segmentation (Corporate vs Individual)
+  const custSegments = analyzeCustomerTaxSegments(_taxAnalysisOrders, _taxAnalysisCustMap);
 
   // Calculate monthly average for active period
   const monthsWithSales = Object.values(monthlyMap).filter(m => m.revenue > 0).length || 1;
@@ -588,6 +751,251 @@ function renderTaxAnalysisDashboard() {
           <div style="font-size:11px;color:#15803d;margin-top:3px">
             <b>แนะนำกันไว้ ${(calc.reserveRate*100).toFixed(1)}%</b> (~฿${calc.monthlyTaxReserve.toLocaleString('en-US')}/เดือน)
           </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════════════
+           CUSTOMER TAX SEGMENTATION: นิติบุคคล (B2B) VS บุคคลทั่วไป (B2C)
+      ════════════════════════════════════════════════════════ -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:0 3px 10px rgba(0,0,0,0.05)">
+        
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg, #1e293b 0%, #0f172a 100%);color:#fff;padding:18px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <span style="font-size:24px">🏢</span>
+              <div>
+                <div style="font-size:16px;font-weight:800;letter-spacing:-0.2px">วิเคราะห์โครงสร้างลูกค้าจากยอดขายจริง: นิติบุคคล (B2B) VS บุคคลทั่วไป (B2C)</div>
+                <div style="font-size:12px;color:#94a3b8;margin-top:2px">จำแนกอัตโนมัติจากเลขผู้เสียภาษี 13 หลัก (Tax ID), คำนำหน้านิติบุคคล (บจก./หจก./จำกัด), ที่อยู่ออกใบกำกับภาษี และฐานข้อมูล CRM</div>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:800;background:#0284c7;color:#fff;padding:4px 12px;border-radius:20px;box-shadow:0 2px 6px rgba(2,132,199,0.3)">
+              สัดส่วนยอดขาย ${custSegments.corpPct.toFixed(1)}% : ${custSegments.indivPct.toFixed(1)}%
+            </span>
+          </div>
+        </div>
+
+        <div style="padding:22px 24px">
+          
+          <!-- Visual Ratio Comparison Bar -->
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;font-weight:700;margin-bottom:8px;flex-wrap:wrap;gap:8px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:12px;height:12px;border-radius:3px;background:#1e40af;display:inline-block"></span>
+                <span style="color:#1e40af;font-size:13px">🏢 ลูกค้านิติบุคคล (B2B): <b>฿${custSegments.corpSales.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</b> (${custSegments.corpPct.toFixed(1)}%)</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="width:12px;height:12px;border-radius:3px;background:#059669;display:inline-block"></span>
+                <span style="color:#059669;font-size:13px">👤 ลูกค้าบุคคลทั่วไป (B2C): <b>฿${custSegments.indivSales.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</b> (${custSegments.indivPct.toFixed(1)}%)</span>
+              </div>
+            </div>
+
+            <!-- Segmented Bar -->
+            <div style="height:18px;background:#e2e8f0;border-radius:9px;overflow:hidden;display:flex;box-shadow:inset 0 1px 2px rgba(0,0,0,0.1)">
+              <div style="height:100%;width:${custSegments.corpPct}%;background:linear-gradient(90deg, #1e3a8a, #2563eb);transition:width 0.4s ease" title="นิติบุคคล ${custSegments.corpPct.toFixed(1)}%"></div>
+              <div style="height:100%;width:${custSegments.indivPct}%;background:linear-gradient(90deg, #10b981, #059669);transition:width 0.4s ease" title="บุคคลทั่วไป ${custSegments.indivPct.toFixed(1)}%"></div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#64748b;margin-top:8px;flex-wrap:wrap;gap:6px">
+              <span>🎯 <b>อัตราส่วนยอดขาย (นิติบุคคล : บุคคลทั่วไป):</b> <b style="color:#0f172a">${custSegments.salesRatio.toFixed(2)} : 1</b> (ยอดขายเกือบเท่ากันแบบ 50:50)</span>
+              <span>⚡ <b>ความต่างยอดเฉลี่ยต่อบิล:</b> นิติบุคคลมียอดซื้อต่อบิลสูงกว่าบุคคลทั่วไปถึง <b style="color:#b91c1c;font-size:12.5px">${custSegments.aovMultiple.toFixed(2)} เท่า!</b></span>
+            </div>
+          </div>
+
+          <!-- 4 Detailed Metric Cards -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(230px, 1fr));gap:14px;margin-bottom:22px">
+            
+            <!-- Card 1: ยอดขายนิติบุคคล -->
+            <div style="border:1px solid #bfdbfe;border-radius:10px;padding:16px;background:#eff6ff">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:#1e40af;font-weight:700">🏢 ยอดขายนิติบุคคล (B2B)</span>
+                <span style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:12px;font-weight:800">${custSegments.corpPct.toFixed(1)}%</span>
+              </div>
+              <div style="font-size:22px;font-weight:800;color:#1e3a8a;margin-top:6px">
+                ฿${custSegments.corpSales.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+              </div>
+              <div style="font-size:11.5px;color:#3b82f6;margin-top:3px">
+                จาก <b>${custSegments.corpCount} ออเดอร์</b> (เฉลี่ย ฿${custSegments.corpAOV.toLocaleString('en-US',{maximumFractionDigits:0})}/บิล)
+              </div>
+            </div>
+
+            <!-- Card 2: ยอดขายบุคคลทั่วไป -->
+            <div style="border:1px solid #bbf7d0;border-radius:10px;padding:16px;background:#f0fdf4">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:12px;color:#15803d;font-weight:700">👤 ยอดขายบุคคลทั่วไป (B2C)</span>
+                <span style="font-size:11px;background:#dcfce7;color:#166534;padding:2px 8px;border-radius:12px;font-weight:800">${custSegments.indivPct.toFixed(1)}%</span>
+              </div>
+              <div style="font-size:22px;font-weight:800;color:#166534;margin-top:6px">
+                ฿${custSegments.indivSales.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+              </div>
+              <div style="font-size:11.5px;color:#16a34a;margin-top:3px">
+                จาก <b>${custSegments.indivCount} ออเดอร์</b> (เฉลี่ย ฿${custSegments.indivAOV.toLocaleString('en-US',{maximumFractionDigits:0})}/บิล)
+              </div>
+            </div>
+
+            <!-- Card 3: สัดส่วนคำสั่งซื้อ -->
+            <div style="border:1px solid #e2e8f0;border-radius:10px;padding:16px;background:#fff">
+              <div style="font-size:12px;color:#64748b;font-weight:700">📦 สัดส่วนจำนวนออเดอร์</div>
+              <div style="font-size:20px;font-weight:800;color:#0f172a;margin-top:6px">
+                ${custSegments.corpCount} <span style="font-size:13px;font-weight:normal;color:#64748b">นิติบุคคล</span> vs ${custSegments.indivCount} <span style="font-size:13px;font-weight:normal;color:#64748b">บุคคล</span>
+              </div>
+              <div style="font-size:11.5px;color:#0284c7;margin-top:3px">
+                นิติบุคคลเพียง <b>${(custSegments.corpCount / (custSegments.totalOrders || 1) * 100).toFixed(1)}%</b> ของบิล แต่ได้ยอดขายเกือบครึ่ง!
+              </div>
+            </div>
+
+            <!-- Card 4: ยอดซื้อเฉลี่ยต่อบิล (AOV) -->
+            <div style="border:1px solid #fed7aa;border-radius:10px;padding:16px;background:#fff7ed">
+              <div style="font-size:12px;color:#c2410c;font-weight:700">📈 ยอดซื้อเฉลี่ยต่อบิล (AOV)</div>
+              <div style="font-size:20px;font-weight:800;color:#9a3412;margin-top:6px">
+                ฿${custSegments.corpAOV.toLocaleString('en-US',{maximumFractionDigits:0})} <span style="font-size:13px;color:#64748b;font-weight:normal">vs ฿${custSegments.indivAOV.toLocaleString('en-US',{maximumFractionDigits:0})}</span>
+              </div>
+              <div style="font-size:11.5px;color:#ea580c;margin-top:3px">
+                🚀 กำลังซื้อ B2B สูงกว่า B2C ถึง <b>${custSegments.aovMultiple.toFixed(2)} เท่า</b>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Channel Breakdown & Strategic Tax Insights Grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px">
+            
+            <!-- Left: เจาะลึกตามช่องทางการขาย -->
+            <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px">
+              <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:6px">
+                <span>🛒</span>
+                <span>สัดส่วนนิติบุคคลแยกตามช่องทางการขาย</span>
+              </div>
+              
+              <div style="overflow-x:auto">
+                <table style="width:100%;border-collapse:collapse;font-size:12px">
+                  <thead>
+                    <tr style="background:#f8fafc;border-bottom:1.5px solid #cbd5e1;color:#475569">
+                      <th style="padding:8px 10px;text-align:left">ช่องทาง</th>
+                      <th style="padding:8px 10px;text-align:right">ยอดนิติบุคคล (บิล)</th>
+                      <th style="padding:8px 10px;text-align:right">ยอดบุคคลทั่วไป (บิล)</th>
+                      <th style="padding:8px 10px;text-align:right">% นิติบุคคล</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${Object.values(custSegments.channelMap).sort((a,b) => b.total - a.total).map(ch => {
+                      const corpChannelPct = ch.total > 0 ? (ch.corpAmt / ch.total * 100) : 0;
+                      return `
+                        <tr style="border-bottom:1px solid #f1f5f9">
+                          <td style="padding:8px 10px;font-weight:700;color:#0f172a">${escapeHTML(ch.channel)}</td>
+                          <td style="padding:8px 10px;text-align:right;color:#1e40af;font-weight:700">
+                            ฿${ch.corpAmt.toLocaleString('en-US',{maximumFractionDigits:0})}
+                            <span style="font-size:10.5px;color:#64748b">(${ch.corpCount})</span>
+                          </td>
+                          <td style="padding:8px 10px;text-align:right;color:#15803d">
+                            ฿${ch.indivAmt.toLocaleString('en-US',{maximumFractionDigits:0})}
+                            <span style="font-size:10.5px;color:#64748b">(${ch.indivCount})</span>
+                          </td>
+                          <td style="padding:8px 10px;text-align:right;font-weight:800;color:${corpChannelPct >= 50 ? '#1e40af' : '#64748b'}">
+                            ${corpChannelPct.toFixed(1)}%
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+
+              <div style="font-size:11.5px;color:#64748b;margin-top:10px;background:#f8fafc;padding:8px 10px;border-radius:6px;line-height:1.5">
+                💡 <b>ข้อสังเกตสำคัญ:</b> ช่องทาง <b>LINE</b> มียอดจากลูกค้านิติบุคคลสูงถึง <b>96.6%</b> (แทบเป็น B2B ทั้งหมด) ขณะที่ <b>Shopee</b> มีลูกค้านิติบุคคลแฝงสั่งซื้อถึง <b>22.1%</b> (฿43k+) เพื่อนำไปใช้ออกใบกำกับภาษีโรงงาน
+              </div>
+            </div>
+
+            <!-- Right: นัยสำคัญต่อการวางแผนภาษี & นิติบุคคล -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;justify-content:space-between">
+              <div>
+                <div style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+                  <span>🏛️</span>
+                  <span>ผลกระทบเชิงกลยุทธ์ต่อ "การวางแผนภาษี & นิติบุคคล"</span>
+                </div>
+                
+                <div style="font-size:12px;color:#334155;line-height:1.6;display:flex;flex-direction:column;gap:8px">
+                  <div style="background:#fff;border-left:3px solid #2563eb;padding:8px 10px;border-radius:4px">
+                    <b>1. ความต้องการใบกำกับภาษีเต็มรูป (Input Tax Shield):</b><br>
+                    ลูกค้านิติบุคคล (เกือบ 50% ของยอดขาย) จำเป็นต้องนำใบกำกับภาษีไปบันทึกค่าใช้จ่ายและเคลมภาษีซื้อ การเป็นนิติบุคคลที่จด VAT จะเพิ่มความมั่นใจ เปิดรับเครดิตเทอม และปิดออเดอร์ B2B ขนาดใหญ่ได้คล่องตัวขึ้น
+                  </div>
+
+                  <div style="background:#fff;border-left:3px solid #10b981;padding:8px 10px;border-radius:4px">
+                    <b>2. การหักค่าใช้จ่ายจริง 100% (Actual Cost):</b><br>
+                    เนื่องจากออเดอร์ B2B มีขนาดใหญ่ (เฉลี่ย ฿1,700+) หากเป็นบุคคลธรรมดาจะหักค่าใช้จ่ายได้เพียงเหมา 60% ทำให้เสียภาษีฐานก้าวหน้าสูง แต่หากเป็นนิติบุคคล จะหักต้นทุนสินค้าและค่าบริหารจัดการจริงได้ครบ และได้รับสิทธิกำไร 3 แสนแรกฟรีภาษี (0%)
+                  </div>
+
+                  <div style="background:#fff;border-left:3px solid #f59e0b;padding:8px 10px;border-radius:4px">
+                    <b>3. กองทุนสำรองภาษีสำหรับบิลนิติบุคคล:</b><br>
+                    แนะนำกันเงินสำรองภาษีไว้ <b>7% - 10%</b> เฉพาะจากยอดรับชำระของลูกค้านิติบุคคล เพื่อเตรียมพร้อมสำหรับภาษีมูลค่าเพิ่ม (VAT) เมื่อยอดขายรวมขยับเข้าใกล้ 1.8 ล้านบาท/ปี
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Top Corporate Buyers Table with Interactive Filter -->
+          <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden">
+            <div style="padding:14px 18px;background:#f8fafc;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="font-size:16px">🏆</span>
+                <div>
+                  <div style="font-size:13.5px;font-weight:800;color:#0f172a">รายชื่อลูกค้านิติบุคคลยอดซื้อสูงสุด (Top Corporate Buyers)</div>
+                  <div style="font-size:11px;color:#64748b">แสดง 15 อันดับแรกที่มีการระบุชื่อบริษัท/หจก. หรือเลขผู้เสียภาษี 13 หลัก</div>
+                </div>
+              </div>
+              
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <input type="text" id="tax-cust-search" placeholder="🔍 ค้นหาชื่อบริษัท / เลขผู้เสียภาษี..." value="${escapeHTML(_taxCustomerSearchQuery)}" oninput="updateTaxCustomerSearch(this.value)" style="padding:4px 10px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;width:210px">
+              </div>
+            </div>
+
+            <div style="overflow-x:auto;max-height:360px">
+              <table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead style="background:#f1f5f9;position:sticky;top:0;z-index:2;border-bottom:1.5px solid #cbd5e1;color:#475569">
+                  <tr>
+                    <th style="padding:8px 12px;text-align:left;width:38%">ชื่อลูกค้านิติบุคคล / องค์กร</th>
+                    <th style="padding:8px 12px;text-align:left;width:22%">เลขประจำตัวผู้เสียภาษี (Tax ID)</th>
+                    <th style="padding:8px 12px;text-align:center;width:12%">จำนวนบิล</th>
+                    <th style="padding:8px 12px;text-align:left;width:14%">ช่องทางหลัก</th>
+                    <th style="padding:8px 12px;text-align:right;width:14%">ยอดซื้อสะสม (บาท)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${(() => {
+                    let list = custSegments.corpBuyersList;
+                    if (_taxCustomerSearchQuery) {
+                      const q = _taxCustomerSearchQuery.toLowerCase().trim();
+                      list = list.filter(b => b.name.toLowerCase().includes(q) || b.taxId.includes(q));
+                    }
+                    if (list.length === 0) {
+                      return '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">ไม่พบรายชื่อนิติบุคคลที่ตรงกับคำค้นหา</td></tr>';
+                    }
+                    return list.slice(0, 15).map((b, idx) => `
+                      <tr style="border-bottom:1px solid #f1f5f9;hover:background:#f8fafc">
+                        <td style="padding:8px 12px;font-weight:700;color:#0f172a">
+                          <span style="display:inline-block;width:18px;height:18px;background:#e0f2fe;color:#0369a1;border-radius:50%;text-align:center;line-height:18px;font-size:10px;margin-right:6px">${idx+1}</span>
+                          ${escapeHTML(b.name)}
+                        </td>
+                        <td style="padding:8px 12px;font-family:var(--mono);color:#475569">
+                          ${b.taxId ? `<span style="background:#f1f5f9;padding:1px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px">${escapeHTML(b.taxId)}</span>` : '<span style="color:#94a3b8">-</span>'}
+                        </td>
+                        <td style="padding:8px 12px;text-align:center;font-weight:700;color:#0284c7">${b.orderCount} บิล</td>
+                        <td style="padding:8px 12px;color:#64748b">${Array.from(b.channels).join(', ')}</td>
+                        <td style="padding:8px 12px;text-align:right;font-weight:800;color:#1e3a8a;font-size:12.5px">
+                          ฿${b.totalAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+                        </td>
+                      </tr>
+                    `).join('');
+                  })()}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -878,11 +1286,21 @@ function exportTaxAnalysisReport() {
     }
   );
 
+  const custSegments = analyzeCustomerTaxSegments(_taxAnalysisOrders, _taxAnalysisCustMap);
+
   const lines = [
     `รายงานวิเคราะห์ภาษีและการวางแผนเปลี่ยนผ่านสู่นิติบุคคล SEALTHAI`,
     `ปีภาษี: ${_taxAnalysisYear} | วันที่จัดทำ: ${today()}`,
     `----------------------------------------------------`,
     `ยอดขายทั้งปี: ฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}`,
+    `----------------------------------------------------`,
+    `[โครงสร้างลูกค้า: นิติบุคคล (B2B) VS บุคคลทั่วไป (B2C)]`,
+    `- ลูกค้านิติบุคคล (B2B): ฿${custSegments.corpSales.toLocaleString('en-US',{minimumFractionDigits:2})} (${custSegments.corpPct.toFixed(1)}%) | ${custSegments.corpCount} ออเดอร์ | เฉลี่ย ฿${custSegments.corpAOV.toFixed(0)}/บิล`,
+    `- ลูกค้าบุคคลทั่วไป (B2C): ฿${custSegments.indivSales.toLocaleString('en-US',{minimumFractionDigits:2})} (${custSegments.indivPct.toFixed(1)}%) | ${custSegments.indivCount} ออเดอร์ | เฉลี่ย ฿${custSegments.indivAOV.toFixed(0)}/บิล`,
+    `- อัตราส่วนยอดขาย (นิติบุคคล : บุคคลทั่วไป): ${custSegments.salesRatio.toFixed(2)} : 1`,
+    `- ยอดซื้อเฉลี่ยต่อบิลของนิติบุคคลสูงกว่าบุคคลทั่วไป: ${custSegments.aovMultiple.toFixed(2)} เท่า`,
+    `- ลูกค้านิติบุคคลยอดซื้อสูงสุด: ${custSegments.corpBuyersList.slice(0, 3).map(b => b.name + ' (฿' + b.totalAmt.toLocaleString('en-US') + ')').join(', ')}`,
+    `----------------------------------------------------`,
     calc.hasSalary ? `เงินเดือนประจำจำลอง (40(1)): ฿${calc.salaryMonthly.toLocaleString('en-US')}/ด. (ปีละ ฿${calc.annualSalary.toLocaleString('en-US')})` : null,
     `สถานะภาษีบุคคลธรรมดารวมทั้งปี (ภ.ง.ด. 90): ฿${calc.personalFinalTax.toLocaleString('en-US',{minimumFractionDigits:2})} (${calc.personalMethodChosen})`,
     calc.hasSalary ? `  - ภาษีเฉพาะเงินเดือนเดิม: ฿${calc.standaloneSalaryTax.toLocaleString('en-US',{minimumFractionDigits:2})}` : null,
@@ -917,4 +1335,18 @@ window.updateTaxSimMargin = updateTaxSimMargin;
 window.setTaxSimExpense = setTaxSimExpense;
 window.updateTaxSimSalary = updateTaxSimSalary;
 window.toggleTaxSimSocialSecurity = toggleTaxSimSocialSecurity;
+function updateTaxCustomerSearch(query) {
+  _taxCustomerSearchQuery = query || '';
+  renderTaxAnalysisDashboard();
+}
+
+function setTaxCustomerSegmentFilter(filter) {
+  _taxCustomerSegmentFilter = filter || 'all';
+  renderTaxAnalysisDashboard();
+}
+
+window.updateTaxCustomerSearch = updateTaxCustomerSearch;
+window.setTaxCustomerSegmentFilter = setTaxCustomerSegmentFilter;
+window.isCorporateCustomer = isCorporateCustomer;
+window.analyzeCustomerTaxSegments = analyzeCustomerTaxSegments;
 window.exportTaxAnalysisReport = exportTaxAnalysisReport;
