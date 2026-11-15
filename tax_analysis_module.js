@@ -9,6 +9,8 @@ var _taxSimMonthlySales = 50000;
 var _taxSimProfitMargin = 35; // %
 var _taxSimExpenseMode = 'lump'; // 'lump' (60%) | 'actual'
 var _taxSimActualExpensePct = 65; // %
+var _taxSimSalaryMonthly = 0; // เงินเดือนประจำจากงานอื่น (บาท/เดือน)
+var _taxSimSocialSecurity = true; // สิทธิลดหย่อนประกันสังคม 9,000 บ./ปี
 var _taxAnalysisOrders = [];
 var _taxAnalysisLoaded = false;
 var _taxAnalysisCharts = {};
@@ -110,16 +112,41 @@ async function initTaxAnalysis(forceReload = false) {
 function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
   const S = Math.max(0, salesAmount);
 
-  // 1. Personal Income Tax (มาตรา 40(8))
+  // 0. Personal Salary Income (มาตรา 40(1) เงินเดือนจากงานประจำอื่น)
+  const salaryMonthly = Math.max(0, Number(simOpts.salaryMonthly || 0));
+  const hasSocialSecurity = simOpts.hasSocialSecurity !== undefined ? !!simOpts.hasSocialSecurity : true;
+  const annualSalary = salaryMonthly * 12;
+  const salaryExpense = Math.min(100000, annualSalary * 0.50); // หักค่าใช้จ่าย 50% ไม่เกิน 100,000 บาท
+  const personalDeduction = TAX_CONSTANTS.PERSONAL_DEDUCTION; // 60,000 บาท
+  const socialSecurityDeduction = (hasSocialSecurity && annualSalary > 0) 
+    ? Math.min(9000, Math.min(15000, salaryMonthly) * 0.05 * 12) 
+    : 0;
+
+  // Standalone Salary Tax (ภาษีเฉพาะเงินเดือนเดิม กรณีไม่มีร้านค้า)
+  const salaryNetTaxable = Math.max(0, annualSalary - salaryExpense - personalDeduction - socialSecurityDeduction);
+  let standaloneSalaryTax = 0;
+  let remSal = salaryNetTaxable;
+  for (const b of TAX_CONSTANTS.PERSONAL_BRACKETS) {
+    if (remSal <= 0) break;
+    const tB = Math.min(remSal, b.limit);
+    standaloneSalaryTax += tB * b.rate;
+    remSal -= tB;
+  }
+
+  // 1. Personal Income Tax from Shop (มาตรา 40(8) ขายของออนไลน์)
   const expenseRate = isSimulated && simOpts.expenseMode === 'actual' 
     ? (simOpts.actualExpensePct / 100) 
     : TAX_CONSTANTS.LUMP_EXPENSE_RATE; // 60%
   
-  const expenses = S * expenseRate;
-  const personalDeduction = TAX_CONSTANTS.PERSONAL_DEDUCTION; // 60,000
-  const netTaxableIncome = Math.max(0, S - expenses - personalDeduction);
+  const shopExpenses = S * expenseRate;
+  const shopNetBeforeDeduction = Math.max(0, S - shopExpenses);
 
-  // Method 1: Progressive Rate
+  // Combined Net Taxable Income (รวมเงินได้สุทธิ ม.40(1) + ม.40(8))
+  const netTaxableIncome = Math.max(0, 
+    (annualSalary - salaryExpense) + shopNetBeforeDeduction - personalDeduction - socialSecurityDeduction
+  );
+
+  // Method 1: Progressive Rate on Combined Net Taxable Income
   let method1Tax = 0;
   let remainingNet = netTaxableIncome;
   const bracketBreakdown = [];
@@ -138,7 +165,7 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
     remainingNet -= taxableInBracket;
   }
 
-  // Method 2: Minimum Tax 0.5%
+  // Method 2: Minimum Tax 0.5% (มาตรา 48 ทวิ เฉพาะเงินได้ที่ไม่ใช่ ม.40(1))
   let method2Tax = 0;
   if (S >= TAX_CONSTANTS.MIN_TAX_THRESHOLD) {
     const rawMethod2 = S * TAX_CONSTANTS.MIN_TAX_RATE;
@@ -147,11 +174,17 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
     }
   }
 
-  const personalFinalTax = Math.max(method1Tax, method2Tax);
-  const personalMethodChosen = personalFinalTax === method1Tax ? 'อัตราก้าวหน้า (Net Income)' : 'ภาษีขั้นต่ำ 0.5% (เงินได้พึงประเมิน)';
-  const personalEffectiveRate = S > 0 ? (personalFinalTax / S * 100) : 0;
+  // Total Personal Tax (ภ.ง.ด. 90)
+  const personalFinalTax = Math.max(method1Tax, standaloneSalaryTax + method2Tax);
+  const personalMethodChosen = personalFinalTax === method1Tax 
+    ? 'อัตราก้าวหน้า (Net Income)' 
+    : 'เงินเดือนก้าวหน้า + ภาษีขั้นต่ำร้านค้า 0.5%';
+  const personalEffectiveRate = S > 0 ? ((personalFinalTax - standaloneSalaryTax) / S * 100) : 0;
 
-  // 2. Mid-Year Tax (ภ.ง.ด. 94 - สำหรับครึ่งปี ม.ค. - มิ.ย.)
+  // Marginal Tax from Shop (ภาษีส่วนเพิ่มที่เกิดจากร้านค้าโดยเฉพาะ)
+  const marginalShopTax = Math.max(0, personalFinalTax - standaloneSalaryTax);
+
+  // 2. Mid-Year Tax (ภ.ง.ด. 94 - สำหรับครึ่งปี ม.ค. - มิ.ย. เฉพาะรายได้ ม.40(8))
   const midYearSales = S * 0.5;
   const midExpenses = midYearSales * expenseRate;
   const midDeduction = personalDeduction * 0.5; // ลดหย่อนครึ่งปี 30,000
@@ -168,7 +201,6 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
   const midFinalTax = midMethod1;
 
   // 3. Corporate Income Tax (SME Company)
-  // Estimated profit margin: if simulated use simOpts.profitMargin, else assume ~25%
   const profitMargin = isSimulated ? (simOpts.profitMargin / 100) : 0.25;
   const corpGrossProfit = S * profitMargin;
   const corpBookkeepingCost = TAX_CONSTANTS.CORP_BOOKKEEPING_AUDIT_ANNUAL; // 36,000/year
@@ -191,7 +223,12 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
     remCorp -= tB;
   }
   const corpTotalCost = corpTax + corpBookkeepingCost;
-  const taxSavingsIfCorp = personalFinalTax - corpTotalCost;
+
+  // เปรียบเทียบความคุ้มค่า:
+  // หากเป็นบริษัท: เจ้าของจ่ายภาษีเงินเดือนเดิม (standaloneSalaryTax) + บริษัทจ่ายต้นทุนร้าน (corpTotalCost)
+  // หากเป็นบุคคล: เจ้าของจ่ายภาษีรวม (personalFinalTax)
+  // ส่วนต่างที่ประหยัดได้ = marginalShopTax - corpTotalCost
+  const taxSavingsIfCorp = marginalShopTax - corpTotalCost;
 
   // 4. Threshold & Progress Calculations
   const vatProgress = Math.min(100, (S / TAX_CONSTANTS.VAT_THRESHOLD) * 100);
@@ -201,13 +238,12 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
   const corpRemaining = Math.max(0, TAX_CONSTANTS.CORP_BREAKEVEN_SALES - S);
 
   // 5. Tax Provision & Reserve Fund Recommendations
-  // แนะนำการกันเงินสำรองภาษี
   let reserveRate = 0.02; // ขั้นต่ำ 2%
-  if (S >= 1000000) reserveRate = 0.035;
+  if (S >= 1000000 || annualSalary >= 600000) reserveRate = 0.035;
   if (S >= 1500000) reserveRate = 0.05;
   if (S >= 1800000) reserveRate = 0.07; // ต้องรวมเผื่อ VAT
 
-  const suggestedTaxReserve = Math.max(personalFinalTax, S * reserveRate);
+  const suggestedTaxReserve = Math.max(marginalShopTax, S * reserveRate);
   const monthlyTaxReserve = +(suggestedTaxReserve / 12).toFixed(2);
   const weeklyTaxReserve = +(suggestedTaxReserve / 52).toFixed(2);
 
@@ -217,12 +253,12 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
   let corpStatusColor = '#16a34a'; // green
   let corpStatusBg = '#dcfce7';
 
-  if (S >= TAX_CONSTANTS.CORP_BREAKEVEN_SALES || taxSavingsIfCorp > 10000) {
+  if (taxSavingsIfCorp > 10000 || S >= TAX_CONSTANTS.CORP_BREAKEVEN_SALES) {
     corpStatus = 'urgent_corporate';
     corpStatusLabel = 'ควรเปลี่ยนเป็นนิติบุคคลด่วน (ประหยัดภาษีชัดเจน)';
     corpStatusColor = '#dc2626'; // red
     corpStatusBg = '#fee2e2';
-  } else if (S >= 1300000 || vatProgress >= 70) {
+  } else if (taxSavingsIfCorp > 0 || S >= 1300000 || vatProgress >= 70) {
     corpStatus = 'plan_corporate';
     corpStatusLabel = 'โซนเฝ้าระวัง & เริ่มวางแผนจดทะเบียนนิติบุคคล';
     corpStatusColor = '#d97706'; // yellow/amber
@@ -231,8 +267,17 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
 
   return {
     sales: S,
-    expenses,
+    expenses: shopExpenses,
     personalDeduction,
+    salaryMonthly,
+    annualSalary,
+    salaryExpense,
+    hasSocialSecurity,
+    socialSecurityDeduction,
+    salaryNetTaxable,
+    standaloneSalaryTax,
+    marginalShopTax,
+    hasSalary: annualSalary > 0,
     netTaxableIncome,
     method1Tax,
     method2Tax,
@@ -261,7 +306,6 @@ function computeTaxEngine(salesAmount, isSimulated = false, simOpts = {}) {
     corpStatusBg
   };
 }
-
 // ── Render Full Dashboard ──
 function renderTaxAnalysisDashboard() {
   const container = document.getElementById('page-content');
@@ -292,7 +336,9 @@ function renderTaxAnalysisDashboard() {
   const calc = computeTaxEngine(activeSales, _taxAnalysisMode === 'simulator', {
     profitMargin: _taxSimProfitMargin,
     expenseMode: _taxSimExpenseMode,
-    actualExpensePct: _taxSimActualExpensePct
+    actualExpensePct: _taxSimActualExpensePct,
+    salaryMonthly: _taxSimSalaryMonthly,
+    hasSocialSecurity: _taxSimSocialSecurity
   });
 
   // Calculate monthly average for active period
@@ -356,9 +402,61 @@ function renderTaxAnalysisDashboard() {
                 </button>
               </div>
             </div>
+
+            <!-- Salary Simulation inside Simulator Box -->
+            <div style="grid-column:1 / -1;background:#0f172a;border:1px solid #334155;border-radius:8px;padding:14px 18px">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:16px">💼</span>
+                  <span style="font-weight:800;color:#f8fafc;font-size:13px">จำลองเงินเดือนประจำจากงานอื่น (มาตรา 40(1)):</span>
+                  <span style="font-size:11.5px;color:#94a3b8">(กรณีมีงานประจำหรือเงินเดือนจากที่อื่น)</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px">
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#cbd5e1;cursor:pointer">
+                    <input type="checkbox" ${_taxSimSocialSecurity ? 'checked' : ''} onchange="toggleTaxSimSocialSecurity(this.checked)" style="accent-color:#38bdf8;cursor:pointer">
+                    หักประกันสังคม (฿9,000/ปี)
+                  </label>
+                  <span style="font-size:13px;font-weight:800;color:#f59e0b;background:#451a03;border:1px solid #78350f;padding:2px 10px;border-radius:6px">
+                    ฿${_taxSimSalaryMonthly.toLocaleString('en-US')} / ด. (ปีละ ฿${(_taxSimSalaryMonthly*12).toLocaleString('en-US')})
+                  </span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px">
+                <input type="range" min="0" max="150000" step="5000" value="${_taxSimSalaryMonthly}" oninput="updateTaxSimSalary(this.value)" style="flex:1;accent-color:#f59e0b;cursor:pointer">
+                <input type="number" min="0" max="1000000" step="5000" value="${_taxSimSalaryMonthly}" onchange="updateTaxSimSalary(this.value)" style="width:110px;padding:4px 8px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#fff;font-weight:700;font-size:12.5px;text-align:right">
+                <span style="font-size:12px;color:#94a3b8">บ./ด.</span>
+                ${_taxSimSalaryMonthly > 0 ? `<button onclick="updateTaxSimSalary(0)" style="background:#475569;color:#e2e8f0;border:none;border-radius:6px;padding:4px 10px;font-size:11.5px;cursor:pointer;font-weight:700">รีเซ็ต</button>` : ''}
+              </div>
+            </div>
           </div>
         ` : ''}
       </div>
+
+      ${_taxAnalysisMode === 'live' ? `
+        <!-- Quick Salary Simulation Bar for Live Sales -->
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:0 1px 2px rgba(0,0,0,0.03)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">💼</span>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:#0f172a">จำลองคำนวณร่วมกับเงินเดือนประจำ (มีงานประจำจากที่อื่น)</div>
+              <div style="font-size:11.5px;color:#64748b">ทดสอบผลกระทบภาษีบุคคลธรรมดา & จุดคุ้มทุนเปลี่ยนเป็นบริษัทเมื่อมีฐานเงินเดือนมาสะสมเพิ่ม</div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#475569;cursor:pointer">
+              <input type="checkbox" ${_taxSimSocialSecurity ? 'checked' : ''} onchange="toggleTaxSimSocialSecurity(this.checked)" style="accent-color:#0284c7;cursor:pointer">
+              หัก ปกส. (฿9k)
+            </label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:12px;color:#475569;font-weight:700">เงินเดือน:</span>
+              <input type="range" min="0" max="150000" step="5000" value="${_taxSimSalaryMonthly}" oninput="updateTaxSimSalary(this.value)" style="width:130px;accent-color:#0284c7;cursor:pointer">
+              <input type="number" min="0" max="500000" step="5000" value="${_taxSimSalaryMonthly}" onchange="updateTaxSimSalary(this.value)" style="width:95px;padding:4px 8px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:700;font-size:12px;text-align:right">
+              <span style="font-size:12px;color:#64748b">บ./ด.</span>
+              ${_taxSimSalaryMonthly > 0 ? `<button onclick="updateTaxSimSalary(0)" style="background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-weight:700">ล้างค่า</button>` : ''}
+            </div>
+          </div>
+        </div>
+      ` : ''}
 
       <!-- ════════════════════════════════════════════════════════
            2 CRITICAL THRESHOLD PROGRESS BARS (แถบเกณฑ์เปลี่ยนเป็นนิติบุคคล & VAT)
@@ -370,7 +468,7 @@ function renderTaxAnalysisDashboard() {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div>
               <div style="font-size:14px;font-weight:800;color:#0f172a">🏢 เกณฑ์ความคุ้มค่าในการเปลี่ยนเป็น "นิติบุคคล"</div>
-              <div style="font-size:11.5px;color:#64748b;margin-top:1px">จุดตัดแนะนำ: ยอดขายปีละ ฿1,900,000 หรือกำไรสุทธิเกิน ฿750,000</div>
+              <div style="font-size:11.5px;color:#64748b;margin-top:1px">จุดตัดแนะนำ: ยอดขายปีละ ฿1,900,000 หรือกำไรสุทธิเกิน ฿750,000 ${calc.hasSalary ? '<b style="color:#d97706">(มีเงินเดือนประจำจุดตัดจะลดลงเหลือ ~฿1M)</b>' : ''}</div>
             </div>
             <span style="font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:20px;background:${calc.corpStatusBg};color:${calc.corpStatusColor}">
               ${calc.corpStatusLabel}
@@ -394,8 +492,8 @@ function renderTaxAnalysisDashboard() {
           </div>
 
           <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;font-size:12px;color:#475569;margin-top:12px;line-height:1.5">
-            ${calc.corpProgress >= 100 ? `
-              <b style="color:#dc2626">🚨 ถึงเกณฑ์แล้ว!</b> ขณะนี้ยอดขายของท่านถึงระดับที่ภาษีนิติบุคคลจะประหยัดกว่าภาษีบุคคลธรรมดาอย่างชัดเจน (ประหยัดได้ <b>฿${Math.max(0, calc.taxSavingsIfCorp).toLocaleString('en-US',{minimumFractionDigits:2})}</b> ต่อปี แม้จะรวมค่าทำบัญชีแล้วก็ตาม)
+            ${calc.taxSavingsIfCorp > 0 ? `
+              <b style="color:#dc2626">🚨 ถึงเกณฑ์คุ้มค่าแล้ว!</b> ขณะนี้ยอดขายของท่านถึงระดับที่ภาษีนิติบุคคลจะประหยัดกว่าภาษีบุคคลธรรมดาอย่างชัดเจน (ประหยัดได้ <b>฿${calc.taxSavingsIfCorp.toLocaleString('en-US',{minimumFractionDigits:2})}</b> ต่อปี แม้จะรวมค่าทำบัญชีแล้วก็ตาม)
             ` : (calc.corpProgress >= 70 ? `
               <b style="color:#d97706">⚠️ โซนเฝ้าระวัง:</b> ยอดขายของท่านเข้าใกล้จุดคุ้มทุน ควรเริ่มศึกษาและเตรียมความพร้อมในการจดทะเบียนบริษัท (เช่น เตรียมผู้ถือหุ้น 2 คน, เตรียมเอกสารสถานที่)
             ` : `
@@ -456,12 +554,19 @@ function renderTaxAnalysisDashboard() {
 
         <!-- Card 2: ภาษีบุคคลธรรมดาทั้งปี (ภ.ง.ด. 90) -->
         <div style="background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,0.04)">
-          <div style="font-size:11.5px;color:#64748b;font-weight:700">📋 ประมาณการภาษีทั้งปี (ภ.ง.ด. 90)</div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:11.5px;color:#64748b;font-weight:700">📋 ประมาณการภาษีทั้งปี (ภ.ง.ด. 90)</span>
+            ${calc.hasSalary ? `<span style="font-size:10.5px;background:#fef3c7;color:#b45309;padding:1px 6px;border-radius:4px;font-weight:700">รวมเงินเดือน</span>` : ''}
+          </div>
           <div style="font-size:22px;font-weight:800;color:${calc.personalFinalTax > 0 ? '#b91c1c' : '#16a34a'};margin-top:4px">
             ฿${calc.personalFinalTax.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
           </div>
           <div style="font-size:11px;color:#64748b;margin-top:3px">
-            ${calc.personalFinalTax === 0 ? '✨ ยอดขายยังไม่ถึงเกณฑ์เสียภาษี (ยกเว้น)' : `คิดเป็น ${calc.personalEffectiveRate.toFixed(2)}% ของยอดขาย (${calc.personalMethodChosen})`}
+            ${calc.personalFinalTax === 0 ? '✨ ยอดขายยังไม่ถึงเกณฑ์เสียภาษี (ยกเว้น)' : (
+              calc.hasSalary 
+                ? `(ภาษีเงินเดือนเดิม: ฿${calc.standaloneSalaryTax.toLocaleString('en-US')} | ภาษีส่วนเพิ่มจากร้าน: <b style="color:#b91c1c">฿${calc.marginalShopTax.toLocaleString('en-US')}</b>)`
+                : `คิดเป็น ${calc.personalEffectiveRate.toFixed(2)}% ของยอดขาย (${calc.personalMethodChosen})`
+            )}
           </div>
         </div>
 
@@ -493,7 +598,7 @@ function renderTaxAnalysisDashboard() {
         <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;background:#f8fafc;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
           <div>
             <div style="font-size:15px;font-weight:800;color:#0f172a">⚖️ ตารางเปรียบเทียบภาระค่าใช้จ่าย & ภาษี: บุคคลธรรมดา VS นิติบุคคล (SME)</div>
-            <div style="font-size:12px;color:#64748b">วิเคราะห์จุดคุ้มทุนบนยอดขายจริง ฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}</div>
+            <div style="font-size:12px;color:#64748b">วิเคราะห์จุดคุ้มทุนบนยอดขายจริง ฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})} ${calc.hasSalary ? `+ เงินเดือนประจำ ฿${calc.annualSalary.toLocaleString('en-US')}/ปี` : ''}</div>
           </div>
           <div style="font-size:12px;font-weight:700;color:${calc.taxSavingsIfCorp > 0 ? '#15803d' : '#b45309'};background:${calc.taxSavingsIfCorp > 0 ? '#dcfce7' : '#fef3c7'};padding:4px 12px;border-radius:20px">
             ${calc.taxSavingsIfCorp > 0 ? `✨ นิติบุคคลประหยัดกว่าปีละ ฿${calc.taxSavingsIfCorp.toLocaleString('en-US',{minimumFractionDigits:2})}` : `✨ บุคคลธรรมดาประหยัดกว่าปีละ ฿${Math.abs(calc.taxSavingsIfCorp).toLocaleString('en-US',{minimumFractionDigits:2})}`}
@@ -512,14 +617,20 @@ function renderTaxAnalysisDashboard() {
             <tbody>
               <tr style="border-bottom:1px solid #e2e8f0">
                 <td style="padding:12px 16px;font-weight:700;color:#334155">1. ยอดขายทั้งปี (รายรับรวม)</td>
-                <td style="padding:12px 16px;background:#f0f9ff">฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}</td>
-                <td style="padding:12px 16px;background:#f0fdf4">฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}</td>
+                <td style="padding:12px 16px;background:#f0f9ff">
+                  ยอดขายร้าน: <b>฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}</b>
+                  ${calc.hasSalary ? `<br><span style="color:#b45309">+ เงินเดือนประจำ (40(1)): ฿${calc.annualSalary.toLocaleString('en-US',{minimumFractionDigits:2})}</span><br><b style="color:#0f172a">รวมรายรับพึงประเมิน: ฿${(calc.sales + calc.annualSalary).toLocaleString('en-US',{minimumFractionDigits:2})}</b>` : ''}
+                </td>
+                <td style="padding:12px 16px;background:#f0fdf4">
+                  รายรับของบริษัท: <b>฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}</b>
+                  ${calc.hasSalary ? `<br><span style="font-size:11px;color:#64748b">(เงินเดือนประจำแยกยื่นส่วนบุคคล ไม่นำมารวมคำนวณในบริษัท)</span>` : ''}
+                </td>
               </tr>
               <tr style="border-bottom:1px solid #e2e8f0">
                 <td style="padding:12px 16px;font-weight:700;color:#334155">2. การหักค่าใช้จ่าย & ต้นทุน</td>
                 <td style="padding:12px 16px;background:#f0f9ff">
-                  <b>หักเหมา 60%</b> (ไม่ต้องมีบิล)<br>
-                  <span style="font-size:11px;color:#64748b">หักได้: ฿${calc.expenses.toLocaleString('en-US',{minimumFractionDigits:2})}</span>
+                  <b>ร้านค้าหักเหมา 60%:</b> ฿${calc.expenses.toLocaleString('en-US',{minimumFractionDigits:2})}<br>
+                  ${calc.hasSalary ? `<span style="color:#b45309"><b>เงินเดือนหัก 50%:</b> ฿${calc.salaryExpense.toLocaleString('en-US',{minimumFractionDigits:2})} (เพดาน 100,000 บ.)</span>` : ''}
                 </td>
                 <td style="padding:12px 16px;background:#f0fdf4">
                   <b>หักตามจริง (Actual Expenses)</b> มีใบเสร็จ/บิล VAT<br>
@@ -529,16 +640,17 @@ function renderTaxAnalysisDashboard() {
               <tr style="border-bottom:1px solid #e2e8f0">
                 <td style="padding:12px 16px;font-weight:700;color:#334155">3. ค่าลดหย่อน / ค่าใช้จ่ายบริหาร</td>
                 <td style="padding:12px 16px;background:#f0f9ff">
-                  ลดหย่อนส่วนตัว <b>฿60,000</b> (เงินได้สุทธิ: ฿${calc.netTaxableIncome.toLocaleString('en-US',{minimumFractionDigits:2})})
+                  ลดหย่อนส่วนตัว <b>฿60,000</b> ${calc.socialSecurityDeduction > 0 ? `+ ประกันสังคม <b>฿${calc.socialSecurityDeduction.toLocaleString('en-US')}</b>` : ''}
                 </td>
                 <td style="padding:12px 16px;background:#f0fdf4">
                   ค่าทำบัญชีรายเดือน & ค่าผู้สอบบัญชี CPA: <b>฿36,000/ปี</b> (เป็นค่าใช้จ่ายบริษัทได้)
                 </td>
               </tr>
               <tr style="border-bottom:1px solid #e2e8f0">
-                <td style="padding:12px 16px;font-weight:700;color:#334155">4. กำไรสุทธิสำหรับคิดภาษี</td>
+                <td style="padding:12px 16px;font-weight:700;color:#334155">4. กำไรสุทธิ / เงินได้สุทธิคิดภาษี</td>
                 <td style="padding:12px 16px;background:#f0f9ff;font-weight:700;color:#0369a1">
                   ฿${calc.netTaxableIncome.toLocaleString('en-US',{minimumFractionDigits:2})}
+                  ${calc.hasSalary ? `<br><span style="font-size:11px;color:#64748b;font-weight:normal">(รวมฐานเงินเดือนทำให้ตกฐานภาษีที่สูงขึ้น)</span>` : ''}
                 </td>
                 <td style="padding:12px 16px;background:#f0fdf4;font-weight:700;color:#15803d">
                   ฿${calc.corpNetProfit.toLocaleString('en-US',{minimumFractionDigits:2})}
@@ -547,7 +659,7 @@ function renderTaxAnalysisDashboard() {
               <tr style="border-bottom:1px solid #e2e8f0">
                 <td style="padding:12px 16px;font-weight:700;color:#334155">5. อัตราภาษีที่ใช้คำนวณ</td>
                 <td style="padding:12px 16px;background:#f0f9ff">
-                  อัตราก้าวหน้า <b>5% - 35%</b> (ยิ่งรายได้สูง ยิ่งเสียแพง)
+                  อัตราก้าวหน้า <b>5% - 35%</b> (ยิ่งรายได้รวมสูง ยิ่งเสียแพง)
                 </td>
                 <td style="padding:12px 16px;background:#f0fdf4">
                   SME: <b>กำไร 3 แสนแรก ฟรีภาษี 0%</b>, 3 แสน - 3 ล้าน เสีย <b>15%</b>
@@ -557,9 +669,11 @@ function renderTaxAnalysisDashboard() {
                 <td style="padding:12px 16px;font-weight:700;color:#334155">6. ภาษีที่ต้องชำระ (Estimated Tax)</td>
                 <td style="padding:12px 16px;background:#f0f9ff;font-size:14px;font-weight:800;color:${calc.personalFinalTax > 0 ? '#b91c1c' : '#16a34a'}">
                   ฿${calc.personalFinalTax.toLocaleString('en-US',{minimumFractionDigits:2})}
+                  ${calc.hasSalary ? `<br><span style="font-size:11px;color:#64748b;font-weight:normal">(ภาษีเงินเดือนเดิม: ฿${calc.standaloneSalaryTax.toLocaleString('en-US')} + ภาษีเฉพาะร้านค้า: <b style="color:#b91c1c">฿${calc.marginalShopTax.toLocaleString('en-US')}</b>)</span>` : ''}
                 </td>
                 <td style="padding:12px 16px;background:#f0fdf4;font-size:14px;font-weight:800;color:#15803d">
                   ฿${calc.corpTax.toLocaleString('en-US',{minimumFractionDigits:2})}
+                  ${calc.hasSalary ? `<br><span style="font-size:11px;color:#64748b;font-weight:normal">(+ ภาษีเงินเดือนเดิมส่วนบุคคล ฿${calc.standaloneSalaryTax.toLocaleString('en-US')})</span>` : ''}
                 </td>
               </tr>
               <tr style="border-bottom:1px solid #e2e8f0">
@@ -568,9 +682,9 @@ function renderTaxAnalysisDashboard() {
                 <td style="padding:12px 16px;background:#f0fdf4;font-weight:700;color:#b91c1c">~฿36,000 / ปี</td>
               </tr>
               <tr style="background:#f8fafc">
-                <td style="padding:14px 16px;font-weight:800;color:#0f172a;font-size:13.5px">รวมต้นทุนภาษี & การบริหารจัดการ</td>
+                <td style="padding:14px 16px;font-weight:800;color:#0f172a;font-size:13.5px">รวมต้นทุนภาษี & การบริหารจัดการเฉพาะธุรกิจร้านค้า</td>
                 <td style="padding:14px 16px;background:#e0f2fe;font-size:15px;font-weight:800;color:#0369a1">
-                  ฿${calc.personalFinalTax.toLocaleString('en-US',{minimumFractionDigits:2})}
+                  ฿${calc.marginalShopTax.toLocaleString('en-US',{minimumFractionDigits:2})}
                 </td>
                 <td style="padding:14px 16px;background:#dcfce7;font-size:15px;font-weight:800;color:#15803d">
                   ฿${calc.corpTotalCost.toLocaleString('en-US',{minimumFractionDigits:2})}
@@ -582,7 +696,7 @@ function renderTaxAnalysisDashboard() {
 
         <div style="padding:14px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;font-size:12.5px;color:#334155;line-height:1.6">
           💡 <b>บทสรุปความคุ้มค่า:</b> ${calc.taxSavingsIfCorp > 0 ? `
-            เมื่อยอดขายอยู่ที่ระดับนี้ การจดทะเบียนเป็น <b>นิติบุคคล (บริษัทจำกัด)</b> จะเริ่มคุ้มค่ากว่าบุคคลธรรมดา เนื่องจากประหยัดภาษีได้สุทธิ <b>฿${calc.taxSavingsIfCorp.toLocaleString('en-US',{minimumFractionDigits:2})}</b> ต่อปี แม้จะรวมค่าทำบัญชีและค่าสอบบัญชีแล้วก็ตาม!
+            เมื่อรวมยอดขายและเงินเดือนประจำ การจดทะเบียนเป็น <b>นิติบุคคล (บริษัทจำกัด)</b> จะเริ่มคุ้มค่ากว่าบุคคลธรรมดา เนื่องจากประหยัดภาษีได้สุทธิ <b>฿${calc.taxSavingsIfCorp.toLocaleString('en-US',{minimumFractionDigits:2})}</b> ต่อปี แม้จะรวมค่าทำบัญชีและค่าสอบบัญชีแล้วก็ตาม! ${calc.hasSalary ? '<b>(เหตุผล: เพราะเงินเดือนประจำได้ใช้ขั้นบันไดภาษี 0% และ 5% ไปหมดแล้ว ทำให้กำไรจากร้านค้าถูกคิดภาษีในอัตรา 10% - 20% ทันที การแยกมาเป็นบริษัทจึงประหยัดกว่าอย่างมาก)</b>' : ''}
           ` : `
             ณ ยอดขายปัจจุบัน การคงสถานะเป็น <b>บุคคลธรรมดา</b> ยังคงประหยัดกว่านิติบุคคลถึง <b>฿${Math.abs(calc.taxSavingsIfCorp).toLocaleString('en-US',{minimumFractionDigits:2})}</b> ต่อปี เพราะบุคคลธรรมดามีภาระภาษีต่ำมาก และไม่ต้องเสียค่าทำบัญชี/ค่าผู้สอบบัญชีปีละ ฿36,000!
           `}
@@ -612,7 +726,7 @@ function renderTaxAnalysisDashboard() {
               <span>เช็กความคุ้มค่าเรื่องภาษี (Tax Viability)</span>
             </div>
             <div style="font-size:12px;color:#475569;margin-top:8px;line-height:1.5">
-              หลายคนคิดว่าจดบริษัทแล้วภาษีจะถูกลงทันที แต่ความจริงถ้ากำไรสุทธิยังไม่เกิน <b>750,000 บาท/ปี</b> หรือยอดขายยังไม่แตะ <b>1.8 - 2.0 ล้านบาท</b> ภาษีบุคคลธรรมดามักจะยังจ่ายน้อยกว่าเมื่อรวมค่าทำบัญชีและผู้สอบบัญชี
+              หลายคนคิดว่าจดบริษัทแล้วภาษีจะถูกลงทันที แต่ความจริงถ้ากำไรสุทธิยังไม่เกิน <b>750,000 บาท/ปี</b> หรือยอดขายยังไม่แตะ <b>1.8 - 2.0 ล้านบาท</b> ภาษีบุคคลธรรมดามักจะยังจ่ายน้อยกว่าเมื่อรวมค่าทำบัญชีและผู้สอบบัญชี (แต่หากเจ้าของมีเงินเดือนประจำเกิน 30,000 บ./ด. จุดคุ้มทุนจะลดลงเหลือยอดขายเพียง ~1.0 ล้านบาท)
             </div>
           </div>
 
@@ -696,8 +810,9 @@ function renderTaxAnalysisDashboard() {
           <div style="font-size:12.5px;color:#334155;line-height:1.6">
             <div style="font-weight:700;color:#0284c7;margin-bottom:6px">📌 ข้อเท็จจริงสำหรับร้าน SEALTHAI ตอนนี้:</div>
             <div>• ยอดขายปี ${_taxAnalysisYear} ปัจจุบันอยู่ที่ <b>฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}</b></div>
-            <div>• หลังจากหักค่าใช้จ่ายเหมา 60% และลดหย่อนส่วนตัว 60,000 บาท เงินได้สุทธิยังอยู่ในเกณฑ์ <b>ได้รับการยกเว้นภาษี (0 บาท)</b></div>
-            <div>• แต่หากช่วงปลายปีมียอดขายเติบโตขึ้น หรือรวมยอดขายจากทุกมาร์เก็ตเพลสจนเกิน 5-6 แสนบาท จะเริ่มมีภาษีต้องจ่ายประมาณ ฿2,000 - ฿7,500</div>
+            ${calc.hasSalary ? `<div>• มีเงินเดือนประจำจำลอง: <b>฿${calc.salaryMonthly.toLocaleString('en-US')} / ด.</b> (ปีละ ฿${calc.annualSalary.toLocaleString('en-US')})</div>` : ''}
+            <div>• ภาษีส่วนเพิ่มเฉพาะที่เกิดจากร้านค้า: <b style="color:${calc.marginalShopTax > 0 ? '#b91c1c' : '#16a34a'}">฿${calc.marginalShopTax.toLocaleString('en-US',{minimumFractionDigits:2})}</b></div>
+            <div>• แนะนำกันเงินสำรองภาษีร้านค้า: <b>฿${calc.suggestedTaxReserve.toLocaleString('en-US',{minimumFractionDigits:2})}</b> (~฿${calc.monthlyTaxReserve.toLocaleString('en-US')}/เดือน)</div>
           </div>
 
           <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px;font-size:12.5px;color:#166534;line-height:1.6">
@@ -739,12 +854,28 @@ function setTaxSimExpense(mode) {
   renderTaxAnalysisDashboard();
 }
 
+function updateTaxSimSalary(val) {
+  _taxSimSalaryMonthly = Math.max(0, Number(val) || 0);
+  renderTaxAnalysisDashboard();
+}
+
+function toggleTaxSimSocialSecurity(checked) {
+  _taxSimSocialSecurity = !!checked;
+  renderTaxAnalysisDashboard();
+}
+
 // ── Export Tax Report ──
 function exportTaxAnalysisReport() {
   const calc = computeTaxEngine(
     _taxAnalysisMode === 'live' ? _taxAnalysisOrders.reduce((a,b)=>a+Number(b.total_amount||0),0) : (_taxSimMonthlySales*12),
     _taxAnalysisMode === 'simulator',
-    { profitMargin: _taxSimProfitMargin, expenseMode: _taxSimExpenseMode, actualExpensePct: _taxSimActualExpensePct }
+    { 
+      profitMargin: _taxSimProfitMargin, 
+      expenseMode: _taxSimExpenseMode, 
+      actualExpensePct: _taxSimActualExpensePct,
+      salaryMonthly: _taxSimSalaryMonthly,
+      hasSocialSecurity: _taxSimSocialSecurity
+    }
   );
 
   const lines = [
@@ -752,7 +883,10 @@ function exportTaxAnalysisReport() {
     `ปีภาษี: ${_taxAnalysisYear} | วันที่จัดทำ: ${today()}`,
     `----------------------------------------------------`,
     `ยอดขายทั้งปี: ฿${calc.sales.toLocaleString('en-US',{minimumFractionDigits:2})}`,
-    `สถานะภาษีบุคคลธรรมดา (ภ.ง.ด. 90): ฿${calc.personalFinalTax.toLocaleString('en-US',{minimumFractionDigits:2})} (${calc.personalMethodChosen})`,
+    calc.hasSalary ? `เงินเดือนประจำจำลอง (40(1)): ฿${calc.salaryMonthly.toLocaleString('en-US')}/ด. (ปีละ ฿${calc.annualSalary.toLocaleString('en-US')})` : null,
+    `สถานะภาษีบุคคลธรรมดารวมทั้งปี (ภ.ง.ด. 90): ฿${calc.personalFinalTax.toLocaleString('en-US',{minimumFractionDigits:2})} (${calc.personalMethodChosen})`,
+    calc.hasSalary ? `  - ภาษีเฉพาะเงินเดือนเดิม: ฿${calc.standaloneSalaryTax.toLocaleString('en-US',{minimumFractionDigits:2})}` : null,
+    calc.hasSalary ? `  - ภาษีส่วนเพิ่มจากร้านค้า: ฿${calc.marginalShopTax.toLocaleString('en-US',{minimumFractionDigits:2})}` : null,
     `ภาษีครึ่งปี (ภ.ง.ด. 94): ฿${calc.midFinalTax.toLocaleString('en-US',{minimumFractionDigits:2})}`,
     `เงินสำรองภาษีที่ควรกันไว้ (Tax Reserve): ฿${calc.suggestedTaxReserve.toLocaleString('en-US',{minimumFractionDigits:2})} (กันไว้เดือนละ ฿${calc.monthlyTaxReserve.toLocaleString('en-US')})`,
     `----------------------------------------------------`,
@@ -761,7 +895,7 @@ function exportTaxAnalysisReport() {
     `ส่วนต่างภาษีนิติบุคคลเทียบกับบุคคลธรรมดา: ${calc.taxSavingsIfCorp > 0 ? `นิติบุคคลประหยัดกว่า ฿${calc.taxSavingsIfCorp.toLocaleString('en-US',{minimumFractionDigits:2})}` : `บุคคลธรรมดาประหยัดกว่า ฿${Math.abs(calc.taxSavingsIfCorp).toLocaleString('en-US',{minimumFractionDigits:2})}`}`,
     `----------------------------------------------------`,
     `คำแนะนำ: ควรแยกกระเป๋าเงินและกันเงินสำรองภาษีอย่างสม่ำเสมอตามมาตรฐาน FlowAccount`
-  ];
+  ].filter(Boolean);
 
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/plain;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -781,4 +915,6 @@ window.changeTaxYear = changeTaxYear;
 window.updateTaxSimSales = updateTaxSimSales;
 window.updateTaxSimMargin = updateTaxSimMargin;
 window.setTaxSimExpense = setTaxSimExpense;
+window.updateTaxSimSalary = updateTaxSimSalary;
+window.toggleTaxSimSocialSecurity = toggleTaxSimSocialSecurity;
 window.exportTaxAnalysisReport = exportTaxAnalysisReport;

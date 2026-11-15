@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.78';
-const DISPLAY_APP_VERSION = 'v3.78';
+const CURRENT_APP_VERSION = 'sealthai-v3.79';
+const DISPLAY_APP_VERSION = 'v3.79';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.78)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.78 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.79)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.79 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -48056,7 +48056,7 @@ function openChangelogModal() {
   }
 
   const logs = [
-            { v:'3.78', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ขยายขนาดกล่องค้นหาสินค้า (Autocomplete) ให้ใหญ่ขึ้น มองเห็นได้ 10+ รายการ และแก้ปัญหาถูกตัดขอบ (v3.78)', items:[
+            { v:'3.78', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ขยายขนาดกล่องค้นหาสินค้า (Autocomplete) ให้ใหญ่ขึ้น มองเห็นได้ 10+ รายการ และแก้ปัญหาถูกตัดขอบ (v3.78)', items:[
       '🔍 <b>ขยายขนาดกล่องผลการค้นหาสินค้า (Product Search Dropdown):</b> เพิ่มความสูงสูงสุดเป็น 520px (จากเดิม 260-300px) และเพิ่มความกว้างเป็น 580 - 850px เพื่อให้สามารถมองเห็นผลการค้นหาสินค้าได้ 10 รายการขึ้นไปอย่างสบายตา พร้อมแสดงชื่อสินค้า สเปก SKU ป้ายสต็อกหน้าร้าน และสต็อกโรงงานได้อย่างครบถ้วน',
       '🛡️ <b>ปลดล็อคการแสดงผลไม่ให้ถูกตัดขอบ (No Overflow Clipping):</b> ปรับแต่งให้ <code>.sap-matrix-wrap</code>, <code>.sap-window</code> และ <code>.sap-tab-pane</code> แสดงผลแบบ <code>overflow: visible</code> ในมุมมอง PC ทำให้กล่องผลการค้นหาลอยทับองค์ประกอบต่างๆ ได้อย่างอิสระ ไม่ถูกขอบตารางตัดขาดแม้จะมีรายการสินค้าเพียง 1 แถว',
       '📑 <b>ครอบคลุมทุกโมดูลเอกสาร:</b> ใช้งานได้ทันทีในหน้าใบเสนอราคา (Quotation), หน้าสั่งขาย / ออเดอร์ (Sales Order), ใบสั่งซื้อ (PO), ปรับปรุงสต็อก (Stock), และเบิกสินค้า (Goods Issue)',
