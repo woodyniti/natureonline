@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.93';
-const DISPLAY_APP_VERSION = 'v3.93';
+const CURRENT_APP_VERSION = 'sealthai-v3.94';
+const DISPLAY_APP_VERSION = 'v3.94';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.93)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.93 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.94)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.94 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -50058,7 +50058,15 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.93', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ระบบวิเคราะห์สัดส่วนลูกค้านิติบุคคล (B2B) vs บุคคลทั่วไป (B2C) ในเมนูวิเคราะห์ภาษี (v3.93)', items:[
+    { v:'3.94', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'วิเคราะห์สัดส่วนลูกค้านิติบุคคลจากใบเสนอราคา (Quotations Pipeline) & สลับมุมมอง 3 มิติ (v3.94)', items:[
+      '📋 <b>วิเคราะห์ใบเสนอราคา (Quotations Pipeline):</b> นำข้อมูลใบเสนอราคาทั้งหมดในระบบมาจำแนกประเภทลูกค้า ค้นพบว่า <b>นิติบุคคลครองสัดส่วนถึง 73.3% ของจำนวนใบเสนอราคา (11 จาก 15 ใบ) และสูงถึง 91.8% ของมูลค่าเสนอราคาทั้งหมด (฿132,546 จาก ฿144,418)</b>',
+      '🔄 <b>แท็บสลับแหล่งข้อมูล 3 มิติ (Multi-source Switcher):</b> เพิ่มปุ่มสลับดูสถิติได้อย่างอิสระ ระหว่าง <code>[ 📦 ยอดขายจริง (Sales Orders) ]</code>, <code>[ 📋 ใบเสนอราคา (Quotations Pipeline) ]</code>, และ <code>[ 🌐 รวมทั้งระบบ (Combined Ecosystem) ]</code>',
+      '🎯 <b>อัตราการปิดการขาย (Conversion Rate):</b> ติดตามอัตราการแปลงใบเสนอราคาเป็นคำสั่งซื้อจริง โดยลูกค้านิติบุคคลปิดการขายได้ถึง 54.5% (6 จาก 11 ใบ คิดเป็นยอดขายจริง ฿124,291)',
+      '📑 <b>ตารางประวัติใบเสนอราคาจำแนกประเภท:</b> แสดงรายการใบเสนอราคาพร้อมสถานะ (ปิดการขายแล้ว, รอเสนอราคา, ยกเลิก) แยกนิติบุคคลและบุคคลทั่วไปอย่างชัดเจน',
+      '📥 <b>รวมในรายงานภาษี:</b> เพิ่มผลวิเคราะห์สัดส่วนใบเสนอราคาและการปิดการขายเข้าไปในไฟล์รายงานส่งออก (Text Report)',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.94 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.93', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ระบบวิเคราะห์สัดส่วนลูกค้านิติบุคคล (B2B) vs บุคคลทั่วไป (B2C) ในเมนูวิเคราะห์ภาษี (v3.93)', items:[
       '🏢 <b>วิเคราะห์โครงสร้างลูกค้านิติบุคคล vs บุคคลทั่วไป:</b> ในเมนู "🏛️ วิเคราะห์ภาษี · วางแผนนิติบุคคล & กองทุนสำรองภาษี" เพิ่มการจำแนกประเภทลูกค้าจากคำสั่งซื้อจริงอัตโนมัติ โดยอิงจากเลขประจำตัวผู้เสียภาษี 13 หลัก, คำระบุนิติบุคคล (บจก./หจก./จำกัด), ที่อยู่ออกใบกำกับภาษี และฐานข้อมูล CRM',
       '📊 <b>เปรียบเทียบสัดส่วนยอดขาย & AOV:</b> แสดงแถบเปรียบเทียบสัดส่วนยอดขาย (Visual Ratio Bar), ตารางยอดขายรวม, จำนวนคำสั่งซื้อ, จำนวนลูกค้า และยอดซื้อเฉลี่ยต่อบิล (AOV) ที่สะท้อนว่านิติบุคคลมียอดต่อบิลสูงกว่าบุคคลทั่วไปถึง 5 เท่า',
       '🛒 <b>เจาะลึกช่องทางการขาย (Channel Segmentation):</b> แสดงสัดส่วนยอดขายนิติบุคคลและบุคคลทั่วไปแยกรายช่องทาง (LINE, Shopee, Lazada) เผยให้เห็นว่าช่องทาง LINE มียอดนิติบุคคลสูงถึง 96.6% และ Shopee มีลูกค้านิติบุคคลแฝงถึง 22.1%',
