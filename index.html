@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.75';
-const DISPLAY_APP_VERSION = 'v3.75';
+const CURRENT_APP_VERSION = 'sealthai-v3.76';
+const DISPLAY_APP_VERSION = 'v3.76';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -443,6 +443,7 @@ tbody td:first-child { color: var(--text); }
   display: none; position: fixed; inset: 0; z-index: 2000;
   background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px);
   align-items: center; justify-content: center; padding: 16px;
+  overflow: auto; box-sizing: border-box;
 }
 .modal-overlay.open { display: flex; }
 .modal {
@@ -458,14 +459,14 @@ tbody td:first-child { color: var(--text); }
 #modal-grpo .modal, #modal-stock .modal,
 #modal-ar-detail .modal, #modal-ap-detail .modal,
 .sap-modal-large {
-  max-width: min(1400px, calc(100vw - 32px));
+  max-width: min(1440px, calc(100vw - 32px));
   width: min(1320px, calc(100vw - 32px));
   max-height: 94vh;
   box-sizing: border-box;
 }
 #order-detail-content, #ed-items, #qt-items, #order-items-container, #po-detail-content, #gr-content, #stock-rows-wrap { min-width:0; max-width:100%; }
 
-@media (min-width: 1200px) {
+@media (min-width: 769px) {
   #modal-order .modal,
   #modal-order-detail .modal,
   #modal-quote .modal,
@@ -477,9 +478,11 @@ tbody td:first-child { color: var(--text); }
   #modal-ar-detail .modal,
   #modal-ap-detail .modal,
   .sap-modal-large {
-    width: 1280px;
-    min-width: 1200px;
+    width: clamp(1200px, 92vw, 1380px) !important;
+    min-width: 1200px !important;
+    max-width: 98vw !important;
     padding: 20px 24px;
+    box-sizing: border-box;
   }
 }
 
@@ -654,15 +657,23 @@ tbody td:first-child { color: var(--text); }
 .btn-sap-update:hover {
   background: linear-gradient(180deg, #fde047 0%, #eab308 100%) !important;
 }
-#ed-items table { table-layout:fixed; }
-#ed-items thead th:first-child { width:40%; }
-#ed-items thead th:nth-child(2) { width:7%; }
-#ed-items thead th:nth-child(3) { width:10%; }
-#ed-items thead th:nth-child(4) { width:11%; }
-#ed-items thead th:nth-child(5) { width:12%; }
-#ed-items thead th:nth-child(6) { width:20%; }
-#ed-items td { overflow-wrap:anywhere; }
-#ed-items tr.ed-item-row td:last-child > div { flex-wrap:wrap; }
+#ed-items table { table-layout: auto; width: 100%; min-width: 1050px; }
+#ed-items thead th.sap-matrix-num-cell,
+#ed-items tbody td.sap-matrix-num-cell { width: 36px !important; min-width: 36px !important; max-width: 42px !important; text-align: center; padding: 6px 4px !important; }
+#ed-items thead th:nth-child(2),
+#ed-items tbody td:nth-child(2) { min-width: 360px; width: auto; }
+#ed-items thead th:nth-child(3),
+#ed-items tbody td:nth-child(3) { width: 75px !important; min-width: 70px !important; text-align: right; }
+#ed-items thead th:nth-child(4),
+#ed-items tbody td:nth-child(4) { width: 95px !important; min-width: 90px !important; text-align: right; }
+#ed-items thead th:nth-child(5),
+#ed-items tbody td:nth-child(5) { width: 115px !important; min-width: 110px !important; text-align: right; }
+#ed-items thead th:nth-child(6),
+#ed-items tbody td:nth-child(6) { width: 120px !important; min-width: 115px !important; text-align: right; }
+#ed-items thead th:nth-child(7),
+#ed-items tbody td:nth-child(7) { width: 165px !important; min-width: 155px !important; text-align: center; }
+#ed-items td { overflow-wrap: anywhere; }
+#ed-items tr.ed-item-row td:last-child > div { flex-wrap: wrap; }
 
 /* ==========================================================================
    SAP Business One Matrix Grid Styles (PC / Desktop View)
@@ -722,7 +733,11 @@ tbody td:first-child { color: var(--text); }
   font-weight: 700;
   text-align: center;
   font-size: 11px;
-  width: 34px;
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 42px !important;
+  padding: 6px 4px !important;
+  box-sizing: border-box;
   user-select: none;
   vertical-align: middle !important;
 }
@@ -1675,7 +1690,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.75)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.75 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.76)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.76 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9247,8 +9262,8 @@ function renderOrderItems() {
     table.innerHTML = `
       <thead>
         <tr>
-          <th class="sap-matrix-num-cell">#</th>
-          <th style="min-width:320px;text-align:left">Item No. / Description (รหัสและชื่อสินค้า)</th>
+          <th class="sap-matrix-num-cell" style="width:36px;min-width:36px;max-width:42px;text-align:center">#</th>
+          <th style="min-width:340px;text-align:left">Item No. / Description (รหัสและชื่อสินค้า)</th>
           <th style="width:110px;text-align:right">Quantity</th>
           <th style="width:120px;text-align:right">Unit Price</th>
           <th style="width:130px;text-align:right">Discount</th>
@@ -10325,13 +10340,13 @@ function renderEditItems() {
 
   // thead
   table.innerHTML = `<thead><tr>
-    <th class="sap-matrix-num-cell">#</th>
+    <th class="sap-matrix-num-cell" style="width:36px;min-width:36px;max-width:42px;text-align:center">#</th>
     <th style="${thStyle};text-align:left">Item No. / Description (รหัส / รายการสินค้า)</th>
     <th style="${thStyle};text-align:right;width:75px">จำนวน</th>
     <th style="${thStyle};text-align:right;width:95px">ราคา/ชิ้น</th>
     <th style="${thStyle};text-align:right;width:115px">ส่วนลด</th>
     <th style="${thStyle};text-align:right;width:110px">รวม</th>
-    <th style="${thStyle};width:140px;text-align:center">การจัดการ</th>
+    <th style="${thStyle};width:165px;text-align:center">การจัดการ</th>
   </tr></thead>`;
 
   const tbody = document.createElement('tbody');
@@ -47681,7 +47696,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.75', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับเปลี่ยนมุมมองหน้าบันทึกรายการเป็น SAP Business One Matrix Grid สำหรับ PC (v3.75)', items:[
+    { v:'3.76', date:'2026-11-15', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับขนาดคอลัมน์ # ให้เหมาะสม & กำหนดความกว้างหน้าต่างโมดอลในมุมมอง PC ต่ำสุด 1200px (v3.76)', items:[
+      '📏 <b>ปรับขนาดคอลัมน์ # (ลำดับแถว) ให้กะทัดรัดพอดี:</b> แก้ไขข้อกำหนดความกว้างคอลัมน์ลำดับแถว # เป็น 36px พอดีตัวเลข พร้อมยกเลิก CSS เก่าที่เคยดันความกว้างเป็น 40% ช่วยให้คอลัมน์ Item No. / Description มีพื้นที่กว้างขวาง แสดงชื่อ ป้ายสต็อก และปุ่มต่างๆ สวยงามเป็นแถวแนวนอนอย่างถูกต้อง',
+      '🖥️ <b>กำหนดขนาดหน้าต่างโมดอลเอกสารในมุมมอง PC ต่ำสุด 1200px:</b> ปรับแต่งให้หน้าต่าง Popup เอกสาร (Sales Order, Order Detail, Quotation, PO ฯลฯ) ในมุมมอง PC กว้างอย่างน้อย 1200px (min-width: 1200px) เพื่อให้เปิดตาราง SAP B1 Matrix Grid ได้กว้างเต็มตา และมีระบบ Scroll แนวนอนหากหน้าจอเล็กกว่า',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.76 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.75', date:'2026-11-15', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับเปลี่ยนมุมมองหน้าบันทึกรายการเป็น SAP Business One Matrix Grid สำหรับ PC (v3.75)', items:[
       '📊 <b>หน้าตาตารางแบบ SAP Business One Matrix Grid เต็มรูปแบบ:</b> เปลี่ยนพื้นที่รายการสินค้า (Contents) ในหน้าต่างบันทึกออเดอร์ใหม่ (New Sales Order) และหน้าต่างแก้ไขออเดอร์ (Edit Order) ให้เป็นตาราง Spreadsheet สไตล์ SAP B1 มีคอลัมน์ # (ลำดับแถว), Item No. / Description, Quantity, Unit Price, Discount, Total (THB) และปุ่มลบแถว',
       '⚡ <b>ฟังก์ชันและข้อมูลครบถ้วนในแถวเดียว:</b> ค้นหาสินค้าจากคลัง/พิมพ์ชื่ออิสระ, แสดงสถานะคลัง (✓ คลัง / ⚠️ ไม่เชื่อมโยง), ป้ายสต็อกหน้าร้าน, ป้ายสต็อก Supplier (🏭 รง.), ปุ่มปรับสต็อก, Movement, และช่องพิมพ์ชื่อข้อความหน้าบิลพร้อมติ๊กเลือก [✓ ในบิล] ได้ครบถ้วน',
       '📱 <b>รองรับ Responsive สองระบบ:</b> สำหรับมุมมอง PC (>768px) แสดงเป็นตาราง SAP B1 Matrix Grid สะดวกรวดเร็ว ส่วนมุมมองมือถือ (<=768px) ปรับเป็น Card แนวตั้งเพื่อความสะดวกในการแตะสัมผัส',
