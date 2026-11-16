@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.95';
-const DISPLAY_APP_VERSION = 'v3.95';
+const CURRENT_APP_VERSION = 'sealthai-v3.96';
+const DISPLAY_APP_VERSION = 'v3.96';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.95)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.95 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.96)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.96 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2802,8 +2802,11 @@ function formatCompanyWithBranch(companyName, branchCode = '') {
   // Strip existing branch suffix if user already typed it in the company field
   comp = comp.replace(/\s*[\(\[]?\s*(?:สำนักงานใหญ่|head\s*office|สาขา\s*[:\s]?\s*[\w\d]+|สาขาที่\s*[\w\d]+)\s*[\)\]]?\s*$/i, '').trim();
 
+  // ถ้าใส่ค่าว่าง ให้ว่างไว้ไม่ต้องพิมพ์คำว่า สำนักงานใหญ่
+  if (!b) return comp;
+
   let branchSuffix = '';
-  if (!b || b === '00000' || b === 'สำนักงานใหญ่' || b.toLowerCase() === 'head office') {
+  if (b === '00000' || b === 'สำนักงานใหญ่' || b.toLowerCase() === 'head office') {
     branchSuffix = 'สำนักงานใหญ่';
   } else {
     const cleanNum = b.replace(/^สาขา(?:ที่)?\s*[:\s]?\s*/i, '').trim();
@@ -8817,7 +8820,7 @@ function _fillCustFields(c, ids) {
   set(ids.addr,    c.customer_address);
   set(ids.company, c.company_name || (c.source === 'crm' && c.customer_type === 'company' ? c.customer_name : ''));
   set(ids.tax,     c.tax_id);
-  if (ids.branch)  set(ids.branch, c.branch_code || (c.company_name ? '00000' : ''));
+  if (ids.branch)  set(ids.branch, c.branch_code || '');
   set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
   const changedField = document.getElementById(ids.name);
   markUnsavedForm(changedField?.closest('.modal-overlay'));
@@ -13217,7 +13220,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const companyName = (getOrderCompanyName(order, customer) || '').trim();
   const customerName = (order.customer_name || customer?.name || '').trim();
   const taxId = (order.tax_id || customer?.tax_id || '').trim();
-  const branchCode = (order.branch_code || customer?.branch_code || '00000').trim();
+  const branchCode = String(order.branch_code !== undefined && order.branch_code !== null ? order.branch_code : (customer?.branch_code || '')).trim();
   const contactPerson = (order.customer_contact || customer?.contact_name || '').trim();
   const phone = (order.customer_phone || customer?.phone || '').trim();
   const billAddr = (order.billing_address || customer?.billing_address || order.customer_address || customer?.shipping_address || '').trim();
@@ -25141,7 +25144,7 @@ async function viewQuote(qtId) {
         '<div style="display:grid;grid-template-columns:2fr 1.2fr 1fr;gap:12px;margin-bottom:12px">' +
           '<div><span class="sap-field-label">ชื่อบริษัท / ชื่อออกบิล:</span><div style="font-weight:600;font-size:13px">'+(meta.company_name ? escapeHTML(formatCompanyWithBranch(meta.company_name, meta.branch_code)) : '-')+'</div></div>' +
           '<div><span class="sap-field-label">เลขประจำตัวผู้เสียภาษี (Tax ID):</span><div style="font-weight:600;font-size:13px">'+(meta.tax_id ? escapeHTML(meta.tax_id) : '-')+'</div></div>' +
-          '<div><span class="sap-field-label">สาขา (Branch):</span><div style="font-weight:600;font-size:13px">'+(meta.branch_code ? escapeHTML(meta.branch_code) : '00000 (สำนักงานใหญ่)')+'</div></div>' +
+          '<div><span class="sap-field-label">สาขา (Branch):</span><div style="font-weight:600;font-size:13px">'+(meta.branch_code ? escapeHTML(meta.branch_code) : '-')+'</div></div>' +
         '</div>' +
         '<div style="margin-bottom:12px"><span class="sap-field-label">ที่อยู่ออกบิล (Billing Address):</span><div style="background:#f8fafc;padding:8px 12px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;line-height:1.5">'+(meta.billing_address ? escapeHTML(meta.billing_address).replace(/\n/g, '<br>') : '<span style="color:#94a3b8">ไม่ได้ระบุที่อยู่ออกบิล</span>')+'</div></div>' +
         '<div style="border:1.5px solid #16a34a;border-radius:8px;padding:10px 14px;background:#f0fdf4;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">' +
@@ -41742,7 +41745,7 @@ function filterCustomerList() {
             </td>
             <td>
               <div style="font-family:var(--mono);font-size:12px">${c.tax_id || '-'}</div>
-              <div style="font-size:11px;color:var(--text3)">สาขา: ${c.branch_code === '00000' ? 'สำนักงานใหญ่ (00000)' : (c.branch_code || '00000')}</div>
+              <div style="font-size:11px;color:var(--text3)">${c.branch_code ? `สาขา: ${c.branch_code === '00000' ? 'สำนักงานใหญ่ (00000)' : escapeHTML(c.branch_code)}` : '-'}</div>
             </td>
             <td>
               <div style="font-size:12px">${c.phone ? `📞 ${escapeHTML(c.phone)}` : '-'}</div>
@@ -42502,7 +42505,7 @@ function renderCustomerModal(title, c) {
       </div>
       <div class="form-group">
         <label>รหัสสาขา</label>
-        <input type="text" id="mc-branch" value="${escapeHTML(c.branch_code || '00000')}" placeholder="00000 = สำนักงานใหญ่">
+        <input type="text" id="mc-branch" value="${escapeHTML(c.branch_code || '')}" placeholder="00000 = สำนักงานใหญ่ (เว้นว่างได้)">
       </div>
       <div class="form-group">
         <label>เบอร์โทรศัพท์</label>
@@ -42561,7 +42564,7 @@ async function saveCustomerData() {
     customer_type: document.getElementById('mc-type').value,
     customer_tier: document.getElementById('mc-tier').value,
     tax_id: (document.getElementById('mc-tax').value || '').trim() || null,
-    branch_code: (document.getElementById('mc-branch').value || '00000').trim(),
+    branch_code: (document.getElementById('mc-branch').value || '').trim() || null,
     phone: (document.getElementById('mc-phone').value || '').trim() || null,
     email: (document.getElementById('mc-email').value || '').trim() || null,
     credit_term_days: Number(document.getElementById('mc-credit-days').value || 0),
@@ -42675,7 +42678,7 @@ async function openCustomerProfileModal(id) {
         <div style="font-size:15px;font-weight:700;margin-bottom:4px">${escapeHTML(c.name)}</div>
         <div style="margin-bottom:8px">${getCustomerTierBadge(c.customer_tier)}</div>
         <div style="font-size:12px;color:var(--text2);line-height:1.6">
-          <div><b>Tax ID:</b> ${c.tax_id || '-'} (สาขา: ${c.branch_code || '00000'})</div>
+          <div><b>Tax ID:</b> ${c.tax_id || '-'} ${c.branch_code ? `(สาขา: ${c.branch_code === '00000' ? 'สำนักงานใหญ่' : escapeHTML(c.branch_code)})` : ''}</div>
           <div><b>โทร:</b> ${c.phone || '-'} | <b>อีเมล:</b> ${c.email || '-'}</div>
           <div><b>ที่อยู่ออกบิล:</b> ${escapeHTML(c.billing_address || '-')}</div>
           <div><b>ที่อยู่ส่งของ:</b> ${escapeHTML(c.shipping_address || '-')}</div>
@@ -50074,7 +50077,17 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.94', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'วิเคราะห์สัดส่วนลูกค้านิติบุคคลจากใบเสนอราคา (Quotations Pipeline) & สลับมุมมอง 3 มิติ (v3.94)', items:[
+    { v:'3.96', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับการแสดงผลสาขาบนหน้าบิล / เอกสาร (เว้นว่างช่องสาขาจะไม่พิมพ์คำว่าสำนักงานใหญ่) (v3.96)', items:[
+      '🏢 <b>ปรับเงื่อนไขการแสดงผลสาขา (Branch Display):</b> หากช่องสาขา (Branch) เว้นว่างไว้ ระบบจะไม่ต่อท้ายชื่อบริษัทด้วย <code>(สำนักงานใหญ่)</code> และจะแสดงเฉพาะชื่อบริษัทตามที่ระบุบนหน้าบิล, ใบเสร็จรับเงิน, ใบกำกับภาษี, ใบส่งของ และใบเสนอราคา',
+      '🎯 <b>ระบุเฉพาะเมื่อต้องการ:</b> คำว่า <code>(สำนักงานใหญ่)</code> จะแสดงบนบิลเฉพาะเมื่อระบุรหัส <code>00000</code> หรือพิมพ์ <code>สำนักงานใหญ่</code> อย่างชัดเจนเท่านั้น',
+      '🏷️ <b>สาขาอื่นๆ:</b> หากระบุเลขสาขา เช่น <code>00001</code> ระบบจะแสดงเป็น <code>(สาขา 00001)</code> ตามปกติ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.96 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.95', date:'2026-11-16', badge:'Stable', color:'#059669', bg:'#ecfdf5', title:'แก้ไขข้อผิดพลาดหน้าสินค้าและหน้าต่างตรวจสอบสต๊อกการเคลื่อนไหว (v3.95)', items:[
+      '🛡️ <b>Null-safety Guard สำหรับ DOM Elements:</b> เพิ่มการตรวจสอบ Element ป้องกันข้อผิดพลาด Cannot set properties of null (setting \'innerHTML\') ในหน้าจัดการสินค้าและหน้าต่างตรวจสอบสต๊อก',
+      '📦 <b>Product Table & Inventory Posting:</b> ปรับปรุงให้การเปิดดูรายละเอียดสต๊อกสินค้าทำงานได้อย่างราบรื่นและไม่เกิดข้อขัดข้อง'
+    ]},
+    { v:'3.94', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'วิเคราะห์สัดส่วนลูกค้านิติบุคคลจากใบเสนอราคา (Quotations Pipeline) & สลับมุมมอง 3 มิติ (v3.94)', items:[
       '📋 <b>วิเคราะห์ใบเสนอราคา (Quotations Pipeline):</b> นำข้อมูลใบเสนอราคาทั้งหมดในระบบมาจำแนกประเภทลูกค้า ค้นพบว่า <b>นิติบุคคลครองสัดส่วนถึง 73.3% ของจำนวนใบเสนอราคา (11 จาก 15 ใบ) และสูงถึง 91.8% ของมูลค่าเสนอราคาทั้งหมด (฿132,546 จาก ฿144,418)</b>',
       '🔄 <b>แท็บสลับแหล่งข้อมูล 3 มิติ (Multi-source Switcher):</b> เพิ่มปุ่มสลับดูสถิติได้อย่างอิสระ ระหว่าง <code>[ 📦 ยอดขายจริง (Sales Orders) ]</code>, <code>[ 📋 ใบเสนอราคา (Quotations Pipeline) ]</code>, และ <code>[ 🌐 รวมทั้งระบบ (Combined Ecosystem) ]</code>',
       '🎯 <b>อัตราการปิดการขาย (Conversion Rate):</b> ติดตามอัตราการแปลงใบเสนอราคาเป็นคำสั่งซื้อจริง โดยลูกค้านิติบุคคลปิดการขายได้ถึง 54.5% (6 จาก 11 ใบ คิดเป็นยอดขายจริง ฿124,291)',
