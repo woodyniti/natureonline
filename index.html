@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.01';
-const DISPLAY_APP_VERSION = 'v4.01';
+const CURRENT_APP_VERSION = 'sealthai-v4.02';
+const DISPLAY_APP_VERSION = 'v4.02';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.01 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.02 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -37188,119 +37188,236 @@ async function openBatchSOtoPOModal() {
   modal.id = 'modal-batch-po';
   modal.style.zIndex = '450';
   modal.innerHTML = `
-    <div class="modal" style="max-width:940px;width:95vw">
-      <div class="modal-title" style="display:flex;justify-content:space-between;align-items:center">
-        <span>🛒 สร้างใบสั่งซื้อ (PO) จากรายการขาย (${ordersData.length} ออเดอร์)</span>
-        <button class="btn btn-secondary btn-sm" onclick="this.closest(\'.modal-overlay\').remove()">✕</button>
-      </div>
-
-      <!-- Top PO Header Settings -->
-      <div class="grid-2 mb-3" style="gap:10px">
-        <div class="form-group">
-          <label style="font-weight:700">วันที่ออก PO:</label>
-          <input type="date" id="bpo-date" value="${today()}">
-        </div>
-        <div class="form-group">
-          <label style="font-weight:700">วันที่คาดว่าจะได้รับของ:</label>
-          <input type="date" id="bpo-expected" value="${(()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10);})()}">
-        </div>
-        <div class="form-group" style="grid-column:1/-1">
-          <label style="font-weight:700">เลือก Supplier / ผู้จัดจำหน่าย <span style="color:var(--red)">*</span>:</label>
-          <select id="bpo-supplier-sel" onchange="onBatchPOSupplierChange()" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:7px 10px;font-size:15px;color:var(--text);font-weight:600">
-            <option value="">-- กรุณาเลือก Supplier เพื่อออกใบสั่งซื้อ --</option>
-            ${allSuppliers.map(s=>`<option value="${s.id}" data-phone="${s.phone||''}" data-contact="${s.contact_name||''}">${s.name} ${s.phone?('('+s.phone+')'):''}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-
-      <!-- Controls & Toggle Grouping -->
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;background:var(--bg3);padding:8px 12px;border-radius:8px">
-        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;cursor:pointer">
-            <input type="checkbox" id="bpo-select-all" checked onchange="toggleAllBatchPOItems(this.checked)"> เลือกทั้งหมด
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--accent);cursor:pointer">
-            <input type="checkbox" id="bpo-group-toggle" ${_batchPOGroupBySKU?'checked':''} onchange="toggleBatchPOGrouping(this.checked)"> 🔄 รวมจำนวนตามรหัส SKU / สินค้าเดียวกัน
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:#0284c7;background:#e0f2fe;padding:3px 8px;border-radius:6px;border:1px solid #7dd3fc;cursor:pointer" title="ใช้ Item Code (Supplier SKU) และ Item Description ของ Supplier ในการออก PO">
-            <input type="checkbox" id="bpo-supplier-naming-toggle" ${_batchPOUseSupplierNaming?'checked':''} onchange="toggleBatchPOSupplierNaming(this.checked)"> 🏷️ ใช้ Item Code & Description ของ Supplier
-          </label>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px">
-          <button type="button" class="btn btn-secondary btn-sm" onclick="openAddProductToBatchPOModal()" style="font-size:12px;padding:4px 10px;background:#fff;border-color:var(--border2);color:#15803d;font-weight:700;display:inline-flex;align-items:center;gap:4px">➕ เพิ่มสินค้า / SKU ใน PO นี้</button>
-          <div style="font-size:12px;color:var(--text3)">
-            เลือกแล้ว <b id="bpo-selected-count" style="color:var(--accent)">0</b> รายการ
+    <div class="modal sap-modal-large" style="width:min(1360px,calc(100vw - 32px));max-width:min(1420px,calc(100vw - 32px));max-height:94vh;padding:0;border:none;background:transparent;box-shadow:none;display:flex;flex-direction:column">
+      <div class="sap-window" id="sap-batch-po-window" style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.18);overflow:hidden;display:flex;flex-direction:column;flex:1;max-height:94vh">
+        
+        <!-- 1. SAP Header Bar -->
+        <div class="sap-header-bar" style="background:linear-gradient(180deg,#f8fafc 0%,#e2e8f0 100%);border-top:3.5px solid #f59e0b;border-bottom:2px solid #cbd5e1;padding:8px 14px;display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-size:16px">🛒</span>
+            <span style="font-weight:700;font-size:14px;color:#1e293b">Purchase Order · สร้างใบสั่งซื้อจากรายการขาย (Batch PO)</span>
+            <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:11px">SAP Business One Standard</span>
+            <span class="badge" style="background:#e0f2fe;color:#0284c7;border:1px solid #bae6fd;font-size:11px;font-weight:700">📑 รวม ${ordersData.length} ออเดอร์ต้นทาง</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="this.closest('.modal-overlay').remove()" style="padding:2px 8px;font-weight:700">✕</button>
           </div>
         </div>
-      </div>
 
-      <!-- Items Table -->
-      <div class="table-wrap" style="max-height:340px;overflow-y:auto;border:1px solid var(--border2);border-radius:6px">
-        <table id="table-bpo-items">
-          <thead>
-            <tr style="background:#f8fafc">
-              <th style="width:36px;text-align:center">✓</th>
-              <th style="width:120px">อ้างอิงออเดอร์</th>
-              <th>รหัส SKU & ชื่อสินค้า</th>
-              <th style="width:80px;text-align:right">ยอดขาย</th>
-              <th style="width:100px;text-align:right">จำนวนสั่ง PO</th>
-              <th style="width:110px;text-align:right" title="ราคาซื้อต่อหน่วยจาก Supplier">ราคาซื้อ/หน่วย (บ.)</th>
-              <th style="width:110px;text-align:right">รวมราคาซื้อ (บ.)</th>
-              <th style="width:40px;text-align:center">✕</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-bpo-items"></tbody>
-        </table>
-      </div>
+        <!-- 2. Form Panel (2 Columns) -->
+        <div class="sap-panel" style="padding:10px 14px;background:#fff;border-bottom:1px solid #e2e8f0">
+          <div class="sap-form-grid">
+            <!-- Left: Vendor Business Partner -->
+            <div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Vendor (ผู้ขาย) <span style="color:var(--red)">*</span></span>
+                <div style="display:flex;gap:4px;align-items:center;width:100%">
+                  <button type="button" class="sap-link-btn" title="เลือกผู้ขาย" onclick="document.getElementById('bpo-supplier-sel')?.focus()">➔</button>
+                  <select id="bpo-supplier-sel" onchange="onBatchPOSupplierChange()" style="width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:5px 8px;font-size:13px;color:#0f172a;font-weight:600">
+                    <option value="">-- กรุณาเลือก Supplier เพื่อออกใบสั่งซื้อ --</option>
+                    ${allSuppliers.map(s=>`<option value="${s.id}" data-phone="${s.phone||''}" data-contact="${s.contact_name||''}">${s.name} ${s.phone?('('+s.phone+')'):''}</option>`).join('')}
+                  </select>
+                </div>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Contact / Phone</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                  <input type="text" id="bpo-supplier-contact" readonly placeholder="ผู้ติดต่อ" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12px;color:#475569">
+                  <input type="text" id="bpo-supplier-phone" readonly placeholder="เบอร์โทร" style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12px;color:#475569">
+                </div>
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Source / Cur.</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:11px;font-weight:600">รวม ${ordersData.length} ออเดอร์</span>
+                  <span style="font-size:11.5px;font-weight:700;color:#64748b;white-space:nowrap;margin-left:auto">Currency: <b style="color:#0f172a">THB (฿)</b></span>
+                </div>
+              </div>
+            </div>
 
-      <!-- Calculation Summary Box -->
-      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-          <div style="display:flex;align-items:center;gap:12px">
-            <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer">
-              <input type="checkbox" id="bpo-vat-on" onchange="calcBatchPOTotals()"> มี VAT 7%
-            </label>
-            <select id="bpo-vat-type" onchange="calcBatchPOTotals()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:3px 8px;font-size:12px">
-              <option value="excluded">VAT แยก (บวกเพิ่ม 7%)</option>
-              <option value="included">VAT รวมใน (รวมในยอดแล้ว)</option>
-            </select>
-          </div>
-          <div style="display:flex;gap:20px;text-align:right">
+            <!-- Right: Document Dates & Status -->
             <div>
-              <div style="font-size:11px;color:var(--text3)">รวมจำนวนสั่งซื้อ</div>
-              <div class="font-mono" id="bpo-sum-qty" style="font-weight:700;font-size:15px">0 ชิ้น</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3)">ยอดรวมก่อน VAT</div>
-              <div class="font-mono" id="bpo-sum-subtotal" style="font-weight:700;font-size:15px">฿0</div>
-            </div>
-            <div id="bpo-vat-amount-box" style="display:none">
-              <div style="font-size:11px;color:var(--text3)">VAT 7%</div>
-              <div class="font-mono text-amber" id="bpo-sum-vat" style="font-weight:700;font-size:15px">฿0</div>
-            </div>
-            <div>
-              <div style="font-size:11px;color:var(--text3)">ยอดรวมทั้งสิ้น (PO Total)</div>
-              <div class="font-mono text-green" id="bpo-sum-total" style="font-weight:800;font-size:18px">฿0</div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Posting Date</span>
+                <input type="date" id="bpo-date" value="${today()}" style="width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12.5px;box-sizing:border-box">
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label" style="color:#0284c7;font-weight:700">Delivery Date</span>
+                <input type="date" id="bpo-expected" value="${(()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10);})()}" style="width:100%;background:#f0f9ff;border:1.5px solid #93c5fd;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:700;color:#0369a1;box-sizing:border-box">
+              </div>
+              <div class="sap-field-row">
+                <span class="sap-field-label">Document Status</span>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:11px;font-weight:700">Open · Ready to Order</span>
+                  <span style="font-size:11px;color:#64748b;margin-left:auto">Auto Batch PO</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="form-group" style="margin-top:10px">
-        <label>หมายเหตุใบสั่งซื้อ (PO Note):</label>
-        <textarea id="bpo-note" rows="2" placeholder="เช่น สั่งผลิต/จัดซื้อตามรายการขาย Sales Orders รวม..."></textarea>
-      </div>
+        <!-- 3. Tabs Navigation -->
+        <div class="sap-tabs">
+          <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-batch-po-window','contents')">📦 Contents (รายการสินค้า & สเปก Supplier)</div>
+          <div class="sap-tab" data-tab="logistics" onclick="switchSapTab('sap-batch-po-window','logistics')">🚚 Logistics (สถานที่จัดส่ง & ผู้ขาย)</div>
+          <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-batch-po-window','accounting')">💳 Accounting (เงื่อนไขการเงิน & ภาษี)</div>
+          <div class="sap-tab" data-tab="notes" onclick="switchSapTab('sap-batch-po-window','notes')">📝 Remarks (หมายเหตุเอกสาร)</div>
+        </div>
 
-      <div class="modal-footer" style="display:flex;justify-content:space-between;align-items:center">
-        <button class="btn btn-secondary" onclick="this.closest(\'.modal-overlay\').remove()">ยกเลิก</button>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-secondary" onclick="saveBatchPOFromOrders('draft')">💾 บันทึกเป็นแบบร่าง (Draft PO)</button>
-          <button class="btn btn-primary" style="background:#16a34a;border-color:#15803d;font-weight:700" onclick="saveBatchPOFromOrders('sent')">📄 สร้าง Purchase Order (PO)</button>
+        <!-- 4. Tab Panes -->
+        <!-- Tab 1: Contents -->
+        <div class="sap-tab-pane active" data-pane="contents" style="padding:10px 14px;overflow-y:auto;flex:1;max-height:calc(92vh - 340px);display:flex;flex-direction:column;box-sizing:border-box">
+          <!-- Toolbar Controls -->
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:6px 10px;background:#f8fafc;border:1px solid #cbd5e1;border-bottom:none;border-radius:6px 6px 0 0">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:12px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#1e293b;cursor:pointer">
+                <input type="checkbox" id="bpo-select-all" checked onchange="toggleAllBatchPOItems(this.checked)"> เลือกทั้งหมด
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#0284c7;background:#fff;padding:2px 8px;border-radius:4px;border:1px solid #cbd5e1;cursor:pointer">
+                <input type="checkbox" id="bpo-group-toggle" ${_batchPOGroupBySKU?'checked':''} onchange="toggleBatchPOGrouping(this.checked)"> 🔄 รวมจำนวนตามรหัส SKU / สินค้าเดียวกัน
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:#059669;background:#ecfdf5;padding:2px 8px;border-radius:4px;border:1px solid #a7f3d0;cursor:pointer" title="ใช้ Item Code (Supplier SKU) และ Item Description ของ Supplier ในการออก PO">
+                <input type="checkbox" id="bpo-supplier-naming-toggle" ${_batchPOUseSupplierNaming?'checked':''} onchange="toggleBatchPOSupplierNaming(this.checked)"> 🏷️ ใช้ Item Code & Description ของ Supplier
+              </label>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openAddProductToBatchPOModal()" style="font-size:12px;padding:3px 10px;background:#fff;border-color:#cbd5e1;color:#15803d;font-weight:700;display:inline-flex;align-items:center;gap:4px">➕ เพิ่มสินค้า (Add Line)</button>
+              <span style="font-size:12px;color:#64748b;font-weight:600">เลือกแล้ว <b id="bpo-selected-count" style="color:#0284c7">0</b> รายการ</span>
+            </div>
+          </div>
+
+          <!-- SAP Matrix Table -->
+          <div class="sap-matrix-wrap" style="margin-bottom:0;border-top-left-radius:0;border-top-right-radius:0;flex:1;overflow:auto;max-height:360px">
+            <table class="sap-matrix-table" id="table-bpo-items" style="min-width:1100px;width:100%">
+              <thead>
+                <tr style="position:sticky;top:0;z-index:2;background:#f8fafc">
+                  <th class="sap-matrix-num-cell" style="width:36px;text-align:center">#</th>
+                  <th style="width:36px;text-align:center">✓</th>
+                  <th style="width:160px">Item No. (รหัสสินค้า)</th>
+                  <th>Item Description (รายการสินค้า / สเปกผู้ขาย)</th>
+                  <th style="width:130px">Order Ref (อ้างอิง)</th>
+                  <th style="width:75px;text-align:right">ยอดขาย</th>
+                  <th style="width:105px;text-align:right">จำนวนสั่ง (Qty)</th>
+                  <th style="width:115px;text-align:right">ราคาซื้อ/หน่วย (บ.)</th>
+                  <th style="width:125px;text-align:right">รวมราคาซื้อ (บ.)</th>
+                  <th style="width:40px;text-align:center">✕</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-bpo-items"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Logistics -->
+        <div class="sap-tab-pane" data-pane="logistics" style="padding:16px 20px;overflow-y:auto;min-height:320px">
+          <div style="max-width:750px;font-size:13px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:12px;color:#1e293b;border-bottom:1px solid #cbd5e1;padding-bottom:6px">🚚 Logistics & Delivery Information (สถานที่จัดส่ง & ผู้ขาย)</div>
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+              <span class="sap-field-label">สถานที่จัดส่ง (Ship-to):</span>
+              <span style="font-weight:600;color:#0f172a">คลังสินค้า SEALTHAI (สำนักงานใหญ่) · 346/149 อาคาร 1B ซอยรัชดาภิเษก 36 แขวงจันทรเกษม เขตจตุจักร กรุงเทพฯ 10900</span>
+            </div>
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+              <span class="sap-field-label">กำหนดวันส่งมอบ (Expected):</span>
+              <span style="color:#0284c7;font-weight:700" id="bpo-logistics-expected-display">-</span>
+            </div>
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+              <span class="sap-field-label">ผู้ขาย (Vendor Name):</span>
+              <span style="font-weight:600;color:#0f172a" id="bpo-logistics-supplier-display">-</span>
+            </div>
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:10px">
+              <span class="sap-field-label">ผู้ติดต่อ / โทร:</span>
+              <span id="bpo-logistics-contact-display">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Accounting -->
+        <div class="sap-tab-pane" data-pane="accounting" style="padding:16px 20px;overflow-y:auto;min-height:320px">
+          <div style="max-width:750px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:8px;padding:16px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1e293b">💳 Accounting & Payment Terms (เงื่อนไขการเงิน & ภาษี)</div>
+            <div style="font-size:12.5px;color:#64748b;line-height:1.6;margin-bottom:12px">
+              ระบบคำนวณภาษีมูลค่าเพิ่ม (VAT 7%) สามารถปรับแต่งได้โดยตรงที่แถบสรุปยอดด้านล่างของหน้าต่างเอกสาร
+            </div>
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:8px">
+              <span class="sap-field-label">เงื่อนไขการชำระเงิน:</span>
+              <span style="font-weight:600;color:#1e293b">เครดิตตามรอบวางบิล / โอนชำระเงิน</span>
+            </div>
+            <div class="sap-field-row" style="grid-template-columns:160px 1fr;margin-bottom:8px">
+              <span class="sap-field-label">การบันทึกบัญชี AP:</span>
+              <span style="color:#0284c7;font-weight:600">ตั้งหนี้ AP Invoice อัตโนมัติเมื่อตรวจรับสินค้าเข้าคลัง (Goods Receipt PO)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Notes -->
+        <div class="sap-tab-pane" data-pane="notes" style="padding:16px 20px;overflow-y:auto;min-height:320px">
+          <div class="form-group" style="margin:0;max-width:800px">
+            <label style="font-size:12.5px;font-weight:700;color:#475569;margin-bottom:6px;display:block">หมายเหตุใบสั่งซื้อ (Remarks / PO Note)</label>
+            <textarea id="bpo-note" rows="5" placeholder="ข้อความหมายเหตุที่จะระบุในใบสั่งซื้อ เช่น สั่งผลิต/จัดซื้อตามรายการขาย Sales Orders รวม..." style="width:100%;border:1px solid #cbd5e1;border-radius:6px;padding:8px 10px;font-size:13px"></textarea>
+          </div>
+        </div>
+
+        <!-- 5. SAP Footer Bar -->
+        <div class="sap-footer" style="padding:10px 14px;border-top:1.5px solid #cbd5e1;background:#f8fafc;box-sizing:border-box">
+          <div>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:#1e293b;cursor:pointer">
+                <input type="checkbox" id="bpo-vat-on" onchange="calcBatchPOTotals()"> มี VAT 7%
+              </label>
+              <select id="bpo-vat-type" onchange="calcBatchPOTotals()" style="background:#fff;border:1px solid #cbd5e1;border-radius:4px;padding:3px 8px;font-size:12px;color:#0f172a">
+                <option value="excluded">VAT แยก (บวกเพิ่ม 7%)</option>
+                <option value="included">VAT รวมใน (รวมในยอดแล้ว)</option>
+              </select>
+            </div>
+            <div style="margin-bottom:10px">
+              <input type="text" id="bpo-note-quick" placeholder="หมายเหตุสั้น..." oninput="const n=document.getElementById('bpo-note');if(n)n.value=this.value" style="width:100%;max-width:380px;background:#fff;border:1px solid #cbd5e1;border-radius:4px;padding:4px 8px;font-size:12px">
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Cancel (ยกเลิก)</button>
+              <button type="button" class="btn btn-secondary" onclick="saveBatchPOFromOrders('draft')">💾 บันทึกแบบร่าง (Draft)</button>
+              <button type="button" class="btn btn-primary btn-sap-update" onclick="saveBatchPOFromOrders('sent')" style="font-size:13px;padding:7px 20px">➕ Add (สร้าง Purchase Order)</button>
+            </div>
+          </div>
+
+          <!-- Right Summary Box -->
+          <div style="background:#fff;border:1.5px solid #cbd5e1;border-radius:8px;padding:10px 14px;min-width:320px">
+            <div style="display:flex;justify-content:space-between;align-items:center;color:#475569;font-size:12px;margin-bottom:4px">
+              <span>รวมจำนวนสั่งซื้อ (Total Qty)</span>
+              <span class="font-mono" id="bpo-sum-qty" style="font-weight:700;color:#0f172a">0 ชิ้น</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;color:#475569;font-size:12px;margin-bottom:4px">
+              <span>มูลค่าสินค้าก่อนภาษี (Subtotal)</span>
+              <span class="font-mono" id="bpo-sum-subtotal" style="font-weight:700;color:#0f172a">฿0</span>
+            </div>
+            <div id="bpo-vat-amount-box" style="display:none;justify-content:space-between;align-items:center;color:#d97706;font-size:12px;margin-bottom:4px">
+              <span>ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
+              <span class="font-mono" id="bpo-sum-vat" style="font-weight:700">฿0</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
+              <span style="font-weight:700;font-size:13px;color:#0f172a">ยอดรวมทั้งสิ้น (PO Total)</span>
+              <span class="font-mono" id="bpo-sum-total" style="font-weight:800;font-size:18px;color:#16a34a">฿0</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `;
   document.body.appendChild(modal);
+
+  // Sync Expected Date to Logistics
+  const expInp = document.getElementById('bpo-expected');
+  const logExp = document.getElementById('bpo-logistics-expected-display');
+  if (expInp && logExp) {
+    logExp.textContent = expInp.value || '-';
+    expInp.addEventListener('change', () => { logExp.textContent = expInp.value || '-'; });
+  }
+
+  // Sync Note between quick and full
+  const fullNote = document.getElementById('bpo-note');
+  const quickNote = document.getElementById('bpo-note-quick');
+  if (fullNote && quickNote) {
+    fullNote.addEventListener('input', () => { quickNote.value = fullNote.value; });
+  }
 
   // Auto-select common preferred supplier if all items match
   const prefSupIds = rawItems.map(it => it.preferred_supplier_id).filter(Boolean);
@@ -37309,9 +37426,9 @@ async function openBatchSOtoPOModal() {
     const supSel = document.getElementById('bpo-supplier-sel');
     if (supSel && !supSel.value) {
       supSel.value = commonSupId;
-      onBatchPOSupplierChange();
     }
   }
+  onBatchPOSupplierChange();
 
   renderBatchPOItemsTable();
 }
@@ -37321,9 +37438,23 @@ function onBatchPOSupplierChange() {
   const opt = sel?.options[sel.selectedIndex];
   if (opt && opt.value) {
     const ph = opt.dataset.phone || '';
+    const contact = opt.dataset.contact || '';
+    
+    const contactInp = document.getElementById('bpo-supplier-contact');
+    if (contactInp) contactInp.value = contact || '-';
+    const phoneInp = document.getElementById('bpo-supplier-phone');
+    if (phoneInp) phoneInp.value = ph || '-';
+    
+    const logSup = document.getElementById('bpo-logistics-supplier-display');
+    if (logSup) logSup.textContent = opt.text;
+    const logContact = document.getElementById('bpo-logistics-contact-display');
+    if (logContact) logContact.textContent = (contact ? contact + ' ' : '') + (ph ? '(' + ph + ')' : '-');
+
     const note = document.getElementById('bpo-note');
     if (note && !note.value) {
       note.value = `สั่งซื้อสินค้าตามรายการขายออเดอร์ ติดต่อ: ${opt.text}`;
+      const quickNote = document.getElementById('bpo-note-quick');
+      if (quickNote) quickNote.value = note.value;
     }
   }
 }
@@ -37392,7 +37523,7 @@ function renderBatchPOItemsTable() {
     }));
   }
 
-  tbody.innerHTML = displayItems.map((item) => {
+  tbody.innerHTML = displayItems.map((item, idx) => {
     const lineTotal = (Number(item.qty_po) || 0) * (Number(item.unit_cost) || 0);
     const useSupp = _batchPOUseSupplierNaming;
     const hasSuppDesc = Boolean(item.supplier_description && item.supplier_description.trim());
@@ -37404,52 +37535,64 @@ function renderBatchPOItemsTable() {
       mainTitle = item.supplier_description;
     }
 
-    const itemDescHTML = `
-      <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.4">
-        ${escapeHTML(mainTitle)}
-      </div>
-      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;margin-bottom:3px">
-        ${hasSuppSku ? `<span class="badge font-mono" style="background:#0284c7;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:4px" title="Supplier Item Code / SKU ผู้ขาย">🏷️ Supplier SKU: ${escapeHTML(item.supplier_sku)}</span>` : ''}
-        ${hasPartNo ? `<span class="badge font-mono" style="background:#f1f5f9;color:#6d28d9;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #ddd6fe" title="Part No">Part: ${escapeHTML(item.part_no)}</span>` : ''}
-        ${item.sku ? `<span class="badge badge-gray font-mono" style="font-size:10.5px;padding:1px 6px" title="รหัส SKU สินค้าในคลัง">SKU: ${escapeHTML(item.sku)}</span>` : ''}
-      </div>
-      ${hasSuppDesc ? `
-        <div style="font-size:11.5px;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;padding:3px 8px;margin-top:3px;display:inline-flex;align-items:center;gap:4px;line-height:1.3" title="Item Description Supplier">
-          <span>📝 <b>สเปกผู้ขาย (Desc):</b> ${escapeHTML(item.supplier_description)}</span>
-        </div>
-      ` : ''}
-      ${(hasSuppDesc && mainTitle === item.supplier_description && item.product_name && item.product_name !== item.supplier_description) ? `
-        <div style="font-size:11px;color:#64748b;margin-top:2px">
-          📦 ชื่อในคลัง: ${escapeHTML(item.product_name)}
-        </div>
-      ` : ''}
-    `;
+    const codeDisplay = hasSuppSku ? item.supplier_sku : (item.sku || '-');
 
     return `
       <tr style="${item.selected ? '' : 'opacity:0.4;background:#f1f5f9'}">
-        <td style="text-align:center">
+        <td class="sap-matrix-num-cell">${idx + 1}</td>
+        <td style="text-align:center;vertical-align:middle">
           <input type="checkbox" ${item.selected ? 'checked' : ''} onchange="onToggleBatchPOItem('${item.key}', this.checked)">
         </td>
-        <td style="font-size:11px;color:var(--text3);white-space:nowrap">
-          <div style="font-weight:600;color:var(--text)">${escapeHTML(item.order_no_display)}</div>
+        <td style="vertical-align:middle">
+          <div style="display:flex;align-items:center;gap:4px">
+            <button type="button" class="sap-link-btn" title="ดูข้อมูลสินค้า" onclick="if('${item.product_id||''}') editProduct('${item.product_id}')">➔</button>
+            <div style="min-width:0">
+              <div class="font-mono" style="font-weight:700;font-size:12px;color:#0284c7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${escapeHTML(codeDisplay)}">
+                ${escapeHTML(codeDisplay)}
+              </div>
+              ${(hasSuppSku && item.sku && item.sku !== item.supplier_sku) ? `<div style="font-size:10.5px;color:#64748b" class="font-mono">SKU: ${escapeHTML(item.sku)}</div>` : ''}
+            </div>
+          </div>
         </td>
-        <td>
-          ${itemDescHTML}
+        <td style="vertical-align:middle">
+          <div style="font-weight:700;font-size:12.5px;color:#0f172a;line-height:1.35">
+            ${escapeHTML(mainTitle)}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px">
+            ${(hasSuppDesc && mainTitle !== item.supplier_description) ? `
+              <span style="font-size:11px;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;padding:1px 5px" title="สเปกผู้ขาย (Supplier Description)">
+                📝 <b>สเปกผู้ขาย:</b> ${escapeHTML(item.supplier_description)}
+              </span>
+            ` : ''}
+            ${(hasSuppDesc && mainTitle === item.supplier_description && item.product_name && item.product_name !== item.supplier_description) ? `
+              <span style="font-size:11px;color:#475569;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:4px;padding:1px 5px" title="ชื่อสินค้าในคลัง">
+                📦 <b>ชื่อในคลัง:</b> ${escapeHTML(item.product_name)}
+              </span>
+            ` : ''}
+            ${hasPartNo ? `
+              <span style="font-size:10.5px;color:#6d28d9;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:4px;padding:1px 5px;font-family:monospace" title="Part No">
+                Part: ${escapeHTML(item.part_no)}
+              </span>
+            ` : ''}
+          </div>
         </td>
-        <td style="text-align:right;font-size:12px;color:var(--text3);font-family:monospace">
+        <td style="vertical-align:middle;font-size:11px;color:#64748b;white-space:nowrap">
+          <div style="font-weight:600;color:#0f172a">${escapeHTML(item.order_no_display)}</div>
+        </td>
+        <td style="text-align:right;vertical-align:middle;font-size:12px;color:#64748b;font-family:monospace">
           ${item.qty_sold}
         </td>
-        <td style="text-align:right">
-          <input type="number" min="1" step="1" value="${item.qty_po}" onchange="onChangeBatchPOQty('${item.key}', this.value)" style="width:70px;text-align:right;font-weight:700;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
+        <td style="text-align:right;vertical-align:middle">
+          <input type="number" min="1" step="1" class="sap-matrix-inp" value="${item.qty_po}" onchange="onChangeBatchPOQty('${item.key}', this.value)" style="text-align:right;font-weight:700;font-size:13px;padding:4px 6px">
         </td>
-        <td style="text-align:right">
-          <input type="number" min="0" step="0.001" value="${item.unit_cost}" title="ราคาซื้อต่อหน่วย (บ.)" placeholder="ราคาซื้อ" onchange="onChangeBatchPOCost('${item.key}', this.value)" style="width:90px;text-align:right;padding:3px 6px;border:1px solid var(--border2);border-radius:4px">
+        <td style="text-align:right;vertical-align:middle">
+          <input type="number" min="0" step="0.001" class="sap-matrix-inp" value="${item.unit_cost}" title="ราคาซื้อต่อหน่วยจาก Supplier" placeholder="0.00" onchange="onChangeBatchPOCost('${item.key}', this.value)" style="text-align:right;font-weight:600;font-size:12.5px;padding:4px 6px">
         </td>
-        <td style="text-align:right;font-weight:700;font-family:monospace">
+        <td style="text-align:right;vertical-align:middle;font-weight:700;font-family:monospace;font-size:12.5px;color:#0f172a;white-space:nowrap">
           ฿${lineTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}
         </td>
-        <td style="text-align:center">
-          <button class="btn btn-secondary btn-sm" style="padding:2px 5px;font-size:10px;color:var(--red)" onclick="removeBatchPOItem('${item.key}')">✕</button>
+        <td style="text-align:center;vertical-align:middle">
+          <button type="button" class="sap-matrix-del-btn" title="ลบแถวนี้" onclick="removeBatchPOItem('${item.key}')">✕</button>
         </td>
       </tr>
     `;
@@ -37674,7 +37817,7 @@ function calcBatchPOTotals() {
   if (ssubEl) ssubEl.textContent = `฿${subtotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
   const svBox = document.getElementById('bpo-vat-amount-box');
-  if (svBox) svBox.style.display = vatOn ? 'block' : 'none';
+  if (svBox) svBox.style.display = vatOn ? 'flex' : 'none';
 
   const svEl = document.getElementById('bpo-sum-vat');
   if (svEl) svEl.textContent = `฿${vatAmt.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
@@ -50156,7 +50299,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.01', date:'2026-11-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขระบบดึงข้อมูลจาก Sales Order (SO) เข้าสู่ใบสั่งซื้อ (PO) ให้ทำงานได้อย่างสมบูรณ์ (v4.01)', items:[
+    { v:'4.02', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงหน้าต่างสร้าง PO จากรายการขาย ให้เป็นมาตรฐาน SAP Business One ERP เต็มรูปแบบ (v4.02)', items:[
+      '🏭 <b>ยกระดับโครงสร้างหน้าต่างเป็น SAP Business One Standard Layout:</b> เปลี่ยนโฉมหน้าต่างสร้างใบสั่งซื้อแบบรวมออเดอร์ (Batch PO) ให้เป็นรูปแบบหน้าต่าง ERP สากลของ SAP B1 พร้อมกรอบ <code>.sap-window</code> แถบหัวสีทองเหลือง <code>.sap-header-bar</code> และระบบ 2-Column Business Partner Grid',
+      '📦 <b>SAP Matrix Grid รองรับการจัดการสินค้าแบบมืออาชีพ:</b> แสดงตารางแบบ SAP B1 Matrix มีคอลัมน์ลำดับบรรทัด (<code>#</code>), ช่องรหัสสินค้า (Item No.) แยกต่างหากพร้อมปุ่มลูกศรสีส้ม (<code>➔</code>) สำหรับคลิกเปิดดู/แก้ไขข้อมูลสินค้า, ช่องสเปกผู้ขาย (Item Description) จัดวางสะอาดตาไม่เบียดแน่น และช่องกรอกจำนวน/ราคาซื้อแบบ <code>.sap-matrix-inp</code> ที่ชิดขวามาตรฐาน',
+      '🗂️ <b>ระบบ 4 แท็บเอกสารมาตรฐาน SAP B1:</b> เพิ่มแท็บ <code>📦 Contents (รายการสินค้า)</code>, <code>🚚 Logistics (สถานที่จัดส่ง & ผู้ขาย)</code>, <code>💳 Accounting (เงื่อนไขการเงิน & ภาษี)</code>, และ <code>📝 Remarks (หมายเหตุเอกสาร)</code>',
+      '💰 <b>SAP Summary Box & ปุ่ม Add สีทองมาตรฐาน:</b> ปรับปรุงกล่องสรุปยอดท้ายบิลขวาล่าง พร้อมปุ่มบันทึกสีทอง <code>➕ Add (สร้าง Purchase Order)</code> สไตล์ SAP Business One แท้',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.02 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.01', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขระบบดึงข้อมูลจาก Sales Order (SO) เข้าสู่ใบสั่งซื้อ (PO) ให้ทำงานได้อย่างสมบูรณ์ (v4.01)', items:[
       '🛒 <b>แก้ไขระบบดึงรายการสินค้าจาก Sales Order (SO) เข้า PO:</b> ปรับปรุงคำสั่ง PostgREST Query ใน <code>loadPOSOSources()</code> และ <code>importSOToPO()</code> ให้ตรงกับโครงสร้างคอลัมน์ของฐานข้อมูล Supabase ป้องกันข้อผิดพลาด HTTP 400 (Undefined Column)',
       '📥 <b>โหลดรายการ Sales Order และสินค้าเข้าฟอร์ม PO ได้ทันที:</b> ผู้ใช้สามารถเลือก SO จาก Dropdown ในฟอร์มสร้าง PO หรือคลิกปุ่ม <code>🔍 ค้นหา SO</code> เพื่อค้นหาตามเลขที่บิล, ชื่อลูกค้า, หรือรหัสสินค้า และกด <code>📥 ดึงเข้า PO</code> เพื่อนำรายการ จำนวน และต้นทุนเข้าสู่ใบสั่งซื้อได้ราบรื่น 100%',
       '🔍 <b>จับคู่สินค้า Master และดึงราคาซื้อ Supplier อัตโนมัติ:</b> เชื่อมโยง Product ID กับฐานข้อมูลสินค้าคลัง ดึงรหัส Supplier SKU, สเปกผู้ขาย (Supplier Description) และคำนวณราคาซื้อเข้า PO ทันที',
