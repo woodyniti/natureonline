@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.03';
-const DISPLAY_APP_VERSION = 'v4.03';
+const CURRENT_APP_VERSION = 'sealthai-v4.04';
+const DISPLAY_APP_VERSION = 'v4.04';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.03 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.04 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -15745,7 +15745,7 @@ async function loadProducts() {
   if (!statsEl0) return;
   const totalStock = allProducts.reduce((s,p)=>s+Number(p.stock_qty||0),0);
   const totalValue = allProducts.reduce((s,p)=>s+Number(p.current_cost||0)*Number(p.stock_qty||0),0);
-  const zeroStock  = allProducts.filter(p=>Number(p.stock_qty||0)===0).length;
+  const zeroStock  = allProducts.filter(p=>Number(p.stock_qty||0)<=0).length;
   const lowStock5  = allProducts.filter(p=>Number(p.stock_qty||0)>0&&Number(p.stock_qty||0)<5).length;
   const totalPendingPO = allProducts.reduce((s,p)=>s+Number(p.pending_po||0),0);
   const prodsWithPendingPO = allProducts.filter(p=>Number(p.pending_po||0)>0).length;
@@ -15771,7 +15771,7 @@ async function loadProducts() {
     [
       { icon:'📦', label:'สินค้าทั้งหมด', val: allProducts.length+' รายการ', sub: productCategories.length+' หมวดหมู่', click: ()=>filterByCat('') },
       { icon:'💰', label:'มูลค่าสต๊อกรวม', val: fmtB(totalValue), sub: fmt(totalStock)+' ชิ้น', cls:'', click: null },
-      { icon:'⚠️', label:'สต๊อก = 0', val: zeroStock+' รายการ', sub: lowStock5+' รายการ < 5 ชิ้น', border:'3px solid var(--red)', click: filterZeroStock },
+      { icon:'⚠️', label:'สต๊อกหมด/ติดลบ', val: zeroStock+' รายการ', sub: lowStock5+' รายการ < 5 ชิ้น', border:'3px solid var(--red)', click: filterZeroStock },
       { icon:'⏳', label:'รอเข้า (PO)', val: fmt(totalPendingPO)+' ชิ้น', sub: prodsWithPendingPO+' รายการมี PO ค้างรับ', border:'3px solid #f59e0b', click: filterPendingPOStock },
       { icon:'📤', label:'รอจัดส่ง (SO)', val: fmt(totalPendingSO)+' ชิ้น', sub: prodsWithPendingSO+' รายการค้างจัดส่ง', border:'3px solid #ef4444', click: filterPendingSOStock }
     ].forEach(s => {
@@ -16148,6 +16148,7 @@ function renderProductTable(prods, requestedPage = 1) {
       const stEcoseal = Number(p.stock_ecoseal || 0);
       const totalQty = stInhouse + stEcoseal;
       const stockVal = Number(p.current_cost||0) * stInhouse; // คำนวณเงินจมเฉพาะคลังร้านจริง
+      const isNegSt  = totalQty < 0;
       const zeroSt   = totalQty === 0;
       const lowSt    = totalQty > 0 && totalQty < 5;
       const pendingPO = Number(p.pending_po || 0);
@@ -16167,7 +16168,7 @@ function renderProductTable(prods, requestedPage = 1) {
         ? '<img src="'+imgUrl+'" style="width:32px;height:32px;object-fit:cover;border-radius:6px;border:1px solid var(--border)" onerror="this.style.display=\'none\'">'
         : '<div style="width:32px;height:32px;background:var(--bg3);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px">📦</div>';
 
-      return '<tr data-product-id="'+escapeHTML(p.id)+'" class="'+(zeroSt?'tr-zero-stock':'')+'" style="border-bottom:1px solid var(--border);transition:background 0.15s" onmouseover="this.style.background=\'var(--bg3,#f8fafc)\'" onmouseout="this.style.background=\'\'">' +
+      return '<tr data-product-id="'+escapeHTML(p.id)+'" class="'+(isNegSt?'tr-negative-stock':zeroSt?'tr-zero-stock':'')+'" style="border-bottom:1px solid var(--border);transition:background 0.15s;'+(isNegSt?'background:#fff1f2;':'')+'" onmouseover="this.style.background=\'var(--bg3,#f8fafc)\'" onmouseout="this.style.background=\''+(isNegSt?'#fff1f2':'')+'\'">' +
         // Col 1: # & รูป
         '<td style="text-align:center;padding:7px 4px">' +
           '<div style="font-size:10.5px;color:var(--text3);margin-bottom:2px">'+rowNum+'</div>' +
@@ -16219,11 +16220,11 @@ function renderProductTable(prods, requestedPage = 1) {
         // Col 4: สต๊อก & มูลค่า
         '<td class="text-right" style="padding:7px 10px;font-family:var(--mono)">' +
           '<div style="cursor:pointer" onclick="viewProductInventoryPosting(&quot;'+p.id+'&quot;)" title="คลิกดูประวัติสต๊อก (Inventory Posting List)">' +
-            '<span class="'+(zeroSt?'text-red':lowSt?'text-amber':'text-green')+'" style="font-weight:800;font-size:13px">'+fmt(totalQty)+'</span> ' +
-            '<span style="font-size:11px;color:var(--text3)">ชิ้น '+(zeroSt?'❌':lowSt?'⚠️':'')+'</span> <span style="font-size:10px;color:var(--blue)">📜</span>' +
+            '<span class="'+(isNegSt?'text-red':zeroSt?'text-red':lowSt?'text-amber':'text-green')+'" style="font-weight:800;font-size:13px">'+fmt(totalQty)+'</span> ' +
+            '<span style="font-size:11px;color:var(--text3)">ชิ้น '+(isNegSt?'⚠️ <b style="color:#ef4444">ติดลบ</b>':zeroSt?'❌':lowSt?'⚠️':'')+'</span> <span style="font-size:10px;color:var(--blue)">📜</span>' +
           '</div>' +
           '<div style="font-size:10.5px;color:var(--text3);margin-top:1px">' +
-            'ร้าน: <b style="color:'+(stInhouse>0?'var(--green)':'inherit')+'">'+fmt(stInhouse)+'</b>' +
+            'ร้าน: <b style="color:'+(stInhouse<0?'#ef4444':stInhouse>0?'var(--green)':'inherit')+'">'+fmt(stInhouse)+'</b>' +
             (stEcoseal > 0 ? ' · Eco: <b style="color:var(--blue)">'+fmt(stEcoseal)+'</b>' : '') +
             (Number(p.factory_stock || 0) > 0 ? ' · รง: <b style="color:#d97706" title="สต็อกโรงงาน / Supplier พร้อมขาย">'+fmt(p.factory_stock)+'</b>' : '') +
             (stockVal > 0 ? ' · <span class="text-amber">'+fmtB(stockVal)+'</span>' : '') +
@@ -49234,10 +49235,10 @@ async function viewProductInventoryPosting(productId) {
     if (summaryEl) {
       summaryEl.innerHTML = `
         ${reconciliationNotice ? `<div role="alert" style="grid-column:1/-1;padding:12px;border:1px solid #f59e0b;border-radius:10px;background:#fffbeb;color:#92400e;font-size:12px">⚠️ ${reconciliationNotice}</div>` : ''}
-        <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #0284c7;border-radius:10px;padding:12px">
-          <div style="font-size:11.5px;color:#64748b;font-weight:600">📦 คงเหลือตามรับ–จ่าย (คลังร้าน)</div>
-          <div data-stock-on-hand="${hasActualHistory ? totalCurrentStock : 'unknown'}" style="font-size:20px;font-weight:800;color:#0f172a;font-family:var(--mono);margin:4px 0">${hasActualHistory ? fmt(totalCurrentStock) : 'รอยืนยัน'} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
-          <div style="font-size:11px;color:#64748b">ตรงกับยอดสะสมท้ายตาราง · ไม่รวมยอดจอง<br>${lastCountCheckpoint ? `ตั้งยอดล่าสุด ${fmt(lastCountCheckpoint.countTarget)} ชิ้น ณ ${escapeHTML(lastCountCheckpoint.date)}` : `ผลปรับเพิ่ม/ลดแยก: ${fmt(totalAdjustmentQty)} ชิ้น`}<br>EcoSeal: ${fmt(ecosealQty)} (แยกจากคลังร้าน)</div>
+        <div class="stat-card" style="background:#fff;border:1px solid ${totalCurrentStock < 0 ? '#fca5a5' : '#e2e8f0'};border-left:4px solid ${totalCurrentStock < 0 ? '#ef4444' : '#0284c7'};border-radius:10px;padding:12px">
+          <div style="font-size:11.5px;color:${totalCurrentStock < 0 ? '#b91c1c' : '#64748b'};font-weight:600">📦 คงเหลือตามรับ–จ่าย (คลังร้าน)</div>
+          <div data-stock-on-hand="${hasActualHistory ? totalCurrentStock : 'unknown'}" style="font-size:20px;font-weight:800;color:${totalCurrentStock < 0 ? '#dc2626' : '#0f172a'};font-family:var(--mono);margin:4px 0">${hasActualHistory ? (totalCurrentStock < 0 ? '⚠️ ' + fmt(totalCurrentStock) : fmt(totalCurrentStock)) : 'รอยืนยัน'} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
+          <div style="font-size:11px;color:${totalCurrentStock < 0 ? '#991b1b' : '#64748b'}">ตรงกับยอดสะสมท้ายตาราง · ไม่รวมยอดจอง<br>${lastCountCheckpoint ? `ตั้งยอดล่าสุด ${fmt(lastCountCheckpoint.countTarget)} ชิ้น ณ ${escapeHTML(lastCountCheckpoint.date)}` : `ผลปรับเพิ่ม/ลดแยก: ${fmt(totalAdjustmentQty)} ชิ้น`}<br>EcoSeal: ${fmt(ecosealQty)} (แยกจากคลังร้าน)</div>
         </div>
         <div class="stat-card" style="background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:12px;cursor:pointer" onclick="filterInventoryPostingByType('pending_po')" title="คลิกเพื่อดูเฉพาะรายการที่รอเข้าจาก PO">
           <div style="font-size:11.5px;color:#b45309;font-weight:600">⏳ รอเข้าจาก PO (Inbound) 🔍</div>
@@ -49249,10 +49250,10 @@ async function viewProductInventoryPosting(productId) {
           <div style="font-size:20px;font-weight:800;color:#b91c1c;font-family:var(--mono);margin:4px 0">-${fmt(totalPendingSOQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
           <div style="font-size:11px;color:#991b1b">${pendingSOCount} รายการออเดอร์รอจัดส่ง</div>
         </div>
-        <div class="stat-card" style="background:#f0fdf4;border:1px solid #86efac;border-left:4px solid #16a34a;border-radius:10px;padding:12px">
-          <div style="font-size:11.5px;color:#15803d;font-weight:700">🚀 คงเหลือหลังจอง (ไม่รวม PO รอเข้า)</div>
-          <div data-stock-available="${hasActualHistory ? availableNetStock : 'unknown'}" style="font-size:20px;font-weight:800;color:${availableNetStock >= 0 ? '#15803d' : '#b91c1c'};font-family:var(--mono);margin:4px 0">${hasActualHistory ? fmt(availableNetStock) : 'รอยืนยัน'} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
-          <div style="font-size:10.5px;color:#166534">${hasActualHistory ? `คงเหลือ ${fmt(totalCurrentStock)} − จอง SO ${fmt(totalPendingSOQty)}${availableNetStock < 0 ? ` · ขาดส่ง ${fmt(-availableNetStock)} ชิ้น` : ''}<br>คาดหลังรับ PO: ${fmt(availableNetStock + totalPendingPOQty)} ชิ้น` : 'ต้องยืนยันยอดตั้งต้นก่อน'}</div>
+        <div class="stat-card" style="background:${availableNetStock < 0 ? '#fef2f2' : availableNetStock === 0 ? '#fffbeb' : '#f0fdf4'};border:1px solid ${availableNetStock < 0 ? '#fca5a5' : availableNetStock === 0 ? '#fde68a' : '#86efac'};border-left:4px solid ${availableNetStock < 0 ? '#ef4444' : availableNetStock === 0 ? '#f59e0b' : '#16a34a'};border-radius:10px;padding:12px">
+          <div style="font-size:11.5px;color:${availableNetStock < 0 ? '#b91c1c' : availableNetStock === 0 ? '#b45309' : '#15803d'};font-weight:700">${availableNetStock < 0 ? '⚠️ คงเหลือหลังจอง (ขาดส่ง/ติดลบ)' : availableNetStock === 0 ? '📦 คงเหลือหลังจอง (พอดีจอง 0 ชิ้น)' : '🚀 คงเหลือหลังจอง (ไม่รวม PO รอเข้า)'}</div>
+          <div data-stock-available="${hasActualHistory ? availableNetStock : 'unknown'}" style="font-size:20px;font-weight:800;color:${availableNetStock < 0 ? '#dc2626' : availableNetStock === 0 ? '#b45309' : '#15803d'};font-family:var(--mono);margin:4px 0">${hasActualHistory ? (availableNetStock < 0 ? '⚠️ ' + fmt(availableNetStock) : fmt(availableNetStock)) : 'รอยืนยัน'} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
+          <div style="font-size:10.5px;color:${availableNetStock < 0 ? '#991b1b' : availableNetStock === 0 ? '#92400e' : '#166534'}">${hasActualHistory ? `คงเหลือ ${fmt(totalCurrentStock)} − จอง SO ${fmt(totalPendingSOQty)}${availableNetStock < 0 ? ` · ขาดส่ง ${fmt(-availableNetStock)} ชิ้น` : ''}<br>คาดหลังรับ PO: ${fmt(availableNetStock + totalPendingPOQty)} ชิ้น` : 'ต้องยืนยันยอดตั้งต้นก่อน'}</div>
         </div>
         <div class="stat-card" style="background:#fff;border:1px solid #e2e8f0;border-left:4px solid #10b981;border-radius:10px;padding:12px">
           <div style="font-size:11.5px;color:#64748b;font-weight:600">🟢 รวมรับเข้าจริง (+In)</div>
@@ -49771,8 +49772,8 @@ function renderInventoryPostingTableRows(list) {
         <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:13.5px;font-weight:800;color:${qtyColor}">
           ${qtySign}
         </td>
-        <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:13.5px;font-weight:800;color:#0f172a;background:#f0fdf4">
-          ${tx.isPending ? (tx.typeKey === 'pending_so' ? '<span style="color:#b91c1c;font-size:11px;font-weight:700">(รอจัดส่ง)</span>' : '<span style="color:#d97706;font-size:11px;font-weight:700">(รอรับเข้า)</span>') : fmt(tx.runningBalance)}
+        <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:13.5px;font-weight:800;color:${!tx.isPending && tx.runningBalance < 0 ? '#dc2626' : '#0f172a'};background:${!tx.isPending && tx.runningBalance < 0 ? '#fef2f2' : tx.isPending ? '#f8fafc' : '#f0fdf4'}">
+          ${tx.isPending ? (tx.typeKey === 'pending_so' ? '<span style="color:#b91c1c;font-size:11px;font-weight:700">(รอจัดส่ง)</span>' : '<span style="color:#d97706;font-size:11px;font-weight:700">(รอรับเข้า)</span>') : (tx.runningBalance < 0 ? `<span style="color:#dc2626">⚠️ ${fmt(tx.runningBalance)}</span>` : fmt(tx.runningBalance))}
         </td>
         <td style="padding:9px 8px;text-align:right;font-family:var(--mono);font-size:12.5px;color:#64748b">
           ${fmtB(tx.unitCostPrice)}
@@ -50405,7 +50406,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.03', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ซิงค์ต้นทุนจริงจากใบรับของเข้าสู่รายการขาย (SO) & แก้ไขสถานะสต๊อกของเข้าพร้อมส่ง (v4.03)', items:[
+    { v:'4.04', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการแสดงผลสีตัวเลขสต๊อกติดลบให้ถูกต้อง & ล้างรายการตัดสต๊อกซ้ำ (v4.04)', items:[
+      '🎨 <b>แก้ไขสีตัวเลขสต๊อกติดลบในหน้าสินค้า (Negative Stock Color Fix):</b> ปรับเงื่อนไขตรวจสอบยอดสต๊อกในตารางสินค้า ให้แสดงสีแดงเตือน (<code>text-red</code>) และป้าย <code>⚠️ ติดลบ</code> ชัดเจนเมื่อยอดคงเหลือน้อยกว่า 0 แทนที่จะแสดงเป็นสีเขียว',
+      '🏷️ <b>ปรับปรุงการ์ดและตารางในบัตรสต๊อก (Stock Card Modal Theme):</b> การ์ด "คงเหลือหลังจอง" และคอลัมน์ "คงเหลือสะสม" จะปรับธีมสีอัตโนมัติตามสถานะจริง (สีแดงเมื่อติดลบ/ขาดส่ง, สีส้มเมื่อพอดีจอง 0 ชิ้น, สีเขียวเมื่อมีของพร้อมส่ง)',
+      '🧹 <b>ล้างข้อมูลประวัติการตัดสต๊อกซ้ำจาก QT ย้อนหลัง:</b> ดำเนินการลบประวัติการตัดสต๊อกซ้ำที่ตกค้างจากการแปลงใบเสนอราคา ปรับปรุงยอดสต๊อกสินค้า K109 และซิงค์ต้นทุนจริงของบิล SO-20261113-0014 ให้ถูกต้องสมบูรณ์',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.04 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.03', date:'2026-11-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ซิงค์ต้นทุนจริงจากใบรับของเข้าสู่รายการขาย (SO) & แก้ไขสถานะสต๊อกของเข้าพร้อมส่ง (v4.03)', items:[
       '📦 <b>แสดงสถานะสต๊อกของเข้าพร้อมส่งทันทีในหน้าออเดอร์:</b> แก้ไขป้ายสถานะสินค้าในตารางออเดอร์ เมื่อสินค้ามีการรับเข้าผ่านใบสั่งซื้อ (PO รับแล้ว) จะแสดงป้ายสีเขียวเด่นชัด <code>📦 ของเข้าพร้อมส่ง (${recQty})</code> แทนที่จะแสดง <code>⚠️ สต๊อกหมด (0)</code> ป้องกันความสับสนในการแพ็คสินค้าจัดส่ง',
       '💰 <b>Auto-Sync ต้นทุนจริง (Landed Cost + VAT) สู่ Sales Order อัตโนมัติ:</b> เมื่อบันทึกรับสินค้าเข้าสต๊อก (Goods Receipt) จาก PO ที่อ้างอิงออเดอร์ขาย ระบบจะคำนวณต้นทุนต่อหน่วยที่รวมค่าใช้จ่ายนำเข้า (Landed Cost) และภาษีซื้อจริง อัปเดตกลับไปยัง <code>order_items.cost_per_unit</code> และคำนวณ <code>orders.total_cost</code> ใหม่ทันที ทำให้รายงานกำไร-ขาดทุนถูกต้องแม่นยำ 100%',
       '🔄 <b>ปรับปรุงระบบคำนวณต้นทุนย้อนหลัง (Recompute Order Costs):</b> ปรับฟังก์ชันคำนวณต้นทุนให้อัปเดตต้นทุนลงตารางรายการสั่งซื้อได้จริง พร้อมระบบคำนวณยอดรวมต้นทุนและกำไรของบิลขายใหม่โดยอัตโนมัติ',
