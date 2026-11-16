@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.94';
-const DISPLAY_APP_VERSION = 'v3.94';
+const CURRENT_APP_VERSION = 'sealthai-v3.95';
+const DISPLAY_APP_VERSION = 'v3.95';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.94)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.94 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.95)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.95 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -11346,7 +11346,8 @@ async function viewOrder(orderId) {
     ? `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="navigateToDoc('ar', '${firstAR.id}')" title="เปิดดู AR Invoice ${escapeHTML(firstAR.ar_no)}">📄 ดู AR Invoice (${escapeHTML(firstAR.ar_no)})</button>`
     : `<button class="btn btn-secondary btn-sm" style="background:#e8f0fd;color:#2563eb;border-color:#2563eb" onclick="convertSOtoAR('${order.id}',true)">📄 Copy to Invoice</button>`;
 
-  document.getElementById('order-detail-footer').innerHTML =
+  const ordDetailFooter = document.getElementById('order-detail-footer');
+  if (ordDetailFooter) ordDetailFooter.innerHTML =
     `<button class="btn btn-sap-update" onclick="saveOrderEdit('${order.id}')">💾 Update (บันทึกการแก้ไข)</button>` +
     `<button class="btn btn-secondary" onclick="closeModal('modal-order-detail')">Cancel (ปิด)</button>` +
     `<button class="btn btn-secondary btn-sm" onclick="openReceiptOptions('${order.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-weight:700" title="พิมพ์บิลเงินสด / ใบแจ้งหนี้ (Invoice) / ใบส่งสินค้า (Delivery Note)">🖨️ พิมพ์เอกสาร (บิล/แจ้งหนี้/ส่งของ)</button>` +
@@ -12366,7 +12367,8 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
     ord = data;
   }
   if (!ord) {
-    document.getElementById('order-fulfillment-body').innerHTML = '<div class="alert alert-danger">ไม่พบข้อมูลออเดอร์</div>';
+    const ofbEl = document.getElementById('order-fulfillment-body');
+    if (ofbEl) ofbEl.innerHTML = '<div class="alert alert-danger">ไม่พบข้อมูลออเดอร์</div>';
     return;
   }
 
@@ -15730,25 +15732,27 @@ async function loadProducts() {
 
   // สร้าง stat cards ด้วย DOM เพื่อป้องกัน quote ชน
   const statsEl = document.getElementById('prod-stats');
-  statsEl.innerHTML = '';
-  [
-    { icon:'📦', label:'สินค้าทั้งหมด', val: allProducts.length+' รายการ', sub: productCategories.length+' หมวดหมู่', click: ()=>filterByCat('') },
-    { icon:'💰', label:'มูลค่าสต๊อกรวม', val: fmtB(totalValue), sub: fmt(totalStock)+' ชิ้น', cls:'', click: null },
-    { icon:'⚠️', label:'สต๊อก = 0', val: zeroStock+' รายการ', sub: lowStock5+' รายการ < 5 ชิ้น', border:'3px solid var(--red)', click: filterZeroStock },
-    { icon:'⏳', label:'รอเข้า (PO)', val: fmt(totalPendingPO)+' ชิ้น', sub: prodsWithPendingPO+' รายการมี PO ค้างรับ', border:'3px solid #f59e0b', click: filterPendingPOStock },
-    { icon:'📤', label:'รอจัดส่ง (SO)', val: fmt(totalPendingSO)+' ชิ้น', sub: prodsWithPendingSO+' รายการค้างจัดส่ง', border:'3px solid #ef4444', click: filterPendingSOStock }
-  ].forEach(s => {
-    const card = document.createElement('div');
-    card.className = 'stat-card';
-    card.style.cursor = 'pointer';
-    if (s.border) card.style.borderLeft = s.border;
-    card.innerHTML =
-      '<div class="stat-label">'+s.icon+' '+s.label+'</div>' +
-      '<div class="stat-value'+(s.label==='สต๊อก = 0'?' text-red':s.label==='รอจัดส่ง (SO)'?' text-red':s.label==='รอรับเข้า (PO)'||s.label==='รอเข้า (PO)'?' text-amber':s.label==='มูลค่าสต๊อกรวม'?' text-amber':'')+'">'+s.val+'</div>' +
-      '<div class="stat-sub'+(s.label==='สต๊อก = 0'||s.label==='รอจัดส่ง (SO)'?' text-red':s.label==='รอรับเข้า (PO)'||s.label==='รอเข้า (PO)'?' text-amber':'')+'">'+s.sub+'</div>';
-    if (s.click) card.onclick = s.click;
-    statsEl.appendChild(card);
-  });
+  if (statsEl) {
+    statsEl.innerHTML = '';
+    [
+      { icon:'📦', label:'สินค้าทั้งหมด', val: allProducts.length+' รายการ', sub: productCategories.length+' หมวดหมู่', click: ()=>filterByCat('') },
+      { icon:'💰', label:'มูลค่าสต๊อกรวม', val: fmtB(totalValue), sub: fmt(totalStock)+' ชิ้น', cls:'', click: null },
+      { icon:'⚠️', label:'สต๊อก = 0', val: zeroStock+' รายการ', sub: lowStock5+' รายการ < 5 ชิ้น', border:'3px solid var(--red)', click: filterZeroStock },
+      { icon:'⏳', label:'รอเข้า (PO)', val: fmt(totalPendingPO)+' ชิ้น', sub: prodsWithPendingPO+' รายการมี PO ค้างรับ', border:'3px solid #f59e0b', click: filterPendingPOStock },
+      { icon:'📤', label:'รอจัดส่ง (SO)', val: fmt(totalPendingSO)+' ชิ้น', sub: prodsWithPendingSO+' รายการค้างจัดส่ง', border:'3px solid #ef4444', click: filterPendingSOStock }
+    ].forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      card.style.cursor = 'pointer';
+      if (s.border) card.style.borderLeft = s.border;
+      card.innerHTML =
+        '<div class="stat-label">'+s.icon+' '+s.label+'</div>' +
+        '<div class="stat-value'+(s.label==='สต๊อก = 0'?' text-red':s.label==='รอจัดส่ง (SO)'?' text-red':s.label==='รอรับเข้า (PO)'||s.label==='รอเข้า (PO)'?' text-amber':s.label==='มูลค่าสต๊อกรวม'?' text-amber':'')+'">'+s.val+'</div>' +
+        '<div class="stat-sub'+(s.label==='สต๊อก = 0'||s.label==='รอจัดส่ง (SO)'?' text-red':s.label==='รอรับเข้า (PO)'||s.label==='รอเข้า (PO)'?' text-amber':'')+'">'+s.sub+'</div>';
+      if (s.click) card.onclick = s.click;
+      statsEl.appendChild(card);
+    });
+  }
 
   // Category dashboard — DOM-based to avoid quote issues
   const catDash = document.getElementById('cat-dashboard');
@@ -16048,10 +16052,12 @@ function renderProductTable(prods, requestedPage = 1) {
   const prodTable = document.getElementById('prod-table');
   const prodCards = document.getElementById('prod-cards');
 
+  if (!prodTable && !prodCards) return;
+
   if (!prods.length) {
     renderProductPagination(1,1,0);
-    prodTable.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">ไม่พบสินค้า</div></div>';
-    prodCards.innerHTML = '';
+    if (prodTable) prodTable.innerHTML = '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">ไม่พบสินค้า</div></div>';
+    if (prodCards) prodCards.innerHTML = '';
     return;
   }
 
@@ -16091,7 +16097,7 @@ function renderProductTable(prods, requestedPage = 1) {
   };
 
   // Desktop table (No horizontal scroll layout - 100% responsive width)
-  prodTable.innerHTML =
+  if (prodTable) prodTable.innerHTML =
     '<div style="width:100%;overflow-x:hidden;border-radius:var(--radius);border:1px solid var(--border);background:#fff">' +
     '<table style="width:100%;border-collapse:collapse;table-layout:fixed"><thead><tr style="background:var(--bg2,#f8fafc);border-bottom:1.5px solid var(--border)">' +
     '<th style="width:52px;text-align:center;color:var(--text3);font-size:11.5px;padding:8px 4px">#</th>' +
@@ -16212,7 +16218,7 @@ function renderProductTable(prods, requestedPage = 1) {
     '</tbody></table></div>';
 
   // Mobile cards — ใส่ใน prod-cards (hidden บน desktop ด้วย CSS)
-  prodCards.innerHTML = pageRows.map(p => {
+  if (prodCards) prodCards.innerHTML = pageRows.map(p => {
     const margin = Number(p.sell_price||0)-Number(p.current_cost||0);
     const lowStock = Number(p.stock_qty||0) < 5;
     const pendingPO = Number(p.pending_po || 0);
@@ -34951,9 +34957,11 @@ async function renderShopeeReport() {
   window._shopeeProdMapNorm = _prodMapNorm;
   const rows = getShopeeFiltered();
   if (!rows.length) {
-    document.getElementById('shopee-stats').innerHTML = '';
+    const shpStats = document.getElementById('shopee-stats');
+    if (shpStats) shpStats.innerHTML = '';
     const _ie = document.getElementById('shopee-info'); if (_ie) _ie.style.display = 'none';
-    document.getElementById('shopee-table').innerHTML =
+    const shpTable = document.getElementById('shopee-table');
+    if (shpTable) shpTable.innerHTML =
       '<div class="empty"><div class="empty-icon">🛍</div><div class="empty-text">ไม่มีข้อมูล</div></div>';
     return;
   }
@@ -37766,7 +37774,7 @@ async function loadProductDashboard() {
   // เติม orders data กลับเข้าไป
   const oi = (oiRaw||[]).map(it => ({ ...it, orders: orderIdMap[it.order_id] || null }));
 
-  if (!oi || !oi.length) { el.innerHTML = ''; return; }
+  if (!oi || !oi.length) { if (el && el.isConnected) el.innerHTML = ''; return; }
 
   // กรองเฉพาะที่ไม่ถูก cancel
   const valid = oi.filter(r => r.orders?.doc_status !== 'cancelled');
@@ -37829,9 +37837,10 @@ async function loadProductDashboard() {
   const totalQty = topQty.reduce((s,p)=>s+p.qty,0);
   const totalOrders = topRepeat.reduce((s,p)=>s+p.orderCount,0);
 
-  el.innerHTML = `
+  const currentDashEl = document.getElementById('prod-dashboard');
+  if (!currentDashEl) return;
+  currentDashEl.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
-
       <div class="card" style="padding:14px">
         <div class="card-title" style="font-size:13px;margin-bottom:10px">🏆 ยอดขายสูงสุด (Revenue)</div>
         ${renderTopList(topRevenue, p=>p.revenue, (v)=>fmtB(v), totalRevenue, 'drillProductOrders')}
@@ -48898,12 +48907,12 @@ async function viewProductInventoryPosting(productId) {
           <div data-stock-on-hand="${hasActualHistory ? totalCurrentStock : 'unknown'}" style="font-size:20px;font-weight:800;color:#0f172a;font-family:var(--mono);margin:4px 0">${hasActualHistory ? fmt(totalCurrentStock) : 'รอยืนยัน'} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
           <div style="font-size:11px;color:#64748b">ตรงกับยอดสะสมท้ายตาราง · ไม่รวมยอดจอง<br>${lastCountCheckpoint ? `ตั้งยอดล่าสุด ${fmt(lastCountCheckpoint.countTarget)} ชิ้น ณ ${escapeHTML(lastCountCheckpoint.date)}` : `ผลปรับเพิ่ม/ลดแยก: ${fmt(totalAdjustmentQty)} ชิ้น`}<br>EcoSeal: ${fmt(ecosealQty)} (แยกจากคลังร้าน)</div>
         </div>
-        <div class="stat-card" style="background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:12px;cursor:pointer" onclick="document.getElementById('ipl-filter-type').value='pending_po';filterInventoryPostingRows()" title="คลิกเพื่อดูเฉพาะรายการที่รอเข้าจาก PO">
+        <div class="stat-card" style="background:#fff;border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:10px;padding:12px;cursor:pointer" onclick="filterInventoryPostingByType('pending_po')" title="คลิกเพื่อดูเฉพาะรายการที่รอเข้าจาก PO">
           <div style="font-size:11.5px;color:#b45309;font-weight:600">⏳ รอเข้าจาก PO (Inbound) 🔍</div>
           <div style="font-size:20px;font-weight:800;color:#d97706;font-family:var(--mono);margin:4px 0">+${fmt(totalPendingPOQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
           <div style="font-size:11px;color:#92400e">${pendingPOCount} รายการ PO รอรับเข้า</div>
         </div>
-        <div class="stat-card" style="background:#fff;border:1px solid #fca5a5;border-left:4px solid #ef4444;border-radius:10px;padding:12px;cursor:pointer" onclick="document.getElementById('ipl-filter-type').value='pending_so';filterInventoryPostingRows()" title="คลิกเพื่อดูเฉพาะรายการออเดอร์ที่รอจัดส่ง (SO)">
+        <div class="stat-card" style="background:#fff;border:1px solid #fca5a5;border-left:4px solid #ef4444;border-radius:10px;padding:12px;cursor:pointer" onclick="filterInventoryPostingByType('pending_so')" title="คลิกเพื่อดูเฉพาะรายการออเดอร์ที่รอจัดส่ง (SO)">
           <div style="font-size:11.5px;color:#b91c1c;font-weight:600">📤 รอส่งจาก SO (Outbound) 🔍</div>
           <div style="font-size:20px;font-weight:800;color:#b91c1c;font-family:var(--mono);margin:4px 0">-${fmt(totalPendingSOQty)} <span style="font-size:13px;font-weight:600">ชิ้น</span></div>
           <div style="font-size:11px;color:#991b1b">${pendingSOCount} รายการออเดอร์รอจัดส่ง</div>
@@ -49054,6 +49063,12 @@ async function openQuickAdjustStockFromPosting() {
   } finally {
     _stockCountSaving = false;
   }
+}
+
+function filterInventoryPostingByType(typeKey) {
+  const el = document.getElementById('ipl-filter-type');
+  if (el) el.value = typeKey;
+  filterInventoryPostingRows();
 }
 
 function filterInventoryPostingRows() {
@@ -49392,11 +49407,12 @@ async function openPODocument(docNo) {
 function renderInventoryPostingTableRows(list) {
   const tbody = document.getElementById('ipl-tbody');
   const countEl = document.getElementById('ipl-rows-count');
-  if (countEl) countEl.textContent = `แสดง ${list.length} รายการ`;
+  const rowsList = Array.isArray(list) ? list : [];
+  if (countEl) countEl.textContent = `แสดง ${rowsList.length} รายการ`;
 
   if (!tbody) return;
 
-  if (!list.length) {
+  if (!rowsList.length) {
     tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;color:#94a3b8"><div style="font-size:24px">📦</div><div style="margin-top:6px;font-weight:600">ยังไม่มีรายการเคลื่อนไหวสต๊อก</div></td></tr>';
     return;
   }
