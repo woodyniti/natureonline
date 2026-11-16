@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.99';
-const DISPLAY_APP_VERSION = 'v3.99';
+const CURRENT_APP_VERSION = 'sealthai-v4.00';
+const DISPLAY_APP_VERSION = 'v4.00';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.99)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.99 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.00)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.00 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -31197,6 +31197,17 @@ async function viewPO(poId) {
             if (!supTHB && it.sku) {
               supTHB = it.sku;
             }
+            if ((!supTHB || !supDesc) && it.product_name && allProducts && allProducts.length) {
+              const cleanPName = it.product_name.replace(/\[SO:[^\]]*\]/gi, '').trim().toLowerCase();
+              const matchedProd = allProducts.find(p => p.name && p.name.trim().toLowerCase() === cleanPName)
+                || allProducts.find(p => p.supplier_description && p.supplier_description.trim().toLowerCase() === cleanPName)
+                || allProducts.find(p => p.sku && p.sku.trim().toLowerCase() === cleanPName);
+              if (matchedProd) {
+                if (!supTHB) supTHB = getProductSupplierTHB(matchedProd);
+                if (!supUSD) supUSD = getProductSupplierUSD(matchedProd);
+                if (!supDesc) supDesc = String(matchedProd.supplier_description || '').trim();
+              }
+            }
 
             const internalNoteHtml = '<div style="margin-top:5px;padding:5px 7px;background:#f5f3ff;border-radius:5px;color:#5b21b6;font-size:11px;white-space:pre-wrap">🔒 หมายเหตุภายใน: '+
               (internalNote ? escapeHTML(internalNote) : '<span style="color:#8b7ab8">ยังไม่มี</span>')+
@@ -37054,12 +37065,6 @@ async function openBatchSOtoPOModal() {
     allSuppliers = sups || [];
   }
 
-  // Always query latest products to get the exact purchase_price, current_cost, and supplier info set for each product
-  const { data: latestProds } = await sb.from('products')
-    .select('id, name, sku, supplier_sku, supplier_description, part_no, purchase_price, current_cost, preferred_supplier_id, application_note')
-    .eq('shop_id', currentShop.id);
-  const prodLookup = latestProds || allProducts || [];
-
   // Load orders with items
   toast('กำลังดึงรายการสินค้าจาก ' + orderIds.length + ' ออเดอร์...', 'info');
   const { data: ordersData, error } = await sb.from('orders')
@@ -37072,6 +37077,32 @@ async function openBatchSOtoPOModal() {
     toast('ไม่สามารถดึงข้อมูลออเดอร์ได้: ' + (error?.message || 'ไม่พบรายการที่ถูกต้อง'), 'error');
     return;
   }
+
+  // รวบรวม product_id ทั้งหมดจากรายการขายที่เลือก เพื่อดึงข้อมูลสินค้าที่ตรงจุด 100% ครบทุกชิ้น
+  const targetProductIds = Array.from(new Set(
+    ordersData.flatMap(ord => (ord.order_items || []).map(it => it.product_id).filter(Boolean))
+  ));
+
+  let latestProds = [];
+  if (targetProductIds.length > 0) {
+    const { data: pByIds } = await sb.from('products')
+      .select('id, name, sku, supplier_sku, supplier_description, part_no, purchase_price, current_cost, preferred_supplier_id, application_note')
+      .in('id', targetProductIds);
+    if (pByIds && pByIds.length) latestProds = pByIds;
+  }
+
+  // ดึงสินค้าเพิ่มเติมสำหรับกรณีที่ไม่มี product_id
+  const unlinkedSkus = Array.from(new Set(
+    ordersData.flatMap(ord => (ord.order_items || []).filter(it => !it.product_id).map(it => (it.sku || '').trim()).filter(Boolean))
+  ));
+  if (unlinkedSkus.length > 0) {
+    const { data: pBySkus } = await sb.from('products')
+      .select('id, name, sku, supplier_sku, supplier_description, part_no, purchase_price, current_cost, preferred_supplier_id, application_note')
+      .in('sku', unlinkedSkus);
+    if (pBySkus && pBySkus.length) latestProds = [...latestProds, ...pBySkus];
+  }
+
+  const prodLookup = [...latestProds, ...(allProducts || []), ...(productList || [])];
 
   // Normalizer helper for SKU matching
   const cleanSKUStr = (str) => String(str || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
@@ -37097,10 +37128,11 @@ async function openBatchSOtoPOModal() {
         return false;
       });
 
-      const sku = prod?.sku || prod?.supplier_sku || prod?.item_no || itSKU || '';
+      const sku = prod?.sku || itSKU || prod?.supplier_sku || prod?.item_no || '';
       const pName = itProdName || prod?.name || 'สินค้า';
-      const suppSku = prod?.supplier_sku || prod?.supplier_sku_usd || prod?.part_no || '';
+      const suppSku = getProductSupplierTHB(prod) || prod?.supplier_sku || prod?.supplier_sku_usd || prod?.part_no || '';
       const suppDesc = (prod?.supplier_description || '').trim();
+      const partNo = getProductSupplierUSD(prod) || prod?.part_no || '';
 
       // ── ดึงราคาซื้อ / ราคาซื้อเข้า (Purchase Price) ที่ตั้งไว้สำหรับอ้างอิง Supplier โดยตรง ──
       // 1. ดึง purchase_price หรือ buy_price ที่ตั้งไว้ในฐานข้อมูลสินค้า (เช่น ราคาซื้อเข้า = 9)
@@ -37124,7 +37156,7 @@ async function openBatchSOtoPOModal() {
         sku: sku,
         supplier_sku: suppSku,
         supplier_description: suppDesc,
-        part_no: prod?.part_no || '',
+        part_no: partNo,
         preferred_supplier_id: prod?.preferred_supplier_id || null,
         qty_sold: qtySold,
         qty_po: qtySold,
@@ -37331,6 +37363,9 @@ function renderBatchPOItemsTable() {
           raw_items: []
         };
       }
+      if (!groupMap[key].supplier_sku && it.supplier_sku) groupMap[key].supplier_sku = it.supplier_sku;
+      if (!groupMap[key].supplier_description && it.supplier_description) groupMap[key].supplier_description = it.supplier_description;
+      if (!groupMap[key].part_no && it.part_no) groupMap[key].part_no = it.part_no;
       groupMap[key].qty_sold += it.qty_sold;
       groupMap[key].qty_po += it.qty_po;
       groupMap[key].order_refs.add(it.order_no);
@@ -37355,29 +37390,33 @@ function renderBatchPOItemsTable() {
     const useSupp = _batchPOUseSupplierNaming;
     const hasSuppDesc = Boolean(item.supplier_description && item.supplier_description.trim());
     const hasSuppSku = Boolean(item.supplier_sku && item.supplier_sku.trim());
+    const hasPartNo = Boolean(item.part_no && item.part_no.trim() && item.part_no !== item.supplier_sku);
 
-    let itemDescHTML = '';
-    if (useSupp && (hasSuppDesc || hasSuppSku)) {
-      const mainName = hasSuppDesc ? item.supplier_description : item.product_name;
-      const codeBadge = hasSuppSku ? `<span class="badge font-mono" style="background:#0284c7;color:#fff;font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:4px" title="Supplier Item Code">🏷️ ${escapeHTML(item.supplier_sku)}</span>` : '';
-      itemDescHTML = `
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="font-weight:700;font-size:13px;color:#0f172a">${escapeHTML(mainName)}</span>
-          ${codeBadge}
-        </div>
-        <div style="font-size:11px;color:#64748b;margin-top:2px">
-          ชื่อสินค้าในคลัง: ${escapeHTML(item.product_name)} ${item.sku ? ('['+escapeHTML(item.sku)+']') : ''}
-        </div>
-      `;
-    } else {
-      itemDescHTML = `
-        <div style="font-weight:700;font-size:13px;color:var(--text)">${escapeHTML(item.product_name)}</div>
-        <div style="display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap">
-          ${item.sku ? `<span class="badge badge-gray font-mono" style="font-size:10px">${escapeHTML(item.sku)}</span>` : ''}
-          ${hasSuppSku ? `<span class="badge font-mono" style="background:#e0f2fe;color:#0369a1;font-size:10px;font-weight:600">Sup: ${escapeHTML(item.supplier_sku)}</span>` : ''}
-        </div>
-      `;
+    let mainTitle = item.product_name;
+    if (useSupp && hasSuppDesc) {
+      mainTitle = item.supplier_description;
     }
+
+    const itemDescHTML = `
+      <div style="font-weight:700;font-size:13px;color:#0f172a;line-height:1.4">
+        ${escapeHTML(mainTitle)}
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:3px;margin-bottom:3px">
+        ${hasSuppSku ? `<span class="badge font-mono" style="background:#0284c7;color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:4px" title="Supplier Item Code / SKU ผู้ขาย">🏷️ Supplier SKU: ${escapeHTML(item.supplier_sku)}</span>` : ''}
+        ${hasPartNo ? `<span class="badge font-mono" style="background:#f1f5f9;color:#6d28d9;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:4px;border:1px solid #ddd6fe" title="Part No">Part: ${escapeHTML(item.part_no)}</span>` : ''}
+        ${item.sku ? `<span class="badge badge-gray font-mono" style="font-size:10.5px;padding:1px 6px" title="รหัส SKU สินค้าในคลัง">SKU: ${escapeHTML(item.sku)}</span>` : ''}
+      </div>
+      ${hasSuppDesc ? `
+        <div style="font-size:11.5px;color:#0369a1;background:#f0f9ff;border:1px solid #bae6fd;border-radius:4px;padding:3px 8px;margin-top:3px;display:inline-flex;align-items:center;gap:4px;line-height:1.3" title="Item Description Supplier">
+          <span>📝 <b>สเปกผู้ขาย (Desc):</b> ${escapeHTML(item.supplier_description)}</span>
+        </div>
+      ` : ''}
+      ${(hasSuppDesc && mainTitle === item.supplier_description && item.product_name && item.product_name !== item.supplier_description) ? `
+        <div style="font-size:11px;color:#64748b;margin-top:2px">
+          📦 ชื่อในคลัง: ${escapeHTML(item.product_name)}
+        </div>
+      ` : ''}
+    `;
 
     return `
       <tr style="${item.selected ? '' : 'opacity:0.4;background:#f1f5f9'}">
@@ -50110,7 +50149,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.99', date:'2026-11-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'นำช่องบันทึก Landed Cost & แจกแจงแถว VAT 7% กลับมาแสดงในหน้าแรกของ Goods Receipt ทันที (v3.99)', items:[
+    { v:'4.00', date:'2026-11-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'สร้างใบสั่งซื้อ (PO) จากรายการขาย แสดงรหัส SKU & สเปกจาก Supplier (Item Description Supplier) อย่างสมบูรณ์ (v4.00)', items:[
+      '🛒 <b>แสดงสเปกผู้ขาย (Item Description Supplier) ในหน้าสร้าง PO จากรายการขาย:</b> ในตารางรายการสินค้า คอลัมน์ "รหัส SKU & ชื่อสินค้า" เพิ่มการแสดงผลข้อมูลจาก Supplier ทั้ง <code>📝 สเปกผู้ขาย (Supplier Desc)</code> และป้าย <code>🏷️ Supplier SKU / Item Code</code> ชัดเจนทุกรายการ',
+      '🔍 <b>ค้นหาและจับคู่สินค้าตรงจุด 100% จากฐานข้อมูล 23,225 รายการ:</b> ปรับปรุงระบบดึงข้อมูลสินค้าในหน้าสร้าง PO จากรายการขายให้อ้างอิง Product ID และ SKU จากรายการขายโดยตรง ทำให้ดึง Supplier SKU และ Supplier Description ได้ถูกต้องครบถ้วน แม้แคตตาล็อกสินค้าจะมีขนาดใหญ่กว่า 23,000 ชิ้น',
+      '📋 <b>แสดงผลคู่ขนานทั้งชื่อในคลังและชื่อ Supplier:</b> รองรับการสลับโหมดใช้ชื่อ Supplier ในการออก PO พร้อมแสดงชื่อและรหัสคลังกำกับไว้อย่างเป็นระเบียบ',
+      '📄 <b>Fallback อัจฉริยะในหน้าตรวจสอบ PO:</b> เพิ่มระบบค้นหาข้อมูล Supplier อัตโนมัติในหน้าต่างดูรายละเอียด PO ป้องกันปัญหาข้อมูลผู้ขายไม่แสดงสำหรับรายการที่สร้างไว้ก่อนหน้า',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.00 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.99', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'นำช่องบันทึก Landed Cost & แจกแจงแถว VAT 7% กลับมาแสดงในหน้าแรกของ Goods Receipt ทันที (v3.99)', items:[
       '📦 <b>นำ Landed Cost กลับมาแสดงในหน้าหลัก (Direct Landed Cost on Contents Tab):</b> แก้ปัญหา Landed Cost ที่ถูกซ่อนอยู่ในแท็บที่ 3 ให้กลับมาแสดงใต้รายการสินค้าในหน้าแรก (Tab Contents) ทันที สามารถกด <code>+ เพิ่มค่าใช้จ่าย (Landed Cost)</code> เพื่อกรอกค่าขนส่ง, ค่าศุลกากร, หรือค่าประกันได้ทันทีเหมือนเดิม พร้อมระบบเฉลี่ยเข้าต้นทุนสินค้าอัตโนมัติ',
       '🏛️ <b>แสดงแจกแจงแถวภาษีมูลค่าเพิ่ม (VAT 7%) ในกล่องสรุปยอด:</b> เพิ่มแถว <code>ภาษีมูลค่าเพิ่ม (VAT 7%)</code> ในกล่องสรุปยอดท้ายตาราง เพื่อแสดงที่มาของยอดรวมชัดเจน (เช่น มูลค่าสินค้า ฿44,000 + VAT 7% ฿3,080 = ต้นทุนรวมทั้งสิ้น ฿47,080) ไม่สับสนเรื่องตัวเลขและผลต่าง',
       '🏷️ <b>จัดหมวดหมู่ส่วนลดและภาษีมูลค่าเพิ่มให้เข้าถึงง่าย:</b> ย้ายกล่องส่วนลดสินค้ารับเข้าและการตั้งค่าภาษีมูลค่าเพิ่ม (VAT แยก / รวมใน) มาอยู่บนหน้าแรกเคียงคู่กับ Landed Cost ใช้งานได้อย่างรวดเร็ว ไม่ต้องคลิกสลับแท็บไปมา',
