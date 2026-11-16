@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.00';
-const DISPLAY_APP_VERSION = 'v4.00';
+const CURRENT_APP_VERSION = 'sealthai-v4.01';
+const DISPLAY_APP_VERSION = 'v4.01';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.00)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.00 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.01)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.01 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -29128,6 +29128,12 @@ async function savePOExpectedDate(poId) {
   }
 }
 
+// ── Helper: Normalizer สำหรับค้นหาและเปรียบเทียบ SKU ──
+function cleanSKUStr(str) {
+  return String(str || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+window.cleanSKUStr = cleanSKUStr;
+
 // ── Helper: ดึงราคาซื้อสินค้าสำหรับ PO (อิงตามสกุลเงิน THB หรือ USD) ──
 function getPOProductBuyPrice(p, cur = 'THB', rate = 35) {
   if (!p) return 0;
@@ -29233,11 +29239,11 @@ async function loadPOSOSources(selectedOrderId = null) {
   
   try {
     let q = sb.from('orders')
-      .select('id, order_no, order_date, customer_name, total_amount, status, shipping_status, doc_status, note, customer_ref, order_items(id, product_id, product_name, sku, qty, cost_per_unit, purchase_price, buy_price)')
-      .neq('status', 'cancelled')
+      .select('id, order_no, order_date, customer_name, total_amount, shipping_status, doc_status, note, customer_po_no, order_items(id, product_id, product_name, qty, cost_per_unit, sell_price)')
+      .neq('shipping_status', 'cancelled')
       .order('order_date', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(80);
+      .limit(100);
       
     if (typeof currentShop !== 'undefined' && currentShop?.id) {
       q = q.eq('shop_id', currentShop.id);
@@ -29250,7 +29256,7 @@ async function loadPOSOSources(selectedOrderId = null) {
       return;
     }
     
-    _poRecentOrders = (data || []).filter(o => o.order_items && o.order_items.length > 0);
+    _poRecentOrders = (data || []).filter(o => o.order_items && o.order_items.length > 0 && o.shipping_status !== 'cancelled' && o.doc_status !== 'cancelled');
     
     if (_poRecentOrders.length === 0) {
       sel.innerHTML = '<option value="">-- ไม่พบรายการ Sales Order --</option>';
@@ -29281,10 +29287,11 @@ async function importSOToPO(orderId) {
   let ord = (_poRecentOrders || []).find(o => o.id === orderId);
   if (!ord || !ord.order_items || ord.order_items.length === 0) {
     const { data, error } = await sb.from('orders')
-      .select('id, order_no, order_date, customer_name, total_amount, status, note, customer_ref, order_items(*)')
+      .select('id, order_no, order_date, customer_name, total_amount, shipping_status, doc_status, note, customer_po_no, order_items(*)')
       .eq('id', orderId)
       .single();
     if (error || !data) {
+      console.error('importSOToPO error:', error);
       toast('ไม่สามารถดึงข้อมูล Sales Order ได้', 'error');
       return;
     }
@@ -29483,7 +29490,7 @@ function renderSOListForPO(keyword) {
     if (!kw) return true;
     const oNo = (o.order_no || '').toLowerCase();
     const cust = (o.customer_name || '').toLowerCase();
-    const ref = (o.customer_ref || '').toLowerCase();
+    const ref = (o.customer_po_no || o.customer_ref || '').toLowerCase();
     if (oNo.includes(kw) || cust.includes(kw) || ref.includes(kw)) return true;
     return (o.order_items || []).some(it => {
       const pName = (it.product_name || '').toLowerCase();
@@ -50149,7 +50156,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.00', date:'2026-11-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'สร้างใบสั่งซื้อ (PO) จากรายการขาย แสดงรหัส SKU & สเปกจาก Supplier (Item Description Supplier) อย่างสมบูรณ์ (v4.00)', items:[
+    { v:'4.01', date:'2026-11-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขระบบดึงข้อมูลจาก Sales Order (SO) เข้าสู่ใบสั่งซื้อ (PO) ให้ทำงานได้อย่างสมบูรณ์ (v4.01)', items:[
+      '🛒 <b>แก้ไขระบบดึงรายการสินค้าจาก Sales Order (SO) เข้า PO:</b> ปรับปรุงคำสั่ง PostgREST Query ใน <code>loadPOSOSources()</code> และ <code>importSOToPO()</code> ให้ตรงกับโครงสร้างคอลัมน์ของฐานข้อมูล Supabase ป้องกันข้อผิดพลาด HTTP 400 (Undefined Column)',
+      '📥 <b>โหลดรายการ Sales Order และสินค้าเข้าฟอร์ม PO ได้ทันที:</b> ผู้ใช้สามารถเลือก SO จาก Dropdown ในฟอร์มสร้าง PO หรือคลิกปุ่ม <code>🔍 ค้นหา SO</code> เพื่อค้นหาตามเลขที่บิล, ชื่อลูกค้า, หรือรหัสสินค้า และกด <code>📥 ดึงเข้า PO</code> เพื่อนำรายการ จำนวน และต้นทุนเข้าสู่ใบสั่งซื้อได้ราบรื่น 100%',
+      '🔍 <b>จับคู่สินค้า Master และดึงราคาซื้อ Supplier อัตโนมัติ:</b> เชื่อมโยง Product ID กับฐานข้อมูลสินค้าคลัง ดึงรหัส Supplier SKU, สเปกผู้ขาย (Supplier Description) และคำนวณราคาซื้อเข้า PO ทันที',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.01 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.00', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'สร้างใบสั่งซื้อ (PO) จากรายการขาย แสดงรหัส SKU & สเปกจาก Supplier (Item Description Supplier) อย่างสมบูรณ์ (v4.00)', items:[
       '🛒 <b>แสดงสเปกผู้ขาย (Item Description Supplier) ในหน้าสร้าง PO จากรายการขาย:</b> ในตารางรายการสินค้า คอลัมน์ "รหัส SKU & ชื่อสินค้า" เพิ่มการแสดงผลข้อมูลจาก Supplier ทั้ง <code>📝 สเปกผู้ขาย (Supplier Desc)</code> และป้าย <code>🏷️ Supplier SKU / Item Code</code> ชัดเจนทุกรายการ',
       '🔍 <b>ค้นหาและจับคู่สินค้าตรงจุด 100% จากฐานข้อมูล 23,225 รายการ:</b> ปรับปรุงระบบดึงข้อมูลสินค้าในหน้าสร้าง PO จากรายการขายให้อ้างอิง Product ID และ SKU จากรายการขายโดยตรง ทำให้ดึง Supplier SKU และ Supplier Description ได้ถูกต้องครบถ้วน แม้แคตตาล็อกสินค้าจะมีขนาดใหญ่กว่า 23,000 ชิ้น',
       '📋 <b>แสดงผลคู่ขนานทั้งชื่อในคลังและชื่อ Supplier:</b> รองรับการสลับโหมดใช้ชื่อ Supplier ในการออก PO พร้อมแสดงชื่อและรหัสคลังกำกับไว้อย่างเป็นระเบียบ',
