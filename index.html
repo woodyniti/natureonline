@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.02';
-const DISPLAY_APP_VERSION = 'v4.02';
+const CURRENT_APP_VERSION = 'sealthai-v4.03';
+const DISPLAY_APP_VERSION = 'v4.03';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.02)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.02 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.03)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.03 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8185,15 +8185,30 @@ async function loadOrders() {
               const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
               const itemReqQty = Number(it.qty || 1);
               const stockVal = rawStock;
-              const isStockOut = stockVal <= 0;
-              const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
-              const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
-              const sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
-              const sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
-              const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
-              const sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
-              const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
-              stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
+
+              let sBg, sColor, sBdr, sIcon, sText, sTitle;
+              if (isPoReceived) {
+                // สินค้ารายการนี้สั่งซื้อและตรวจรับเข้าคลังแล้ว (มีของพร้อมในคลังสำหรับออเดอร์นี้)
+                const recQty = poMatch?.qty_received || itemReqQty;
+                sBg = '#dcfce7';
+                sColor = '#15803d';
+                sBdr = '#86efac';
+                sIcon = '📦';
+                sText = `ของเข้าพร้อมส่ง (${fmt(recQty)})`;
+                sTitle = `รับสินค้าเข้าคลังแล้วจาก PO: ${escapeHTML(poMatch?.po_no || '')} (${fmt(recQty)} ชิ้น) มีของพร้อมส่งทันที (คลิกเพื่อดู Inventory Movement)`;
+              } else {
+                const isStockOut = stockVal <= 0;
+                const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+                sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+                sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
+                sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
+                sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
+                sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+                const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
+                sTitle = `สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)`;
+              }
+
+              stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="${sTitle}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
 
               const fStock = Number(p.factory_stock || 0);
@@ -8548,7 +8563,7 @@ async function quickUpdateStatus(orderId, status, selEl) {
     const note = 'ขาย ' + (ord.order_no || '');
     const pids = [...new Set((ord.order_items||[]).map(it=>it.product_id).filter(Boolean))];
     // ลบ movement 'out' เดิมของออเดอร์นี้ก่อนเสมอ (กันซ้ำ) → ทำให้สต๊อกถูกคืน
-    await sb.from('stock_movements').delete().eq('shop_id', currentShop.id).eq('note', note);
+    await sb.from('stock_movements').delete().eq('shop_id', currentShop.id).ilike('note', 'ขาย ' + (ord.order_no || '') + '%');
     // ถ้ากลับมาใช้งาน (ไม่ยกเลิก) และเอกสารไม่ได้ยกเลิก → ตัดสต๊อกใหม่
     if (!nowCancel && ord.doc_status !== 'cancelled') {
       const mvs = (ord.order_items||[]).filter(it=>it.product_id).map(it=>({
@@ -11582,8 +11597,8 @@ async function saveOrderEdit(orderId) {
   // อัปเดตประวัติการเคลื่อนไหวสต๊อก (stock movements) ของออเดอร์นี้
   const { data: orderObj } = await sb.from('orders').select('order_no,order_date').eq('id', orderId).single();
   if (orderObj) {
-    // 1. ลบรายการความเคลื่อนไหวเดิมออก
-    await sb.from('stock_movements').delete().eq('note', 'ขาย ' + orderObj.order_no);
+    // 1. ลบรายการความเคลื่อนไหวเดิมออก (ครอบคลุมทั้ง note ปกติและที่แปลงจาก QT)
+    await sb.from('stock_movements').delete().ilike('note', 'ขาย ' + orderObj.order_no + '%');
     
     // 2. เพิ่มรายการความเคลื่อนไหวใหม่ (เฉพาะกรณีเอกสารไม่ได้ยกเลิก)
     const docStatus = document.getElementById('ed-doc-status')?.value || 'confirmed';
@@ -12772,7 +12787,7 @@ async function submitOrderPartialShipment(orderId) {
   // 2. Adjust stock movements: Deduct ONLY the shipped portions
   if (ord.doc_status !== 'cancelled') {
     const note = 'ขาย ' + (ord.order_no || '');
-    await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).eq('note', note);
+    await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).ilike('note', 'ขาย ' + (ord.order_no || '') + '%');
 
     const mvs = fulfillmentItems.filter(f => f.product_id && f.shipped_qty > 0).map(f => ({
       shop_id: currentShop?.id,
@@ -12920,7 +12935,7 @@ async function submitSAPCloseOrderApproval(orderId) {
 
   // 3. Deduct stock movements for actually shipped portion only
   const note = 'ขาย ' + (ord.order_no || '');
-  await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).eq('note', note);
+  await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).ilike('note', 'ขาย ' + (ord.order_no || '') + '%');
   const mvs = fulfillmentItems.filter(f => f.product_id && f.shipped_qty > 0).map(f => ({
     shop_id: currentShop?.id,
     product_id: f.product_id,
@@ -13649,7 +13664,7 @@ async function deleteOrder(orderId) {
   const { data: items } = await sb.from('order_items').select('product_id').eq('order_id', orderId);
   
   if (order) {
-    await sb.from('stock_movements').delete().eq('note', 'ขาย ' + order.order_no);
+    await sb.from('stock_movements').delete().ilike('note', 'ขาย ' + order.order_no + '%');
   }
   
   await sb.from('order_items').delete().eq('order_id', orderId);
@@ -19024,10 +19039,61 @@ async function saveStockBatch() {
     if (poStatusErr) throw poStatusErr;
   }
 
+  // ── Auto-Sync: ซิงค์ต้นทุนจริง (รวม Landed Cost & ภาษี) กลับไปยัง Sales Order (SO) ที่เกี่ยวข้อง ──
+  const affectedOrdersToRecalc = new Set();
+  for (let idx = 0; idx < valid.length; idx++) {
+    const r = valid[idx];
+    const insertedItem = inserts[idx];
+    const actualUnitCost = Number(insertedItem?.cost_per_unit || 0);
+    if (actualUnitCost <= 0) continue;
+
+    const rawPName = String(r.product_name || r.name || '');
+    const soMatches = rawPName.match(/SO[-_0-9A-Za-z]+/gi) || [];
+
+    for (const soNo of soMatches) {
+      try {
+        const { data: matchedOrders } = await sb.from('orders')
+          .select('id,order_no,shipping_status,doc_status')
+          .eq('shop_id', currentShop.id)
+          .eq('order_no', soNo);
+        if (matchedOrders && matchedOrders.length) {
+          for (const ord of matchedOrders) {
+            const { data: curOi } = await sb.from('order_items')
+              .select('id,product_id,product_name')
+              .eq('order_id', ord.id);
+            if (curOi && curOi.length) {
+              for (const oi of curOi) {
+                if ((r.product_id && oi.product_id === r.product_id) || 
+                    (oi.product_name && rawPName.toLowerCase().includes(oi.product_name.trim().toLowerCase()))) {
+                  await sb.from('order_items').update({ cost_per_unit: actualUnitCost }).eq('id', oi.id);
+                  affectedOrdersToRecalc.add(ord.id);
+                }
+              }
+            }
+          }
+        }
+      } catch(e) {
+        console.warn('Error syncing SO item cost from GR:', e);
+      }
+    }
+  }
+
+  // คำนวณ total_cost และกำไรใหม่ให้ทุกออเดอร์ที่ต้นทุนเปลี่ยน
+  if (affectedOrdersToRecalc.size > 0) {
+    try {
+      await recomputeOrderCosts([...affectedOrdersToRecalc], true);
+      if (typeof loadOrders === 'function' && currentPage === 'orders') {
+        loadOrders();
+      }
+    } catch(e) {
+      console.warn('Error recomputing affected order costs:', e);
+    }
+  }
+
   // reset landed cost rows
   landedCostRows = [];
   closeModal('modal-stock');
-  toast('บันทึกสำเร็จ '+valid.length+' รายการ'+poCountText + (discountTHB>0?' · ส่วนลด '+fmtB(discountTHB):'') + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'')+' ✓','success');
+  toast('บันทึกสำเร็จ '+valid.length+' รายการ'+poCountText + (discountTHB>0?' · ส่วนลด '+fmtB(discountTHB):'') + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'') + (affectedOrdersToRecalc.size>0?' · ซิงค์ต้นทุนกลับ '+affectedOrdersToRecalc.size+' ออเดอร์แล้ว':'')+' ✓','success');
   loadStockHistory();
   } catch (err) {
     if (stockInserted) {
@@ -19065,18 +19131,18 @@ async function recalcStockQty(productIds) {
       (oi||[]).forEach(x => { if (x.order_id) affectedOrderIds.add(x.order_id); });
     }
   }
-  if (affectedOrderIds.size) await recomputeOrderCosts([...affectedOrderIds]);
+  if (affectedOrderIds.size) await recomputeOrderCosts([...affectedOrderIds], true);
 }
 
-// คำนวณ orders.total_cost ใหม่ โดยใช้ current_cost ของสินค้าแทนเมื่อ order_item cost=0 (ขายก่อนรับเข้า)
-// อัพเดตเฉพาะตาราง orders (RLS อนุญาต UPDATE) — ไม่แตะ order_items (แอปใช้ delete+insert เท่านั้น จึงไม่มี UPDATE policy)
-// orderIds = array ของ order id หรือ null = ทุกออเดอร์ ; คืนจำนวนออเดอร์ที่แก้จริง
-async function recomputeOrderCosts(orderIds) {
+// คำนวณ orders.total_cost ใหม่ โดยใช้ current_cost ของสินค้าแทนเมื่อ order_item cost=0 หรือออเดอร์ยังรอส่ง
+// อัพเดตทั้งตาราง orders และ order_items เพื่อให้สะท้อนต้นทุนจริง
+// orderIds = array ของ order id หรือ null = ทุกออเดอร์ ; forceSyncFromProducts = บังคับอัพเดตตาม current_cost ล่าสุด
+async function recomputeOrderCosts(orderIds, forceSyncFromProducts = false) {
   const { data: prods } = await sb.from('products').select('*').eq('shop_id', currentShop.id);
   const prodMap = {};
   (prods || []).forEach(p => { prodMap[p.id] = normalizeProduct(p); });
 
-  const sel = 'id,total_cost,order_items(qty,cost_per_unit,product_id)';
+  const sel = 'id,total_cost,shipping_status,doc_status,order_items(id,qty,cost_per_unit,product_id)';
   let orders = [];
   if (orderIds && orderIds.length) {
     for (let i = 0; i < orderIds.length; i += 100) {
@@ -19094,17 +19160,58 @@ async function recomputeOrderCosts(orderIds) {
 
   let fixed = 0;
   for (const o of orders) {
-    const newCost = (o.order_items || []).reduce((s, it) => {
+    let orderChanged = false;
+    let newCost = 0;
+
+    for (const it of (o.order_items || [])) {
       const c = Number(it.cost_per_unit || 0);
       const p = prodMap[it.product_id];
-      const unitCost = c > 0 ? c : getProductOrderCost(p);
-      return s + Number(it.qty || 0) * unitCost;
-    }, 0);
-    if (Math.abs(newCost - Number(o.total_cost || 0)) > 0.005) {
-      const { error: uErr } = await sb.from('orders').update({ total_cost: newCost }).eq('id', o.id);
-      if (!uErr) fixed++;
+      const prodCost = getProductOrderCost(p);
+
+      let unitCost = c;
+      const isPendingSO = !o.shipping_status || o.shipping_status === 'pending' || o.shipping_status === 'partially_shipped';
+
+      if ((forceSyncFromProducts || isPendingSO || c <= 0) && prodCost > 0) {
+        unitCost = prodCost;
+        if (it.id && Math.abs(c - prodCost) > 0.005) {
+          try {
+            await sb.from('order_items').update({ cost_per_unit: unitCost }).eq('id', it.id);
+            it.cost_per_unit = unitCost;
+            orderChanged = true;
+          } catch(e) {}
+        }
+      } else if (c <= 0 && prodCost > 0) {
+        unitCost = prodCost;
+      }
+
+      newCost += Number(it.qty || 0) * unitCost;
+    }
+
+    if (Math.abs(newCost - Number(o.total_cost || 0)) > 0.005 || orderChanged) {
+      const roundedCost = Math.round(newCost * 100) / 100;
+      const { error: uErr } = await sb.from('orders').update({ total_cost: roundedCost }).eq('id', o.id);
+      if (!uErr) {
+        fixed++;
+        o.total_cost = roundedCost;
+      }
     }
   }
+
+  if (fixed > 0 && Array.isArray(allOrders)) {
+    orders.forEach(o => {
+      const cached = allOrders.find(x => x.id === o.id);
+      if (cached) {
+        cached.total_cost = o.total_cost;
+        if (o.order_items && cached.order_items) {
+          o.order_items.forEach(it => {
+            const cachedItem = cached.order_items.find(ci => ci.id === it.id);
+            if (cachedItem) cachedItem.cost_per_unit = it.cost_per_unit;
+          });
+        }
+      }
+    });
+  }
+
   return fixed;
 }
 
@@ -19223,13 +19330,13 @@ async function fixAllCostAnomalies() {
   loadOrders();
 }
 
-// ปุ่ม "คำนวณต้นทุนย้อนหลัง" — คำนวณ total_cost/กำไร ของทุกออเดอร์ใหม่ (ข้อมูลเก่าที่ขายก่อนรับเข้า)
+// ปุ่ม "คำนวณต้นทุนย้อนหลัง" — คำนวณ total_cost/กำไร ของทุกออเดอร์ใหม่ (ข้อมูลเก่าที่ขายก่อนรับเข้า หรือรับเข้าของแล้วแต่ต้นทุนยังไม่อัปเดต)
 async function backfillAllOrderCosts() {
-  if (!confirm('คำนวณกำไรใหม่ให้ทุกออเดอร์?\n\nระบบจะใช้ต้นทุนปัจจุบันของสินค้าเติมให้ออเดอร์ที่ขายไปก่อนรับสินค้าเข้า (ตอนนั้นต้นทุน=0)')) return;
+  if (!confirm('คำนวณกำไรและต้นทุนใหม่ให้ทุกออเดอร์?\n\nระบบจะใช้ต้นทุนจริงล่าสุดของสินค้าเติมให้ออเดอร์ที่ยังรอส่ง หรือออเดอร์ที่ขายไปก่อนรับสินค้าเข้าคลัง')) return;
   const btn = document.getElementById('btn-backfill-costs');
   if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังคำนวณ...'; }
   try {
-    const fixed = await recomputeOrderCosts(null);
+    const fixed = await recomputeOrderCosts(null, true);
     toast(fixed > 0 ? `อัพเดตต้นทุน/กำไรใหม่: ${fixed} ออเดอร์ ✓` : 'ทุกออเดอร์มีต้นทุนถูกต้องอยู่แล้ว ✓', 'success');
     if (typeof loadOrders === 'function') loadOrders();
   } catch (e) {
@@ -49898,7 +50005,7 @@ async function linkProductToOrderItem(prod, ctx) {
         if (matched) {
           // Attempt direct UPDATE first
           const { error: updErr } = await sb.from('order_items')
-            .update({ product_id: prod.id, sku: prod.sku || null })
+            .update({ product_id: prod.id })
             .eq('id', matched.id);
 
           // If direct update failed (RLS restriction or similar), use the established delete+insert pattern
@@ -49906,7 +50013,7 @@ async function linkProductToOrderItem(prod, ctx) {
             console.warn('Direct order_items update error, using delete+insert fallback:', updErr);
             const newList = dbItems.map(it => {
               if (it.id === matched.id) {
-                return { ...it, product_id: prod.id, sku: prod.sku || null };
+                return { ...it, product_id: prod.id };
               }
               return it;
             });
@@ -49915,7 +50022,6 @@ async function linkProductToOrderItem(prod, ctx) {
               order_id: it.order_id,
               product_id: it.product_id || null,
               product_name: it.product_name || '-',
-              sku: it.sku || null,
               qty: Number(it.qty) || 1,
               sell_price: Number(it.sell_price) || 0,
               cost_per_unit: Number(it.cost_per_unit) || 0,
@@ -50299,7 +50405,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.02', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงหน้าต่างสร้าง PO จากรายการขาย ให้เป็นมาตรฐาน SAP Business One ERP เต็มรูปแบบ (v4.02)', items:[
+    { v:'4.03', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ซิงค์ต้นทุนจริงจากใบรับของเข้าสู่รายการขาย (SO) & แก้ไขสถานะสต๊อกของเข้าพร้อมส่ง (v4.03)', items:[
+      '📦 <b>แสดงสถานะสต๊อกของเข้าพร้อมส่งทันทีในหน้าออเดอร์:</b> แก้ไขป้ายสถานะสินค้าในตารางออเดอร์ เมื่อสินค้ามีการรับเข้าผ่านใบสั่งซื้อ (PO รับแล้ว) จะแสดงป้ายสีเขียวเด่นชัด <code>📦 ของเข้าพร้อมส่ง (${recQty})</code> แทนที่จะแสดง <code>⚠️ สต๊อกหมด (0)</code> ป้องกันความสับสนในการแพ็คสินค้าจัดส่ง',
+      '💰 <b>Auto-Sync ต้นทุนจริง (Landed Cost + VAT) สู่ Sales Order อัตโนมัติ:</b> เมื่อบันทึกรับสินค้าเข้าสต๊อก (Goods Receipt) จาก PO ที่อ้างอิงออเดอร์ขาย ระบบจะคำนวณต้นทุนต่อหน่วยที่รวมค่าใช้จ่ายนำเข้า (Landed Cost) และภาษีซื้อจริง อัปเดตกลับไปยัง <code>order_items.cost_per_unit</code> และคำนวณ <code>orders.total_cost</code> ใหม่ทันที ทำให้รายงานกำไร-ขาดทุนถูกต้องแม่นยำ 100%',
+      '🔄 <b>ปรับปรุงระบบคำนวณต้นทุนย้อนหลัง (Recompute Order Costs):</b> ปรับฟังก์ชันคำนวณต้นทุนให้อัปเดตต้นทุนลงตารางรายการสั่งซื้อได้จริง พร้อมระบบคำนวณยอดรวมต้นทุนและกำไรของบิลขายใหม่โดยอัตโนมัติ',
+      '🛡️ <b>ป้องกันการตัดสต๊อกซ้ำซ้อนจากออเดอร์แปลงจากใบเสนอราคา (QT):</b> แก้ไขระบบลบประวัติการเคลื่อนไหวสต๊อกเดิมให้ครอบคลุมกรณีแปลงจาก QT ป้องกันปัญหายอดสต๊อกคงเหลือติดลบโดยไม่ถูกต้อง',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.03 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.02', date:'2026-11-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับปรุงหน้าต่างสร้าง PO จากรายการขาย ให้เป็นมาตรฐาน SAP Business One ERP เต็มรูปแบบ (v4.02)', items:[
       '🏭 <b>ยกระดับโครงสร้างหน้าต่างเป็น SAP Business One Standard Layout:</b> เปลี่ยนโฉมหน้าต่างสร้างใบสั่งซื้อแบบรวมออเดอร์ (Batch PO) ให้เป็นรูปแบบหน้าต่าง ERP สากลของ SAP B1 พร้อมกรอบ <code>.sap-window</code> แถบหัวสีทองเหลือง <code>.sap-header-bar</code> และระบบ 2-Column Business Partner Grid',
       '📦 <b>SAP Matrix Grid รองรับการจัดการสินค้าแบบมืออาชีพ:</b> แสดงตารางแบบ SAP B1 Matrix มีคอลัมน์ลำดับบรรทัด (<code>#</code>), ช่องรหัสสินค้า (Item No.) แยกต่างหากพร้อมปุ่มลูกศรสีส้ม (<code>➔</code>) สำหรับคลิกเปิดดู/แก้ไขข้อมูลสินค้า, ช่องสเปกผู้ขาย (Item Description) จัดวางสะอาดตาไม่เบียดแน่น และช่องกรอกจำนวน/ราคาซื้อแบบ <code>.sap-matrix-inp</code> ที่ชิดขวามาตรฐาน',
       '🗂️ <b>ระบบ 4 แท็บเอกสารมาตรฐาน SAP B1:</b> เพิ่มแท็บ <code>📦 Contents (รายการสินค้า)</code>, <code>🚚 Logistics (สถานที่จัดส่ง & ผู้ขาย)</code>, <code>💳 Accounting (เงื่อนไขการเงิน & ภาษี)</code>, และ <code>📝 Remarks (หมายเหตุเอกสาร)</code>',
