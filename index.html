@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.98';
-const DISPLAY_APP_VERSION = 'v3.98';
+const CURRENT_APP_VERSION = 'sealthai-v3.99';
+const DISPLAY_APP_VERSION = 'v3.99';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.98 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.99)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.99 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -17985,9 +17985,8 @@ async function stock() {
 
           <!-- Tabs Navigation -->
           <div class="sap-tabs">
-            <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-stock-window','contents')">📦 Contents (รายการสินค้ารับเข้า)</div>
+            <div class="sap-tab active" data-tab="contents" onclick="switchSapTab('sap-stock-window','contents')">📦 Contents (รายการสินค้ารับเข้า & Landed Cost)</div>
             <div class="sap-tab" data-tab="linkpo" onclick="switchSapTab('sap-stock-window','linkpo')">🔗 Link PO (เชื่อมโยงใบสั่งซื้อ)</div>
-            <div class="sap-tab" data-tab="accounting" onclick="switchSapTab('sap-stock-window','accounting')">💳 Accounting & Landed Cost (ภาษี & ค่าใช้จ่าย)</div>
           </div>
 
           <!-- Tab Contents -->
@@ -17998,6 +17997,59 @@ async function stock() {
             </div>
             <!-- Stock rows -->
             <div id="stock-rows-wrap" style="display:flex;flex-direction:column;gap:10px"></div>
+
+            <!-- Landed Cost & Cost Adjustments (Directly visible on Contents tab) -->
+            <div style="margin-top:16px;padding-top:14px;border-top:1px dashed #cbd5e1;display:grid;grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));gap:14px">
+              <!-- Left Col: Landed Cost (ค่าใช้จ่ายเพิ่มเติม / ค่าขนส่ง) -->
+              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <span style="font-weight:700;font-size:13px;color:#1e293b">📦 Landed Cost (ค่าใช้จ่ายเพิ่มเติม / ค่าขนส่ง)</span>
+                  <span style="font-size:11px;color:#64748b">เฉลี่ยเข้าต้นทุนสินค้า</span>
+                </div>
+                <div style="font-size:11.5px;color:var(--text3);margin-bottom:8px">ค่าขนส่งและค่าใช้จ่ายอื่นๆ จะถูกเฉลี่ยเข้าต้นทุนสินค้าแต่ละรายการตามมูลค่า</div>
+                <div id="landed-cost-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px"></div>
+                <button type="button" onclick="addLandedCostRow()" style="background:#fff;border:1px dashed var(--border2);border-radius:6px;padding:7px 12px;color:var(--accent);cursor:pointer;font-size:12.5px;font-weight:600;width:100%">+ เพิ่มค่าใช้จ่าย (Landed Cost)</button>
+              </div>
+
+              <!-- Right Col: Discount & VAT -->
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <!-- Discount -->
+                <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
+                  <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:#1e293b">🏷️ ส่วนลดสินค้ารับเข้า</div>
+                  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                    <input type="number" id="s-discount" min="0" step="0.0001" value="0" inputmode="decimal" oninput="stockDiscountManual=true;updateStockTotal()" style="flex:1;min-width:110px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-size:13.5px;text-align:right">
+                    <span id="s-discount-currency" style="font-size:12px;font-weight:700;color:var(--text2)">THB</span>
+                    <select id="s-discount-type" onchange="stockDiscountManual=true;updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 8px;font-size:12.5px">
+                      <option value="amount">จำนวนเงิน (สกุลเงินรับเข้า)</option>
+                      <option value="percent">เปอร์เซ็นต์ (%)</option>
+                    </select>
+                  </div>
+                  <div id="s-discount-hint" style="font-size:11px;color:var(--text3);margin-top:4px">หักจากราคาสินค้าก่อน VAT และเฉลี่ยเข้าต้นทุนแต่ละรายการ · ถ้าโหลด PO จะดึงส่วนลดตามสัดส่วนที่รับ</div>
+                </div>
+
+                <!-- VAT section -->
+                <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div style="font-weight:700;font-size:13px;color:#1e293b">🏛️ ภาษีมูลค่าเพิ่ม (VAT)</div>
+                    <div style="display:flex;gap:8px;align-items:center">
+                      <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;cursor:pointer">
+                        <input type="checkbox" id="s-vat-on" onchange="updateStockTotal()"> มี VAT 7%
+                      </label>
+                      <select id="s-vat-type" onchange="updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
+                        <option value="excluded">VAT แยก (บวกเพิ่ม)</option>
+                        <option value="included">VAT รวมใน (ถอนออก)</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div id="s-vat-row" style="display:none;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12.5px">
+                    <div style="display:flex;justify-content:space-between">
+                      <span style="color:var(--text3)">VAT 7%</span>
+                      <span class="font-mono text-amber" id="s-vat-amt">฿0</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Tab Link PO -->
@@ -18015,54 +18067,6 @@ async function stock() {
             </div>
           </div>
 
-          <!-- Tab Accounting & Landed Cost -->
-          <div class="sap-tab-pane" data-pane="accounting">
-            <div style="max-width:750px;display:flex;flex-direction:column;gap:12px">
-              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
-                <div style="font-weight:700;font-size:13px;margin-bottom:7px;color:#1e293b">🏷️ ส่วนลดสินค้ารับเข้า</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                  <input type="number" id="s-discount" min="0" step="0.0001" value="0" inputmode="decimal" oninput="stockDiscountManual=true;updateStockTotal()" style="flex:1;min-width:110px;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:14px;text-align:right">
-                  <span id="s-discount-currency" style="font-size:12px;font-weight:700;color:var(--text2)">THB</span>
-                  <select id="s-discount-type" onchange="stockDiscountManual=true;updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:8px;font-size:13px">
-                    <option value="amount">จำนวนเงิน (สกุลเงินรับเข้า)</option>
-                    <option value="percent">เปอร์เซ็นต์ (%)</option>
-                  </select>
-                </div>
-                <div id="s-discount-hint" style="font-size:11px;color:var(--text3);margin-top:5px">หักจากราคาสินค้าก่อน VAT และเฉลี่ยเข้าต้นทุนแต่ละรายการ · ถ้าโหลด PO จะดึงส่วนลดตามสัดส่วนที่รับ</div>
-              </div>
-
-              <!-- VAT section -->
-              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:12px">
-                <div style="display:flex;align-items:center;justify-content:space-between">
-                  <div style="font-weight:700;font-size:13px;color:#1e293b">ภาษีมูลค่าเพิ่ม (VAT)</div>
-                  <div style="display:flex;gap:8px;align-items:center">
-                    <label style="display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;cursor:pointer">
-                      <input type="checkbox" id="s-vat-on" onchange="updateStockTotal()"> มี VAT 7%
-                    </label>
-                    <select id="s-vat-type" onchange="updateStockTotal()" style="background:#fff;border:1px solid var(--border2);border-radius:6px;padding:4px 8px;font-size:12px">
-                      <option value="excluded">VAT แยก (บวกเพิ่ม)</option>
-                      <option value="included">VAT รวมใน (ถอนออก)</option>
-                    </select>
-                  </div>
-                </div>
-                <div id="s-vat-row" style="display:none;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:13px">
-                  <div style="display:flex;justify-content:space-between">
-                    <span style="color:var(--text3)">VAT 7%</span>
-                    <span class="font-mono text-amber" id="s-vat-amt">฿0</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Landed Cost section -->
-              <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:14px">
-                <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:#1e293b">📦 Landed Cost (ค่าใช้จ่ายเพิ่มเติม)</div>
-                <div style="font-size:12px;color:var(--text3);margin-bottom:10px">ค่าใช้จ่ายเหล่านี้จะถูกแบ่งตามสัดส่วนมูลค่าสินค้า เพื่อคำนวณต้นทุนที่แท้จริง</div>
-                <div id="landed-cost-rows" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
-                <button onclick="addLandedCostRow()" style="background:#fff;border:1px dashed var(--border2);border-radius:6px;padding:6px 12px;color:var(--accent);cursor:pointer;font-size:12px;width:100%">+ เพิ่มค่าใช้จ่าย</button>
-              </div>
-            </div>
-          </div>
-
           <!-- SAP Footer -->
           <div class="sap-footer">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -18070,7 +18074,7 @@ async function stock() {
               <button class="btn btn-secondary" onclick="printPendingStockLabels()">🏷️ พิมพ์ฉลากสินค้า A4</button>
               <button class="btn btn-primary btn-sap-update" onclick="saveStockBatch()" style="font-size:13.5px;padding:8px 20px">💾 บันทึกรับเข้าสต๊อก (Post)</button>
             </div>
-            <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px">
+            <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px;min-width:260px">
               <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
                 <span style="color:#64748b">มูลค่าสินค้ารวม</span>
                 <span class="font-mono" id="s-goods-total">฿0</span>
@@ -18082,6 +18086,10 @@ async function stock() {
               <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px">
                 <span style="color:#64748b">Landed Cost รวม</span>
                 <span class="font-mono text-amber" id="s-landed-total">฿0</span>
+              </div>
+              <div id="s-vat-summary-row" style="display:none;justify-content:space-between;font-size:12.5px;margin-bottom:3px;color:#d97706">
+                <span>ภาษีมูลค่าเพิ่ม (VAT 7%)</span>
+                <span class="font-mono text-amber" id="s-vat-summary-amt">+฿0</span>
               </div>
               <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;border-top:1.5px solid #cbd5e1;padding-top:6px;margin-top:4px">
                 <span style="color:#0f172a">ต้นทุนรวมทั้งสิ้น</span>
@@ -18619,6 +18627,12 @@ function updateStockTotal() {
   const grandTotal = vatType === 'excluded' ? baseAmt + vatAmt : baseAmt;
   const vatRow = document.getElementById('s-vat-row');
   if (vatRow) vatRow.style.display = vatOn ? 'block' : 'none';
+  const vatSummaryRow = document.getElementById('s-vat-summary-row');
+  if (vatSummaryRow) vatSummaryRow.style.display = vatOn ? 'flex' : 'none';
+  const vatSummaryAmt = document.getElementById('s-vat-summary-amt');
+  if (vatSummaryAmt) {
+    vatSummaryAmt.textContent = (vatType === 'included' ? '(รวมใน) ' : '+') + fmtB(vatAmt);
+  }
   const gtEl = document.getElementById('s-goods-total');
   if (gtEl) {
     gtEl.innerHTML = cur === 'USD' ? `${fmtB(goodsTotal)} <span style="font-size:11px;color:var(--text3)">($${goodsRaw.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})</span>` : fmtB(goodsTotal);
@@ -20384,6 +20398,7 @@ async function openStockModal(preselectedPOIds=[]) {
   stockDiscountManual = false;
   stockDiscountCurrency = 'THB';
   openModal('modal-stock');
+  switchSapTab('sap-stock-window', 'contents');
   // reset rows wrap
   const wrap = document.getElementById('stock-rows-wrap');
   if (wrap) wrap.innerHTML = '';
@@ -50095,7 +50110,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.98', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับตัวหนังสือบนหน้าบิล / เอกสาร ให้เป็นสีเข้มชัดเจน ไม่เป็นสีเทาอ่อน (v3.98)', items:[
+    { v:'3.99', date:'2026-11-16', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'นำช่องบันทึก Landed Cost & แจกแจงแถว VAT 7% กลับมาแสดงในหน้าแรกของ Goods Receipt ทันที (v3.99)', items:[
+      '📦 <b>นำ Landed Cost กลับมาแสดงในหน้าหลัก (Direct Landed Cost on Contents Tab):</b> แก้ปัญหา Landed Cost ที่ถูกซ่อนอยู่ในแท็บที่ 3 ให้กลับมาแสดงใต้รายการสินค้าในหน้าแรก (Tab Contents) ทันที สามารถกด <code>+ เพิ่มค่าใช้จ่าย (Landed Cost)</code> เพื่อกรอกค่าขนส่ง, ค่าศุลกากร, หรือค่าประกันได้ทันทีเหมือนเดิม พร้อมระบบเฉลี่ยเข้าต้นทุนสินค้าอัตโนมัติ',
+      '🏛️ <b>แสดงแจกแจงแถวภาษีมูลค่าเพิ่ม (VAT 7%) ในกล่องสรุปยอด:</b> เพิ่มแถว <code>ภาษีมูลค่าเพิ่ม (VAT 7%)</code> ในกล่องสรุปยอดท้ายตาราง เพื่อแสดงที่มาของยอดรวมชัดเจน (เช่น มูลค่าสินค้า ฿44,000 + VAT 7% ฿3,080 = ต้นทุนรวมทั้งสิ้น ฿47,080) ไม่สับสนเรื่องตัวเลขและผลต่าง',
+      '🏷️ <b>จัดหมวดหมู่ส่วนลดและภาษีมูลค่าเพิ่มให้เข้าถึงง่าย:</b> ย้ายกล่องส่วนลดสินค้ารับเข้าและการตั้งค่าภาษีมูลค่าเพิ่ม (VAT แยก / รวมใน) มาอยู่บนหน้าแรกเคียงคู่กับ Landed Cost ใช้งานได้อย่างรวดเร็ว ไม่ต้องคลิกสลับแท็บไปมา',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.99 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.98', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับตัวหนังสือบนหน้าบิล / เอกสาร ให้เป็นสีเข้มชัดเจน ไม่เป็นสีเทาอ่อน (v3.98)', items:[
       '🖤 <b>ตัวหนังสือเข้มชัดเจน (High Contrast Text):</b> ปรับสีตัวอักษรทุกส่วนในกล่องข้อมูลลูกค้าและข้อมูลเอกสาร ทั้งหัวข้อ ป้ายกำกับ (Label) และรายละเอียด ให้เป็นสีดำเข้มชัดเจน (#000) อ่านง่ายทั้งบนหน้าจอและเวลาพิมพ์ลงกระดาษ',
       '🖨️ <b>พิมพ์เอกสารคมชัด:</b> แก้ปัญหาตัวหนังสือสีเทาอ่อน (#475569 / #334155) ที่พิมพ์ออกมาแล้วดูจาง ไม่ซีดจาง และไม่กลืนกับพื้นหลัง',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.98 และล้างแคชอัตโนมัติ'
