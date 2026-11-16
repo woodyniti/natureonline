@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.97';
-const DISPLAY_APP_VERSION = 'v3.97';
+const CURRENT_APP_VERSION = 'sealthai-v3.98';
+const DISPLAY_APP_VERSION = 'v3.98';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.97)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.97 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.98)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.98 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -13293,15 +13293,15 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       : '-';
     const itName = escapeHTML(it.product_name||(it.products&&it.products.name)||'-');
     const itSku = (it.sku || (it.products && it.products.sku) || '').trim();
-    const itDesc = (showSkuInBill && itSku) ? itName + ' <br><small style="color:#64748b;font-family:Courier,monospace">[' + escapeHTML(itSku) + ']</small>' : itName;
+    const itDesc = (showSkuInBill && itSku) ? itName + ' <br><small style="color:#000;font-weight:600;font-family:Courier,monospace">[' + escapeHTML(itSku) + ']</small>' : itName;
 
     if (isDeliveryWithoutPrice) {
       return '<tr>' +
         '<td style="text-align:center">'+(i+1)+'</td>' +
         '<td>'+itDesc+'</td>' +
         '<td style="text-align:center;font-weight:700">'+fmt(it.qty)+'</td>' +
-        '<td style="text-align:center;color:#475569">ชิ้น</td>' +
-        '<td style="text-align:center;color:#64748b;font-size:11px">[ &nbsp; ] ตรวจรับแล้ว</td>' +
+        '<td style="text-align:center;color:#000;font-weight:500">ชิ้น</td>' +
+        '<td style="text-align:center;color:#000;font-size:11px">[ &nbsp; ] ตรวจรับแล้ว</td>' +
         '</tr>';
     }
 
@@ -13360,26 +13360,26 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.hd { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }');
   billParts.push('.hd-left { display:flex; align-items:center; gap:10px; min-width:0; }');
   billParts.push('.shop-name { font-size:20px; font-weight:700; margin-bottom:3px; }');
-  billParts.push('.shop-owner,.shop-tax { font-size:11px; font-weight:400; color:#334155; line-height:1.45; }');
-  billParts.push('.shop-info { font-size:11.5px; color:#1a1a1a; line-height:1.65; }');
-  billParts.push('.seller-contact { font-size:11px; color:#1a1a1a; line-height:1.5; margin:-4px 0 10px; }');
+  billParts.push('.shop-owner,.shop-tax { font-size:11.5px; font-weight:600; color:#000; line-height:1.45; }');
+  billParts.push('.shop-info { font-size:11.5px; color:#000; line-height:1.65; }');
+  billParts.push('.seller-contact { font-size:11px; color:#000; line-height:1.5; margin:-4px 0 10px; }');
   billParts.push('.seller-contact-line { white-space:nowrap; }');
   billParts.push('.bill-type { border:2.5px solid #00a882; color:#00a882; font-weight:700; font-size:14px; padding:6px 12px; border-radius:6px; text-align:center; line-height:1.3; flex-shrink:0; }');
-  billParts.push('.bill-type.copy { border:2.5px solid #475569 !important; color:#334155 !important; }');
+  billParts.push('.bill-type.copy { border:2.5px solid #1e293b !important; color:#000 !important; }');
   billParts.push('.bill-type.invoice { border-color:#1e3a5f; color:#1e3a5f; }');
   billParts.push('.bill-type.delivery { border-color:#0284c7; color:#0369a1; }');
   billParts.push('.bill-type .doc-en { font-size:11px; font-weight:600; margin-top:2px; }');
-  billParts.push('.bill-type .doc-warning { font-size:9px; font-weight:400; color:#475569; margin-top:3px; }');
+  billParts.push('.bill-type .doc-warning { font-size:9.5px; font-weight:600; color:#000; margin-top:3px; }');
   billParts.push('.bill-type .doc-sub { font-size:11px; font-weight:700; letter-spacing:0.5px; opacity:0.95; margin-top:2px; }');
-  billParts.push('.info-row { display:grid; grid-template-columns:1.22fr 0.78fr; gap:14px; margin-bottom:12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; }');
+  billParts.push('.info-row { display:grid; grid-template-columns:1.22fr 0.78fr; gap:14px; margin-bottom:12px; background:#fff; border:1.5px solid #334155; border-radius:6px; padding:10px 14px; }');
   billParts.push('.info-col-left { display:flex; flex-direction:column; gap:2px; }');
-  billParts.push('.info-col-right { display:flex; flex-direction:column; gap:3px; border-left:1px solid #cbd5e1; padding-left:14px; }');
-  billParts.push('.info-label { font-size:11px; color:#475569; font-weight:700; margin-bottom:2px; text-transform:uppercase; letter-spacing:0.3px; }');
-  billParts.push('.info-val { font-size:13.5px; font-weight:700; color:#0f172a; margin-bottom:1px; }');
-  billParts.push('.info-sub { font-size:11.5px; color:#334155; line-height:1.45; }');
+  billParts.push('.info-col-right { display:flex; flex-direction:column; gap:3px; border-left:1.5px solid #334155; padding-left:14px; }');
+  billParts.push('.info-label { font-size:11.5px; color:#000; font-weight:700; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.3px; }');
+  billParts.push('.info-val { font-size:13.5px; font-weight:700; color:#000; margin-bottom:2px; }');
+  billParts.push('.info-sub { font-size:12px; color:#000; line-height:1.5; font-weight:500; }');
   billParts.push('.doc-meta-row { display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:1px 0; }');
-  billParts.push('.doc-meta-lbl { color:#475569; font-size:11.5px; }');
-  billParts.push('.doc-meta-val { font-weight:700; color:#0f172a; }');
+  billParts.push('.doc-meta-lbl { color:#000; font-size:12px; font-weight:600; }');
+  billParts.push('.doc-meta-val { font-weight:700; color:#000; font-size:12.5px; }');
   billParts.push('.font-mono { font-family:Courier, monospace; }');
   billParts.push('table { width:100%; border-collapse:collapse; font-size:12.5px; margin-top:0; }');
   billParts.push('thead th { background:#0d1f3c; color:#fff; padding:7px 6px; font-size:12px; font-weight:700; border:1px solid #1e3a5f; text-align:center; }');
@@ -13393,11 +13393,11 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.total-row.grand { background:#e8f5f0; font-size:15px; font-weight:700; border-top:2.5px solid #00a882; }');
   billParts.push('.baht-text { background:#eef0f2; border:1px solid #555; border-top:none; padding:6px 10px; font-size:12px; color:#000; }');
   billParts.push('.note-box { border:1px solid #777; border-top:none; padding:7px 10px; font-size:12px; line-height:1.55; background:#fffdf2; }');
-  billParts.push('.policy-box { margin-top:6px; background:#f8fafc; border:1px solid #cbd5e1; border-left:3.5px solid #0284c7; border-radius:4px; padding:5px 9px; font-size:10px; color:#334155; line-height:1.45; }');
-  billParts.push('.policy-title { font-weight:700; color:#0369a1; font-size:10.5px; margin-bottom:2px; display:flex; align-items:center; gap:4px; }');
+  billParts.push('.policy-box { margin-top:6px; background:#f8fafc; border:1px solid #cbd5e1; border-left:3.5px solid #0284c7; border-radius:4px; padding:5px 9px; font-size:10.5px; color:#000; line-height:1.45; }');
+  billParts.push('.policy-title { font-weight:700; color:#0369a1; font-size:11px; margin-bottom:2px; display:flex; align-items:center; gap:4px; }');
   billParts.push('.policy-list { margin:0; padding-left:14px; list-style-type:decimal; }');
   billParts.push('.policy-list li { margin-bottom:1px; }');
-  billParts.push('.policy-list li strong { color:#0f172a; }');
+  billParts.push('.policy-list li strong { color:#000; }');
   billParts.push('.sig-area { display:flex; justify-content:flex-end; margin-top:20px; }');
   billParts.push('.sig-box { text-align:center; width:180px; }');
   billParts.push('.sig-image-wrap { height:26px; display:flex; align-items:flex-end; justify-content:center; overflow:visible; margin-bottom:2px; }');
@@ -13405,7 +13405,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   billParts.push('.sig-space { height:26px; }');
   billParts.push('.sig-line { border-top:1.5px solid #1d4ed8; margin-bottom:5px; }');
   billParts.push('.sig-label { font-size:12px; color:#1d4ed8; font-weight:700; }');
-  billParts.push('.sig-sub { font-size:12px; color:#333; margin-top:2px; }');
+  billParts.push('.sig-sub { font-size:12px; color:#000; font-weight:500; margin-top:2px; }');
   billParts.push('@media print { body { background:#fff; padding:0; margin:0; } .bill-page { box-shadow:none; padding:8mm 10mm; margin:0; width:100%; min-height:275mm; page-break-after:always; break-after:page; } .bill-page:last-child { page-break-after:avoid; break-after:avoid; } .page-border { min-height:265mm; padding:8mm 10mm; } @page { size:A4 portrait; margin:0; } }');
   billParts.push('</' + 'style></head><body>');
 
@@ -13485,7 +13485,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     const rawDelDate = getOrderDeliveryDate(order);
     const delDate = (typeof formatThaiDocDate === 'function') ? formatThaiDocDate(rawDelDate) : rawDelDate;
     if (docType === 'delivery') {
-      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val" style="color:#0369a1;font-weight:700">' + escapeHTML(delDate || thDate) + '</span></div>');
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val" style="color:#000;font-weight:700">' + escapeHTML(delDate || thDate) + '</span></div>');
       const carrierName = (typeof detectCarrier === 'function' && order.tracking_no && detectCarrier(order.tracking_no)?.name) || order.channel || '-';
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">ขนส่ง / Carrier:</span><span class="doc-meta-val">' + escapeHTML(carrierName) + '</span></div>');
     } else if (delDate) {
@@ -13493,7 +13493,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     }
     if (docType === 'invoice') {
       const dueDate = delDate || thDate;
-      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">กำหนดชำระ / Due Date:</span><span class="doc-meta-val" style="color:#1e3a5f;font-weight:700">' + escapeHTML(dueDate) + '</span></div>');
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">กำหนดชำระ / Due Date:</span><span class="doc-meta-val" style="color:#000;font-weight:700">' + escapeHTML(dueDate) + '</span></div>');
     }
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
     if (order.customer_social) {
@@ -13568,7 +13568,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
     // Bank transfer details for Invoice
     if (docType === 'invoice') {
       billParts.push('<div class="bank-box" style="margin-top:8px;display:flex;justify-content:space-between;align-items:center;background:#f0fdf4;border:1.5px solid #86efac;border-radius:6px;padding:8px 12px">');
-      billParts.push('<div><div style="font-weight:700;font-size:11.5px;color:#166534">💳 ชำระเงินโดยการโอนเงินเข้าบัญชี (Bank Transfer):</div><div style="font-size:12px;color:#1e3a5f;font-weight:600">' + escapeHTML(bank.name) + '</div><div style="font-size:11.5px;color:#334155">ชื่อบัญชี: <strong>' + escapeHTML(bank.accountName) + '</strong></div></div>');
+      billParts.push('<div><div style="font-weight:700;font-size:11.5px;color:#166534">💳 ชำระเงินโดยการโอนเงินเข้าบัญชี (Bank Transfer):</div><div style="font-size:12px;color:#1e3a5f;font-weight:600">' + escapeHTML(bank.name) + '</div><div style="font-size:11.5px;color:#000">ชื่อบัญชี: <strong>' + escapeHTML(bank.accountName) + '</strong></div></div>');
       billParts.push('<div style="text-align:right"><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:2px">เลขที่บัญชี / Account No.</div><div class="font-mono" style="font-size:15px;font-weight:700;color:#15803d;letter-spacing:0.5px">' + escapeHTML(bank.accountNumber) + '</div></div>');
       billParts.push('</div>');
     }
@@ -50095,7 +50095,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.97', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับรูปแบบวันที่บนหน้าบิล / ใบเสร็จรับเงิน / ใบส่งสินค้า ให้เป็นมาตรฐานเดียวกัน (v3.97)', items:[
+    { v:'3.98', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับตัวหนังสือบนหน้าบิล / เอกสาร ให้เป็นสีเข้มชัดเจน ไม่เป็นสีเทาอ่อน (v3.98)', items:[
+      '🖤 <b>ตัวหนังสือเข้มชัดเจน (High Contrast Text):</b> ปรับสีตัวอักษรทุกส่วนในกล่องข้อมูลลูกค้าและข้อมูลเอกสาร ทั้งหัวข้อ ป้ายกำกับ (Label) และรายละเอียด ให้เป็นสีดำเข้มชัดเจน (#000) อ่านง่ายทั้งบนหน้าจอและเวลาพิมพ์ลงกระดาษ',
+      '🖨️ <b>พิมพ์เอกสารคมชัด:</b> แก้ปัญหาตัวหนังสือสีเทาอ่อน (#475569 / #334155) ที่พิมพ์ออกมาแล้วดูจาง ไม่ซีดจาง และไม่กลืนกับพื้นหลัง',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.98 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.97', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับรูปแบบวันที่บนหน้าบิล / ใบเสร็จรับเงิน / ใบส่งสินค้า ให้เป็นมาตรฐานเดียวกัน (v3.97)', items:[
       '📅 <b>รูปแบบวันที่มาตรฐานเดียวกัน (Consistent Date Format):</b> ปรับให้วันที่เอกสาร (วันที่ / Date), วันส่งสินค้า (Delivery Date), และกำหนดชำระ (Due Date) แสดงผลเป็นรูปแบบ วัน/เดือน/ปี พ.ศ. (เช่น <code>16/11/2569</code>) เหมือนกันทั้งหมดในหน้าต่างพิมพ์เอกสาร',
       '✨ <b>จัดรูปแบบ Typography & Font:</b> ปรับสไตล์ตัวอักษรของวันที่และวันส่งสินค้าให้สม่ำเสมอสวยงาม กลมกลืนกับหัวบิล',
       '📄 <b>Quotation Consistency:</b> ปรับปรุงให้หน้าพิมพ์ใบเสนอราคาแสดงผลวันที่และวันหมดอายุในรูปแบบมาตรฐานเดียวกัน',
