@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v3.96';
-const DISPLAY_APP_VERSION = 'v3.96';
+const CURRENT_APP_VERSION = 'sealthai-v3.97';
+const DISPLAY_APP_VERSION = 'v3.97';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.96)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.96 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v3.97)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v3.97 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2732,6 +2732,20 @@ function getOrderDeliveryDate(order) {
   if (mText && mText[1]) return mText[1];
   return order?.order_date ? String(order.order_date).trim().slice(0, 10) : '';
 }
+
+function formatThaiDocDate(dateStr) {
+  if (!dateStr) return '';
+  try {
+    const cleanStr = String(dateStr).trim().slice(0, 10);
+    if (!cleanStr) return '';
+    const dt = new Date(cleanStr + (cleanStr.includes('T') ? '' : 'T00:00:00'));
+    if (isNaN(dt.getTime())) return String(dateStr).trim();
+    return dt.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch(e) {
+    return String(dateStr || '').trim();
+  }
+}
+window.formatThaiDocDate = formatThaiDocDate;
 
 function getOrderInternalNote(order) {
   if (order?.internal_note && String(order.internal_note).trim()) {
@@ -13259,9 +13273,10 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   let displayNote    = cleanOrderNote(order.note);
   if (!displayNote && linkedQuote?.quote_no) displayNote = linkedQuote.quote_no;
 
-  // วันที่ไทย พ.ศ.
-  const d      = new Date(order.order_date+'T00:00:00');
-  const thDate = d.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
+  // วันที่ไทย พ.ศ. (วัน/เดือน/ปี เช่น 16/11/2569)
+  const thDate = (typeof formatThaiDocDate === 'function')
+    ? formatThaiDocDate(order.order_date)
+    : new Date(order.order_date+'T00:00:00').toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'});
 
   const MIN_ROWS = 6;
   const showSkuInBill = (typeof showSkuInDocument !== 'undefined')
@@ -13466,18 +13481,19 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
           ? 'เลขที่ใบส่งของ / DN No.:'
           : 'เลขที่ / No.:');
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">' + docNoLabel + '</span><span class="doc-meta-val font-mono">' + escapeHTML(order.order_no||'-') + '</span></div>');
-    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันที่ / Date:</span><span class="doc-meta-val">' + thDate + '</span></div>');
-    const delDate = getOrderDeliveryDate(order);
+    billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันที่ / Date:</span><span class="doc-meta-val">' + escapeHTML(thDate) + '</span></div>');
+    const rawDelDate = getOrderDeliveryDate(order);
+    const delDate = (typeof formatThaiDocDate === 'function') ? formatThaiDocDate(rawDelDate) : rawDelDate;
     if (docType === 'delivery') {
-      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val font-mono" style="color:#0369a1;font-weight:700">' + escapeHTML(delDate || thDate) + '</span></div>');
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val" style="color:#0369a1;font-weight:700">' + escapeHTML(delDate || thDate) + '</span></div>');
       const carrierName = (typeof detectCarrier === 'function' && order.tracking_no && detectCarrier(order.tracking_no)?.name) || order.channel || '-';
       billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">ขนส่ง / Carrier:</span><span class="doc-meta-val">' + escapeHTML(carrierName) + '</span></div>');
     } else if (delDate) {
-      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val font-mono">' + escapeHTML(delDate) + '</span></div>');
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">วันส่งสินค้า / Delivery:</span><span class="doc-meta-val">' + escapeHTML(delDate) + '</span></div>');
     }
     if (docType === 'invoice') {
       const dueDate = delDate || thDate;
-      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">กำหนดชำระ / Due Date:</span><span class="doc-meta-val font-mono" style="color:#1e3a5f;font-weight:700">' + escapeHTML(dueDate) + '</span></div>');
+      billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">กำหนดชำระ / Due Date:</span><span class="doc-meta-val" style="color:#1e3a5f;font-weight:700">' + escapeHTML(dueDate) + '</span></div>');
     }
     billParts.push('<div class="doc-meta-row"><span class="doc-meta-lbl">\u0e0a\u0e48\u0e2d\u0e07\u0e17\u0e32\u0e07 / Channel:</span><span class="doc-meta-val">' + escapeHTML(order.channel||'-') + '</span></div>');
     if (order.customer_social) {
@@ -25768,8 +25784,10 @@ async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyTy
     bp.push('<div class="info-box">');
     bp.push('<div style="text-align:right">');
     bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">เลขที่ / No.</span>&nbsp;&nbsp;<strong>'+(qt.quote_no||'-')+'</strong></div>');
-    bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">วันที่ / Date</span>&nbsp;&nbsp;<strong>'+qt.quote_date+'</strong></div>');
-    if(qt.valid_until) bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">ใช้ได้ถึง / Valid Until</span>&nbsp;&nbsp;<strong>'+qt.valid_until+'</strong></div>');
+    const qtDateTh = (typeof formatThaiDocDate === 'function') ? (formatThaiDocDate(qt.quote_date) || qt.quote_date) : qt.quote_date;
+    const qtValidTh = qt.valid_until ? ((typeof formatThaiDocDate === 'function') ? (formatThaiDocDate(qt.valid_until) || qt.valid_until) : qt.valid_until) : '';
+    bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">วันที่ / Date</span>&nbsp;&nbsp;<strong>'+qtDateTh+'</strong></div>');
+    if(qtValidTh) bp.push('<div style="margin-bottom:5px"><span style="font-size:11px;color:#1a1a1a">ใช้ได้ถึง / Valid Until</span>&nbsp;&nbsp;<strong>'+qtValidTh+'</strong></div>');
     if(qt.customer_social) bp.push('<div><span style="font-size:11px;color:#1a1a1a">Ref / Social</span>&nbsp;&nbsp;<strong>'+escapeHTML(qt.customer_social)+'</strong></div>');
     bp.push('</div>');
     if(qt.customer_address && qt.customer_address.trim()) {
@@ -50077,7 +50095,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'3.96', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับการแสดงผลสาขาบนหน้าบิล / เอกสาร (เว้นว่างช่องสาขาจะไม่พิมพ์คำว่าสำนักงานใหญ่) (v3.96)', items:[
+    { v:'3.97', date:'2026-11-16', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ปรับรูปแบบวันที่บนหน้าบิล / ใบเสร็จรับเงิน / ใบส่งสินค้า ให้เป็นมาตรฐานเดียวกัน (v3.97)', items:[
+      '📅 <b>รูปแบบวันที่มาตรฐานเดียวกัน (Consistent Date Format):</b> ปรับให้วันที่เอกสาร (วันที่ / Date), วันส่งสินค้า (Delivery Date), และกำหนดชำระ (Due Date) แสดงผลเป็นรูปแบบ วัน/เดือน/ปี พ.ศ. (เช่น <code>16/11/2569</code>) เหมือนกันทั้งหมดในหน้าต่างพิมพ์เอกสาร',
+      '✨ <b>จัดรูปแบบ Typography & Font:</b> ปรับสไตล์ตัวอักษรของวันที่และวันส่งสินค้าให้สม่ำเสมอสวยงาม กลมกลืนกับหัวบิล',
+      '📄 <b>Quotation Consistency:</b> ปรับปรุงให้หน้าพิมพ์ใบเสนอราคาแสดงผลวันที่และวันหมดอายุในรูปแบบมาตรฐานเดียวกัน',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v3.97 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'3.96', date:'2026-11-16', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'ปรับการแสดงผลสาขาบนหน้าบิล / เอกสาร (เว้นว่างช่องสาขาจะไม่พิมพ์คำว่าสำนักงานใหญ่) (v3.96)', items:[
       '🏢 <b>ปรับเงื่อนไขการแสดงผลสาขา (Branch Display):</b> หากช่องสาขา (Branch) เว้นว่างไว้ ระบบจะไม่ต่อท้ายชื่อบริษัทด้วย <code>(สำนักงานใหญ่)</code> และจะแสดงเฉพาะชื่อบริษัทตามที่ระบุบนหน้าบิล, ใบเสร็จรับเงิน, ใบกำกับภาษี, ใบส่งของ และใบเสนอราคา',
       '🎯 <b>ระบุเฉพาะเมื่อต้องการ:</b> คำว่า <code>(สำนักงานใหญ่)</code> จะแสดงบนบิลเฉพาะเมื่อระบุรหัส <code>00000</code> หรือพิมพ์ <code>สำนักงานใหญ่</code> อย่างชัดเจนเท่านั้น',
       '🏷️ <b>สาขาอื่นๆ:</b> หากระบุเลขสาขา เช่น <code>00001</code> ระบบจะแสดงเป็น <code>(สาขา 00001)</code> ตามปกติ',
