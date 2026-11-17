@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.10</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.11</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.10';
-const DISPLAY_APP_VERSION = 'v4.10';
+const CURRENT_APP_VERSION = 'sealthai-v4.11';
+const DISPLAY_APP_VERSION = 'v4.11';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.10 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.11 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7890,7 +7890,7 @@ async function loadOrders() {
     Promise.all([ensureShopeeFeeData(), ensureShopeeOrderReconciliation()]),
     sb.from('ar_invoices').select('id,ar_no,order_id,status').eq('shop_id', currentShop.id).not('order_id','is',null),
     sb.from('purchase_orders').select('id,po_no,status,supplier_name,note,purchase_order_items(id,product_id,product_name,qty_ordered,qty_received)').eq('shop_id', currentShop.id).neq('status','cancelled'),
-    (allProducts && allProducts.length > 1000) ? Promise.resolve({ data: allProducts }) : fetchAllProductsChunked(),
+    fetchAllProductsChunked(),
     ensureLazadaSummary()
   ]);
 
@@ -7965,7 +7965,7 @@ async function loadOrders() {
   });
 
   // บันทึกและ normalize allProducts เพื่อให้ทุกฟังก์ชันในหน้าบันทึกออเดอร์ใช้งานได้ทันที
-  if (prodRes?.data && prodRes.data.length && (!allProducts || allProducts.length < prodRes.data.length)) {
+  if (prodRes?.data) {
     allProducts = prodRes.data.map(normalizeProduct);
   }
 
@@ -8225,17 +8225,21 @@ async function loadOrders() {
               const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
               const itemReqQty = Number(it.qty || 1);
               const stockVal = rawStock;
+              const ecoStock = Number(p.stock_ecoseal || 0);
+              const stockScope = ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)} (EcoSeal ${fmt(ecoStock)})` : '';
 
               let sBg, sColor, sBdr, sIcon, sText, sTitle;
               if (isPoReceived) {
-                // สินค้ารายการนี้สั่งซื้อและตรวจรับเข้าคลังแล้ว (มีของพร้อมในคลังสำหรับออเดอร์นี้) แสดงตัวเลขตามคงเหลือจริงในคลัง (v4.09)
+                // PO รับเข้าแล้ว แต่ต้องใช้ยอดคลังร้านปัจจุบันตัดสินว่าพร้อมส่งหรือไม่
                 const recQty = poMatch?.qty_received || itemReqQty;
-                sBg = '#dcfce7';
-                sColor = '#15803d';
-                sBdr = '#86efac';
-                sIcon = '📦';
-                sText = stockVal > 0 ? `คงเหลือ ${fmt(stockVal)}` : `คงเหลือ 0 (ของเข้าครบ)`;
-                sTitle = `สต๊อกคงเหลือจริงในคลัง: ${fmt(stockVal)} ชิ้น · ตรวจรับสินค้าเข้าจาก PO: ${escapeHTML(poMatch?.po_no || '')} เรียบร้อยแล้ว (${fmt(recQty)} ชิ้น) มีของพร้อมส่งทันที (คลิกเพื่อดู Inventory Movement)`;
+                const isStockOut = stockVal <= 0;
+                const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+                sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+                sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
+                sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
+                sIcon = isStockOut || isInsufficient ? '⚠️' : '📦';
+                sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+                sTitle = `คลังร้าน: ${fmt(stockVal)} ชิ้น${stockScope} · PO ${escapeHTML(poMatch?.po_no || '')} รับเข้าแล้ว ${fmt(recQty)} ชิ้น (คลิกดู Inventory Movement)`;
               } else {
                 const isStockOut = stockVal <= 0;
                 const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
@@ -8245,10 +8249,10 @@ async function loadOrders() {
                 sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
                 sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
                 const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
-                sTitle = `สต๊อก${sText} ชิ้น${tipPending} (คลิกเพื่อดู Inventory Movement)`;
+                sTitle = `คลังร้าน: ${fmt(stockVal)} ชิ้น${stockScope}${tipPending} (คลิกเพื่อดู Inventory Movement)`;
               }
 
-              stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="${sTitle}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ${sText}</span>`;
+              stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="${sTitle}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;transition:transform 0.1s" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">${sIcon} ร้าน ${sText}${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)}` : ''}</span>`;
               nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลิกดูประวัติสต๊อก Inventory Movement ของ ${escapeHTML(p.name)}" style="cursor:pointer;color:var(--text);font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
 
               const fStock = Number(p.factory_stock || 0);
@@ -8425,6 +8429,7 @@ async function loadOrders() {
             const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
             const itemReqQty = Number(it.qty || 1);
             const stockVal = rawStock;
+            const ecoStock = Number(p.stock_ecoseal || 0);
             const isStockOut = stockVal <= 0;
             const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
             const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
@@ -8433,7 +8438,7 @@ async function loadOrders() {
             const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
             const sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
             const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
-            stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="สต๊อก${sText} ชิ้น${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ${sText}</span>`;
+            stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลังร้าน: ${fmt(stockVal)} ชิ้น${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)} (EcoSeal ${fmt(ecoStock)})` : ''}${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ร้าน ${sText}${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)}` : ''}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
 
             const fStock = Number(p.factory_stock || 0);
@@ -10820,14 +10825,9 @@ function itemNetEdit(it) {
 let editProdList = []; // โหลดครั้งเดียวตอน viewOrder
 
 async function loadEditProdList() {
-  if (editProdList && editProdList.length > 1000) return;
-  if (allProducts && allProducts.length > 1000) {
-    editProdList = allProducts;
-    return;
-  }
   const pRes = await fetchAllProductsChunked();
   editProdList = pRes.data || [];
-  if (!allProducts || allProducts.length < editProdList.length) {
+  if (pRes.data) {
     allProducts = editProdList.map(normalizeProduct);
   }
 }
@@ -11055,6 +11055,7 @@ function renderEditItems() {
       const rawStock = Number(_pItem.stock_inhouse !== undefined && _pItem.stock_inhouse !== null ? _pItem.stock_inhouse : (_pItem.stock_qty || 0));
       const itemReqQty = Number(it.qty || 1);
       const stockVal = rawStock;
+      const ecoStock = Number(_pItem.stock_ecoseal || 0);
       const isOut = stockVal <= 0;
       const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
       const stockHint = document.createElement('div');
@@ -11072,8 +11073,8 @@ function renderEditItems() {
             ? `<span title="สต็อกของ Supplier / โรงงาน: 0 ชิ้น" style="background:#f8fafc;color:#94a3b8;border:1px solid #e2e8f0;padding:2px 6px;border-radius:5px;font-size:11px;display:inline-flex;align-items:center;gap:3px">🏭 รง. 0</span>`
             : '');
       stockHint.innerHTML = `
-        <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลิกดูประวัติการเคลื่อนไหวสต๊อก (Inventory Movement)${tipPending}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
-          ${sIcon} ${sText}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
+        <span onclick="viewProductInventoryPosting('${_pItem.id}')" title="คลังร้าน: ${fmt(stockVal)} ชิ้น${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)} (EcoSeal ${fmt(ecoStock)})` : ''}${tipPending} · คลิกดู Inventory Movement" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};padding:2px 7px;border-radius:5px;font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:3px">
+          ${sIcon} ร้าน ${sText}${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)}` : ''}${isOrderPending ? ' <span style="font-size:9.5px;font-weight:500;color:#0284c7">(รอส่ง)</span>' : ''} 🔍
         </span>
         ${fStockHtml}
         <button type="button" class="btn btn-secondary btn-sm" onclick="quickAdjustProductStock('${_pItem.id}')" title="ปรับยอดสต๊อกสินค้าจริงทันที" style="padding:1px 6px;font-size:10.5px;background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700">
@@ -51082,7 +51083,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.10', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้หน้า Order เปิดดูไม่ได้เพราะตัวแปรรายชื่อลูกค้าไม่ถูกต้อง', items:[
+    { v:'4.11', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ซิงค์สต๊อกหน้าออเดอร์กับข้อมูลสินค้าล่าสุด', items:[
+      'หน้าออเดอร์และรายละเอียดออเดอร์โหลดสต๊อกสินค้าล่าสุดเมื่อเปิด ไม่ใช้แคชเก่าของร้านที่มีสินค้ามากกว่า 1,000 รายการ',
+      'อัปเดตข้อมูลสินค้าในหน่วยความจำตามผลโหลดใหม่ แม้จำนวนสินค้าเท่าเดิม เพื่อให้ยอดคงเหลือไม่ค้าง',
+      'ป้ายออเดอร์แยกยอดคลังร้านกับยอดรวม EcoSeal และไม่ขึ้นสีเขียวว่าพร้อมส่งเมื่อ PO รับเข้าแล้วแต่คลังร้านเหลือ 0'
+    ]},
+    { v:'4.10', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'แก้หน้า Order เปิดดูไม่ได้เพราะตัวแปรรายชื่อลูกค้าไม่ถูกต้อง', items:[
       'แก้การดึงอีเมลลูกค้าในรายละเอียด Order ให้ใช้รายชื่อลูกค้าที่โหลดไว้จริง และอ่านอีเมลครั้งเดียวสำหรับแสดงและแก้ไข',
       'ป้องกันข้อผิดพลาด allCustomers is not defined เมื่อกดดู Order'
     ]},
