@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.11</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.12</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.11';
-const DISPLAY_APP_VERSION = 'v4.11';
+const CURRENT_APP_VERSION = 'sealthai-v4.12';
+const DISPLAY_APP_VERSION = 'v4.12';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.11)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.11 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.12)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.12 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -3582,7 +3582,19 @@ function docStatusStepper(currentStatus) {
 }
 
 async function updateDocStatus(orderId, newStatus) {
-  await sb.from('orders').update({ doc_status: newStatus }).eq('id', orderId);
+  const { data: order, error: readErr } = await sb.from('orders')
+    .select('id,order_no,order_date,shipping_status,doc_status,note,order_items(id,product_id,qty,cost_per_unit)')
+    .eq('id', orderId).single();
+  if (readErr || !order) { toast('อ่านออเดอร์ไม่สำเร็จ: ' + (readErr?.message || 'ไม่พบออเดอร์'), 'error'); return; }
+  const { error: updateErr } = await sb.from('orders').update({ doc_status: newStatus }).eq('id', orderId);
+  if (updateErr) { toast('เปลี่ยนสถานะเอกสารไม่สำเร็จ: ' + updateErr.message, 'error'); return; }
+  try {
+    await syncOrderPhysicalStock({ ...order, doc_status: newStatus });
+  } catch (error) {
+    await sb.from('orders').update({ doc_status: order.doc_status }).eq('id', orderId);
+    toast('ปรับสต๊อกไม่สำเร็จ: ' + (error.message || error), 'error');
+    return;
+  }
   toast('อัพเดทสถานะ → '+( DOC_STATUSES.find(x=>x.key===newStatus)?.th || newStatus)+' ✓','success');
   loadOrders();
 }
@@ -8550,6 +8562,76 @@ function clearOrdFilter() {
   loadPendingOrdersCard();
 }
 
+// Only goods actually shipped leave physical stock. Pending SO lines are reservations,
+// not stock_movements. Replace the order's legacy sale postings as one logical group.
+async function syncOrderPhysicalStock(order, items = order.order_items, shippingStatus = order.shipping_status, fulfillmentItems = null) {
+  if (!order?.order_no || !currentShop?.id) throw new Error('ไม่พบเลขออเดอร์หรือร้านสำหรับปรับสต๊อก');
+  const note = 'ขาย ' + order.order_no;
+  const legacyNotes = [note, note + ' (แปลงจาก QT)'];
+  const { data: existing, error: readErr } = await sb.from('stock_movements')
+    .select('id,product_id,move_type,qty,cost_per_unit,note,move_date')
+    .eq('shop_id', currentShop.id).in('note', legacyNotes);
+  if (readErr) throw readErr;
+  const oldMoves = (existing || []).filter(m => m.move_type === 'out');
+  const affectedIds = [...new Set([...oldMoves.map(m => m.product_id), ...(items || []).map(i => i.product_id)].filter(Boolean))];
+  let shippedLines = [];
+  if (order.doc_status !== 'cancelled' && shippingStatus !== 'cancelled') {
+    if (shippingStatus === 'shipped' || shippingStatus === 'delivered') {
+      const approvedCloseItems = order.doc_status === 'closed' ? getSAPCloseData(order)?.shipped_items : null;
+      shippedLines = Array.isArray(fulfillmentItems)
+        ? fulfillmentItems
+        : Array.isArray(approvedCloseItems) ? approvedCloseItems
+        : (items || []).map(i => ({ ...i, shipped_qty: Number(i.qty || 0) }));
+    } else if (shippingStatus === 'partially_shipped') {
+      const partial = fulfillmentItems || getOrderFulfillmentData(order)?.items;
+      if (!Array.isArray(partial)) throw new Error('ไม่พบจำนวนจัดส่งจริงของออเดอร์ที่จัดส่งบางส่วน');
+      shippedLines = partial;
+    }
+  }
+  const newMoves = shippedLines.filter(i => i.product_id && Number(i.shipped_qty || 0) > 0).map(i => ({
+    shop_id: currentShop.id, product_id: i.product_id, move_type: 'out',
+    qty: Number(i.shipped_qty), cost_per_unit: Number(i.cost_per_unit || 0),
+    note, move_date: order.order_date || today()
+  }));
+  const stockBefore = new Map();
+  if (affectedIds.length) {
+    const { data: products, error: productReadErr } = await sb.from('products')
+      .select('id,stock_qty').in('id', affectedIds);
+    if (productReadErr) throw productReadErr;
+    (products || []).forEach(p => stockBefore.set(p.id, Number(p.stock_qty || 0)));
+    if (stockBefore.size !== affectedIds.length) throw new Error('ไม่พบสินค้าในฐานข้อมูลครบทุกบรรทัด จึงยังไม่ปรับสต๊อก');
+  }
+  const stockDelta = new Map(affectedIds.map(id => [id, 0]));
+  oldMoves.forEach(m => stockDelta.set(m.product_id, stockDelta.get(m.product_id) + Number(m.qty || 0)));
+  newMoves.forEach(m => stockDelta.set(m.product_id, stockDelta.get(m.product_id) - Number(m.qty || 0)));
+  if (oldMoves.length) {
+    const { error } = await sb.from('stock_movements').delete().in('id', oldMoves.map(m => m.id));
+    if (error) throw error;
+  }
+  try {
+    if (newMoves.length) {
+      const { error } = await sb.from('stock_movements').insert(newMoves);
+      if (error) throw error;
+    }
+    for (const [productId, delta] of stockDelta) {
+      if (!delta) continue;
+      const { error } = await sb.from('products').update({ stock_qty: stockBefore.get(productId) + delta }).eq('id', productId);
+      if (error) throw error;
+    }
+  } catch (error) {
+    // Restore the previous postings when a later step fails; never silently leave a half-change.
+    await sb.from('stock_movements').delete().eq('shop_id', currentShop.id).eq('note', note);
+    if (oldMoves.length) await sb.from('stock_movements').insert(oldMoves.map(m => ({
+      shop_id: currentShop.id, product_id: m.product_id, move_type: m.move_type,
+      qty: m.qty, cost_per_unit: m.cost_per_unit, note: m.note, move_date: m.move_date
+    })));
+    for (const [productId, originalQty] of stockBefore) {
+      await sb.from('products').update({ stock_qty: originalQty }).eq('id', productId);
+    }
+    throw error;
+  }
+}
+
 async function quickUpdateStatus(orderId, status, selEl) {
   const _lbl = {
     pending:           'รอจัดส่ง',
@@ -8561,7 +8643,7 @@ async function quickUpdateStatus(orderId, status, selEl) {
 
   // ดึงสถานะเดิม + รายการสินค้า
   const { data: ord } = await sb.from('orders')
-    .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+    .select('*,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
     .eq('id', orderId).single();
   const oldStatus = ord?.shipping_status;
 
@@ -8575,7 +8657,7 @@ async function quickUpdateStatus(orderId, status, selEl) {
   }
 
   // ── Stock Validation Guard: ห้ามเปลี่ยนเป็น "จัดส่งแล้ว" ถ้าสต๊อกไม่พอ (เว้นแต่ปิดเอกสารแล้ว) ──
-  if ((status === 'shipped' || status === 'delivered') && ord?.doc_status !== 'closed') {
+  if ((status === 'shipped' || status === 'delivered') && !['shipped','delivered'].includes(oldStatus) && ord?.doc_status !== 'closed') {
     if (typeof checkOrderStockSufficiency === 'function') {
       const stockCheck = await checkOrderStockSufficiency(orderId, ord);
       if (!stockCheck.isSufficient) {
@@ -8591,41 +8673,50 @@ async function quickUpdateStatus(orderId, status, selEl) {
 
   // ── ยืนยันก่อนเปลี่ยน (กันกดผิด) ──
   let _msg = 'เปลี่ยนสถานะจัดส่งเป็น "' + (_lbl[status]||status) + '"?';
-  if (status === 'cancelled')       _msg += '\n\n⚠️ สต๊อกสินค้าจะถูกบวกคืนกลับเข้าระบบ';
-  else if (oldStatus === 'cancelled') _msg += '\n\n⚠️ สต๊อกจะถูกตัดออกใหม่ (นับเป็นขายอีกครั้ง)';
+  if (status === 'cancelled') _msg += '\n\nสต๊อกที่เคยจัดส่งจะถูกบวกคืนเข้าคลัง';
+  else if (status === 'pending') _msg += '\n\nสต๊อกที่เคยจัดส่งจะถูกบวกคืน และรายการนี้จะเป็นยอดจองรอส่ง';
+  else if (oldStatus === 'cancelled') _msg += '\n\nสต๊อกจะถูกตัดเมื่อเปลี่ยนเป็นจัดส่งแล้วเท่านั้น';
   if (!confirm(_msg)) {
     if (selEl && oldStatus != null) selEl.value = oldStatus;  // เด้ง dropdown กลับค่าเดิม
     return;
   }
 
-  await sb.from('orders').update({ shipping_status: status }).eq('id', orderId);
+  const resetFulfillment = status === 'pending' || status === 'cancelled';
+  const statusPayload = { shipping_status: status };
+  if (resetFulfillment) {
+    statusPayload.note = noteWithCompanyAndShipping(ord.note, ord.company_name, getOrderShippingFee(ord), getOrderInternalNote(ord), getOrderDeliveryDate(ord), '', null, getOrderCustomerEmail(ord));
+    statusPayload.fulfillment_data = null;
+  }
+  let { error: statusErr } = await sb.from('orders').update(statusPayload).eq('id', orderId);
+  if (statusErr && resetFulfillment && (statusErr.message || '').includes('fulfillment_data')) {
+    delete statusPayload.fulfillment_data;
+    ({ error: statusErr } = await sb.from('orders').update(statusPayload).eq('id', orderId));
+  }
+  if (statusErr) {
+    if (selEl) selEl.value = oldStatus || 'pending';
+    toast('เปลี่ยนสถานะไม่สำเร็จ: ' + statusErr.message, 'error');
+    return;
+  }
+  try {
+    await syncOrderPhysicalStock({ ...ord, shipping_status: status }, ord.order_items, status);
+  } catch (error) {
+    const rollback = { shipping_status: oldStatus, note: ord.note };
+    if ('fulfillment_data' in ord) rollback.fulfillment_data = ord.fulfillment_data;
+    await sb.from('orders').update(rollback).eq('id', orderId);
+    if (selEl) selEl.value = oldStatus || 'pending';
+    toast('ปรับสต๊อกไม่สำเร็จ: ' + (error.message || error), 'error');
+    return;
+  }
+  if (resetFulfillment) {
+    try { localStorage.removeItem('shopflow_order_fulfillment_' + orderId); } catch(e) {}
+  }
 
   // ── Auto Marketing Content: เมื่อเปลี่ยนสถานะเป็น "จัดส่งแล้ว" (shipped) ──
   if (status === 'shipped' && oldStatus !== 'shipped') {
     triggerAutoContentOnOrderShipped(orderId, ord);
   }
 
-  const wasCancel = ord?.shipping_status === 'cancelled';
-  const nowCancel = status === 'cancelled';
-  if (ord && wasCancel !== nowCancel) {
-    const note = 'ขาย ' + (ord.order_no || '');
-    const pids = [...new Set((ord.order_items||[]).map(it=>it.product_id).filter(Boolean))];
-    // ลบ movement 'out' เดิมของออเดอร์นี้ก่อนเสมอ (กันซ้ำ) → ทำให้สต๊อกถูกคืน
-    await sb.from('stock_movements').delete().eq('shop_id', currentShop.id).ilike('note', 'ขาย ' + (ord.order_no || '') + '%');
-    // ถ้ากลับมาใช้งาน (ไม่ยกเลิก) และเอกสารไม่ได้ยกเลิก → ตัดสต๊อกใหม่
-    if (!nowCancel && ord.doc_status !== 'cancelled') {
-      const mvs = (ord.order_items||[]).filter(it=>it.product_id).map(it=>({
-        shop_id: currentShop.id, product_id: it.product_id, move_type: 'out',
-        qty: Number(it.qty)||0, cost_per_unit: Number(it.cost_per_unit)||0,
-        note, move_date: ord.order_date
-      }));
-      if (mvs.length) await sb.from('stock_movements').insert(mvs);
-    }
-    if (pids.length) await recalcStockQty(pids);
-    toast(nowCancel ? 'ยกเลิกออเดอร์ + คืนสต๊อกแล้ว ✓' : 'อัพเดทสถานะ + ตัดสต๊อกใหม่ ✓', 'success');
-  } else {
-    toast('อัพเดทสถานะแล้ว ✓','success');
-  }
+  toast(status === 'cancelled' || status === 'pending' ? 'อัปเดตสถานะ + คืนสต๊อกจริงแล้ว ✓' : 'อัปเดตสถานะ + ตัดสต๊อกตามที่จัดส่งแล้ว ✓', 'success');
   if (typeof loadOrders === 'function') loadOrders();  // refresh สี + เรียงลำดับใหม่
   loadPendingOrdersCard();
 }
@@ -10735,32 +10826,14 @@ async function saveOrder() {
     await sb.from('quotations').update({status:'converted',converted_order_id:order.id}).eq('id',orderSourceQuoteId);
   }
 
-  // deduct stock — บันทึก movement + อัพเดท stock_qty โดยตรง (ไม่รอ trigger)
-  const orderDate = document.getElementById('o-date').value;
-  for (const item of items) {
-    if (!item.product_id) continue;
-
-    // 1. บันทึก stock movement
-    await sb.from('stock_movements').insert({
-      shop_id: currentShop.id,
-      product_id: item.product_id,
-      move_type: 'out',
-      qty: Number(item.qty),
-      cost_per_unit: Number(item.cost_per_unit)||0,
-      note: 'ขาย ' + order.order_no,
-      move_date: orderDate
-    });
-
-    // 2. อัพเดท stock_qty โดยตรง (ไม่ว่า trigger จะทำงานหรือไม่)
-    const { data: prod } = await sb.from('products')
-      .select('stock_qty')
-      .eq('id', item.product_id)
-      .single();
-    if (prod) {
-      // ใช้ค่าจริง อนุญาตให้ติดลบได้ (stock on hand จริง)
-      await sb.from('products').update({
-        stock_qty: Number(prod.stock_qty) - Number(item.qty)
-      }).eq('id', item.product_id);
+  // Pending orders reserve stock only; physical stock leaves when goods are shipped.
+  if (orderPayload.shipping_status === 'shipped' || orderPayload.shipping_status === 'delivered') {
+    try {
+      await syncOrderPhysicalStock(order, items, orderPayload.shipping_status);
+    } catch (stockError) {
+      await sb.from('orders').update({ shipping_status: 'pending' }).eq('id', order.id);
+      toast('สร้างออเดอร์แล้ว แต่ตัดสต๊อกไม่สำเร็จ จึงตั้งเป็นรอจัดส่ง: ' + (stockError.message || stockError), 'error');
+      return;
     }
   }
 
@@ -11798,9 +11871,14 @@ async function saveOrderEdit(orderId) {
 
   const targetShipStatus = document.getElementById('ed-status')?.value;
   const targetDocStatus = document.getElementById('ed-doc-status')?.value;
+  if (targetShipStatus === 'partially_shipped' && window._editingOrderForGP?.shipping_status !== 'partially_shipped') {
+    toast('กรุณาระบุจำนวนที่จัดส่งจริงในหน้าจัดส่งบางส่วนก่อน', 'error');
+    openOrderFulfillmentModal(orderId, 'partially_shipped');
+    return;
+  }
 
   // ── Stock Validation Guard in Edit: ห้ามเปลี่ยนเป็น "จัดส่งแล้ว" ถ้าสต๊อกไม่พอ ──
-  if ((targetShipStatus === 'shipped' || targetShipStatus === 'delivered') && targetDocStatus !== 'closed') {
+  if ((targetShipStatus === 'shipped' || targetShipStatus === 'delivered') && !['shipped','delivered'].includes(window._editingOrderForGP?.shipping_status) && targetDocStatus !== 'closed') {
     if (typeof checkOrderStockSufficiency === 'function') {
       const stockCheck = await checkOrderStockSufficiency(orderId, {
         id: orderId,
@@ -11973,34 +12051,18 @@ async function saveOrderEdit(orderId) {
     }
   }
 
-  // อัปเดตประวัติการเคลื่อนไหวสต๊อก (stock movements) ของออเดอร์นี้
-  const { data: orderObj } = await sb.from('orders').select('order_no,order_date').eq('id', orderId).single();
-  if (orderObj) {
-    // 1. ลบรายการความเคลื่อนไหวเดิมออก (ครอบคลุมทั้ง note ปกติและที่แปลงจาก QT)
-    await sb.from('stock_movements').delete().ilike('note', 'ขาย ' + orderObj.order_no + '%');
-    
-    // 2. เพิ่มรายการความเคลื่อนไหวใหม่ (เฉพาะกรณีเอกสารไม่ได้ยกเลิก)
-    const docStatus = document.getElementById('ed-doc-status')?.value || 'confirmed';
-    if (docStatus !== 'cancelled') {
-      const mvs = editItems.filter(it => it.product_id).map(it => ({
-        shop_id: currentShop.id,
-        product_id: it.product_id,
-        move_type: 'out',
-        qty: Number(it.qty)||1,
-        cost_per_unit: Number(it.cost_per_unit)||0,
-        note: 'ขาย ' + orderObj.order_no,
-        move_date: orderObj.order_date
-      }));
-      if (mvs.length) {
-        await sb.from('stock_movements').insert(mvs);
-      }
-    }
+  // Rebuild only physically shipped quantities; old pending sale postings are removed.
+  const { data: orderObj, error: orderReadErr } = await sb.from('orders')
+    .select('order_no,order_date,shipping_status,doc_status,note').eq('id', orderId).single();
+  if (orderReadErr || !orderObj) {
+    toast('บันทึกรายการแล้ว แต่ตรวจสถานะสต๊อกไม่ได้ กรุณาตรวจออเดอร์ก่อนทำรายการต่อ', 'error');
+    return;
   }
-
-  // 3. คำนวณจำนวนคงเหลือในคลังของสินค้าเหล่านี้ใหม่
-  const productIds = [...new Set(editItems.map(it => it.product_id).filter(Boolean))];
-  if (productIds.length) {
-    await recalcStockQty(productIds);
+  try {
+    await syncOrderPhysicalStock(orderObj, editItems, orderObj.shipping_status);
+  } catch (stockError) {
+    toast('บันทึกรายการแล้ว แต่ปรับสต๊อกไม่สำเร็จ: ' + (stockError.message || stockError), 'error');
+    return;
   }
 
   // ── Record Price Change Audit Log (v3.47) ──
@@ -12676,12 +12738,12 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
     return { isSufficient: true, shortfallItems: [], totalShortfall: 0, order: ord };
   }
 
-  // Ensure products cache has all items
-  let localProdMap = (typeof prodMap !== 'undefined' && prodMap) ? prodMap : {};
-  const missingPids = ord.order_items.map(it => it.product_id).filter(pid => pid && !localProdMap[pid]);
-  if (missingPids.length > 0) {
+  // Validate against the latest physical balance, not an older product cache.
+  let localProdMap = {};
+  const productIds = [...new Set(ord.order_items.map(it => it.product_id).filter(Boolean))];
+  if (productIds.length > 0) {
     try {
-      const { data: pRows } = await sb.from('products').select('id,name,sku,part_no,stock_qty,stock_inhouse,current_cost').in('id', missingPids);
+      const { data: pRows } = await sb.from('products').select('id,name,sku,part_no,stock_qty,current_cost').in('id', productIds);
       if (pRows) {
         pRows.forEach(p => { localProdMap[p.id] = p; });
       }
@@ -12696,8 +12758,7 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
 
   for (const it of ord.order_items) {
     if (!it.product_id) continue;
-    const p = localProdMap[it.product_id];
-    if (!p) continue;
+    const p = localProdMap[it.product_id] || { stock_qty: 0 };
 
     const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
     const orderedQty = Math.max(1, Number(it.qty || 1));
@@ -12709,7 +12770,7 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
 
     // Physical available stock: use actual warehouse on-hand stock
     const stockVal = rawStock;
-    const available = Math.max(0, stockVal - alreadyShipped);
+    const available = Math.max(0, stockVal);
 
     if (available < reqQty) {
       const shortfall = reqQty - available;
@@ -12787,8 +12848,18 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
   const fulfillment = getOrderFulfillmentData(ord);
   const sapClose = getSAPCloseData(ord);
 
-  // Build product stock lookup
-  let localProdMap = (typeof prodMap !== 'undefined' && prodMap) ? prodMap : {};
+  // Build product stock lookup from current physical balances.
+  const localProdMap = {};
+  const fulfillmentProductIds = [...new Set((ord.order_items || []).map(it => it.product_id).filter(Boolean))];
+  if (fulfillmentProductIds.length) {
+    const { data: liveProducts, error: stockReadErr } = await sb.from('products')
+      .select('id,name,sku,part_no,stock_qty,current_cost').in('id', fulfillmentProductIds);
+    if (stockReadErr) {
+      toast('อ่านสต๊อกล่าสุดไม่สำเร็จ: ' + stockReadErr.message, 'error');
+      return;
+    }
+    (liveProducts || []).forEach(p => { localProdMap[p.id] = p; });
+  }
   const isOrderPending = !isOrderCancelled(ord) && (!ord.shipping_status || ord.shipping_status === 'pending' || ord.shipping_status === 'partially_shipped');
 
   const items = (ord.order_items || []).map((it, idx) => {
@@ -12799,7 +12870,7 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
     const alreadyShipped = Number(prevItemFulfill?.shipped_qty || 0);
     const reqQty = prevItemFulfill ? Math.max(0, orderedQty - alreadyShipped) : orderedQty;
     const stockVal = rawStock;
-    const available = Math.max(0, stockVal - alreadyShipped);
+    const available = Math.max(0, stockVal);
     const defaultFulfill = Math.min(reqQty, available);
     const shortfall = Math.max(0, reqQty - available);
 
@@ -13144,7 +13215,6 @@ async function submitOrderPartialShipment(orderId) {
 
   // 1. Dual-layer save fulfillment data
   const rawTag = JSON.stringify(fulfillData);
-  localStorage.setItem('shopflow_order_fulfillment_' + orderId, rawTag);
   const newNote = noteWithCompanyAndShipping(ord.note, ord.company_name, ord.shipping_fee, getOrderInternalNote(ord), getOrderDeliveryDate(ord), rawTag);
 
   const newShippingStatus = totalBackorder > 0 ? 'partially_shipped' : 'shipped';
@@ -13154,37 +13224,28 @@ async function submitOrderPartialShipment(orderId) {
     fulfillment_data: fulfillData
   };
 
+  let partialUpdateError = null;
   for (let a = 0; a < 3; a++) {
     const { error: updErr } = await sb.from('orders').update(updatePayload).eq('id', orderId);
+    partialUpdateError = updErr;
     if (!updErr) break;
     if (('fulfillment_data' in updatePayload) && (updErr.message || '').toLowerCase().includes('fulfillment_data')) {
       delete updatePayload.fulfillment_data;
       continue;
     }
   }
-
-  // 2. Adjust stock movements: Deduct ONLY the shipped portions
-  if (ord.doc_status !== 'cancelled') {
-    const note = 'ขาย ' + (ord.order_no || '');
-    await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).ilike('note', 'ขาย ' + (ord.order_no || '') + '%');
-
-    const mvs = fulfillmentItems.filter(f => f.product_id && f.shipped_qty > 0).map(f => ({
-      shop_id: currentShop?.id,
-      product_id: f.product_id,
-      move_type: 'out',
-      qty: Number(f.shipped_qty),
-      cost_per_unit: Number(f.cost_per_unit || 0),
-      note,
-      move_date: ord.order_date
-    }));
-    if (mvs.length) {
-      await sb.from('stock_movements').insert(mvs);
-    }
-    const pids = [...new Set(fulfillmentItems.map(f => f.product_id).filter(Boolean))];
-    if (pids.length && typeof recalcStockQty === 'function') {
-      await recalcStockQty(pids);
-    }
+  if (partialUpdateError) {
+    toast('บันทึกสถานะจัดส่งไม่สำเร็จ: ' + partialUpdateError.message, 'error');
+    return;
   }
+
+  try {
+    await syncOrderPhysicalStock({ ...ord, shipping_status: newShippingStatus }, ord.order_items, newShippingStatus, fulfillmentItems);
+  } catch (error) {
+    toast('บันทึกสถานะแล้ว แต่ตัดสต๊อกไม่สำเร็จ: ' + (error.message || error), 'error');
+    return;
+  }
+  localStorage.setItem('shopflow_order_fulfillment_' + orderId, rawTag);
 
   closeModal('modal-order-fulfillment');
   toast(`บันทึกจัดส่งแบบบางส่วนสำเร็จ (มียอดค้างส่งรวม ${totalBackorder} ชิ้น) ✓`, 'success');
@@ -13252,7 +13313,6 @@ async function submitSAPCloseOrderApproval(orderId) {
   };
 
   const rawSapTag = JSON.stringify(approvalData);
-  localStorage.setItem('shopflow_sap_close_' + orderId, rawSapTag);
 
   const billDisc = Number(ord.bill_discount || 0);
   const billDiscType = ord.bill_discount_type || 'amount';
@@ -13300,8 +13360,10 @@ async function submitSAPCloseOrderApproval(orderId) {
     note: newNote
   };
 
+  let closeUpdateError = null;
   for (let a = 0; a < 4; a++) {
     const { error: updErr } = await sb.from('orders').update(updatePayload).eq('id', orderId);
+    closeUpdateError = updErr;
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
     if (('closed_by' in updatePayload) && (msg.includes('closed_by') || msg.includes('close_reason') || msg.includes('closed_at'))) {
@@ -13311,26 +13373,18 @@ async function submitSAPCloseOrderApproval(orderId) {
       continue;
     }
   }
+  if (closeUpdateError) {
+    toast('ปิดเอกสารไม่สำเร็จ: ' + closeUpdateError.message, 'error');
+    return;
+  }
 
-  // 3. Deduct stock movements for actually shipped portion only
-  const note = 'ขาย ' + (ord.order_no || '');
-  await sb.from('stock_movements').delete().eq('shop_id', currentShop?.id).ilike('note', 'ขาย ' + (ord.order_no || '') + '%');
-  const mvs = fulfillmentItems.filter(f => f.product_id && f.shipped_qty > 0).map(f => ({
-    shop_id: currentShop?.id,
-    product_id: f.product_id,
-    move_type: 'out',
-    qty: Number(f.shipped_qty),
-    cost_per_unit: Number(f.cost_per_unit || 0),
-    note,
-    move_date: ord.order_date
-  }));
-  if (mvs.length) {
-    await sb.from('stock_movements').insert(mvs);
+  try {
+    await syncOrderPhysicalStock({ ...ord, doc_status: 'closed', shipping_status: 'shipped' }, ord.order_items, 'shipped', fulfillmentItems);
+  } catch (error) {
+    toast('ปิดเอกสารแล้ว แต่ตัดสต๊อกไม่สำเร็จ: ' + (error.message || error), 'error');
+    return;
   }
-  const pids = [...new Set(fulfillmentItems.map(f => f.product_id).filter(Boolean))];
-  if (pids.length && typeof recalcStockQty === 'function') {
-    await recalcStockQty(pids);
-  }
+  localStorage.setItem('shopflow_sap_close_' + orderId, rawSapTag);
 
   closeModal('modal-order-fulfillment');
   toast(`อนุมัติปิดเอกสาร (SAP B1 Close) สำเร็จ โดย ${approver} ✓`, 'success');
@@ -26003,24 +26057,7 @@ async function convertToOrder(qtId) {
     autoSyncCustomerFromOrder(orderPayload, order.id).catch(() => {});
   }
 
-  // อัพเดท stock และบันทึก movement
-  const movements = [];
-  for(const it of (items||[])){
-    if(!it.product_id) continue;
-    movements.push({
-      shop_id: currentShop.id,
-      product_id: it.product_id,
-      move_type: 'out',
-      qty: Number(it.qty)||1,
-      cost_per_unit: Number(it.unit_cost)||0,
-      note: 'ขาย ' + orderNo + ' (แปลงจาก QT)',
-      move_date: today()
-    });
-  }
-  if (movements.length) {
-    await sb.from('stock_movements').insert(movements);
-    await recalcStockQty(movements.map(m => m.product_id));
-  }
+  // ออเดอร์ที่แปลงจากใบเสนอราคายังรอจัดส่ง: จองสินค้า แต่ไม่ตัดคลังจริง
 
   // mark quotation as closed & won (lock document to prevent repeat conversion)
   let { error: closeErr } = await sb.from('quotations').update({
@@ -51083,7 +51120,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.11', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ซิงค์สต๊อกหน้าออเดอร์กับข้อมูลสินค้าล่าสุด', items:[
+    { v:'4.12', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ตัดสต๊อกจริงเมื่อจัดส่งและคืนยอดเมื่อย้อนสถานะ', items:[
+      'ออเดอร์ใหม่และออเดอร์ที่แปลงจากใบเสนอราคาในสถานะรอจัดส่งไม่ตัดสต๊อกคลังจริง',
+      'เปลี่ยนเป็นจัดส่งแล้วจึงตัดตามจำนวนจริง และคืนสต๊อกเมื่อกลับเป็นรอจัดส่งหรือยกเลิก รวมถึงรองรับแก้ไขรายการออเดอร์',
+      'ปรับยอดออเดอร์รอจัดส่งเก่าด้วยไฟล์ supabase_order_physical_stock_v412.sql ซึ่งเก็บรายการเดิมไว้ในตาราง audit ก่อนปรับ'
+    ]},
+    { v:'4.11', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ซิงค์สต๊อกหน้าออเดอร์กับข้อมูลสินค้าล่าสุด', items:[
       'หน้าออเดอร์และรายละเอียดออเดอร์โหลดสต๊อกสินค้าล่าสุดเมื่อเปิด ไม่ใช้แคชเก่าของร้านที่มีสินค้ามากกว่า 1,000 รายการ',
       'อัปเดตข้อมูลสินค้าในหน่วยความจำตามผลโหลดใหม่ แม้จำนวนสินค้าเท่าเดิม เพื่อให้ยอดคงเหลือไม่ค้าง',
       'ป้ายออเดอร์แยกยอดคลังร้านกับยอดรวม EcoSeal และไม่ขึ้นสีเขียวว่าพร้อมส่งเมื่อ PO รับเข้าแล้วแต่คลังร้านเหลือ 0'
