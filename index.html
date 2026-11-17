@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.04';
-const DISPLAY_APP_VERSION = 'v4.04';
+const CURRENT_APP_VERSION = 'sealthai-v4.05';
+const DISPLAY_APP_VERSION = 'v4.05';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.04)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.04 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.05 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2747,6 +2747,34 @@ function formatThaiDocDate(dateStr) {
 }
 window.formatThaiDocDate = formatThaiDocDate;
 
+const EMAIL_TAG_RE = /\[\[EMAIL:([\s\S]*?)\]\]/i;
+const EMAIL_TAG_GLOBAL_RE = /\[\[EMAIL:[\s\S]*?\]\]/gi;
+const EMAIL_TEXT_RE = /\[(?:e-?mail|อีเมล|อีเมล์)\]:\s*([^\n\r\]]+)/i;
+const EMAIL_TEXT_GLOBAL_RE = /\[(?:e-?mail|อีเมล|อีเมล์)\]:[^\n]*/gi;
+
+function getOrderCustomerEmail(order, customer = null) {
+  if (order?.customer_email && String(order.customer_email).trim()) {
+    return String(order.customer_email).trim();
+  }
+  if (order?.email && String(order.email).trim()) {
+    return String(order.email).trim();
+  }
+  const raw = String(order?.note || '');
+  const mTag = raw.match(EMAIL_TAG_RE);
+  if (mTag && mTag[1]) {
+    try { return decodeURIComponent(mTag[1]).trim(); } catch(e) { return mTag[1].trim(); }
+  }
+  const mText = raw.match(EMAIL_TEXT_RE);
+  if (mText && mText[1]?.trim()) {
+    return mText[1].trim();
+  }
+  if (customer?.email && String(customer.email).trim()) {
+    return String(customer.email).trim();
+  }
+  return '';
+}
+window.getOrderCustomerEmail = getOrderCustomerEmail;
+
 function getOrderInternalNote(order) {
   if (order?.internal_note && String(order.internal_note).trim()) {
     return String(order.internal_note).trim();
@@ -2774,6 +2802,8 @@ const SAP_B1_CLOSE_TAG_GLOBAL_RE = /\[\[SAP_B1_CLOSE:[\s\S]*?\]\]/gi;
 
 function cleanOrderNote(note) {
   let s = String(note || '')
+    .replace(EMAIL_TAG_GLOBAL_RE, '')
+    .replace(EMAIL_TEXT_GLOBAL_RE, '')
     .replace(INTERNAL_NOTE_TAG_GLOBAL_RE, '')
     .replace(INTERNAL_NOTE_TEXT_GLOBAL_RE, '')
     .replace(DELIVERY_DATE_TAG_GLOBAL_RE, '')
@@ -2782,7 +2812,7 @@ function cleanOrderNote(note) {
     .replace(SAP_B1_CLOSE_TAG_GLOBAL_RE, '')
     .replace(SHIPPING_FEE_NOTE_RE, '')
     .replace(COMPANY_NOTE_GLOBAL_RE, '')
-    .replace(/\[(?:บริษัท\/นิติบุคคล|Tax ID|ที่อยู่ออกบิล|หมายเหตุภายใน|PO ลูกค้า|ค่าจัดส่ง|วันที่ส่งสินค้า|วันส่งสินค้า)\]:[^\n]*/gi, '')
+    .replace(/\[(?:บริษัท\/นิติบุคคล|Tax ID|ที่อยู่ออกบิล|หมายเหตุภายใน|PO ลูกค้า|ค่าจัดส่ง|วันที่ส่งสินค้า|วันส่งสินค้า|e-?mail|อีเมล|อีเมล์)\]:[^\n]*/gi, '')
     .trim();
   const qm = s.match(/(?:Convert จาก|ดึงจากใบเสนอราคา)\s*(QT[0-9A-Za-z-]+)/i);
   if (qm && qm[1]) {
@@ -2877,7 +2907,7 @@ function formatCustomerDisplayName(customerName, companyName, contactPerson = ''
 window.formatCustomerDisplayName = formatCustomerDisplayName;
 window._normalizeCompName = _normalizeCompName;
 
-function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null, deliveryDate = null, fulfillmentRaw = null, sapCloseRaw = null) {
+function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote = null, deliveryDate = null, fulfillmentRaw = null, sapCloseRaw = null, email = null) {
   let clean = cleanOrderNote(note);
   const comp = (companyName || '').trim();
   const fee = Math.max(0, Number(shippingFee) || 0);
@@ -2885,9 +2915,11 @@ function noteWithCompanyAndShipping(note, companyName, shippingFee, internalNote
   const dDate = (deliveryDate || '').trim();
   const fTag = fulfillmentRaw !== null ? (fulfillmentRaw || '') : (String(note || '').match(FULFILLMENT_TAG_RE)?.[0] || '');
   const sTag = sapCloseRaw !== null ? (sapCloseRaw || '') : (String(note || '').match(SAP_B1_CLOSE_TAG_RE)?.[0] || '');
+  const mail = email !== null ? (email || '').trim() : getOrderCustomerEmail({ note });
   const parts = [];
   if (clean) parts.push(clean);
   if (comp) parts.push(`[บริษัท: ${comp}]`);
+  if (mail) parts.push(`[[EMAIL:${encodeURIComponent(mail)}]]`);
   if (fee > 0) parts.push(`[[SHIPPING_FEE:${fee}]]`);
   if (inote) parts.push(`[[INTERNAL_NOTE:${encodeURIComponent(inote)}]]`);
   if (dDate) parts.push(`[[DELIVERY_DATE:${dDate}]]`);
@@ -7512,6 +7544,12 @@ async function orders() {
                   </div>
                 </div>
                 <div class="sap-field-row">
+                  <span class="sap-field-label">E-mail</span>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <input type="email" id="o-email" placeholder="เช่น contact@company.com (ไม่บังคับ)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
+                  </div>
+                </div>
+                <div class="sap-field-row">
                   <span class="sap-field-label">Customer Ref. No.</span>
                   <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                     <input type="text" id="o-ref" placeholder="Customer Ref (Shopee)" onchange="checkDupCustomerRef(this.value,null)" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
@@ -8277,6 +8315,7 @@ async function loadOrders() {
           <td class="col-customer">
             ${o.company_name ? `<div style="font-weight:700;color:var(--text);font-size:13.5px">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
             ${(!o.company_name || (o.customer_name && o.customer_name.trim().toLowerCase() !== o.company_name.trim().toLowerCase() && _normalizeCompName(o.customer_name) !== _normalizeCompName(o.company_name))) ? `<div style="font-weight:${o.company_name?'500':'600'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'-')}</div>` : ''}
+            ${(()=>{ const em = (typeof getOrderCustomerEmail === 'function' ? getOrderCustomerEmail(o) : (o.customer_email || '')); return em ? `<div style="font-size:11px;color:#0284c7;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="อีเมล: ${escapeHTML(em)}">✉️ ${escapeHTML(em)}</div>` : ''; })()}
             ${o.customer_username?`<div style="font-size:11px;color:var(--text3)">👤 ${escapeHTML(o.customer_username)}</div>`:''}
             ${o.customer_address ? `<div style="font-size:10.5px;color:var(--text3);margin-top:2px;max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHTML(o.customer_address)}">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
             <div style="margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap">${channelBadge(o.channel,true)}${o.employees?.name?`<span style="font-size:11px;color:var(--text2)">· ${escapeHTML(o.employees.name)}</span>`:''}</div>
@@ -8323,6 +8362,7 @@ async function loadOrders() {
         <div>
           ${o.company_name ? `<div style="font-weight:700;font-size:14px;color:var(--text)">🏢 ${escapeHTML(o.company_name)}</div>` : ''}
           ${(!o.company_name || (o.customer_name && o.customer_name.trim().toLowerCase() !== o.company_name.trim().toLowerCase() && _normalizeCompName(o.customer_name) !== _normalizeCompName(o.company_name))) ? `<div style="font-weight:${o.company_name?'500':'600'};font-size:${o.company_name?'13px':'14px'};color:${o.company_name?'var(--text2)':'var(--text)'}">${escapeHTML(o.customer_name||'ไม่ระบุชื่อ')}</div>` : ''}
+          ${(()=>{ const em = (typeof getOrderCustomerEmail === 'function' ? getOrderCustomerEmail(o) : (o.customer_email || '')); return em ? `<div style="font-size:11px;color:#0284c7;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="อีเมล: ${escapeHTML(em)}">✉️ ${escapeHTML(em)}</div>` : ''; })()}
           ${o.customer_address ? `<div style="font-size:11px;color:var(--text3);margin-top:2px">📍 ${escapeHTML(o.customer_address)}</div>` : ''}
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${o.order_date}${getOrderDeliveryDate(o)?' · <b style="color:#0f766e">🚚 ส่ง: '+escapeHTML(getOrderDeliveryDate(o))+'</b>':''}${(typeof getOrderPriceChangeCount === 'function' && getOrderPriceChangeCount(o.id) > 0)?' · <span onclick="event.stopPropagation();openOrderPriceHistoryModal(\''+o.id+'\')" style="color:#991b1b;cursor:pointer;font-weight:700">📝 แก้ไขราคา ('+getOrderPriceChangeCount(o.id)+')</span>':''} · ${o.order_no||'-'}${o.customer_social?' · 📄 '+o.customer_social:''}${o.employees?.name?' · 👤 '+o.employees.name:''}</div>
           ${shopeeReconciliationBadge(o)}
@@ -8604,7 +8644,7 @@ async function openNewOrder() {
   orderSourceQuoteId = null;
   renderOrderItems();
   // เคลียร์ field ลูกค้าให้ว่างทุกครั้งที่เปิดออเดอร์ใหม่ (กันข้อมูลออเดอร์ก่อนหน้าค้าง)
-  ['o-cust','o-username','o-ref','o-contact','o-phone','o-address','o-company','o-tax-id','o-branch','o-billing-address','o-track','o-note','o-internal-note'].forEach(id => {
+  ['o-cust','o-username','o-ref','o-contact','o-phone','o-email','o-address','o-company','o-tax-id','o-branch','o-billing-address','o-track','o-note','o-internal-note'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   const elDate = document.getElementById('o-date'); if (elDate) elDate.value = today();
@@ -8662,6 +8702,7 @@ async function importQuoteToOrder(qtId) {
   if (qMeta.customer_po_no) set('o-customer-po', qMeta.customer_po_no);
   set('o-contact', qt.customer_contact);
   set('o-phone', qt.customer_phone);
+  if (qMeta.contact_email) set('o-email', qMeta.contact_email);
   set('o-address', qt.customer_address);
   set('o-note', (qt.quote_no || '').trim());
   if (qMeta.internal_note) set('o-internal-note', qMeta.internal_note);
@@ -8726,6 +8767,7 @@ async function loadOrderCustomerList() {
       id: c.id,
       customer_name: c.name,
       customer_phone: c.phone || '',
+      customer_email: c.email || '',
       customer_contact: c.contact_person || '',
       customer_address: c.address || c.shipping_address || '',
       billing_address: c.billing_address || c.address || '',
@@ -8747,6 +8789,7 @@ async function loadOrderCustomerList() {
         source: 'order',
         customer_name: c.customer_name,
         customer_phone: c.customer_phone || '',
+        customer_email: c.customer_email || getOrderCustomerEmail(c) || '',
         customer_contact: c.customer_contact || '',
         customer_address: c.customer_address || '',
         billing_address: c.billing_address || '',
@@ -8759,7 +8802,7 @@ async function loadOrderCustomerList() {
       };
     } else {
       byKey[k].order_count = (byKey[k].order_count || 0) + 1;
-      ['customer_username','customer_social','customer_contact','customer_phone','customer_address','company_name','tax_id','billing_address']
+      ['customer_username','customer_social','customer_contact','customer_phone','customer_email','customer_address','company_name','tax_id','billing_address']
         .forEach(f => { if (!byKey[k][f] && c[f]) byKey[k][f] = c[f]; });
     }
   });
@@ -8817,6 +8860,7 @@ function _renderCustDropdown(ddId, fillFn, q) {
       c.company_name ? '🏢 ' + c.company_name : null,
       c.tax_id ? '🧾 Tax ID: ' + c.tax_id : null,
       c.customer_phone ? '📞 ' + c.customer_phone : null,
+      (c.customer_email || c.email) ? '✉️ ' + (c.customer_email || c.email) : null,
       c.customer_contact ? '👤 ' + c.customer_contact : null,
       c.customer_username ? '🏷️ ' + c.customer_username : null,
       c.billing_address ? '🏢 บิล: ' + c.billing_address.slice(0, 25) + '...' : (c.customer_address ? '📍 ' + c.customer_address.slice(0, 25) + '...' : null)
@@ -8846,6 +8890,7 @@ function _fillCustFields(c, ids) {
   // ไม่เติม Customer Ref (customer_social) — เลขอ้างอิงเอกสาร Shopee เปลี่ยนทุกออเดอร์ ต้องกรอกเอง
   set(ids.contact, c.customer_contact);
   set(ids.phone,   c.customer_phone);
+  if (ids.email)   set(ids.email, c.customer_email || c.email);
   set(ids.addr,    c.customer_address);
   set(ids.company, c.company_name || (c.source === 'crm' && c.customer_type === 'company' ? c.customer_name : ''));
   set(ids.tax,     c.tax_id);
@@ -8927,6 +8972,7 @@ function fillCustomerFromOrder(idx) {
     ref: 'o-ref',
     contact: 'o-contact',
     phone: 'o-phone',
+    email: 'o-email',
     addr: 'o-address',
     company: 'o-company',
     tax: 'o-tax-id',
@@ -8946,6 +8992,7 @@ function fillEditCustomer(idx) {
     ref: 'ed-ref',
     contact: 'ed-contact',
     phone: 'ed-phone',
+    email: 'ed-email',
     addr: 'ed-address',
     company: 'ed-company',
     tax: 'ed-tax-id',
@@ -10292,6 +10339,7 @@ async function saveOrder() {
 
   const totalCost = orderItems.reduce((s,it) => s + Number(it.qty||1)*Number(it.cost_per_unit||0), 0);
   const internalNote = (document.getElementById('o-internal-note')?.value || '').trim();
+  const oEmail = (document.getElementById('o-email')?.value || '').trim();
 
   const orderPayload = {
     shop_id: currentShop.id,
@@ -10305,6 +10353,7 @@ async function saveOrder() {
     customer_po_no: (document.getElementById('o-customer-po')?.value || '').trim() || null,
     customer_contact: document.getElementById('o-contact')?.value || '',
     customer_phone:   document.getElementById('o-phone')?.value   || '',
+    customer_email:   oEmail || null,
     customer_address: document.getElementById('o-address')?.value || '',
     company_name:     (document.getElementById('o-company')?.value || '').trim() || null,
     tax_id:           (document.getElementById('o-tax-id')?.value || '').trim() || null,
@@ -10314,7 +10363,7 @@ async function saveOrder() {
     tracking_no: document.getElementById('o-track').value,
     doc_status: 'confirmed',
     shipping_status: document.getElementById('o-status').value,
-    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote, document.getElementById('o-delivery-date')?.value || today()),
+    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote, document.getElementById('o-delivery-date')?.value || today(), null, null, oEmail),
     internal_note: internalNote || null,
     employee_id: empId,
     bill_discount: billDisc,
@@ -10323,12 +10372,16 @@ async function saveOrder() {
     total_amount: grand,
     total_cost: totalCost
   };
-  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date
+  // บันทึก — รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date / customer_email
   let order, error;
-  for (let a = 0; a < 8; a++) {
+  for (let a = 0; a < 9; a++) {
     const r = await sb.from('orders').insert(orderPayload).select().single();
     order = r.data; error = r.error;
     if (!error) break;
+    if (('customer_email' in orderPayload) && (error.message||'').includes('customer_email')) {
+      delete orderPayload.customer_email;
+      continue;
+    }
     if (('delivery_date' in orderPayload) && (error.message||'').includes('delivery_date')) {
       delete orderPayload.delivery_date;
       continue;
@@ -10372,7 +10425,7 @@ async function saveOrder() {
   // Auto-sync customer to database in background
   if (orderPayload.customer_name && currentShop?.id) {
     const oCompanyVal = (document.getElementById('o-company')?.value || '').trim() || null;
-    autoSyncCustomerFromOrder({ ...orderPayload, company_name: oCompanyVal }, order.id).catch(()=>{});
+    autoSyncCustomerFromOrder({ ...orderPayload, company_name: oCompanyVal, customer_email: oEmail }, order.id).catch(()=>{});
   }
 
   if (orderSourceQuoteId) {
@@ -11060,9 +11113,10 @@ async function viewOrder(orderId) {
             </div>
             <div class="sap-field-row">
               <span class="sap-field-label">Name</span>
-              <div style="display:flex;gap:6px;align-items:center">
+              <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                 <input value="${(order.customer_name||'').replace(/"/g,'&quot;')}" readonly style="${iStyle};background:#f8fafc;color:#475569;font-weight:600" title="ชื่อลูกค้าที่ระบุ">
                 ${order.customer_phone ? `<span style="font-size:11px;color:#64748b;white-space:nowrap" title="เบอร์โทร">📞 ${escapeHTML(order.customer_phone)}</span>` : ''}
+                ${(()=>{ const em = getOrderCustomerEmail(order, (allCustomers||[]).find(c=>c.id===order.customer_id)); return em ? `<span style="font-size:11px;color:#0284c7;white-space:nowrap" title="อีเมล">✉️ ${escapeHTML(em)}</span>` : ''; })()}
               </div>
             </div>
             <div class="sap-field-row">
@@ -11070,6 +11124,12 @@ async function viewOrder(orderId) {
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                 <input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ชื่อผู้ติดต่อ (ไม่บังคับ)" style="${iStyle}">
                 <input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="เบอร์โทรศัพท์" style="${iStyle}">
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">E-mail</span>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input type="email" id="ed-email" value="${(getOrderCustomerEmail(order, (allCustomers||[]).find(c=>c.id===order.customer_id))).replace(/"/g,'&quot;')}" placeholder="เช่น contact@company.com (ไม่บังคับ)" style="${iStyle}">
               </div>
             </div>
             <div class="sap-field-row">
@@ -11481,6 +11541,7 @@ async function saveOrderEdit(orderId) {
   const editBillingAddress = document.getElementById('ed-billing-address')?.value || '';
   const editRawNote = document.getElementById('ed-note')?.value || '';
   const editInternalNote = (document.getElementById('ed-internal-note')?.value || '').trim();
+  const editEmail = (document.getElementById('ed-email')?.value || '').trim();
 
   const editPayload = {
     doc_status:       document.getElementById('ed-doc-status')?.value || 'confirmed',
@@ -11492,6 +11553,7 @@ async function saveOrderEdit(orderId) {
     customer_po_no: (document.getElementById('ed-customer-po')?.value || '').trim() || null,
     customer_contact: document.getElementById('ed-contact')?.value || '',
     customer_phone:   document.getElementById('ed-phone')?.value   || '',
+    customer_email:   editEmail || null,
     customer_address: document.getElementById('ed-address')?.value || '',
     company_name:     editCompanyName || null,
     tax_id:           editTaxId || null,
@@ -11501,7 +11563,7 @@ async function saveOrderEdit(orderId) {
     tracking_no: document.getElementById('ed-track').value,
     payment_method: document.getElementById('ed-pay').value,
     shipping_status: document.getElementById('ed-status').value,
-    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote, (document.getElementById('ed-delivery-date')?.value || '').trim()),
+    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote, (document.getElementById('ed-delivery-date')?.value || '').trim(), null, null, editEmail),
     internal_note: editInternalNote || null,
     employee_id: edEmpVal || null,
     bill_discount: editBillDisc,
@@ -11510,13 +11572,17 @@ async function saveOrderEdit(orderId) {
     total_amount: editGrand,
     total_cost: editTotalCost
   };
-  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date
+  // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date / customer_email
   let updErr;
-  for (let a = 0; a < 9; a++) {
+  for (let a = 0; a < 10; a++) {
     const r = await sb.from('orders').update(editPayload).eq('id', orderId);
     updErr = r.error;
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
+    if (('customer_email' in editPayload) && msg.includes('customer_email')) {
+      delete editPayload.customer_email;
+      continue;
+    }
     if (('delivery_date' in editPayload) && msg.includes('delivery_date')) {
       delete editPayload.delivery_date;
       continue;
@@ -11565,7 +11631,7 @@ async function saveOrderEdit(orderId) {
 
   // Auto-sync customer to database in background
   if (editPayload.customer_name && currentShop?.id && typeof autoSyncCustomerFromOrder === 'function') {
-    autoSyncCustomerFromOrder({ ...editPayload, company_name: editCompanyName }, orderId).catch(()=>{});
+    autoSyncCustomerFromOrder({ ...editPayload, company_name: editCompanyName, customer_email: editEmail }, orderId).catch(()=>{});
   }
 
   // save order items: delete old, insert new
@@ -13252,6 +13318,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
   const branchCode = String(order.branch_code !== undefined && order.branch_code !== null ? order.branch_code : (customer?.branch_code || '')).trim();
   const contactPerson = (order.customer_contact || customer?.contact_name || '').trim();
   const phone = (order.customer_phone || customer?.phone || '').trim();
+  const email = (order.customer_email || (typeof getOrderCustomerEmail === 'function' ? getOrderCustomerEmail(order, customer) : (customer?.email || ''))).trim();
   const billAddr = (order.billing_address || customer?.billing_address || order.customer_address || customer?.shipping_address || '').trim();
   const shipAddr = (order.customer_address || customer?.shipping_address || '').trim();
 
@@ -13477,6 +13544,7 @@ async function printReceipt(orderId, showDiscount=true, showSignature=false, doc
       billParts.push('<div class="info-sub"><strong>\u0e40\u0e25\u0e02\u0e1b\u0e23\u0e30\u0e08\u0e33\u0e15\u0e31\u0e27\u0e1c\u0e39\u0e49\u0e40\u0e2a\u0e35\u0e22\u0e20\u0e32\u0e29\u0e35 (Tax ID):</strong> <span class="font-mono" style="font-weight:700">' + escapeHTML(taxId) + '</span></div>');
     }
     if (phone) billParts.push('<div class="info-sub"><strong>\u0e42\u0e17\u0e23:</strong> ' + escapeHTML(phone) + '</div>');
+    if (email) billParts.push('<div class="info-sub"><strong>\u0e2d\u0e35\u0e40\u0e21\u0e25 (E-mail):</strong> ' + escapeHTML(email) + '</div>');
     if (billAddr) {
       billParts.push('<div class="info-sub" style="margin-top:3px"><strong>ที่อยู่ออกบิล:</strong> ' + escapeHTML(billAddr).split('\n').join('<br>') + '</div>');
     }
@@ -41148,6 +41216,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
     const rawName = (orderPayload.customer_name || '').trim();
     const compName = (orderPayload.company_name || '').trim();
     const taxId = (orderPayload.tax_id || '').trim();
+    const custEmail = (orderPayload.customer_email || orderPayload.email || '').trim();
     const targetName = compName || rawName;
     if (!targetName || targetName === '-' || targetName === 'ลูกค้าทั่วไป') return;
 
@@ -41156,7 +41225,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
     // 1. If tax_id exists, match by tax_id first
     if (taxId && taxId.length >= 10) {
       const { data: byTax } = await sb.from('customers')
-        .select('id, name, phone, tax_id, billing_address, shipping_address')
+        .select('id, name, phone, tax_id, email, billing_address, shipping_address')
         .eq('shop_id', currentShop.id)
         .eq('tax_id', taxId)
         .limit(1)
@@ -41167,7 +41236,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
     // 2. If not found by tax_id, match by customer/company name
     if (!existing) {
       const { data: byName } = await sb.from('customers')
-        .select('id, name, phone, tax_id, billing_address, shipping_address')
+        .select('id, name, phone, tax_id, email, billing_address, shipping_address')
         .eq('shop_id', currentShop.id)
         .ilike('name', targetName)
         .limit(1)
@@ -41178,7 +41247,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
     // 3. If rawName is different from compName, try rawName too
     if (!existing && rawName && rawName !== targetName) {
       const { data: byRaw } = await sb.from('customers')
-        .select('id, name, phone, tax_id, billing_address, shipping_address')
+        .select('id, name, phone, tax_id, email, billing_address, shipping_address')
         .eq('shop_id', currentShop.id)
         .ilike('name', rawName)
         .limit(1)
@@ -41190,7 +41259,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
     const cleanPhone = cleanPhoneDigits(orderPayload.customer_phone);
     if (!existing && cleanPhone && cleanPhone.length >= 8) {
       const { data: byPhone } = await sb.from('customers')
-        .select('id, name, phone, tax_id, billing_address, shipping_address, code')
+        .select('id, name, phone, tax_id, email, billing_address, shipping_address, code')
         .eq('shop_id', currentShop.id)
         .ilike('phone', `%${cleanPhone.slice(-8)}%`)
         .limit(1)
@@ -41224,6 +41293,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
         tax_id: taxId || null,
         branch_code: orderPayload.branch_code || '00000',
         phone: orderPayload.customer_phone || null,
+        email: custEmail || null,
         billing_address: orderPayload.billing_address || orderPayload.customer_address || null,
         shipping_address: orderPayload.customer_address || orderPayload.billing_address || null,
         notes: orderPayload.channel ? `ช่องทาง: ${orderPayload.channel}${rawName && rawName !== targetName ? ` (ผู้ติดต่อ: ${rawName})` : ''}` : (rawName && rawName !== targetName ? `ผู้ติดต่อ: ${rawName}` : null),
@@ -41239,6 +41309,7 @@ async function autoSyncCustomerFromOrder(orderPayload, orderId) {
     } else {
       const updates = {};
       if (!existing.phone && orderPayload.customer_phone) updates.phone = orderPayload.customer_phone;
+      if (!existing.email && custEmail) updates.email = custEmail;
       if (!existing.tax_id && taxId) updates.tax_id = taxId;
       if (!existing.billing_address && orderPayload.billing_address) updates.billing_address = orderPayload.billing_address;
       if (!existing.shipping_address && orderPayload.customer_address) updates.shipping_address = orderPayload.customer_address;
@@ -50406,7 +50477,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.04', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขการแสดงผลสีตัวเลขสต๊อกติดลบให้ถูกต้อง & ล้างรายการตัดสต๊อกซ้ำ (v4.04)', items:[
+    { v:'4.05', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องกรอก E-mail ในหน้ารายละเอียดออเดอร์ & เชื่อมโยงระบบ CRM และเอกสารพิมพ์ (v4.05)', items:[
+      '📧 <b>เพิ่มช่องกรอก E-mail ในหน้ารายละเอียดออเดอร์ (Order Detail / Edit):</b> จัดวางในพาเนลข้อมูลลูกค้า Business Partner สไตล์ SAP B1 ใต้เบอร์โทรศัพท์ พร้อมช่องกรอกในหน้าสร้างออเดอร์ใหม่ (New Sales Order)',
+      '🔄 <b>Auto-Fill & Auto-Sync เชื่อมโยงลูกค้า CRM อัตโนมัติ:</b> เมื่อค้นหาหรือเลือกลูกค้า ระบบจะดึงอีเมลมาเติมให้อัตโนมัติ และเมื่อบันทึกออเดอร์จะซิงค์อีเมลลงฐานข้อมูลลูกค้า (CRM Customer Database) ทันที',
+      '🖨️ <b>แสดงข้อมูล E-mail ในเอกสารพิมพ์ทางการ:</b> เพิ่มการแสดงผลอีเมลลูกค้าในบิลเงินสด, ใบเสร็จรับเงิน, ใบแจ้งหนี้ และใบส่งของ ใต้เบอร์โทรศัพท์อย่างเรียบร้อยสวยงาม',
+      '🛡️ <b>ระบบบันทึกแบบ Dual-layer Persistence:</b> รองรับทั้งคอลัมน์ตรง <code>customer_email</code> ในฐานข้อมูล orders และระบบสำรองข้อมูลอัจฉริยะใน note พร้อมสคริปต์ Migration SQL สำหรับผู้ดูแลระบบ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.05 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.04', date:'2026-11-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขการแสดงผลสีตัวเลขสต๊อกติดลบให้ถูกต้อง & ล้างรายการตัดสต๊อกซ้ำ (v4.04)', items:[
       '🎨 <b>แก้ไขสีตัวเลขสต๊อกติดลบในหน้าสินค้า (Negative Stock Color Fix):</b> ปรับเงื่อนไขตรวจสอบยอดสต๊อกในตารางสินค้า ให้แสดงสีแดงเตือน (<code>text-red</code>) และป้าย <code>⚠️ ติดลบ</code> ชัดเจนเมื่อยอดคงเหลือน้อยกว่า 0 แทนที่จะแสดงเป็นสีเขียว',
       '🏷️ <b>ปรับปรุงการ์ดและตารางในบัตรสต๊อก (Stock Card Modal Theme):</b> การ์ด "คงเหลือหลังจอง" และคอลัมน์ "คงเหลือสะสม" จะปรับธีมสีอัตโนมัติตามสถานะจริง (สีแดงเมื่อติดลบ/ขาดส่ง, สีส้มเมื่อพอดีจอง 0 ชิ้น, สีเขียวเมื่อมีของพร้อมส่ง)',
       '🧹 <b>ล้างข้อมูลประวัติการตัดสต๊อกซ้ำจาก QT ย้อนหลัง:</b> ดำเนินการลบประวัติการตัดสต๊อกซ้ำที่ตกค้างจากการแปลงใบเสนอราคา ปรับปรุงยอดสต๊อกสินค้า K109 และซิงค์ต้นทุนจริงของบิล SO-20261113-0014 ให้ถูกต้องสมบูรณ์',
