@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.06';
-const DISPLAY_APP_VERSION = 'v4.06';
+const CURRENT_APP_VERSION = 'sealthai-v4.07';
+const DISPLAY_APP_VERSION = 'v4.07';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.06)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.06 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.07)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.07 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -18156,6 +18156,7 @@ async function stock() {
           <div class="sap-footer">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-secondary" onclick="closeModal('modal-stock')">ยกเลิก</button>
+              <button class="btn btn-secondary" onclick="printPendingStockLabels10x15()" style="background:#fff3e0;color:#c2410c;border:1.5px solid #fdba74;font-weight:700" title="พิมพ์ฉลากสินค้าขนาด 10x15 cm สติกเกอร์ความร้อน แผ่นละ 4 รายการ">🏷️ พิมพ์ฉลาก 10x15 cm (4 รายการ/แผ่น)</button>
               <button class="btn btn-secondary" onclick="printPendingStockLabels()">🏷️ พิมพ์ฉลากสินค้า A4</button>
               <button class="btn btn-primary btn-sap-update" onclick="saveStockBatch()" style="font-size:13.5px;padding:8px 20px">💾 บันทึกรับเข้าสต๊อก (Post)</button>
             </div>
@@ -19955,7 +19956,10 @@ function renderStockDocumentsTable(docs) {
                 ${fmtB(d.total_net_cost)}
               </td>
               <td style="text-align:center;white-space:nowrap">
-                <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')">👁️ ดูเอกสาร</button>
+                <div style="display:inline-flex;gap:4px">
+                  <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')" title="เปิดดูใบรับสินค้า">👁️ ดูเอกสาร</button>
+                  <button class="btn btn-secondary btn-sm" onclick="printGRItemLabels10x15('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')" style="background:#fff3e0;color:#c2410c;border-color:#fdba74;font-weight:700" title="พิมพ์ฉลากสินค้า 10x15 cm (4 รายการ/แผ่น)">🏷️ 10x15</button>
+                </div>
               </td>
             </tr>
           `).join('')}
@@ -19993,7 +19997,8 @@ function renderStockDocumentsTable(docs) {
             <b class="font-mono" style="color:var(--accent);font-size:13px">${fmtB(d.total_net_cost)}</b>
           </div>
         </div>
-        <div style="display:flex;justify-content:flex-end">
+        <div style="display:flex;justify-content:flex-end;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="printGRItemLabels10x15('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')" style="background:#fff3e0;color:#c2410c;border-color:#fdba74;font-size:11.5px;font-weight:700">🏷️ ฉลาก 10x15 cm</button>
           <button class="btn btn-secondary btn-sm" onclick="openGRDocumentDetail('${encodeURIComponent(d.gr_key).replace(/'/g,'%27')}')">👁️ เปิดดูใบรับเข้า</button>
         </div>
       </div>
@@ -20115,6 +20120,7 @@ function openGRDocumentDetail(encodedKey) {
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           <button class="btn btn-secondary" onclick="window.print()">🖨️ พิมพ์ใบรับสินค้า</button>
+          <button class="btn btn-secondary" onclick="printGRItemLabels10x15('${encodeURIComponent(doc.gr_key).replace(/'/g,'%27')}')" style="background:#fff3e0;color:#c2410c;border:1.5px solid #fdba74;font-weight:700" title="พิมพ์ฉลากสินค้าขนาด 10x15 cm สติกเกอร์ความร้อน แผ่นละ 4 รายการ">🏷️ พิมพ์ฉลาก 10x15 cm (4 รายการ/แผ่น)</button>
           <button class="btn btn-secondary" onclick="printGRItemLabels('${encodeURIComponent(doc.gr_key).replace(/'/g,'%27')}')">🏷️ พิมพ์ฉลากสินค้า A4</button>
         </div>
         <button class="btn btn-primary" onclick="closeModal('${modalId}')">ปิดหน้าต่าง</button>
@@ -31237,6 +31243,7 @@ async function viewPO(poId) {
   let btns = '<button class="btn btn-secondary" onclick="closeModal(&quot;modal-po-detail&quot;)">ปิด</button>';
   if (hasDupItems) btns += '<button class="btn btn-warning btn-sm" onclick="dedupePOItems(&quot;'+poId+'&quot;)" title="พบรายการสินค้าซ้ำใน PO นี้">🧹 ลบรายการซ้ำ</button>';
   btns += '<button class="btn btn-secondary btn-sm" onclick="printPO(&quot;'+poId+'&quot;)">🖨 พิมพ์ PO</button>';
+  btns += '<button class="btn btn-secondary btn-sm" onclick="printPOItemLabels10x15(&quot;'+poId+'&quot;)" style="background:#fff3e0;color:#c2410c;border:1.5px solid #fdba74;font-weight:700" title="พิมพ์ฉลากสินค้าขนาด 10x15 cm สติกเกอร์ความร้อน แผ่นละ 4 รายการ">🏷️ ฉลาก 10x15 cm (4 รายการ/แผ่น)</button>';
   btns += '<button class="btn btn-secondary btn-sm" onclick="printPOItemLabels(&quot;'+poId+'&quot;)">🏷️ พิมพ์ฉลากสินค้า A4</button>';
   btns += '<button class="btn btn-secondary btn-sm" onclick="openDocumentRelationshipMap({ docType: &quot;po&quot;, docId: &quot;'+poId+'&quot;, docNo: &quot;'+escapeHTML(po.po_no||'')+'&quot; })" style="background:#e0f2fe;color:#0369a1;border-color:#7dd3fc;font-weight:700" title="ดูผังความสัมพันธ์เอกสาร (Relationship Map)">🗺️ ผังเอกสาร (Map)</button>';
   if (po.status === 'draft') {
@@ -31827,6 +31834,283 @@ function printPendingStockLabels() {
     const product = products.find(p => p.id === r.product_id);
     return { name: r.product_name || product?.name, sku: product?.sku || '-', qty: r.qty };
   }), popup);
+}
+
+// ── ฉลากสินค้าขนาด 10x15 cm (พิมพ์ 1 แผ่นบรรจุ 4 รายการสินค้า) ──
+function printProductLabels10x15(meta, items, popup) {
+  if (!popup) { toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ฉลาก', 'error'); return; }
+  const valid = (items || []).filter(it => it && String(it.name || '').trim() && Number(it.qty) > 0);
+  if (!valid.length) { popup.close(); toast('ไม่มีรายการสินค้าสำหรับพิมพ์ฉลาก', 'error'); return; }
+
+  const labelsPerSheet = 4;
+  const totalSheets = Math.ceil(valid.length / labelsPerSheet);
+  const refTitle = escapeHTML(meta.reference || meta.doc_no || 'รับเข้าสต็อก');
+  const dateStr = escapeHTML(meta.date || '');
+  const supName = escapeHTML(meta.supplier_name || '');
+
+  const sheets = Array.from({ length: totalSheets }, (_, sheetIdx) => {
+    const chunk = valid.slice(sheetIdx * labelsPerSheet, (sheetIdx + 1) * labelsPerSheet);
+    const cards = [];
+
+    for (let i = 0; i < labelsPerSheet; i++) {
+      const it = chunk[i];
+      if (it) {
+        const itemIdx = sheetIdx * labelsPerSheet + i + 1;
+        const cleanName = escapeHTML(String(it.name || '-').replace(/\[SO:[^\]]*\]/gi, '').trim());
+        const skuText = (it.sku && it.sku !== '-') ? escapeHTML(it.sku) : '';
+        const partText = it.part_no ? escapeHTML(it.part_no) : '';
+        const soText = it.so_ref ? escapeHTML(it.so_ref) : '';
+        const extraNote = it.note ? escapeHTML(it.note) : '';
+        const qtyVal = Number(it.qty || 1);
+
+        cards.push(`
+          <div class="label-card-10x15">
+            <div class="stk-top">
+              <div class="stk-ref-col">
+                <div class="stk-doc-title">
+                  <span class="stk-badge">GR</span>
+                  <strong>${refTitle}</strong>
+                  ${dateStr ? `<span class="stk-date">(${dateStr})</span>` : ''}
+                </div>
+                ${supName ? `<div class="stk-sub-meta">${supName}</div>` : ''}
+              </div>
+              <div class="stk-brand">SEALTHAI.COM</div>
+            </div>
+            <table class="stk-table">
+              <thead>
+                <tr>
+                  <th class="th-qty">QTY</th>
+                  <th class="th-desc">DESCRIPTION / รายการสินค้า</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="td-qty">
+                    <div class="qty-num">${qtyVal}</div>
+                    <div class="qty-unit">ชิ้น / PCS</div>
+                  </td>
+                  <td class="td-desc">
+                    <div class="desc-name">${cleanName}</div>
+                    <div class="desc-meta">
+                      ${skuText ? `<span class="tag-sku">[${skuText}]</span>` : ''}
+                      ${partText ? `<span class="tag-part">#${partText}</span>` : ''}
+                      ${soText ? `<span class="tag-so">SO: ${soText}</span>` : ''}
+                    </div>
+                    ${extraNote ? `<div class="desc-note">${extraNote}</div>` : ''}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="stk-bot">
+              <span>SEALTHAI.COM · สินค้ารับเข้าสต็อก (${itemIdx}/${valid.length})</span>
+              <span>Line: @sealthai · Tel: 02-592-9400</span>
+            </div>
+          </div>
+        `);
+      } else {
+        cards.push('<div class="label-card-10x15 stk-empty"><div class="empty-text">SEALTHAI · พื้นที่ว่าง</div></div>');
+      }
+    }
+
+    return `
+      <div class="sheet-10x15">
+        ${cards.join('\n')}
+      </div>
+    `;
+  }).join('\n');
+
+  popup.document.open();
+  popup.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>ฉลากสินค้า 10x15 cm - ${refTitle}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    @page { size:100mm 150mm; margin:0; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    html, body { margin:0; padding:0; width:100mm; font-family:'Sarabun',Arial,Tahoma,sans-serif; color:#000; background:#fff; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .sheet-10x15 { width:100mm; height:150mm; max-height:150mm; padding:2.8mm 3.5mm; display:flex; flex-direction:column; justify-content:flex-start; gap:2.2mm; box-sizing:border-box; page-break-after:always; break-after:page; page-break-inside:avoid; break-inside:avoid; overflow:hidden; background:#fff; }
+    .sheet-10x15:last-child { page-break-after:auto; break-after:auto; }
+    .label-card-10x15 { width:100%; height:34.2mm; max-height:34.2mm; border:1.5px solid #000; border-radius:4px; box-sizing:border-box; padding:1.8mm 2.8mm; display:flex; flex-direction:column; justify-content:space-between; background:#fff; overflow:hidden; break-inside:avoid; page-break-inside:avoid; }
+    .label-card-10x15.stk-empty { border:1.2px dashed #cbd5e1; display:flex; align-items:center; justify-content:center; background:#fafafa; }
+    .empty-text { font-size:9px; color:#94a3b8; font-weight:600; letter-spacing:0.5px; }
+    .stk-top { display:flex; justify-content:space-between; align-items:flex-start; line-height:1.1; margin-bottom:1mm; }
+    .stk-ref-col { display:flex; flex-direction:column; gap:1px; max-width:66mm; overflow:hidden; }
+    .stk-doc-title { font-size:10px; font-weight:700; color:#000; display:flex; align-items:center; gap:4px; white-space:nowrap; }
+    .stk-badge { background:#0f172a; color:#fff; font-size:8px; font-weight:800; padding:0.5px 3.5px; border-radius:2px; line-height:1.2; }
+    .stk-date { font-size:9px; color:#374151; font-weight:600; }
+    .stk-sub-meta { font-size:8.5px; color:#374151; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65mm; }
+    .stk-brand { font-size:11px; font-weight:800; color:#000; letter-spacing:0.5px; white-space:nowrap; text-align:right; line-height:1.1; }
+    .stk-table { width:100%; border-collapse:collapse; border:1.5px solid #000; flex:1; }
+    .stk-table th { border:1.2px solid #000; padding:1px 3px; font-size:8.5px; font-weight:700; background:#f3f4f6; color:#000; }
+    .stk-table th.th-qty { width:20%; text-align:center; }
+    .stk-table th.th-desc { width:80%; text-align:left; padding-left:5px; }
+    .stk-table td { border:1.2px solid #000; padding:2px 4px; vertical-align:middle; }
+    .td-qty { text-align:center; width:20%; line-height:1; }
+    .qty-num { font-size:18px; font-weight:800; color:#000; font-family:'Courier New',Courier,monospace; }
+    .qty-unit { font-size:7.5px; font-weight:700; color:#4b5563; margin-top:1px; }
+    .td-desc { width:80%; padding:2px 5px; }
+    .desc-name { font-size:11.5px; font-weight:700; color:#000; line-height:1.2; max-height:2.4em; overflow:hidden; word-break:break-word; }
+    .desc-meta { display:flex; gap:3px; flex-wrap:wrap; margin-top:1px; font-size:8.5px; line-height:1.2; }
+    .tag-sku { background:#eff6ff; color:#1d4ed8; padding:0.5px 3px; border-radius:2px; font-weight:700; font-family:monospace; }
+    .tag-part { background:#f1f5f9; color:#334155; padding:0.5px 3px; border-radius:2px; font-family:monospace; }
+    .tag-so { background:#ecfdf5; color:#047857; padding:0.5px 3px; border-radius:2px; font-weight:700; }
+    .desc-note { font-size:8px; color:#6b7280; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:68mm; margin-top:1px; }
+    .stk-bot { display:flex; justify-content:space-between; align-items:center; font-size:7.5px; color:#4b5563; font-weight:600; border-top:0.5px solid #e5e7eb; padding-top:1px; margin-top:1px; }
+    .print-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 14px; background:#eff6ff; border-bottom:2px solid #bfdbfe; font-size:13px; width:100%; }
+    .tb-info { display:flex; flex-direction:column; gap:2px; }
+    .tb-info strong { font-size:14px; color:#1e40af; }
+    .tb-info span { font-size:12px; color:#4b5563; }
+    .tb-actions { display:flex; gap:8px; }
+    .btn-print { border:0; border-radius:6px; padding:7px 14px; background:#ea580c; color:#fff; font-weight:700; cursor:pointer; font-size:12.5px; }
+    .btn-close { border:0; border-radius:6px; padding:7px 12px; background:#475569; color:#fff; font-weight:600; cursor:pointer; font-size:12.5px; }
+    @media screen {
+      body { background:#f1f5f9; padding:15px 0; display:flex; flex-direction:column; align-items:center; }
+      .print-toolbar { max-width:450px; margin-bottom:12px; border-radius:8px; border:1px solid #bfdbfe; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+      .sheet-10x15 { box-shadow:0 4px 14px rgba(0,0,0,0.12); margin-bottom:15px; border-radius:2px; }
+    }
+    @media print {
+      html, body { background:#fff; width:100mm; margin:0; }
+      .print-toolbar { display:none !important; }
+      .sheet-10x15 { margin:0; box-shadow:none; }
+      @page { size:100mm 150mm; margin:0; }
+    }
+  </style></head><body>
+    <div class="print-toolbar">
+      <div class="tb-info">
+        <strong>🏷️ ฉลากสินค้าขนาด 10x15 cm (4 รายการ/แผ่น)</strong>
+        <span>เอกสาร: ${refTitle} · ทั้งหมด ${valid.length} รายการ (${totalSheets} แผ่น)</span>
+      </div>
+      <div class="tb-actions">
+        <button type="button" class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+        <button type="button" class="btn-close" onclick="window.close()">ปิด</button>
+      </div>
+    </div>
+    ${sheets}
+  </body></html>`);
+  popup.document.close();
+  popup.focus();
+  setTimeout(() => {
+    if (!popup.closed) popup.print();
+  }, 400);
+}
+
+function printPendingStockLabels10x15() {
+  const popup = window.open('', '_blank', 'width=850,height=1000,scrollbars=yes');
+  const products = Array.isArray(allProducts) ? allProducts : [];
+  const poNo = (document.getElementById('s-po-sel')?.value ? document.getElementById('s-po-sel')?.options[document.getElementById('s-po-sel').selectedIndex]?.text : '') || '';
+  const lot = (document.getElementById('s-lot')?.value || '').trim() || poNo || 'รับเข้าสต็อก';
+  const date = (document.getElementById('s-date')?.value || today()).trim();
+  const sup = (document.getElementById('s-po-supplier')?.value || '').trim();
+
+  const activeRows = stockRows.filter((r, idx) => {
+    const chk = document.getElementById('sr-use-' + idx);
+    const isEnabled = chk ? chk.checked : (r?.enabled !== false);
+    const qtyVal = Number(document.getElementById('sr-qty-' + idx)?.value ?? r.qty ?? 0);
+    return isEnabled && qtyVal > 0;
+  });
+
+  if (!activeRows.length) {
+    if (popup) popup.close();
+    toast('ไม่มีรายการสินค้าสำหรับพิมพ์ฉลาก', 'error');
+    return;
+  }
+
+  const items = activeRows.map(r => {
+    const idx = stockRows.indexOf(r);
+    const currentQty = Number(document.getElementById('sr-qty-' + idx)?.value ?? r.qty ?? 1);
+    const currentName = (document.getElementById('sr-prod-' + idx)?.value || r.product_name || '').trim();
+    const p = (r.product_id ? products.find(x => x.id === r.product_id) : null) || {};
+    const rawName = currentName || p.name || 'สินค้า';
+    const soMatch = rawName.match(/\[SO:\s*([^\]]+)\]/i)?.[1] || '';
+    const cleanName = rawName.replace(/\[SO:[^\]]*\]/gi, '').trim();
+
+    return {
+      name: cleanName || rawName,
+      sku: p.sku || r.sku || '-',
+      part_no: p.part_no || '',
+      qty: currentQty,
+      note: r.note || '',
+      so_ref: soMatch || (r.so_no || '')
+    };
+  });
+
+  printProductLabels10x15({
+    reference: lot,
+    doc_no: lot,
+    date: date,
+    supplier_name: sup,
+    type_title: 'ใบรับสินค้าเข้าสต๊อก'
+  }, items, popup);
+}
+
+function printGRItemLabels10x15(encodedKey) {
+  const doc = allStockDocs.find(d => d.gr_key === decodeURIComponent(encodedKey));
+  if (!doc) { toast('ไม่พบใบรับสินค้า กรุณารีเฟรชหน้า', 'error'); return; }
+  const popup = window.open('', '_blank', 'width=850,height=1000,scrollbars=yes');
+
+  const products = Array.isArray(allProducts) ? allProducts : [];
+  const items = (doc.items || []).filter(it => Number(it.qty) > 0).map(it => {
+    const p = (it.product_id ? products.find(x => x.id === it.product_id) : null) || {};
+    const rawName = String(it.product_name || 'สินค้า');
+    const soMatch = rawName.match(/\[SO:\s*([^\]]+)\]/i)?.[1] || '';
+    const cleanName = rawName.replace(/\[SO:[^\]]*\]/gi, '').trim();
+
+    return {
+      name: cleanName || rawName,
+      sku: it.product_sku || p.sku || '-',
+      part_no: p.part_no || '',
+      qty: Number(it.qty || 1),
+      note: it.note || '',
+      so_ref: soMatch
+    };
+  });
+
+  printProductLabels10x15({
+    reference: doc.doc_no || doc.po_no || doc.lot_name,
+    doc_no: doc.doc_no,
+    po_no: doc.po_no !== '-' ? doc.po_no : '',
+    date: doc.move_date,
+    supplier_name: doc.supplier_name !== '-' ? doc.supplier_name : '',
+    type_title: 'ใบรับสินค้าเข้าสต๊อก'
+  }, items, popup);
+}
+
+async function printPOItemLabels10x15(poId) {
+  const popup = window.open('', '_blank', 'width=850,height=1000,scrollbars=yes');
+  if (!popup) { toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ฉลาก', 'error'); return; }
+  try {
+    const [{ data: po, error: poError }, { data: items, error: itemError }] = await Promise.all([
+      sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).eq('id', poId).single(),
+      sb.from('purchase_order_items').select('*').eq('po_id', poId).order('id')
+    ]);
+    if (poError || itemError || !po) throw new Error(poError?.message || itemError?.message || 'ไม่พบ PO');
+
+    const skuMap = await loadPOSkuMap(items || []);
+    const validItems = (items || []).filter(it => Number(it.qty_ordered) > 0).map(it => {
+      const p = skuMap[it.product_id] || {};
+      const rawName = String(it.product_name || 'สินค้า');
+      const soMatch = rawName.match(/\[SO:\s*([^\]]+)\]/i)?.[1] || '';
+      const cleanName = rawName.replace(/\[SO:[^\]]*\]/gi, '').trim();
+
+      return {
+        name: cleanName || rawName,
+        sku: p.sku || '-',
+        part_no: p.part_no || '',
+        qty: Number(it.qty_ordered || 1),
+        note: it.note || '',
+        so_ref: soMatch
+      };
+    });
+
+    printProductLabels10x15({
+      reference: 'PO ' + po.po_no,
+      doc_no: po.po_no,
+      date: po.po_date || po.created_at?.slice(0, 10),
+      supplier_name: po.supplier_name || '',
+      type_title: 'ใบสั่งซื้อสินค้า (PO)'
+    }, validItems, popup);
+  } catch(error) {
+    if (popup) popup.close();
+    toast('พิมพ์ฉลาก PO ไม่สำเร็จ: ' + error.message, 'error');
+  }
 }
 
 async function printPO(poId) {
@@ -50487,7 +50771,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.06', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาด allOrders is not defined ขณะบันทึกรับสินค้าเข้าสต๊อก (v4.06)', items:[
+    { v:'4.07', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มพิมพ์ฉลากสินค้าขนาด 10x15 cm (4 รายการ/แผ่น) ในใบรับสินค้าเข้าสต๊อก (v4.07)', items:[
+      '🏷️ <b>พิมพ์ฉลากสินค้า 10x15 cm (4 รายการต่อแผ่น):</b> เพิ่มปุ่มพิมพ์ฉลากสินค้าสติกเกอร์ความร้อน (Thermal Label) ขนาด 100x150 mm จัดวางอย่างลงตัว 4 รายการสินค้าต่อ 1 แผ่นกระดาษ รองรับทั้งฟอร์มรับเข้าสต๊อก (Goods Receipt Modal), หน้ารายละเอียดใบรับเข้าที่บันทึกแล้ว, ตารางประวัติใบรับสินค้า และหน้าใบสั่งซื้อ (PO)',
+      '📦 <b>รูปแบบฉลากมาตรฐานสวยงามชัดเจน:</b> แต่ละช่องฉลากระบุเลขที่เอกสารรับเข้า (GR No.), วันที่, ผู้จำหน่าย, แบรนด์ SEALTHAI.COM, ช่องแสดงจำนวน QTY ตัวเลขโตเด่นชัด, ชื่อสินค้า, รหัส SKU, Part No, เลขที่ SO อ้างอิง และแถบข้อมูลติดต่อท้ายฉลาก',
+      '📏 <b>ป้องกันการล้นหน้าสำหรับเครื่องพิมพ์สติกเกอร์ความร้อน:</b> คำนวณความสูงช่องละ 34.2 มม. พร้อมขอบกระดาษ 100x150 มม. เป๊ะ 100% ไม่เลื่อนหลุดหน้า พร้อมช่องสำรองตำแหน่งสำหรับกระดาษสติกเกอร์แบบ 4 ดวงตัดสำเร็จ',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.07 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.06', date:'2026-11-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'แก้ไขข้อผิดพลาด allOrders is not defined ขณะบันทึกรับสินค้าเข้าสต๊อก (v4.06)', items:[
       '🐛 <b>แก้ไขข้อผิดพลาดตอนรับสินค้าเข้าสต๊อก (Fix allOrders is not defined):</b> แก้ไขฟังก์ชันคำนวณต้นทุนออเดอร์ (<code>recomputeOrderCosts</code>) ให้ตรวจสอบแคชของออเดอร์อย่างปลอดภัยหลายระดับ (<code>window.allOrders</code>, <code>window._lastLoadedOrders</code>, <code>window._allOrdersWithItems</code>) ป้องกัน ReferenceError ที่ทำให้ขั้นตอนอัปเดต PO ขัดข้อง',
       '🛒 <b>ปรับปรุงสถานะใบสั่งซื้อ (PO Receipt Status Sync):</b> ตรวจสอบและซิงค์สถานะใบสั่งซื้อ <code>PO-20261117-0001</code> และจำนวนรับ (<code>qty_received = 1</code>) ให้เสร็จสมบูรณ์ถูกต้องตรงกับสต๊อกจริง',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.06 และล้างแคชอัตโนมัติ'
