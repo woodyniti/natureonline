@@ -31,6 +31,8 @@ const migration = fs.readFileSync('supabase_order_physical_stock_v412.sql', 'utf
 assert.match(migration, /CREATE TABLE IF NOT EXISTS public\.order_pending_stock_v412_audit/,'legacy movements are archived');
 assert.match(migration, /ENABLE ROW LEVEL SECURITY/,'audit rows are not exposed to anonymous clients');
 assert.match(migration, /COALESCE\(o\.shipping_status, 'pending'\) = 'pending'/,'migration only restores pending orders');
-assert.match(migration, /SET stock_qty = COALESCE\(b\.old_stock_qty, 0\) \+ b\.restore_qty/,'migration restores the exact deducted quantity');
+assert.doesNotMatch(migration, /ON COMMIT DROP|CREATE TEMP TABLE/,'migration cannot depend on temporary tables between SQL Editor statements');
+assert.match(migration, /SET stock_qty = COALESCE\(old_qty, 0\) \+ restored_qty/,'migration restores the exact deducted quantity');
+assert.match(migration, /WITH deleted AS \(\s*DELETE FROM public\.stock_movements/,'migration counts only movements actually removed');
 
 console.log('Pending order stock booking paths: OK');

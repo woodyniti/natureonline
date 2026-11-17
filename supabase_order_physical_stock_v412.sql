@@ -1,10 +1,7 @@
--- SEALTHAI v4.12: one-time migration of legacy pending-order stock deductions.
--- Run once in Supabase SQL Editor AFTER deploying the v4.12 application.
--- Pending SO quantities remain reservations in orders/order_items, not physical stock_movements.
--- Old movement rows are preserved as JSON in the audit table before deletion.
--- The script is idempotent: a second run finds no matching old movements.
-
-BEGIN;
+-- SEALTHAI v4.12.1: restore physical stock previously deducted by pending orders.
+-- Run the whole script in Supabase SQL Editor after deploying v4.12 or later.
+-- No temporary tables: each DO block is one atomic PostgreSQL statement.
+-- Pending orders remain reservations; their old outbound movement is archived first.
 
 CREATE TABLE IF NOT EXISTS public.order_pending_stock_v412_audit (
   move_id text PRIMARY KEY,
@@ -18,58 +15,105 @@ CREATE TABLE IF NOT EXISTS public.order_pending_stock_v412_audit (
 ALTER TABLE public.order_pending_stock_v412_audit ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.order_pending_stock_v412_audit FROM anon, authenticated;
 
-CREATE TEMP TABLE v412_pending_moves ON COMMIT DROP AS
-SELECT m.id, m.shop_id, m.product_id, m.qty, o.id AS order_id,
-       to_jsonb(m) AS old_movement
-FROM public.stock_movements AS m
-JOIN public.orders AS o
-  ON o.shop_id = m.shop_id
- AND m.note IN ('ขาย ' || o.order_no, 'ขาย ' || o.order_no || ' (แปลงจาก QT)')
-WHERE COALESCE(o.shipping_status, 'pending') = 'pending'
-  AND COALESCE(o.doc_status, '') <> 'cancelled'
-  AND m.move_type = 'out';
-
-DO $$
+DO $migration$
+DECLARE
+  product_row record;
+  old_qty numeric;
+  restored_qty numeric;
+  deleted_count integer;
+  total_deleted integer := 0;
+  total_restored numeric := 0;
 BEGIN
-  IF EXISTS (SELECT 1 FROM v412_pending_moves GROUP BY id HAVING COUNT(*) > 1) THEN
-    RAISE EXCEPTION 'พบเลขที่ movement ซ้ำจากการจับคู่ออเดอร์ กรุณาตรวจ order_no ก่อนย้ายยอด';
-  END IF;
+  -- A partially completed previous attempt cannot be repaired blindly.
   IF EXISTS (
-    SELECT 1 FROM v412_pending_moves AS pm
-    LEFT JOIN public.products AS p ON p.id = pm.product_id
-    WHERE p.id IS NULL
+    SELECT 1 FROM public.order_pending_stock_v412_audit a
+    WHERE NOT EXISTS (
+      SELECT 1 FROM public.stock_movements m WHERE m.id::text = a.move_id
+    )
+  ) THEN
+    RAISE EXCEPTION 'พบ movement ที่เคยสำรองแล้วแต่ถูกลบก่อน migration นี้ กรุณาตรวจยอดสต๊อกก่อนรันซ้ำ';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.stock_movements m
+    JOIN public.orders o ON o.shop_id = m.shop_id
+      AND m.note IN ('ขาย ' || o.order_no, 'ขาย ' || o.order_no || ' (แปลงจาก QT)')
+    WHERE COALESCE(o.shipping_status, 'pending') = 'pending'
+      AND COALESCE(o.doc_status, '') <> 'cancelled' AND m.move_type = 'out'
+    GROUP BY m.id HAVING COUNT(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'พบ movement จับคู่ได้มากกว่าหนึ่งออเดอร์ กรุณาตรวจ order_no';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.stock_movements m
+    JOIN public.orders o ON o.shop_id = m.shop_id
+      AND m.note IN ('ขาย ' || o.order_no, 'ขาย ' || o.order_no || ' (แปลงจาก QT)')
+    LEFT JOIN public.products p ON p.id = m.product_id
+    WHERE COALESCE(o.shipping_status, 'pending') = 'pending'
+      AND COALESCE(o.doc_status, '') <> 'cancelled' AND m.move_type = 'out'
+      AND p.id IS NULL
   ) THEN
     RAISE EXCEPTION 'พบ movement ของสินค้าที่ไม่มีใน products จึงยังไม่ปรับยอด';
   END IF;
-END $$;
 
-CREATE TEMP TABLE v412_stock_before ON COMMIT DROP AS
-SELECT p.id AS product_id, p.stock_qty AS old_stock_qty,
-       SUM(ABS(pm.qty)) AS restore_qty
-FROM public.products AS p
-JOIN v412_pending_moves AS pm ON pm.product_id = p.id
-GROUP BY p.id, p.stock_qty;
+  FOR product_row IN
+    SELECT DISTINCT p.id
+    FROM public.products p
+    JOIN public.stock_movements m ON m.product_id = p.id
+    JOIN public.orders o ON o.shop_id = m.shop_id
+      AND m.note IN ('ขาย ' || o.order_no, 'ขาย ' || o.order_no || ' (แปลงจาก QT)')
+    WHERE COALESCE(o.shipping_status, 'pending') = 'pending'
+      AND COALESCE(o.doc_status, '') <> 'cancelled' AND m.move_type = 'out'
+    ORDER BY p.id
+  LOOP
+    SELECT p.stock_qty INTO old_qty
+    FROM public.products p WHERE p.id = product_row.id FOR UPDATE;
 
-INSERT INTO public.order_pending_stock_v412_audit
-  (move_id, order_id, product_id, moved_qty, old_stock_qty, old_movement)
-SELECT pm.id::text, pm.order_id::text, pm.product_id::text, ABS(pm.qty),
-       b.old_stock_qty, pm.old_movement
-FROM v412_pending_moves AS pm
-JOIN v412_stock_before AS b ON b.product_id = pm.product_id
-ON CONFLICT (move_id) DO NOTHING;
+    INSERT INTO public.order_pending_stock_v412_audit
+      (move_id, order_id, product_id, moved_qty, old_stock_qty, old_movement)
+    SELECT m.id::text, o.id::text, m.product_id::text, ABS(m.qty), old_qty,
+           to_jsonb(m)
+    FROM public.stock_movements m
+    JOIN public.orders o ON o.shop_id = m.shop_id
+      AND m.note IN ('ขาย ' || o.order_no, 'ขาย ' || o.order_no || ' (แปลงจาก QT)')
+    WHERE m.product_id = product_row.id
+      AND COALESCE(o.shipping_status, 'pending') = 'pending'
+      AND COALESCE(o.doc_status, '') <> 'cancelled' AND m.move_type = 'out'
+    ON CONFLICT (move_id) DO NOTHING;
 
-DELETE FROM public.stock_movements AS m
-USING v412_pending_moves AS pm
-WHERE m.id = pm.id;
+    WITH deleted AS (
+      DELETE FROM public.stock_movements m
+      WHERE m.product_id = product_row.id AND m.move_type = 'out'
+        AND EXISTS (
+          SELECT 1 FROM public.orders o
+          WHERE o.shop_id = m.shop_id
+            AND m.note IN ('ขาย ' || o.order_no, 'ขาย ' || o.order_no || ' (แปลงจาก QT)')
+            AND COALESCE(o.shipping_status, 'pending') = 'pending'
+            AND COALESCE(o.doc_status, '') <> 'cancelled'
+        )
+        AND EXISTS (
+          SELECT 1 FROM public.order_pending_stock_v412_audit a
+          WHERE a.move_id = m.id::text
+        )
+      RETURNING m.qty
+    )
+    SELECT COUNT(*), COALESCE(SUM(ABS(qty)), 0)
+      INTO deleted_count, restored_qty FROM deleted;
 
--- Use the captured pre-delete balance so a stock_movements DELETE trigger
--- cannot cause the quantity to be restored twice.
-UPDATE public.products AS p
-SET stock_qty = COALESCE(b.old_stock_qty, 0) + b.restore_qty
-FROM v412_stock_before AS b
-WHERE p.id = b.product_id;
-
-COMMIT;
+    IF deleted_count > 0 THEN
+      -- Snapshot the pre-delete balance, so any DELETE trigger cannot restore twice.
+      UPDATE public.products p
+      SET stock_qty = COALESCE(old_qty, 0) + restored_qty
+      WHERE p.id = product_row.id;
+      total_deleted := total_deleted + deleted_count;
+      total_restored := total_restored + restored_qty;
+    END IF;
+  END LOOP;
+  RAISE NOTICE 'Migrated % pending movements; restored % physical units',
+    total_deleted, total_restored;
+END
+$migration$;
 
 SELECT COUNT(*) AS archived_pending_movements,
        COALESCE(SUM(moved_qty), 0) AS archived_pending_units
