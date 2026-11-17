@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v3.38</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.10</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.09';
-const DISPLAY_APP_VERSION = 'v4.09';
+const CURRENT_APP_VERSION = 'sealthai-v4.10';
+const DISPLAY_APP_VERSION = 'v4.10';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.09)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.09 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.10)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.10 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -11363,6 +11363,8 @@ async function viewOrder(orderId) {
   editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount', show_on_receipt:showOrderItemOnReceipt(i)}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
   await loadOrderCustomerList(); // โหลดรายชื่อลูกค้าสำหรับ auto-fill
+  const orderCustomer = (_orderCustomerList || []).find(c => c.id === order.customer_id);
+  const orderCustomerEmail = getOrderCustomerEmail(order, orderCustomer ? { email: orderCustomer.customer_email || orderCustomer.email } : null);
   // คำนวณต้นทุน/กำไร โดย fallback ไป current_cost ของสินค้าเมื่อ item cost=0 (ขายก่อนรับเข้า)
   const _pcMap = {}; editProdList.forEach(p => { _pcMap[p.id] = Number(p.current_cost||0); });
   const _effCost = (it) => { const c = Number(it.cost_per_unit||0); return c > 0 ? c : Number(_pcMap[it.product_id]||0); };
@@ -11419,7 +11421,7 @@ async function viewOrder(orderId) {
               <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
                 <input value="${(order.customer_name||'').replace(/"/g,'&quot;')}" readonly style="${iStyle};background:#f8fafc;color:#475569;font-weight:600" title="ชื่อลูกค้าที่ระบุ">
                 ${order.customer_phone ? `<span style="font-size:11px;color:#64748b;white-space:nowrap" title="เบอร์โทร">📞 ${escapeHTML(order.customer_phone)}</span>` : ''}
-                ${(()=>{ const em = getOrderCustomerEmail(order, (allCustomers||[]).find(c=>c.id===order.customer_id)); return em ? `<span style="font-size:11px;color:#0284c7;white-space:nowrap" title="อีเมล">✉️ ${escapeHTML(em)}</span>` : ''; })()}
+                ${orderCustomerEmail ? `<span style="font-size:11px;color:#0284c7;white-space:nowrap" title="อีเมล">✉️ ${escapeHTML(orderCustomerEmail)}</span>` : ''}
               </div>
             </div>
             <div class="sap-field-row">
@@ -11432,7 +11434,7 @@ async function viewOrder(orderId) {
             <div class="sap-field-row">
               <span class="sap-field-label">E-mail</span>
               <div style="display:flex;gap:6px;align-items:center">
-                <input type="email" id="ed-email" value="${(getOrderCustomerEmail(order, (allCustomers||[]).find(c=>c.id===order.customer_id))).replace(/"/g,'&quot;')}" placeholder="เช่น contact@company.com (ไม่บังคับ)" style="${iStyle}">
+                <input type="email" id="ed-email" value="${escapeHTML(orderCustomerEmail)}" placeholder="เช่น contact@company.com (ไม่บังคับ)" style="${iStyle}">
               </div>
             </div>
             <div class="sap-field-row">
@@ -51080,7 +51082,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.09', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับการแสดงผลป้ายสต๊อกในหน้าออเดอร์ให้ตรงตามยอดคงเหลือจริงในคลัง (v4.09)', items:[
+    { v:'4.10', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้หน้า Order เปิดดูไม่ได้เพราะตัวแปรรายชื่อลูกค้าไม่ถูกต้อง', items:[
+      'แก้การดึงอีเมลลูกค้าในรายละเอียด Order ให้ใช้รายชื่อลูกค้าที่โหลดไว้จริง และอ่านอีเมลครั้งเดียวสำหรับแสดงและแก้ไข',
+      'ป้องกันข้อผิดพลาด allCustomers is not defined เมื่อกดดู Order'
+    ]},
+    { v:'4.09', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ปรับการแสดงผลป้ายสต๊อกในหน้าออเดอร์ให้ตรงตามยอดคงเหลือจริงในคลัง (v4.09)', items:[
       '📦 <b>แก้ไขตัวเลขป้ายสต๊อกให้ตรงตามยอดคงเหลือจริงในคลัง (Sync Stock Balance):</b> แก้ไขป้ายสต๊อกสินค้าในหน้าตารางออเดอร์ให้แสดงตัวเลขตามยอดคงเหลือจริงในคลังร้าน (<code>stock_qty</code>) เสมอ เช่น <code>คงเหลือ 0 (ของเข้าครบ)</code> หรือ <code>คงเหลือ X</code> ตรงกับในบัตรสต๊อก (Stock Card) 100% แทนการนำจำนวนรับเข้าจาก PO มาใส่ในวงเล็บที่ทำให้เกิดความเข้าใจผิด',
       '🔍 <b>คำอธิบายการตัดยอดสต๊อกที่ชัดเจน (Stock Movement Tooltip):</b> แสดง Tooltip ละเอียดเมื่อชี้ที่ป้าย ระบุทั้งยอดคงเหลือจริงในคลังร้าน และเลขที่ใบสั่งซื้อ PO พร้อมจำนวนที่รับเข้า ทำให้ตรวจเช็กได้ทันทีว่าของเข้าครบพร้อมส่งและยอดสต๊อกคงเหลือในร้านถูกต้องตามหลักบัญชี',
       '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.09 และล้างแคชอัตโนมัติ'
