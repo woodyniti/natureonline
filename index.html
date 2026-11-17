@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.05';
-const DISPLAY_APP_VERSION = 'v4.05';
+const CURRENT_APP_VERSION = 'sealthai-v4.06';
+const DISPLAY_APP_VERSION = 'v4.06';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.05)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.05 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.06)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.06 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8495,6 +8495,7 @@ async function loadOrders() {
   `).join('');
   }
   window._lastLoadedOrders = rows;
+  window.allOrders = rows;
   if (typeof updateTodayOrderCountBadge === 'function') updateTodayOrderCountBadge();
 }
 
@@ -19266,18 +19267,27 @@ async function recomputeOrderCosts(orderIds, forceSyncFromProducts = false) {
     }
   }
 
-  if (fixed > 0 && Array.isArray(allOrders)) {
+  const cachedLists = [
+    (typeof allOrders !== 'undefined' && Array.isArray(allOrders)) ? allOrders : null,
+    Array.isArray(window.allOrders) ? window.allOrders : null,
+    Array.isArray(window._lastLoadedOrders) ? window._lastLoadedOrders : null,
+    Array.isArray(window._allOrdersWithItems) ? window._allOrdersWithItems : null
+  ].filter(Boolean);
+
+  if (fixed > 0 && cachedLists.length > 0) {
     orders.forEach(o => {
-      const cached = allOrders.find(x => x.id === o.id);
-      if (cached) {
-        cached.total_cost = o.total_cost;
-        if (o.order_items && cached.order_items) {
-          o.order_items.forEach(it => {
-            const cachedItem = cached.order_items.find(ci => ci.id === it.id);
-            if (cachedItem) cachedItem.cost_per_unit = it.cost_per_unit;
-          });
+      cachedLists.forEach(list => {
+        const cached = list.find(x => x && x.id === o.id);
+        if (cached) {
+          cached.total_cost = o.total_cost;
+          if (o.order_items && cached.order_items) {
+            o.order_items.forEach(it => {
+              const cachedItem = cached.order_items.find(ci => ci && ci.id === it.id);
+              if (cachedItem) cachedItem.cost_per_unit = it.cost_per_unit;
+            });
+          }
         }
-      }
+      });
     });
   }
 
@@ -50477,7 +50487,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.05', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มช่องกรอก E-mail ในหน้ารายละเอียดออเดอร์ & เชื่อมโยงระบบ CRM และเอกสารพิมพ์ (v4.05)', items:[
+    { v:'4.06', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาด allOrders is not defined ขณะบันทึกรับสินค้าเข้าสต๊อก (v4.06)', items:[
+      '🐛 <b>แก้ไขข้อผิดพลาดตอนรับสินค้าเข้าสต๊อก (Fix allOrders is not defined):</b> แก้ไขฟังก์ชันคำนวณต้นทุนออเดอร์ (<code>recomputeOrderCosts</code>) ให้ตรวจสอบแคชของออเดอร์อย่างปลอดภัยหลายระดับ (<code>window.allOrders</code>, <code>window._lastLoadedOrders</code>, <code>window._allOrdersWithItems</code>) ป้องกัน ReferenceError ที่ทำให้ขั้นตอนอัปเดต PO ขัดข้อง',
+      '🛒 <b>ปรับปรุงสถานะใบสั่งซื้อ (PO Receipt Status Sync):</b> ตรวจสอบและซิงค์สถานะใบสั่งซื้อ <code>PO-20261117-0001</code> และจำนวนรับ (<code>qty_received = 1</code>) ให้เสร็จสมบูรณ์ถูกต้องตรงกับสต๊อกจริง',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.06 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.05', date:'2026-11-17', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มช่องกรอก E-mail ในหน้ารายละเอียดออเดอร์ & เชื่อมโยงระบบ CRM และเอกสารพิมพ์ (v4.05)', items:[
       '📧 <b>เพิ่มช่องกรอก E-mail ในหน้ารายละเอียดออเดอร์ (Order Detail / Edit):</b> จัดวางในพาเนลข้อมูลลูกค้า Business Partner สไตล์ SAP B1 ใต้เบอร์โทรศัพท์ พร้อมช่องกรอกในหน้าสร้างออเดอร์ใหม่ (New Sales Order)',
       '🔄 <b>Auto-Fill & Auto-Sync เชื่อมโยงลูกค้า CRM อัตโนมัติ:</b> เมื่อค้นหาหรือเลือกลูกค้า ระบบจะดึงอีเมลมาเติมให้อัตโนมัติ และเมื่อบันทึกออเดอร์จะซิงค์อีเมลลงฐานข้อมูลลูกค้า (CRM Customer Database) ทันที',
       '🖨️ <b>แสดงข้อมูล E-mail ในเอกสารพิมพ์ทางการ:</b> เพิ่มการแสดงผลอีเมลลูกค้าในบิลเงินสด, ใบเสร็จรับเงิน, ใบแจ้งหนี้ และใบส่งของ ใต้เบอร์โทรศัพท์อย่างเรียบร้อยสวยงาม',
