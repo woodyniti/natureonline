@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.12.1</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.12.2</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.12.1';
-const DISPLAY_APP_VERSION = 'v4.12.1';
+const CURRENT_APP_VERSION = 'sealthai-v4.12.2';
+const DISPLAY_APP_VERSION = 'v4.12.2';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.12.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.12.1 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.12.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.12.2 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8353,7 +8353,7 @@ async function loadOrders() {
           </td>
           <td class="col-status" style="white-space:nowrap">
             <div style="margin-bottom:5px">${docStatusBadge(o.doc_status||'draft')}</div>
-            <select class="status-sel" onchange="quickUpdateStatus('${o.id}',this.value,this)"
+            <select class="status-sel" data-current-status="${escapeHTML(o.shipping_status||'pending')}" onchange="quickUpdateStatus('${o.id}',this.value,this)"
               style="border:1px solid;border-radius:6px;padding:3px 6px;font-size:12px;cursor:pointer;font-weight:600;${shipSelStyle(o.shipping_status)}">
               ${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',partially_shipped:'⚠️ จัดส่งบางส่วน (ค้างส่ง)',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
             </select>
@@ -8504,7 +8504,7 @@ async function loadOrders() {
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openReceiptOptions('${o.id}')" style="background:#e8f5f0;color:#00a882;border-color:#00a882;font-size:11px;padding:4px 6px" title="พิมพ์บิล / ใบแจ้งหนี้ / ใบส่งสินค้า">🖨️ พิมพ์เอกสาร</button>
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openShippingLabelModal('${o.id}')" style="background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;font-size:11px;padding:4px 6px">📦 ใบปะหน้า</button>
           <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openStickerModal('${o.id}')" style="background:#fff3e0;color:#e65100;border-color:#e65100;font-size:11px;padding:4px 6px">🏷️ สติกเกอร์</button>
-          <select class="status-sel" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value,this)"
+          <select class="status-sel" data-current-status="${escapeHTML(o.shipping_status||'pending')}" onchange="event.stopPropagation();quickUpdateStatus('${o.id}',this.value,this)"
             style="border:1px solid;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:600;${shipSelStyle(o.shipping_status)}">
             ${['pending','partially_shipped','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.shipping_status===s?'selected':''}>${{pending:'รอจัดส่ง',partially_shipped:'⚠️ จัดส่งบางส่วน (ค้างส่ง)',shipped:'จัดส่งแล้ว',delivered:'ส่งถึงแล้ว',cancelled:'ยกเลิก'}[s]}</option>`).join('')}
           </select>
@@ -8642,9 +8642,14 @@ async function quickUpdateStatus(orderId, status, selEl) {
   };
 
   // ดึงสถานะเดิม + รายการสินค้า
-  const { data: ord } = await sb.from('orders')
-    .select('*,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+  const { data: ord, error: orderReadErr } = await sb.from('orders')
+    .select('*,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
     .eq('id', orderId).single();
+  if (orderReadErr || !ord) {
+    if (selEl) selEl.value = selEl.dataset?.currentStatus || 'pending';
+    toast('โหลดออเดอร์ก่อนเปลี่ยนสถานะไม่สำเร็จ: ' + (orderReadErr?.message || 'ไม่พบออเดอร์นี้'), 'error');
+    return;
+  }
   const oldStatus = ord?.shipping_status;
 
   // ถ้าเลือกสถานะ "จัดส่งบางส่วน (ค้างส่ง)" ให้เปิดหน้าต่างจัดส่งบางส่วนทันที
@@ -12730,7 +12735,7 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
   let ord = orderObj;
   if (!ord || !ord.order_items) {
     const { data } = await sb.from('orders')
-      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
       .eq('id', orderId).single();
     ord = data;
   }
@@ -12834,7 +12839,7 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
   let ord = stockCheck?.order;
   if (!ord || !ord.order_items) {
     const { data } = await sb.from('orders')
-      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,sku,qty,sell_price,cost_per_unit)')
+      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
       .eq('id', orderId).single();
     ord = data;
   }
@@ -51120,7 +51125,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.12.1', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ SQL ปรับสต๊อกออเดอร์ค้างไม่ให้ตารางชั่วคราวหาย', items:[
+    { v:'4.12.2', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ปุ่มจัดส่งแล้วอ่านรายการออเดอร์ผิดคอลัมน์', items:[
+      'ตัดฟิลด์ sku ที่ไม่มีใน order_items ออกจากคำสั่งโหลดออเดอร์และหน้าจัดส่งสินค้า',
+      'ถ้าโหลดออเดอร์ไม่สำเร็จให้หยุดก่อนอัปเดตสถานะและแจ้งข้อผิดพลาดจริง ไม่อ่าน note จาก null'
+    ]},
+    { v:'4.12.1', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'แก้ SQL ปรับสต๊อกออเดอร์ค้างไม่ให้ตารางชั่วคราวหาย', items:[
       'ย้ายข้อมูล movement เก่าและคืนยอดสต๊อกในคำสั่งเดียว ไม่พึ่งตารางชั่วคราวที่ SQL Editor อาจลบทิ้งระหว่างคำสั่ง',
       'เก็บรายการเดิมใน audit ก่อนลบและหยุดทันทีหากพบข้อมูลที่เคยย้ายค้างเพื่อป้องกันการคืนยอดผิด'
     ]},

@@ -7,6 +7,7 @@ const start = html.indexOf('async function syncOrderPhysicalStock(order, items =
 const end = html.indexOf('\nlet _orderCustomerList', start);
 assert.ok(start >= 0 && end > start, 'stock sync and quick order status handlers exist');
 const handler = html.slice(start, end);
+assert.equal((html.match(/order_items\(id,product_id,product_name,sku,qty,sell_price,cost_per_unit\)/g) || []).length, 0, 'order_items has no sku column in the live database');
 
 async function transition(from, to, approvedQty = null) {
   const order = {
@@ -51,7 +52,34 @@ async function transition(from, to, approvedQty = null) {
   return { movements, stockQty };
 }
 
+async function missingOrderLoad() {
+  let writes = 0;
+  const messages = [];
+  const sb = { from(table) {
+    assert.equal(table, 'orders');
+    return {
+      select() { return this; }, eq() { return this; },
+      async single() { return { data: null, error: { message: 'order_items.sku column unavailable' } }; },
+      update() { writes++; return { eq: async () => ({ error: null }) }; }
+    };
+  } };
+  const context = {
+    sb, currentShop: { id: 'shop-1' }, confirm: () => true,
+    toast: message => messages.push(message),
+    checkOrderStockSufficiency: async () => ({ isSufficient: true }),
+    console
+  };
+  vm.createContext(context);
+  vm.runInContext(handler, context);
+  const select = {value:'shipped',dataset:{currentStatus:'pending'}};
+  await context.quickUpdateStatus('order-1', 'shipped', select);
+  assert.equal(writes, 0, 'failed order read must not change shipping status');
+  assert.equal(select.value, 'pending', 'failed order read restores the visible status selector');
+  assert.ok(messages.some(message => message.includes('order_items.sku column unavailable')), 'user sees the original read failure');
+}
+
 (async () => {
+  await missingOrderLoad();
   const shipped = await transition('pending', 'shipped');
   assert.equal(shipped.movements.filter(m => m.type === 'insert').length, 1, 'shipping a pending order deducts physical stock once');
   assert.equal(shipped.stockQty, 9, 'shipping 10 from 19 leaves 9 physically in stock');
