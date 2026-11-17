@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.08';
-const DISPLAY_APP_VERSION = 'v4.08';
+const CURRENT_APP_VERSION = 'sealthai-v4.09';
+const DISPLAY_APP_VERSION = 'v4.09';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.08)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.08 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.09)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.09 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8228,14 +8228,14 @@ async function loadOrders() {
 
               let sBg, sColor, sBdr, sIcon, sText, sTitle;
               if (isPoReceived) {
-                // สินค้ารายการนี้สั่งซื้อและตรวจรับเข้าคลังแล้ว (มีของพร้อมในคลังสำหรับออเดอร์นี้)
+                // สินค้ารายการนี้สั่งซื้อและตรวจรับเข้าคลังแล้ว (มีของพร้อมในคลังสำหรับออเดอร์นี้) แสดงตัวเลขตามคงเหลือจริงในคลัง (v4.09)
                 const recQty = poMatch?.qty_received || itemReqQty;
                 sBg = '#dcfce7';
                 sColor = '#15803d';
                 sBdr = '#86efac';
                 sIcon = '📦';
-                sText = `ของเข้าพร้อมส่ง (${fmt(recQty)})`;
-                sTitle = `รับสินค้าเข้าคลังแล้วจาก PO: ${escapeHTML(poMatch?.po_no || '')} (${fmt(recQty)} ชิ้น) มีของพร้อมส่งทันที (คลิกเพื่อดู Inventory Movement)`;
+                sText = stockVal > 0 ? `คงเหลือ ${fmt(stockVal)}` : `คงเหลือ 0 (ของเข้าครบ)`;
+                sTitle = `สต๊อกคงเหลือจริงในคลัง: ${fmt(stockVal)} ชิ้น · ตรวจรับสินค้าเข้าจาก PO: ${escapeHTML(poMatch?.po_no || '')} เรียบร้อยแล้ว (${fmt(recQty)} ชิ้น) มีของพร้อมส่งทันที (คลิกเพื่อดู Inventory Movement)`;
               } else {
                 const isStockOut = stockVal <= 0;
                 const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
@@ -51080,7 +51080,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.08', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบตรวจสอบสมาชิกคลับช่าง & ติ๊กใส่ส่วนลดท้ายบิลอัตโนมัติ (Technician Club Ledger & 1-Click Order Discount)', items:[
+    { v:'4.09', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับการแสดงผลป้ายสต๊อกในหน้าออเดอร์ให้ตรงตามยอดคงเหลือจริงในคลัง (v4.09)', items:[
+      '📦 <b>แก้ไขตัวเลขป้ายสต๊อกให้ตรงตามยอดคงเหลือจริงในคลัง (Sync Stock Balance):</b> แก้ไขป้ายสต๊อกสินค้าในหน้าตารางออเดอร์ให้แสดงตัวเลขตามยอดคงเหลือจริงในคลังร้าน (<code>stock_qty</code>) เสมอ เช่น <code>คงเหลือ 0 (ของเข้าครบ)</code> หรือ <code>คงเหลือ X</code> ตรงกับในบัตรสต๊อก (Stock Card) 100% แทนการนำจำนวนรับเข้าจาก PO มาใส่ในวงเล็บที่ทำให้เกิดความเข้าใจผิด',
+      '🔍 <b>คำอธิบายการตัดยอดสต๊อกที่ชัดเจน (Stock Movement Tooltip):</b> แสดง Tooltip ละเอียดเมื่อชี้ที่ป้าย ระบุทั้งยอดคงเหลือจริงในคลังร้าน และเลขที่ใบสั่งซื้อ PO พร้อมจำนวนที่รับเข้า ทำให้ตรวจเช็กได้ทันทีว่าของเข้าครบพร้อมส่งและยอดสต๊อกคงเหลือในร้านถูกต้องตามหลักบัญชี',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.09 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.08', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'ระบบตรวจสอบสมาชิกคลับช่าง & ติ๊กใส่ส่วนลดท้ายบิลอัตโนมัติ (Technician Club Ledger & 1-Click Order Discount)', items:[
       '🎁 <b>ระบบตรวจสอบสมาชิกคลับช่างอัตโนมัติ (Auto Customer Club Check):</b> เมื่อพิมพ์ค้นหาหรือเลือกลูกค้าในหน้าสร้างออเดอร์ใหม่ (New Order) หรือเปิดดูรายละเอียดออเดอร์ (Order Detail / Edit) ระบบจะตรวจสอบฐานข้อมูลคลับช่าง (Mechanic Club Ledger) ดึงระดับสมาชิก (Bronze, Silver 3%, Gold 5%, Platinum 7%), รหัสสมาชิก (MC-xxxx), แต้มสะสม และยอดซื้อสะสมมาแสดงในการ์ด Business Partner ลูกค้าทันที',
       '☑ <b>ช่องติ๊กถูกนำส่วนลดใส่ท้ายบิล (1-Click Discount to Bill):</b> ป้องกันปัญหาพนักงานขายลืมให้ส่วนลดแก่สมาชิกช่าง เพียงคลิกติ๊กถูกที่ช่องสิทธิ์ส่วนลด ระบบจะนำเปอร์เซ็นต์ส่วนลดของระดับสมาชิกช่าง (เช่น Silver 3%, Gold 5%, Platinum 7%) ไปใส่ในช่อง Discount ท้ายบิลและคำนวณยอดสุทธิ (Grand Total) ให้อัตโนมัติทันที',
       '⚠️ <b>การแจ้งเตือนเด่นชัดป้องกันการลืม (Anti-forget Alert):</b> หากลูกค้ามีสิทธิ์ส่วนลดแต่ในบิลยังไม่ได้ใส่ส่วนลด ระบบจะแสดงกล่องแจ้งเตือนสีส้มเด่นชัดเพื่อเตือนพนักงานขายให้ติ๊กรับสิทธิ์ และเมื่อติ๊กใช้แล้วจะเปลี่ยนเป็นป้ายยืนยันสีเขียวพร้อมแสดงปุ่มลัด [🏷️ คลับช่าง] ข้างช่อง Discount ท้ายบิล',
