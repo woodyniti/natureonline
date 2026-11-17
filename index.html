@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.12.2</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.12.3</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.12.2';
-const DISPLAY_APP_VERSION = 'v4.12.2';
+const CURRENT_APP_VERSION = 'sealthai-v4.12.3';
+const DISPLAY_APP_VERSION = 'v4.12.3';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.12.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.12.2 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.12.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.12.3 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -51125,7 +51125,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.12.2', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ปุ่มจัดส่งแล้วอ่านรายการออเดอร์ผิดคอลัมน์', items:[
+    { v:'4.12.3', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เตรียมซ่อมยอดสต๊อกออเดอร์ที่จัดส่งแล้วแต่ยังไม่ตัด', items:[
+      'เพิ่มสคริปต์ซ่อมเฉพาะ SO-20261117-0003 หลังยืนยันส่งจริง 10 ชิ้นและคงเหลือจริง 9 ชิ้น',
+      'ตรวจสถานะ สินค้า ยอดก่อนซ่อม และ movement ซ้ำก่อนบันทึกแบบ atomic; ต้องรันสคริปต์ใน Supabase SQL Editor ก่อนยอดเปลี่ยน'
+    ]},
+    { v:'4.12.2', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'แก้ปุ่มจัดส่งแล้วอ่านรายการออเดอร์ผิดคอลัมน์', items:[
       'ตัดฟิลด์ sku ที่ไม่มีใน order_items ออกจากคำสั่งโหลดออเดอร์และหน้าจัดส่งสินค้า',
       'ถ้าโหลดออเดอร์ไม่สำเร็จให้หยุดก่อนอัปเดตสถานะและแจ้งข้อผิดพลาดจริง ไม่อ่าน note จาก null'
     ]},
