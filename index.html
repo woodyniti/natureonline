@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.07';
-const DISPLAY_APP_VERSION = 'v4.07';
+const CURRENT_APP_VERSION = 'sealthai-v4.08';
+const DISPLAY_APP_VERSION = 'v4.08';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.07)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.07 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.08)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.08 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -7556,6 +7556,7 @@ async function orders() {
                     <input type="text" id="o-username" placeholder="@username Shopee/Lazada" style="width:100%;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:5px 8px;color:var(--text);font-size:13px;box-sizing:border-box">
                   </div>
                 </div>
+                <div id="o-mechanic-club-banner" style="margin:4px 0 6px 0"></div>
                 <div class="sap-field-row">
                   <span class="sap-field-label">Channel / Cur.</span>
                   <div style="display:flex;gap:6px;align-items:center">
@@ -7725,6 +7726,7 @@ async function orders() {
                     <option value="amount">บาท (฿)</option>
                     <option value="percent">เปอร์เซ็นต์ (%)</option>
                   </select>
+                  <span id="o-club-disc-badge" style="display:none;margin-left:6px"></span>
                 </div>
               </div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:6px;font-size:12.5px">
@@ -8658,6 +8660,17 @@ async function openNewOrder() {
   if (bd) bd.value = '0';
   if (bt) bt.value = 'amount';
   if (sf) sf.value = '0';
+  
+  // reset mechanic club check (v4.08)
+  window._activeClubCust_o = null;
+  const clubBanner = document.getElementById('o-mechanic-club-banner');
+  if (clubBanner) clubBanner.innerHTML = '';
+  const clubBadge = document.getElementById('o-club-disc-badge');
+  if (clubBadge) { clubBadge.innerHTML = ''; clubBadge.style.display = 'none'; }
+  if (!_allCustomers || !_allCustomers.length) {
+    if (typeof loadCRMData === 'function') loadCRMData().catch(()=>{});
+  }
+
   updateOrderSummary();
   openModal('modal-order');
   if (typeof switchSapTab === 'function') switchSapTab('sap-new-order-window', 'contents');
@@ -8712,6 +8725,15 @@ async function importQuoteToOrder(qtId) {
   if (qMeta.branch_code) set('o-branch', qMeta.branch_code);
   if (qMeta.billing_address) set('o-billing-address', qMeta.billing_address);
   if (qt.employee_id) set('o-emp', qt.employee_id);
+  if (typeof checkAndRenderOrderCustomerClub === 'function') {
+    checkAndRenderOrderCustomerClub({
+      customer_id: qt.customer_id,
+      customer_name: qt.customer_name,
+      customer_phone: qt.customer_phone,
+      company_name: qMeta.company_name,
+      tax_id: qMeta.tax_id
+    }, 'o');
+  }
   orderItems = (items||[]).map(it => {
     const product = productList.find(p => p.id === it.product_id);
     return {
@@ -8856,6 +8878,11 @@ function _renderCustDropdown(ddId, fillFn, q) {
     const badge = c.source === 'crm'
       ? `<span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:6px">🏢 CRM ${c.customer_tier ? c.customer_tier.toUpperCase() : 'B2B'}</span>`
       : `<span style="font-size:10px;background:#f0fdf4;color:#166534;padding:2px 6px;border-radius:4px;font-weight:600;margin-left:6px">🛒 ออเดอร์เดิม (${c.order_count || 1} ครั้ง)</span>`;
+    const clubData = (typeof findCustomerClubData === 'function') ? findCustomerClubData(c) : null;
+    const clubTier = clubData?.mechanicTier;
+    const clubBadge = (clubTier && clubTier.discountPct > 0)
+      ? `<span style="font-size:10px;background:${clubTier.bg};color:${clubTier.color};border:1px solid ${clubTier.border};padding:1px 6px;border-radius:4px;font-weight:800;margin-left:4px">${clubTier.icon} ${clubTier.nameTh} (-${clubTier.discountPct}%)</span>`
+      : (clubTier ? `<span style="font-size:10px;background:#fef3c7;color:#92400e;border:1px solid #fde68a;padding:1px 6px;border-radius:4px;font-weight:700;margin-left:4px">${clubTier.icon} คลับช่าง</span>` : '');
     
     const details = [
       c.company_name ? '🏢 ' + c.company_name : null,
@@ -8871,7 +8898,7 @@ function _renderCustDropdown(ddId, fillFn, q) {
       onmousedown="${fillFn}(${i})"
       onmouseover="this.style.background='var(--bg3)'" onmouseout="this.style.background=''">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="font-weight:700;color:var(--text)">${escapeHTML(c.customer_name)} ${badge}</div>
+        <div style="font-weight:700;color:var(--text)">${escapeHTML(c.customer_name)} ${badge} ${clubBadge}</div>
         ${c.channel ? `<span style="font-size:10px;color:var(--text3)">${escapeHTML(c.channel)}</span>` : ''}
       </div>
       <div style="font-size:11.5px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHTML(details)}</div>
@@ -8881,6 +8908,265 @@ function _renderCustDropdown(ddId, fillFn, q) {
   dd.style.display = 'block';
   dd._matches = matches;
 }
+
+
+// ─── ระบบตรวจสอบสมาชิกคลับช่าง & ติ๊กใส่ส่วนลดท้ายบิลอัตโนมัติ (v4.08) ────────
+function findCustomerClubData(query) {
+  if (!query) return null;
+  const list = _allCustomers || [];
+
+  if (typeof query === 'string') {
+    const byId = list.find(x => x.id === query);
+    if (byId) return byId;
+    query = { customer_name: query };
+  }
+
+  // 1. By ID
+  const qId = query.id || query.customer_id;
+  if (qId) {
+    const found = list.find(x => x.id === qId);
+    if (found) return found;
+  }
+
+  // 2. By Tax ID
+  const taxId = (query.tax_id || query.taxId || '').trim();
+  if (taxId && taxId.length >= 10) {
+    const cleanTax = taxId.replace(/\D+/g, '');
+    const found = list.find(x => x.tax_id && (x.tax_id.trim() === taxId || (x.tax_id.replace(/\D+/g, '') === cleanTax && cleanTax.length >= 10)));
+    if (found) return found;
+  }
+
+  // 3. By Phone
+  const rawPhone = query.phone || query.customer_phone || '';
+  const cleanPhone = cleanPhoneDigits(rawPhone);
+  if (cleanPhone && cleanPhone.length >= 8) {
+    const found = list.find(x => x.phone && cleanPhoneDigits(x.phone).endsWith(cleanPhone.slice(-8)));
+    if (found) return found;
+  }
+
+  // 4. By Name or Company
+  const rawName = (query.name || query.customer_name || '').trim().toLowerCase();
+  const rawComp = (query.company_name || '').trim().toLowerCase();
+  if (rawName && rawName !== '-' && rawName !== 'ลูกค้าทั่วไป') {
+    const found = list.find(x => {
+      const n = (x.name || '').trim().toLowerCase();
+      const comp = (x.company_name || '').trim().toLowerCase();
+      return n === rawName || comp === rawName || (rawName.length >= 4 && (n.includes(rawName) || rawName.includes(n)));
+    });
+    if (found) return found;
+  }
+  if (rawComp && rawComp !== '-') {
+    const found = list.find(x => {
+      const n = (x.name || '').trim().toLowerCase();
+      const comp = (x.company_name || '').trim().toLowerCase();
+      return n === rawComp || comp === rawComp;
+    });
+    if (found) return found;
+  }
+
+  // 5. If query itself carries mechanic data (e.g. from orders or customers table directly)
+  if (query.mechanic_tier || query.mechanicTier || query.points_balance != null || query.pointsBalance != null || query.lifetime_spend != null) {
+    const tier = query.mechanicTier || (typeof query.mechanic_tier === 'object' ? query.mechanic_tier : (typeof MECHANIC_TIERS !== 'undefined' ? MECHANIC_TIERS[query.mechanic_tier] : null)) || (typeof getCustomerMechanicTier === 'function' ? getCustomerMechanicTier(query.lifetime_spend || query.lifetimeSpend || 0) : null);
+    return {
+      ...query,
+      id: query.id || query.customer_id || null,
+      name: query.name || query.customer_name || 'ลูกค้าสมาชิก',
+      code: query.code || 'MC-0001',
+      mechanicTier: tier || (typeof MECHANIC_TIERS !== 'undefined' ? MECHANIC_TIERS.bronze : null),
+      pointsBalance: query.pointsBalance != null ? query.pointsBalance : (query.points_balance || 0),
+      lifetimeSpend: Number(query.lifetimeSpend != null ? query.lifetimeSpend : (query.lifetime_spend || 0))
+    };
+  }
+
+  return null;
+}
+window.findCustomerClubData = findCustomerClubData;
+
+function checkAndRenderOrderCustomerClub(custOrInfo, prefix = 'o') {
+  const bannerEl = document.getElementById(`${prefix}-mechanic-club-banner`);
+  const badgeEl = document.getElementById(`${prefix}-club-disc-badge`);
+
+  // If _allCustomers is not yet loaded, trigger loadCRMData in background
+  if (!_allCustomers || !_allCustomers.length) {
+    if (typeof loadCRMData === 'function') {
+      loadCRMData().then(() => {
+        checkAndRenderOrderCustomerClub(custOrInfo, prefix);
+      }).catch(()=>{});
+    }
+  }
+
+  let cust = findCustomerClubData(custOrInfo);
+  if (!cust) {
+    const nameVal = document.getElementById(`${prefix}-cust`)?.value;
+    const phoneVal = document.getElementById(`${prefix}-phone`)?.value;
+    const taxVal = document.getElementById(`${prefix}-tax-id`)?.value;
+    const compVal = document.getElementById(`${prefix}-company`)?.value;
+    if (nameVal || phoneVal || taxVal || compVal) {
+      cust = findCustomerClubData({ customer_name: nameVal, phone: phoneVal, tax_id: taxVal, company_name: compVal });
+    }
+  }
+
+  if (!cust) {
+    window['_activeClubCust_' + prefix] = null;
+    if (bannerEl) bannerEl.innerHTML = '';
+    if (badgeEl) { badgeEl.innerHTML = ''; badgeEl.style.display = 'none'; }
+    return;
+  }
+
+  window['_activeClubCust_' + prefix] = cust;
+
+  const tier = cust.mechanicTier || (typeof getCustomerMechanicTier === 'function' ? getCustomerMechanicTier(cust.lifetimeSpend || 0) : (typeof MECHANIC_TIERS !== 'undefined' ? MECHANIC_TIERS.bronze : { discountPct: 0, nameTh: 'ช่างมือใหม่', icon: '🥉', key: 'bronze', color: '#92400e', bg: '#fef3c7', border: '#fde68a' }));
+  const points = cust.pointsBalance || 0;
+  const spend = cust.lifetimeSpend || 0;
+  const code = cust.code || 'MC-0001';
+  const discountPct = Number(tier.discountPct || 0);
+
+  // Check current bill discount state in the form
+  const discInp = document.getElementById(`${prefix}-bill-disc`);
+  const discTypeSel = document.getElementById(`${prefix}-bill-disc-type`);
+  const curDiscVal = Number(discInp?.value || 0);
+  const curDiscType = discTypeSel?.value || 'amount';
+
+  const isApplied = (discountPct > 0 && curDiscVal === discountPct && curDiscType === 'percent');
+
+  if (bannerEl) {
+    if (discountPct > 0) {
+      bannerEl.innerHTML = `
+        <div style="background:${tier.bg || '#fef3c7'};border:1.5px solid ${isApplied ? '#86efac' : (tier.border || '#fde68a')};border-radius:8px;padding:9px 12px;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:all 0.2s">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:18px">${tier.icon}</span>
+              <span style="font-weight:800;font-size:12.5px;color:${tier.color}">สมาชิกคลับช่าง: ${tier.nameTh} (${tier.key.toUpperCase()})</span>
+              <span style="background:${tier.color};color:#fff;font-size:10.5px;font-weight:800;padding:1px 6px;border-radius:4px">สิทธิ์ลด ${discountPct}%</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="font-mono" style="font-size:11px;font-weight:800;color:#0369a1;background:#fff;padding:1px 6px;border-radius:4px;border:1px solid #bae6fd">${escapeHTML(code)}</span>
+              <span style="font-size:11.5px;color:#b45309;font-weight:800">🎁 ${fmt(points)} แต้ม</span>
+            </div>
+          </div>
+
+          <div style="background:#fff;border:1.5px solid ${isApplied ? '#16a34a' : '#f59e0b'};border-radius:6px;padding:7px 10px;margin-top:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:${isApplied ? '0 1px 4px rgba(22,163,74,0.12)' : '0 1px 4px rgba(245,158,11,0.18)'}">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0;font-size:12.5px;user-select:none;flex:1">
+              <input type="checkbox" id="${prefix}-apply-club-discount" ${isApplied ? 'checked' : ''} onchange="toggleOrderClubDiscount(this.checked, '${prefix}')" style="width:17px;height:17px;cursor:pointer;accent-color:${tier.color}">
+              <span style="font-weight:800;color:${isApplied ? '#15803d' : '#b45309'}">
+                ${isApplied ? '✓ ใช้สิทธิ์ส่วนลดสมาชิกคลับช่างแล้ว (-' + discountPct + '% ท้ายบิล)' : '☑ ติ๊กถูกเพื่อนำส่วนลดคลับช่าง (-' + discountPct + '% ท้ายบิล)'}
+              </span>
+            </label>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openMembershipCardModal('${cust.id}')" style="padding:1px 8px;font-size:11px;font-weight:700;color:${tier.color}" title="ดูบัตรสมาชิกดิจิทัลและสิทธิประโยชน์">📇 บัตรสมาชิก</button>
+          </div>
+
+          <div id="${prefix}-club-status-hint" style="margin-top:4px">
+            ${isApplied
+              ? `<div style="font-size:11px;color:#16a34a;font-weight:700;display:flex;align-items:center;gap:4px">✓ นำส่วนลด ${discountPct}% ไปใส่ในช่อง Discount ท้ายบิลแล้ว (ยอดสุทธิคำนวณอัตโนมัติ)</div>`
+              : `<div style="font-size:11px;color:#b45309;font-weight:700;display:flex;align-items:center;gap:4px">⚠️ <b>แจ้งเตือน:</b> ลูกค้านี้มีสิทธิ์ลด ${discountPct}% แต่ยังไม่ได้ใส่ส่วนลดท้ายบิล — ติ๊กถูกที่ช่องด้านบนเพื่อใส่ส่วนลดทันที (ป้องกันการลืม)</div>`
+            }
+          </div>
+        </div>
+      `;
+    } else {
+      // Bronze Tier (0% discount, but member with points)
+      bannerEl.innerHTML = `
+        <div style="background:#fef3c7;border:1.5px solid #fde68a;border-radius:8px;padding:8px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.05)">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:16px">🥉</span>
+              <span style="font-weight:800;font-size:12.5px;color:#92400e">สมาชิกคลับช่าง: ช่างมือใหม่ (BRONZE)</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span class="font-mono" style="font-size:11px;font-weight:800;color:#0369a1;background:#fff;padding:1px 6px;border-radius:4px;border:1px solid #bae6fd">${escapeHTML(code)}</span>
+              <span style="font-size:11.5px;color:#b45309;font-weight:800">🎁 ${fmt(points)} แต้ม</span>
+            </div>
+          </div>
+          <div style="font-size:11.5px;color:#78350f;margin-top:4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+            <span>ยอดซื้อสะสม: <b>฿${fmtB(spend)}</b> ${spend < 3000 ? `(ซื้ออีก <b>฿${fmtB(3000 - spend)}</b> เพื่อขึ้น Silver ลด 3%)` : ''}</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="openMembershipCardModal('${cust.id}')" style="padding:1px 8px;font-size:11px;font-weight:700" title="ดูบัตรสมาชิกดิจิทัล">📇 บัตรสมาชิก</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Bottom discount quick pill badge
+  if (badgeEl) {
+    if (discountPct > 0) {
+      badgeEl.style.display = 'inline-flex';
+      badgeEl.innerHTML = `
+        <span class="badge" onclick="toggleOrderClubDiscount(!document.getElementById('${prefix}-apply-club-discount')?.checked, '${prefix}')" style="background:${isApplied ? '#dcfce7' : tier.bg};color:${isApplied ? '#15803d' : tier.color};border:1px solid ${isApplied ? '#86efac' : tier.border};font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" title="คลิกเพื่อ${isApplied ? 'ยกเลิก' : 'เปิดใช้'}ส่วนลดคลับช่าง ${discountPct}%">
+          ${isApplied ? '✓' : tier.icon} คลับช่าง: ${tier.nameTh} (-${discountPct}%)
+        </span>
+      `;
+    } else {
+      badgeEl.innerHTML = '';
+      badgeEl.style.display = 'none';
+    }
+  }
+}
+window.checkAndRenderOrderCustomerClub = checkAndRenderOrderCustomerClub;
+
+function toggleOrderClubDiscount(checked, prefix = 'o') {
+  const cust = window['_activeClubCust_' + prefix];
+  if (!cust) {
+    toast('ไม่พบข้อมูลสมาชิกคลับช่างสำหรับออเดอร์นี้', 'warning');
+    return;
+  }
+  const tier = cust.mechanicTier || (typeof getCustomerMechanicTier === 'function' ? getCustomerMechanicTier(cust.lifetimeSpend || 0) : null);
+  const discountPct = Number(tier?.discountPct || 0);
+  if (discountPct <= 0) {
+    toast('สมาชิกคลับช่างระดับ Bronze ยังไม่มีสิทธิ์ส่วนลดเปอร์เซ็นต์', 'info');
+    return;
+  }
+
+  const discInput = document.getElementById(`${prefix}-bill-disc`);
+  const discTypeSelect = document.getElementById(`${prefix}-bill-disc-type`);
+
+  if (checked) {
+    if (discInput) discInput.value = discountPct;
+    if (discTypeSelect) discTypeSelect.value = 'percent';
+    if (prefix === 'o' && typeof updateOrderSummary === 'function') updateOrderSummary();
+    else if (prefix === 'ed' && typeof updateEditTotal === 'function') updateEditTotal();
+    toast(`✓ ใช้สิทธิ์ส่วนลดสมาชิกคลับช่าง ${tier?.nameTh || 'VIP'} (-${discountPct}%) ท้ายบิลแล้ว`, 'success');
+  } else {
+    if (discInput && Number(discInput.value) === discountPct && discTypeSelect?.value === 'percent') {
+      discInput.value = 0;
+    }
+    if (prefix === 'o' && typeof updateOrderSummary === 'function') updateOrderSummary();
+    else if (prefix === 'ed' && typeof updateEditTotal === 'function') updateEditTotal();
+    toast('ยกเลิกการใช้ส่วนลดคลับช่างแล้ว', 'info');
+  }
+
+  checkAndRenderOrderCustomerClub(cust, prefix);
+}
+window.toggleOrderClubDiscount = toggleOrderClubDiscount;
+
+function syncClubDiscountUIState(prefix, billDisc, billDiscType) {
+  const cust = window['_activeClubCust_' + prefix];
+  if (!cust) return;
+  const tier = cust.mechanicTier || (typeof getCustomerMechanicTier === 'function' ? getCustomerMechanicTier(cust.lifetimeSpend || 0) : null);
+  const discountPct = Number(tier?.discountPct || 0);
+  if (discountPct <= 0) return;
+
+  const isApplied = (Number(billDisc) === discountPct && billDiscType === 'percent');
+  const chk = document.getElementById(`${prefix}-apply-club-discount`);
+  if (chk && chk.checked !== isApplied) chk.checked = isApplied;
+
+  const hintEl = document.getElementById(`${prefix}-club-status-hint`);
+  if (hintEl) {
+    hintEl.innerHTML = isApplied
+      ? `<div style="font-size:11px;color:#16a34a;font-weight:700;display:flex;align-items:center;gap:4px">✓ นำส่วนลด ${discountPct}% ไปใส่ในช่อง Discount ท้ายบิลแล้ว (ยอดสุทธิคำนวณอัตโนมัติ)</div>`
+      : `<div style="font-size:11px;color:#b45309;font-weight:700;display:flex;align-items:center;gap:4px">⚠️ <b>แจ้งเตือน:</b> ลูกค้านี้มีสิทธิ์ลด ${discountPct}% แต่ยังไม่ได้ใส่ส่วนลดท้ายบิล — ติ๊กถูกที่ช่องด้านบนเพื่อใส่ส่วนลดทันที (ป้องกันการลืม)</div>`;
+  }
+
+  const badgeEl = document.getElementById(`${prefix}-club-disc-badge`);
+  if (badgeEl) {
+    badgeEl.style.display = 'inline-flex';
+    badgeEl.innerHTML = `
+      <span class="badge" onclick="toggleOrderClubDiscount(!document.getElementById('${prefix}-apply-club-discount')?.checked, '${prefix}')" style="background:${isApplied ? '#dcfce7' : (tier.bg||'#fef3c7')};color:${isApplied ? '#15803d' : (tier.color||'#92400e')};border:1px solid ${isApplied ? '#86efac' : (tier.border||'#fde68a')};font-size:11px;font-weight:800;padding:2px 8px;border-radius:4px;cursor:pointer;display:inline-flex;align-items:center;gap:4px" title="คลิกเพื่อ${isApplied ? 'ยกเลิก' : 'เปิดใช้'}ส่วนลดคลับช่าง ${discountPct}%">
+        ${isApplied ? '✓' : (tier.icon||'🏷️')} คลับช่าง: ${tier.nameTh} (-${discountPct}%)
+      </span>
+    `;
+  }
+}
+window.syncClubDiscountUIState = syncClubDiscountUIState;
 
 // generic: เติมข้อมูลลูกค้าลง field ตาม mapping ids
 function _fillCustFields(c, ids) {
@@ -8899,6 +9185,12 @@ function _fillCustFields(c, ids) {
   set(ids.billing, c.billing_address);    // ที่อยู่ออกบิล (auto-fill)
   const changedField = document.getElementById(ids.name);
   markUnsavedForm(changedField?.closest('.modal-overlay'));
+
+  // ── Auto-Check Mechanic Club Membership & Points (v4.08) ──
+  const pfx = (ids.name && ids.name.startsWith('ed')) ? 'ed' : (ids.name && ids.name.startsWith('o')) ? 'o' : '';
+  if (pfx && typeof checkAndRenderOrderCustomerClub === 'function') {
+    checkAndRenderOrderCustomerClub(c, pfx);
+  }
 }
 
 // คัดลอกข้อมูลสองทางระหว่าง Ship-to (ที่อยู่จัดส่ง) และ Bill-to (ชื่อบริษัท / ข้อมูลออกบิล)
@@ -9132,6 +9424,11 @@ function updateOrderSummary() {
       <span>ยอดสุทธิ</span>
       <span class="font-mono text-accent">${fmtB(s.grand)}</span>
     </div>`;
+  // Sync club discount badge & checkbox if customer is active (v4.08)
+  if (typeof syncClubDiscountUIState === 'function') {
+    syncClubDiscountUIState('o', s.billDisc, s.billDiscType);
+  }
+
   const receiptWarning = document.getElementById('o-receipt-visibility-warning');
   if (receiptWarning) {
     const message = hiddenReceiptWarningText(orderItems);
@@ -10955,6 +11252,11 @@ function updateEditTotal() {
   const sfe = document.getElementById('ed-shipping-fee-amt');
   if (sfe) sfe.textContent = shippingFee > 0 ? '+ ' + fmtB(shippingFee) : '';
 
+  // Sync club discount badge & checkbox if customer is active (v4.08)
+  if (typeof syncClubDiscountUIState === 'function') {
+    syncClubDiscountUIState('ed', billDisc, billDiscType);
+  }
+
   const receiptWarning = document.getElementById('ed-receipt-visibility-warning');
   if (receiptWarning) {
     const message = hiddenReceiptWarningText(editItems, itemNetEdit);
@@ -11140,6 +11442,7 @@ async function viewOrder(orderId) {
                 <input id="ed-username" value="${(order.customer_username||'').replace(/"/g,'&quot;')}" placeholder="@user Shopee/Lazada" style="${iStyle}">
               </div>
             </div>
+            <div id="ed-mechanic-club-banner" style="margin:4px 0 6px 0"></div>
             <div class="sap-field-row">
               <span class="sap-field-label">Channel / Cur.</span>
               <div style="display:flex;gap:6px;align-items:center">
@@ -11394,13 +11697,14 @@ async function viewOrder(orderId) {
             <span class="font-mono" id="ed-subtotal">${fmtB(order.total_amount)}</span>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;color:var(--red);font-size:12.5px;margin-bottom:4px" id="ed-bill-disc-row">
-            <div style="display:flex;align-items:center;gap:4px">
+            <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap">
               <span>Discount</span>
               <input type="number" id="ed-bill-disc" value="${order.bill_discount||0}" min="0" step="any" oninput="updateEditTotal()" style="width:75px;background:#fff;border:1px solid var(--border);border-radius:4px;padding:2px 6px;color:var(--red);font-size:12px;text-align:right">
               <select id="ed-bill-disc-type" onchange="updateEditTotal()" style="background:#fff;border:1px solid var(--border);border-radius:4px;padding:2px 4px;color:var(--text);font-size:11.5px">
                 <option value="amount" ${(order.bill_discount_type||'amount')==='amount'?'selected':''}>฿</option>
                 <option value="percent" ${order.bill_discount_type==='percent'?'selected':''}>%</option>
               </select>
+              <span id="ed-club-disc-badge" style="display:none;margin-left:4px"></span>
             </div>
             <span class="font-mono" id="ed-bill-disc-amt"></span>
           </div>
@@ -11456,6 +11760,11 @@ async function viewOrder(orderId) {
   renderDocRelationBar('order-doc-relation-bar', { docType: 'order', docId: order.id, docNo: order.order_no, currentShopId: currentShop?.id });
   openModal('modal-order-detail');
   registerUnsavedForm(document.getElementById('modal-order-detail'));
+
+  // ── Auto-Check Mechanic Club Membership & Points for Edit Order (v4.08) ──
+  if (typeof checkAndRenderOrderCustomerClub === 'function') {
+    checkAndRenderOrderCustomerClub(order, 'ed');
+  }
 }
 
 function updateTrackingLink(val) {
@@ -50771,7 +51080,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.07', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มพิมพ์ฉลากสินค้าขนาด 10x15 cm (4 รายการ/แผ่น) ในใบรับสินค้าเข้าสต๊อก (v4.07)', items:[
+    { v:'4.08', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบตรวจสอบสมาชิกคลับช่าง & ติ๊กใส่ส่วนลดท้ายบิลอัตโนมัติ (Technician Club Ledger & 1-Click Order Discount)', items:[
+      '🎁 <b>ระบบตรวจสอบสมาชิกคลับช่างอัตโนมัติ (Auto Customer Club Check):</b> เมื่อพิมพ์ค้นหาหรือเลือกลูกค้าในหน้าสร้างออเดอร์ใหม่ (New Order) หรือเปิดดูรายละเอียดออเดอร์ (Order Detail / Edit) ระบบจะตรวจสอบฐานข้อมูลคลับช่าง (Mechanic Club Ledger) ดึงระดับสมาชิก (Bronze, Silver 3%, Gold 5%, Platinum 7%), รหัสสมาชิก (MC-xxxx), แต้มสะสม และยอดซื้อสะสมมาแสดงในการ์ด Business Partner ลูกค้าทันที',
+      '☑ <b>ช่องติ๊กถูกนำส่วนลดใส่ท้ายบิล (1-Click Discount to Bill):</b> ป้องกันปัญหาพนักงานขายลืมให้ส่วนลดแก่สมาชิกช่าง เพียงคลิกติ๊กถูกที่ช่องสิทธิ์ส่วนลด ระบบจะนำเปอร์เซ็นต์ส่วนลดของระดับสมาชิกช่าง (เช่น Silver 3%, Gold 5%, Platinum 7%) ไปใส่ในช่อง Discount ท้ายบิลและคำนวณยอดสุทธิ (Grand Total) ให้อัตโนมัติทันที',
+      '⚠️ <b>การแจ้งเตือนเด่นชัดป้องกันการลืม (Anti-forget Alert):</b> หากลูกค้ามีสิทธิ์ส่วนลดแต่ในบิลยังไม่ได้ใส่ส่วนลด ระบบจะแสดงกล่องแจ้งเตือนสีส้มเด่นชัดเพื่อเตือนพนักงานขายให้ติ๊กรับสิทธิ์ และเมื่อติ๊กใช้แล้วจะเปลี่ยนเป็นป้ายยืนยันสีเขียวพร้อมแสดงปุ่มลัด [🏷️ คลับช่าง] ข้างช่อง Discount ท้ายบิล',
+      '📇 <b>เชื่อมโยงบัตรสมาชิกช่างดิจิทัล (Digital VIP Pass):</b> เพิ่มปุ่มกดดูบัตรสมาชิกดิจิทัลได้โดยตรงจากฟอร์มออเดอร์ ตรวจสอบสิทธิประโยชน์ โค้ดคูปองส่วนลดประจำตัว และแต้มสะสมได้สะดวกรวดเร็ว',
+      '🧹 <b>Cache Refresh:</b> อัปเดตเวอร์ชันระบบเป็น v4.08 และล้างแคชอัตโนมัติ'
+    ]},
+    { v:'4.07', date:'2026-11-17', badge:'Stable', color:'#16a34a', bg:'#dcfce7', title:'เพิ่มพิมพ์ฉลากสินค้าขนาด 10x15 cm (4 รายการ/แผ่น) ในใบรับสินค้าเข้าสต๊อก (v4.07)', items:[
       '🏷️ <b>พิมพ์ฉลากสินค้า 10x15 cm (4 รายการต่อแผ่น):</b> เพิ่มปุ่มพิมพ์ฉลากสินค้าสติกเกอร์ความร้อน (Thermal Label) ขนาด 100x150 mm จัดวางอย่างลงตัว 4 รายการสินค้าต่อ 1 แผ่นกระดาษ รองรับทั้งฟอร์มรับเข้าสต๊อก (Goods Receipt Modal), หน้ารายละเอียดใบรับเข้าที่บันทึกแล้ว, ตารางประวัติใบรับสินค้า และหน้าใบสั่งซื้อ (PO)',
       '📦 <b>รูปแบบฉลากมาตรฐานสวยงามชัดเจน:</b> แต่ละช่องฉลากระบุเลขที่เอกสารรับเข้า (GR No.), วันที่, ผู้จำหน่าย, แบรนด์ SEALTHAI.COM, ช่องแสดงจำนวน QTY ตัวเลขโตเด่นชัด, ชื่อสินค้า, รหัส SKU, Part No, เลขที่ SO อ้างอิง และแถบข้อมูลติดต่อท้ายฉลาก',
       '📏 <b>ป้องกันการล้นหน้าสำหรับเครื่องพิมพ์สติกเกอร์ความร้อน:</b> คำนวณความสูงช่องละ 34.2 มม. พร้อมขอบกระดาษ 100x150 มม. เป๊ะ 100% ไม่เลื่อนหลุดหน้า พร้อมช่องสำรองตำแหน่งสำหรับกระดาษสติกเกอร์แบบ 4 ดวงตัดสำเร็จ',
