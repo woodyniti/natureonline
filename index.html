@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.12.3</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.13.0</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.12.3';
-const DISPLAY_APP_VERSION = 'v4.12.3';
+const CURRENT_APP_VERSION = 'sealthai-v4.13.0';
+const DISPLAY_APP_VERSION = 'v4.13.0';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.12.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.12.3 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.0 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2620,6 +2620,7 @@ async function afterLogin(user) {
 }
 
 async function doLogout() {
+  invalidateStockPlanningCache();
   try {
     localStorage.removeItem('sealthai_active_user');
   } catch(e) {}
@@ -29111,6 +29112,9 @@ async function purchase() {
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
               <div style="font-weight:700;font-size:13.5px;color:#1e293b">รายการ SKU ที่สั่งซื้อ</div>
               <div style="display:flex;gap:6px">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openPOStockPlanningSuggestModal('po')" style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#fff;border:none;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 6px rgba(2,132,199,0.25)" title="ดูสินค้าที่ระบบคำนวณและแนะนำให้สั่งซื้อจาก Stock Planning">
+                  💡 สินค้าแนะนำสั่งซื้อ (Stock Planning) <span id="po-suggest-count-badge" class="badge" style="background:#fff;color:#0369a1;font-size:10px;padding:1px 6px;border-radius:10px;display:none">0</span>
+                </button>
                 <button type="button" class="btn btn-secondary btn-sm" onclick="openSelectSOModalForPO()" style="background:#f0fdf4;color:#15803d;border:1px solid #86efac;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px" title="ดึงรายการสินค้าจาก Sales Order (SO) เข้า PO นี้">
                   📥 ดึงสินค้าจาก SO
                 </button>
@@ -29120,6 +29124,7 @@ async function purchase() {
                 <button type="button" onclick="addPOItem()" style="background:#f0f9f5;border:1px solid var(--accent);border-radius:6px;padding:5px 12px;color:var(--accent);cursor:pointer;font-size:13px;font-weight:700">+ เพิ่ม SKU</button>
               </div>
             </div>
+            <div id="po-stock-planning-recommend-bar" style="display:none"></div>
             <div id="po-items"></div>
           </div>
 
@@ -29773,6 +29778,7 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   // โหลด supplier dropdown หลัง modal เปิด
   await loadSupplierDropdown('po-supplier-sel', preferredSupplierId || null);
   await loadPOSOSources();
+  updatePOSuggestionBadge();
 }
 
 // ── SO Source Integration for PO (ดึงข้อมูลสินค้าจาก Sales Order เข้า PO) ──
@@ -30102,6 +30108,829 @@ window.openSelectSOModalForPO = openSelectSOModalForPO;
 window.importSOToPO = importSOToPO;
 window.loadPOSOSources = loadPOSOSources;
 window.renderSOListForPO = renderSOListForPO;
+
+// ── STOCK PLANNING SUGGESTIONS FOR PURCHASE ORDER (v4.13) ──
+let _lastPlanningComputedAt = 0;
+let _lastPlanningShopId = null;
+let _planningLoadPromise = null;
+let _poSuggestTarget = 'po';
+let _poSuggestCurrentTab = 'repeat_target';
+let _poSuggestCurrentCat = '';
+let _poSuggestKeyword = '';
+let _poSuggestMinQtyOnly = true;
+let _poSugSelectedMap = new Map(); // prodId -> { qty, price, product }
+
+function fmtPOMoney(amount, cur = 'THB') {
+  const n = Number(amount) || 0;
+  const sym = cur === 'USD' ? '$' : '฿';
+  const decimals = cur === 'USD' ? 3 : 2;
+  return sym + n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+
+async function getOrComputeStockPlanning(force = false) {
+  const shopId = currentShop?.id || null;
+  const now = Date.now();
+
+  // If different shop, invalidate cache
+  if (_lastPlanningShopId !== shopId) {
+    _lastPlanningComputedAt = 0;
+    _lastPlanningShopId = shopId;
+  }
+
+  // Return cache if fresh and not forced
+  if (!force && Array.isArray(planningProducts) && planningProducts.length > 0 && (now - _lastPlanningComputedAt < 10 * 60 * 1000)) {
+    return planningProducts;
+  }
+
+  // Deduplicate concurrent load requests
+  if (_planningLoadPromise) {
+    return _planningLoadPromise;
+  }
+
+  _planningLoadPromise = (async () => {
+    try {
+      await loadStockPlanningData();
+      _lastPlanningComputedAt = Date.now();
+      _lastPlanningShopId = shopId;
+      return planningProducts;
+    } finally {
+      _planningLoadPromise = null;
+    }
+  })();
+
+  return _planningLoadPromise;
+}
+
+function invalidateStockPlanningCache() {
+  _lastPlanningComputedAt = 0;
+  _lastPlanningShopId = null;
+}
+
+async function updatePOSuggestionBadge() {
+  const badge = document.getElementById('po-suggest-count-badge');
+  const bar = document.getElementById('po-stock-planning-recommend-bar');
+  if (!badge && !bar) return;
+
+  try {
+    const list = await getOrComputeStockPlanning();
+    if (!list || !list.length) return;
+
+    // Filter items with suggestedQty > 0 and repeat / urgent status
+    const recommended = list.filter(p => p.suggestedQty > 0 && (p.repeatClass === 'high' || p.repeatClass === 'med' || p.status === 'urgent' || p.status === 'reorder'));
+    const count = recommended.length;
+
+    if (badge) {
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+
+    if (bar) {
+      if (count > 0) {
+        bar.style.display = 'flex';
+        bar.style.cssText = 'background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);border:1.5px solid #93c5fd;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:0 2px 6px rgba(59,130,246,0.1)';
+        bar.innerHTML = `
+          <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:280px">
+            <span style="font-size:22px">💡</span>
+            <div>
+              <div style="font-weight:700;font-size:13px;color:#1e40af">Stock Planning แนะนำสั่งซื้อสินค้า: พบ ${count} รายการที่ถึงรอบสั่งซื้อ / ขายซ้ำบ่อย</div>
+              <div style="font-size:11.5px;color:#3b82f6;margin-top:2px">ประเมินจากยอดขายย้อนหลัง, ความถี่การซื้อซ้ำ 2-3 รอบ/60วัน, อัตราวิ่งสต๊อก (Run-Rate) และจุดสั่งซื้อ ROP จริง</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <button type="button" class="btn btn-primary btn-sm" onclick="openPOStockPlanningSuggestModal('po')" style="background:#0284c7;border:none;font-weight:700;font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:5px;box-shadow:0 2px 4px rgba(2,132,199,0.3)">
+              🛒 ดูสินค้าแนะนำ & เลือกเข้า PO (${count}) ➜
+            </button>
+          </div>
+        `;
+      } else {
+        bar.style.display = 'none';
+        bar.innerHTML = '';
+      }
+    }
+  } catch (err) {
+    console.warn('updatePOSuggestionBadge error:', err);
+  }
+}
+
+async function openPOStockPlanningSuggestModal(target = 'po') {
+  _poSuggestTarget = target;
+  _poSuggestCurrentTab = 'repeat_target';
+  _poSuggestCurrentCat = '';
+  _poSuggestKeyword = '';
+  _poSuggestMinQtyOnly = true;
+  _poSugSelectedMap.clear();
+
+  document.getElementById('modal-po-stock-planning-suggest')?.remove();
+
+  let cur = 'THB';
+  let rate = 35;
+  let currentSupplierId = '';
+  let currentSupplierName = '';
+
+  if (target === 'po') {
+    cur = document.getElementById('po-currency')?.value || 'THB';
+    rate = Number(document.getElementById('po-exrate')?.value || 35);
+    currentSupplierId = document.getElementById('po-supplier-sel')?.value || '';
+    const sObj = (allSuppliers || []).find(s => s.id === currentSupplierId);
+    if (sObj) currentSupplierName = sObj.name;
+  } else if (target === 'batch-po') {
+    cur = 'THB';
+    rate = 35;
+    currentSupplierId = document.getElementById('bpo-supplier-sel')?.value || '';
+    const sObj = (allSuppliers || []).find(s => s.id === currentSupplierId);
+    if (sObj) currentSupplierName = sObj.name;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-po-stock-planning-suggest';
+  overlay.style.zIndex = typeof getNextModalZIndex === 'function' ? getNextModalZIndex() : '2100';
+
+  overlay.innerHTML = `
+    <div class="modal sap-modal-large" style="width:min(1360px,calc(100vw - 32px));max-width:min(1420px,calc(100vw - 32px));max-height:94vh;padding:0;border:none;background:transparent;box-shadow:none;display:flex;flex-direction:column">
+      <div class="sap-window" style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;box-shadow:0 12px 36px rgba(0,0,0,0.25);overflow:hidden;display:flex;flex-direction:column;flex:1;max-height:94vh">
+        
+        <!-- Header -->
+        <div class="sap-header-bar" style="background:linear-gradient(180deg,#f8fafc 0%,#e2e8f0 100%);border-top:4px solid #0284c7;border-bottom:1.5px solid #cbd5e1;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:20px">💡</span>
+            <div>
+              <div style="font-weight:700;font-size:14.5px;color:#0f172a">สินค้าแนะนำสั่งซื้อเข้า PO จาก Stock Planning (Smart Replenishment)</div>
+              <div style="font-size:11.5px;color:#64748b;margin-top:2px">
+                แนะนำจากความถี่ซื้อซ้ำ 2-3 รอบ/2 เดือน, อัตราวิ่งสต๊อก (Run-Rate), จุดสั่งซื้อ (ROP) และ Safety Stock อัตโนมัติ
+              </div>
+            </div>
+            ${currentSupplierName ? `<span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">🏢 Supplier: ${escapeHTML(currentSupplierName)}</span>` : ''}
+            <span class="badge" style="background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px">สกุลเงิน: ${cur}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closePOSuggestModal()" style="padding:4px 10px;font-weight:700">✕ ปิด</button>
+          </div>
+        </div>
+
+        <!-- Filter & Tab Toolbar -->
+        <div style="padding:10px 16px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;flex-direction:column;gap:10px">
+          <!-- Quick Tabs -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button type="button" class="btn btn-sm posug-tab-btn" data-tab="repeat_target" onclick="switchPOSuggestTab('repeat_target')" style="background:#0284c7;color:#fff;border:1px solid #0284c7;font-weight:700;font-size:12px;border-radius:6px;padding:5px 12px">
+              🎯 ลูกค้าสั่งซ้ำบ่อย (≥ 2-3 รอบ/2ด.)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary posug-tab-btn" data-tab="hot_selling" onclick="switchPOSuggestTab('hot_selling')" style="font-weight:700;font-size:12px;border-radius:6px;padding:5px 12px">
+              🔥 สินค้าขายดี / ขายบ่อย (Class A)
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary posug-tab-btn" data-tab="urgent_oos" onclick="switchPOSuggestTab('urgent_oos')" style="font-weight:700;font-size:12px;border-radius:6px;padding:5px 12px">
+              🔴 สต๊อกหมด / วิกฤต (Critical OOS)
+            </button>
+            ${currentSupplierId ? `
+            <button type="button" class="btn btn-sm btn-secondary posug-tab-btn" data-tab="matched_supplier" onclick="switchPOSuggestTab('matched_supplier')" style="font-weight:700;font-size:12px;border-radius:6px;padding:5px 12px">
+              🏢 เฉพาะของ ${escapeHTML(currentSupplierName || 'Supplier นี้')}
+            </button>
+            ` : ''}
+            <button type="button" class="btn btn-sm btn-secondary posug-tab-btn" data-tab="all_suggested" onclick="switchPOSuggestTab('all_suggested')" style="font-weight:700;font-size:12px;border-radius:6px;padding:5px 12px">
+              📋 สินค้าแนะนำทั้งหมด (All Suggestions)
+            </button>
+          </div>
+
+          <!-- Search & Category Filters -->
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div style="flex:1;min-width:240px;position:relative">
+              <input type="text" id="posug-search" placeholder="🔍 ค้นหาชื่อสินค้า, รหัส SKU, Supplier SKU, Part No, ขนาด..." oninput="onPOSuggestSearch(this.value)" style="width:100%;padding:6px 12px;font-size:13px;border:1.5px solid #cbd5e1;border-radius:6px;box-sizing:border-box">
+            </div>
+            <select id="posug-cat-filter" onchange="onPOSuggestCategoryChange(this.value)" style="background:#fff;border:1.5px solid #cbd5e1;border-radius:6px;padding:6px 10px;font-size:13px;color:#0f172a;font-weight:600;min-width:180px">
+              <option value="">📂 ทุกหมวดหมู่สินค้า</option>
+            </select>
+            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#334155;cursor:pointer;background:#f8fafc;padding:5px 10px;border-radius:6px;border:1px solid #e2e8f0;white-space:nowrap">
+              <input type="checkbox" id="posug-min-qty-only" checked onchange="onPOSuggestMinQtyToggle(this.checked)">
+              เฉพาะรายการที่ระบบแนะนำสั่ง > 0
+            </label>
+            <div style="margin-left:auto;font-size:12px;color:#64748b" id="posug-item-count-label">
+              กำลังคำนวณข้อมูล...
+            </div>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="sap-matrix-wrap" style="flex:1;overflow:auto;margin:0;border-radius:0;background:#fff;min-height:360px" id="posug-table-wrap">
+          <div style="padding:40px;text-align:center;color:#64748b">
+            <div class="spinner" style="margin:0 auto 12px"></div>
+            กำลังวิเคราะห์ข้อมูล Stock Planning & อัตราการซื้อซ้ำ...
+          </div>
+        </div>
+
+        <!-- Footer / Batch Action Bar -->
+        <div class="sap-footer" style="background:#f8fafc;border-top:1.5px solid #cbd5e1;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:#1e293b;cursor:pointer">
+              <input type="checkbox" id="posug-select-all" onchange="toggleAllPOSuggestions(this.checked)">
+              เลือกทั้งหมด
+            </label>
+            <span style="font-size:12.5px;color:#475569">
+              เลือกแล้ว <b id="posug-sel-count" style="color:#0284c7;font-size:14px">0</b> รายการ | 
+              รวม <b id="posug-sel-qty" style="color:#0f172a">0</b> ชิ้น | 
+              มูลค่าสั่งซื้อรวม <b style="color:#15803d;font-size:14px"><span id="posug-sel-val">${cur === 'USD' ? '$' : '฿'}0.00</span></b>
+            </span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <button type="button" class="btn btn-secondary" onclick="closePOSuggestModal()" style="font-weight:600">ยกเลิก</button>
+            <button type="button" id="posug-btn-add-batch" class="btn btn-primary" onclick="addBatchSuggestedItemsToPO()" disabled style="background:#15803d;border:none;font-weight:700;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 6px rgba(21,128,61,0.3)">
+              🛒 + เพิ่มรายการที่เลือกเข้า PO (<span id="posug-btn-add-count">0</span>)
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+  if (typeof ensureModalCloseButton === 'function') {
+    ensureModalCloseButton(overlay, closePOSuggestModal);
+  }
+
+  // Background fetch/compute planning products
+  try {
+    const list = await getOrComputeStockPlanning();
+    
+    // Populate categories
+    const catSel = document.getElementById('posug-cat-filter');
+    if (catSel && list) {
+      const cats = [...new Set(list.map(p => p.category).filter(Boolean))].sort();
+      cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        catSel.appendChild(opt);
+      });
+    }
+
+    renderPOSuggestionsTable();
+  } catch (err) {
+    console.error('Error loading stock planning suggestions:', err);
+    const wrap = document.getElementById('posug-table-wrap');
+    if (wrap) wrap.innerHTML = `<div style="padding:30px;color:var(--red);text-align:center">⚠️ เกิดข้อผิดพลาดในการโหลดข้อมูล Stock Planning: ${escapeHTML(err.message || String(err))}</div>`;
+  }
+}
+
+function closePOSuggestModal() {
+  document.getElementById('modal-po-stock-planning-suggest')?.remove();
+}
+
+function switchPOSuggestTab(tab) {
+  _poSuggestCurrentTab = tab;
+  document.querySelectorAll('.posug-tab-btn').forEach(btn => {
+    if (btn.dataset.tab === tab) {
+      btn.style.background = '#0284c7';
+      btn.style.color = '#fff';
+      btn.style.borderColor = '#0284c7';
+      btn.classList.remove('btn-secondary');
+    } else {
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.borderColor = '';
+      btn.classList.add('btn-secondary');
+    }
+  });
+  renderPOSuggestionsTable();
+}
+
+let _poSugSearchTimeout = null;
+function onPOSuggestSearch(val) {
+  clearTimeout(_poSugSearchTimeout);
+  _poSugSearchTimeout = setTimeout(() => {
+    _poSuggestKeyword = (val || '').trim().toLowerCase();
+    renderPOSuggestionsTable();
+  }, 200);
+}
+
+function onPOSuggestCategoryChange(val) {
+  _poSuggestCurrentCat = val || '';
+  renderPOSuggestionsTable();
+}
+
+function onPOSuggestMinQtyToggle(checked) {
+  _poSuggestMinQtyOnly = checked;
+  renderPOSuggestionsTable();
+}
+
+function renderPOSuggestionsTable() {
+  const wrap = document.getElementById('posug-table-wrap');
+  const countLabel = document.getElementById('posug-item-count-label');
+  if (!wrap) return;
+
+  const list = planningProducts || [];
+  if (!list.length) {
+    wrap.innerHTML = '<div style="padding:40px;text-align:center;color:#64748b">ไม่พบข้อมูลสินค้าในการวางแผนสต๊อก</div>';
+    if (countLabel) countLabel.textContent = 'ไม่พบข้อมูล';
+    return;
+  }
+
+  let cur = 'THB';
+  let rate = 35;
+  let currentSupplierId = '';
+
+  if (_poSuggestTarget === 'po') {
+    cur = document.getElementById('po-currency')?.value || 'THB';
+    rate = Number(document.getElementById('po-exrate')?.value || 35);
+    currentSupplierId = document.getElementById('po-supplier-sel')?.value || '';
+  } else if (_poSuggestTarget === 'batch-po') {
+    cur = 'THB';
+    rate = 35;
+    currentSupplierId = document.getElementById('bpo-supplier-sel')?.value || '';
+  }
+
+  // Filter items
+  let filtered = list;
+
+  // 1. Min Suggested Qty Filter
+  if (_poSuggestMinQtyOnly) {
+    filtered = filtered.filter(p => p.suggestedQty > 0);
+  }
+
+  // 2. Tab Filter
+  if (_poSuggestCurrentTab === 'repeat_target') {
+    filtered = filtered.filter(p => p.orderCount60 >= 2);
+  } else if (_poSuggestCurrentTab === 'hot_selling') {
+    filtered = filtered.filter(p => p.abcClass === 'A' || p.sales60 >= 5);
+  } else if (_poSuggestCurrentTab === 'urgent_oos') {
+    filtered = filtered.filter(p => p.status === 'urgent' || (Number(p.stock_qty || 0) <= 0 && p.sales90 > 0));
+  } else if (_poSuggestCurrentTab === 'matched_supplier') {
+    filtered = filtered.filter(p => currentSupplierId && p.preferred_supplier_id === currentSupplierId);
+  } else if (_poSuggestCurrentTab === 'all_suggested') {
+    // all with suggestions or reorder flags
+    filtered = filtered.filter(p => p.suggestedQty > 0 || p.orderCount60 >= 2 || p.status === 'urgent' || p.status === 'reorder');
+  }
+
+  // 3. Category Filter
+  if (_poSuggestCurrentCat) {
+    filtered = filtered.filter(p => p.category === _poSuggestCurrentCat);
+  }
+
+  // 4. Keyword Search Filter
+  if (_poSuggestKeyword) {
+    filtered = filtered.filter(p => {
+      const fields = [
+        p.name || '',
+        p.sku || '',
+        p.supplier_sku || '',
+        p.part_no || '',
+        p.category || '',
+        p.inner_diameter && p.outer_diameter ? `${p.inner_diameter}x${p.outer_diameter}` : '',
+        p.material || ''
+      ].map(x => String(x).toLowerCase());
+      return fields.some(f => f.includes(_poSuggestKeyword));
+    });
+  }
+
+  // Sort: Priority to urgent OOS, then high repeat, then suggested qty descending
+  filtered.sort((a, b) => {
+    const aUrgent = (a.status === 'urgent' || Number(a.stock_qty || 0) <= 0) ? 1 : 0;
+    const bUrgent = (b.status === 'urgent' || Number(b.stock_qty || 0) <= 0) ? 1 : 0;
+    if (bUrgent !== aUrgent) return bUrgent - aUrgent;
+
+    const aRepeat = a.orderCount60 || 0;
+    const bRepeat = b.orderCount60 || 0;
+    if (bRepeat !== aRepeat) return bRepeat - aRepeat;
+
+    return (b.suggestedQty || 0) - (a.suggestedQty || 0);
+  });
+
+  if (countLabel) {
+    countLabel.innerHTML = `แสดง <b>${filtered.length}</b> รายการ (จากทั้งหมด ${list.length} SKU)`;
+  }
+
+  if (!filtered.length) {
+    wrap.innerHTML = `
+      <div style="padding:40px;text-align:center;color:#64748b">
+        <div style="font-size:32px;margin-bottom:8px">🔍</div>
+        <div style="font-weight:700;color:#1e293b;font-size:14px">ไม่พบสินค้าที่ตรงกับเงื่อนไข</div>
+        <div style="font-size:12px;margin-top:4px">ลองปรับเปลี่ยนแถบตัวกรอง หรือค้นหาด้วยคำอื่น หรือยกเลิกการติ๊ก "เฉพาะรายการที่แนะนำสั่ง > 0"</div>
+      </div>
+    `;
+    updatePOSuggestSummary();
+    return;
+  }
+
+  // Build lookups for already added items in PO
+  const poItemProdIds = new Set();
+  const poItemSkus = new Set();
+  if (_poSuggestTarget === 'po' && typeof poItems !== 'undefined') {
+    poItems.forEach(it => {
+      if (it.product_id) poItemProdIds.add(it.product_id);
+      if (it.sku) poItemSkus.add(it.sku);
+    });
+  } else if (_poSuggestTarget === 'batch-po' && typeof _batchPOItems !== 'undefined') {
+    _batchPOItems.forEach(it => {
+      if (it.product_id) poItemProdIds.add(it.product_id);
+      if (it.sku) poItemSkus.add(it.sku);
+    });
+  }
+
+  // Render Table
+  let html = `
+    <table class="sap-matrix-table" style="width:100%;min-width:1150px;border-collapse:collapse">
+      <thead>
+        <tr style="position:sticky;top:0;z-index:3;background:#f8fafc;border-bottom:2px solid #cbd5e1">
+          <th style="width:40px;text-align:center;padding:8px">
+            <input type="checkbox" id="posug-th-check-all" onchange="toggleAllPOSuggestions(this.checked)">
+          </th>
+          <th style="width:40px;text-align:center">#</th>
+          <th style="width:300px;text-align:left">สินค้า & หมวดหมู่ (Product & Specs)</th>
+          <th style="width:190px;text-align:left">พฤติกรรมการขาย (Sales & Repeat)</th>
+          <th style="width:150px;text-align:center">สต๊อกจริง & ROP</th>
+          <th style="width:110px;text-align:right">ราคาซื้อ/หน่วย (${cur})</th>
+          <th style="width:130px;text-align:center">จำนวนแนะนำสั่ง</th>
+          <th style="width:120px;text-align:right">รวมราคาซื้อ (${cur})</th>
+          <th style="width:90px;text-align:center">จัดการ</th>
+        </tr>
+      </thead>
+      <tbody>
+  `;
+
+  filtered.forEach((p, idx) => {
+    const buyPrice = getPOProductBuyPrice(p, cur, rate);
+    
+    // Check if user already customized quantity in this session
+    const savedState = _poSugSelectedMap.get(p.id);
+    const isChecked = Boolean(savedState);
+    const sugQty = savedState ? savedState.qty : (p.suggestedQty > 0 ? p.suggestedQty : Math.max(1, p.moq || 1));
+    const subtotal = sugQty * buyPrice;
+    const stockVal = Number(p.stock_qty) || 0;
+    const inTransitVal = Number(p.inTransit) || 0;
+
+    const isAlreadyInPO = poItemProdIds.has(p.id) || (p.sku && poItemSkus.has(p.sku));
+
+    // Repeat Badge
+    let repeatBadge = '';
+    if (p.orderCount60 >= 3) {
+      repeatBadge = `<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:10.5px;font-weight:700">🔥 ซื้อซ้ำสูง (${p.orderCount60} รอบ/2ด.)</span>`;
+    } else if (p.orderCount60 === 2) {
+      repeatBadge = `<span class="badge" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;font-size:10.5px;font-weight:700">🟡 ซื้อซ้ำ (${p.orderCount60} รอบ/2ด.)</span>`;
+    } else if (p.orderCount60 === 1) {
+      repeatBadge = `<span class="badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-size:10.5px">⚪ สั่ง 1 รอบ/2ด.</span>`;
+    }
+
+    // ABC Class Badge
+    let abcBadge = '';
+    if (p.abcClass === 'A') {
+      abcBadge = `<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700">⭐ Class A (ขายดี)</span>`;
+    } else if (p.abcClass === 'B') {
+      abcBadge = `<span class="badge" style="background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;font-size:10px">Class B</span>`;
+    }
+
+    // Stock Status Badge
+    let stockColor = '#15803d';
+    let stockBg = '#dcfce7';
+    let stockText = `${fmt(stockVal)} ชิ้น`;
+    if (stockVal <= 0) {
+      stockColor = '#b91c1c';
+      stockBg = '#fee2e2';
+      stockText = 'สต๊อกหมด (0)';
+    } else if (stockVal < (p.rop || 5)) {
+      stockColor = '#b45309';
+      stockBg = '#fef3c7';
+      stockText = `${fmt(stockVal)} ชิ้น (ต่ำกว่า ROP)`;
+    }
+
+    const rowBg = idx % 2 === 0 ? '#fff' : '#f8fafc';
+
+    html += `
+      <tr style="background:${rowBg};border-bottom:1px solid #e2e8f0" id="posug-row-${p.id}">
+        <td style="text-align:center;padding:6px">
+          <input type="checkbox" class="posug-row-check" data-pid="${p.id}" data-price="${buyPrice}" ${isChecked ? 'checked' : ''} onchange="onPOSuggestRowCheckChange('${p.id}')">
+        </td>
+        <td style="text-align:center;font-size:11px;color:#94a3b8;font-family:var(--mono)">${idx + 1}</td>
+        
+        <!-- Product & Specs -->
+        <td style="padding:6px 8px">
+          <div style="font-weight:700;font-size:12.5px;color:#0f172a">${escapeHTML(p.name)}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;align-items:center">
+            ${p.sku ? `<span style="font-size:11px;background:#f1f5f9;color:#334155;padding:1px 5px;border-radius:4px;font-family:var(--mono)">SKU: ${escapeHTML(p.sku)}</span>` : ''}
+            ${p.supplier_sku ? `<span style="font-size:11px;background:#eff6ff;color:#1e40af;padding:1px 5px;border-radius:4px;font-family:var(--mono)">Supp SKU: ${escapeHTML(p.supplier_sku)}</span>` : ''}
+            ${p.category ? `<span class="badge" style="background:#f1f5f9;color:#64748b;font-size:10px">${escapeHTML(p.category)}</span>` : ''}
+            ${isAlreadyInPO ? `<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700">✓ มีใน PO แล้ว</span>` : ''}
+          </div>
+        </td>
+
+        <!-- Sales & Repeat Behavior -->
+        <td style="padding:6px 8px;font-size:11.5px">
+          <div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap">
+            ${repeatBadge}
+            ${abcBadge}
+          </div>
+          <div style="color:#475569;margin-top:3px">
+            ยอดขาย 60 วัน: <b>${fmt(p.sales60 || 0)}</b> ชิ้น 
+            ${p.custCount60 ? `· ลูกค้า <b>${p.custCount60}</b> ราย` : ''}
+          </div>
+          <div style="font-size:10.5px;color:#94a3b8">
+            วิ่งเฉลี่ย (ADS): ${(p.adsWeighted || 0).toFixed(2)} ชิ้น/วัน
+          </div>
+        </td>
+
+        <!-- Stock & ROP -->
+        <td style="text-align:center;padding:6px 8px;font-size:11.5px">
+          <div>
+            <span style="background:${stockBg};color:${stockColor};font-weight:700;padding:2px 6px;border-radius:4px;font-size:11px">
+              ${stockText}
+            </span>
+          </div>
+          <div style="font-size:11px;color:#64748b;margin-top:3px">
+            ROP: <b>${fmt(p.rop || 0)}</b> · รอเข้า: <b>${fmt(inTransitVal)}</b>
+          </div>
+        </td>
+
+        <!-- Buy Price -->
+        <td style="text-align:right;padding:6px 8px;font-weight:600;font-size:12.5px;color:#0f172a">
+          ${fmtPOMoney(buyPrice, cur)}
+        </td>
+
+        <!-- Suggested Qty (Editable) -->
+        <td style="text-align:center;padding:6px 8px">
+          <input type="number" id="posug-qty-${p.id}" value="${sugQty}" min="1" step="1" 
+            oninput="onPOSuggestQtyChange('${p.id}', ${buyPrice})"
+            style="width:75px;padding:4px 6px;text-align:center;font-size:13px;font-weight:700;border:1.5px solid #0284c7;border-radius:6px;background:#f0f9ff;color:#0369a1">
+          <div style="font-size:10px;color:#64748b;margin-top:2px">
+            MOQ: ${p.moq || 1} ${p.packSize > 1 ? `· แพ็ค ${p.packSize}` : ''}
+          </div>
+        </td>
+
+        <!-- Subtotal -->
+        <td style="text-align:right;padding:6px 8px;font-weight:700;font-size:12.5px;color:#15803d" id="posug-subtotal-${p.id}">
+          ${fmtPOMoney(subtotal, cur)}
+        </td>
+
+        <!-- Action Add Single Item -->
+        <td style="text-align:center;padding:6px 8px">
+          <button type="button" class="btn btn-sm" onclick="addSuggestedItemToPO('${_poSuggestTarget}', '${p.id}')"
+            style="background:#0284c7;color:#fff;border:none;font-weight:700;font-size:11.5px;padding:4px 10px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 3px rgba(2,132,199,0.25)">
+            + เพิ่ม
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  syncPOSuggestHeaderChecks();
+  updatePOSuggestSummary();
+}
+
+function onPOSuggestQtyChange(pid, buyPrice) {
+  const inp = document.getElementById('posug-qty-' + pid);
+  const subtotalEl = document.getElementById('posug-subtotal-' + pid);
+  const cur = (_poSuggestTarget === 'po' ? (document.getElementById('po-currency')?.value || 'THB') : 'THB');
+  if (inp && subtotalEl) {
+    const q = Math.max(1, Math.round(Number(inp.value) || 1));
+    const sub = q * buyPrice;
+    subtotalEl.textContent = fmtPOMoney(sub, cur);
+    
+    // Update state map if selected
+    if (_poSugSelectedMap.has(pid)) {
+      const state = _poSugSelectedMap.get(pid);
+      state.qty = q;
+    }
+  }
+  updatePOSuggestSummary();
+}
+
+function onPOSuggestRowCheckChange(pid) {
+  const rowCheck = document.querySelector(`.posug-row-check[data-pid="${pid}"]`);
+  const qtyInp = document.getElementById('posug-qty-' + pid);
+  const q = qtyInp ? Math.max(1, Math.round(Number(qtyInp.value) || 1)) : 1;
+  const price = rowCheck ? Number(rowCheck.dataset.price) || 0 : 0;
+
+  if (rowCheck && rowCheck.checked) {
+    _poSugSelectedMap.set(pid, { qty: q, price });
+  } else {
+    _poSugSelectedMap.delete(pid);
+  }
+
+  syncPOSuggestHeaderChecks();
+  updatePOSuggestSummary();
+}
+
+function syncPOSuggestHeaderChecks() {
+  const rowChecks = Array.from(document.querySelectorAll('.posug-row-check'));
+  const allChecked = rowChecks.length > 0 && rowChecks.every(ck => ck.checked);
+  const th = document.getElementById('posug-th-check-all');
+  if (th) th.checked = allChecked;
+  const bottomAll = document.getElementById('posug-select-all');
+  if (bottomAll) bottomAll.checked = allChecked;
+}
+
+function toggleAllPOSuggestions(checked) {
+  document.querySelectorAll('.posug-row-check').forEach(ck => {
+    ck.checked = checked;
+    const pid = ck.dataset.pid;
+    const price = Number(ck.dataset.price) || 0;
+    const qtyInp = document.getElementById('posug-qty-' + pid);
+    const q = qtyInp ? Math.max(1, Math.round(Number(qtyInp.value) || 1)) : 1;
+
+    if (checked) {
+      _poSugSelectedMap.set(pid, { qty: q, price });
+    } else {
+      _poSugSelectedMap.delete(pid);
+    }
+  });
+
+  const th = document.getElementById('posug-th-check-all');
+  if (th) th.checked = checked;
+  const bottomAll = document.getElementById('posug-select-all');
+  if (bottomAll) bottomAll.checked = checked;
+  updatePOSuggestSummary();
+}
+
+function updatePOSuggestSummary() {
+  const cur = (_poSuggestTarget === 'po' ? (document.getElementById('po-currency')?.value || 'THB') : 'THB');
+  const count = _poSugSelectedMap.size;
+  let totalQty = 0;
+  let totalVal = 0;
+
+  _poSugSelectedMap.forEach(item => {
+    const q = Math.max(1, item.qty || 1);
+    totalQty += q;
+    totalVal += (q * (item.price || 0));
+  });
+
+  const countEl = document.getElementById('posug-sel-count');
+  if (countEl) countEl.textContent = count;
+  const qtyEl = document.getElementById('posug-sel-qty');
+  if (qtyEl) qtyEl.textContent = fmt(totalQty);
+  const valEl = document.getElementById('posug-sel-val');
+  if (valEl) valEl.textContent = fmtPOMoney(totalVal, cur);
+
+  const btnAdd = document.getElementById('posug-btn-add-batch');
+  const btnCount = document.getElementById('posug-btn-add-count');
+  if (btnAdd) btnAdd.disabled = (count === 0);
+  if (btnCount) btnCount.textContent = count;
+}
+
+// ── Shared Helper to Upsert an Item into PO Target ──
+function upsertSuggestedItemToTarget(target, p, qty, buyPrice) {
+  if (target === 'po') {
+    const existing = poItems.find(it => it.product_id === p.id || (p.sku && it.sku === p.sku));
+    if (existing) {
+      existing.qty_ordered = Number(existing.qty_ordered || 0) + qty;
+      if (!existing.unit_cost && buyPrice > 0) existing.unit_cost = buyPrice;
+      return { isNew: false, name: p.name, qty: existing.qty_ordered };
+    } else {
+      poItems.push({
+        product_id: p.id,
+        product_name: p.name,
+        sku: p.sku || p.supplier_sku || '',
+        qty_ordered: qty,
+        unit_cost: buyPrice > 0 ? buyPrice : '',
+        internal_note: `Stock Planning แนะนำ (${p.repeatLabel || p.statusLabel || 'Reorder'})`
+      });
+      return { isNew: true, name: p.name, qty };
+    }
+  } else if (target === 'batch-po') {
+    if (typeof _batchPOItems !== 'undefined') {
+      const existing = _batchPOItems.find(it => it.product_id === p.id || (p.sku && it.sku === p.sku));
+      if (existing) {
+        existing.qty_po = Number(existing.qty_po || 0) + qty;
+        existing.selected = true;
+        if (!existing.unit_cost && buyPrice > 0) existing.unit_cost = buyPrice;
+        return { isNew: false, name: p.name, qty: existing.qty_po };
+      } else {
+        _batchPOItems.push({
+          id: 'bpoi_' + Math.random().toString(36).slice(2, 9),
+          order_id: null,
+          order_no: 'Stock Planning (แนะนำสั่ง)',
+          order_date: today(),
+          customer_name: 'สินค้าแนะนำสั่งซื้อ',
+          product_id: p.id,
+          product_name: p.name,
+          sku: p.sku || '',
+          supplier_sku: p.supplier_sku || p.part_no || '',
+          part_no: p.part_no || '',
+          supplier_description: p.supplier_description || '',
+          qty_sold: 0,
+          qty_po: qty,
+          cost_price: buyPrice,
+          unit_cost: buyPrice,
+          selected: true
+        });
+        return { isNew: true, name: p.name, qty };
+      }
+    }
+  }
+  return null;
+}
+
+function addSuggestedItemToPO(target, prodId) {
+  const p = (planningProducts || []).find(x => x.id === prodId) || (allProducts || []).find(x => x.id === prodId);
+  if (!p) { toast('ไม่พบข้อมูลสินค้า', 'error'); return; }
+
+  const qtyInp = document.getElementById('posug-qty-' + prodId);
+  const qty = qtyInp ? Math.max(1, Math.round(Number(qtyInp.value) || 1)) : Math.max(1, p.suggestedQty || 1);
+
+  let cur = 'THB';
+  let rate = 35;
+  if (target === 'po') {
+    cur = document.getElementById('po-currency')?.value || 'THB';
+    rate = Number(document.getElementById('po-exrate')?.value || 35);
+  }
+  const buyPrice = getPOProductBuyPrice(p, cur, rate);
+
+  const res = upsertSuggestedItemToTarget(target, p, qty, buyPrice);
+
+  if (target === 'po') {
+    renderPOItems();
+    calcPOTotal();
+    markUnsavedForm(document.getElementById('modal-po'));
+    if (res?.isNew) {
+      toast(`🛒 เพิ่ม ${p.name} จำนวน ${qty} ชิ้น เข้า PO แล้วค่ะ ✓`, 'success');
+    } else {
+      toast(`🛒 ปรับเพิ่มจำนวน ${p.name} เป็น ${res?.qty} ชิ้นแล้วค่ะ`, 'success');
+    }
+  } else if (target === 'batch-po') {
+    if (typeof renderBatchPOItemsTable === 'function') renderBatchPOItemsTable();
+    if (typeof calcBatchPOTotals === 'function') calcBatchPOTotals();
+    if (res?.isNew) {
+      toast(`🛒 เพิ่ม ${p.name} เข้า Batch PO เรียบร้อยแล้วค่ะ ✓`, 'success');
+    } else {
+      toast(`🛒 ปรับเพิ่มจำนวน ${p.name} ใน Batch PO แล้วค่ะ`, 'success');
+    }
+  }
+
+  // Update badge on row if rendered
+  const row = document.getElementById('posug-row-' + prodId);
+  if (row) {
+    const nameCell = row.querySelector('td:nth-child(3) div:nth-child(2)');
+    if (nameCell && !nameCell.textContent.includes('มีใน PO แล้ว')) {
+      nameCell.insertAdjacentHTML('beforeend', '<span class="badge" style="background:#dcfce7;color:#166534;font-size:10px;font-weight:700">✓ มีใน PO แล้ว</span>');
+    }
+  }
+}
+
+function addBatchSuggestedItemsToPO() {
+  if (!_poSugSelectedMap.size) {
+    toast('กรุณาเลือกอย่างน้อย 1 รายการเพื่อเพิ่มเข้า PO', 'error');
+    return;
+  }
+
+  let cur = 'THB';
+  let rate = 35;
+  if (_poSuggestTarget === 'po') {
+    cur = document.getElementById('po-currency')?.value || 'THB';
+    rate = Number(document.getElementById('po-exrate')?.value || 35);
+  }
+
+  // Create fast map of products
+  const pMap = new Map();
+  (planningProducts || []).forEach(p => pMap.set(p.id, p));
+  (allProducts || []).forEach(p => { if (!pMap.has(p.id)) pMap.set(p.id, p); });
+
+  let addedCount = 0;
+  let updatedCount = 0;
+
+  _poSugSelectedMap.forEach((val, prodId) => {
+    const p = pMap.get(prodId);
+    if (!p) return;
+
+    const qty = Math.max(1, Math.round(Number(val.qty) || 1));
+    const buyPrice = getPOProductBuyPrice(p, cur, rate);
+
+    const res = upsertSuggestedItemToTarget(_poSuggestTarget, p, qty, buyPrice);
+    if (res) {
+      if (res.isNew) addedCount++;
+      else updatedCount++;
+    }
+  });
+
+  if (_poSuggestTarget === 'po') {
+    renderPOItems();
+    calcPOTotal();
+    markUnsavedForm(document.getElementById('modal-po'));
+  } else if (_poSuggestTarget === 'batch-po') {
+    if (typeof renderBatchPOItemsTable === 'function') renderBatchPOItemsTable();
+    if (typeof calcBatchPOTotals === 'function') calcBatchPOTotals();
+  }
+
+  closePOSuggestModal();
+  toast(`🎉 เพิ่มสินค้าเข้า PO สำเร็จ ${addedCount + updatedCount} รายการ (รายการใหม่ ${addedCount}, ปรับยอด ${updatedCount}) ✓`, 'success');
+}
+
+window.openPOStockPlanningSuggestModal = openPOStockPlanningSuggestModal;
+window.closePOSuggestModal = closePOSuggestModal;
+window.switchPOSuggestTab = switchPOSuggestTab;
+window.onPOSuggestSearch = onPOSuggestSearch;
+window.onPOSuggestCategoryChange = onPOSuggestCategoryChange;
+window.onPOSuggestMinQtyToggle = onPOSuggestMinQtyToggle;
+window.renderPOSuggestionsTable = renderPOSuggestionsTable;
+window.onPOSuggestQtyChange = onPOSuggestQtyChange;
+window.onPOSuggestRowCheckChange = onPOSuggestRowCheckChange;
+window.toggleAllPOSuggestions = toggleAllPOSuggestions;
+window.updatePOSuggestSummary = updatePOSuggestSummary;
+window.addSuggestedItemToPO = addSuggestedItemToPO;
+window.addBatchSuggestedItemsToPO = addBatchSuggestedItemsToPO;
+window.updatePOSuggestionBadge = updatePOSuggestionBadge;
+window.invalidateStockPlanningCache = invalidateStockPlanningCache;
 
 window.togglePoCurrency = function() {
   const cur = document.getElementById('po-currency')?.value || 'THB';
@@ -38105,6 +38934,7 @@ async function openBatchSOtoPOModal() {
               </label>
             </div>
             <div style="display:flex;align-items:center;gap:8px">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openPOStockPlanningSuggestModal('batch-po')" style="font-size:12px;padding:3px 10px;background:#e0f2fe;border-color:#7dd3fc;color:#0369a1;font-weight:700;display:inline-flex;align-items:center;gap:4px" title="ดูสินค้าแนะนำจาก Stock Planning สำหรับเพิ่มใน Batch PO">💡 สินค้าแนะนำ (Stock Planning)</button>
               <button type="button" class="btn btn-secondary btn-sm" onclick="openAddProductToBatchPOModal()" style="font-size:12px;padding:3px 10px;background:#fff;border-color:#cbd5e1;color:#15803d;font-weight:700;display:inline-flex;align-items:center;gap:4px">➕ เพิ่มสินค้า (Add Line)</button>
               <span style="font-size:12px;color:#64748b;font-weight:600">เลือกแล้ว <b id="bpo-selected-count" style="color:#0284c7">0</b> รายการ</span>
             </div>
