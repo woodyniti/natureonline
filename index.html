@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.13.0';
-const DISPLAY_APP_VERSION = 'v4.13.0';
+const CURRENT_APP_VERSION = 'sealthai-v4.13.1';
+const DISPLAY_APP_VERSION = 'v4.13.1';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.0 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.1 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8243,16 +8243,28 @@ async function loadOrders() {
 
               let sBg, sColor, sBdr, sIcon, sText, sTitle;
               if (isPoReceived) {
-                // PO รับเข้าแล้ว แต่ต้องใช้ยอดคลังร้านปัจจุบันตัดสินว่าพร้อมส่งหรือไม่
-                const recQty = poMatch?.qty_received || itemReqQty;
-                const isStockOut = stockVal <= 0;
-                const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
-                sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
-                sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
-                sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
-                sIcon = isStockOut || isInsufficient ? '⚠️' : '📦';
-                sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
-                sTitle = `คลังร้าน: ${fmt(stockVal)} ชิ้น${stockScope} · PO ${escapeHTML(poMatch?.po_no || '')} รับเข้าแล้ว ${fmt(recQty)} ชิ้น (คลิกดู Inventory Movement)`;
+                // PO ตรวจรับสินค้าเข้าคลังแล้วสำหรับออเดอร์นี้
+                const recQty = Number(poMatch?.qty_received || itemReqQty);
+                if (isOrderPending) {
+                  // ออเดอร์รอจัดส่ง: มีของเข้าจาก PO พร้อมแพ็คจัดส่งสำหรับออเดอร์นี้โดยตรง
+                  const isFull = recQty >= itemReqQty;
+                  sBg = isFull ? '#dcfce7' : '#fef3c7';
+                  sColor = isFull ? '#15803d' : '#b45309';
+                  sBdr = isFull ? '#86efac' : '#fde68a';
+                  sIcon = isFull ? '📦' : '⚠️';
+                  sText = isFull ? `ของเข้าพร้อมส่ง (${fmt(recQty)})` : `ของเข้าแล้ว ${fmt(recQty)} (ขาด ${fmt(itemReqQty - recQty)})`;
+                  sTitle = `ตรวจรับเข้าสต๊อกแล้วจาก PO: ${escapeHTML(poMatch?.po_no || '')} (${fmt(recQty)}/${fmt(itemReqQty)} ชิ้น) ของเข้าพร้อมส่งทันที${stockVal > 0 ? ` · คลังร้านคงเหลือ ${fmt(stockVal)}` : ''} (คลิกดู Inventory Movement)`;
+                } else {
+                  // ออเดอร์จัดส่งแล้ว
+                  const isStockOut = stockVal <= 0;
+                  const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+                  sBg = isStockOut ? '#f8fafc' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+                  sColor = isStockOut ? '#64748b' : (isInsufficient ? '#b45309' : '#15803d');
+                  sBdr = isStockOut ? '#cbd5e1' : (isInsufficient ? '#fde68a' : '#86efac');
+                  sIcon = isStockOut ? '✓' : (isInsufficient ? '⚠️' : '📦');
+                  sText = isStockOut ? 'จัดส่งแล้ว (คลัง 0)' : `คงเหลือ ${fmt(stockVal)}`;
+                  sTitle = `ออเดอร์นี้จัดส่งแล้ว (รับจาก PO ${escapeHTML(poMatch?.po_no || '')} ${fmt(recQty)} ชิ้น) · ยอดคลังร้านปัจจุบัน: ${fmt(stockVal)} ชิ้น`;
+                }
               } else {
                 const isStockOut = stockVal <= 0;
                 const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
@@ -8443,15 +8455,39 @@ async function loadOrders() {
             const itemReqQty = Number(it.qty || 1);
             const stockVal = rawStock;
             const ecoStock = Number(p.stock_ecoseal || 0);
-            const isStockOut = stockVal <= 0;
-            const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
-            const sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
-            const sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
-            const sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
-            const sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
-            const sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
-            const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
-            stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="คลังร้าน: ${fmt(stockVal)} ชิ้น${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)} (EcoSeal ${fmt(ecoStock)})` : ''}${tipPending} (คลิกดู Inventory Movement)" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ร้าน ${sText}${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)}` : ''}</span>`;
+            let sBg, sColor, sBdr, sIcon, sText, sTitle;
+            if (isPoReceived) {
+              const recQty = Number(poMatch?.qty_received || itemReqQty);
+              if (isOrderPending) {
+                const isFull = recQty >= itemReqQty;
+                sBg = isFull ? '#dcfce7' : '#fef3c7';
+                sColor = isFull ? '#15803d' : '#b45309';
+                sBdr = isFull ? '#86efac' : '#fde68a';
+                sIcon = isFull ? '📦' : '⚠️';
+                sText = isFull ? `ของเข้าพร้อมส่ง (${fmt(recQty)})` : `ของเข้าแล้ว ${fmt(recQty)} (ขาด ${fmt(itemReqQty - recQty)})`;
+                sTitle = `ตรวจรับเข้าสต๊อกแล้วจาก PO: ${escapeHTML(poMatch?.po_no || '')} (${fmt(recQty)}/${fmt(itemReqQty)} ชิ้น) ของเข้าพร้อมส่งทันที${stockVal > 0 ? ` · คลังร้านคงเหลือ ${fmt(stockVal)}` : ''} (คลิกดู Inventory Movement)`;
+              } else {
+                const isStockOut = stockVal <= 0;
+                const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+                sBg = isStockOut ? '#f8fafc' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+                sColor = isStockOut ? '#64748b' : (isInsufficient ? '#b45309' : '#15803d');
+                sBdr = isStockOut ? '#cbd5e1' : (isInsufficient ? '#fde68a' : '#86efac');
+                sIcon = isStockOut ? '✓' : (isInsufficient ? '⚠️' : '📦');
+                sText = isStockOut ? 'จัดส่งแล้ว (คลัง 0)' : `คงเหลือ ${fmt(stockVal)}`;
+                sTitle = `ออเดอร์นี้จัดส่งแล้ว (รับจาก PO ${escapeHTML(poMatch?.po_no || '')} ${fmt(recQty)} ชิ้น) · ยอดคลังร้านปัจจุบัน: ${fmt(stockVal)} ชิ้น`;
+              }
+            } else {
+              const isStockOut = stockVal <= 0;
+              const isInsufficient = stockVal > 0 && stockVal < itemReqQty;
+              sBg = isStockOut ? '#fee2e2' : (isInsufficient ? '#fef3c7' : '#dcfce7');
+              sColor = isStockOut ? '#b91c1c' : (isInsufficient ? '#b45309' : '#15803d');
+              sBdr = isStockOut ? '#fca5a5' : (isInsufficient ? '#fde68a' : '#86efac');
+              sIcon = isStockOut ? '⚠️' : (isInsufficient ? '⚠️' : '📦');
+              sText = isStockOut ? 'สต๊อกหมด (0)' : (isInsufficient ? `มีแค่ ${fmt(stockVal)} (ขาด ${fmt(itemReqQty - stockVal)})` : `คงเหลือ ${fmt(stockVal)}`);
+              const tipPending = isOrderPending ? ` (สถานะรอจัดส่ง: ต้องการ ${it.qty} ชิ้น)` : '';
+              sTitle = `คลังร้าน: ${fmt(stockVal)} ชิ้น${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)} (EcoSeal ${fmt(ecoStock)})` : ''}${tipPending} (คลิกดู Inventory Movement)`;
+            }
+            stockHtml = ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" title="${sTitle}" style="cursor:pointer;background:${sBg};color:${sColor};border:1px solid ${sBdr};font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap">${sIcon} ร้าน ${sText}${ecoStock ? ` · รวม ${fmt(stockVal + ecoStock)}` : ''}</span>`;
             nameHtml = `<span onclick="event.stopPropagation();viewProductInventoryPosting('${p.id}')" style="cursor:pointer;font-weight:600;text-decoration:underline dotted #94a3b8">${escapeHTML(it.product_name || p.name || '')}</span>`;
 
             const fStock = Number(p.factory_stock || 0);
@@ -29359,6 +29395,53 @@ function clearPOFilter() {
   return loadPOs();
 }
 
+// ── Helper ตรวจสอบรายการสินค้าใน PO ว่าตรงกับคำค้นหาหรือไม่ (รองรับ SKU, ขนาดมิติ เช่น 35x42x5, ชื่อสินค้า) ──
+function isPOItemMatchSearch(it, search, prodMap) {
+  if (!it || !search) return false;
+  const s = String(search).trim().toLowerCase();
+  if (!s) return false;
+
+  const itName = String(it.product_name || '').toLowerCase();
+  const itNote = String(it.internal_note || '').toLowerCase();
+  if (smartWildcardMatch(itName, s) || smartWildcardMatch(itNote, s)) return true;
+
+  const sNorm = s.replace(/[-*xX×/\s.]+/g, 'x');
+  const itNameNorm = itName.replace(/[-*xX×/\s.]+/g, 'x');
+  if (itNameNorm.includes(sNorm)) return true;
+
+  const prod = it.product_id ? (prodMap?.[it.product_id] || (allProducts || []).find(p => p.id === it.product_id)) : null;
+  if (prod) {
+    const pName = String(prod.name || '').toLowerCase();
+    const pSku = String(prod.sku || '').toLowerCase();
+    const pSupSku = String(prod.supplier_sku || '').toLowerCase();
+    const pSupDesc = String(prod.supplier_description || '').toLowerCase();
+    const pPartNo = String(prod.part_no || '').toLowerCase();
+    const pCat = String(prod.category || '').toLowerCase();
+
+    if (smartWildcardMatch(pName, s) || smartWildcardMatch(pSku, s) || 
+        smartWildcardMatch(pSupSku, s) || smartWildcardMatch(pSupDesc, s) || 
+        smartWildcardMatch(pPartNo, s) || smartWildcardMatch(pCat, s)) return true;
+
+    const pNameNorm = pName.replace(/[-*xX×/\s.]+/g, 'x');
+    const pSkuNorm = pSku.replace(/[-*xX×/\s.]+/g, 'x');
+    if (pNameNorm.includes(sNorm) || pSkuNorm.includes(sNorm)) return true;
+
+    if (prod.inner_diameter && prod.outer_diameter) {
+      const dimStr = `${prod.inner_diameter}x${prod.outer_diameter}${prod.width ? 'x' + prod.width : ''}`;
+      if (dimStr.includes(sNorm) || sNorm.includes(dimStr)) return true;
+    }
+  }
+
+  // Multi-term AND search
+  const terms = s.split(/\s+/).filter(t => t.length > 0);
+  if (terms.length > 1) {
+    const combined = (itName + ' ' + itNote + ' ' + (prod ? (prod.name||'') + ' ' + (prod.sku||'') + ' ' + (prod.supplier_sku||'') : '')).toLowerCase();
+    if (terms.every(t => combined.includes(t))) return true;
+  }
+
+  return false;
+}
+
 async function loadPOs() {
   schedulePendingPOCardRefresh();
   const from=document.getElementById('po-from')?.value||'';
@@ -29368,9 +29451,14 @@ async function loadPOs() {
   const sortMode=document.getElementById('po-sort')?.value||'date_desc';
 
   const openStatuses = ['draft','sent','partial'];
-  const baseQuery = () => sb.from('purchase_orders').select('*').eq('shop_id',currentShop.id);
+  const baseQuery = () => sb.from('purchase_orders').select('*, purchase_order_items(*)').eq('shop_id',currentShop.id);
   const queries = [];
-  if (['month','year','custom'].includes(_poPeriodMode)) {
+  if (search) {
+    // เมื่อมีการค้นหา ให้ค้นข้ามทุกช่วงเวลาเพื่อค้นพบสินค้าทันที
+    let q = baseQuery();
+    if (st) q = q.eq('status', st);
+    queries.push(q);
+  } else if (['month','year','custom'].includes(_poPeriodMode)) {
     let datedQuery = baseQuery();
     if(from) datedQuery=datedQuery.gte('po_date',from);
     if(to) datedQuery=datedQuery.lte('po_date',to);
@@ -29393,15 +29481,24 @@ async function loadPOs() {
   results.forEach(result => (result.data || []).forEach(po => byId.set(po.id,po)));
   let rows=[...byId.values()];
 
+  const poMatchedItemsMap = new Map();
   if (search) {
-    rows = rows.filter(po => 
-      smartWildcardMatch(po.po_no, search) ||
-      smartWildcardMatch(po.supplier_name, search) ||
-      smartWildcardMatch(getPOSupplierRef(po), search) ||
-      smartWildcardMatch(getCleanPONote(po.note), search) ||
-      smartWildcardMatch(po.note, search) ||
-      smartWildcardMatch(po.supplier_contact, search)
-    );
+    const prodMap = (allProducts || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+    rows = rows.filter(po => {
+      const baseMatch = smartWildcardMatch(po.po_no, search) ||
+        smartWildcardMatch(po.supplier_name, search) ||
+        smartWildcardMatch(getPOSupplierRef(po), search) ||
+        smartWildcardMatch(getCleanPONote(po.note), search) ||
+        smartWildcardMatch(po.note, search) ||
+        smartWildcardMatch(po.supplier_contact, search);
+
+      const matchedItems = (po.purchase_order_items || []).filter(it => isPOItemMatchSearch(it, search, prodMap));
+      if (matchedItems.length > 0) {
+        poMatchedItemsMap.set(po.id, matchedItems);
+        return true;
+      }
+      return baseMatch;
+    });
   }
 
   // เรียงลำดับรายการตามตัวเลือก (รองรับ Natural Numerical Sorting สำหรับเลข PO เช่น 1 - 10)
@@ -29466,6 +29563,13 @@ async function loadPOs() {
         '<td>'+po.po_date+(((from && po.po_date < from) || (to && po.po_date > to)) ? '<div style="font-size:10px;color:var(--blue)">ค้างจากช่วงอื่น</div>' : '')+'</td>'+
         '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+
           (supRef ? '<div style="font-size:10.5px;color:var(--blue);font-weight:600" title="Ref No ของ Supplier">🏷️ '+escapeHTML(supRef)+'</div>' : '')+
+          (()=>{
+            const matchedIts = poMatchedItemsMap.get(po.id);
+            if (!matchedIts || !matchedIts.length) return '';
+            const itemsHtml = matchedIts.slice(0, 3).map(it => `${escapeHTML(it.product_name || 'สินค้า')} (<b>${fmt(it.qty_ordered)}</b> ชิ้น)`).join(' · ');
+            const moreTxt = matchedIts.length > 3 ? ` +อีก ${matchedIts.length - 3} รายการ` : '';
+            return '<div style="margin-top:3px;padding:2px 6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;font-size:10.5px;color:#166534;font-family:sans-serif">📦 <b>พบสินค้า:</b> '+itemsHtml+moreTxt+'</div>';
+          })()+
         '</td>'+
         '<td style="font-weight:500">'+(po.supplier_name||'-')+'</td>'+
         '<td class="text-right font-mono text-amber">'+amtDisplay+'</td>'+
@@ -51955,6 +52059,15 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.13.1', date:'2026-11-22', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขป้ายสถานะของเข้าพร้อมส่งในหน้าออเดอร์ & ระบบค้นหาสินค้าลึกในใบสั่งซื้อ (PO Deep Search)', items:[
+      '📦 <b>แก้ไขป้ายสถานะสินค้าในหน้าออเดอร์ (ของเข้าพร้อมส่ง):</b> เมื่อตรวจรับของเข้าคลังจาก PO เรียบร้อยแล้ว (PO รับแล้ว) และออเดอร์อยู่ในสถานะรอจัดส่ง ระบบจะแสดงป้ายสีเขียว <code>📦 ของเข้าพร้อมส่ง (X ชิ้น)</code> เด่นชัดทันที ไม่แสดง <code>⚠️ สต็อกหมด (0)</code> ผิดพลาดอีกต่อไป แม้ยอดสต๊อกตั้งต้นของร้านจะเป็น 0 ช่วยให้ฝ่ายแพ็คและจัดส่งตรวจสอบและหยิบสินค้าส่งได้ถูกต้อง 100%',
+      '🔍 <b>ค้นหาสินค้าลึกในใบสั่งซื้อ (PO Product Search):</b> ช่องค้นหาหน้า Purchase Order รองรับการพิมพ์ค้นหาชื่อสินค้า, SKU, รหัสผู้ขาย, ขนาดมิติ (เช่น 35x42x5) หรือข้อความในรายการ เพื่อดูว่าสินค้าเคยสั่งซื้อใน PO ใบใดบ้าง พร้อมแสดงป้ายรายการสินค้าที่พบในแถวของตารางทันที',
+      '⚡ <b>Search Across All Periods:</b> เมื่อมีการค้นหาในหน้า PO ระบบจะค้นหาจากประวัติทุกช่วงเวลาโดยไม่ถูกตัดทอนตามตัวกรองเดือน เพื่อให้พบประวัติการสั่งซื้อได้ทันที',
+      '📱 <b>รองรับทั้ง Desktop และ Mobile Cards:</b> แสดงผลป้ายของเข้าพร้อมส่งและผลการค้นหาครอบคลุมทุกมุมมอง'
+    ]},
+    { v:'4.13.0', date:'2026-11-22', badge:'Stable', color:'#0284c7', bg:'#e0f2fe', title:'Smart Stock Planning Purchase Order Suggestions (ระบบแนะนำสั่งซื้ออัจฉริยะตามแผนสต๊อก)', items:[
+      '🛒 <b>ระบบแนะนำสั่งซื้อสินค้าใน PO ใหม่:</b> ดึงข้อมูลความต้องการสินค้าตามการวางแผนสต๊อกและยอดขายซ้ำบ่อยๆ สามารถกดเลือกเพิ่มเข้าสู่รายการสั่งซื้อพร้อมราคาซื้อและจำนวนที่แนะนำได้ทันที'
+    ]},
     { v:'4.12.3', date:'2026-11-17', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เตรียมซ่อมยอดสต๊อกออเดอร์ที่จัดส่งแล้วแต่ยังไม่ตัด', items:[
       'เพิ่มสคริปต์ซ่อมเฉพาะ SO-20261117-0003 หลังยืนยันส่งจริง 10 ชิ้นและคงเหลือจริง 9 ชิ้น',
       'ตรวจสถานะ สินค้า ยอดก่อนซ่อม และ movement ซ้ำก่อนบันทึกแบบ atomic; ต้องรันสคริปต์ใน Supabase SQL Editor ก่อนยอดเปลี่ยน'
