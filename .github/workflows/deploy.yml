@@ -19,10 +19,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Stage 1: เตรียมและอัปโหลดไฟล์เว็บ
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -37,6 +35,14 @@ jobs:
           # เผยแพร่ทั้งโฟลเดอร์ (เว็บเป็น static ไฟล์เดียว index.html)
           path: '.'
 
+  # Stage 2: เผยแพร่ขึ้น GitHub Pages (แยก Job เพื่อรอให้อาร์ติแฟกต์พร้อม 100% ป้องกัน Race Condition)
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
