@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.13.1';
-const DISPLAY_APP_VERSION = 'v4.13.1';
+const CURRENT_APP_VERSION = 'sealthai-v4.13.2';
+const DISPLAY_APP_VERSION = 'v4.13.2';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1730,7 +1730,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.1 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.2 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -32266,7 +32266,8 @@ async function savePO(status) {
   const date=document.getElementById('po-date').value;
   if(!date){toast('กรุณาระบุวันที่','error');return;}
   const supSel = document.getElementById('po-supplier-sel');
-  const supplierId = supSel?.value||null;
+  const rawSupId = supSel?.value || null;
+  const supplierId = (rawSupId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(rawSupId))) ? rawSupId : null;
   let supplierName = supplierId
     ? (allSuppliers.find(s=>s.id===supplierId)?.name||'')
     : '';
@@ -32392,15 +32393,28 @@ async function savePO(status) {
   }
   
   if(poItems.length){
-    const items=poItems.filter(it=>it.product_name).map(it=>({
-      po_id:po.id, product_id:it.product_id||null, product_name:it.product_name,
-      qty_ordered:it.qty_ordered, qty_received:0, unit_cost: cur === 'USD' ? Number(it.unit_cost)*rate : it.unit_cost,
-      ...(hasItemNotes ? { internal_note:String(it.internal_note || '').trim() } : {})
-    }));
+    const items=poItems.filter(it=>it.product_name).map(it=>{
+      const cleanProductId = (it.product_id && it.product_id !== '__custom__' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(it.product_id)))
+        ? it.product_id
+        : null;
+      return {
+        po_id: po.id,
+        product_id: cleanProductId,
+        product_name: it.product_name,
+        qty_ordered: it.qty_ordered,
+        qty_received: 0,
+        unit_cost: cur === 'USD' ? Number(it.unit_cost)*rate : it.unit_cost,
+        ...(hasItemNotes ? { internal_note:String(it.internal_note || '').trim() } : {})
+      };
+    });
     if(items.length) {
       const { error: itemsErr } = await sb.from('purchase_order_items').insert(items);
       if (itemsErr) {
         console.error('Error inserting PO items:', itemsErr);
+        if (!editingPOId) {
+          // หากเป็น PO ใหม่แล้วบันทึกรายการสินค้าไม่สำเร็จ ให้ rollback ลบ header เปล่าออก ป้องกัน PO ค้าง
+          await sb.from('purchase_orders').delete().eq('id', po.id);
+        }
         toast('บันทึกรายการสินค้าไม่สำเร็จ: ' + itemsErr.message, 'error');
         _poSaving = false;
         return;
@@ -39689,9 +39703,12 @@ async function saveBatchPOFromOrders(status = 'sent') {
             pName = `[${it.supplier_sku}] ${it.product_name}`;
           }
         }
+        const cleanBatchPid = (it.product_id && it.product_id !== '__custom__' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(it.product_id)))
+          ? it.product_id
+          : null;
         return {
           po_id: po.id,
-          product_id: it.product_id || null,
+          product_id: cleanBatchPid,
           product_name: pName + (it.order_no ? ` [SO: ${it.order_no}]` : ''),
           qty_ordered: it.qty_po,
           qty_received: 0,
