@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.13.4</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.0</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.13.4';
-const DISPLAY_APP_VERSION = 'v4.13.4';
+const CURRENT_APP_VERSION = 'sealthai-v4.14.0';
+const DISPLAY_APP_VERSION = 'v4.14.0';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.4)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.4 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.0 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -20137,12 +20137,20 @@ async function loadStockHistory() {
     }
     return { data: rows, error: null };
   };
+  const fetchLandedCosts = async () => {
+    const rows = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data, error } = await sb.from('landed_costs').select('*')
+        .eq('shop_id', currentShop.id).order('move_date', { ascending:false })
+        .range(offset, offset + 499);
+      if (error) return { data:rows, error };
+      rows.push(...(data || []));
+      if (!data || data.length < 500) return { data:rows, error:null };
+    }
+  };
   const [mvRes, lcRes] = await Promise.all([
     fetchMovements(),
-    sb.from('landed_costs')
-      .select('*')
-      .eq('shop_id', currentShop.id)
-      .limit(1000)
+    fetchLandedCosts()
   ]);
   if (mvRes.error) { toast('โหลดเอกสารรับเข้าไม่สำเร็จ: ' + mvRes.error.message, 'error'); return; }
   if (lcRes.error) toast('โหลดค่าใช้จ่ายเพิ่มเติมของเอกสารรับเข้าไม่สำเร็จ: ' + lcRes.error.message, 'error');
@@ -20229,8 +20237,9 @@ async function loadStockHistory() {
   // Attach landed costs breakdown if available
   docGroups.forEach(doc => {
     const matchedLC = landedCosts.filter(lc => 
-      (lc.lot_name && lc.lot_name === doc.lot_name) ||
-      (lc.po_id && doc.po_id && lc.po_id === doc.po_id && lc.move_date === doc.move_date)
+      (lc.gr_no && lc.gr_no === doc.doc_no) ||
+      (!lc.gr_no && ((lc.lot_name && lc.lot_name === doc.lot_name) ||
+      (lc.po_id && doc.po_id && lc.po_id === doc.po_id && lc.move_date === doc.move_date)))
     );
     doc.landed_breakdown = matchedLC;
   });
@@ -20533,6 +20542,30 @@ function openGRDocumentDetail(encodedKey) {
         </div>
       </div>
 
+      ${doc.items.every(it => String(it.note||'').startsWith('GR|'+doc.doc_no+'|')) ? `
+      <div style="border:1px solid #fbbf24;background:#fffbeb;border-radius:10px;padding:14px;margin-bottom:16px">
+        <div style="font-weight:800;color:#92400e;margin-bottom:5px">💰 เพิ่ม Landed Cost หลังรับสินค้า</div>
+        <div style="font-size:12px;color:#78350f;margin-bottom:10px">เพิ่มค่าใช้จ่ายจริงเป็นบาท ระบบเฉลี่ยเข้าต้นทุนรับเข้าของใบนี้และคำนวณต้นทุนเฉลี่ย SKU ย้อนหลัง โดยไม่เปลี่ยนจำนวนสต๊อกหรือ PO · ต้องมีเหตุผลและบันทึกประวัติทุกครั้ง</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:end">
+          <label style="font-size:12px;flex:1;min-width:140px">ประเภทค่าใช้จ่าย
+            <select id="gr-lc-type" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px">
+              <option value="ค่าขนส่ง">ค่าขนส่ง</option><option value="ค่าศุลกากร">ค่าศุลกากร</option>
+              <option value="ค่าจัดการ">ค่าจัดการ</option><option value="ค่าใช้จ่ายอื่น">ค่าใช้จ่ายอื่น</option>
+            </select>
+          </label>
+          <label style="font-size:12px;flex:1;min-width:120px">ยอดเพิ่ม (บาท)
+            <input id="gr-lc-amount" type="number" min="0.01" max="10000000" step="0.01" oninput="previewGRLandedAdjustment('${encodeURIComponent(doc.gr_key).replace(/'/g,'%27')}')" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px" placeholder="0.00">
+          </label>
+          <label style="font-size:12px;flex:2;min-width:180px">เหตุผล / เลขเอกสารค่าใช้จ่าย
+            <input id="gr-lc-reason" type="text" maxlength="500" style="width:100%;padding:7px;border:1px solid #d1d5db;border-radius:6px" placeholder="เช่น ค่าส่งที่ได้รับใบแจ้งหนี้ภายหลัง">
+          </label>
+          <button id="gr-lc-save" class="btn btn-primary" onclick="saveGRLandedAdjustment('${encodeURIComponent(doc.gr_key).replace(/'/g,'%27')}')">💾 เพิ่มต้นทุนย้อนหลัง</button>
+        </div>
+        <div id="gr-lc-preview" style="font-size:12px;color:#92400e;margin-top:8px">กรอกยอดเพิ่มเพื่อดูตัวอย่างต้นทุนใหม่</div>
+        <div style="font-size:11px;color:#9a3412;margin-top:6px">หมายเหตุบัญชี: ต้นทุนออเดอร์ขายเก่าจะไม่ถูกเปลี่ยนอัตโนมัติ เพราะระบบยังไม่ได้ผูกล็อตรับเข้ากับออเดอร์ที่ขายไปแล้ว</div>
+        ${doc.landed_breakdown.filter(lc => lc.gr_no === doc.doc_no).map(lc => `<div style="font-size:11px;margin-top:5px;color:#6b7280">↳ เพิ่มแล้ว ${fmtB(lc.amount)} · ${escapeHTML(lc.type||'')} · ${escapeHTML(lc.note||'')}</div>`).join('')}
+      </div>` : `<div style="padding:10px;border-radius:8px;background:#f8fafc;color:#64748b;font-size:12px;margin-bottom:16px">เอกสารรับเข้ารุ่นเก่ายังไม่มีเลขอ้างอิงระดับรายการ จึงไม่เปิดให้ปรับต้นทุนอัตโนมัติเพื่อป้องกันแก้ผิดเอกสาร</div>`}
+
       <!-- Footer Buttons -->
       <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -20546,6 +20579,61 @@ function openGRDocumentDetail(encodedKey) {
   `;
 
   modal.classList.add('open');
+}
+
+function previewGRLandedAdjustment(encodedKey) {
+  const doc = allStockDocs.find(d => d.gr_key === decodeURIComponent(encodedKey));
+  const target = document.getElementById('gr-lc-preview');
+  if (!doc || !target) return;
+  const amount = Number(document.getElementById('gr-lc-amount')?.value);
+  if (!Number.isFinite(amount) || amount <= 0) { target.textContent = 'กรอกยอดเพิ่มเพื่อดูตัวอย่างต้นทุนใหม่'; return; }
+  const base = doc.items.reduce((sum,it) => sum + Math.max(0,Number(it.net_total)||0),0);
+  const qty = doc.items.reduce((sum,it) => sum + Math.max(0,Number(it.qty)||0),0);
+  target.textContent = 'เพิ่ม ' + fmtB(amount) + ' · ต้นทุนรวมใหม่ประมาณ ' + fmtB(doc.total_net_cost + amount) +
+    ' · เฉลี่ยตามมูลค่ารายการ' + (base <= 0 ? ' (ตามจำนวนสินค้า)' : '') + ' · รวม ' + fmt(qty) + ' ชิ้น';
+}
+
+let _savingGRLanded = false;
+let _pendingGRLandedRequest = null;
+async function saveGRLandedAdjustment(encodedKey) {
+  const doc = allStockDocs.find(d => d.gr_key === decodeURIComponent(encodedKey));
+  if (!doc || _savingGRLanded) return;
+  const amount = Number(document.getElementById('gr-lc-amount')?.value);
+  const costType = document.getElementById('gr-lc-type')?.value || '';
+  const reason = (document.getElementById('gr-lc-reason')?.value || '').trim();
+  if (!Number.isFinite(amount) || amount <= 0 || amount > 10000000 || Math.round(amount*100) !== amount*100) {
+    toast('กรุณากรอกยอดเพิ่มเป็นบาท ทศนิยมไม่เกิน 2 ตำแหน่ง', 'error'); return;
+  }
+  if (reason.length < 3) { toast('กรุณาระบุเหตุผลหรือเลขเอกสารค่าใช้จ่าย', 'error'); return; }
+  if (!confirm('ยืนยันเพิ่ม Landed Cost ' + fmtB(amount) + ' ให้ ' + doc.doc_no +
+    '?\nระบบจะปรับต้นทุนรายการรับเข้าและต้นทุนเฉลี่ยสินค้าโดยไม่เปลี่ยนจำนวนสต๊อก')) return;
+  _savingGRLanded = true;
+  const button = document.getElementById('gr-lc-save');
+  if (button) { button.disabled = true; button.textContent = 'กำลังบันทึก...'; }
+  try {
+    const requestKey = [doc.doc_no,amount,costType,reason].join('|');
+    if (!_pendingGRLandedRequest || _pendingGRLandedRequest.key !== requestKey) {
+      _pendingGRLandedRequest = {key:requestKey,id:crypto.randomUUID()};
+    }
+    const { error } = await sb.rpc('add_gr_landed_cost', {
+      p_shop_id: currentShop.id, p_gr_no: doc.doc_no, p_amount: amount,
+      p_cost_type: costType, p_reason: reason,
+      p_expected_total: doc.items.reduce((sum,it) => sum + Number(it.net_total||0),0),
+      p_request_id: _pendingGRLandedRequest.id
+    });
+    if (error) throw error;
+    _pendingGRLandedRequest = null;
+    toast('เพิ่ม Landed Cost และคำนวณต้นทุนรับเข้าย้อนหลังสำเร็จ ✓', 'success');
+    await loadStockHistory();
+    openGRDocumentDetail(encodedKey);
+  } catch(err) {
+    const migrationHint = /add_gr_landed_cost|schema cache|function.*not found/i.test(err?.message||'')
+      ? ' กรุณาให้ผู้ดูแลรัน supabase_gr_landed_adjustment_v414.sql ใน Supabase SQL Editor ก่อน' : '';
+    toast('ปรับ Landed Cost ไม่สำเร็จ: ' + (err?.message||String(err)) + migrationHint, 'error');
+  } finally {
+    _savingGRLanded = false;
+    if (button?.isConnected) { button.disabled = false; button.textContent = '💾 เพิ่มต้นทุนย้อนหลัง'; }
+  }
 }
 
 
@@ -52086,6 +52174,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.14.0', date:'2026-11-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่ม Landed Cost หลังรับสินค้าและคำนวณต้นทุนรับเข้าย้อนหลัง', items:[
+      'ใบรับสินค้าเข้าสต๊อกสามารถเพิ่มค่าใช้จ่ายจริงภายหลัง พร้อมเหตุผลและประวัติการปรับ',
+      'กระจายค่าใช้จ่ายตามมูลค่ารายการรับเข้า อัปเดตต้นทุนต่อชิ้นและต้นทุนเฉลี่ยสินค้า โดยไม่เปลี่ยนจำนวนสต๊อก',
+      'ต้องรันไฟล์ supabase_gr_landed_adjustment_v414.sql ใน Supabase SQL Editor ก่อนใช้งาน'
+    ]},
     { v:'4.13.4', date:'2026-11-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงเลขแถวออเดอร์บนสติกเกอร์สินค้า', items:[
       'หน้าเลือกพิมพ์สติกเกอร์แสดงเลขแถวของสินค้าแต่ละรายการ แม้ชื่อสินค้าซ้ำกัน',
       'สติกเกอร์ที่พิมพ์แสดงเลขแถวเดิมของรายการออเดอร์ แม้เลือกพิมพ์เพียงบางรายการหรือพิมพ์หลายดวง'
