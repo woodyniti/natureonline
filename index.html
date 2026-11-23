@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.0</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.1</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.14.0';
-const DISPLAY_APP_VERSION = 'v4.14.0';
+const CURRENT_APP_VERSION = 'sealthai-v4.14.1';
+const DISPLAY_APP_VERSION = 'v4.14.1';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.0 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.1 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -9323,6 +9323,10 @@ function _fillCustFields(c, ids) {
   set(ids.user,    c.customer_username);  // ชื่อผู้ใช้ Shopee/Lazada
   // ไม่เติม Customer Ref (customer_social) — เลขอ้างอิงเอกสาร Shopee เปลี่ยนทุกออเดอร์ ต้องกรอกเอง
   set(ids.contact, c.customer_contact);
+  if (ids.contact === 'ed-contact') {
+    const extraContacts = document.getElementById('ed-extra-contacts');
+    if (extraContacts) extraContacts.replaceChildren();
+  }
   set(ids.phone,   c.customer_phone);
   if (ids.email)   set(ids.email, c.customer_email || c.email);
   set(ids.addr,    c.customer_address);
@@ -11460,6 +11464,64 @@ function switchSapTab(scopeId, tabKey) {
 }
 window.switchSapTab = switchSapTab;
 
+function addOrderContactRow(contact = {}) {
+  const container = document.getElementById('ed-extra-contacts');
+  if (!container) return;
+  if (container.children.length >= 20) { toast('เพิ่มผู้ติดต่อได้ไม่เกิน 20 คนต่อออเดอร์', 'error'); return; }
+  const row = document.createElement('div');
+  row.className = 'ed-extra-contact-row';
+  row.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr)) auto;gap:5px;align-items:center;padding:6px;background:#f8fafc;border:1px solid var(--border);border-radius:7px';
+  row.innerHTML = `
+    <input class="ed-extra-contact-name" type="text" maxlength="150" value="${escapeHTML(contact.name||'')}" placeholder="ชื่อผู้ติดต่อ" aria-label="ชื่อผู้ติดต่อเพิ่มเติม" style="min-width:0;padding:6px;border:1px solid var(--border2);border-radius:5px">
+    <input class="ed-extra-contact-phone" type="tel" maxlength="60" value="${escapeHTML(contact.phone||'')}" placeholder="เบอร์โทร" aria-label="เบอร์โทรผู้ติดต่อเพิ่มเติม" style="min-width:0;padding:6px;border:1px solid var(--border2);border-radius:5px">
+    <input class="ed-extra-contact-email" type="email" maxlength="254" value="${escapeHTML(contact.email||'')}" placeholder="อีเมล" aria-label="อีเมลผู้ติดต่อเพิ่มเติม" style="min-width:0;padding:6px;border:1px solid var(--border2);border-radius:5px">
+    <button type="button" class="btn btn-danger btn-sm" aria-label="ลบผู้ติดต่อเพิ่มเติม" onclick="this.closest('.ed-extra-contact-row').remove();markUnsavedForm(document.getElementById('modal-order-detail'))">✕</button>`;
+  container.appendChild(row);
+  markUnsavedForm(document.getElementById('modal-order-detail'));
+}
+
+function renderOrderExtraContacts(contacts) {
+  const container = document.getElementById('ed-extra-contacts');
+  if (!container) return;
+  container.replaceChildren();
+  (Array.isArray(contacts) ? contacts : []).forEach(contact => addOrderContactRow(contact));
+}
+
+function collectOrderExtraContacts() {
+  const contacts = [];
+  for (const row of document.querySelectorAll('#ed-extra-contacts .ed-extra-contact-row')) {
+    const name = row.querySelector('.ed-extra-contact-name')?.value.trim() || '';
+    const phone = row.querySelector('.ed-extra-contact-phone')?.value.trim() || '';
+    const email = row.querySelector('.ed-extra-contact-email')?.value.trim() || '';
+    if (!name && !phone && !email) continue;
+    if (!name) return {error:'กรุณาใส่ชื่อผู้ติดต่อเพิ่มเติม หรือปล่อยทั้งแถวให้ว่าง'};
+    if (email && !row.querySelector('.ed-extra-contact-email').checkValidity()) return {error:'อีเมลผู้ติดต่อเพิ่มเติมไม่ถูกต้อง'};
+    contacts.push({name,phone,email});
+  }
+  return {contacts};
+}
+
+async function saveOrderContactsOnly(orderId) {
+  const result = collectOrderExtraContacts();
+  if (result.error) { toast(result.error, 'error'); return; }
+  const payload = {
+    customer_contact: document.getElementById('ed-contact')?.value.trim() || '',
+    customer_phone: document.getElementById('ed-phone')?.value.trim() || '',
+    order_contacts: result.contacts
+  };
+  const { data, error } = await sb.from('orders').update(payload).eq('id', orderId)
+    .eq('shop_id', currentShop.id).select('id').single();
+  if (error) {
+    toast((error.message||'').includes('order_contacts')
+      ? 'ยังไม่ได้เพิ่มคอลัมน์ผู้ติดต่อหลายคน กรุณารัน supabase_order_contacts_v4141.sql ก่อนบันทึก'
+      : 'บันทึกผู้ติดต่อไม่สำเร็จ: ' + error.message, 'error');
+    return;
+  }
+  if (!data?.id) { toast('ไม่พบออเดอร์ที่บันทึกผู้ติดต่อ กรุณารีเฟรชและตรวจสอบ', 'error'); return; }
+  if (window._editingOrderForGP?.id === orderId) Object.assign(window._editingOrderForGP, payload);
+  toast('บันทึกผู้ติดต่อของออเดอร์แล้ว ✓', 'success');
+}
+
 async function viewOrder(orderId) {
   const _iplModal = document.getElementById('modal-inventory-posting');
   const _isIplOpen = _iplModal && _iplModal.classList.contains('open');
@@ -11554,6 +11616,17 @@ async function viewOrder(orderId) {
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
                 <input id="ed-contact" value="${(order.customer_contact||'').replace(/"/g,'&quot;')}" placeholder="ชื่อผู้ติดต่อ (ไม่บังคับ)" style="${iStyle}">
                 <input id="ed-phone" value="${(order.customer_phone||'').replace(/"/g,'&quot;')}" placeholder="เบอร์โทรศัพท์" style="${iStyle}">
+              </div>
+            </div>
+            <div class="sap-field-row">
+              <span class="sap-field-label">ผู้ติดต่อเพิ่มเติม</span>
+              <div style="min-width:0">
+                <div id="ed-extra-contacts" style="display:grid;gap:6px"></div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="addOrderContactRow()">+ เพิ่ม Contact Person</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="saveOrderContactsOnly('${order.id}')">💾 บันทึกผู้ติดต่อเท่านั้น</button>
+                </div>
+                <div style="font-size:11px;color:var(--text3);margin-top:4px">เก็บเฉพาะในออเดอร์นี้ · ผู้ติดต่อหลักด้านบนยังใช้ในเอกสารพิมพ์</div>
               </div>
             </div>
             <div class="sap-field-row">
@@ -11852,6 +11925,7 @@ async function viewOrder(orderId) {
       </div>
     </div>`;
 
+  renderOrderExtraContacts(order.order_contacts);
   renderEditItems();
 
   // โหลดรายชื่อพนักงาน แล้วเลือก employee ของ order นี้
@@ -11910,6 +11984,8 @@ function updateTrackingLink(val) {
 async function saveOrderEdit(orderId) {
   if (!await checkReceiptVisibilityColumn()) return;
   if (!confirmHiddenPaidReceiptItems(editItems, itemNetEdit)) return;
+  const extraContactResult = collectOrderExtraContacts();
+  if (extraContactResult.error) { toast(extraContactResult.error, 'error'); return; }
   // save order meta
   // คำนวณยอดสุทธิ
   const editBillDisc = Number(document.getElementById('ed-bill-disc')?.value||0);
@@ -12014,6 +12090,9 @@ async function saveOrderEdit(orderId) {
     total_amount: editGrand,
     total_cost: editTotalCost
   };
+  if (extraContactResult.contacts.length || Array.isArray(oldOrderSnapshot.order_contacts)) {
+    editPayload.order_contacts = extraContactResult.contacts;
+  }
   // รองรับฐานข้อมูลเดิมที่ยังไม่มี company_name / tax_id / billing_address / shipping_fee / internal_note / delivery_date / customer_email
   let updErr;
   for (let a = 0; a < 10; a++) {
@@ -12021,6 +12100,10 @@ async function saveOrderEdit(orderId) {
     updErr = r.error;
     if (!updErr) break;
     const msg = (updErr.message || '').toLowerCase();
+    if (('order_contacts' in editPayload) && msg.includes('order_contacts')) {
+      toast('ยังไม่ได้เพิ่มคอลัมน์ผู้ติดต่อหลายคน กรุณารัน supabase_order_contacts_v4141.sql ก่อนบันทึก', 'error');
+      return;
+    }
     if (('customer_email' in editPayload) && msg.includes('customer_email')) {
       delete editPayload.customer_email;
       continue;
@@ -52174,6 +52257,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.14.1', date:'2026-11-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่ม Contact Person หลายคนในรายละเอียดออเดอร์', items:[
+      'เพิ่มผู้ติดต่อหลายคนต่อออเดอร์ พร้อมชื่อ เบอร์โทร และอีเมล โดยคงผู้ติดต่อหลักเดิมไว้',
+      'บันทึกเฉพาะผู้ติดต่อได้โดยไม่แตะรายการสินค้า สต๊อก หรือยอดออเดอร์',
+      'ต้องรัน supabase_order_contacts_v4141.sql ใน Supabase SQL Editor ก่อนบันทึกผู้ติดต่อเพิ่มเติม'
+    ]},
     { v:'4.14.0', date:'2026-11-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่ม Landed Cost หลังรับสินค้าและคำนวณต้นทุนรับเข้าย้อนหลัง', items:[
       'ใบรับสินค้าเข้าสต๊อกสามารถเพิ่มค่าใช้จ่ายจริงภายหลัง พร้อมเหตุผลและประวัติการปรับ',
       'กระจายค่าใช้จ่ายตามมูลค่ารายการรับเข้า อัปเดตต้นทุนต่อชิ้นและต้นทุนเฉลี่ยสินค้า โดยไม่เปลี่ยนจำนวนสต๊อก',
