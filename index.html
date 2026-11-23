@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.13.0</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.13.3</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.13.2';
-const DISPLAY_APP_VERSION = 'v4.13.2';
+const CURRENT_APP_VERSION = 'sealthai-v4.13.3';
+const DISPLAY_APP_VERSION = 'v4.13.3';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -726,6 +726,15 @@ tbody td:first-child { color: var(--text); }
   overflow: visible;
   margin-bottom: 10px;
 }
+/* Batch PO is a fixed-height flex dialog: the item matrix must scroll inside
+   its pane. The generic SAP overflow:visible rules otherwise let rows paint
+   behind the footer and make the footer appear halfway through the list. */
+#modal-batch-po .modal { height: min(94vh, 900px); overflow: hidden; }
+#modal-batch-po .sap-window { min-height: 0; }
+#modal-batch-po .sap-tab-pane.active { min-height: 0; max-height: none !important; flex: 1 1 auto; overflow: auto !important; }
+#modal-batch-po .sap-tab-pane[data-pane="contents"].active { overflow: hidden !important; }
+#modal-batch-po .sap-tab-pane[data-pane="contents"] .sap-matrix-wrap { min-height: 0; max-height: none !important; overflow: auto !important; }
+#modal-batch-po .sap-footer { flex: 0 0 auto; }
 .sap-matrix-table {
   width: 100%;
   border-collapse: separate;
@@ -1730,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.2 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.13.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.13.3 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -52076,6 +52085,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.13.3', date:'2026-11-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้หน้าต่าง Batch PO ให้ตารางเลื่อนภายในและแถบสรุปอยู่ท้ายหน้าต่าง', items:[
+      'ตารางรายการสินค้าในหน้าสร้าง PO จากออเดอร์เลื่อนภายในกรอบ ไม่วาดทับแถบสรุปยอดหรือปุ่มบันทึก',
+      'ปรับเฉพาะหน้าต่าง Batch PO รองรับหน้าจอ PC, แท็บเล็ต และมือถือ โดยไม่เปลี่ยนตาราง SAP หน้าอื่น'
+    ]},
     { v:'4.13.1', date:'2026-11-22', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขป้ายสถานะของเข้าพร้อมส่งในหน้าออเดอร์ & ระบบค้นหาสินค้าลึกในใบสั่งซื้อ (PO Deep Search)', items:[
       '📦 <b>แก้ไขป้ายสถานะสินค้าในหน้าออเดอร์ (ของเข้าพร้อมส่ง):</b> เมื่อตรวจรับของเข้าคลังจาก PO เรียบร้อยแล้ว (PO รับแล้ว) และออเดอร์อยู่ในสถานะรอจัดส่ง ระบบจะแสดงป้ายสีเขียว <code>📦 ของเข้าพร้อมส่ง (X ชิ้น)</code> เด่นชัดทันที ไม่แสดง <code>⚠️ สต็อกหมด (0)</code> ผิดพลาดอีกต่อไป แม้ยอดสต๊อกตั้งต้นของร้านจะเป็น 0 ช่วยให้ฝ่ายแพ็คและจัดส่งตรวจสอบและหยิบสินค้าส่งได้ถูกต้อง 100%',
       '🔍 <b>ค้นหาสินค้าลึกในใบสั่งซื้อ (PO Product Search):</b> ช่องค้นหาหน้า Purchase Order รองรับการพิมพ์ค้นหาชื่อสินค้า, SKU, รหัสผู้ขาย, ขนาดมิติ (เช่น 35x42x5) หรือข้อความในรายการ เพื่อดูว่าสินค้าเคยสั่งซื้อใน PO ใบใดบ้าง พร้อมแสดงป้ายรายการสินค้าที่พบในแถวของตารางทันที',
