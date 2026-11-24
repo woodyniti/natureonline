@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.1</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.2</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.14.1';
-const DISPLAY_APP_VERSION = 'v4.14.1';
+const CURRENT_APP_VERSION = 'sealthai-v4.14.2';
+const DISPLAY_APP_VERSION = 'v4.14.2';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.1 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.2 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8610,6 +8610,70 @@ function clearOrdFilter() {
 
 // Only goods actually shipped leave physical stock. Pending SO lines are reservations,
 // not stock_movements. Replace the order's legacy sale postings as one logical group.
+async function planBomShipmentMovements(order, shippedLines, oldMoves, note) {
+  const sourceIds = [...new Set([
+    ...(shippedLines||[]).map(i => i.product_id),...(oldMoves||[]).map(m => m.product_id)
+  ].filter(Boolean))];
+  if (!sourceIds.length) return {newMoves:[],stockBefore:new Map(),affectedIds:[]};
+  const {data:sourceProducts,error:sourceError} = await sb.from('products')
+    .select('id,sku,stock_qty,current_cost,application_note').eq('shop_id',currentShop.id).in('id',sourceIds);
+  if (sourceError) throw sourceError;
+  const byId = new Map((sourceProducts||[]).map(p => [p.id,p]));
+  if (byId.size!==sourceIds.length) throw new Error('ไม่พบสินค้าในฐานข้อมูลครบทุกบรรทัด จึงยังไม่ปรับสต๊อก');
+  const kitBom = new Map();
+  const componentSkus = new Set();
+  for (const line of (shippedLines||[])) {
+    const product = byId.get(line.product_id);
+    const bom = getProductBom(product);
+    if (!bom || bom.stock_mode!=='purchased_box') continue;
+    kitBom.set(line.product_id,bom);
+    bom.components.forEach(c => componentSkus.add(String(c.sku||'').trim()));
+  }
+  if (componentSkus.size) {
+    const {data:parts,error:partError} = await sb.from('products')
+      .select('id,sku,stock_qty,current_cost').eq('shop_id',currentShop.id).in('sku',[...componentSkus]);
+    if (partError) throw partError;
+    const bySku = new Map();
+    (parts||[]).forEach(p => {
+      if (bySku.has(p.sku)) throw new Error('SKU ชิ้นส่วน BOM ซ้ำ: '+p.sku);
+      bySku.set(p.sku,p);
+      byId.set(p.id,p);
+    });
+    for (const sku of componentSkus) if (!bySku.has(sku)) throw new Error('ไม่พบ SKU ชิ้นส่วน BOM: '+sku);
+  }
+  const stockBefore = new Map([...byId].map(([id,p]) => [id,Number(p.stock_qty||0)]));
+  const available = new Map(stockBefore);
+  const bomStockIds = new Set([...kitBom.keys()]);
+  byId.forEach(p => { if (componentSkus.has(p.sku)) bomStockIds.add(p.id); });
+  (oldMoves||[]).forEach(m => available.set(m.product_id,Number(available.get(m.product_id)||0)+Number(m.qty||0)));
+  const newMoves = [];
+  const post = (productId,qty,cost) => {
+    if (!(qty>0)) return;
+    const remaining = Number(available.get(productId)||0)-qty;
+    if (bomStockIds.has(productId) && remaining < -0.0001) throw new Error('สต๊อก BOM/ชิ้นส่วนไม่พอสำหรับจัดส่ง: '+(byId.get(productId)?.sku||productId));
+    available.set(productId,remaining);
+    newMoves.push({shop_id:currentShop.id,product_id:productId,move_type:'out',qty,
+      cost_per_unit:Number(cost||0),note,move_date:order.order_date||today()});
+  };
+  for (const line of (shippedLines||[])) {
+    const qty = Number(line.shipped_qty||0);
+    if (!line.product_id || !(qty>0)) continue;
+    const bom = kitBom.get(line.product_id);
+    if (!bom) { post(line.product_id,qty,line.cost_per_unit); continue; }
+    if (!Number.isInteger(qty)) throw new Error('จำนวนชุด BOM ที่จัดส่งต้องเป็นจำนวนเต็ม');
+    const physicalBoxes = Math.min(qty,Math.floor(Math.max(0,Number(available.get(line.product_id)||0))));
+    post(line.product_id,physicalBoxes,line.cost_per_unit);
+    const virtualBoxes = qty-physicalBoxes;
+    if (virtualBoxes>0) for (const component of bom.components) {
+      const part = [...byId.values()].find(p => p.sku===component.sku);
+      const partQty = Number(component.qty||0);
+      if (!part || !Number.isInteger(partQty) || partQty<=0) throw new Error('BOM มีชิ้นส่วนไม่ครบ');
+      post(part.id,virtualBoxes*partQty,part.current_cost);
+    }
+  }
+  return {newMoves,stockBefore,affectedIds:[...new Set([...sourceIds,...newMoves.map(m=>m.product_id)])]};
+}
+
 async function syncOrderPhysicalStock(order, items = order.order_items, shippingStatus = order.shipping_status, fulfillmentItems = null) {
   if (!order?.order_no || !currentShop?.id) throw new Error('ไม่พบเลขออเดอร์หรือร้านสำหรับปรับสต๊อก');
   const note = 'ขาย ' + order.order_no;
@@ -8619,7 +8683,6 @@ async function syncOrderPhysicalStock(order, items = order.order_items, shipping
     .eq('shop_id', currentShop.id).in('note', legacyNotes);
   if (readErr) throw readErr;
   const oldMoves = (existing || []).filter(m => m.move_type === 'out');
-  const affectedIds = [...new Set([...oldMoves.map(m => m.product_id), ...(items || []).map(i => i.product_id)].filter(Boolean))];
   let shippedLines = [];
   if (order.doc_status !== 'cancelled' && shippingStatus !== 'cancelled') {
     if (shippingStatus === 'shipped' || shippingStatus === 'delivered') {
@@ -8634,19 +8697,7 @@ async function syncOrderPhysicalStock(order, items = order.order_items, shipping
       shippedLines = partial;
     }
   }
-  const newMoves = shippedLines.filter(i => i.product_id && Number(i.shipped_qty || 0) > 0).map(i => ({
-    shop_id: currentShop.id, product_id: i.product_id, move_type: 'out',
-    qty: Number(i.shipped_qty), cost_per_unit: Number(i.cost_per_unit || 0),
-    note, move_date: order.order_date || today()
-  }));
-  const stockBefore = new Map();
-  if (affectedIds.length) {
-    const { data: products, error: productReadErr } = await sb.from('products')
-      .select('id,stock_qty').in('id', affectedIds);
-    if (productReadErr) throw productReadErr;
-    (products || []).forEach(p => stockBefore.set(p.id, Number(p.stock_qty || 0)));
-    if (stockBefore.size !== affectedIds.length) throw new Error('ไม่พบสินค้าในฐานข้อมูลครบทุกบรรทัด จึงยังไม่ปรับสต๊อก');
-  }
+  const {newMoves,stockBefore,affectedIds} = await planBomShipmentMovements(order,shippedLines,oldMoves,note);
   const stockDelta = new Map(affectedIds.map(id => [id, 0]));
   oldMoves.forEach(m => stockDelta.set(m.product_id, stockDelta.get(m.product_id) + Number(m.qty || 0)));
   newMoves.forEach(m => stockDelta.set(m.product_id, stockDelta.get(m.product_id) - Number(m.qty || 0)));
@@ -12877,7 +12928,7 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
   const productIds = [...new Set(ord.order_items.map(it => it.product_id).filter(Boolean))];
   if (productIds.length > 0) {
     try {
-      const { data: pRows } = await sb.from('products').select('id,name,sku,part_no,stock_qty,current_cost').in('id', productIds);
+      const { data: pRows } = await sb.from('products').select('id,name,sku,part_no,stock_qty,current_cost,application_note').in('id', productIds);
       if (pRows) {
         pRows.forEach(p => { localProdMap[p.id] = p; });
       }
@@ -12889,12 +12940,26 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
 
   const shortfallItems = [];
   let totalShortfall = 0;
+  const bomSkus = new Set();
+  Object.values(localProdMap).forEach(p => {
+    const bom = getProductBom(p);
+    if (bom?.stock_mode==='purchased_box') bom.components.forEach(c => bomSkus.add(String(c.sku||'').trim()));
+  });
+  const bomPartsBySku = new Map();
+  if (bomSkus.size) {
+    const {data:partRows,error:partError} = await sb.from('products')
+      .select('id,sku,stock_qty').eq('shop_id',currentShop.id).in('sku',[...bomSkus]);
+    if (partError) throw partError;
+    (partRows||[]).forEach(p => bomPartsBySku.set(p.sku,p));
+  }
+  const remainingById = new Map([...Object.values(localProdMap),...bomPartsBySku.values()]
+    .map(p => [p.id,Number(p.stock_qty||0)]));
 
   for (const it of ord.order_items) {
     if (!it.product_id) continue;
     const p = localProdMap[it.product_id] || { stock_qty: 0 };
 
-    const rawStock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+    const rawStock = Number(remainingById.get(it.product_id) ?? p.stock_qty ?? 0);
     const orderedQty = Math.max(1, Number(it.qty || 1));
 
     // Check if item had previous partial fulfillment
@@ -12903,7 +12968,17 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
     const reqQty = prevItemFulfill ? Math.max(0, orderedQty - alreadyShipped) : orderedQty;
 
     // Physical available stock: use actual warehouse on-hand stock
-    const stockVal = rawStock;
+    const bom = getProductBom(p);
+    let virtualBoxes = 0;
+    if (bom?.stock_mode==='purchased_box') {
+      virtualBoxes = bom.components.reduce((min,c) => {
+        const part = bomPartsBySku.get(String(c.sku||'').trim());
+        const perBox = Number(c.qty||0);
+        return !part || !(perBox>0) ? 0 : Math.min(min,Math.floor(Math.max(0,Number(remainingById.get(part.id)||0))/perBox));
+      },Infinity);
+      if (!Number.isFinite(virtualBoxes)) virtualBoxes = 0;
+    }
+    const stockVal = rawStock + virtualBoxes;
     const available = Math.max(0, stockVal);
 
     if (available < reqQty) {
@@ -12922,6 +12997,16 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
         cost_per_unit: Number(it.cost_per_unit || 0)
       });
       totalShortfall += shortfall;
+    } else if (bom?.stock_mode==='purchased_box') {
+      const physical = Math.min(reqQty,Math.max(0,rawStock));
+      remainingById.set(it.product_id,rawStock-physical);
+      const fromParts = reqQty-physical;
+      if (fromParts>0) bom.components.forEach(c => {
+        const part = bomPartsBySku.get(String(c.sku||'').trim());
+        remainingById.set(part.id,Number(remainingById.get(part.id)||0)-fromParts*Number(c.qty||0));
+      });
+    } else {
+      remainingById.set(it.product_id,rawStock-reqQty);
     }
   }
 
@@ -16582,7 +16667,8 @@ let prodSortDir = -1;
 const PRODUCT_PAGE_SIZE = 20;
 
 function productListStockQty(p) {
-  return (Number(p.stock_inhouse ?? p.stock_qty) || 0) + (Number(p.stock_ecoseal) || 0);
+  const physical = (Number(p.stock_inhouse ?? p.stock_qty) || 0) + (Number(p.stock_ecoseal) || 0);
+  return physical + (getProductBom(p) ? getBomVirtualBoxCount(p,allProducts) : 0);
 }
 
 function goProductPage(page) {
@@ -16622,7 +16708,7 @@ function filterZeroStock() {
   if (el) el.value = '';
   const cf = document.getElementById('prod-cat-filter');
   if (cf) cf.value = '';
-  const filtered = allProducts.filter(p => Number(p.stock_qty||0) === 0);
+  const filtered = allProducts.filter(p => productListStockQty(p) === 0);
   renderProductTable(filtered);
   updateProdSearchBanner(true, '⚠️ สินค้าสต๊อก = 0 (สินค้าหมด)', `พบสินค้าที่สต๊อกหมด ${filtered.length} รายการ`);
 }
@@ -16715,7 +16801,8 @@ function renderProductTable(prods, requestedPage = 1) {
       const margin   = Number(p.sell_price||0)-Number(p.current_cost||0);
       const stInhouse = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
       const stEcoseal = Number(p.stock_ecoseal || 0);
-      const totalQty = stInhouse + stEcoseal;
+      const virtualKit = getProductBom(p) ? getBomVirtualBoxCount(p,allProducts) : 0;
+      const totalQty = stInhouse + stEcoseal + virtualKit;
       const stockVal = Number(p.current_cost||0) * stInhouse; // คำนวณเงินจมเฉพาะคลังร้านจริง
       const isNegSt  = totalQty < 0;
       const zeroSt   = totalQty === 0;
@@ -16794,6 +16881,7 @@ function renderProductTable(prods, requestedPage = 1) {
           '</div>' +
           '<div style="font-size:10.5px;color:var(--text3);margin-top:1px">' +
             'ร้าน: <b style="color:'+(stInhouse<0?'#ef4444':stInhouse>0?'var(--green)':'inherit')+'">'+fmt(stInhouse)+'</b>' +
+            (virtualKit > 0 ? ' · <b style="color:#7c3aed" title="จัดชุดได้จากชิ้นส่วนในสต๊อก ไม่ใช่กล่องกายภาพ">จัดชุดได้: '+fmt(virtualKit)+'</b>' : '') +
             (stEcoseal > 0 ? ' · Eco: <b style="color:var(--blue)">'+fmt(stEcoseal)+'</b>' : '') +
             (Number(p.factory_stock || 0) > 0 ? ' · รง: <b style="color:#d97706" title="สต็อกโรงงาน / Supplier พร้อมขาย">'+fmt(p.factory_stock)+'</b>' : '') +
             (stockVal > 0 ? ' · <span class="text-amber">'+fmtB(stockVal)+'</span>' : '') +
@@ -16824,7 +16912,8 @@ function renderProductTable(prods, requestedPage = 1) {
   // Mobile cards — ใส่ใน prod-cards (hidden บน desktop ด้วย CSS)
   if (prodCards) prodCards.innerHTML = pageRows.map(p => {
     const margin = Number(p.sell_price||0)-Number(p.current_cost||0);
-    const lowStock = Number(p.stock_qty||0) < 5;
+    const effectiveStock = productListStockQty(p);
+    const lowStock = effectiveStock < 5;
     const pendingPO = Number(p.pending_po || 0);
     const pendingSO = Number(p.pending_so || 0);
     const imgUrl = getProductImageUrl(p);
@@ -16881,7 +16970,8 @@ function renderProductTable(prods, requestedPage = 1) {
         </div>
         <div style="background:var(--bg4);border-radius:7px;padding:6px;text-align:center;cursor:pointer" onclick="viewProductInventoryPosting('${p.id}')" title="คลิกเพื่อดูประวัติสต๊อก (Posting List)">
           <div style="font-size:10px;color:var(--text3);margin-bottom:2px">คงเหลือ 🔍</div>
-          <div class="font-mono ${lowStock?'text-red':'text-green'}" style="font-size:13px;font-weight:600">${fmt(p.stock_qty)}${lowStock?' ⚠️':''}</div>
+          <div class="font-mono ${lowStock?'text-red':'text-green'}" style="font-size:13px;font-weight:600">${fmt(effectiveStock)}${lowStock?' ⚠️':''}</div>
+          ${getProductBom(p) && effectiveStock > Number(p.stock_qty||0) ? '<div style="font-size:9px;color:#7c3aed">รวมจัดชุดจากชิ้นส่วน</div>' : ''}
         </div>
         <div style="background:var(--bg4);border-radius:7px;padding:6px;text-align:center;cursor:pointer" onclick="viewProductInventoryPosting('${p.id}')" title="คลิกเพื่อดู PO รอรับเข้า">
           <div style="font-size:10px;color:var(--text3);margin-bottom:2px">รอเข้า PO</div>
@@ -19554,9 +19644,29 @@ async function saveStockBatch() {
     };
   });
 
-  const { error } = await sb.from('stock_movements').insert(inserts);
+  const { data: insertedMoves, error } = await sb.from('stock_movements').insert(inserts)
+    .select('id,product_id,qty');
   if (error) throw error;
   stockInserted = true;
+
+  // A purchased BOM box is first posted as the GR line, then atomically unpacked
+  // into its physical component SKUs. The kit remains available virtually from parts.
+  const bomAffectedIds = new Set();
+  const bomUnpackErrors = [];
+  const receiptProductIds = [...new Set(valid.map(r => r.product_id))];
+  const {data:receiptProducts,error:bomProductError} = await sb.from('products')
+    .select('id,sku,application_note').eq('shop_id',currentShop.id).in('id',receiptProductIds);
+  if (bomProductError) bomUnpackErrors.push('ตรวจ BOM ไม่สำเร็จ: '+bomProductError.message);
+  const bomKitIds = new Set((receiptProducts||[]).filter(p => getProductBom(p)).map(p => p.id));
+  if (bomKitIds.size && !(insertedMoves||[]).length) bomUnpackErrors.push('ไม่พบรหัส movement ที่รับเข้าเพื่อแปลง BOM');
+  for (const move of (insertedMoves||[]).filter(m => bomKitIds.has(m.product_id))) {
+    const {data:unpacked,error:unpackError} = await sb.rpc('unpack_bom_receipt',{
+      p_source_movement_id:move.id,p_expected_qty:Number(move.qty)
+    });
+    if (unpackError) { bomUnpackErrors.push(unpackError.message); continue; }
+    bomAffectedIds.add(move.product_id);
+    (unpacked?.components||[]).forEach(part => { if (part.product_id) bomAffectedIds.add(part.product_id); });
+  }
 
   // เก็บ Landed Cost แยกตามประเภท (ค่าขนส่ง/ค่าจัดการ ฯลฯ) สำหรับ Dashboard — ถ้าตาราง landed_costs ยังไม่มี จะข้าม (ไม่ block)
   const receivedPoIds = [...new Set(valid.map(r=>r.po_id).filter(Boolean))];
@@ -19586,7 +19696,7 @@ async function saveStockBatch() {
     if (lcErr) toast('รับสินค้าแล้ว แต่บันทึกค่าใช้จ่ายเพิ่มเติมไม่สำเร็จ: ' + lcErr.message, 'error');
   }
 
-  const productIds = [...new Set(valid.map(r => r.product_id))];
+  const productIds = [...new Set([...valid.map(r => r.product_id),...bomAffectedIds])];
   await recalcStockQty(productIds);
 
   // ── อัพเดท qty_received และ status ของทุก PO ที่รับในรอบนี้ ──
@@ -19665,6 +19775,8 @@ async function saveStockBatch() {
   landedCostRows = [];
   closeModal('modal-stock');
   toast('บันทึกสำเร็จ '+valid.length+' รายการ'+poCountText + (discountTHB>0?' · ส่วนลด '+fmtB(discountTHB):'') + (totalLanded>0?' · Landed Cost '+fmtB(totalLanded):'') + (affectedOrdersToRecalc.size>0?' · ซิงค์ต้นทุนกลับ '+affectedOrdersToRecalc.size+' ออเดอร์แล้ว':'')+' ✓','success');
+  if (bomUnpackErrors.length) toast('รับกล่อง BOM แล้ว แต่ยังแปลงเป็นรายตัวไม่ครบ: '+bomUnpackErrors.join(' · ')+
+    ' กรุณาเปิดสินค้า → BOM ชุดโอริง → แปลงกล่องคงเหลือหลังแก้ข้อผิดพลาด (ห้ามรับ PO ซ้ำ)','error');
   loadStockHistory();
   } catch (err) {
     if (stockInserted) {
@@ -20255,6 +20367,7 @@ async function loadStockHistory() {
 
   allStockHistory.forEach(r => {
     if (r.move_type !== 'in') return;
+    if (String(r.note||'').startsWith('BOM_UNPACK|')) return; // transfer, not a second supplier receipt
     const po = r.po_id ? poMap.get(r.po_id) : null;
     const poNo = po ? po.po_no : (r.note && r.note.includes('PO:') ? r.note.split('PO:')[1].trim() : '-');
     const supName = po ? po.supplier_name : '-';
@@ -52257,6 +52370,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.14.2', date:'2026-11-24', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แปลงกล่อง BOM เป็นสต๊อกรายตัวและแสดงกล่องพร้อมขายจากชิ้นส่วน', items:[
+      'เมื่อรับกล่อง BOM ระบบแปลงเป็น SKU รายตัวตามจำนวนในชุด พร้อมบันทึก movement และต้นทุนโดยไม่บวกสต๊อกกายภาพซ้ำ',
+      'แปลงกล่องเดิมผ่านหน้า BOM ได้โดยเก็บประวัติ รับ PO เดิมไม่เปลี่ยน; การขายกล่องพร้อมจัดชุดจะตัดโอริงรายตัวตาม BOM',
+      'ต้องรัน supabase_bom_unpack_v4142.sql ก่อนเปิดใช้การแปลง'
+    ]},
     { v:'4.14.1', date:'2026-11-23', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เพิ่ม Contact Person หลายคนในรายละเอียดออเดอร์', items:[
       'เพิ่มผู้ติดต่อหลายคนต่อออเดอร์ พร้อมชื่อ เบอร์โทร และอีเมล โดยคงผู้ติดต่อหลักเดิมไว้',
       'บันทึกเฉพาะผู้ติดต่อได้โดยไม่แตะรายการสินค้า สต๊อก หรือยอดออเดอร์',
@@ -53704,7 +53822,7 @@ async function convertQuotationToOrder(qtId) {
   }
 }
 </script>
-<script src="silicone_kit_bom.js?v=2.86"></script>
+<script src="silicone_kit_bom.js?v=4.14.2"></script>
 
 <!-- Mobile Bottom Nav -->
 <button id="back-to-top" onclick="scrollToTop()" title="กลับขึ้นบนสุด" aria-label="กลับขึ้นบนสุด">↑</button>
