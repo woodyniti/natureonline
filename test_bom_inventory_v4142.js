@@ -35,6 +35,18 @@ vm.runInContext(bomScript+'\n'+page.slice(begin,end),context);
 
 (async () => {
   assert.equal(context.getBomVirtualBoxCount(kit,parts),1);
+  const costs = context.calculateBomComponentCosts(bom,1,20);
+  assert.equal(costs.length,2);
+  assert.equal(costs[0].unitCost,5);
+  assert.equal(costs[1].unitCost,10);
+  assert.ok(Math.abs(costs.reduce((sum,p) => sum+p.total,0)-20)<0.001);
+  const twoBoxes = context.calculateBomComponentCosts(bom,2,20);
+  assert.equal(twoBoxes[0].qty,4);
+  assert.equal(twoBoxes[1].qty,2);
+  assert.ok(Math.abs(twoBoxes.reduce((sum,p) => sum+p.total,0)-40)<0.001);
+  const fallback = context.calculateBomComponentCosts({...bom,components:bom.components.map(p => ({...p,allocated_unit_cost:0}))},1,30);
+  assert.equal(fallback[0].unitCost,10);
+  assert.equal(fallback[1].unitCost,10);
   const order = {order_date:'2026-11-24'};
   const line = {product_id:'kit',shipped_qty:1,cost_per_unit:20};
   const plan = await context.planBomShipmentMovements(order,[line],[],'ขาย SO-TEST');

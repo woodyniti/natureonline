@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.2</title>
+<title>SEALTHAI - ERP &amp; POS Dashboard v4.14.3</title>
 <!-- PWA -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.14.2';
-const DISPLAY_APP_VERSION = 'v4.14.2';
+const CURRENT_APP_VERSION = 'sealthai-v4.14.3';
+const DISPLAY_APP_VERSION = 'v4.14.3';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.2 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.3 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -18516,6 +18516,7 @@ function showProductRefsModal(id, pname, refs) {
 // ─── PAGE: STOCK ──────────────────────────────────────
 let stockProductList = [];   // all active products for search
 let stockRows = [];          // current batch rows
+let stockBomProductMap = new Map(); // BOM metadata for receipt cost preview
 let stockDiscountManual = false;
 let stockDiscountCurrency = 'THB';
 
@@ -18844,6 +18845,10 @@ async function stock() {
   // Load products for search
   const { data } = await sb.from('products').select('id,name,sku').eq('shop_id', currentShop.id).eq('active',true).order('name');
   stockProductList = data || [];
+  const {data:bomProducts,error:bomLoadError} = await sb.from('products')
+    .select('id,sku,application_note').eq('shop_id',currentShop.id).like('sku','ST-ORS-W-KIT-%');
+  stockBomProductMap = new Map((bomProducts||[]).map(p => [p.id,p]));
+  if (bomLoadError) toast('โหลด BOM สำหรับแสดงต้นทุนรายตัวไม่สำเร็จ: '+bomLoadError.message,'error');
 
   // Populate filter dropdown
   const pf = document.getElementById('sh-prod-filter');
@@ -19120,7 +19125,7 @@ function addStockRow(initial={}) {
         </div>
         ${idx > 0 ? '<button onclick="removeStockRow('+idx+')" style="background:rgba(240,82,82,0.15);color:var(--red);border:none;border-radius:6px;padding:9px 10px;cursor:pointer;font-size:14px;margin-bottom:1px">✕</button>' : ''}
       </div>
-    </div>`;
+    </div><div id="sr-bom-cost-${idx}" style="display:none;margin-top:8px;padding:9px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:7px;font-size:11px"></div>`;
   wrap.appendChild(div);
   const nameInp = document.getElementById('sr-prod-'+idx);
   if (nameInp) {
@@ -19325,6 +19330,31 @@ function updateStockTotal() {
   }
   const vaEl = document.getElementById('s-vat-amt');      if(vaEl) vaEl.textContent=fmtB(vatAmt);
   const grEl = document.getElementById('s-grand-total');  if(grEl) grEl.textContent=fmtB(grandTotal);
+  const receiptRows = stockRows.filter(r => r?.enabled !== false && r?.product_id && Number(r.qty) > 0);
+  const receiptDiscountShares = getStockDiscountShares(receiptRows, discountTHB, cur, rate);
+  const receiptGoodsTotal = goodsTotal - discountTHB;
+  stockRows.forEach((row, index) => {
+    const box = document.getElementById('sr-bom-cost-' + index);
+    if (!box) return;
+    const bom = row?.enabled !== false ? getProductBom(stockBomProductMap.get(row?.product_id)) : null;
+    if (!bom || !(Number(row.qty) > 0)) { box.style.display='none'; box.innerHTML=''; return; }
+    const receiptIndex = receiptRows.indexOf(row);
+    const rowOther = Number(row.other || 0) * ((row.other_cur || cur) === 'USD' ? rate : 1);
+    const rowGross = Number(row.qty) * Number(row.cost || 0) * (cur === 'USD' ? rate : 1) + rowOther;
+    const netGoods = rowGross - Number(receiptDiscountShares[receiptIndex] || 0);
+    const landedShare = receiptGoodsTotal > 0 ? netGoods / receiptGoodsTotal * landedTotalTHB
+      : (receiptRows.reduce((sum,r) => sum + Number(r.qty || 0),0) > 0
+        ? Number(row.qty) / receiptRows.reduce((sum,r) => sum + Number(r.qty || 0),0) * landedTotalTHB : 0);
+    const rowVat = vatOn && vatType === 'excluded' ? (netGoods + landedShare) * 0.07 : 0;
+    const boxUnitCost = Math.round((netGoods + landedShare + rowVat) / Number(row.qty) * 100) / 100;
+    const parts = calculateBomComponentCosts(bom,Number(row.qty),boxUnitCost);
+    if (!parts.length) { box.style.display='none'; return; }
+    box.style.display='block';
+    box.innerHTML = `<strong>🧩 ต้นทุนรายตัวหลังแปลง BOM · กล่องละ ${fmtB(boxUnitCost)}</strong>`+
+      `<div style="max-height:165px;overflow:auto;margin-top:5px">${parts.map(part =>
+        `<div style="display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-top:1px solid #dcfce7"><span>${escapeHTML(part.name || part.sku)} · ${fmt(part.qty)} ชิ้น</span><b style="white-space:nowrap">฿${part.unitCost.toFixed(4)}/ชิ้น</b></div>`).join('')}</div>`+
+      `<div style="color:#64748b;margin-top:4px">รวมส่วนลด ค่าใช้จ่ายเพิ่มเติม และ VAT ตามต้นทุนรับเข้า · ยอดจริงอาจต่างจากตัวอย่างไม่เกินเศษปัด</div>`;
+  });
 }
 
 // ── Landed Cost rows state ─────────────────────────────
@@ -52370,6 +52400,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.14.3', date:'2026-11-24', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงต้นทุนรายตัว BOM ก่อนรับเข้าสินค้า', items:[
+      'หน้ารับเข้าแสดงต้นทุนต่อชิ้นของ BOM ทุก SKU จากต้นทุนกล่อง หลังเฉลี่ยส่วนลด ค่าใช้จ่ายเพิ่มเติม และ VAT',
+      'ตัวอย่างคำนวณใช้สูตรแบ่งต้นทุนเดียวกับขั้นตอนแปลงกล่องในฐานข้อมูล และปรับทันทีเมื่อแก้จำนวนหรือราคา'
+    ]},
     { v:'4.14.2', date:'2026-11-24', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แปลงกล่อง BOM เป็นสต๊อกรายตัวและแสดงกล่องพร้อมขายจากชิ้นส่วน', items:[
       'เมื่อรับกล่อง BOM ระบบแปลงเป็น SKU รายตัวตามจำนวนในชุด พร้อมบันทึก movement และต้นทุนโดยไม่บวกสต๊อกกายภาพซ้ำ',
       'แปลงกล่องเดิมผ่านหน้า BOM ได้โดยเก็บประวัติ รับ PO เดิมไม่เปลี่ยน; การขายกล่องพร้อมจัดชุดจะตัดโอริงรายตัวตาม BOM',
@@ -53822,7 +53856,7 @@ async function convertQuotationToOrder(qtId) {
   }
 }
 </script>
-<script src="silicone_kit_bom.js?v=4.14.2"></script>
+<script src="silicone_kit_bom.js?v=4.14.3"></script>
 
 <!-- Mobile Bottom Nav -->
 <button id="back-to-top" onclick="scrollToTop()" title="กลับขึ้นบนสุด" aria-label="กลับขึ้นบนสุด">↑</button>

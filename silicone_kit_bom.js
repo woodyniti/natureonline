@@ -31,6 +31,29 @@ function getBomVirtualBoxCount(product, products) {
   return Number.isFinite(boxes) ? Math.max(0, boxes) : 0;
 }
 
+// Mirrors the database unpack allocation: weighted by BOM reference cost,
+// falling back to piece counts, with the final line absorbing rounding.
+function calculateBomComponentCosts(bom, boxQty, boxUnitCost) {
+  const components = bom?.components || [];
+  const boxes = Number(boxQty);
+  const cost = Number(boxUnitCost);
+  if (!Number.isInteger(boxes) || boxes <= 0 || !Number.isFinite(cost) || cost < 0 || !components.length) return [];
+  if (components.some(c => !Number.isInteger(Number(c.qty)) || Number(c.qty) <= 0)) return [];
+  const byCost = components.every(c => Number(c.allocated_unit_cost) > 0);
+  const weights = components.map(c => Number(c.qty) * (byCost ? Number(c.allocated_unit_cost) : 1));
+  const totalWeight = weights.reduce((sum, value) => sum + value, 0);
+  if (!(totalWeight > 0)) return [];
+  const totalCost = boxes * cost;
+  let remaining = totalCost;
+  return components.map((component, index) => {
+    const qty = boxes * Number(component.qty);
+    const unitCost = Math.round((index === components.length - 1 ? remaining / qty
+      : totalCost * weights[index] / totalWeight / qty) * 10000) / 10000;
+    remaining -= unitCost * qty;
+    return {sku:component.sku,name:component.name,qty,unitCost,total:unitCost * qty};
+  });
+}
+
 async function unpackExistingBomReceipts(kitId = null) {
   if (!sb || !currentShop?.id) return;
   const {data:kits,error:kitError} = await sb.from('products')
