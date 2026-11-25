@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.14.3';
-const DISPLAY_APP_VERSION = 'v4.14.3';
+const CURRENT_APP_VERSION = 'sealthai-v4.14.4';
+const DISPLAY_APP_VERSION = 'v4.14.4';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.3 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.4)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.4 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8962,7 +8962,7 @@ async function loadOrderCustomerList() {
   } catch(e) {}
 
   // 2. ดึงรายชื่อจากประวัติออเดอร์ (orders table) สูงสุด 1,000 รายการล่าสุด
-  const baseCols = 'id,customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username,company_name,tax_id,billing_address,order_date,channel';
+  const baseCols = 'id,customer_name,customer_phone,customer_contact,customer_address,customer_social,customer_username,tax_id,billing_address,order_date,channel,note';
   let ordCusts = [];
   try {
     let res = await sb.from('orders').select(baseCols)
@@ -12670,7 +12670,7 @@ async function openOrderPriceHistoryModal(orderId) {
     order = window._editingOrderForGP;
   } else {
     try {
-      const { data } = await sb.from('orders').select('id,order_no,customer_name,company_name,total_amount').eq('id', orderId).single();
+      const { data } = await sb.from('orders').select('id,order_no,customer_name,total_amount').eq('id', orderId).single();
       order = data;
     } catch (e) {}
   }
@@ -12915,7 +12915,7 @@ async function checkOrderStockSufficiency(orderId, orderObj = null) {
   let ord = orderObj;
   if (!ord || !ord.order_items) {
     const { data } = await sb.from('orders')
-      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
+      .select('id,order_no,order_date,customer_name,total_amount,total_cost,shipping_status,doc_status,note,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
       .eq('id', orderId).single();
     ord = data;
   }
@@ -13053,7 +13053,7 @@ async function openOrderFulfillmentModal(orderId, targetStatus = 'shipped', stoc
   let ord = stockCheck?.order;
   if (!ord || !ord.order_items) {
     const { data } = await sb.from('orders')
-      .select('id,order_no,order_date,customer_name,company_name,total_amount,total_cost,shipping_status,doc_status,note,internal_note,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
+      .select('id,order_no,order_date,customer_name,total_amount,total_cost,shipping_status,doc_status,note,order_items(id,product_id,product_name,qty,sell_price,cost_per_unit)')
       .eq('id', orderId).single();
     ord = data;
   }
@@ -20144,7 +20144,7 @@ async function openProductHistory(productId) {
     const orderIds = [...new Set(rawOItems.map(it => it.order_id).filter(Boolean))];
     if (orderIds.length > 0) {
       const { data: ordersData } = await sb.from('orders')
-        .select('id,order_no,order_date,status')
+        .select('id,order_no,order_date,shipping_status,doc_status')
         .in('id', orderIds);
       (ordersData || []).forEach(o => { ordersMap[o.id] = o; });
     }
@@ -43856,7 +43856,7 @@ async function loadCRMData(force = false) {
     let ordersData = [];
     try {
       const ordersRes = await sb.from('orders')
-        .select('id, order_no, customer_name, customer_username, customer_social, customer_phone, customer_id, total_amount, profit, status, shipping_status, doc_status, payment_method, order_date, channel, order_items(*)')
+        .select('id, order_no, customer_name, customer_username, customer_social, customer_phone, customer_id, total_amount, total_cost, shipping_status, doc_status, payment_method, order_date, channel, order_items(*)')
         .eq('shop_id', currentShop.id)
         .order('order_date', { ascending: false })
         .limit(5000);
@@ -52400,6 +52400,10 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.14.4', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาดคำสั่งดึงข้อมูลออเดอร์ 400 Bad Request (Order Column Schema Alignment)', items:[
+      '🛡️ <b>แก้ปัญหา 400 Bad Request ในคำสั่งดึงข้อมูลลูกค้า:</b> นำคอลัมน์ <code>company_name</code> ที่ไม่มีอยู่ในตาราง <code>orders</code> ออกจากคำสั่งดึงประวัติลูกค้า (orders select) ช่วยให้หน้าจอโหลดข้อมูลลูกค้าและ autocomplete ได้ราบรื่น 100% ไม่มีข้อผิดพลาดสีแดงใน console',
+      '⚡ <b>จัดระเบียบคำสั่ง Query ตาราง Orders ทั้งระบบ:</b> ตรวจสอบและตัดคอลัมน์ที่ไม่ตรงกับ schema ของ orders (เช่น <code>company_name</code>, <code>internal_note</code>, <code>profit</code>, <code>status</code>) ในระบบตรวจสอบสต๊อกออเดอร์, ประวัติราคา, และหน้า Customer CRM ทำให้การดึงข้อมูลออเดอร์ทำได้ในคำขอเดียวแบบความเร็วสูงสุด ไม่ต้องเสียเวลาเข้า fallback'
+    ]},
     { v:'4.14.3', date:'2026-11-24', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แสดงต้นทุนรายตัว BOM ก่อนรับเข้าสินค้า', items:[
       'หน้ารับเข้าแสดงต้นทุนต่อชิ้นของ BOM ทุก SKU จากต้นทุนกล่อง หลังเฉลี่ยส่วนลด ค่าใช้จ่ายเพิ่มเติม และ VAT',
       'ตัวอย่างคำนวณใช้สูตรแบ่งต้นทุนเดียวกับขั้นตอนแปลงกล่องในฐานข้อมูล และปรับทันทีเมื่อแก้จำนวนหรือราคา'
