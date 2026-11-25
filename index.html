@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.0';
-const DISPLAY_APP_VERSION = 'v4.16.0';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.1';
+const DISPLAY_APP_VERSION = 'v4.16.1';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.0 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.1 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2768,6 +2768,14 @@ function escapeHTML(value) {
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   })[ch]);
 }
+
+// ── Bulletproof UUID Sanitizer (ป้องกัน invalid input syntax for type uuid: "_custom_") ──
+function cleanDbUUID(val) {
+  if (!val || typeof val !== 'string') return null;
+  const s = val.trim();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ? s : null;
+}
+window.cleanDbUUID = cleanDbUUID;
 
 // ── Universal Item Reordering & Sequence Persistence System ──
 function moveItemInArray(arr, fromIdx, toIdx) {
@@ -11357,7 +11365,7 @@ async function saveOrder() {
 
   const items = orderItems.map(item=>({
     order_id: order.id,
-    product_id: item.product_id==='__custom__' ? null : (item.product_id||null),
+    product_id: cleanDbUUID(item.product_id),
     product_name: item.product_name || productList.find(p=>p.id===item.product_id)?.name || '-',
     qty: item.qty,
     sell_price: item.sell_price,
@@ -12683,7 +12691,7 @@ async function saveOrderEdit(orderId) {
     const { error: insertItemsError } = await sb.from('order_items').insert(
       editItems.map(it => ({
         order_id: orderId,
-        product_id: it.product_id || null,
+        product_id: cleanDbUUID(it.product_id),
         product_name: it.product_name || '-',
         qty: Number(it.qty)||1,
         sell_price: Number(it.sell_price)||0,
@@ -26377,7 +26385,7 @@ async function saveQuote(status) {
   const itemsFor = qid => quoteItems
     .filter(it => (it.product_name||'').trim())
     .map((it, idx) => ({
-      quotation_id: qid, product_id: it.product_id||null,
+      quotation_id: qid, product_id: cleanDbUUID(it.product_id),
       product_name: it.product_name, qty: it.qty, sell_price: it.sell_price,
       discount: it.discount, discount_type: it.discount_type,
       sort_order: idx + 1
@@ -26875,7 +26883,7 @@ async function convertToOrder(qtId) {
     const unitCost = Number(it.unit_cost) || getProductOrderCost(product);
     return {
       order_id: order.id,
-      product_id: it.product_id || null,
+      product_id: cleanDbUUID(it.product_id),
       product_name: it.product_name,
       qty: it.qty,
       sell_price: it.sell_price,
@@ -33436,9 +33444,7 @@ async function savePO(status) {
   
   if(poItems.length){
     const items=poItems.filter(it=>it.product_name).map(it=>{
-      const cleanProductId = (it.product_id && it.product_id !== '__custom__' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(it.product_id)))
-        ? it.product_id
-        : null;
+      const cleanProductId = cleanDbUUID(it.product_id);
       return {
         po_id: po.id,
         product_id: cleanProductId,
@@ -52742,7 +52748,7 @@ async function linkProductToOrderItem(prod, ctx) {
             await sb.from('order_items').delete().eq('order_id', orderId);
             await sb.from('order_items').insert(newList.map(it => ({
               order_id: it.order_id,
-              product_id: it.product_id || null,
+              product_id: cleanDbUUID(it.product_id),
               product_name: it.product_name || '-',
               qty: Number(it.qty) || 1,
               sell_price: Number(it.sell_price) || 0,
@@ -53127,11 +53133,18 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.0', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบ Drag & Drop ลากย้ายตำแหน่ง, เมนู Jump เลือกลำดับ, และจำตำแหน่งถาวรทุกเอกสาร (Order, Quotation, PO, AR, AP)', items:[
+    { v:'4.16.1', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Drag & Drop ย้ายตำแหน่ง, Jump เลือกลำดับ, ล็อคลำดับถาวร และ UUID Sanitizer ป้องกันข้อผิดพลาด _custom_', items:[
       '🎯 <b>เมนูเลือกย้ายลำดับ (Jump to Position Selector):</b> เพิ่มช่อง Dropdown เลือกลำดับในคอลัมน์ Actions (เช่น #1 บนสุด, #2, ..., #N ล่างสุด) ให้ทุกตารางสินค้า สามารถเลือกเพื่อย้ายแถวไปยังตำแหน่งที่ต้องการได้ทันที ทั้งบน PC และ Mobile',
       '🖐️ <b>Drag & Drop ลากวางจัดตำแหน่งอิสระ:</b> เพิ่มไอคอนจับลาก <code>⠿</code> และระบบ HTML5 Drag and Drop ให้คลิกลากแถวสินค้าไปวางยังตำแหน่งใดก็ได้ โดยมีเส้นขอบไฮไลต์สีน้ำเงินแจ้งตำแหน่งแทรกอย่างชัดเจน',
       '🔒 <b>จำลำดับที่บันทึกถาวร ห้ามเปลี่ยน (Permanent Sequence Persistence):</b> พัฒนาระบบจัดเก็บและล็อคลำดับแถวสินค้าอัตโนมัติผ่าน Metadata (<code>PO_META</code>, <code>SO_META</code>, <code>QT_META</code>) บันทึกแล้วจำตำแหน่งเดิม 100% ไม่ถูก Random UUID สลับแถวอีกต่อไป',
-      '📑 <b>ครอบคลุมครบทั้ง 5 เอกสารหลัก:</b> ใช้งานได้เหมือนกันหมดทั้ง <b>Sales Order (สร้าง/แก้ไข/ดู/พิมพ์)</b>, <b>Quotation (ใบเสนอราคา)</b>, <b>Purchase Order (ใบสั่งซื้อ/รับสินค้า/พิมพ์)</b>, <b>AR Invoice (ใบแจ้งหนี้ลูกหนี้)</b> และ <b>AP Invoice (ใบแจ้งหนี้เจ้าหนี้)</b>'
+      '📑 <b>ครอบคลุมครบทั้ง 5 เอกสารหลัก:</b> ใช้งานได้เหมือนกันหมดทั้ง <b>Sales Order (สร้าง/แก้ไข/ดู/พิมพ์)</b>, <b>Quotation (ใบเสนอราคา)</b>, <b>Purchase Order (ใบสั่งซื้อ/รับสินค้า/พิมพ์)</b>, <b>AR Invoice (ใบแจ้งหนี้ลูกหนี้)</b> และ <b>AP Invoice (ใบแจ้งหนี้เจ้าหนี้)</b>',
+      '🛡️ <b>Bulletproof UUID Sanitizer:</b> เพิ่มตัวกรอง <code>cleanDbUUID()</code> ป้องกันข้อผิดพลาดฐานข้อมูล <i>invalid input syntax for type uuid: "_custom_"</i> ในทุกเอกสารและทุกขั้นตอนการแปลงใบเสนอราคา/ออเดอร์/PO อย่างสมบูรณ์'
+    ]},
+    { v:'4.16.0', date:'2026-11-25', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'ระบบ Drag & Drop ลากย้ายตำแหน่ง, เมนู Jump เลือกลำดับ, และจำตำแหน่งถาวรทุกเอกสาร (Order, Quotation, PO, AR, AP)', items:[
+      '🎯 <b>เมนูเลือกย้ายลำดับ (Jump to Position Selector):</b> เพิ่มช่อง Dropdown เลือกลำดับในคอลัมน์ Actions (เช่น #1 บนสุด, #2, ..., #N ล่างสุด) ให้ทุกตารางสินค้า',
+      '🖐️ <b>Drag & Drop ลากวางจัดตำแหน่งอิสระ:</b> เพิ่มไอคอนจับลาก <code>⠿</code> และระบบ HTML5 Drag and Drop ให้คลิกลากแถวสินค้าไปวางยังตำแหน่งใดก็ได้',
+      '🔒 <b>จำลำดับที่บันทึกถาวร ห้ามเปลี่ยน (Permanent Sequence Persistence):</b> พัฒนาระบบจัดเก็บและล็อคลำดับแถวสินค้าอัตโนมัติผ่าน Metadata',
+      '📑 <b>ครอบคลุมครบทั้ง 5 เอกสารหลัก:</b> Sales Order, Quotation, Purchase Order, AR Invoice และ AP Invoice'
     ]},
     { v:'4.15.3', date:'2026-11-25', badge:'Patch', color:'#64748b', bg:'#f1f5f9', title:'แก้ไขข้อผิดพลาดในการเปิดดูรายละเอียดใบเสนอราคา (Fix meta is not defined in viewQuote)', items:[
       '🐛 <b>แก้ไขข้อผิดพลาด meta is not defined:</b> แก้ไขฟังก์ชัน <code>getQuoteMeta()</code> ที่มีตัวแปร <code>meta</code> ถูกประกาศไว้ภายใน block scope ของ JSON.parse ทำให้เกิด ReferenceError เมื่อเปิดดูใบเสนอราคาที่ไม่มี Metadata หรือระหว่างการจัดเรียงลำดับรายการสินค้า',
