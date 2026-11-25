@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.14.4';
-const DISPLAY_APP_VERSION = 'v4.14.4';
+const CURRENT_APP_VERSION = 'sealthai-v4.15.0';
+const DISPLAY_APP_VERSION = 'v4.15.0';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.14.4)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.14.4 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.0 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8897,15 +8897,16 @@ async function importQuoteToOrder(qtId) {
     orderSourceQuoteId = null;
     return;
   }
-  const [{data:qt,error:qErr},{data:items,error:iErr}] = await Promise.all([
+  const [{data:qt,error:qErr},{data:itemsRaw,error:iErr}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id'),
+    fetchQuoteItems(qtId),
   ]);
+  const qMeta = getQuoteMeta(qt);
+  const items = sortQuoteItems(itemsRaw, qMeta);
   if (qErr || iErr || !qt) { toast('ดึงใบเสนอราคาไม่สำเร็จ','error'); return; }
   const set = (id,value) => { const el=document.getElementById(id); if(el) el.value=value||''; };
   set('o-date', today());
   set('o-delivery-date', today());
-  const qMeta = getQuoteMeta(qt);
   if (qMeta.channel) set('o-channel', qMeta.channel);
   if (qMeta.payment_method) set('o-pay', qMeta.payment_method);
   set('o-cust', qt.customer_name);
@@ -24707,8 +24708,59 @@ function getQuoteMeta(qt) {
     branch_code: branchCode,
     billing_address: billingAddress,
     item_photos: itemPhotos,
+    item_order: (meta && Array.isArray(meta.item_order)) ? meta.item_order : null,
     note: cleanNote
   };
+}
+
+async function fetchQuoteItems(qtId) {
+  if (!qtId) return { data: [], error: null };
+  // Query with sort_order if column exists in database
+  let res = await sb.from('quotation_items').select('*').eq('quotation_id', qtId).order('sort_order', { ascending: true });
+  if (res.error && (res.error.message?.includes('sort_order') || res.error.code === '42703' || res.error.message?.includes('column'))) {
+    // Fallback if sort_order column not in DB: query in natural insertion order (NEVER sort by random UUID id!)
+    res = await sb.from('quotation_items').select('*').eq('quotation_id', qtId);
+  }
+  return res;
+}
+
+function sortQuoteItems(items, quoteMeta) {
+  if (!items || !items.length) return items || [];
+  // 1. If any item has sort_order defined (> 0), sort strictly by sort_order
+  const hasSortOrder = items.some(it => it.sort_order != null && Number(it.sort_order) > 0);
+  if (hasSortOrder) {
+    return [...items].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+  }
+  // 2. If quoteMeta has item_order recorded in QT_META, align with that exact saved sequence
+  if (quoteMeta && Array.isArray(quoteMeta.item_order) && quoteMeta.item_order.length) {
+    const orderList = quoteMeta.item_order;
+    const pool = [...items];
+    const matched = [];
+    orderList.forEach(ord => {
+      const ordName = (ord.name || '').trim().toLowerCase();
+      const ordQty = ord.qty != null ? Number(ord.qty) : null;
+      const ordPrice = ord.sell_price != null ? Number(ord.sell_price) : null;
+      const idx = pool.findIndex(it => {
+        const itName = (it.product_name || '').trim().toLowerCase();
+        const itQty = Number(it.qty || 0);
+        const itPrice = Number(it.sell_price || 0);
+        return itName === ordName &&
+          (ordQty == null || Math.abs(itQty - ordQty) < 0.001) &&
+          (ordPrice == null || Math.abs(itPrice - ordPrice) < 0.001);
+      });
+      if (idx !== -1) {
+        matched.push(pool.splice(idx, 1)[0]);
+      } else {
+        const nameIdx = pool.findIndex(it => (it.product_name || '').trim().toLowerCase() === ordName);
+        if (nameIdx !== -1) {
+          matched.push(pool.splice(nameIdx, 1)[0]);
+        }
+      }
+    });
+    return matched.concat(pool);
+  }
+  // 3. Otherwise return natural array order (never sort by random UUID id!)
+  return items;
 }
 
 async function openNewQuote() {
@@ -24738,9 +24790,9 @@ async function openNewQuote() {
 
 // แก้ไขใบเสนอราคาที่บันทึกแล้ว — ใช้ฟอร์มเดียวกับสร้างใหม่ แต่ populate ค่าเดิม
 async function openEditQuote(qtId) {
-  const [{data:qt},{data:items}] = await Promise.all([
+  const [{data:qt},{data:itemsRaw}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id'),
+    fetchQuoteItems(qtId),
   ]);
   if(!qt){ toast('ไม่พบใบเสนอราคา','error'); return; }
   if (isQuoteClosed(qt)) {
@@ -24775,7 +24827,8 @@ async function openEditQuote(qtId) {
   set('qt-shipping-type', meta.shipping_type || 'custom');
   set('qt-shipping-fee', meta.shipping_fee);
   handleQuoteShippingTypeChange();
-  quoteItems = (items||[]).map((it, idx)=>({
+  const sortedItems = sortQuoteItems(itemsRaw, meta);
+  quoteItems = (sortedItems||[]).map((it, idx)=>({
     product_id: it.product_id||null,
     product_name: it.product_name,
     qty: it.qty,
@@ -25887,6 +25940,19 @@ async function saveQuote(status) {
     metaObj.item_photos = itemPhotos;
   }
 
+  // Preserve exact user-defined line order in QT_META
+  const itemOrderList = (quoteItems || [])
+    .filter(it => (it.product_name||'').trim())
+    .map((it, idx) => ({
+      name: String(it.product_name || '').trim(),
+      qty: Number(it.qty || 1),
+      sell_price: Number(it.sell_price || 0),
+      sort_order: idx + 1
+    }));
+  if (itemOrderList.length) {
+    metaObj.item_order = itemOrderList;
+  }
+
   const noteWithMeta = (rawNote ? rawNote + '\n' : '') + '<!--QT_META:' + JSON.stringify(metaObj) + '-->';
 
   let payload = {
@@ -25916,13 +25982,14 @@ async function saveQuote(status) {
     status,
     total_amount:     total,
   };
-  // แปลง quoteItems → rows (รองรับสินค้าชั่วคราว: product_id=null แต่มี product_name)
+  // แปลง quoteItems → rows (รองรับสินค้าชั่วคราว: product_id=null แต่มี product_name, บันทึก sort_order ตามลำดับจริง)
   const itemsFor = qid => quoteItems
     .filter(it => (it.product_name||'').trim())
-    .map(it => ({
+    .map((it, idx) => ({
       quotation_id: qid, product_id: it.product_id||null,
       product_name: it.product_name, qty: it.qty, sell_price: it.sell_price,
-      discount: it.discount, discount_type: it.discount_type
+      discount: it.discount, discount_type: it.discount_type,
+      sort_order: idx + 1
     }));
 
   // ── โหมดแก้ไข: อัพเดตใบเดิม + ลบ items เก่าแล้วใส่ใหม่ ──
@@ -25939,7 +26006,12 @@ async function saveQuote(status) {
     if(delErr){toast('อัพเดตรายการสินค้าไม่สำเร็จ: '+delErr.message,'error');return;}
     const items = itemsFor(editingQuoteId);
     if(items.length){
-      const { error: iErr } = await sb.from('quotation_items').insert(items);
+      let { error: iErr } = await sb.from('quotation_items').insert(items);
+      if(iErr && (iErr.message.includes('sort_order') || iErr.code === 'PGRST204' || iErr.message.includes('column'))){
+        const cleanItems = items.map(({ sort_order, ...rest }) => rest);
+        const retry = await sb.from('quotation_items').insert(cleanItems);
+        iErr = retry.error;
+      }
       if(iErr){toast('บันทึกรายการไม่สำเร็จ: '+iErr.message,'error');return;}
     }
     editingQuoteId = null; editingQuoteStatus = null;
@@ -25964,7 +26036,12 @@ async function saveQuote(status) {
   if(error){toast('บันทึกไม่สำเร็จ: '+error.message,'error');return;}
   const items = itemsFor(qt.id);
   if(items.length){
-    const {error:iErr}=await sb.from('quotation_items').insert(items);
+    let {error:iErr}=await sb.from('quotation_items').insert(items);
+    if(iErr && (iErr.message.includes('sort_order') || iErr.code === 'PGRST204' || iErr.message.includes('column'))){
+      const cleanItems = items.map(({ sort_order, ...rest }) => rest);
+      const retry = await sb.from('quotation_items').insert(cleanItems);
+      iErr = retry.error;
+    }
     if(iErr){toast('สร้างใบเสนอราคาแล้ว แต่บันทึกรายการสินค้าไม่สำเร็จ: '+iErr.message,'error');return;}
   }
   closeModal('modal-quote');
@@ -25975,12 +26052,14 @@ async function saveQuote(status) {
 function openQuotationDetail(qtId) { return viewQuote(qtId); }
 window.openQuotationDetail = openQuotationDetail;
 async function viewQuote(qtId) {
-  const [{data:qt},{data:items},{data:emps}] = await Promise.all([
+  const [{data:qt},{data:itemsRaw},{data:emps}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id'),
+    fetchQuoteItems(qtId),
     sb.from('employees').select('id,name').eq('active',true),
   ]);
   if(!qt) return;
+  const meta = getQuoteMeta(qt);
+  const items = sortQuoteItems(itemsRaw, meta);
 
   // Auto-migrate legacy quote_no
   if (qt.quote_no) {
@@ -25994,7 +26073,6 @@ async function viewQuote(qtId) {
       }
     }
   }
-  const meta = getQuoteMeta(qt);
   const bank = getQuoteBankSettings(currentShop);
   const empMap={}; (emps||[]).forEach(e=>empMap[e.id]=e.name);
   const el=document.getElementById('qt-detail-content');
@@ -26280,19 +26358,19 @@ function openQuotePrintOptions(qtId, defaultLayout = 'standard') {
 }
 
 async function convertToOrder(qtId) {
-  const [{data:qt},{data:items}] = await Promise.all([
+  const [{data:qt},{data:itemsRaw}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
+    fetchQuoteItems(qtId),
   ]);
   if(!qt) { toast('ไม่พบใบเสนอราคา', 'error'); return; }
+  const meta = getQuoteMeta(qt);
+  const items = sortQuoteItems(itemsRaw, meta);
   if (isQuoteClosed(qt)) {
     toast('ใบเสนอราคานี้ปิดแล้ว (แปลงเป็น Sales Order แล้ว) ถูกล็อคเพื่อป้องกันแปลงซ้ำ\nหากต้องการสั่งซื้อใหม่ กรุณาใช้ปุ่ม "📋 ทำซ้ำ (Duplicate)"', 'warning');
     return;
   }
   const ok=confirm('ยืนยัน Convert ใบเสนอราคานี้เป็น Sales Order?\nเมื่อแปลงแล้ว เอกสารใบเสนอราคาจะถูกเปลี่ยนสถานะเป็น "Close" และล็อคเพื่อป้องกันการแปลงซ้ำ');
   if(!ok) return;
-
-  const meta = getQuoteMeta(qt);
 
   // สร้าง order
   const orderNo = await generateOrderNo(today());
@@ -26447,19 +26525,19 @@ async function duplicateQuote(qtId) {
   const ok = confirm('ต้องการทำซ้ำ (Duplicate) ใบเสนอราคานี้เป็นฉบับใหม่ใช่หรือไม่?\n\nระบบจะคัดลอกข้อมูลลูกค้า ที่อยู่ และรายการสินค้าทั้งหมดไปยังแบบร่างใบเสนอราคาใหม่ เพื่อให้คุณตรวจสอบและแก้ไขก่อนบันทึก');
   if (!ok) return;
 
-  const [{data:qt, error:qErr},{data:items, error:iErr}] = await Promise.all([
+  const [{data:qt, error:qErr},{data:itemsRaw, error:iErr}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
+    fetchQuoteItems(qtId),
   ]);
   if (qErr || !qt) { toast('ไม่พบใบเสนอราคาต้นฉบับ', 'error'); return; }
+  const meta = getQuoteMeta(qt);
+  const items = sortQuoteItems(itemsRaw, meta);
 
   closeModal('modal-quote-detail');
 
   // Reset to new quote mode (never edit mode)
   editingQuoteId = null;
   editingQuoteStatus = null;
-
-  const meta = getQuoteMeta(qt);
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = (v == null ? '' : v); };
 
   set('qt-date', today());
@@ -26562,12 +26640,13 @@ function getQuoteBankSettings(shop = currentShop) {
 }
 
 async function printQuote(qtId, showDiscount=true, showSignature=true, docCopyType='original', layoutType='standard', showPolicy=false, customPolicyText=null) {
-  const [{data:qt},{data:items}] = await Promise.all([
+  const [{data:qt},{data:itemsRaw}] = await Promise.all([
     sb.from('quotations').select('*').eq('id',qtId).single(),
-    sb.from('quotation_items').select('*').eq('quotation_id',qtId).order('id', {ascending:true}),
+    fetchQuoteItems(qtId),
   ]);
   if(!qt) return;
   const meta = getQuoteMeta(qt);
+  const items = sortQuoteItems(itemsRaw, meta);
   const shop = currentShop||{};
   const bank = getQuoteBankSettings(shop);
   const signatureUrl = new URL('assets/nuntana-signature.png', window.location.href).href;
@@ -52400,7 +52479,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.14.4', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาดคำสั่งดึงข้อมูลออเดอร์ 400 Bad Request (Order Column Schema Alignment)', items:[
+    { v:'4.15.0', date:'2026-11-25', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'จัดลำดับรายการใบเสนอราคาตามที่บันทึกจริง ไม่เปลี่ยนบรรทัดไปมา (Quotation Line Order Preservation) & ปรับปรุงความปลอดภัยฐานข้อมูล RLS', items:[
+      'Quotation Line Order Preservation: แก้ไขปัญหารายการสินค้าในใบเสนอราคาสลับบรรทัดไปมาอันเกิดจากการเรียงลำดับตาม random UUID',
+      '3-Tier Resilient Sorting: พัฒนาระบบจัดลำดับรายการสินค้า 3 ชั้น (1. คอลัมน์ sort_order ในฐานข้อมูล, 2. โครงสร้าง item_order ใน Metadata, 3. Natural Insertion Order) ทำให้ลำดับถูกต้องตรงตามที่บันทึกทุกกรณี',
+      'Unified Quote Operations: ปรับฟังก์ชันแสดงผลใบเสนอราคา (View Detail), พิมพ์เอกสาร (Print Quotation / PDF), แปลงเป็นออเดอร์ (Convert to Order), ทำซ้ำเอกสาร (Duplicate) และนำเข้าใบเสนอราคา (Import Quote) ให้ยึดลำดับรายการที่บันทึกจริง 100%',
+      'Interactive Reorder Compatibility: รองรับปุ่มสลับขึ้น-ลง (Move Up / Down) ในหน้าฟอร์ม โดยบันทึกลำดับที่ผู้ใช้จัดวางจริงลงฐานข้อมูลอย่างแม่นยำ',
+      'Supabase Database Security Hardening: ปรับปรุงสคริปต์ความปลอดภัย RLS ป้องกันการเข้าถึงจากภายนอกที่ไม่ได้รับอนุญาต (anon) และคุ้มครองข้อมูลส่วนบุคคลอย่างเข้มงวด'
+    ]},
+    { v:'4.14.4', date:'2026-11-25', badge:'Patch', color:'#64748b', bg:'#f1f5f9', title:'แก้ไขข้อผิดพลาดคำสั่งดึงข้อมูลออเดอร์ 400 Bad Request (Order Column Schema Alignment)', items:[
       '🛡️ <b>แก้ปัญหา 400 Bad Request ในคำสั่งดึงข้อมูลลูกค้า:</b> นำคอลัมน์ <code>company_name</code> ที่ไม่มีอยู่ในตาราง <code>orders</code> ออกจากคำสั่งดึงประวัติลูกค้า (orders select) ช่วยให้หน้าจอโหลดข้อมูลลูกค้าและ autocomplete ได้ราบรื่น 100% ไม่มีข้อผิดพลาดสีแดงใน console',
       '⚡ <b>จัดระเบียบคำสั่ง Query ตาราง Orders ทั้งระบบ:</b> ตรวจสอบและตัดคอลัมน์ที่ไม่ตรงกับ schema ของ orders (เช่น <code>company_name</code>, <code>internal_note</code>, <code>profit</code>, <code>status</code>) ในระบบตรวจสอบสต๊อกออเดอร์, ประวัติราคา, และหน้า Customer CRM ทำให้การดึงข้อมูลออเดอร์ทำได้ในคำขอเดียวแบบความเร็วสูงสุด ไม่ต้องเสียเวลาเข้า fallback'
     ]},

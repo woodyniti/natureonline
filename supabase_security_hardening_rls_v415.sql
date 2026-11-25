@@ -82,6 +82,18 @@ END
 $$;
 
 -- ------------------------------------------------------------------------------
+-- STEP 3.1: ENSURE DETERMINISTIC LINE ORDERING COLUMNS
+-- ------------------------------------------------------------------------------
+-- Add sort_order and created_at columns to items tables so line ordering
+-- (especially in Quotations, POs, and Orders) is deterministically preserved.
+ALTER TABLE public.quotation_items ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0;
+ALTER TABLE public.quotation_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.purchase_order_items ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0;
+ALTER TABLE public.purchase_order_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS sort_order INT DEFAULT 0;
+ALTER TABLE public.order_items ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
+
+-- ------------------------------------------------------------------------------
 -- STEP 4: VERIFICATION QUERY
 -- ------------------------------------------------------------------------------
 -- Run this check to confirm all tables have rowsecurity = true (RLS enabled)
