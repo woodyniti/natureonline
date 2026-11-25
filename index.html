@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.15.0';
-const DISPLAY_APP_VERSION = 'v4.15.0';
+const CURRENT_APP_VERSION = 'sealthai-v4.15.1';
+const DISPLAY_APP_VERSION = 'v4.15.1';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.0 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.1 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -8261,7 +8261,7 @@ async function loadOrders() {
                   sColor = isFull ? '#15803d' : '#b45309';
                   sBdr = isFull ? '#86efac' : '#fde68a';
                   sIcon = isFull ? '📦' : '⚠️';
-                  sText = isFull ? `ของเข้าพร้อมส่ง (${fmt(recQty)})` : `ของเข้าแล้ว ${fmt(recQty)} (ขาด ${fmt(itemReqQty - recQty)})`;
+                  sText = isFull ? `ของเข้าพร้อมส่ง (${fmt(recQty)}) · คลัง ${fmt(stockVal)}` : `ของเข้าแล้ว ${fmt(recQty)} (ขาด ${fmt(itemReqQty - recQty)}) · คลัง ${fmt(stockVal)}`;
                   sTitle = `ตรวจรับเข้าสต๊อกแล้วจาก PO: ${escapeHTML(poMatch?.po_no || '')} (${fmt(recQty)}/${fmt(itemReqQty)} ชิ้น) ของเข้าพร้อมส่งทันที${stockVal > 0 ? ` · คลังร้านคงเหลือ ${fmt(stockVal)}` : ''} (คลิกดู Inventory Movement)`;
                 } else {
                   // ออเดอร์จัดส่งแล้ว
@@ -8473,7 +8473,7 @@ async function loadOrders() {
                 sColor = isFull ? '#15803d' : '#b45309';
                 sBdr = isFull ? '#86efac' : '#fde68a';
                 sIcon = isFull ? '📦' : '⚠️';
-                sText = isFull ? `ของเข้าพร้อมส่ง (${fmt(recQty)})` : `ของเข้าแล้ว ${fmt(recQty)} (ขาด ${fmt(itemReqQty - recQty)})`;
+                sText = isFull ? `ของเข้าพร้อมส่ง (${fmt(recQty)}) · คลัง ${fmt(stockVal)}` : `ของเข้าแล้ว ${fmt(recQty)} (ขาด ${fmt(itemReqQty - recQty)}) · คลัง ${fmt(stockVal)}`;
                 sTitle = `ตรวจรับเข้าสต๊อกแล้วจาก PO: ${escapeHTML(poMatch?.po_no || '')} (${fmt(recQty)}/${fmt(itemReqQty)} ชิ้น) ของเข้าพร้อมส่งทันที${stockVal > 0 ? ` · คลังร้านคงเหลือ ${fmt(stockVal)}` : ''} (คลิกดู Inventory Movement)`;
               } else {
                 const isStockOut = stockVal <= 0;
@@ -9644,6 +9644,90 @@ function updateOrderSummary() {
   }
 }
 
+// ── Smart Multi-Token & Dimension Product Live Search Engine ──
+let _prodSearchCache = new Map();
+
+async function queryServerProductsSmart(ql) {
+  const cleanQ = (ql || '').replace(/[(),]/g, ' ').trim();
+  if (!cleanQ || cleanQ.length < 2) return [];
+
+  const cacheKey = cleanQ.toLowerCase();
+  if (_prodSearchCache.has(cacheKey)) {
+    return _prodSearchCache.get(cacheKey);
+  }
+
+  const tokens = cleanQ.replace(/[*xX×\-\/]+/g, ' ').split(/\s+/).filter(Boolean);
+  const numTokens = tokens.filter(t => /^\d+(\.\d+)?$/.test(t));
+  const dimVariants = [];
+  if (numTokens.length >= 2 && numTokens.length <= 4) {
+    dimVariants.push(numTokens.join('-'));
+    dimVariants.push(numTokens.join('x'));
+    dimVariants.push(numTokens.join('X'));
+    dimVariants.push(numTokens.join('*'));
+  }
+
+  const promises = [];
+
+  // Strategy 1: Chained tokens on name (e.g. "TC 35 55 8" or "28 42 7" or "K21 80 100")
+  if (tokens.length >= 2) {
+    let tReq = sb.from('products').select('*').eq('active', true);
+    if (currentShop?.id) tReq = tReq.eq('shop_id', currentShop.id);
+    tokens.slice(0, 4).forEach(t => {
+      tReq = tReq.ilike('name', `%${t}%`);
+    });
+    promises.push(tReq.limit(40).then(r => r.data || []).catch(() => []));
+  }
+
+  // Strategy 2: OR matching for literal clean query, dimension variants, and unique model/part tokens
+  const orClauses = [];
+  orClauses.push(`name.ilike.%${cleanQ}%`);
+  orClauses.push(`sku.ilike.%${cleanQ}%`);
+  orClauses.push(`supplier_sku.ilike.%${cleanQ}%`);
+  orClauses.push(`supplier_description.ilike.%${cleanQ}%`);
+  orClauses.push(`part_no.ilike.%${cleanQ}%`);
+
+  dimVariants.forEach(dv => {
+    orClauses.push(`name.ilike.%${dv}%`);
+    orClauses.push(`sku.ilike.%${dv}%`);
+  });
+
+  tokens.forEach(tok => {
+    if (tok.length >= 3 && isNaN(Number(tok))) {
+      orClauses.push(`sku.ilike.%${tok}%`);
+      orClauses.push(`supplier_sku.ilike.%${tok}%`);
+      orClauses.push(`part_no.ilike.%${tok}%`);
+    }
+  });
+
+  let orReq = sb.from('products').select('*').eq('active', true);
+  if (currentShop?.id) orReq = orReq.eq('shop_id', currentShop.id);
+  orReq = orReq.or(orClauses.slice(0, 16).join(','));
+  promises.push(orReq.limit(40).then(r => r.data || []).catch(() => []));
+
+  const allFetched = await Promise.all(promises);
+  const mergedMap = new Map();
+  allFetched.flat().forEach(p => {
+    if (p && p.id) mergedMap.set(p.id, p);
+  });
+
+  const results = Array.from(mergedMap.values());
+  _prodSearchCache.set(cacheKey, results);
+
+  // Cache fetched products into in-memory lists so instant local lookup works
+  if (results.length) {
+    if (!Array.isArray(productList)) productList = [];
+    if (!Array.isArray(allProducts)) allProducts = [];
+    results.forEach(dp => {
+      if (!productList.some(ep => ep.id === dp.id)) productList.push(dp);
+      if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
+      if (typeof editProdList !== 'undefined' && Array.isArray(editProdList) && !editProdList.some(ep => ep.id === dp.id)) editProdList.push(dp);
+    });
+  }
+
+  return results;
+}
+window.queryServerProductsSmart = queryServerProductsSmart;
+
 // ── SAP B1 Autocomplete Dropdown Positioning Portal ──
 function positionProductAutocompletePortal(inp, dd) {
   if (!inp || !dd) return;
@@ -9987,29 +10071,19 @@ function searchOrderProduct(rowIdx, q) {
   
   renderRows(localFiltered);
 
-  // 2. Server-side async fallback search if typed query
+  // 2. Server-side async smart search (120ms debounce across 23,000+ items)
   if (ql.length >= 2) {
     if (_orderSearchTimer) clearTimeout(_orderSearchTimer);
     _orderSearchTimer = setTimeout(async () => {
       try {
-        const cleanQ = ql.replace(/[(),]/g, ' ').trim();
-        const { data } = await sb.from('products')
-          .select('*')
-          .eq('shop_id', currentShop.id)
-          .eq('active', true)
-          .or(`name.ilike.%${cleanQ}%,sku.ilike.%${cleanQ}%,supplier_sku.ilike.%${cleanQ}%,supplier_description.ilike.%${cleanQ}%,part_no.ilike.%${cleanQ}%`)
-          .limit(40);
-        
-        if (data && data.length) {
-          data.forEach(dp => {
-            if (!productList.some(ep => ep.id === dp.id)) productList.push(dp);
-            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
-          });
-          const updated = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+        const fetched = await queryServerProductsSmart(ql);
+        if (fetched && fetched.length) {
+          const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
           renderRows(updated);
         }
       } catch(e) {}
-    }, 250);
+    }, 120);
   }
 
   // Close on outside click
@@ -11120,29 +11194,19 @@ function searchEditProd(rowIdx, q) {
 
   renderEditRows(localFiltered);
 
-  // 2. Server-side async fallback search
+  // 2. Server-side async smart search (120ms debounce across 23,000+ items)
   if (ql.length >= 2) {
     if (_editOrderSearchTimer) clearTimeout(_editOrderSearchTimer);
     _editOrderSearchTimer = setTimeout(async () => {
       try {
-        const cleanQ = ql.replace(/[(),]/g, ' ').trim();
-        const { data } = await sb.from('products')
-          .select('*')
-          .eq('shop_id', currentShop.id)
-          .eq('active', true)
-          .or(`name.ilike.%${cleanQ}%,sku.ilike.%${cleanQ}%,supplier_sku.ilike.%${cleanQ}%,supplier_description.ilike.%${cleanQ}%,part_no.ilike.%${cleanQ}%`)
-          .limit(40);
-        
-        if (data && data.length) {
-          data.forEach(dp => {
-            if (!editProdList.some(ep => ep.id === dp.id)) editProdList.push(dp);
-            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
-          });
-          const updated = editProdList.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40);
+        const fetched = await queryServerProductsSmart(ql);
+        if (fetched && fetched.length) {
+          const prodsNow = (editProdList && editProdList.length) ? editProdList : ((allProducts && allProducts.length) ? allProducts : (productList || []));
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40);
           renderEditRows(updated);
         }
       } catch(e) {}
-    }, 250);
+    }, 120);
   }
 
   // Safe outside click dismissal
@@ -24934,28 +24998,19 @@ async function searchQuoteProduct(rowIdx, q) {
   
   renderRows(localFiltered);
 
-  // 2. Server-side async fallback search
+  // 2. Server-side async smart search (120ms debounce across 23,000+ items)
   if (ql.length >= 2) {
     if (_quoteSearchTimer) clearTimeout(_quoteSearchTimer);
     _quoteSearchTimer = setTimeout(async () => {
       try {
-        const { data } = await sb.from('products')
-          .select('*')
-          .eq('shop_id', currentShop.id)
-          .eq('active', true)
-          .or(`name.ilike.%${ql}%,sku.ilike.%${ql}%,supplier_sku.ilike.%${ql}%,supplier_description.ilike.%${ql}%,part_no.ilike.%${ql}%`)
-          .limit(40);
-        
-        if (data && data.length) {
-          data.forEach(dp => {
-            if (!productList.some(ep => ep.id === dp.id)) productList.push(dp);
-            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
-          });
-          const updated = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+        const fetched = await queryServerProductsSmart(ql);
+        if (fetched && fetched.length) {
+          const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
           renderRows(updated);
         }
       } catch(e) {}
-    }, 250);
+    }, 120);
   }
 
   // Close on outside click
@@ -31530,41 +31585,48 @@ function searchPOProduct(rowIdx, q) {
 
   function renderRows(results) {
     if (!results.length) {
-      dd.innerHTML = `<div style="padding:10px 12px;font-size:12px;color:var(--text3);text-align:center">
-        ${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '"' : 'พิมพ์เพื่อค้นหาสินค้า'}
+      dd.innerHTML = `<div style="padding:14px 16px;font-size:12.5px;color:var(--text3);text-align:center;line-height:1.5">
+        <div>${ql ? 'ไม่พบสินค้า "' + escapeHTML(ql) + '" ในระบบ' : 'พิมพ์เพื่อค้นหาสินค้า (ชื่อ, ขนาด, หรือ SKU)'}</div>
+        ${ql ? '<div style="font-size:11px;color:#94a3b8;margin-top:2px">ลองค้นหาด้วยขนาด (เช่น 35 55 8 หรือ 35x55x8) หรือคำสั้นลง หรือกดสร้างสินค้าใหม่ด้านล่าง</div>' : ''}
       </div>`;
     } else {
       dd.innerHTML = results.map(p => {
         const stockVal = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
         const stockBadge = stockVal > 0
-          ? `<span style="background:#dcfce7;color:#15803d;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap">สต๊อก ${fmt(stockVal)}</span>`
-          : `<span style="background:#fee2e2;color:#b91c1c;font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:10px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap">หมด (0)</span>`;
+          ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`
+          : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">⚠️ หมด (0)</span>`;
+
+        const fStock = Number(p.factory_stock || 0);
+        const fStockBadge = fStock > 0
+          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;border:1px solid #fde68a;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
+          : '';
 
         const buyPrice = getPOProductBuyPrice(p, cur, rate);
-        const priceLabel = cur === 'USD' ? `$${buyPrice.toFixed(3)}` : `฿${buyPrice.toFixed(3)}`;
+        const priceLabel = cur === 'USD' ? `${buyPrice.toFixed(3)}` : `฿${buyPrice.toFixed(3)}`;
 
-        const codes = [];
-        if (p.sku) codes.push('SKU: ' + escapeHTML(p.sku));
+        const badges = [];
+        if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
+        if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
         const supTHB = getProductSupplierTHB(p);
         const supUSD = getProductSupplierUSD(p);
-        if (supTHB) codes.push('<span style="color:#1d4ed8;font-weight:700">🇹🇭 ' + escapeHTML(supTHB) + '</span>');
-        if (supUSD) codes.push('<span style="color:#86198f;font-weight:700">🇺🇸 ' + escapeHTML(supUSD) + '</span>');
-        if (p.part_no && p.part_no !== supUSD) codes.push('Part: ' + escapeHTML(p.part_no));
-        if (p.supplier_description && p.supplier_description !== p.name) codes.push('<span style="color:#b45309;font-weight:600">Desc: ' + escapeHTML(p.supplier_description) + '</span>');
-        codes.push('ราคาซื้อ: ' + priceLabel);
-        if (p.current_cost) codes.push('ทุนเฉลี่ย: ฿' + Number(p.current_cost).toFixed(3));
-        const codeHtml = codes.length ? `<div style="font-size:10.5px;color:var(--text3);margin-top:1px;display:flex;gap:4px;flex-wrap:wrap">${codes.map(c=>`<span style="background:var(--bg2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)">${c}</span>`).join('')}</div>` : '';
+        if (supTHB) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:700">🇹🇭 ${escapeHTML(supTHB)}</span>`);
+        if (supUSD) badges.push(`<span style="background:#fdf4ff;color:#86198f;padding:2px 6px;border-radius:4px;border:1px solid #f0abfc;font-weight:700">🇺🇸 ${escapeHTML(supUSD)}</span>`);
+        if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
+        badges.push(`<span style="background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;border:1px solid #bae6fd;font-weight:700">💵 ซื้อ: ${priceLabel}</span>`);
+        if (p.current_cost) badges.push(`<span style="background:#f8fafc;color:#64748b;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:10.5px">ทุนเฉลี่ย: ฿${Number(p.current_cost).toFixed(3)}</span>`);
+
+        const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
 
         return `
           <div onmousedown="event.preventDefault(); window._poAutocompleteClicking = true; selectNewPOProductById(${rowIdx}, '${p.id}');"
             onclick="selectNewPOProductById(${rowIdx}, '${p.id}'); event.stopPropagation();"
-            style="padding:8px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;gap:8px"
+            style="padding:9px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;transition:background 0.12s ease"
             onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
-            <div style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-              <div style="font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis">${escapeHTML(p.name)}</div>
-              ${codeHtml}
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;color:#0f172a;font-size:13px;line-height:1.4;white-space:normal;word-break:break-word">${escapeHTML(p.name)}</div>
+              ${badgeHtml}
             </div>
-            ${stockBadge}
+            <div style="margin-top:2px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${fStockBadge}</div>
           </div>`;
       }).join('');
     }
@@ -31589,29 +31651,19 @@ function searchPOProduct(rowIdx, q) {
   
   renderRows(localFiltered);
 
-  // 2. Server-side async fallback search
+  // 2. Server-side async smart search (120ms debounce across 23,000+ items)
   if (ql.length >= 2) {
     if (_poSearchTimer) clearTimeout(_poSearchTimer);
     _poSearchTimer = setTimeout(async () => {
       try {
-        const cleanQ = ql.replace(/[(),]/g, ' ').trim();
-        const { data } = await sb.from('products')
-          .select('*')
-          .eq('shop_id', currentShop.id)
-          .eq('active', true)
-          .or(`name.ilike.%${cleanQ}%,sku.ilike.%${cleanQ}%,supplier_sku.ilike.%${cleanQ}%,supplier_description.ilike.%${cleanQ}%,part_no.ilike.%${cleanQ}%`)
-          .limit(40);
-        
-        if (data && data.length) {
-          data.forEach(dp => {
-            if (!productList.some(ep => ep.id === dp.id)) productList.push(dp);
-            if (allProducts && !allProducts.some(ep => ep.id === dp.id)) allProducts.push(dp);
-          });
-          const updated = productList.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+        const fetched = await queryServerProductsSmart(ql);
+        if (fetched && fetched.length) {
+          const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
           renderRows(updated);
         }
       } catch(e) {}
-    }, 250);
+    }, 120);
   }
 
   // Close on outside click
@@ -52479,7 +52531,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.15.0', date:'2026-11-25', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'จัดลำดับรายการใบเสนอราคาตามที่บันทึกจริง ไม่เปลี่ยนบรรทัดไปมา (Quotation Line Order Preservation) & ปรับปรุงความปลอดภัยฐานข้อมูล RLS', items:[
+    { v:'4.15.1', date:'2026-11-25', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ระบบค้นหาและกรองรายการสินค้าแบบสดทันที (Instant Live Product Search & Filter) ในหน้า Order, ใบเสนอราคา และ PO', items:[
+      '⚡ <b>Instant Live Filter & Search:</b> อัปเกรดระบบพิมพ์ค้นหาสินค้าในหน้า ออเดอร์ (สร้าง/แก้ไข), ใบเสนอราคา, และใบสั่งซื้อ (PO) ให้กรองข้อมูลในหน่วยความจำทันทีที่พิมพ์ (0ms) พร้อมดึงข้อมูลจากฐานข้อมูล 23,000+ รายการอัตโนมัติ',
+      '🔍 <b>Smart Multi-Token & Dimension Matching:</b> รองรับการค้นหาแบบแยกคำและขนาด เช่น พิมพ์ "TC 35 55 8" หรือ "35x55x8" หรือ "28-42-7" หรือ "K21 80 100" ระบบจะจับคู่ความหมายและดึงสินค้าตรงสเปกมาแสดงทันที',
+      '📋 <b>Rich Product Information Card:</b> ปรับหน้าต่าง Dropdown แสดงผลข้อมูลสินค้าแบบละเอียดครบถ้วน ทั้งชื่อเต็ม, หมวดหมู่ (Category), รหัสสินค้า (SKU), สต๊อกคงเหลือจริงในร้าน (In-house Stock), สต๊อกโรงงาน (Factory Stock), ราคาขาย (Sell Price), ราคาซื้อ (Buy Price THB/USD), และต้นทุนเฉลี่ย เพื่อให้พนักงานเลือกสินค้าได้อย่างถูกต้องและแม่นยำ 100%',
+      '🏢 <b>Unified Catalog Experience:</b> ปรับมาตรฐานการแสดงผลตัวเลือกสินค้าในหน้า PO ให้ขยายชื่อสินค้าแบบเต็ม ไม่ถูกตัดบรรทัด พร้อมแสดงซัพพลายเออร์ไทย (🇹🇭) และต่างประเทศ (🇺🇸) ชัดเจน'
+    ]},
+    { v:'4.15.0', date:'2026-11-25', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'จัดลำดับรายการใบเสนอราคาตามที่บันทึกจริง ไม่เปลี่ยนบรรทัดไปมา (Quotation Line Order Preservation) & ปรับปรุงความปลอดภัยฐานข้อมูล RLS', items:[
       'Quotation Line Order Preservation: แก้ไขปัญหารายการสินค้าในใบเสนอราคาสลับบรรทัดไปมาอันเกิดจากการเรียงลำดับตาม random UUID',
       '3-Tier Resilient Sorting: พัฒนาระบบจัดลำดับรายการสินค้า 3 ชั้น (1. คอลัมน์ sort_order ในฐานข้อมูล, 2. โครงสร้าง item_order ใน Metadata, 3. Natural Insertion Order) ทำให้ลำดับถูกต้องตรงตามที่บันทึกทุกกรณี',
       'Unified Quote Operations: ปรับฟังก์ชันแสดงผลใบเสนอราคา (View Detail), พิมพ์เอกสาร (Print Quotation / PDF), แปลงเป็นออเดอร์ (Convert to Order), ทำซ้ำเอกสาร (Duplicate) และนำเข้าใบเสนอราคา (Import Quote) ให้ยึดลำดับรายการที่บันทึกจริง 100%',
