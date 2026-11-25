@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.15.3';
-const DISPLAY_APP_VERSION = 'v4.15.3';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.0';
+const DISPLAY_APP_VERSION = 'v4.16.0';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -830,6 +830,55 @@ tbody td:first-child { color: var(--text); }
 .sap-matrix-del-btn:hover {
   background: #fee2e2;
   color: #dc2626;
+}
+.sap-drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 4px;
+  user-select: none;
+  transition: color 0.15s, background 0.15s;
+}
+.sap-drag-handle:hover {
+  color: #1e293b;
+  background: #f1f5f9;
+}
+.sap-drag-handle:active {
+  cursor: grabbing;
+}
+.sap-row-dragging {
+  opacity: 0.45;
+  background: #f1f5f9 !important;
+}
+.sap-row-drag-over-top td {
+  border-top: 2.5px solid #2563eb !important;
+}
+.sap-row-drag-over-bottom td {
+  border-bottom: 2.5px solid #2563eb !important;
+}
+.sap-row-jump-sel {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  background: #ffffff;
+  color: var(--text);
+  cursor: pointer;
+  height: 24px;
+  max-width: 72px;
+  text-align: center;
+  vertical-align: middle;
+}
+.sap-row-jump-sel:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
 }
 .sap-matrix-footer {
   display: flex;
@@ -1739,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.3 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.0 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2719,6 +2768,297 @@ function escapeHTML(value) {
     '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
   })[ch]);
 }
+
+// ── Universal Item Reordering & Sequence Persistence System ──
+function moveItemInArray(arr, fromIdx, toIdx) {
+  if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= arr.length || toIdx >= arr.length) return false;
+  const [item] = arr.splice(fromIdx, 1);
+  arr.splice(toIdx, 0, item);
+  return true;
+}
+
+function renderRowActionControls({
+  index,
+  totalCount,
+  itemsArray,
+  onReorder,
+  onDelete,
+  syncInputs,
+  isMobile = false,
+  deleteTitle = 'ลบรายการนี้'
+}) {
+  const wrap = document.createElement('div');
+  wrap.className = isMobile ? 'sap-mob-row-actions' : 'sap-row-actions-cell';
+  wrap.style.cssText = isMobile 
+    ? 'display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap'
+    : 'display:inline-flex;align-items:center;justify-content:center;gap:2px;white-space:nowrap';
+
+  // 1. Drag handle (Desktop only)
+  if (!isMobile) {
+    const dragHandle = document.createElement('span');
+    dragHandle.className = 'sap-drag-handle';
+    dragHandle.innerHTML = '⠿';
+    dragHandle.title = 'คลิกลากเพื่อย้ายลำดับ (Drag & Drop)';
+    wrap.appendChild(dragHandle);
+  }
+
+  // 2. Jump to Position Dropdown Selector
+  if (totalCount > 1) {
+    const jumpSel = document.createElement('select');
+    jumpSel.className = 'sap-row-jump-sel';
+    jumpSel.title = 'เลือกเพื่อย้ายไปลำดับที่ต้องการ';
+    for (let k = 0; k < totalCount; k++) {
+      const opt = document.createElement('option');
+      opt.value = k;
+      opt.textContent = `#${k + 1}${k === 0 ? ' (บนสุด)' : (k === totalCount - 1 ? ' (ล่างสุด)' : '')}`;
+      if (k === index) opt.selected = true;
+      jumpSel.appendChild(opt);
+    }
+    jumpSel.onchange = (e) => {
+      e.stopPropagation();
+      const targetIdx = Number(jumpSel.value);
+      if (targetIdx !== index) {
+        if (typeof syncInputs === 'function') syncInputs();
+        moveItemInArray(itemsArray, index, targetIdx);
+        onReorder();
+      }
+    };
+    wrap.appendChild(jumpSel);
+  }
+
+  // 3. Move Up button
+  if (index > 0) {
+    const upBtn = document.createElement('button');
+    upBtn.type = 'button';
+    upBtn.className = isMobile ? 'btn btn-secondary btn-sm' : 'sap-matrix-del-btn';
+    upBtn.innerHTML = '▲';
+    upBtn.title = 'เลื่อนขึ้นด้านบน';
+    upBtn.style.cssText = isMobile
+      ? 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;color:var(--text)'
+      : 'font-size:11px;padding:2px 4px;color:#475569';
+    upBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (typeof syncInputs === 'function') syncInputs();
+      moveItemInArray(itemsArray, index, index - 1);
+      onReorder();
+    };
+    wrap.appendChild(upBtn);
+  }
+
+  // 4. Move Down button
+  if (index < totalCount - 1) {
+    const downBtn = document.createElement('button');
+    downBtn.type = 'button';
+    downBtn.className = isMobile ? 'btn btn-secondary btn-sm' : 'sap-matrix-del-btn';
+    downBtn.innerHTML = '▼';
+    downBtn.title = 'เลื่อนลงด้านล่าง';
+    downBtn.style.cssText = isMobile
+      ? 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer;color:var(--text)'
+      : 'font-size:11px;padding:2px 4px;color:#475569';
+    downBtn.onclick = (e) => {
+      e.stopPropagation();
+      if (typeof syncInputs === 'function') syncInputs();
+      moveItemInArray(itemsArray, index, index + 1);
+      onReorder();
+    };
+    wrap.appendChild(downBtn);
+  }
+
+  // 5. Delete button
+  const delBtn = document.createElement('button');
+  delBtn.type = 'button';
+  delBtn.className = isMobile ? 'btn btn-danger btn-sm' : 'sap-matrix-del-btn';
+  delBtn.innerHTML = isMobile ? '✕ ลบ' : '✕';
+  delBtn.title = deleteTitle;
+  if (isMobile) {
+    delBtn.style.cssText = 'background:rgba(220,38,38,0.1);color:var(--red);border:1px solid rgba(220,38,38,0.2);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;font-weight:600';
+  }
+  delBtn.onclick = (e) => {
+    e.stopPropagation();
+    onDelete();
+  };
+  wrap.appendChild(delBtn);
+
+  return wrap;
+}
+
+function enableTableDragAndDrop(tbody, itemsArray, onReorder, syncInputs) {
+  if (!tbody) return;
+  const rows = Array.from(tbody.querySelectorAll('tr:not(.sap-matrix-footer-row):not(.ed-add-row):not(.sap-matrix-add-row)'));
+  rows.forEach((tr, idx) => {
+    tr.setAttribute('draggable', 'true');
+    tr.dataset.rowIndex = idx;
+
+    tr.addEventListener('dragstart', (e) => {
+      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+      if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button') {
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(idx));
+      tr.classList.add('sap-row-dragging');
+      window._currentDraggedRowIdx = idx;
+    });
+
+    tr.addEventListener('dragend', () => {
+      tr.classList.remove('sap-row-dragging');
+      tbody.querySelectorAll('tr').forEach(r => {
+        r.classList.remove('sap-row-drag-over-top', 'sap-row-drag-over-bottom');
+      });
+      window._currentDraggedRowIdx = null;
+    });
+
+    tr.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const rect = tr.getBoundingClientRect();
+      const isTop = (e.clientY - rect.top) < (rect.height / 2);
+      if (isTop) {
+        tr.classList.add('sap-row-drag-over-top');
+        tr.classList.remove('sap-row-drag-over-bottom');
+      } else {
+        tr.classList.add('sap-row-drag-over-bottom');
+        tr.classList.remove('sap-row-drag-over-top');
+      }
+    });
+
+    tr.addEventListener('dragleave', () => {
+      tr.classList.remove('sap-row-drag-over-top', 'sap-row-drag-over-bottom');
+    });
+
+    tr.addEventListener('drop', (e) => {
+      e.preventDefault();
+      tr.classList.remove('sap-row-drag-over-top', 'sap-row-drag-over-bottom');
+      const fromIdx = (window._currentDraggedRowIdx !== null && window._currentDraggedRowIdx !== undefined)
+        ? window._currentDraggedRowIdx
+        : Number(e.dataTransfer.getData('text/plain'));
+      
+      const rect = tr.getBoundingClientRect();
+      const isTop = (e.clientY - rect.top) < (rect.height / 2);
+      let targetIdx = Number(tr.dataset.rowIndex);
+      if (isNaN(fromIdx) || isNaN(targetIdx) || fromIdx === targetIdx) return;
+
+      if (!isTop && fromIdx > targetIdx) targetIdx++;
+      if (isTop && fromIdx < targetIdx) targetIdx--;
+      targetIdx = Math.max(0, Math.min(itemsArray.length - 1, targetIdx));
+
+      if (fromIdx !== targetIdx) {
+        if (typeof syncInputs === 'function') syncInputs();
+        moveItemInArray(itemsArray, fromIdx, targetIdx);
+        onReorder();
+      }
+    });
+  });
+}
+
+function getPOMeta(po) {
+  let itemOrder = null;
+  let cleanNote = String(po?.note || '');
+  if (cleanNote.includes('<!--PO_META:') || cleanNote.includes('[PO_META:')) {
+    try {
+      const match = cleanNote.match(/<!--PO_META:([\s\S]*?)-->/) || cleanNote.match(/\[PO_META:([\s\S]*?)\]/);
+      if (match) {
+        const meta = JSON.parse(match[1]);
+        if (meta.item_order && Array.isArray(meta.item_order)) itemOrder = meta.item_order;
+        cleanNote = cleanNote.replace(/<!--PO_META:[\s\S]*?-->/g, '').replace(/\[PO_META:[\s\S]*?\]/g, '').trim();
+      }
+    } catch(e) {}
+  }
+  return { item_order: itemOrder, note: cleanNote };
+}
+
+function cleanPOMeta(note) {
+  return String(note || '').replace(/<!--PO_META:[\s\S]*?-->/g, '').replace(/\[PO_META:[\s\S]*?\]/g, '').trim();
+}
+
+function sortPOItems(items, poMeta) {
+  if (!items || !items.length) return items || [];
+  if (items.some(it => it.sort_order != null && Number(it.sort_order) > 0)) {
+    return [...items].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+  }
+  if (poMeta && Array.isArray(poMeta.item_order) && poMeta.item_order.length) {
+    const orderList = poMeta.item_order;
+    const pool = [...items];
+    const matched = [];
+    orderList.forEach(ord => {
+      const ordName = (ord.name || '').trim().toLowerCase();
+      const ordQty = ord.qty != null ? Number(ord.qty) : null;
+      const ordPid = ord.product_id || null;
+      const idx = pool.findIndex(it => {
+        const itName = (it.product_name || '').trim().toLowerCase();
+        const itQty = Number(it.qty_ordered != null ? it.qty_ordered : (it.qty || 0));
+        const itPid = (it.product_id && it.product_id !== '__custom__') ? it.product_id : null;
+        if (ordPid && itPid && ordPid === itPid) return true;
+        return itName === ordName && (ordQty == null || Math.abs(itQty - ordQty) < 0.001);
+      });
+      if (idx !== -1) {
+        matched.push(pool.splice(idx, 1)[0]);
+      } else {
+        const nameIdx = pool.findIndex(it => (it.product_name || '').trim().toLowerCase() === ordName);
+        if (nameIdx !== -1) matched.push(pool.splice(nameIdx, 1)[0]);
+      }
+    });
+    return matched.concat(pool);
+  }
+  return items;
+}
+
+function getSOMeta(order) {
+  let itemOrder = null;
+  let cleanNote = String(order?.note || '');
+  if (cleanNote.includes('<!--SO_META:') || cleanNote.includes('[SO_META:')) {
+    try {
+      const match = cleanNote.match(/<!--SO_META:([\s\S]*?)-->/) || cleanNote.match(/\[SO_META:([\s\S]*?)\]/);
+      if (match) {
+        const meta = JSON.parse(match[1]);
+        if (meta.item_order && Array.isArray(meta.item_order)) itemOrder = meta.item_order;
+        cleanNote = cleanNote.replace(/<!--SO_META:[\s\S]*?-->/g, '').replace(/\[SO_META:[\s\S]*?\]/g, '').trim();
+      }
+    } catch(e) {}
+  }
+  return { item_order: itemOrder, note: cleanNote };
+}
+
+function cleanSOMeta(note) {
+  return String(note || '').replace(/<!--SO_META:[\s\S]*?-->/g, '').replace(/\[SO_META:[\s\S]*?\]/g, '').trim();
+}
+
+function sortOrderItems(items, soMeta) {
+  if (!items || !items.length) return items || [];
+  if (items.some(it => it.sort_order != null && Number(it.sort_order) > 0)) {
+    return [...items].sort((a, b) => (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0));
+  }
+  if (soMeta && Array.isArray(soMeta.item_order) && soMeta.item_order.length) {
+    const orderList = soMeta.item_order;
+    const pool = [...items];
+    const matched = [];
+    orderList.forEach(ord => {
+      const ordName = (ord.name || '').trim().toLowerCase();
+      const ordQty = ord.qty != null ? Number(ord.qty) : null;
+      const ordPrice = ord.price != null ? Number(ord.price) : null;
+      const ordPid = ord.product_id || null;
+      const idx = pool.findIndex(it => {
+        const itName = (it.product_name || '').trim().toLowerCase();
+        const itQty = Number(it.qty || 0);
+        const itPrice = Number(it.sell_price || 0);
+        const itPid = (it.product_id && it.product_id !== '__custom__') ? it.product_id : null;
+        if (ordPid && itPid && ordPid === itPid) return true;
+        return itName === ordName &&
+          (ordQty == null || Math.abs(itQty - ordQty) < 0.001) &&
+          (ordPrice == null || Math.abs(itPrice - ordPrice) < 0.001);
+      });
+      if (idx !== -1) {
+        matched.push(pool.splice(idx, 1)[0]);
+      } else {
+        const nameIdx = pool.findIndex(it => (it.product_name || '').trim().toLowerCase() === ordName);
+        if (nameIdx !== -1) matched.push(pool.splice(nameIdx, 1)[0]);
+      }
+    });
+    return matched.concat(pool);
+  }
+  return items;
+}
 const SHIPPING_FEE_NOTE_RE = /(?:^|\n)\[\[SHIPPING_FEE:([0-9]+(?:\.[0-9]+)?)\]\](?=\n|$)/i;
 const COMPANY_NOTE_RE = /(?:^|\n)\[(?:บริษัท|Company):\s*([^\]]+)\](?=\n|$)/i;
 const COMPANY_NOTE_GLOBAL_RE = /(?:^|\n)\[(?:บริษัท|Company):\s*[^\]]+\](?=\n|$)/gi;
@@ -2812,6 +3152,8 @@ const SAP_B1_CLOSE_TAG_GLOBAL_RE = /\[\[SAP_B1_CLOSE:[\s\S]*?\]\]/gi;
 
 function cleanOrderNote(note) {
   let s = String(note || '')
+    .replace(/<!--SO_META:[\s\S]*?-->/g, '')
+    .replace(/\[SO_META:[\s\S]*?\]/g, '')
     .replace(EMAIL_TAG_GLOBAL_RE, '')
     .replace(EMAIL_TEXT_GLOBAL_RE, '')
     .replace(INTERNAL_NOTE_TAG_GLOBAL_RE, '')
@@ -10215,7 +10557,7 @@ function renderOrderItems() {
           <th style="width:120px;text-align:right">Unit Price</th>
           <th style="width:130px;text-align:right">Discount</th>
           <th style="width:125px;text-align:right">Total (THB)</th>
-          <th style="width:36px;text-align:center"></th>
+          <th style="width:115px;text-align:center">Actions</th>
         </tr>
       </thead>
     `;
@@ -10443,25 +10785,35 @@ function renderOrderItems() {
       tdTotal.textContent = fmtB(itemNet(item));
       tr.appendChild(tdTotal);
 
-      // ── Cell 7: Delete Action ──
+      // ── Cell 7: Delete / Reorder Actions ──
       const tdDel = document.createElement('td');
-      tdDel.style.cssText = 'text-align:center;vertical-align:top;padding-top:6px';
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'sap-matrix-del-btn';
-      delBtn.textContent = '✕';
-      delBtn.title = 'ลบแถวสินค้านี้';
-      delBtn.onclick = () => {
-        orderItems.splice(i, 1);
-        markUnsavedForm(document.getElementById('modal-order'));
-        renderOrderItems();
-      };
-      tdDel.appendChild(delBtn);
+      tdDel.style.cssText = 'text-align:center;vertical-align:top;padding-top:6px;white-space:nowrap';
+      const actionControls = renderRowActionControls({
+        index: i,
+        totalCount: orderItems.length,
+        itemsArray: orderItems,
+        onReorder: () => {
+          markUnsavedForm(document.getElementById('modal-order'));
+          renderOrderItems();
+        },
+        onDelete: () => {
+          orderItems.splice(i, 1);
+          markUnsavedForm(document.getElementById('modal-order'));
+          renderOrderItems();
+        },
+        isMobile: false,
+        deleteTitle: 'ลบแถวสินค้านี้'
+      });
+      tdDel.appendChild(actionControls);
       tr.appendChild(tdDel);
 
       tbody.appendChild(tr);
     });
 
+    enableTableDragAndDrop(tbody, orderItems, () => {
+      markUnsavedForm(document.getElementById('modal-order'));
+      renderOrderItems();
+    });
     table.appendChild(tbody);
     matrixWrap.appendChild(table);
 
@@ -10487,6 +10839,28 @@ function renderOrderItems() {
     const card = document.createElement('div');
     card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;position:relative';
 
+    // ── Card Header: ลำดับที่ + Reorder / Jump / Delete ──
+    const cardHeader = document.createElement('div');
+    cardHeader.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:6px;border-bottom:1px dashed var(--border2)';
+    const leftBadge = document.createElement('div');
+    leftBadge.innerHTML = `<span style="background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd">ลำดับที่ ${i+1}</span> <span style="font-size:11px;color:var(--text3)">(${i+1} จาก ${orderItems.length} รายการ)</span>`;
+    const rightActions = renderRowActionControls({
+      index: i,
+      totalCount: orderItems.length,
+      itemsArray: orderItems,
+      onReorder: () => { markUnsavedForm(document.getElementById('modal-order')); renderOrderItems(); },
+      onDelete: () => {
+        orderItems.splice(i, 1);
+        markUnsavedForm(document.getElementById('modal-order'));
+        renderOrderItems();
+      },
+      isMobile: true,
+      deleteTitle: 'ลบแถวสินค้านี้'
+    });
+    cardHeader.appendChild(leftBadge);
+    cardHeader.appendChild(rightActions);
+    card.appendChild(cardHeader);
+
     const linkedProd = item.product_id && item.product_id !== '__custom__' 
       ? productList.find(p => p.id === item.product_id) 
       : null;
@@ -10494,7 +10868,7 @@ function renderOrderItems() {
       ? Number(linkedProd.stock_inhouse !== undefined && linkedProd.stock_inhouse !== null ? linkedProd.stock_inhouse : (linkedProd.stock_qty || 0)) 
       : null;
 
-    // ── Row 1: Product search + delete button ──
+    // ── Row 1: Product search ──
     const row1 = document.createElement('div');
     row1.style.cssText='display:flex;gap:8px;align-items:start;margin-bottom:10px';
 
@@ -10588,13 +10962,7 @@ function renderOrderItems() {
     receiptLabel.appendChild(document.createTextNode('แสดงรายการนี้ในบิล'));
     prodWrap.appendChild(receiptLabel);
 
-    const delBtn = document.createElement('button');
-    delBtn.textContent='✕';
-    delBtn.style.cssText='background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:14px;flex-shrink:0;margin-top:18px';
-    delBtn.onclick=()=>{orderItems.splice(i,1);renderOrderItems();};
-
     row1.appendChild(prodWrap);
-    row1.appendChild(delBtn);
     card.appendChild(row1);
 
     // ── Row 2: Qty | ราคา/ชิ้น | ส่วนลด | รวม ──
@@ -10938,7 +11306,16 @@ async function saveOrder() {
     tracking_no: document.getElementById('o-track').value,
     doc_status: 'confirmed',
     shipping_status: document.getElementById('o-status').value,
-    note: noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote, document.getElementById('o-delivery-date')?.value || today(), null, null, oEmail),
+    note: (function() {
+      const soItemOrder = orderItems.filter(it => it.product_name || it.product_id).map(it => ({
+        name: (it.product_name || '').trim(),
+        qty: Number(it.qty || 0),
+        price: Number(it.sell_price || 0),
+        product_id: (it.product_id && it.product_id !== '__custom__') ? it.product_id : null
+      }));
+      const baseNote = noteWithCompanyAndShipping(document.getElementById('o-note')?.value || '', document.getElementById('o-company')?.value, shippingFee, internalNote, document.getElementById('o-delivery-date')?.value || today(), null, null, oEmail);
+      return baseNote + (soItemOrder.length ? (baseNote ? '\n' : '') + '<!--SO_META:' + JSON.stringify({ item_order: soItemOrder }) + '-->' : '');
+    })(),
     internal_note: internalNote || null,
     employee_id: empId,
     bill_discount: billDisc,
@@ -11267,7 +11644,7 @@ function renderEditItems() {
     <th style="${thStyle};text-align:right;width:95px">ราคา/ชิ้น</th>
     <th style="${thStyle};text-align:right;width:115px">ส่วนลด</th>
     <th style="${thStyle};text-align:right;width:110px">รวม</th>
-    <th style="${thStyle};width:165px;text-align:center">การจัดการ</th>
+    <th style="${thStyle};width:245px;text-align:center">การจัดการ</th>
   </tr></thead>`;
 
   const tbody = document.createElement('tbody');
@@ -11441,8 +11818,17 @@ function renderEditItems() {
         <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modal-order-detail');openContentStudioWithOrderItem('${prodIdVal}','${prodNameEsc}',${qtyVal},'${chVal}','${orderNoVal}',${sellPriceVal})" title="นำสินค้านี้ไปสร้างโพสต์/คอนเทนต์ AI" style="padding:2px 7px;font-size:11px;background:#f0fdf4;color:#15803d;border-color:#86efac;font-weight:700">
           🎨 ทำ Content
         </button>
-        <button type="button" onclick="editItems.splice(${i},1);renderEditItems();updateEditTotal()" style="background:rgba(220,38,38,0.1);color:var(--red);border:none;border-radius:5px;padding:3px 7px;cursor:pointer;font-size:12px">✕</button>
       </div>`;
+    const actionControls = renderRowActionControls({
+      index: i,
+      totalCount: editItems.length,
+      itemsArray: editItems,
+      onReorder: () => { renderEditItems(); updateEditTotal(); },
+      onDelete: () => { editItems.splice(i, 1); renderEditItems(); updateEditTotal(); },
+      isMobile: false,
+      deleteTitle: 'ลบรายการสินค้านี้'
+    });
+    tdDel.firstElementChild.appendChild(actionControls);
     tr.appendChild(tdDel);
 
     tbody.appendChild(tr);
@@ -11462,6 +11848,7 @@ function renderEditItems() {
   addRow.appendChild(addTd);
   tbody.appendChild(addRow);
 
+  enableTableDragAndDrop(tbody, editItems, () => { renderEditItems(); updateEditTotal(); });
   table.appendChild(tbody);
   matrixWrap.appendChild(table);
   el.innerHTML = '';
@@ -11663,7 +12050,9 @@ async function viewOrder(orderId) {
   });
   window._currentOrderPOItems = thisOrderPOItems;
   window._editingOrderForGP = order;
-  editItems = (order.order_items||[]).map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount', show_on_receipt:showOrderItemOnReceipt(i)}));
+  const sortedOrderItems = sortOrderItems(order.order_items || [], getSOMeta(order));
+  order.order_items = sortedOrderItems;
+  editItems = sortedOrderItems.map(i=>({...i, discount:i.discount||0, discount_type:i.discount_type||'amount', show_on_receipt:showOrderItemOnReceipt(i)}));
   await loadEditProdList(); // โหลดรายการสินค้าสำหรับ autocomplete
   await loadOrderCustomerList(); // โหลดรายชื่อลูกค้าสำหรับ auto-fill
   const orderCustomer = (_orderCustomerList || []).find(c => c.id === order.customer_id);
@@ -12197,7 +12586,16 @@ async function saveOrderEdit(orderId) {
     tracking_no: document.getElementById('ed-track').value,
     payment_method: document.getElementById('ed-pay').value,
     shipping_status: document.getElementById('ed-status').value,
-    note: noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote, (document.getElementById('ed-delivery-date')?.value || '').trim(), null, null, editEmail),
+    note: (function() {
+      const soEditItemOrder = editItems.filter(it => it.product_name || it.product_id).map(it => ({
+        name: (it.product_name || '').trim(),
+        qty: Number(it.qty || 0),
+        price: Number(it.sell_price || 0),
+        product_id: (it.product_id && it.product_id !== '__custom__') ? it.product_id : null
+      }));
+      const baseNote = noteWithCompanyAndShipping(editRawNote, editCompanyName, editShippingFee, editInternalNote, (document.getElementById('ed-delivery-date')?.value || '').trim(), null, null, editEmail);
+      return baseNote + (soEditItemOrder.length ? (baseNote ? '\n' : '') + '<!--SO_META:' + JSON.stringify({ item_order: soEditItemOrder }) + '-->' : '');
+    })(),
     internal_note: editInternalNote || null,
     employee_id: edEmpVal || null,
     bill_discount: editBillDisc,
@@ -25133,6 +25531,12 @@ function syncQuoteItemInputs(idx) {
   }
 }
 
+function syncAllQuoteInputs() {
+  for (let k = 0; k < quoteItems.length; k++) {
+    syncQuoteItemInputs(k);
+  }
+}
+
 async function saveQuoteItemPhotoToProduct(rowIdx, slotIdx) {
   const it = quoteItems[rowIdx];
   if (!it) return;
@@ -25408,7 +25812,7 @@ function renderQuoteItems() {
           <th style="width:115px;text-align:right">Unit Price</th>
           <th style="width:125px;text-align:right">Discount</th>
           <th style="width:125px;text-align:right">Total (THB)</th>
-          <th style="width:85px;text-align:center">Actions</th>
+          <th style="width:115px;text-align:center">Actions</th>
         </tr>
       </thead>
     `;
@@ -25647,58 +26051,23 @@ function renderQuoteItems() {
       // ── Cell 7: Actions ──
       const tdActions = document.createElement('td');
       tdActions.style.cssText = 'text-align:center;vertical-align:top;padding-top:6px;white-space:nowrap';
-
-      if (i > 0) {
-        const upBtn = document.createElement('button');
-        upBtn.type = 'button';
-        upBtn.innerHTML = '▲';
-        upBtn.title = 'สลับขึ้นด้านบน';
-        upBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:11px;cursor:pointer;color:var(--text);margin-right:2px';
-        upBtn.onclick = () => {
-          syncQuoteItemInputs(i);
-          syncQuoteItemInputs(i - 1);
-          const temp = quoteItems[i];
-          quoteItems[i] = quoteItems[i-1];
-          quoteItems[i-1] = temp;
-          renderQuoteItems();
-          calcQuoteTotal();
-        };
-        tdActions.appendChild(upBtn);
-      }
-      if (i < quoteItems.length - 1) {
-        const downBtn = document.createElement('button');
-        downBtn.type = 'button';
-        downBtn.innerHTML = '▼';
-        downBtn.title = 'สลับลงด้านล่าง';
-        downBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:11px;cursor:pointer;color:var(--text);margin-right:4px';
-        downBtn.onclick = () => {
-          syncQuoteItemInputs(i);
-          syncQuoteItemInputs(i + 1);
-          const temp = quoteItems[i];
-          quoteItems[i] = quoteItems[i+1];
-          quoteItems[i+1] = temp;
-          renderQuoteItems();
-          calcQuoteTotal();
-        };
-        tdActions.appendChild(downBtn);
-      }
-
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'sap-matrix-del-btn';
-      delBtn.textContent = '✕';
-      delBtn.title = `ลบรายการที่ ${i+1}`;
-      delBtn.onclick = () => {
-        quoteItems.splice(i, 1);
-        renderQuoteItems();
-        calcQuoteTotal();
-      };
-      tdActions.appendChild(delBtn);
+      const actionControls = renderRowActionControls({
+        index: i,
+        totalCount: quoteItems.length,
+        itemsArray: quoteItems,
+        onReorder: () => { renderQuoteItems(); calcQuoteTotal(); },
+        onDelete: () => { quoteItems.splice(i, 1); renderQuoteItems(); calcQuoteTotal(); },
+        syncInputs: syncAllQuoteInputs,
+        isMobile: false,
+        deleteTitle: `ลบรายการที่ ${i+1}`
+      });
+      tdActions.appendChild(actionControls);
 
       tr.appendChild(tdActions);
       tbody.appendChild(tr);
     });
 
+    enableTableDragAndDrop(tbody, quoteItems, () => { renderQuoteItems(); calcQuoteTotal(); }, syncAllQuoteInputs);
     table.appendChild(tbody);
     matrixWrap.appendChild(table);
 
@@ -25733,51 +26102,16 @@ function renderQuoteItems() {
     leftBadge.style.cssText = 'display:flex;align-items:center;gap:6px';
     leftBadge.innerHTML = `<span style="background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:12px;font-family:var(--mono);border:1px solid #bae6fd">ลำดับที่ ${i+1}</span> <span style="font-size:11px;color:var(--text3)">(${i+1} จาก ${quoteItems.length} รายการ)</span>`;
     
-    const rightActions = document.createElement('div');
-    rightActions.style.cssText = 'display:flex;align-items:center;gap:4px';
-    
-    if (i > 0) {
-      const upBtn = document.createElement('button');
-      upBtn.type = 'button';
-      upBtn.innerHTML = '▲ เลื่อนขึ้น';
-      upBtn.title = 'สลับขึ้นด้านบน';
-      upBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--text);font-weight:600';
-      upBtn.onclick = () => {
-        syncQuoteItemInputs(i);
-        syncQuoteItemInputs(i - 1);
-        const temp = quoteItems[i];
-        quoteItems[i] = quoteItems[i-1];
-        quoteItems[i-1] = temp;
-        renderQuoteItems();
-        calcQuoteTotal();
-      };
-      rightActions.appendChild(upBtn);
-    }
-    if (i < quoteItems.length - 1) {
-      const downBtn = document.createElement('button');
-      downBtn.type = 'button';
-      downBtn.innerHTML = '▼ เลื่อนลง';
-      downBtn.title = 'สลับลงด้านล่าง';
-      downBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;cursor:pointer;color:var(--text);font-weight:600';
-      downBtn.onclick = () => {
-        syncQuoteItemInputs(i);
-        syncQuoteItemInputs(i + 1);
-        const temp = quoteItems[i];
-        quoteItems[i] = quoteItems[i+1];
-        quoteItems[i+1] = temp;
-        renderQuoteItems();
-        calcQuoteTotal();
-      };
-      rightActions.appendChild(downBtn);
-    }
-    
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.innerHTML = '✕ ลบ';
-    delBtn.title = `ลบรายการที่ ${i+1}`;
-    delBtn.style.cssText = 'background:rgba(220,38,38,0.1);color:var(--red);border:1px solid rgba(220,38,38,0.2);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px';
-    delBtn.onclick = () => { quoteItems.splice(i,1); renderQuoteItems(); calcQuoteTotal(); };
-    rightActions.appendChild(delBtn);
+    const rightActions = renderRowActionControls({
+      index: i,
+      totalCount: quoteItems.length,
+      itemsArray: quoteItems,
+      onReorder: () => { renderQuoteItems(); calcQuoteTotal(); },
+      onDelete: () => { quoteItems.splice(i, 1); renderQuoteItems(); calcQuoteTotal(); },
+      syncInputs: syncAllQuoteInputs,
+      isMobile: true,
+      deleteTitle: `ลบรายการที่ ${i+1}`
+    });
 
     cardHeader.appendChild(leftBadge);
     cardHeader.appendChild(rightActions);
@@ -27369,11 +27703,12 @@ async function loadGRPO() {
 }
 
 async function openGR(poId) {
-  const [{data:po},{data:items}] = await Promise.all([
+  const [{data:po},{data:itemsRaw}] = await Promise.all([
     sb.from('purchase_orders').select('*').eq('id',poId).single(),
-    sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
+    sb.from('purchase_order_items').select('*').eq('po_id',poId),
   ]);
   if (!po) return;
+  const items = sortPOItems(itemsRaw || [], getPOMeta(po));
   if (po.status === 'draft') {
     toast('PO นี้ยังเป็นสถานะแบบร่าง (ยังไม่ส่งสั่งซื้อ) ไม่สามารถรับสินค้าเข้าได้', 'error');
     return;
@@ -29385,6 +29720,7 @@ function getPOSupplierRef(po) {
 function getCleanPONote(note) {
   if (!note) return '';
   return note
+    .replace(/(?:<!--|\[)PO_META:[\s\S]*?(?:-->|\])/gi, '')
     .replace(/(?:<!--|\[)PO_ITEM_NOTES:(\{.*?\})(?:-->|\])/gi, '')
     .replace(/\[(?:สกุลเงิน|currency):[^\]]+\]/gi, '')
     .replace(/\[(?:Supplier\s*Ref|Ref\s*No|Supplier\s*Ref\s*No|Ref):[^\]]+\]/gi, '')
@@ -32159,7 +32495,7 @@ function renderPOItems() {
           <th style="width:110px;text-align:right">Quantity</th>
           <th style="width:130px;text-align:right">Unit Cost (${cur === 'USD' ? 'USD' : 'THB'})</th>
           <th style="width:135px;text-align:right">Total (${cur === 'USD' ? 'USD / THB' : 'THB'})</th>
-          <th style="width:85px;text-align:center">Actions</th>
+          <th style="width:115px;text-align:center">Actions</th>
         </tr>
       </thead>
     `;
@@ -32388,56 +32724,22 @@ function renderPOItems() {
       // ── Cell 6: Actions ──
       const tdActions = document.createElement('td');
       tdActions.style.cssText = 'text-align:center;vertical-align:top;padding-top:6px;white-space:nowrap';
-
-      if (i > 0) {
-        const upBtn = document.createElement('button');
-        upBtn.type = 'button';
-        upBtn.innerHTML = '▲';
-        upBtn.title = 'สลับขึ้นด้านบน';
-        upBtn.className = 'sap-matrix-del-btn';
-        upBtn.style.color = '#475569';
-        upBtn.onclick = () => {
-          const t = poItems[i];
-          poItems[i] = poItems[i-1];
-          poItems[i-1] = t;
-          renderPOItems();
-          calcPOTotal();
-        };
-        tdActions.appendChild(upBtn);
-      }
-      if (i < poItems.length - 1) {
-        const downBtn = document.createElement('button');
-        downBtn.type = 'button';
-        downBtn.innerHTML = '▼';
-        downBtn.title = 'สลับลงด้านล่าง';
-        downBtn.className = 'sap-matrix-del-btn';
-        downBtn.style.color = '#475569';
-        downBtn.onclick = () => {
-          const t = poItems[i];
-          poItems[i] = poItems[i+1];
-          poItems[i+1] = t;
-          renderPOItems();
-          calcPOTotal();
-        };
-        tdActions.appendChild(downBtn);
-      }
-
-      const delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'sap-matrix-del-btn';
-      delBtn.textContent = '✕';
-      delBtn.title = `ลบรายการที่ ${i+1}`;
-      delBtn.onclick = () => {
-        poItems.splice(i, 1);
-        renderPOItems();
-        calcPOTotal();
-      };
-      tdActions.appendChild(delBtn);
+      const actionControls = renderRowActionControls({
+        index: i,
+        totalCount: poItems.length,
+        itemsArray: poItems,
+        onReorder: () => { renderPOItems(); calcPOTotal(); },
+        onDelete: () => { poItems.splice(i, 1); renderPOItems(); calcPOTotal(); },
+        isMobile: false,
+        deleteTitle: `ลบรายการที่ ${i+1}`
+      });
+      tdActions.appendChild(actionControls);
 
       tr.appendChild(tdActions);
       tbody.appendChild(tr);
     });
 
+    enableTableDragAndDrop(tbody, poItems, () => { renderPOItems(); calcPOTotal(); });
     table.appendChild(tbody);
     matrixWrap.appendChild(table);
 
@@ -32490,47 +32792,15 @@ function renderPOItems() {
     }
     leftBadge.innerHTML = badgeHTML;
     
-    const rightActions = document.createElement('div');
-    rightActions.style.cssText = 'display:flex;align-items:center;gap:4px';
-    
-    if (i > 0) {
-      const upBtn = document.createElement('button');
-      upBtn.type = 'button';
-      upBtn.innerHTML = '▲';
-      upBtn.title = 'เลื่อนขึ้น (ลำดับก่อนหน้า)';
-      upBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--text2)';
-      upBtn.onclick = () => {
-        const temp = poItems[i];
-        poItems[i] = poItems[i-1];
-        poItems[i-1] = temp;
-        renderPOItems();
-        calcPOTotal();
-      };
-      rightActions.appendChild(upBtn);
-    }
-    if (i < poItems.length - 1) {
-      const downBtn = document.createElement('button');
-      downBtn.type = 'button';
-      downBtn.innerHTML = '▼';
-      downBtn.title = 'เลื่อนลง (ลำดับถัดไป)';
-      downBtn.style.cssText = 'background:var(--bg4);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:10px;cursor:pointer;color:var(--text2)';
-      downBtn.onclick = () => {
-        const temp = poItems[i];
-        poItems[i] = poItems[i+1];
-        poItems[i+1] = temp;
-        renderPOItems();
-        calcPOTotal();
-      };
-      rightActions.appendChild(downBtn);
-    }
-    
-    const delBtn = document.createElement('button');
-    delBtn.type = 'button';
-    delBtn.innerHTML = '✕ ลบ';
-    delBtn.title = `ลบรายการที่ ${i+1}`;
-    delBtn.style.cssText = 'background:rgba(220,38,38,0.1);color:var(--red);border:1px solid rgba(220,38,38,0.2);border-radius:4px;padding:2px 8px;cursor:pointer;font-size:11px;font-weight:600;margin-left:4px';
-    delBtn.onclick = () => { poItems.splice(i, 1); renderPOItems(); calcPOTotal(); };
-    rightActions.appendChild(delBtn);
+    const rightActions = renderRowActionControls({
+      index: i,
+      totalCount: poItems.length,
+      itemsArray: poItems,
+      onReorder: () => { renderPOItems(); calcPOTotal(); },
+      onDelete: () => { poItems.splice(i, 1); renderPOItems(); calcPOTotal(); },
+      isMobile: true,
+      deleteTitle: `ลบรายการที่ ${i+1}`
+    });
 
     cardHeader.appendChild(leftBadge);
     cardHeader.appendChild(rightActions);
@@ -33121,6 +33391,14 @@ async function savePO(status) {
   if (shippingTHB > 0) noteTags.push(`[PO Shipping THB: ${shippingTHB.toFixed(3)}]`);
   noteTags.push(`[PO Shipping Currency: ${shippingCurrency}]`);
   noteTags.push(`[PO Shipping Amount: ${shippingRaw.toFixed(6)}]`);
+  // Preserve exact user-defined line order in PO_META
+  const poItemOrder = poItems.filter(it => it.product_name).map(it => ({
+    name: (it.product_name || '').trim(),
+    qty: Number(it.qty_ordered || 0),
+    cost: Number(it.unit_cost || 0),
+    product_id: (it.product_id && it.product_id !== '__custom__') ? it.product_id : null
+  }));
+  noteTags.push('<!--PO_META:' + JSON.stringify({ item_order: poItemOrder }) + '-->');
   if (noteTags.length) {
     finalNote = (rawNoteVal ? rawNoteVal + '\n' : '') + noteTags.join('\n');
   }
@@ -33199,7 +33477,11 @@ async function savePO(status) {
 
 // ลบและรวมรายการสินค้าที่ซ้ำใน PO (สินค้าเดียวกัน) — รวมจำนวนสั่งซื้อเข้าด้วยกัน
 async function dedupePOItems(poId) {
-  const { data: items } = await sb.from('purchase_order_items').select('*').eq('po_id', poId).order('id');
+  const [{ data: po }, { data: itemsRaw }] = await Promise.all([
+    sb.from('purchase_orders').select('note').eq('id', poId).maybeSingle(),
+    sb.from('purchase_order_items').select('*').eq('po_id', poId)
+  ]);
+  const items = sortPOItems(itemsRaw || [], getPOMeta(po));
   if (!items || !items.length) return;
   const groups = {};
   items.forEach(it => {
@@ -33259,11 +33541,12 @@ async function viewPO(poId) {
   if (currentPage !== 'purchase' && !_isIplOpen && !_hasModalOpen && !window._isNavigatingRefDoc) {
     showPage('purchase');
   }
-  const [{data:po},{data:items}]=await Promise.all([
+  const [{data:po},{data:itemsRaw}]=await Promise.all([
     sb.from('purchase_orders').select('*').eq('id',poId).single(),
-    sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
+    sb.from('purchase_order_items').select('*').eq('po_id',poId),
   ]);
   if(!po) return;
+  const items = sortPOItems(itemsRaw || [], getPOMeta(po));
   const poFallbackNotes = getPOItemNotesFallback(po);
   const skuMap = await loadPOSkuMap(items);
   let actualReceiptDate = null;
@@ -33670,14 +33953,15 @@ async function editPOItemInternalNote(poId, itemId) {
 
 
 async function editPO(poId) {
-  const [{data:po},{data:items}]=await Promise.all([
+  const [{data:po},{data:itemsRaw}]=await Promise.all([
     sb.from('purchase_orders').select('*').eq('id',poId).single(),
-    sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id'),
+    sb.from('purchase_order_items').select('*').eq('po_id',poId),
   ]);
   if(!po) {
     toast('ไม่พบข้อมูล Purchase Order', 'error');
     return;
   }
+  const items = sortPOItems(itemsRaw || [], getPOMeta(po));
   
   editingPOId = po.id;
   editingPONo = po.po_no;
@@ -33869,11 +34153,12 @@ async function printPOItemLabels(poId) {
   const popup = window.open('', '_blank', 'width=900,height=1100,scrollbars=yes');
   if (!popup) { toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ฉลาก', 'error'); return; }
   try {
-    const [{data:po,error:poError},{data:items,error:itemError}] = await Promise.all([
-      sb.from('purchase_orders').select('po_no').eq('shop_id',currentShop.id).eq('id',poId).single(),
-      sb.from('purchase_order_items').select('product_id,product_name,qty_ordered').eq('po_id',poId).order('id')
+    const [{data:po,error:poError},{data:itemsRaw,error:itemError}] = await Promise.all([
+      sb.from('purchase_orders').select('po_no,note').eq('shop_id',currentShop.id).eq('id',poId).single(),
+      sb.from('purchase_order_items').select('product_id,product_name,qty_ordered').eq('po_id',poId)
     ]);
     if (poError || itemError || !po) throw new Error(poError?.message || itemError?.message || 'ไม่พบ PO');
+    const items = sortPOItems(itemsRaw || [], getPOMeta(po));
     const skuMap = await loadPOSkuMap(items || []);
     printA4ProductLabels('PO ' + po.po_no, (items || []).map(it => ({
       name: it.product_name || '-', sku: skuMap[it.product_id]?.sku || '-', qty: it.qty_ordered
@@ -34142,12 +34427,13 @@ async function printPOItemLabels10x15(poId) {
   const popup = window.open('', '_blank', 'width=850,height=1000,scrollbars=yes');
   if (!popup) { toast('กรุณาอนุญาต Pop-up เพื่อพิมพ์ฉลาก', 'error'); return; }
   try {
-    const [{ data: po, error: poError }, { data: items, error: itemError }] = await Promise.all([
+    const [{ data: po, error: poError }, { data: itemsRaw, error: itemError }] = await Promise.all([
       sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).eq('id', poId).single(),
-      sb.from('purchase_order_items').select('*').eq('po_id', poId).order('id')
+      sb.from('purchase_order_items').select('*').eq('po_id', poId)
     ]);
     if (poError || itemError || !po) throw new Error(poError?.message || itemError?.message || 'ไม่พบ PO');
 
+    const items = sortPOItems(itemsRaw || [], getPOMeta(po));
     const skuMap = await loadPOSkuMap(items || []);
     const validItems = (items || []).filter(it => Number(it.qty_ordered) > 0).map(it => {
       const p = skuMap[it.product_id] || {};
@@ -34185,7 +34471,7 @@ async function printPO(poId) {
   if (poId && typeof poId === 'string' && !poId.startsWith('PO-')) {
     const [{data:po},{data:items}]=await Promise.all([
       sb.from('purchase_orders').select('*').eq('id',poId).maybeSingle(),
-      sb.from('purchase_order_items').select('*').eq('po_id',poId).order('id', {ascending:true}),
+      sb.from('purchase_order_items').select('*').eq('po_id',poId),
     ]);
     poData = po;
     poItems = items || [];
@@ -34193,7 +34479,7 @@ async function printPO(poId) {
   if (!poData && poId) {
     const {data:po} = await sb.from('purchase_orders').select('*').eq('shop_id', currentShop.id).eq('po_no', poId).maybeSingle();
     if (po) {
-      const {data:items} = await sb.from('purchase_order_items').select('*').eq('po_id', po.id).order('id', {ascending:true});
+      const {data:items} = await sb.from('purchase_order_items').select('*').eq('po_id', po.id);
       poData = po;
       poItems = items || [];
     }
@@ -34203,7 +34489,7 @@ async function printPO(poId) {
     return;
   }
   const po = poData;
-  const items = poItems;
+  const items = sortPOItems(poItems, getPOMeta(po));
   const shop = currentShop || {};
   const skuMap = await loadPOSkuMap(items);
   let isUSD = false;
@@ -36103,10 +36389,10 @@ async function openAPDetail(apId) {
   if (ap.po_id) {
     const [{ data: poData }, { data: itemsData }] = await Promise.all([
       sb.from('purchase_orders').select('*').eq('id', ap.po_id).single(),
-      sb.from('purchase_order_items').select('*').eq('po_id', ap.po_id).order('id')
+      sb.from('purchase_order_items').select('*').eq('po_id', ap.po_id)
     ]);
     linkedPO = poData;
-    poItems = itemsData || [];
+    poItems = sortPOItems(itemsData || [], getPOMeta(linkedPO));
   }
   const isPaid = ap.status === 'paid';
   const remaining = Math.max(0, Number(ap.total_amount || 0) - Number(ap.paid_amount || 0));
@@ -38897,7 +39183,7 @@ async function openARDetail(arId) {
   if (!ar) return;
   let sourceOrder = null;
   if (ar.order_id) {
-    const { data } = await sb.from('orders').select('id,order_no,order_date,channel,total_amount,order_items(*)').eq('id', ar.order_id).single();
+    const { data } = await sb.from('orders').select('id,order_no,order_date,channel,total_amount,note,order_items(*)').eq('id', ar.order_id).single();
     sourceOrder = data || null;
   }
   const isCancelled = ar.status === 'cancelled';
@@ -38917,7 +39203,7 @@ async function openARDetail(arId) {
       '</td>' +
     '</tr>'
   ).join('');
-  const sourceItems = sourceOrder?.order_items || [];
+  const sourceItems = sortOrderItems(sourceOrder?.order_items || [], getSOMeta(sourceOrder));
   const sourceBox = sourceOrder ? `
     <div style="background:#eef6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px;margin-bottom:14px">
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
@@ -52841,7 +53127,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.15.3', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาดในการเปิดดูรายละเอียดใบเสนอราคา (Fix meta is not defined in viewQuote)', items:[
+    { v:'4.16.0', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบ Drag & Drop ลากย้ายตำแหน่ง, เมนู Jump เลือกลำดับ, และจำตำแหน่งถาวรทุกเอกสาร (Order, Quotation, PO, AR, AP)', items:[
+      '🎯 <b>เมนูเลือกย้ายลำดับ (Jump to Position Selector):</b> เพิ่มช่อง Dropdown เลือกลำดับในคอลัมน์ Actions (เช่น #1 บนสุด, #2, ..., #N ล่างสุด) ให้ทุกตารางสินค้า สามารถเลือกเพื่อย้ายแถวไปยังตำแหน่งที่ต้องการได้ทันที ทั้งบน PC และ Mobile',
+      '🖐️ <b>Drag & Drop ลากวางจัดตำแหน่งอิสระ:</b> เพิ่มไอคอนจับลาก <code>⠿</code> และระบบ HTML5 Drag and Drop ให้คลิกลากแถวสินค้าไปวางยังตำแหน่งใดก็ได้ โดยมีเส้นขอบไฮไลต์สีน้ำเงินแจ้งตำแหน่งแทรกอย่างชัดเจน',
+      '🔒 <b>จำลำดับที่บันทึกถาวร ห้ามเปลี่ยน (Permanent Sequence Persistence):</b> พัฒนาระบบจัดเก็บและล็อคลำดับแถวสินค้าอัตโนมัติผ่าน Metadata (<code>PO_META</code>, <code>SO_META</code>, <code>QT_META</code>) บันทึกแล้วจำตำแหน่งเดิม 100% ไม่ถูก Random UUID สลับแถวอีกต่อไป',
+      '📑 <b>ครอบคลุมครบทั้ง 5 เอกสารหลัก:</b> ใช้งานได้เหมือนกันหมดทั้ง <b>Sales Order (สร้าง/แก้ไข/ดู/พิมพ์)</b>, <b>Quotation (ใบเสนอราคา)</b>, <b>Purchase Order (ใบสั่งซื้อ/รับสินค้า/พิมพ์)</b>, <b>AR Invoice (ใบแจ้งหนี้ลูกหนี้)</b> และ <b>AP Invoice (ใบแจ้งหนี้เจ้าหนี้)</b>'
+    ]},
+    { v:'4.15.3', date:'2026-11-25', badge:'Patch', color:'#64748b', bg:'#f1f5f9', title:'แก้ไขข้อผิดพลาดในการเปิดดูรายละเอียดใบเสนอราคา (Fix meta is not defined in viewQuote)', items:[
       '🐛 <b>แก้ไขข้อผิดพลาด meta is not defined:</b> แก้ไขฟังก์ชัน <code>getQuoteMeta()</code> ที่มีตัวแปร <code>meta</code> ถูกประกาศไว้ภายใน block scope ของ JSON.parse ทำให้เกิด ReferenceError เมื่อเปิดดูใบเสนอราคาที่ไม่มี Metadata หรือระหว่างการจัดเรียงลำดับรายการสินค้า',
       '✅ <b>ปลอดภัยและเสถียร 100%:</b> ประกาศตัวแปร <code>itemOrder</code> ในฟังก์ชัน scope พร้อมตรวจสอบความถูกต้องของข้อมูลก่อนส่งออก ทำให้สามารถกดดูรายละเอียด (View Detail), พิมพ์เอกสาร (Print Quote / PDF), แปลงเป็นออเดอร์ (Convert to Order) และแก้ไขใบเสนอราคาได้ราบรื่นสมบูรณ์'
     ]},
