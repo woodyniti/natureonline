@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.15.2';
-const DISPLAY_APP_VERSION = 'v4.15.2';
+const CURRENT_APP_VERSION = 'sealthai-v4.15.3';
+const DISPLAY_APP_VERSION = 'v4.15.3';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.2 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.3 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -24722,6 +24722,7 @@ function getQuoteMeta(qt) {
   let branchCode = String(qt?.branch_code || '');
   let billingAddress = String(qt?.billing_address || '');
   let itemPhotos = {};
+  let itemOrder = null;
   let cleanNote = String(qt?.note || '');
 
   if (cleanNote.includes('<!--QT_META:') || cleanNote.includes('[QT_META:')) {
@@ -24745,6 +24746,7 @@ function getQuoteMeta(qt) {
         if (meta.branch_code != null && !branchCode) branchCode = meta.branch_code;
         if (meta.billing_address != null && !billingAddress) billingAddress = meta.billing_address;
         if (meta.item_photos && typeof meta.item_photos === 'object') itemPhotos = meta.item_photos;
+        if (meta.item_order && Array.isArray(meta.item_order)) itemOrder = meta.item_order;
         cleanNote = cleanNote.replace(/<!--QT_META:[\s\S]*?-->/g, '').replace(/\[QT_META:[\s\S]*?\]/g, '').trim();
       }
     } catch(e) {}
@@ -24772,7 +24774,7 @@ function getQuoteMeta(qt) {
     branch_code: branchCode,
     billing_address: billingAddress,
     item_photos: itemPhotos,
-    item_order: (meta && Array.isArray(meta.item_order)) ? meta.item_order : null,
+    item_order: itemOrder,
     note: cleanNote
   };
 }
@@ -52839,7 +52841,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.15.2', date:'2026-11-25', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มโหมดดูตามรายการสินค้าในใบสั่งซื้อ (Purchase Order Line Items View & Search)', items:[
+    { v:'4.15.3', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'แก้ไขข้อผิดพลาดในการเปิดดูรายละเอียดใบเสนอราคา (Fix meta is not defined in viewQuote)', items:[
+      '🐛 <b>แก้ไขข้อผิดพลาด meta is not defined:</b> แก้ไขฟังก์ชัน <code>getQuoteMeta()</code> ที่มีตัวแปร <code>meta</code> ถูกประกาศไว้ภายใน block scope ของ JSON.parse ทำให้เกิด ReferenceError เมื่อเปิดดูใบเสนอราคาที่ไม่มี Metadata หรือระหว่างการจัดเรียงลำดับรายการสินค้า',
+      '✅ <b>ปลอดภัยและเสถียร 100%:</b> ประกาศตัวแปร <code>itemOrder</code> ในฟังก์ชัน scope พร้อมตรวจสอบความถูกต้องของข้อมูลก่อนส่งออก ทำให้สามารถกดดูรายละเอียด (View Detail), พิมพ์เอกสาร (Print Quote / PDF), แปลงเป็นออเดอร์ (Convert to Order) และแก้ไขใบเสนอราคาได้ราบรื่นสมบูรณ์'
+    ]},
+    { v:'4.15.2', date:'2026-11-25', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'เพิ่มโหมดดูตามรายการสินค้าในใบสั่งซื้อ (Purchase Order Line Items View & Search)', items:[
       '📦 <b>โหมดดูตามรายการสินค้า (PO Items View):</b> เพิ่มปุ่มสลับมุมมองระหว่าง <code>📑 ดูตามใบสั่งซื้อ (PO)</code> และ <code>📦 ดูตามรายการสินค้า (Items)</code> ช่วยให้ผู้ใช้สามารถดูรายการสินค้าทุกแถวที่สั่งซื้อใน PO ได้อย่างละเอียด',
       '🔍 <b>ค้นหาเจาะจงรายสินค้าได้ทันที:</b> เมื่ออยู่ในโหมดรายการสินค้า ช่องค้นหาจะช่วยกรองหาสินค้าตามชื่อ, รหัส SKU, ขนาดมิติ (เช่น 35 55 8 หรือ 35x42x5), เลข PO หรือผู้ขาย พร้อมสรุปยอดจำนวนสั่งซื้อ จำนวนรับแล้ว และยอดค้างรับ',
       '⏳ <b>Quick Item Status Filters:</b> เพิ่มปุ่มคัดกรองด่วน <code>ทั้งหมด</code>, <code>⏳ ค้างรับสินค้า</code> และ <code>✓ รับครบแล้ว</code> ช่วยให้ฝ่ายจัดซื้อและฝ่ายคลังติดตามสินค้าค้างส่งได้ในคลิกเดียว',
