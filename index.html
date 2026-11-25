@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.15.1';
-const DISPLAY_APP_VERSION = 'v4.15.1';
+const CURRENT_APP_VERSION = 'sealthai-v4.15.2';
+const DISPLAY_APP_VERSION = 'v4.15.2';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1739,7 +1739,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.1 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.15.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.15.2 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -29477,6 +29477,45 @@ let _poPeriodMode = 'default';
 let _poPeriodYear = null;
 let _poPeriodMonth = null;
 let _poPeriodCounts = new Map();
+let _poViewMode = (typeof localStorage !== 'undefined' && localStorage.getItem('po_view_mode')) || 'docs'; // 'docs' | 'items'
+let _poItemStatusFilter = 'all'; // 'all' | 'pending' | 'received'
+let _lastLoadedPOs = [];
+let _lastReceiptByPO = new Map();
+let _lastPOFrom = '';
+let _lastPOTo = '';
+
+function setPOViewMode(mode) {
+  _poViewMode = mode;
+  try { localStorage.setItem('po_view_mode', mode); } catch(e){}
+  updatePOViewToggle();
+  renderPOActiveView();
+}
+
+function updatePOViewToggle() {
+  const docsBtn = document.getElementById('po-view-docs-btn');
+  const itemsBtn = document.getElementById('po-view-items-btn');
+  const searchInp = document.getElementById('po-search');
+  if (docsBtn && itemsBtn) {
+    if (_poViewMode === 'items') {
+      docsBtn.style.background = 'transparent';
+      docsBtn.style.color = 'var(--text)';
+      itemsBtn.style.background = 'var(--accent)';
+      itemsBtn.style.color = '#fff';
+      if (searchInp) searchInp.placeholder = '🔍 ค้นหา ชื่อสินค้า / SKU / ขนาด (เช่น 35 55 8) / PO / ผู้ขาย...';
+    } else {
+      docsBtn.style.background = 'var(--accent)';
+      docsBtn.style.color = '#fff';
+      itemsBtn.style.background = 'transparent';
+      itemsBtn.style.color = 'var(--text)';
+      if (searchInp) searchInp.placeholder = '🔍 ค้นหา เลขที่ PO / ผู้ขาย / ชื่อสินค้า / หมายเหตุ...';
+    }
+  }
+}
+
+function setPOItemFilter(f) {
+  _poItemStatusFilter = f;
+  renderPOActiveView();
+}
 
 async function purchase() {
   _poPeriodMode = 'default';
@@ -29487,7 +29526,11 @@ async function purchase() {
 
   setContent(`
     <div id="po-period-shortcuts" class="po-period-shortcuts" aria-label="เลือกช่วงเวลาใบสั่งซื้อ"><div style="font-size:12px;color:var(--text3)">กำลังโหลดตัวเลือกเดือนและปี...</div></div>
-    <div class="filter-bar" style="flex-wrap:wrap;gap:8px">
+    <div class="filter-bar" style="flex-wrap:wrap;gap:8px;align-items:center">
+      <div style="display:inline-flex;background:#e2e8f0;border-radius:6px;padding:2px;gap:2px">
+        <button type="button" id="po-view-docs-btn" class="btn btn-sm" onclick="setPOViewMode('docs')" style="border:none;border-radius:4px;padding:4px 10px;font-size:12px;font-weight:600;background:var(--accent);color:#fff">📑 ดูตามใบสั่งซื้อ (PO)</button>
+        <button type="button" id="po-view-items-btn" class="btn btn-sm" onclick="setPOViewMode('items')" style="border:none;border-radius:4px;padding:4px 10px;font-size:12px;font-weight:600;background:transparent;color:var(--text)">📦 ดูตามรายการสินค้า (Items)</button>
+      </div>
       <input type="date" id="po-from" value="${pendingPOCardToday().slice(0,7)+'-01'}" onchange="setPOCustomPeriod()">
       <span style="color:var(--text3)">ถึง</span>
       <input type="date" id="po-to" value="${pendingPOCardToday()}" onchange="setPOCustomPeriod()">
@@ -29845,6 +29888,7 @@ function setPOCustomPeriod() {
 
 function clearPOFilter() {
   _poPeriodMode = 'all';
+  _poItemStatusFilter = 'all';
   ['po-from','po-to','po-status','po-search'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const sortEl = document.getElementById('po-sort');
   if (sortEl) sortEl.value = 'date_desc';
@@ -29988,18 +30032,42 @@ async function loadPOs() {
     toast('โหลดวันที่รับสินค้าจริงของ PO ไม่สำเร็จ: '+(error.message||'เกิดข้อผิดพลาด'),'error');
   }
 
-  const el=document.getElementById('po-list');
-  if(!el) return;
-  if(!rows.length){
-    el.innerHTML='<div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">ยังไม่มี Purchase Order</div></div>';
+  _lastLoadedPOs = rows;
+  _lastReceiptByPO = lastReceiptByPO;
+  _lastPOFrom = from;
+  _lastPOTo = to;
+
+  updatePOViewToggle();
+  renderPOActiveView();
+}
+
+function renderPOActiveView() {
+  const el = document.getElementById('po-list');
+  if (!el) return;
+  if (_poViewMode === 'items') {
+    renderPOItemsTable(_lastLoadedPOs, _lastReceiptByPO);
+  } else {
+    renderPODocumentsTable(_lastLoadedPOs, _lastReceiptByPO, _lastPOFrom, _lastPOTo);
+  }
+}
+
+function renderPODocumentsTable(rows, lastReceiptByPO, from, to) {
+  const el = document.getElementById('po-list');
+  if (!el) return;
+  if (!rows || !rows.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🛒</div><div class="empty-text">ยังไม่มี Purchase Order</div></div>';
     return;
   }
-  el.innerHTML='<div class="table-wrap"><table><thead><tr>'+
-    '<th style="width:45px;text-align:center">#</th>'+
-    '<th>วันที่</th><th>เลขที่ PO</th><th>Supplier</th>'+
-    '<th class="text-right">ยอดรวม</th><th>สถานะ</th><th>คาดรับ / รับจริง</th><th>⏱️ รอสินค้า</th><th></th>'+
-    '</tr></thead><tbody>'+
-    rows.map((po, idx)=>{
+  const poAsOf = pendingPOCardToday();
+  const search = (document.getElementById('po-search')?.value || '').trim().toLowerCase();
+  const prodMap = (allProducts || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+
+  el.innerHTML = '<div class="table-wrap"><table><thead><tr>' +
+    '<th style="width:45px;text-align:center">#</th>' +
+    '<th>วันที่</th><th>เลขที่ PO</th><th>Supplier</th>' +
+    '<th class="text-right">ยอดรวม</th><th>สถานะ</th><th>คาดรับ / รับจริง</th><th>⏱️ รอสินค้า</th><th></th>' +
+    '</tr></thead><tbody>' +
+    rows.map((po, idx) => {
       let isUSD = false;
       let poRate = 35.00;
       const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
@@ -30011,34 +30079,37 @@ async function loadPOs() {
       const rawTHB = Number(po.total_amount || 0);
       const usdTotal = isUSD && poRate > 0 ? (rawTHB / poRate) : 0;
       const amtDisplay = isUSD
-        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+        ? `${usdTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
         : `฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
       const supRef = getPOSupplierRef(po);
-      return '<tr style="cursor:pointer" onclick="viewPO(&quot;'+po.id+'&quot;)">'+
-        '<td style="text-align:center;font-weight:700;color:var(--text3);font-family:var(--mono);font-size:12px">'+(idx+1)+'</td>'+
-        '<td>'+po.po_date+(((from && po.po_date < from) || (to && po.po_date > to)) ? '<div style="font-size:10px;color:var(--blue)">ค้างจากช่วงอื่น</div>' : '')+'</td>'+
-        '<td class="font-mono" style="font-size:12px;color:var(--text3)">'+(po.po_no||'-')+
-          (supRef ? '<div style="font-size:10.5px;color:var(--blue);font-weight:600" title="Ref No ของ Supplier">🏷️ '+escapeHTML(supRef)+'</div>' : '')+
-          (()=>{
-            const matchedIts = poMatchedItemsMap.get(po.id);
-            if (!matchedIts || !matchedIts.length) return '';
+      const matchedIts = search ? (po.purchase_order_items || []).filter(it => isPOItemMatchSearch(it, search, prodMap)) : [];
+      const matchedHtml = (matchedIts && matchedIts.length)
+        ? (() => {
             const itemsHtml = matchedIts.slice(0, 3).map(it => `${escapeHTML(it.product_name || 'สินค้า')} (<b>${fmt(it.qty_ordered)}</b> ชิ้น)`).join(' · ');
             const moreTxt = matchedIts.length > 3 ? ` +อีก ${matchedIts.length - 3} รายการ` : '';
-            return '<div style="margin-top:3px;padding:2px 6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;font-size:10.5px;color:#166534;font-family:sans-serif">📦 <b>พบสินค้า:</b> '+itemsHtml+moreTxt+'</div>';
-          })()+
-        '</td>'+
-        '<td style="font-weight:500">'+(po.supplier_name||'-')+'</td>'+
-        '<td class="text-right font-mono text-amber">'+amtDisplay+'</td>'+
-        '<td>'+poBadge(po.status)+'</td>'+
-        '<td style="font-size:12px">'+renderPOListReceiptDate(po,lastReceiptByPO.get(po.id))+'</td>'+
-        '<td style="font-size:12px;font-weight:700;white-space:nowrap;color:'+(['sent','partial'].includes(po.status)?'var(--blue)':'var(--text3)')+'" title="นับจากวันที่ PO ถึงวันนี้">'+escapeHTML(pendingPOWaitText(po,poAsOf))+'</td>'+
-        '<td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewPO(&quot;'+po.id+'&quot;)">ดู</button></td>'+
+            return '<div style="margin-top:3px;padding:2px 6px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:4px;font-size:10.5px;color:#166534;font-family:sans-serif">📦 <b>พบสินค้า:</b> ' + itemsHtml + moreTxt + '</div>';
+          })()
+        : '';
+
+      return '<tr style="cursor:pointer" onclick="viewPO(&quot;' + po.id + '&quot;)">' +
+        '<td style="text-align:center;font-weight:700;color:var(--text3);font-family:var(--mono);font-size:12px">' + (idx + 1) + '</td>' +
+        '<td>' + po.po_date + (((from && po.po_date < from) || (to && po.po_date > to)) ? '<div style="font-size:10px;color:var(--blue)">ค้างจากช่วงอื่น</div>' : '') + '</td>' +
+        '<td class="font-mono" style="font-size:12px;color:var(--text3)">' + (po.po_no || '-') +
+          (supRef ? '<div style="font-size:10.5px;color:var(--blue);font-weight:600" title="Ref No ของ Supplier">🏷️ ' + escapeHTML(supRef) + '</div>' : '') +
+          matchedHtml +
+        '</td>' +
+        '<td style="font-weight:500">' + (po.supplier_name || '-') + '</td>' +
+        '<td class="text-right font-mono text-amber">' + amtDisplay + '</td>' +
+        '<td>' + poBadge(po.status) + '</td>' +
+        '<td style="font-size:12px">' + renderPOListReceiptDate(po, lastReceiptByPO.get(po.id)) + '</td>' +
+        '<td style="font-size:12px;font-weight:700;white-space:nowrap;color:' + (['sent','partial'].includes(po.status) ? 'var(--blue)' : 'var(--text3)') + '" title="นับจากวันที่ PO ถึงวันนี้">' + escapeHTML(pendingPOWaitText(po, poAsOf)) + '</td>' +
+        '<td><button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewPO(&quot;' + po.id + '&quot;)">ดู</button></td>' +
       '</tr>';
-    }).join('')+
-    '</tbody></table></div>'+
-    '<div class="mobile-only">'+
-    rows.map((po, idx)=>{
+    }).join('') +
+    '</tbody></table></div>' +
+    '<div class="mobile-only">' +
+    rows.map((po, idx) => {
       let isUSD = false;
       let poRate = 35.00;
       const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
@@ -30050,18 +30121,255 @@ async function loadPOs() {
       const rawTHB = Number(po.total_amount || 0);
       const usdTotal = isUSD && poRate > 0 ? (rawTHB / poRate) : 0;
       const amtMobile = isUSD
-        ? `$${usdTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:11px;color:var(--text3);font-weight:normal">(฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
+        ? `${usdTotal.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}<div style="font-size:11px;color:var(--text3);font-weight:normal">(฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})})</div>`
         : `฿${rawTHB.toLocaleString('en-US',{minimumFractionDigits:3,maximumFractionDigits:3})}`;
 
       const supRef = getPOSupplierRef(po);
-      return '<div class="order-card" onclick="viewPO(&quot;'+po.id+'&quot;)" style="cursor:pointer">'+
-        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">'+
-          '<div><div style="font-weight:600">'+(po.supplier_name||'-')+'</div>'+
-          '<div style="font-size:11px;color:var(--text3)"><span style="font-weight:700;color:var(--accent);margin-right:4px">#'+(idx+1)+'</span> · '+po.po_date+' · '+(po.po_no||'-')+(supRef ? ' · <span style="color:var(--blue);font-weight:600">Ref: '+escapeHTML(supRef)+'</span>' : '')+(((from && po.po_date < from) || (to && po.po_date > to)) ? ' · <span style="color:var(--blue);font-weight:600">ค้างจากช่วงอื่น</span>' : '')+'</div></div>'+
-          '<div class="font-mono text-amber" style="font-size:15px;font-weight:700;text-align:right">'+amtMobile+'</div>'+
-        '</div>'+
-        poBadge(po.status)+'<div style="font-size:12px;margin-top:7px">'+renderPOListReceiptDate(po,lastReceiptByPO.get(po.id))+'</div><div style="font-size:12px;margin-top:7px;color:'+(['sent','partial'].includes(po.status)?'var(--blue)':'var(--text3)')+';font-weight:700">⏱️ รอสินค้า: '+escapeHTML(pendingPOWaitText(po,poAsOf))+'</div></div>';
-    }).join('')+
+      return '<div class="order-card" onclick="viewPO(&quot;' + po.id + '&quot;)" style="cursor:pointer">' +
+        '<div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">' +
+          '<div><div style="font-weight:600">' + (po.supplier_name || '-') + '</div>' +
+          '<div style="font-size:11px;color:var(--text3)"><span style="font-weight:700;color:var(--accent);margin-right:4px">#' + (idx + 1) + '</span> · ' + po.po_date + ' · ' + (po.po_no || '-') + (supRef ? ' · <span style="color:var(--blue);font-weight:600">Ref: ' + escapeHTML(supRef) + '</span>' : '') + (((from && po.po_date < from) || (to && po.po_date > to)) ? ' · <span style="color:var(--blue);font-weight:600">ค้างจากช่วงอื่น</span>' : '') + '</div></div>' +
+          '<div class="font-mono text-amber" style="font-size:15px;font-weight:700;text-align:right">' + amtMobile + '</div>' +
+        '</div>' +
+        poBadge(po.status) + '<div style="font-size:12px;margin-top:7px">' + renderPOListReceiptDate(po, lastReceiptByPO.get(po.id)) + '</div><div style="font-size:12px;margin-top:7px;color:' + (['sent','partial'].includes(po.status) ? 'var(--blue)' : 'var(--text3)') + ';font-weight:700">⏱️ รอสินค้า: ' + escapeHTML(pendingPOWaitText(po, poAsOf)) + '</div></div>';
+    }).join('') +
+    '</div>';
+}
+
+function renderPOItemsTable(rows, lastReceiptByPO) {
+  const el = document.getElementById('po-list');
+  if (!el) return;
+
+  const search = (document.getElementById('po-search')?.value || '').trim().toLowerCase();
+  const prodMap = (allProducts || []).reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+
+  // Flatten all items across loaded POs
+  let allItems = [];
+  (rows || []).forEach(po => {
+    let isUSD = false;
+    let poRate = 35.00;
+    const usdMatch = (po.note || '').match(/\[(?:สกุลเงิน|currency):\s*USD(?:,\s*(?:อัตราแลกเปลี่ยน|rate):\s*([\d.]+))?\]/i);
+    if (po.currency === 'USD' || usdMatch) {
+      isUSD = true;
+      if (usdMatch && usdMatch[1]) poRate = Number(usdMatch[1]) || 35.00;
+      else if (po.exchange_rate) poRate = Number(po.exchange_rate) || 35.00;
+    }
+
+    (po.purchase_order_items || []).forEach(it => {
+      const p = it.product_id ? (prodMap[it.product_id] || (productList || []).find(x => x.id === it.product_id)) : null;
+      const ordered = Number(it.qty_ordered || 0);
+      const received = Number(it.qty_received || 0);
+      const pending = Math.max(0, ordered - received);
+      const unitCost = Number(it.unit_cost || 0);
+      const lineTotal = ordered * unitCost;
+
+      allItems.push({
+        ...it,
+        po,
+        product: p,
+        ordered,
+        received,
+        pending,
+        unitCost,
+        lineTotal,
+        isUSD,
+        poRate
+      });
+    });
+  });
+
+  // Filter items by search if provided
+  if (search) {
+    allItems = allItems.filter(item => {
+      const itMatch = isPOItemMatchSearch(item, search, prodMap);
+      const poMatch = smartWildcardMatch(item.po.po_no, search) ||
+        smartWildcardMatch(item.po.supplier_name, search) ||
+        smartWildcardMatch(getPOSupplierRef(item.po), search) ||
+        smartWildcardMatch(getCleanPONote(item.po.note), search) ||
+        smartWildcardMatch(item.internal_note || '', search);
+      return itMatch || poMatch;
+    });
+  }
+
+  const totalRawCount = allItems.length;
+  const pendingItems = allItems.filter(it => it.po.status !== 'cancelled' && it.pending > 0);
+  const receivedItems = allItems.filter(it => it.po.status !== 'cancelled' && it.ordered > 0 && it.received >= it.ordered);
+
+  // Apply Quick Status Filter
+  if (_poItemStatusFilter === 'pending') {
+    allItems = pendingItems;
+  } else if (_poItemStatusFilter === 'received') {
+    allItems = receivedItems;
+  }
+
+  // Sort item rows
+  const sortMode = document.getElementById('po-sort')?.value || 'date_desc';
+  allItems.sort((a, b) => {
+    if (sortMode === 'po_no_asc') {
+      return (a.po.po_no || '').localeCompare(b.po.po_no || '', undefined, {numeric: true});
+    }
+    if (sortMode === 'po_no_desc') {
+      return (b.po.po_no || '').localeCompare(a.po.po_no || '', undefined, {numeric: true});
+    }
+    if (sortMode === 'date_asc') {
+      return (a.po.po_date || '').localeCompare(b.po.po_date || '') || (a.po.po_no || '').localeCompare(b.po.po_no || '', undefined, {numeric: true});
+    }
+    if (sortMode === 'amount_desc') {
+      return b.lineTotal - a.lineTotal;
+    }
+    if (sortMode === 'amount_asc') {
+      return a.lineTotal - b.lineTotal;
+    }
+    // date_desc
+    return (b.po.po_date || '').localeCompare(a.po.po_date || '') || (b.po.created_at || '').localeCompare(a.po.created_at || '') || (b.po.po_no || '').localeCompare(a.po.po_no || '', undefined, {numeric: true});
+  });
+
+  const filterChipsHtml = `
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:4px 0 8px">
+      <span style="font-size:12.5px;font-weight:700;color:var(--text);display:inline-flex;align-items:center;gap:4px">
+        📦 แสดงตามรายการสินค้า:
+      </span>
+      <button type="button" class="btn btn-sm" onclick="setPOItemFilter('all')" style="border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;background:${_poItemStatusFilter==='all'?'var(--accent)':'#f1f5f9'};color:${_poItemStatusFilter==='all'?'#fff':'var(--text)'};border:1px solid ${_poItemStatusFilter==='all'?'var(--accent)':'#cbd5e1'}">
+        ทั้งหมด (${fmt(totalRawCount)})
+      </button>
+      <button type="button" class="btn btn-sm" onclick="setPOItemFilter('pending')" style="border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;background:${_poItemStatusFilter==='pending'?'#b45309':'#fef3c7'};color:${_poItemStatusFilter==='pending'?'#fff':'#92400e'};border:1px solid #fde68a">
+        ⏳ ค้างรับสินค้า (${fmt(pendingItems.length)})
+      </button>
+      <button type="button" class="btn btn-sm" onclick="setPOItemFilter('received')" style="border-radius:20px;padding:3px 10px;font-size:11.5px;font-weight:600;background:${_poItemStatusFilter==='received'?'#15803d':'#dcfce7'};color:${_poItemStatusFilter==='received'?'#fff':'#166534'};border:1px solid #86efac">
+        ✓ รับครบแล้ว (${fmt(receivedItems.length)})
+      </button>
+    </div>
+  `;
+
+  if (!allItems.length) {
+    el.innerHTML = filterChipsHtml + '<div class="empty"><div class="empty-icon">📦</div><div class="empty-text">ไม่พบรายการสินค้าที่สั่งซื้อตามเงื่อนไข</div></div>';
+    return;
+  }
+
+  const totalOrderedQty = allItems.reduce((s, it) => s + it.ordered, 0);
+  const totalReceivedQty = allItems.reduce((s, it) => s + it.received, 0);
+  const totalPendingQty = allItems.reduce((s, it) => s + it.pending, 0);
+  const totalLineAmt = allItems.reduce((s, it) => s + it.lineTotal, 0);
+
+  const summaryBarHtml = `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:12px">
+      <div>📦 <b>รายการที่แสดง:</b> ${fmt(allItems.length)} รายการ</div>
+      <div>🛒 <b>สั่งซื้อรวม:</b> ${fmt(totalOrderedQty)} ชิ้น</div>
+      <div style="color:#15803d">✓ <b>รับแล้ว:</b> ${fmt(totalReceivedQty)} ชิ้น</div>
+      <div style="color:${totalPendingQty > 0 ? '#b91c1c' : '#15803d'};font-weight:700">⏳ <b>ค้างรับ:</b> ${fmt(totalPendingQty)} ชิ้น</div>
+      <div style="margin-left:auto;font-family:var(--mono);font-weight:700;color:var(--amber);font-size:13px">💰 <b>ยอดรวม:</b> ฿${totalLineAmt.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2})}</div>
+    </div>
+  `;
+
+  el.innerHTML = filterChipsHtml + summaryBarHtml +
+    '<div class="table-wrap"><table class="table-compact"><thead><tr>' +
+    '<th style="width:40px;text-align:center">#</th>' +
+    '<th>วันที่ PO</th>' +
+    '<th>เลขที่ PO</th>' +
+    '<th>Supplier</th>' +
+    '<th>รหัสสินค้า (SKU)</th>' +
+    '<th>ชื่อสินค้า / รายการ</th>' +
+    '<th class="text-right">สั่งซื้อ</th>' +
+    '<th class="text-right">รับแล้ว</th>' +
+    '<th class="text-right">ค้างรับ</th>' +
+    '<th class="text-right">ราคา/หน่วย</th>' +
+    '<th class="text-right">ยอดรวม</th>' +
+    '<th style="text-align:center">สถานะรับเข้า</th>' +
+    '<th>หมายเหตุ / SO</th>' +
+    '<th></th>' +
+    '</tr></thead><tbody>' +
+    allItems.map((item, idx) => {
+      const p = item.product;
+      const sku = item.sku || p?.sku || p?.supplier_sku || '-';
+      const partNo = p?.part_no ? `<span style="font-size:9.5px;color:var(--text3);background:var(--bg3);padding:1px 4px;border-radius:3px;font-family:var(--mono)">#${escapeHTML(p.part_no)}</span>` : '';
+      const inStock = p ? Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0)) : null;
+
+      let itemBadgeHtml = '';
+      if (item.po.status === 'cancelled') {
+        itemBadgeHtml = '<span class="badge" style="background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1;font-size:10px">ยกเลิก</span>';
+      } else if (item.received >= item.ordered && item.ordered > 0) {
+        itemBadgeHtml = `<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700">✓ รับครบแล้ว (${fmt(item.received)}/${fmt(item.ordered)})</span>`;
+      } else if (item.received > 0) {
+        itemBadgeHtml = `<span class="badge" style="background:#fef3c7;color:#b45309;border:1px solid #fde68a;font-size:10px;font-weight:700">⚠️ รับบางส่วน (${fmt(item.received)}/${fmt(item.ordered)})</span>`;
+      } else {
+        itemBadgeHtml = `<span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:10px;font-weight:700">⏳ รอรับ (${fmt(item.ordered)})</span>`;
+      }
+
+      const pendingBadge = (item.po.status !== 'cancelled' && item.pending > 0)
+        ? `<span class="badge" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-weight:700;font-size:10.5px">ค้าง ${fmt(item.pending)}</span>`
+        : (item.po.status === 'cancelled' ? '<span style="color:var(--text3)">-</span>' : '<span style="color:#16a34a;font-size:10.5px;font-weight:700">✓ ครบ</span>');
+
+      const unitCostDisplay = item.isUSD
+        ? `${(item.unitCost / item.poRate).toFixed(3)}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${item.unitCost.toFixed(2)})</div>`
+        : `฿${item.unitCost.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+      const lineTotalDisplay = item.isUSD
+        ? `${(item.lineTotal / item.poRate).toFixed(2)}<div style="font-size:10px;color:var(--text3);font-weight:normal">(฿${item.lineTotal.toFixed(2)})</div>`
+        : `฿${item.lineTotal.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+
+      const prodNameHtml = item.product_id
+        ? `<span onclick="event.stopPropagation();viewProductInventoryPosting('${item.product_id}')" title="คลิกดูประวัติสต๊อก Inventory Movement" style="cursor:pointer;font-weight:600;color:var(--text);text-decoration:underline dotted #94a3b8">${escapeHTML(item.product_name || p?.name || '-')}</span>`
+        : `<span>${escapeHTML(item.product_name || '-')}</span>`;
+
+      const stockBadge = inStock !== null
+        ? ` <span onclick="event.stopPropagation();viewProductInventoryPosting('${item.product_id}')" title="สต๊อกคงเหลือจริงในร้านปัจจุบัน: ${fmt(inStock)} ชิ้น" style="cursor:pointer;font-size:9.5px;padding:1px 5px;border-radius:4px;background:${inStock>0?'#dcfce7':'#fee2e2'};color:${inStock>0?'#15803d':'#b91c1c'};border:1px solid ${inStock>0?'#86efac':'#fca5a5'};font-weight:700;white-space:nowrap">📦 คลัง ${fmt(inStock)}</span>`
+        : '';
+
+      const noteHtml = item.internal_note
+        ? `<div style="font-size:11px;color:#0284c7;font-family:sans-serif" title="${escapeHTML(item.internal_note)}">📝 ${escapeHTML(item.internal_note)}</div>`
+        : '';
+
+      return '<tr style="cursor:pointer" onclick="viewPO(&quot;' + item.po.id + '&quot;)">' +
+        '<td style="text-align:center;font-weight:700;color:var(--text3);font-family:var(--mono);font-size:11.5px">' + (idx + 1) + '</td>' +
+        '<td style="white-space:nowrap;font-size:12px">' + item.po.po_date + (item.po.expected_date ? `<div style="font-size:10px;color:var(--text3)">คาด: ${item.po.expected_date}</div>` : '') + '</td>' +
+        '<td class="font-mono" style="font-size:12px;color:var(--accent);font-weight:700">' + (item.po.po_no || '-') + '<div style="margin-top:2px">' + poBadge(item.po.status) + '</div></td>' +
+        '<td style="font-size:12px;font-weight:500">' + escapeHTML(item.po.supplier_name || '-') + '</td>' +
+        '<td class="font-mono" style="font-size:11.5px;color:var(--text2)">' + escapeHTML(sku) + (partNo ? ' ' + partNo : '') + '</td>' +
+        '<td style="font-size:12.5px;max-width:280px">' + prodNameHtml + stockBadge + '</td>' +
+        '<td class="text-right font-mono" style="font-weight:700">' + fmt(item.ordered) + '</td>' +
+        '<td class="text-right font-mono" style="color:#15803d">' + fmt(item.received) + '</td>' +
+        '<td class="text-right font-mono">' + pendingBadge + '</td>' +
+        '<td class="text-right font-mono" style="font-size:12px">' + unitCostDisplay + '</td>' +
+        '<td class="text-right font-mono text-amber" style="font-weight:700;font-size:12px">' + lineTotalDisplay + '</td>' +
+        '<td style="text-align:center;white-space:nowrap">' + itemBadgeHtml + '</td>' +
+        '<td style="font-size:11.5px;max-width:180px">' + noteHtml + '</td>' +
+        '<td><button type="button" class="btn btn-secondary btn-sm" onclick="event.stopPropagation();viewPO(&quot;' + item.po.id + '&quot;)">ดู PO</button></td>' +
+      '</tr>';
+    }).join('') +
+    '</tbody></table></div>' +
+    '<div class="mobile-only">' +
+    allItems.map((item, idx) => {
+      const p = item.product;
+      const sku = item.sku || p?.sku || p?.supplier_sku || '';
+      return '<div class="order-card" onclick="viewPO(&quot;' + item.po.id + '&quot;)" style="cursor:pointer;padding:10px;margin-bottom:8px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:start;gap:8px">' +
+          '<div>' +
+            '<span style="font-size:11px;color:var(--text3);font-family:var(--mono);font-weight:700;margin-right:4px">#' + (idx + 1) + '</span>' +
+            '<b style="font-size:13px;color:var(--text)">' + escapeHTML(item.product_name || p?.name || '-') + '</b>' +
+            (sku ? `<div style="font-size:11px;color:var(--accent);font-family:var(--mono);margin-top:1px">[${escapeHTML(sku)}]</div>` : '') +
+          '</div>' +
+          '<div>' +
+            (item.po.status === 'cancelled'
+              ? '<span class="badge" style="background:#f1f5f9;color:#64748b;font-size:10px">ยกเลิก</span>'
+              : (item.received >= item.ordered && item.ordered > 0
+                  ? '<span class="badge" style="background:#dcfce7;color:#15803d;border:1px solid #86efac;font-size:10px;font-weight:700">✓ ครบ</span>'
+                  : (item.received > 0
+                      ? '<span class="badge" style="background:#fef3c7;color:#b45309;font-size:10px;font-weight:700">⚠️ บางส่วน</span>'
+                      : '<span class="badge" style="background:#eff6ff;color:#1d4ed8;font-size:10px;font-weight:700">⏳ รอรับ</span>'))) +
+          '</div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text3);margin-top:6px;border-top:1px dashed var(--border);padding-top:6px">' +
+          '<div>📄 <b>' + escapeHTML(item.po.po_no || '-') + '</b> · ' + escapeHTML(item.po.supplier_name || '-') + '</div>' +
+          '<div>📅 ' + item.po.po_date + '</div>' +
+        '</div>' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;background:#f8fafc;padding:6px 8px;border-radius:6px;margin-top:6px;font-size:12px">' +
+          '<div>สั่ง: <b>' + fmt(item.ordered) + '</b> | รับ: <b style="color:#15803d">' + fmt(item.received) + '</b></div>' +
+          '<div>' + (item.pending > 0 ? `<b style="color:#b45309">ค้าง ${fmt(item.pending)} ชิ้น</b>` : '<span style="color:#16a34a">ครบแล้ว</span>') + '</div>' +
+          '<div style="font-family:var(--mono);font-weight:700;color:var(--amber)">฿' + item.lineTotal.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div>' +
+        '</div>' +
+        (item.internal_note ? `<div style="font-size:11px;color:#0284c7;background:#f0f9ff;padding:3px 6px;border-radius:4px;margin-top:4px">📝 ${escapeHTML(item.internal_note)}</div>` : '') +
+      '</div>';
+    }).join('') +
     '</div>';
 }
 
@@ -52531,7 +52839,14 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.15.1', date:'2026-11-25', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'ระบบค้นหาและกรองรายการสินค้าแบบสดทันที (Instant Live Product Search & Filter) ในหน้า Order, ใบเสนอราคา และ PO', items:[
+    { v:'4.15.2', date:'2026-11-25', badge:'Latest', color:'#0284c7', bg:'#e0f2fe', title:'เพิ่มโหมดดูตามรายการสินค้าในใบสั่งซื้อ (Purchase Order Line Items View & Search)', items:[
+      '📦 <b>โหมดดูตามรายการสินค้า (PO Items View):</b> เพิ่มปุ่มสลับมุมมองระหว่าง <code>📑 ดูตามใบสั่งซื้อ (PO)</code> และ <code>📦 ดูตามรายการสินค้า (Items)</code> ช่วยให้ผู้ใช้สามารถดูรายการสินค้าทุกแถวที่สั่งซื้อใน PO ได้อย่างละเอียด',
+      '🔍 <b>ค้นหาเจาะจงรายสินค้าได้ทันที:</b> เมื่ออยู่ในโหมดรายการสินค้า ช่องค้นหาจะช่วยกรองหาสินค้าตามชื่อ, รหัส SKU, ขนาดมิติ (เช่น 35 55 8 หรือ 35x42x5), เลข PO หรือผู้ขาย พร้อมสรุปยอดจำนวนสั่งซื้อ จำนวนรับแล้ว และยอดค้างรับ',
+      '⏳ <b>Quick Item Status Filters:</b> เพิ่มปุ่มคัดกรองด่วน <code>ทั้งหมด</code>, <code>⏳ ค้างรับสินค้า</code> และ <code>✓ รับครบแล้ว</code> ช่วยให้ฝ่ายจัดซื้อและฝ่ายคลังติดตามสินค้าค้างส่งได้ในคลิกเดียว',
+      '📊 <b>Summary Overview Bar:</b> แสดงแถบสรุปจำนวนรายการที่แสดง, ผลรวมจำนวนชิ้นที่สั่ง, รับแล้ว, ค้างรับ, และมูลค่ารวมสินค้าทั้งหมด',
+      '🔗 <b>ลิงก์ด่วนกับคลังสินค้า & ใบสั่งซื้อ:</b> คลิกที่ชื่อสินค้าเพื่อเปิดดูประวัติสต๊อก (Inventory Movement) หรือคลิกที่เลขที่ PO เพื่อเปิดดูใบสั่งซื้อต้นฉบับได้ทันที'
+    ]},
+    { v:'4.15.1', date:'2026-11-25', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'ระบบค้นหาและกรองรายการสินค้าแบบสดทันที (Instant Live Product Search & Filter) ในหน้า Order, ใบเสนอราคา และ PO', items:[
       '⚡ <b>Instant Live Filter & Search:</b> อัปเกรดระบบพิมพ์ค้นหาสินค้าในหน้า ออเดอร์ (สร้าง/แก้ไข), ใบเสนอราคา, และใบสั่งซื้อ (PO) ให้กรองข้อมูลในหน่วยความจำทันทีที่พิมพ์ (0ms) พร้อมดึงข้อมูลจากฐานข้อมูล 23,000+ รายการอัตโนมัติ',
       '🔍 <b>Smart Multi-Token & Dimension Matching:</b> รองรับการค้นหาแบบแยกคำและขนาด เช่น พิมพ์ "TC 35 55 8" หรือ "35x55x8" หรือ "28-42-7" หรือ "K21 80 100" ระบบจะจับคู่ความหมายและดึงสินค้าตรงสเปกมาแสดงทันที',
       '📋 <b>Rich Product Information Card:</b> ปรับหน้าต่าง Dropdown แสดงผลข้อมูลสินค้าแบบละเอียดครบถ้วน ทั้งชื่อเต็ม, หมวดหมู่ (Category), รหัสสินค้า (SKU), สต๊อกคงเหลือจริงในร้าน (In-house Stock), สต๊อกโรงงาน (Factory Stock), ราคาขาย (Sell Price), ราคาซื้อ (Buy Price THB/USD), และต้นทุนเฉลี่ย เพื่อให้พนักงานเลือกสินค้าได้อย่างถูกต้องและแม่นยำ 100%',
