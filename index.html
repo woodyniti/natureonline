@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.1';
-const DISPLAY_APP_VERSION = 'v4.16.1';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.2';
+const DISPLAY_APP_VERSION = 'v4.16.2';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.1)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.1 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.2 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2893,15 +2893,61 @@ function renderRowActionControls({
 function enableTableDragAndDrop(tbody, itemsArray, onReorder, syncInputs) {
   if (!tbody) return;
   const rows = Array.from(tbody.querySelectorAll('tr:not(.sap-matrix-footer-row):not(.ed-add-row):not(.sap-matrix-add-row)'));
+  
+  if (!window._dragGlobalMouseUpBound) {
+    window._dragGlobalMouseUpBound = true;
+    document.addEventListener('mouseup', () => {
+      if (window._dragActiveRow && !window._dragActiveRow.classList.contains('sap-row-dragging')) {
+        window._dragActiveRow.removeAttribute('draggable');
+        window._dragActiveRow = null;
+        window._dragOriginHandle = null;
+      }
+    });
+  }
+
   rows.forEach((tr, idx) => {
-    tr.setAttribute('draggable', 'true');
+    // ห้ามใส่ draggable บน <tr> ล่วงหน้า เพื่อป้องกันเวลา user เลือกตัวหนังสือในช่องพิมพ์แล้วกลายเป็นการลากแถว
+    tr.removeAttribute('draggable');
     tr.dataset.rowIndex = idx;
 
+    // ผูก mousedown เฉพาะที่ไอคอน ⠿ (.sap-drag-handle) เท่านั้น
+    const dragHandle = tr.querySelector('.sap-drag-handle');
+    if (dragHandle) {
+      dragHandle.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return; // รับเฉพาะคลิกซ้าย
+        tr.setAttribute('draggable', 'true');
+        window._dragOriginHandle = dragHandle;
+        window._dragActiveRow = tr;
+      });
+      dragHandle.addEventListener('mouseup', () => {
+        if (!tr.classList.contains('sap-row-dragging')) {
+          tr.removeAttribute('draggable');
+          window._dragActiveRow = null;
+          window._dragOriginHandle = null;
+        }
+      });
+    }
+
+    // ป้องกันช่อง Input, Textarea, Select ไม่ให้ถูกลาก และปิด draggable บน <tr> ทันทีเมื่อคลิกในช่องพิมพ์
+    tr.querySelectorAll('input, textarea, select').forEach(el => {
+      el.setAttribute('draggable', 'false');
+      el.addEventListener('mousedown', (e) => {
+        tr.removeAttribute('draggable');
+        window._dragOriginHandle = null;
+        window._dragActiveRow = null;
+      });
+      el.addEventListener('selectstart', (e) => {
+        e.stopPropagation();
+      });
+    });
+
     tr.addEventListener('dragstart', (e) => {
-      const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
-      if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'button') {
+      // ตรวจสอบอย่างเข้มงวด: ต้องเริ่มลากมาจากไอคอน .sap-drag-handle เท่านั้น
+      const fromHandle = e.target.closest && e.target.closest('.sap-drag-handle');
+      if (!fromHandle && (!window._dragOriginHandle || !tr.contains(window._dragOriginHandle))) {
         e.preventDefault();
-        return;
+        tr.removeAttribute('draggable');
+        return false;
       }
       e.dataTransfer.effectAllowed = 'move';
       e.dataTransfer.setData('text/plain', String(idx));
@@ -2910,11 +2956,15 @@ function enableTableDragAndDrop(tbody, itemsArray, onReorder, syncInputs) {
     });
 
     tr.addEventListener('dragend', () => {
+      tr.removeAttribute('draggable');
       tr.classList.remove('sap-row-dragging');
-      tbody.querySelectorAll('tr').forEach(r => {
-        r.classList.remove('sap-row-drag-over-top', 'sap-row-drag-over-bottom');
-      });
+      window._dragOriginHandle = null;
+      window._dragActiveRow = null;
       window._currentDraggedRowIdx = null;
+      tbody.querySelectorAll('tr').forEach(r => {
+        r.removeAttribute('draggable');
+        r.classList.remove('sap-row-drag-over-top', 'sap-row-drag-over-bottom', 'sap-row-dragging');
+      });
     });
 
     tr.addEventListener('dragover', (e) => {
@@ -26768,8 +26818,139 @@ async function convertToOrder(qtId) {
     toast('ใบเสนอราคานี้ปิดแล้ว (แปลงเป็น Sales Order แล้ว) ถูกล็อคเพื่อป้องกันแปลงซ้ำ\nหากต้องการสั่งซื้อใหม่ กรุณาใช้ปุ่ม "📋 ทำซ้ำ (Duplicate)"', 'warning');
     return;
   }
+  if (!items || !items.length) {
+    toast('ใบเสนอราคานี้ไม่มีรายการสินค้า', 'error');
+    return;
+  }
+
   const ok=confirm('ยืนยัน Convert ใบเสนอราคานี้เป็น Sales Order?\nเมื่อแปลงแล้ว เอกสารใบเสนอราคาจะถูกเปลี่ยนสถานะเป็น "Close" และล็อคเพื่อป้องกันการแปลงซ้ำ');
   if(!ok) return;
+
+  // ── Sync & Validate Products with Supabase Database ──
+  toast('กำลังตรวจสอบข้อมูลสินค้ากับฐานข้อมูล...', 'info');
+  const validPids = items.map(it => cleanDbUUID(it.product_id)).filter(Boolean);
+  let dbProducts = [];
+  if (validPids.length > 0) {
+    const { data: prodsById, error: pIdErr } = await sb.from('products').select('*').in('id', validPids);
+    if (!pIdErr && prodsById && prodsById.length) {
+      dbProducts = dbProducts.concat(prodsById);
+    }
+  }
+
+  const missingItems = [];
+  for (const it of items) {
+    let matched = dbProducts.find(p => p.id === cleanDbUUID(it.product_id));
+    if (!matched && it.product_name) {
+      const cleanName = it.product_name.trim();
+      // Try local memory cache
+      const localMatch = (productList || []).find(p => 
+        (p.name && p.name.trim().toLowerCase() === cleanName.toLowerCase()) ||
+        (p.sku && p.sku.trim().toLowerCase() === cleanName.toLowerCase())
+      ) || (allProducts || []).find(p => 
+        (p.name && p.name.trim().toLowerCase() === cleanName.toLowerCase()) ||
+        (p.sku && p.sku.trim().toLowerCase() === cleanName.toLowerCase())
+      );
+      if (localMatch) {
+        matched = localMatch;
+      } else {
+        // Query database directly by name or sku
+        const safeQuery = cleanName.replace(/["'\\]/g, '');
+        const { data: qProds } = await sb.from('products')
+          .select('*')
+          .eq('shop_id', currentShop.id)
+          .or(`name.eq."${safeQuery}",sku.eq."${safeQuery}"`)
+          .limit(1);
+        if (qProds && qProds.length) {
+          matched = qProds[0];
+        }
+      }
+    }
+
+    if (matched) {
+      it.product_id = matched.id;
+      if (!it.unit_cost || Number(it.unit_cost) <= 0) {
+        it.unit_cost = getProductOrderCost(matched);
+      }
+      if (Array.isArray(productList) && !productList.some(p => p.id === matched.id)) {
+        productList.push(matched);
+      }
+      if (Array.isArray(allProducts) && !allProducts.some(p => p.id === matched.id)) {
+        allProducts.push(matched);
+      }
+    } else {
+      missingItems.push(it);
+    }
+  }
+
+  // ── If any items are missing in Database, alert user and auto-create products ──
+  if (missingItems.length > 0) {
+    const listText = missingItems.map((m, idx) => `  ${idx + 1}. "${m.product_name || 'สินค้า'}" (ราคาขาย: ฿${fmt(m.sell_price)})`).join('\n');
+    const msg = `⚠️ ตรวจพบสินค้าในใบเสนอราคาที่ยังไม่มีอยู่ในฐานข้อมูล ${missingItems.length} รายการ:\n\n` +
+      listText +
+      `\n\nระบบจะทำการ "สร้างสินค้าใหม่เข้าคลังสินค้าอัตโนมัติ" เพื่อให้ข้อมูลเชื่อมโยงกับออเดอร์อย่างสมบูรณ์และถูกต้อง\n\nต้องการสร้างสินค้าและดำเนินการ Convert ต่อทันทีใช่หรือไม่?`;
+    
+    const confirmCreate = confirm(msg);
+    if (!confirmCreate) {
+      toast('ยกเลิกการ Convert ออเดอร์ กรุณาตรวจสอบหรือสร้างสินค้าในคลังก่อนดำเนินการ', 'info');
+      return;
+    }
+
+    toast('กำลังสร้างสินค้าใหม่เข้าคลังสินค้า...', 'info');
+    for (const it of missingItems) {
+      const pName = (it.product_name || 'สินค้าใหม่').trim();
+      let autoSku = (it.sku && it.sku.trim())
+        ? it.sku.trim()
+        : pName.replace(/[^a-zA-Z0-9ก-๙]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 30);
+      if (!autoSku) autoSku = 'SKU-' + Date.now().toString(36).toUpperCase();
+
+      const costVal = Number(it.unit_cost) || 0;
+      const sellPriceVal = Number(it.sell_price) || (costVal > 0 ? Math.round(costVal * 1.3) : 0);
+
+      const newProdPayload = {
+        shop_id: currentShop.id,
+        name: pName,
+        sku: autoSku,
+        sell_price: sellPriceVal,
+        purchase_price: costVal,
+        current_cost: costVal,
+        stock_qty: 0,
+        active: true,
+        ...(it.photos && it.photos[0] && it.photos[0].url ? { image_url: it.photos[0].url } : {})
+      };
+
+      let newProd, pErr;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const res = await sb.from('products').insert(newProdPayload).select().single();
+        newProd = res.data;
+        pErr = res.error;
+        if (!pErr) break;
+        if (pErr.message && pErr.message.toLowerCase().includes('sku')) {
+          newProdPayload.sku = autoSku + '-' + Math.floor(Math.random() * 900 + 100);
+          continue;
+        }
+        break;
+      }
+
+      if (pErr) {
+        console.error('Create product on convert error:', pErr);
+        toast(`สร้างสินค้า "${pName}" ไม่สำเร็จ: ${pErr.message}`, 'error');
+        return;
+      }
+
+      if (newProd) {
+        it.product_id = newProd.id;
+        it.unit_cost = costVal;
+        if (Array.isArray(productList)) productList.unshift(newProd);
+        if (Array.isArray(allProducts)) allProducts.unshift(newProd);
+
+        // Update quote item in Supabase as well
+        if (it.id) {
+          await sb.from('quotation_items').update({ product_id: newProd.id }).eq('id', it.id);
+        }
+      }
+    }
+    toast(`สร้างสินค้าใหม่เข้าคลังสำเร็จ ${missingItems.length} รายการ ✓`, 'success');
+  }
 
   // สร้าง order
   const orderNo = await generateOrderNo(today());
@@ -26791,6 +26972,15 @@ async function convertToOrder(qtId) {
   const inote = (meta.internal_note || qt.internal_note || '').trim();
   const shippingFee = Number(meta.shipping_fee || 0);
 
+  // Embed SO_META to permanently remember item sequence in the new order!
+  const soItemOrder = (items || []).map(it => ({
+    name: it.product_name,
+    qty: it.qty,
+    product_id: it.product_id
+  }));
+  const baseOrderNote = noteWithCompanyAndShipping(docNote, compName, shippingFee, inote);
+  const finalOrderNote = (baseOrderNote ? baseOrderNote + '\n' : '') + '<!--SO_META:' + JSON.stringify({ item_order: soItemOrder }) + '-->';
+
   const orderPayload = {
     shop_id: currentShop.id,
     order_no: orderNo,
@@ -26809,7 +26999,7 @@ async function convertToOrder(qtId) {
     customer_address: qt.customer_address,
     billing_address: meta.billing_address || qt.billing_address || qt.customer_address || '',
     employee_id: qt.employee_id || null,
-    note: noteWithCompanyAndShipping(docNote, compName, shippingFee, inote),
+    note: finalOrderNote,
     internal_note: inote || null,
     bill_discount: meta.bill_discount || 0,
     bill_discount_type: meta.bill_discount_type || 'amount',
@@ -53133,7 +53323,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.1', date:'2026-11-25', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'Drag & Drop ย้ายตำแหน่ง, Jump เลือกลำดับ, ล็อคลำดับถาวร และ UUID Sanitizer ป้องกันข้อผิดพลาด _custom_', items:[
+    { v:'4.16.2', date:'2026-11-26', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'จำกัด Drag & Drop เฉพาะไอคอน ⠿ และตรวจสอบดึงข้อมูลสินค้าจริง/สร้างสินค้าใหม่อัตโนมัติเมื่อ Convert ใบเสนอราคา', items:[
+      '🖐️ <b>ระบบจับลาก Drag & Drop เฉพาะไอคอน <code>⠿</code>:</b> ปรับปรุงระบบลากแถวสินค้าให้ทำงานเมื่อคลิกค้างที่ไอคอนจับลาก <code>⠿</code> เท่านั้น หากเมาส์อยู่ในช่องพิมพ์ข้อความ (Input/Textarea/Select) ระบบจะปิดโหมด Drag ทันที ทำให้ผู้ใช้สามารถคลิก ไฮไลต์เลือกตัวหนังสือ แก้ไขข้อความได้อย่างราบรื่น 100% ไม่หลุดไปลากแถวสินค้าโดยไม่ตั้งใจ',
+      '🔄 <b>Convert Quotation → Order ตรวจสอบฐานข้อมูลจริง (DB Product Sync):</b> ก่อนแปลงใบเสนอราคาเป็นออเดอร์ ระบบจะดึงและตรวจสอบข้อมูลสินค้าจากตาราง <code>products</code> ในฐานข้อมูล Supabase โดยตรง (ครอบคลุมทั้งสินค้าตาม ID, SKU และชื่อสินค้า) เพื่อให้ได้ข้อมูลสเปก ราคา และต้นทุนที่เป็นปัจจุบันที่สุด',
+      '✨ <b>ระบบแจ้งเตือนและสร้างสินค้าใหม่อัตโนมัติ (Auto-create Missing Products):</b> หากพบสินค้าในใบเสนอราคาที่ยังไม่มีอยู่ในฐานข้อมูล ระบบจะแจ้งเตือนพร้อมรายชื่อสินค้า และมีปุ่มให้กดสร้างสินค้าใหม่เข้าคลังสินค้าทันที โดยกำหนด SKU, ราคาขาย และต้นทุนให้อัตโนมัติ พร้อมอัปเดตข้อมูลเชื่อมโยงทั้งในใบเสนอราคาและออเดอร์ ข้อมูลจึงสมบูรณ์ไม่ผิดพลาด',
+      '🔒 <b>ล็อคลำดับแถวถาวรเมื่อแปลงเป็นออเดอร์ (SO_META Persistence):</b> ผนวกข้อมูลลำดับแถวสินค้าเดิมจากใบเสนอราคาลงใน <code>SO_META</code> ของออเดอร์ที่สร้างขึ้นใหม่ ทำให้รายการในออเดอร์คงลำดับตรงตามใบเสนอราคาเดิม 100%'
+    ]},
+    { v:'4.16.1', date:'2026-11-25', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'Drag & Drop ย้ายตำแหน่ง, Jump เลือกลำดับ, ล็อคลำดับถาวร และ UUID Sanitizer ป้องกันข้อผิดพลาด _custom_', items:[
       '🎯 <b>เมนูเลือกย้ายลำดับ (Jump to Position Selector):</b> เพิ่มช่อง Dropdown เลือกลำดับในคอลัมน์ Actions (เช่น #1 บนสุด, #2, ..., #N ล่างสุด) ให้ทุกตารางสินค้า สามารถเลือกเพื่อย้ายแถวไปยังตำแหน่งที่ต้องการได้ทันที ทั้งบน PC และ Mobile',
       '🖐️ <b>Drag & Drop ลากวางจัดตำแหน่งอิสระ:</b> เพิ่มไอคอนจับลาก <code>⠿</code> และระบบ HTML5 Drag and Drop ให้คลิกลากแถวสินค้าไปวางยังตำแหน่งใดก็ได้ โดยมีเส้นขอบไฮไลต์สีน้ำเงินแจ้งตำแหน่งแทรกอย่างชัดเจน',
       '🔒 <b>จำลำดับที่บันทึกถาวร ห้ามเปลี่ยน (Permanent Sequence Persistence):</b> พัฒนาระบบจัดเก็บและล็อคลำดับแถวสินค้าอัตโนมัติผ่าน Metadata (<code>PO_META</code>, <code>SO_META</code>, <code>QT_META</code>) บันทึกแล้วจำตำแหน่งเดิม 100% ไม่ถูก Random UUID สลับแถวอีกต่อไป',
