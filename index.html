@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.5';
-const DISPLAY_APP_VERSION = 'v4.16.5';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.6';
+const DISPLAY_APP_VERSION = 'v4.16.6';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.5)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.5 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.6)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.6 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2484,15 +2484,59 @@ function wcSearch(str, pattern) {
   return s.includes(p);
 }
 
+function extractDimensionPatterns(text) {
+  if (!text) return [];
+  const t = String(text).toLowerCase();
+  const dims = [];
+  // 1. Explicit separator pattern e.g. 21x32x7, 21-32-7, 40x52x7/10, 21x32
+  const m1 = t.match(/\b\d+(?:\.\d+)?(?:[xX×\-\/*]\d+(?:\.\d+)?)+\b/g);
+  if (m1) {
+    m1.forEach(d => {
+      dims.push(d.replace(/[*×\-\/]/g, 'x'));
+    });
+  }
+  // 2. Three numbers in sequence e.g. "21 32 7"
+  const m2 = [...t.matchAll(/\b(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\b/g)];
+  m2.forEach(m => {
+    dims.push(`${m[1]}x${m[2]}x${m[3]}`);
+  });
+  return [...new Set(dims)];
+}
+
+function getProductDims(p) {
+  if (!p) return [];
+  if (p._dimensionsList) return p._dimensionsList;
+  const full = `${p.name || ''} ${p.sku || ''} ${p.description || ''} ${p.supplier_description || ''}`;
+  p._dimensionsList = extractDimensionPatterns(full);
+  return p._dimensionsList;
+}
+
+function matchesDimension(qDim, pDims) {
+  for (let i = 0; i < pDims.length; i++) {
+    const pd = pDims[i];
+    if (pd === qDim) return true;
+    if (pd.startsWith(qDim + 'x') || pd.startsWith(qDim + '/')) return true;
+  }
+  return false;
+}
+
 function wcProdMatch(p, q) {
   if (!q) return true;
   if (!p) return false;
   const qStr = q.trim().toLowerCase();
   if (!qStr) return true;
 
+  const name = (p.name || '').toLowerCase();
+  const sku = (p.sku || '').toLowerCase();
+  const supSku = (p.supplier_sku || p.supplier_code || '').toLowerCase();
+  const desc = (p.supplier_description || p.description || '').toLowerCase();
+  const part = (p.part_no || '').toLowerCase();
   const searchable = getProductSearchableText(p);
 
-  // 1. Wildcard Regex match on full searchable text
+  // Direct exact match on name or sku
+  if (name === qStr || sku === qStr || supSku === qStr || part === qStr) return true;
+
+  // Wildcard Regex match on full searchable text
   if (qStr.includes('*') || qStr.includes('?')) {
     const rxStr = qStr.replace(/[.+^${}()|[\]\\]/g, '\\$&')
                       .replace(/\*/g, '.*')
@@ -2503,15 +2547,77 @@ function wcProdMatch(p, q) {
     } catch(e) {}
   }
 
-  // 2. Multi-token / space separated match on full searchable text
-  const normQ = qStr.replace(/[*xX×\-\/]+/g, ' ').trim();
-  const tokens = normQ.split(/\s+/).filter(Boolean);
-  if (tokens.length > 0 && tokens.every(tok => searchable.includes(tok))) {
-    return true;
+  // Dimension check: if query has dimensions (e.g. 21x32x7 or 21 32 7)
+  const qDims = extractDimensionPatterns(qStr);
+  const pDims = getProductDims(p);
+  if (qDims.length > 0) {
+    const matchedDim = qDims.some(qd => matchesDimension(qd, pDims));
+    if (!matchedDim) return false;
   }
 
-  // 3. Direct substring match
-  return searchable.includes(qStr);
+  // Multi-token match with whole-number boundary for numeric tokens
+  const normQ = qStr.replace(/[*×\-\/]/g, ' ');
+  const tokens = normQ.split(/\s+/).filter(Boolean);
+
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    if (/^\d+$/.test(tok)) {
+      // Must match whole number boundary, not a substring inside 280, 0212 or 196782!
+      const numRx = new RegExp(`(?<!\\d)${tok}(?!\\d)`);
+      if (!numRx.test(searchable)) return false;
+    } else {
+      if (!searchable.includes(tok)) return false;
+    }
+  }
+
+  return true;
+}
+
+function wcProdScore(p, q) {
+  if (!q || !p) return 0;
+  const qStr = q.trim().toLowerCase();
+  const name = (p.name || '').toLowerCase();
+  const sku = (p.sku || '').toLowerCase();
+  const supSku = (p.supplier_sku || p.supplier_code || '').toLowerCase();
+  const part = (p.part_no || '').toLowerCase();
+  const desc = (p.supplier_description || p.description || '').toLowerCase();
+
+  let score = 0;
+  if (name === qStr || sku === qStr) score += 4000;
+  else if (name.startsWith(qStr)) score += 2500;
+  else if (name.includes(qStr)) score += 1800;
+  else if (sku.includes(qStr)) score += 1400;
+  else if (supSku === qStr || part === qStr) score += 1300;
+  else if (supSku.includes(qStr) || part.includes(qStr)) score += 1000;
+  else if (desc.includes(qStr)) score += 700;
+
+  // Dimension exact match bonus
+  const qDims = extractDimensionPatterns(qStr);
+  const pDims = getProductDims(p);
+  if (qDims.length && qDims.some(qd => matchesDimension(qd, pDims))) {
+    score += 600;
+  }
+
+  // Active in-house inventory bonus
+  const stock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
+  if (stock > 0) score += 50;
+
+  return score;
+}
+
+function filterAndSortProducts(prods, q, limit = 40) {
+  if (!Array.isArray(prods)) return [];
+  if (!q || !q.trim()) return prods.slice(0, limit);
+  const qStr = q.trim();
+  const matched = [];
+  for (let i = 0; i < prods.length; i++) {
+    const p = prods[i];
+    if (wcProdMatch(p, qStr)) {
+      matched.push({ p, score: wcProdScore(p, qStr) });
+    }
+  }
+  matched.sort((a, b) => b.score - a.score);
+  return matched.slice(0, limit).map(x => x.p);
 }
 
 async function doDirectAdminLogin() {
@@ -10464,11 +10570,8 @@ function searchOrderProduct(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter
-  const localFiltered = ql
-    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
-    : prods.slice(0, 30);
-  
+  // 1. In-memory filter with relevance ranking
+  const localFiltered = filterAndSortProducts(prods, ql, 40);
   renderRows(localFiltered);
 
   // 2. Server-side async smart search (120ms debounce across 23,000+ items)
@@ -10479,7 +10582,7 @@ function searchOrderProduct(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
-          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+          const updated = filterAndSortProducts(prodsNow, ql, 40);
           renderRows(updated);
         }
       } catch(e) {}
@@ -11622,10 +11725,8 @@ function searchEditProd(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter
-  const localFiltered = ql
-    ? prods.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40)
-    : prods.slice(0, 40);
+  // 1. In-memory filter with relevance ranking
+  const localFiltered = filterAndSortProducts(prods, ql, 40);
 
   renderEditRows(localFiltered);
 
@@ -11637,7 +11738,7 @@ function searchEditProd(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (editProdList && editProdList.length) ? editProdList : ((allProducts && allProducts.length) ? allProducts : (productList || []));
-          const updated = prodsNow.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40);
+          const updated = filterAndSortProducts(prodsNow, ql, 40);
           renderEditRows(updated);
         }
       } catch(e) {}
@@ -25449,11 +25550,8 @@ async function searchQuoteProduct(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter
-  const localFiltered = ql
-    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
-    : prods.slice(0, 30);
-  
+  // 1. In-memory filter with relevance ranking
+  const localFiltered = filterAndSortProducts(prods, ql, 40);
   renderRows(localFiltered);
 
   // 2. Server-side async smart search (120ms debounce across 23,000+ items)
@@ -25464,7 +25562,7 @@ async function searchQuoteProduct(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
-          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+          const updated = filterAndSortProducts(prodsNow, ql, 40);
           renderRows(updated);
         }
       } catch(e) {}
@@ -32513,11 +32611,8 @@ function searchPOProduct(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter
-  const localFiltered = ql
-    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
-    : prods.slice(0, 30);
-  
+  // 1. In-memory filter with relevance ranking
+  const localFiltered = filterAndSortProducts(prods, ql, 40);
   renderRows(localFiltered);
 
   // 2. Server-side async smart search (120ms debounce across 23,000+ items)
@@ -32528,7 +32623,7 @@ function searchPOProduct(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
-          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
+          const updated = filterAndSortProducts(prodsNow, ql, 40);
           renderRows(updated);
         }
       } catch(e) {}
@@ -53404,7 +53499,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.5', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบค้นหาสินค้าแบบ Live Autocomplete อัจฉริยะใน Purchase Order ใหม่เทียบเท่าหน้า Order', items:[
+    { v:'4.16.6', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงระบบค้นหาสินค้าอัจฉริยะ (Smart Dimension Match & Relevance Ranking) ค้นหาแคบลง แม่นยำ 100% ตรงสเปกทันที', items:[
+      '🎯 <b>ระบบกรองขนาดเป๊ะ (Smart Dimension Exact Matching):</b> เมื่อพิมพ์ค้นหาที่มีขนาด เช่น <code>21X32X7</code> หรือ <code>21-32-7</code> หรือ <code>21 32 7</code> ระบบจะตรวจจับและจับคู่เฉพาะสินค้าที่มีขนาดสเปกตรงกันเท่านั้น จะไม่แสดงสินค้าขนาดอื่น (เช่น <code>280X320X20</code> หรือ <code>18X35X7</code>) มาปะปนอีกต่อไป',
+      '🔢 <b>ตรวจสอบขอบเขตตัวเลขจริง (Whole-Number Boundary Matching):</b> ป้องกันตัวเลขสั้นๆ เช่น <code>21</code> ไม่ให้ไปจับคู่กับเศษตัวเลขภายในรหัสสินค้าอื่น เช่น รหัส <code>0212</code> หรือ <code>196782</code> โดยตัวเลขจะต้องเป็นขนาดหรือคำโดดตรงเป๊ะเท่านั้น',
+      '⭐ <b>จัดเรียงลำดับความแม่นยำสูงสุดขึ้นอันดับ 1 (Relevance Score Ranking):</b> สินค้าที่ชื่อ, SKU, หรือสเปกตรงกับคำค้นหามากที่สุดจะขึ้นเป็นอันดับแรกทันที ไม่ต้องเสียเวลาเลื่อนหา ทั้งใน Purchase Order, Order, Quotation และการแก้ไขใบสั่งซื้อ'
+    ]},
+    { v:'4.16.5', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบค้นหาสินค้าแบบ Live Autocomplete อัจฉริยะใน Purchase Order ใหม่เทียบเท่าหน้า Order', items:[
       '🛒 <b>ระบบค้นหาสินค้าทันที (Instant Product Search Dropdown):</b> เพิ่มระบบ Dropdown ค้นหาสินค้าอัตโนมัติในช่อง Item No. / Description ของ Purchase Order ใหม่ พิมพ์หรือแตะที่ช่องจะแสดงผลลัพธ์ทันที รองรับการค้นหาตามชื่อสินค้า, ขนาดซีล (เช่น 21X32X7, 21-32-7), รหัส SKU, รหัสผู้ขาย (Supplier SKU / Code) หรือ Part No',
       '🏷️ <b>ป้ายข้อมูลสินค้าครบถ้วนแบบหน้า Order:</b> แสดงข้อมูลหมวดหมู่ (Category), รหัส SKU, Supplier Code, Part No, สเปก Desc, ซัพพลายเออร์ THB/USD, ราคาซื้อ (คำนวณตามสกุลเงิน PO อัตโนมัติ), ราคาขาย, ทุนเฉลี่ย พร้อมสถานะสต๊อกคลัง (📦 สต๊อก) และสต๊อกโรงงาน (🏭 รง.)',
       '⚡ <b>เริ่มกรอกได้ทันที (Auto-focus & 1-Click Select):</b> เมื่อเปิด Purchase Order ใหม่ ระบบจะเปิดแถวแรกพร้อม Focus ช่องค้นหาให้อัตโนมัติ และเมื่อกด "+ เพิ่ม SKU" จะเลื่อนและเปิดค้นหาให้ทันที พร้อมปุ่ม ➕ สร้างสินค้าใหม่เข้าคลังในตัว Dropdown'
