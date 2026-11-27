@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.3';
-const DISPLAY_APP_VERSION = 'v4.16.3';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.4';
+const DISPLAY_APP_VERSION = 'v4.16.4';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.3 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.4)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.4 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -40299,11 +40299,11 @@ async function openBatchSOtoPOModal() {
             <div>
               <div class="sap-field-row">
                 <span class="sap-field-label">Posting Date</span>
-                <input type="date" id="bpo-date" value="${today()}" style="width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12.5px;box-sizing:border-box">
+                <input type="date" id="bpo-date" value="${today()}" onchange="const exp=document.getElementById('bpo-expected');if(exp){exp.value=this.value;exp.dispatchEvent(new Event('change'));}" style="width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12.5px;box-sizing:border-box">
               </div>
               <div class="sap-field-row">
                 <span class="sap-field-label" style="color:#0284c7;font-weight:700">Delivery Date</span>
-                <input type="date" id="bpo-expected" value="${(()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10);})()}" style="width:100%;background:#f0f9ff;border:1.5px solid #93c5fd;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:700;color:#0369a1;box-sizing:border-box">
+                <input type="date" id="bpo-expected" value="${today()}" style="width:100%;background:#f0f9ff;border:1.5px solid #93c5fd;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:700;color:#0369a1;box-sizing:border-box">
               </div>
               <div class="sap-field-row">
                 <span class="sap-field-label">Document Status</span>
@@ -53366,7 +53366,11 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.3', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'อัปเดตชื่อสินค้าและ SKU ออยซีลตามมาตรฐานใหม่ 10,866 รายการ พร้อมปุ่มซิงค์ชื่อคลังใน PO และระบบจัดเรียงลำดับ Drag & Drop', items:[
+    { v:'4.16.4', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ตั้งค่า Delivery Date เป็นวันเดียวกับ Posting Date เริ่มต้นในหน้า Batch PO (สร้างใบสั่งซื้อจากรายการขาย)', items:[
+      '📅 <b>Delivery Date ตรงกับ Posting Date อัตโนมัติ:</b> กำหนดให้ช่อง Delivery Date (วันนัดรับสินค้า) ในหน้าต่างสร้างใบสั่งซื้อจากรายการขายรวมออเดอร์ (Batch PO) มีค่าเริ่มต้นเป็นวันเดียวกับ Posting Date (วันที่สั่งซื้อ) เพื่อความคล่องตัวในการสั่งซื้อ',
+      '🔄 <b>Auto Date Synchronization:</b> เมื่อผู้ใช้ปรับเปลี่ยนวันที่สั่งซื้อ (Posting Date) ระบบจะปรับวันนัดรับสินค้า (Delivery Date) ให้ตรงกันทันทีโดยอัตโนมัติ'
+    ]},
+    { v:'4.16.3', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'อัปเดตชื่อสินค้าและ SKU ออยซีลตามมาตรฐานใหม่ 10,866 รายการ พร้อมปุ่มซิงค์ชื่อคลังใน PO และระบบจัดเรียงลำดับ Drag & Drop', items:[
       '📦 <b>อัปเดตโครงสร้างชื่อสินค้าและ SKU ออยซีล 10,866 รายการในฐานข้อมูล:</b> ปรับปรุงชื่อสินค้าทั้งหมดให้ตรงตามมาตรฐาน <code>[ประเภทซีล] OIL SEAL [เนื้อยาง] [ใน]X[นอก]X[หนา]</code> (เช่น <code>TC OIL SEAL VITON 21X32X7</code>) และ SKU แบบยาว <code>OIL SEAL [เนื้อยาง] [ใน]X[นอก]X[หนา] [ประเภทซีล]</code> (เช่น <code>OIL SEAL VITON 21X32X7 TC</code>) ในฐานข้อมูล Supabase ครบถ้วน 100%',
       '🔄 <b>ปุ่มซิงค์ชื่อสินค้าตามคลัง (Sync Master Name in PO):</b> เพิ่มปุ่ม <code>🔄 ซิงค์ชื่อตามคลัง</code> ในรายการสินค้าของ PO Draft เพื่อให้ผู้ใช้สามารถอัปเดตชื่อสเปกสินค้าเก่าให้เป็นชื่อมาตรฐานใหม่ในคลังได้ในคลิกเดียว พร้อมปุ่มซิงค์ทุกรายการทั้งใบสั่งซื้อ',
       '🖐️ <b>ระบบ Drag & Drop และ Jump Selector ทุกลำดับเอกสาร:</b> จัดเรียงลำดับรายการสินค้าได้อย่างอิสระผ่านไอคอนจับลาก <code>⠿</code> หรือเลือกจาก Dropdown ในทุกเอกสาร (Order, Quotation, Purchase Order, AR Invoice, AP Invoice) พร้อมล็อคตำแหน่งถาวร'
