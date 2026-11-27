@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.4';
-const DISPLAY_APP_VERSION = 'v4.16.4';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.5';
+const DISPLAY_APP_VERSION = 'v4.16.5';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.4)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.4 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.5)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.5 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -31161,6 +31161,9 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
         internal_note: it.internal_note || ''
       };
     });
+  } else {
+    // Start with 1 empty row ready for typing & searching like Order page
+    poItems = [{ product_id: null, product_name: '', qty_ordered: 1, unit_cost: '', internal_note: '' }];
   }
 
   if (preferredSupplierId) {
@@ -31179,11 +31182,22 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   }
 
   togglePoCurrency();
+  renderPOItems();
+  calcPOTotal();
   openModal('modal-po');
   // โหลด supplier dropdown หลัง modal เปิด
   await loadSupplierDropdown('po-supplier-sel', preferredSupplierId || null);
   await loadPOSOSources();
   updatePOSuggestionBadge();
+
+  // Focus and open product search dropdown like Order modal
+  setTimeout(() => {
+    const firstInp = document.getElementById('po-prod-inp-0');
+    if (firstInp) {
+      firstInp.focus();
+      searchPOProduct(0, '');
+    }
+  }, 200);
 }
 
 // ── SO Source Integration for PO (ดึงข้อมูลสินค้าจาก Sales Order เข้า PO) ──
@@ -32418,9 +32432,16 @@ let _poSearchTimer = null;
 function searchPOProduct(rowIdx, q) {
   const ddid = 'po-prod-dd-' + rowIdx;
   const inpid = 'po-prod-inp-' + rowIdx;
-  const dd = document.getElementById(ddid);
+  let dd = document.getElementById(ddid);
   const inp = document.getElementById(inpid);
-  if (!dd || !inp) return;
+  if (!inp) return;
+  if (!dd) {
+    dd = document.createElement('div');
+    dd.id = ddid;
+    dd.className = 'prod-autocomplete-dropdown';
+    dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+    document.body.appendChild(dd);
+  }
 
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
@@ -32451,12 +32472,16 @@ function searchPOProduct(rowIdx, q) {
         const badges = [];
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
+        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
         const supTHB = getProductSupplierTHB(p);
         const supUSD = getProductSupplierUSD(p);
         if (supTHB) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:700">🇹🇭 ${escapeHTML(supTHB)}</span>`);
         if (supUSD) badges.push(`<span style="background:#fdf4ff;color:#86198f;padding:2px 6px;border-radius:4px;border:1px solid #f0abfc;font-weight:700">🇺🇸 ${escapeHTML(supUSD)}</span>`);
         if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         badges.push(`<span style="background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;border:1px solid #bae6fd;font-weight:700">💵 ซื้อ: ${priceLabel}</span>`);
+        const sellP = Number(p.sale_price !== undefined && p.sale_price !== null ? p.sale_price : (p.sell_price || 0));
+        if (sellP > 0) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:600">🏷️ ขาย: ฿${fmtB(sellP)}</span>`);
         if (p.current_cost) badges.push(`<span style="background:#f8fafc;color:#64748b;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:10.5px">ทุนเฉลี่ย: ฿${Number(p.current_cost).toFixed(3)}</span>`);
 
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
@@ -32766,6 +32791,7 @@ function renderPOItems() {
         dd.id = 'po-prod-dd-' + i;
         dd.className = 'prod-autocomplete-dropdown';
         dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+        document.body.appendChild(dd);
       }
 
       inp.oninput = () => {
@@ -33228,7 +33254,19 @@ function renderPOItems() {
   calcPOTotal();
 }
 
-function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:'',internal_note:''});renderPOItems();}
+function addPOItem() {
+  const nextIdx = poItems.length;
+  poItems.push({product_id: null, product_name: '', qty_ordered: 1, unit_cost: '', internal_note: ''});
+  renderPOItems();
+  calcPOTotal();
+  setTimeout(() => {
+    const nextInp = document.getElementById('po-prod-inp-' + nextIdx);
+    if (nextInp) {
+      nextInp.focus();
+      searchPOProduct(nextIdx, '');
+    }
+  }, 60);
+}
 
 function syncAllPONamesFromMaster() {
   const prods = (productList && productList.length) ? productList : (allProducts || []);
@@ -53366,7 +53404,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.4', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ตั้งค่า Delivery Date เป็นวันเดียวกับ Posting Date เริ่มต้นในหน้า Batch PO (สร้างใบสั่งซื้อจากรายการขาย)', items:[
+    { v:'4.16.5', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบค้นหาสินค้าแบบ Live Autocomplete อัจฉริยะใน Purchase Order ใหม่เทียบเท่าหน้า Order', items:[
+      '🛒 <b>ระบบค้นหาสินค้าทันที (Instant Product Search Dropdown):</b> เพิ่มระบบ Dropdown ค้นหาสินค้าอัตโนมัติในช่อง Item No. / Description ของ Purchase Order ใหม่ พิมพ์หรือแตะที่ช่องจะแสดงผลลัพธ์ทันที รองรับการค้นหาตามชื่อสินค้า, ขนาดซีล (เช่น 21X32X7, 21-32-7), รหัส SKU, รหัสผู้ขาย (Supplier SKU / Code) หรือ Part No',
+      '🏷️ <b>ป้ายข้อมูลสินค้าครบถ้วนแบบหน้า Order:</b> แสดงข้อมูลหมวดหมู่ (Category), รหัส SKU, Supplier Code, Part No, สเปก Desc, ซัพพลายเออร์ THB/USD, ราคาซื้อ (คำนวณตามสกุลเงิน PO อัตโนมัติ), ราคาขาย, ทุนเฉลี่ย พร้อมสถานะสต๊อกคลัง (📦 สต๊อก) และสต๊อกโรงงาน (🏭 รง.)',
+      '⚡ <b>เริ่มกรอกได้ทันที (Auto-focus & 1-Click Select):</b> เมื่อเปิด Purchase Order ใหม่ ระบบจะเปิดแถวแรกพร้อม Focus ช่องค้นหาให้อัตโนมัติ และเมื่อกด "+ เพิ่ม SKU" จะเลื่อนและเปิดค้นหาให้ทันที พร้อมปุ่ม ➕ สร้างสินค้าใหม่เข้าคลังในตัว Dropdown'
+    ]},
+    { v:'4.16.4', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'ตั้งค่า Delivery Date เป็นวันเดียวกับ Posting Date เริ่มต้นในหน้า Batch PO (สร้างใบสั่งซื้อจากรายการขาย)', items:[
       '📅 <b>Delivery Date ตรงกับ Posting Date อัตโนมัติ:</b> กำหนดให้ช่อง Delivery Date (วันนัดรับสินค้า) ในหน้าต่างสร้างใบสั่งซื้อจากรายการขายรวมออเดอร์ (Batch PO) มีค่าเริ่มต้นเป็นวันเดียวกับ Posting Date (วันที่สั่งซื้อ) เพื่อความคล่องตัวในการสั่งซื้อ',
       '🔄 <b>Auto Date Synchronization:</b> เมื่อผู้ใช้ปรับเปลี่ยนวันที่สั่งซื้อ (Posting Date) ระบบจะปรับวันนัดรับสินค้า (Delivery Date) ให้ตรงกันทันทีโดยอัตโนมัติ'
     ]},
