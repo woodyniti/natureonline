@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.6';
-const DISPLAY_APP_VERSION = 'v4.16.6';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.7';
+const DISPLAY_APP_VERSION = 'v4.16.7';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.6)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.6 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.7)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.7 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -25388,7 +25388,7 @@ function sortQuoteItems(items, quoteMeta) {
 
 async function openNewQuote() {
   editingQuoteId = null; editingQuoteStatus = null;
-  quoteItems = [];
+  quoteItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, discount: 0, discount_type: 'amount', is_custom: false, photos: [] }];
   // reset ฟอร์มให้ว่าง (กันค่าค้างจากการแก้ไขก่อนหน้า)
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('qt-date', today());
@@ -25409,6 +25409,15 @@ async function openNewQuote() {
   await loadEmployeeOptions('qt-emp');
   loadOrderCustomerList();   // สำหรับ auto-fill ลูกค้าเดิม
   openModal('modal-quote');
+
+  // Focus and open product search dropdown like Order modal
+  setTimeout(() => {
+    const firstInp = document.getElementById('qt-prod-inp-0');
+    if (firstInp) {
+      firstInp.focus();
+      searchQuoteProduct(0, '');
+    }
+  }, 150);
 }
 
 // แก้ไขใบเสนอราคาที่บันทึกแล้ว — ใช้ฟอร์มเดียวกับสร้างใหม่ แต่ populate ค่าเดิม
@@ -25478,9 +25487,16 @@ window._quoteAutocompleteClicking = false;
 async function searchQuoteProduct(rowIdx, q) {
   const ddid = 'qt-prod-dd-' + rowIdx;
   const inpid = 'qt-prod-inp-' + rowIdx;
-  const dd = document.getElementById(ddid);
+  let dd = document.getElementById(ddid);
   const inp = document.getElementById(inpid);
-  if (!dd || !inp) return;
+  if (!inp) return;
+  if (!dd) {
+    dd = document.createElement('div');
+    dd.id = ddid;
+    dd.className = 'prod-autocomplete-dropdown';
+    dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+    document.body.appendChild(dd);
+  }
 
   if ((!productList || !productList.length) && (!allProducts || !allProducts.length)) {
     await ensureQuoteProductList();
@@ -25502,13 +25518,20 @@ async function searchQuoteProduct(rowIdx, q) {
           ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`
           : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">⚠️ หมด (0)</span>`;
 
+        const fStock = Number(p.factory_stock || 0);
+        const fStockBadge = fStock > 0
+          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;border:1px solid #fde68a;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
+          : '';
+
         const badges = [];
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
-        if (p.supplier_sku) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku)}</span>`);
+        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
         if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
-        if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
+        const price = Number(p.sale_price !== undefined && p.sale_price !== null ? p.sale_price : (p.sell_price || 0));
+        if (price > 0) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(price)}</span>`);
+        if (p.current_cost) badges.push(`<span style="background:#f8fafc;color:#64748b;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:10.5px">ทุนเฉลี่ย: ฿${Number(p.current_cost).toFixed(2)}</span>`);
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
 
         return `
@@ -25520,7 +25543,7 @@ async function searchQuoteProduct(rowIdx, q) {
               <div style="font-weight:700;color:#0f172a;font-size:13px;line-height:1.4;white-space:normal;word-break:break-word">${escapeHTML(p.name)}</div>
               ${badgeHtml}
             </div>
-            <div style="margin-top:2px;flex-shrink:0">${stockBadge}</div>
+            <div style="margin-top:2px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${fStockBadge}</div>
           </div>`;
       }).join('');
     }
@@ -26026,6 +26049,7 @@ function renderQuoteItems() {
         dd.id = 'qt-prod-dd-' + i;
         dd.className = 'prod-autocomplete-dropdown';
         dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
+        document.body.appendChild(dd);
       }
 
       inp.oninput = () => {
@@ -26388,7 +26412,19 @@ function renderQuoteItems() {
   calcQuoteTotal();
 }
 
-function addQuoteItem(){quoteItems.push({product_id:null,product_name:'',qty:1,sell_price:0,discount:0,discount_type:'amount',is_custom:false,photos:[]});renderQuoteItems();}
+function addQuoteItem() {
+  const nextIdx = quoteItems.length;
+  quoteItems.push({product_id: null, product_name: '', qty: 1, sell_price: 0, discount: 0, discount_type: 'amount', is_custom: false, photos: []});
+  renderQuoteItems();
+  calcQuoteTotal();
+  setTimeout(() => {
+    const nextInp = document.getElementById('qt-prod-inp-' + nextIdx);
+    if (nextInp) {
+      nextInp.focus();
+      searchQuoteProduct(nextIdx, '');
+    }
+  }, 60);
+}
 
 function calcQuoteTotal(){
   const subtotal = quoteItems.reduce((s,it,idx)=>{
@@ -53499,7 +53535,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.6', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงระบบค้นหาสินค้าอัจฉริยะ (Smart Dimension Match & Relevance Ranking) ค้นหาแคบลง แม่นยำ 100% ตรงสเปกทันที', items:[
+    { v:'4.16.7', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงระบบค้นหาสินค้าในใบเสนอราคา (Quotation) เทียบเท่าหน้า Order สมบูรณ์แบบ 100%', items:[
+      '📋 <b>Live Autocomplete Dropdown เต็มรูปแบบในใบเสนอราคา:</b> เปิดการแสดงผลหน้าต่าง Dropdown ค้นหาสินค้าทันทีที่คลิกหรือพิมพ์ในช่อง Item No. / Description ทั้งบน Desktop PC และ Mobile พร้อมแนบ Portal ความสำคัญสูงสุด',
+      '🏷️ <b>ป้ายข้อมูลสต๊อกและสเปกครบถ้วนเหมือนหน้า Order:</b> แสดงสต๊อกคลัง (📦 สต๊อก), สต๊อกโรงงาน (🏭 รง.), หมวดหมู่สินค้า, รหัส SKU, Code ซัพพลายเออร์, Part No, สเปก Desc, ราคาขาย (Sell Price) และทุนเฉลี่ย',
+      '⚡ <b>เริ่มสร้างใบเสนอราคาได้ทันที (Auto-focus & Quick Row):</b> เปิดหน้าต่างใบเสนอราคาใหม่จะเริ่มต้นด้วยแถวแรกพร้อม Focus ค้นหาทันที และเมื่อกด "+ เพิ่มรายการ" จะเลื่อนและเปิดค้นหาแถวใหม่อัตโนมัติ พร้อมปุ่มสร้างสินค้าใหม่เข้าคลังในตัว Dropdown'
+    ]},
+    { v:'4.16.6', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'ปรับปรุงระบบค้นหาสินค้าอัจฉริยะ (Smart Dimension Match & Relevance Ranking) ค้นหาแคบลง แม่นยำ 100% ตรงสเปกทันที', items:[
       '🎯 <b>ระบบกรองขนาดเป๊ะ (Smart Dimension Exact Matching):</b> เมื่อพิมพ์ค้นหาที่มีขนาด เช่น <code>21X32X7</code> หรือ <code>21-32-7</code> หรือ <code>21 32 7</code> ระบบจะตรวจจับและจับคู่เฉพาะสินค้าที่มีขนาดสเปกตรงกันเท่านั้น จะไม่แสดงสินค้าขนาดอื่น (เช่น <code>280X320X20</code> หรือ <code>18X35X7</code>) มาปะปนอีกต่อไป',
       '🔢 <b>ตรวจสอบขอบเขตตัวเลขจริง (Whole-Number Boundary Matching):</b> ป้องกันตัวเลขสั้นๆ เช่น <code>21</code> ไม่ให้ไปจับคู่กับเศษตัวเลขภายในรหัสสินค้าอื่น เช่น รหัส <code>0212</code> หรือ <code>196782</code> โดยตัวเลขจะต้องเป็นขนาดหรือคำโดดตรงเป๊ะเท่านั้น',
       '⭐ <b>จัดเรียงลำดับความแม่นยำสูงสุดขึ้นอันดับ 1 (Relevance Score Ranking):</b> สินค้าที่ชื่อ, SKU, หรือสเปกตรงกับคำค้นหามากที่สุดจะขึ้นเป็นอันดับแรกทันที ไม่ต้องเสียเวลาเลื่อนหา ทั้งใน Purchase Order, Order, Quotation และการแก้ไขใบสั่งซื้อ'
