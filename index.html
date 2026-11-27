@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.8';
-const DISPLAY_APP_VERSION = 'v4.16.8';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.9';
+const DISPLAY_APP_VERSION = 'v4.16.9';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.8)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.8 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.9)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.9 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2488,15 +2488,25 @@ function extractDimensionPatterns(text) {
   if (!text) return [];
   const t = String(text).toLowerCase();
   const dims = [];
+  // Clean special notes like (G), (H), etc.
+  const cleanedT = t.replace(/\([a-z]\)/gi, '');
   // 1. Explicit separator pattern e.g. 21x32x7, 21-32-7, 40x52x7/10, 21x32
-  const m1 = t.match(/\b\d+(?:\.\d+)?(?:[xX×\-\/*]\d+(?:\.\d+)?)+\b/g);
+  const m1 = cleanedT.match(/\b\d+(?:\.\d+)?(?:[xX×\-\/*]\d+(?:\.\d+)?)+\b/g);
   if (m1) {
     m1.forEach(d => {
-      dims.push(d.replace(/[*×\-\/]/g, 'x'));
+      const norm = d.replace(/[*×\-\/]/g, 'x');
+      dims.push(norm);
+      if (d.includes('/')) {
+        dims.push(d.replace(/[*×\-]/g, 'x'));
+        const parts = d.split('/');
+        if (parts.length > 1) {
+          dims.push(parts[0].replace(/[*×\-]/g, 'x'));
+        }
+      }
     });
   }
   // 2. Three numbers in sequence e.g. "21 32 7"
-  const m2 = [...t.matchAll(/\b(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\b/g)];
+  const m2 = [...cleanedT.matchAll(/\b(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\b/g)];
   m2.forEach(m => {
     dims.push(`${m[1]}x${m[2]}x${m[3]}`);
   });
@@ -2512,10 +2522,13 @@ function getProductDims(p) {
 }
 
 function matchesDimension(qDim, pDims) {
+  if (!qDim || !Array.isArray(pDims) || !pDims.length) return false;
+  const qd = String(qDim).trim().toLowerCase();
   for (let i = 0; i < pDims.length; i++) {
-    const pd = pDims[i];
-    if (pd === qDim) return true;
-    if (pd.startsWith(qDim + 'x') || pd.startsWith(qDim + '/')) return true;
+    const pd = String(pDims[i]).trim().toLowerCase();
+    if (pd === qd) return true;
+    if (pd.startsWith(qd + 'x') || pd.startsWith(qd + '/')) return true;
+    if (qd.startsWith(pd + 'x') || qd.startsWith(pd + '/')) return true;
   }
   return false;
 }
@@ -2595,7 +2608,7 @@ function wcProdScore(p, q) {
   const qDims = extractDimensionPatterns(qStr);
   const pDims = getProductDims(p);
   if (qDims.length && qDims.some(qd => matchesDimension(qd, pDims))) {
-    score += 600;
+    score += 2500;
   }
 
   // Active in-house inventory bonus
@@ -10444,11 +10457,14 @@ async function queryServerProductsSmart(ql) {
 
   const promises = [];
 
-  // Strategy 1: Chained tokens on name (e.g. "TC 35 55 8" or "28 42 7" or "K21 80 100")
+  // Strategy 1: Chained tokens on name. Ensure dimension numbers are NOT dropped!
   if (tokens.length >= 2) {
     let tReq = sb.from('products').select('*').eq('active', true);
     if (currentShop?.id) tReq = tReq.eq('shop_id', currentShop.id);
-    tokens.slice(0, 4).forEach(t => {
+    const searchTokens = numTokens.length >= 2
+      ? [...numTokens, ...tokens.filter(t => !/^\d+(\.\d+)?$/.test(t) && t !== 'oil' && t !== 'seal').slice(0, 2)]
+      : tokens.slice(0, 4);
+    searchTokens.forEach(t => {
       tReq = tReq.ilike('name', `%${t}%`);
     });
     promises.push(tReq.limit(40).then(r => r.data || []).catch(() => []));
@@ -10468,7 +10484,7 @@ async function queryServerProductsSmart(ql) {
   });
 
   tokens.forEach(tok => {
-    if (tok.length >= 3 && isNaN(Number(tok))) {
+    if (tok.length >= 3 && isNaN(Number(tok)) && tok !== 'oil' && tok !== 'seal') {
       orClauses.push(`sku.ilike.%${tok}%`);
       orClauses.push(`supplier_sku.ilike.%${tok}%`);
       orClauses.push(`part_no.ilike.%${tok}%`);
@@ -10763,6 +10779,7 @@ function newOrderProdSearch(rowIdx) {
         <input id="${pid}" type="text" autocomplete="off" value="${val}"
           placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / ขนาด..."
           style="flex:1;min-width:0;background:#fff;border:1px solid var(--border2);border-radius:6px;padding:6px 10px;color:var(--text);font-size:13px;font-weight:600;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
           oninput="searchOrderProduct(${rowIdx}, this.value)"
           onfocus="searchOrderProduct(${rowIdx}, this.value)"
           onblur="handleOrderProdBlur(${rowIdx}, this.value)">
@@ -10885,16 +10902,32 @@ function handleOrderProdBlur(rowIdx, val) {
       }
     } else {
       const prods = (productList && productList.length) ? productList : (allProducts || []);
-      const matched = prods.find(x =>
+      let matched = prods.find(x =>
         (x.name && x.name.toLowerCase() === v.toLowerCase()) ||
         (x.sku && x.sku.toLowerCase() === v.toLowerCase()) ||
         (x.supplier_sku && x.supplier_sku.toLowerCase() === v.toLowerCase()) ||
         (x.part_no && x.part_no.toLowerCase() === v.toLowerCase())
       );
+      if (!matched && prods.length > 0) {
+        const candidates = filterAndSortProducts(prods, v, 5);
+        if (candidates.length > 0) {
+          const vDims = extractDimensionPatterns(v);
+          if (candidates.length === 1) {
+            matched = candidates[0];
+          } else if (vDims.length > 0) {
+            const dimMatched = candidates.find(c => vDims.some(vd => matchesDimension(vd, getProductDims(c))));
+            if (dimMatched) matched = dimMatched;
+          } else if (candidates[0] && wcProdScore(candidates[0], v) >= 1500) {
+            matched = candidates[0];
+          }
+        }
+      }
       if (matched && orderItems[rowIdx]) {
         orderItems[rowIdx].product_id = matched.id;
         orderItems[rowIdx].product_name = matched.name;
         if (!orderItems[rowIdx].sell_price) orderItems[rowIdx].sell_price = Number(matched.sell_price) || 0;
+        const inp = document.getElementById('o-prod-inp-' + rowIdx);
+        if (inp) inp.value = matched.name;
         orderItems[rowIdx].cost_per_unit = getProductOrderCost(matched);
       } else if (orderItems[rowIdx]) {
         orderItems[rowIdx].product_name = v;
@@ -25950,12 +25983,27 @@ function handleQuoteProdBlur(rowIdx, val) {
     }
     // Check if directly matched an existing product in DB
     const prods = (productList && productList.length) ? productList : (allProducts || []);
-    const matched = prods.find(x =>
+    let matched = prods.find(x =>
       (x.name && x.name.toLowerCase() === cleanVal.toLowerCase()) ||
       (x.sku && x.sku.toLowerCase() === cleanVal.toLowerCase()) ||
       (x.supplier_sku && x.supplier_sku.toLowerCase() === cleanVal.toLowerCase()) ||
       (x.part_no && x.part_no.toLowerCase() === cleanVal.toLowerCase())
     );
+    // Smart auto-link fallback if user typed dimension or search keywords (e.g. 33x55x7)
+    if (!matched && prods.length > 0) {
+      const candidates = filterAndSortProducts(prods, cleanVal, 5);
+      if (candidates.length > 0) {
+        const vDims = extractDimensionPatterns(cleanVal);
+        if (candidates.length === 1) {
+          matched = candidates[0];
+        } else if (vDims.length > 0) {
+          const dimMatched = candidates.find(c => vDims.some(vd => matchesDimension(vd, getProductDims(c))));
+          if (dimMatched) matched = dimMatched;
+        } else if (candidates[0] && wcProdScore(candidates[0], cleanVal) >= 1500) {
+          matched = candidates[0];
+        }
+      }
+    }
     if (matched) {
       if (quoteItems[rowIdx]?.product_id !== matched.id) {
         selectQuoteProductById(rowIdx, matched.id);
@@ -26330,6 +26378,7 @@ function renderQuoteItems() {
         if (customInp && !customInp.value) customInp.value = inp.value;
         searchQuoteProduct(i, inp.value);
       };
+      inp.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); inp.blur(); } };
       inp.onfocus = () => searchQuoteProduct(i, inp.value);
       inp.onblur = () => handleQuoteProdBlur(i, inp.value);
 
@@ -32820,6 +32869,7 @@ function newPOProdSearch(rowIdx) {
         <input id="${pid}" type="text" autocomplete="off" value="${val}"
           placeholder="🔍 พิมพ์ค้นหาชื่อ / SKU / Supplier (THB/USD)... หรือพิมพ์ชื่อเอง"
           style="flex:1;min-width:0;background:#fff;border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--text);font-size:12.5px;font-weight:600;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}"
           oninput="searchPOProduct(${rowIdx}, this.value)"
           onfocus="searchPOProduct(${rowIdx}, this.value)"
           onblur="handlePOProdBlur(${rowIdx}, this.value)">
@@ -32971,12 +33021,30 @@ function handlePOProdBlur(rowIdx, val) {
         return;
       }
 
-      const matched = prods.find(x =>
+      // 1. Direct exact match
+      let matched = prods.find(x =>
         (x.name && x.name.toLowerCase() === v.toLowerCase()) ||
         (x.sku && x.sku.toLowerCase() === v.toLowerCase()) ||
         (x.supplier_sku && x.supplier_sku.toLowerCase() === v.toLowerCase()) ||
         (x.part_no && x.part_no.toLowerCase() === v.toLowerCase())
       );
+
+      // 2. Smart auto-link fallback if user typed dimension or search keywords (e.g. 33x55x7 or OIL SEAL VITON 21X32X7)
+      if (!matched && prods.length > 0) {
+        const candidates = filterAndSortProducts(prods, v, 5);
+        if (candidates.length > 0) {
+          const vDims = extractDimensionPatterns(v);
+          if (candidates.length === 1) {
+            matched = candidates[0];
+          } else if (vDims.length > 0) {
+            const dimMatched = candidates.find(c => vDims.some(vd => matchesDimension(vd, getProductDims(c))));
+            if (dimMatched) matched = dimMatched;
+          } else if (candidates[0] && wcProdScore(candidates[0], v) >= 1500) {
+            matched = candidates[0];
+          }
+        }
+      }
+
       if (matched && poItems[rowIdx]) {
         const cur = document.getElementById('po-currency')?.value || 'THB';
         const rate = Number(document.getElementById('po-exrate')?.value || 35);
@@ -32987,6 +33055,8 @@ function handlePOProdBlur(rowIdx, val) {
         if (poItems[rowIdx].unit_cost === undefined || poItems[rowIdx].unit_cost === null || poItems[rowIdx].unit_cost === 0 || poItems[rowIdx].unit_cost === '') {
           poItems[rowIdx].unit_cost = buyPrice > 0 ? buyPrice : '';
         }
+        const inp = document.getElementById('po-prod-inp-' + rowIdx);
+        if (inp) inp.value = matched.name;
       } else if (poItems[rowIdx]) {
         poItems[rowIdx].product_name = v;
         if (!poItems[rowIdx].product_id) poItems[rowIdx].product_id = '__custom__';
@@ -41148,7 +41218,7 @@ function searchBatchPOAddProd(q) {
   if (!dd) return;
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
-  const res = ql ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 30) : prods.slice(0, 20);
+  const res = ql ? filterAndSortProducts(prods, ql, 30) : prods.slice(0, 20);
   
   if (!res.length) {
     dd.innerHTML = '<div style="padding:10px;font-size:12px;color:var(--text3);text-align:center">ไม่พบสินค้า</div>';
@@ -53807,6 +53877,12 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.16.9', date:'2026-11-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบค้นหาอัจฉริยะแบบ Case-Insensitive ครบทุกระบบ และ Smart Blur Auto-Link', items:[
+      '🔤 <b>ระบบค้นหาไม่แบ่งแยกตัวพิมพ์เล็ก-ใหญ่ (Universal Case-Insensitive Search):</b> ค้นหาด้วยตัวพิมพ์เล็กหรือใหญ่ (เช่น tc, TC, viton, VITON, dkb, DKB, nbr, NBR, 21x32x7, 21X32X7) ให้ผลลัพธ์ตรงกัน 100% ทุกจุดทั่วทั้งระบบ (แคตตาล็อก, ใบสั่งซื้อ PO, ออเดอร์ Order, ใบเสนอราคา Quote, Batch PO, Stock, CRM, Supplier)',
+      '📏 <b>ปรับปรุงระบบวิเคราะห์ขนาด (Dimension Normalizer):</b> รองรับขนาด 2 สเต็ป/Compound (เช่น 40X52X7/10 และ 40-52-7(G)/10(H)) และขนาดตัวเลขเรียง 3 ชุด (เช่น 21 32 7) ค้นหาและจับคู่ข้ามรูปแบบได้แม่นยำ 100%',
+      '🎯 <b>Smart Auto-Link on Blur & Enter:</b> เมื่อพิมพ์ขนาด เช่น 33x55x7 หรือ OIL SEAL VITON 21X32X7 แล้วกด Enter หรือคลิกออก ระบบจะเชื่อมโยงเข้ากับรหัสสินค้าหลักในคลังอัตโนมัติ หมดปัญหาแถบเตือนสีเหลือง (⚠️ ไม่เชื่อมโยงคลัง)',
+      '⚡ <b>เพิ่มความแม่นยำ Server-side Search:</b> ป้องกันการตัดทอนขนาด และตัดคำทั่วไป (oil, seal) ออกจาก OR query เพื่อให้ผลลัพธ์ Supabase ตรงเป้าหมายและรวดเร็วยิ่งขึ้น'
+    ]},
     { v:'4.16.8', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบรวมสินค้าซ้ำอัจฉริยะ (Product Merge Tool) โอนย้ายประวัติ PO, Order, สต๊อก เข้าสินค้าหลักใน 1 คลิก', items:[
       '🔗 <b>ระบบรวมสินค้าซ้ำ (Product Merge Tool):</b> เพิ่มเครื่องมือรวมสินค้าซ้ำ สามารถกดรวมสินค้าได้ทันทีจากหน้าแก้ไขสินค้า (✏️ แก้ไขสินค้า) และหน้าต่างแจ้งเตือนเมื่อลบสินค้าไม่ได้ (🔗 สินค้านี้ถูกใช้งานอยู่)',
       '📦 <b>โอนย้ายประวัติเอกสารอัตโนมัติครบ 100%:</b> โอนรายการในใบสั่งซื้อ (PO Items รวมถึงยอดรอเข้า +10), รายการขายในออเดอร์ (Order Items), ใบเสนอราคา (Quotation Items) และการเคลื่อนไหวสต๊อก (Stock Movements) ไปยังสินค้าหลักที่เลือกอย่างปลอดภัย ไร้รอยต่อ',
