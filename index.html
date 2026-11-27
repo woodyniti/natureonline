@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.2';
-const DISPLAY_APP_VERSION = 'v4.16.2';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.3';
+const DISPLAY_APP_VERSION = 'v4.16.3';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.2)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.2 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.3)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.3 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -32815,6 +32815,27 @@ function renderPOItems() {
         qpBtn.title = 'เปิดหน้าต่างอัปเดตราคาซื้อ Master ในระบบ';
         qpBtn.onclick = () => openPOProductQuickPriceModal(selectedProduct.id, i);
         badgeRow.appendChild(qpBtn);
+
+        // One-click Sync Master Name button if custom name differs from updated DB product name
+        if (selectedProduct.name && (it.product_name || '').trim() !== selectedProduct.name.trim()) {
+          const syncNameBtn = document.createElement('button');
+          syncNameBtn.type = 'button';
+          syncNameBtn.className = 'btn btn-secondary btn-sm';
+          syncNameBtn.style.cssText = 'padding:1px 6px;font-size:10.5px;background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;cursor:pointer;font-weight:700;border-radius:4px;display:inline-flex;align-items:center;gap:3px';
+          syncNameBtn.innerHTML = '🔄 ซิงค์ชื่อตามคลัง';
+          syncNameBtn.title = `กดเพื่ออัปเดตชื่อในช่องพิมพ์เป็น "${escapeHTML(selectedProduct.name)}" ตามมาตรฐานใหม่ของคลังสินค้า`;
+          syncNameBtn.onclick = () => {
+            poItems[i].product_name = selectedProduct.name;
+            const customEl = document.getElementById('po-custom-inp-' + i);
+            if (customEl) customEl.value = selectedProduct.name;
+            const inpEl = document.getElementById('po-prod-inp-' + i);
+            if (inpEl) inpEl.value = selectedProduct.name;
+            renderPOItems();
+            calcPOTotal();
+            toast(`อัปเดตชื่อเป็น "${selectedProduct.name}" แล้ว ✓`, 'success');
+          };
+          badgeRow.appendChild(syncNameBtn);
+        }
       } else {
         badgeRow.innerHTML = '<span style="color:#f59e0b;font-weight:600;font-size:11px">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
       }
@@ -32942,12 +32963,18 @@ function renderPOItems() {
     matrixWrap.appendChild(table);
 
     // Matrix footer toolbar
+    const outOfSyncCount = poItems.filter(it => {
+      const p = prods.find(x => x.id === it.product_id);
+      return p && p.name && (it.product_name || '').trim() !== p.name.trim();
+    }).length;
+
     const footerBar = document.createElement('div');
     footerBar.className = 'sap-matrix-footer';
     footerBar.innerHTML = `
-      <div style="display:flex;gap:6px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button type="button" class="btn btn-secondary btn-sm" onclick="addPOItem()" style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">+ เพิ่มรายการใน PO (Add Row)</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('po', -1, '')" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">⚡ + สร้างสินค้าใหม่เข้าคลัง (Quick Product)</button>
+        ${outOfSyncCount > 0 ? `<button type="button" class="btn btn-secondary btn-sm" onclick="syncAllPONamesFromMaster()" style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">🔄 ซิงค์ชื่อทุกรายการตามคลังสินค้า (${outOfSyncCount} รายการ)</button>` : ''}
       </div>
       <div style="font-size:11.5px;color:#64748b;font-weight:600">${poItems.length} รายการ</div>
     `;
@@ -33202,6 +33229,22 @@ function renderPOItems() {
 }
 
 function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:'',internal_note:''});renderPOItems();}
+
+function syncAllPONamesFromMaster() {
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  let count = 0;
+  poItems.forEach(it => {
+    const p = prods.find(x => x.id === it.product_id);
+    if (p && p.name && (it.product_name || '').trim() !== p.name.trim()) {
+      it.product_name = p.name;
+      count++;
+    }
+  });
+  renderPOItems();
+  calcPOTotal();
+  toast(`ซิงค์ชื่อตามมาตรฐานคลังเรียบร้อย ${count} รายการ ✓`, 'success');
+}
+window.syncAllPONamesFromMaster = syncAllPONamesFromMaster;
 
 // ── Quick Buy Price Modal for PO (บันทึกราคาซื้อโดยไม่ปิดหน้า PO) ──
 function openPOProductQuickPriceModal(productId, rowIdx) {
@@ -53323,7 +53366,12 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.2', date:'2026-11-26', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'จำกัด Drag & Drop เฉพาะไอคอน ⠿ และตรวจสอบดึงข้อมูลสินค้าจริง/สร้างสินค้าใหม่อัตโนมัติเมื่อ Convert ใบเสนอราคา', items:[
+    { v:'4.16.3', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'อัปเดตชื่อสินค้าและ SKU ออยซีลตามมาตรฐานใหม่ 10,866 รายการ พร้อมปุ่มซิงค์ชื่อคลังใน PO และระบบจัดเรียงลำดับ Drag & Drop', items:[
+      '📦 <b>อัปเดตโครงสร้างชื่อสินค้าและ SKU ออยซีล 10,866 รายการในฐานข้อมูล:</b> ปรับปรุงชื่อสินค้าทั้งหมดให้ตรงตามมาตรฐาน <code>[ประเภทซีล] OIL SEAL [เนื้อยาง] [ใน]X[นอก]X[หนา]</code> (เช่น <code>TC OIL SEAL VITON 21X32X7</code>) และ SKU แบบยาว <code>OIL SEAL [เนื้อยาง] [ใน]X[นอก]X[หนา] [ประเภทซีล]</code> (เช่น <code>OIL SEAL VITON 21X32X7 TC</code>) ในฐานข้อมูล Supabase ครบถ้วน 100%',
+      '🔄 <b>ปุ่มซิงค์ชื่อสินค้าตามคลัง (Sync Master Name in PO):</b> เพิ่มปุ่ม <code>🔄 ซิงค์ชื่อตามคลัง</code> ในรายการสินค้าของ PO Draft เพื่อให้ผู้ใช้สามารถอัปเดตชื่อสเปกสินค้าเก่าให้เป็นชื่อมาตรฐานใหม่ในคลังได้ในคลิกเดียว พร้อมปุ่มซิงค์ทุกรายการทั้งใบสั่งซื้อ',
+      '🖐️ <b>ระบบ Drag & Drop และ Jump Selector ทุกลำดับเอกสาร:</b> จัดเรียงลำดับรายการสินค้าได้อย่างอิสระผ่านไอคอนจับลาก <code>⠿</code> หรือเลือกจาก Dropdown ในทุกเอกสาร (Order, Quotation, Purchase Order, AR Invoice, AP Invoice) พร้อมล็อคตำแหน่งถาวร'
+    ]},
+    { v:'4.16.2', date:'2026-11-26', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'จำกัด Drag & Drop เฉพาะไอคอน ⠿ และตรวจสอบดึงข้อมูลสินค้าจริง/สร้างสินค้าใหม่อัตโนมัติเมื่อ Convert ใบเสนอราคา', items:[
       '🖐️ <b>ระบบจับลาก Drag & Drop เฉพาะไอคอน <code>⠿</code>:</b> ปรับปรุงระบบลากแถวสินค้าให้ทำงานเมื่อคลิกค้างที่ไอคอนจับลาก <code>⠿</code> เท่านั้น หากเมาส์อยู่ในช่องพิมพ์ข้อความ (Input/Textarea/Select) ระบบจะปิดโหมด Drag ทันที ทำให้ผู้ใช้สามารถคลิก ไฮไลต์เลือกตัวหนังสือ แก้ไขข้อความได้อย่างราบรื่น 100% ไม่หลุดไปลากแถวสินค้าโดยไม่ตั้งใจ',
       '🔄 <b>Convert Quotation → Order ตรวจสอบฐานข้อมูลจริง (DB Product Sync):</b> ก่อนแปลงใบเสนอราคาเป็นออเดอร์ ระบบจะดึงและตรวจสอบข้อมูลสินค้าจากตาราง <code>products</code> ในฐานข้อมูล Supabase โดยตรง (ครอบคลุมทั้งสินค้าตาม ID, SKU และชื่อสินค้า) เพื่อให้ได้ข้อมูลสเปก ราคา และต้นทุนที่เป็นปัจจุบันที่สุด',
       '✨ <b>ระบบแจ้งเตือนและสร้างสินค้าใหม่อัตโนมัติ (Auto-create Missing Products):</b> หากพบสินค้าในใบเสนอราคาที่ยังไม่มีอยู่ในฐานข้อมูล ระบบจะแจ้งเตือนพร้อมรายชื่อสินค้า และมีปุ่มให้กดสร้างสินค้าใหม่เข้าคลังสินค้าทันที โดยกำหนด SKU, ราคาขาย และต้นทุนให้อัตโนมัติ พร้อมอัปเดตข้อมูลเชื่อมโยงทั้งในใบเสนอราคาและออเดอร์ ข้อมูลจึงสมบูรณ์ไม่ผิดพลาด',
