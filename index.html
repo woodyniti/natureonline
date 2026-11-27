@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.7';
-const DISPLAY_APP_VERSION = 'v4.16.7';
+const CURRENT_APP_VERSION = 'sealthai-v4.16.8';
+const DISPLAY_APP_VERSION = 'v4.16.8';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.7)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.7 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.8)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.8 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -2484,59 +2484,15 @@ function wcSearch(str, pattern) {
   return s.includes(p);
 }
 
-function extractDimensionPatterns(text) {
-  if (!text) return [];
-  const t = String(text).toLowerCase();
-  const dims = [];
-  // 1. Explicit separator pattern e.g. 21x32x7, 21-32-7, 40x52x7/10, 21x32
-  const m1 = t.match(/\b\d+(?:\.\d+)?(?:[xX×\-\/*]\d+(?:\.\d+)?)+\b/g);
-  if (m1) {
-    m1.forEach(d => {
-      dims.push(d.replace(/[*×\-\/]/g, 'x'));
-    });
-  }
-  // 2. Three numbers in sequence e.g. "21 32 7"
-  const m2 = [...t.matchAll(/\b(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)\b/g)];
-  m2.forEach(m => {
-    dims.push(`${m[1]}x${m[2]}x${m[3]}`);
-  });
-  return [...new Set(dims)];
-}
-
-function getProductDims(p) {
-  if (!p) return [];
-  if (p._dimensionsList) return p._dimensionsList;
-  const full = `${p.name || ''} ${p.sku || ''} ${p.description || ''} ${p.supplier_description || ''}`;
-  p._dimensionsList = extractDimensionPatterns(full);
-  return p._dimensionsList;
-}
-
-function matchesDimension(qDim, pDims) {
-  for (let i = 0; i < pDims.length; i++) {
-    const pd = pDims[i];
-    if (pd === qDim) return true;
-    if (pd.startsWith(qDim + 'x') || pd.startsWith(qDim + '/')) return true;
-  }
-  return false;
-}
-
 function wcProdMatch(p, q) {
   if (!q) return true;
   if (!p) return false;
   const qStr = q.trim().toLowerCase();
   if (!qStr) return true;
 
-  const name = (p.name || '').toLowerCase();
-  const sku = (p.sku || '').toLowerCase();
-  const supSku = (p.supplier_sku || p.supplier_code || '').toLowerCase();
-  const desc = (p.supplier_description || p.description || '').toLowerCase();
-  const part = (p.part_no || '').toLowerCase();
   const searchable = getProductSearchableText(p);
 
-  // Direct exact match on name or sku
-  if (name === qStr || sku === qStr || supSku === qStr || part === qStr) return true;
-
-  // Wildcard Regex match on full searchable text
+  // 1. Wildcard Regex match on full searchable text
   if (qStr.includes('*') || qStr.includes('?')) {
     const rxStr = qStr.replace(/[.+^${}()|[\]\\]/g, '\\$&')
                       .replace(/\*/g, '.*')
@@ -2547,77 +2503,285 @@ function wcProdMatch(p, q) {
     } catch(e) {}
   }
 
-  // Dimension check: if query has dimensions (e.g. 21x32x7 or 21 32 7)
-  const qDims = extractDimensionPatterns(qStr);
-  const pDims = getProductDims(p);
-  if (qDims.length > 0) {
-    const matchedDim = qDims.some(qd => matchesDimension(qd, pDims));
-    if (!matchedDim) return false;
-  }
-
-  // Multi-token match with whole-number boundary for numeric tokens
-  const normQ = qStr.replace(/[*×\-\/]/g, ' ');
+  // 2. Multi-token / space separated match on full searchable text
+  const normQ = qStr.replace(/[*xX×\-\/]+/g, ' ').trim();
   const tokens = normQ.split(/\s+/).filter(Boolean);
-
-  for (let i = 0; i < tokens.length; i++) {
-    const tok = tokens[i];
-    if (/^\d+$/.test(tok)) {
-      // Must match whole number boundary, not a substring inside 280, 0212 or 196782!
-      const numRx = new RegExp(`(?<!\\d)${tok}(?!\\d)`);
-      if (!numRx.test(searchable)) return false;
-    } else {
-      if (!searchable.includes(tok)) return false;
-    }
+  if (tokens.length > 0 && tokens.every(tok => searchable.includes(tok))) {
+    return true;
   }
 
-  return true;
+  // 3. Direct substring match
+  return searchable.includes(qStr);
 }
 
-function wcProdScore(p, q) {
-  if (!q || !p) return 0;
-  const qStr = q.trim().toLowerCase();
-  const name = (p.name || '').toLowerCase();
-  const sku = (p.sku || '').toLowerCase();
-  const supSku = (p.supplier_sku || p.supplier_code || '').toLowerCase();
-  const part = (p.part_no || '').toLowerCase();
-  const desc = (p.supplier_description || p.description || '').toLowerCase();
 
-  let score = 0;
-  if (name === qStr || sku === qStr) score += 4000;
-  else if (name.startsWith(qStr)) score += 2500;
-  else if (name.includes(qStr)) score += 1800;
-  else if (sku.includes(qStr)) score += 1400;
-  else if (supSku === qStr || part === qStr) score += 1300;
-  else if (supSku.includes(qStr) || part.includes(qStr)) score += 1000;
-  else if (desc.includes(qStr)) score += 700;
+// ─── PRODUCT MERGE TOOL (รวมสินค้าซ้ำ / ย้ายประวัติเข้าสินค้าหลัก) ───
+let _mergeSelectedTargetProduct = null;
 
-  // Dimension exact match bonus
-  const qDims = extractDimensionPatterns(qStr);
-  const pDims = getProductDims(p);
-  if (qDims.length && qDims.some(qd => matchesDimension(qd, pDims))) {
-    score += 600;
+async function openProductMergeModal(sourceProdId) {
+  if (!sourceProdId) return;
+  _mergeSelectedTargetProduct = null;
+
+  let sourceProd = (allProducts || []).find(p => p.id === sourceProdId) || (productList || []).find(p => p.id === sourceProdId);
+  if (!sourceProd) {
+    try {
+      const { data } = await sb.from('products').select('*').eq('id', sourceProdId).maybeSingle();
+      if (data) sourceProd = normalizeProduct(data);
+    } catch(e) {}
   }
 
-  // Active in-house inventory bonus
-  const stock = Number(p.stock_inhouse !== undefined && p.stock_inhouse !== null ? p.stock_inhouse : (p.stock_qty || 0));
-  if (stock > 0) score += 50;
+  if (!sourceProd) {
+    toast('ไม่พบข้อมูลสินค้ารหัสนี้', 'error');
+    return;
+  }
 
-  return score;
+  document.getElementById('modal-product-merge')?.remove();
+
+  // ดึงสถิติเอกสารที่อ้างอิงสินค้านี้
+  let poCount = 0, ordCount = 0, qtCount = 0, smCount = 0;
+  try {
+    const [pRes, oRes, qRes, sRes] = await Promise.all([
+      sb.from('purchase_order_items').select('id', { count: 'exact', head: true }).eq('product_id', sourceProdId),
+      sb.from('order_items').select('id', { count: 'exact', head: true }).eq('product_id', sourceProdId),
+      sb.from('quotation_items').select('id', { count: 'exact', head: true }).eq('product_id', sourceProdId),
+      sb.from('stock_movements').select('id', { count: 'exact', head: true }).eq('product_id', sourceProdId)
+    ]);
+    poCount = pRes.count || 0;
+    ordCount = oRes.count || 0;
+    qtCount = qRes.count || 0;
+    smCount = sRes.count || 0;
+  } catch(e) {}
+
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay open';
+  overlay.id = 'modal-product-merge';
+  overlay.style.zIndex = '3100';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  modal.style.maxWidth = '780px';
+  modal.innerHTML = `
+    <div class="modal-title" style="display:flex;align-items:center;gap:8px">
+      <span>🔗</span>
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#0f172a">รวมสินค้าซ้ำเข้าด้วยกัน (Product Merge Tool)</div>
+        <div style="font-size:12px;color:#64748b;font-weight:400">โอนย้ายประวัติการสั่งซื้อ, ขาย, ใบเสนอราคา และสต๊อกเข้าสู่สินค้าหลักอัตโนมัติ</div>
+      </div>
+    </div>
+
+    <!-- Step 1: สินค้าต้นทางที่จะรวม (Source Duplicate Product) -->
+    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:#b45309;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;display:flex;align-items:center;gap:4px">
+        <span>⚠️ สินค้าต้นทาง (จะถูกโอนย้ายข้อมูลและปิดการใช้งาน)</span>
+      </div>
+      <div style="font-size:14px;font-weight:700;color:#1e293b">${escapeHTML(sourceProd.name)}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:11.5px">
+        <span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:6px;border:1px solid #bfdbfe">SKU: ${escapeHTML(sourceProd.sku || '-')}</span>
+        ${sourceProd.supplier_sku ? `<span style="background:#f8fafc;color:#334155;padding:2px 8px;border-radius:6px;border:1px solid #e2e8f0">Code: ${escapeHTML(sourceProd.supplier_sku)}</span>` : ''}
+        ${sourceProd.part_no ? `<span style="background:#f8fafc;color:#334155;padding:2px 8px;border-radius:6px;border:1px solid #e2e8f0">Part: ${escapeHTML(sourceProd.part_no)}</span>` : ''}
+        <span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:6px;border:1px solid #cbd5e1">ขาย: ฿${fmt(sourceProd.sell_price || sourceProd.sale_price || 0)}</span>
+        <span style="background:#fef2f2;color:#991b1b;padding:2px 8px;border-radius:6px;border:1px solid #fecaca">สต๊อก: ${fmt(sourceProd.stock_inhouse || sourceProd.stock_qty || 0)}</span>
+      </div>
+      <div style="margin-top:8px;font-size:11.5px;color:#78350f;background:#fef3c7;padding:6px 10px;border-radius:6px">
+        📊 ประวัติที่จะถูกโอนย้ายไปยังสินค้าหลัก: <b>${poCount}</b> รายการ PO, <b>${ordCount}</b> รายการออเดอร์, <b>${qtCount}</b> ใบเสนอราคา, <b>${smCount}</b> รายการเคลื่อนไหวสต๊อก
+      </div>
+    </div>
+
+    <!-- Step 2: ค้นหาและเลือกสินค้าปลายทางหลัก (Target Master Product) -->
+    <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:10px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:800;color:#0369a1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">
+        <span>🎯 เลือกสินค้าหลัก (Master Product) ที่ต้องการรวมเข้าไป</span>
+      </div>
+      
+      <div style="position:relative">
+        <input type="text" id="merge-target-search" class="form-control" placeholder="พิมพ์ชื่อ, ขนาด (เช่น 40X52X7/10 หรือ 21X32X7), SKU, Code เพื่อค้นหาสินค้าหลัก..."
+          style="width:100%;font-size:13px;padding:8px 12px;border:1.5px solid #94a3b8;border-radius:8px"
+          oninput="handleMergeSearchInput(this.value, '${sourceProdId}')" />
+        <div id="merge-target-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:280px;overflow-y:auto;background:#fff;border:1.5px solid #94a3b8;border-radius:8px;box-shadow:0 12px 24px rgba(0,0,0,0.15);z-index:3200;margin-top:4px"></div>
+      </div>
+
+      <!-- กล่องแสดงสินค้าหลักที่เลือก -->
+      <div id="merge-target-selected-box" style="display:none;margin-top:10px;padding:10px 12px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#166534">✅ สินค้าหลักที่เลือก:</div>
+            <div id="merge-target-name" style="font-size:13.5px;font-weight:700;color:#0f172a;margin-top:2px"></div>
+            <div id="merge-target-meta" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;font-size:11.5px"></div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="clearMergeTarget()" style="font-size:11px;padding:3px 8px">เปลี่ยน</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- คำเตือนและสรุปขั้นตอน -->
+    <div style="font-size:11.5px;color:#64748b;line-height:1.5;margin-bottom:14px;padding:0 4px">
+      ℹ️ เมื่อกดยืนยัน: รายการเอกสารทั้งหมด (PO, Order, Quotation, สต๊อก) จะถูกชี้ไปยังสินค้าหลักทันที และสินค้าต้นทางจะถูกตั้งค่าเป็นไม่ใช้งาน (Active = False) พร้อมเปลี่ยน SKU ป้องกันการซ้ำซ้อน
+    </div>
+
+    <div class="modal-footer" style="justify-content:space-between;gap:8px">
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-product-merge').remove()">ยกเลิก</button>
+      <button type="button" class="btn btn-primary" id="btn-execute-merge" onclick="executeProductMerge('${sourceProdId}')" disabled style="background:#0284c7;border:none;font-weight:700;padding:8px 18px">
+        🚀 ยืนยันการรวมสินค้า (Merge)
+      </button>
+    </div>
+  `;
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  // Focus ช่องค้นหาทันที
+  setTimeout(() => {
+    document.getElementById('merge-target-search')?.focus();
+  }, 100);
 }
 
-function filterAndSortProducts(prods, q, limit = 40) {
-  if (!Array.isArray(prods)) return [];
-  if (!q || !q.trim()) return prods.slice(0, limit);
-  const qStr = q.trim();
-  const matched = [];
-  for (let i = 0; i < prods.length; i++) {
-    const p = prods[i];
-    if (wcProdMatch(p, qStr)) {
-      matched.push({ p, score: wcProdScore(p, qStr) });
+function handleMergeSearchInput(q, sourceProdId) {
+  const dd = document.getElementById('merge-target-dropdown');
+  if (!dd) return;
+  const qStr = (q || '').trim();
+  if (!qStr) {
+    dd.style.display = 'none';
+    return;
+  }
+
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const available = prods.filter(p => p.id !== sourceProdId && p.active !== false);
+  const matched = filterAndSortProducts(available, qStr, 25);
+
+  if (!matched.length) {
+    dd.innerHTML = `<div style="padding:10px 14px;font-size:12px;color:#94a3b8;text-align:center">ไม่พบสินค้าอื่นที่ตรงกับ "${escapeHTML(qStr)}"</div>`;
+    dd.style.display = 'block';
+    return;
+  }
+
+  dd.innerHTML = matched.map(p => {
+    return `
+      <div onclick="selectMergeTarget('${p.id}')"
+        style="padding:8px 12px;cursor:pointer;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center"
+        onmouseover="this.style.background='#f0f7ff'" onmouseout="this.style.background=''">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:700;font-size:13px;color:#0f172a">${escapeHTML(p.name)}</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap">
+            <span style="color:#1d4ed8;font-weight:600">SKU: ${escapeHTML(p.sku || '-')}</span>
+            ${p.supplier_sku ? `<span>Code: ${escapeHTML(p.supplier_sku)}</span>` : ''}
+            ${p.part_no ? `<span>Part: ${escapeHTML(p.part_no)}</span>` : ''}
+            ${p.supplier_description && p.supplier_description !== p.name ? `<span style="color:#b45309">Desc: ${escapeHTML(p.supplier_description)}</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:10px;font-size:11px">
+          <span style="background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:4px;font-weight:700">เลือก ➜</span>
+        </div>
+      </div>`;
+  }).join('');
+  dd.style.display = 'block';
+}
+
+function selectMergeTarget(targetId) {
+  const prods = (productList && productList.length) ? productList : (allProducts || []);
+  const p = prods.find(x => x.id === targetId);
+  if (!p) return;
+
+  _mergeSelectedTargetProduct = p;
+  document.getElementById('merge-target-dropdown').style.display = 'none';
+  document.getElementById('merge-target-search').value = p.name;
+
+  const box = document.getElementById('merge-target-selected-box');
+  const nameEl = document.getElementById('merge-target-name');
+  const metaEl = document.getElementById('merge-target-meta');
+  const btn = document.getElementById('btn-execute-merge');
+
+  nameEl.textContent = p.name;
+  metaEl.innerHTML = `
+    <span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:6px;border:1px solid #bfdbfe">SKU: ${escapeHTML(p.sku || '-')}</span>
+    ${p.supplier_sku ? `<span style="background:#f8fafc;color:#334155;padding:2px 8px;border-radius:6px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku)}</span>` : ''}
+    ${p.part_no ? `<span style="background:#f8fafc;color:#334155;padding:2px 8px;border-radius:6px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>` : ''}
+    <span style="background:#f1f5f9;color:#475569;padding:2px 8px;border-radius:6px;border:1px solid #cbd5e1">ขาย: ฿${fmt(p.sell_price || p.sale_price || 0)}</span>
+    <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;border:1px solid #fde68a">🏭 รง. ${fmt(p.factory_stock || 0)}</span>
+  `;
+
+  box.style.display = 'block';
+  btn.disabled = false;
+}
+
+function clearMergeTarget() {
+  _mergeSelectedTargetProduct = null;
+  document.getElementById('merge-target-selected-box').style.display = 'none';
+  document.getElementById('merge-target-search').value = '';
+  document.getElementById('btn-execute-merge').disabled = true;
+  document.getElementById('merge-target-search').focus();
+}
+
+async function executeProductMerge(sourceProdId) {
+  if (!sourceProdId || !_mergeSelectedTargetProduct) {
+    toast('กรุณาเลือกสินค้าหลักที่ต้องการรวม', 'warning');
+    return;
+  }
+  const targetId = _mergeSelectedTargetProduct.id;
+  if (sourceProdId === targetId) {
+    toast('ไม่สามารถรวมสินค้าเข้ากับตัวเองได้', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-execute-merge');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ กำลังรวมสินค้าและโอนย้ายประวัติ...';
+  }
+
+  try {
+    // 1. โอนย้ายรายการในตารางต่างๆ
+    const [pRes, oRes, qRes, sRes, gRes] = await Promise.all([
+      sb.from('purchase_order_items').update({ product_id: targetId }).eq('product_id', sourceProdId),
+      sb.from('order_items').update({ product_id: targetId }).eq('product_id', sourceProdId),
+      sb.from('quotation_items').update({ product_id: targetId }).eq('product_id', sourceProdId),
+      sb.from('stock_movements').update({ product_id: targetId }).eq('product_id', sourceProdId),
+      sb.from('goods_return_items').update({ product_id: targetId }).eq('product_id', sourceProdId)
+    ]);
+
+    // 2. ดึงข้อมูลสินค้าต้นทางเพื่อเปลี่ยน SKU ป้องกัน unique constraint
+    let oldSku = '';
+    let oldName = '';
+    const { data: sProd } = await sb.from('products').select('sku,name').eq('id', sourceProdId).maybeSingle();
+    if (sProd) {
+      oldSku = sProd.sku || '';
+      oldName = sProd.name || '';
+    }
+
+    // 3. ปิดการใช้งานสินค้าต้นทาง
+    const newArchivedSku = `[MERGED_${sourceProdId.slice(0, 8)}] ${oldSku}`.trim();
+    const newArchivedName = `[MERGED DUPLICATE] ${oldName}`.trim();
+    await sb.from('products').update({
+      active: false,
+      sku: newArchivedSku,
+      name: newArchivedName
+    }).eq('id', sourceProdId);
+
+    // 4. อัปเดตข้อมูลใน In-memory cache
+    if (Array.isArray(allProducts)) {
+      const idx = allProducts.findIndex(p => p.id === sourceProdId);
+      if (idx !== -1) {
+        allProducts[idx].active = false;
+        allProducts[idx].sku = newArchivedSku;
+        allProducts[idx].name = newArchivedName;
+      }
+    }
+    if (Array.isArray(productList)) {
+      productList = productList.filter(p => p.id !== sourceProdId);
+    }
+
+    toast('รวมสินค้าเรียบร้อยแล้ว! ข้อมูลและประวัติทั้งหมดถูกโอนไปยังสินค้าหลักแล้ว', 'success');
+    document.getElementById('modal-product-merge')?.remove();
+
+    // รีเฟรชหน้าสินค้า
+    if (typeof renderProducts === 'function') renderProducts();
+  } catch(err) {
+    console.error('executeProductMerge error:', err);
+    toast('เกิดข้อผิดพลาดในการรวมสินค้า: ' + (err.message || err), 'error');
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🚀 ยืนยันการรวมสินค้า (Merge)';
     }
   }
-  matched.sort((a, b) => b.score - a.score);
-  return matched.slice(0, limit).map(x => x.p);
 }
 
 async function doDirectAdminLogin() {
@@ -10570,8 +10734,11 @@ function searchOrderProduct(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter with relevance ranking
-  const localFiltered = filterAndSortProducts(prods, ql, 40);
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
+    : prods.slice(0, 30);
+  
   renderRows(localFiltered);
 
   // 2. Server-side async smart search (120ms debounce across 23,000+ items)
@@ -10582,7 +10749,7 @@ function searchOrderProduct(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
-          const updated = filterAndSortProducts(prodsNow, ql, 40);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
           renderRows(updated);
         }
       } catch(e) {}
@@ -11725,8 +11892,10 @@ function searchEditProd(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter with relevance ranking
-  const localFiltered = filterAndSortProducts(prods, ql, 40);
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40)
+    : prods.slice(0, 40);
 
   renderEditRows(localFiltered);
 
@@ -11738,7 +11907,7 @@ function searchEditProd(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (editProdList && editProdList.length) ? editProdList : ((allProducts && allProducts.length) ? allProducts : (productList || []));
-          const updated = filterAndSortProducts(prodsNow, ql, 40);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql.toLowerCase())).slice(0, 40);
           renderEditRows(updated);
         }
       } catch(e) {}
@@ -18522,6 +18691,7 @@ async function editProduct(id) {
     </div>
 
     <div class="modal-footer">
+      <button type="button" class="btn btn-warning" style="margin-right:auto" onclick="document.getElementById('modal-edit-prod').remove(); openProductMergeModal('${id}')">🔗 รวมสินค้านี้เข้ากับสินค้าอื่น (Merge Duplicate)</button>
       <button class="btn btn-secondary" onclick="document.getElementById('modal-edit-prod').remove()">ยกเลิก</button>
       <button class="btn btn-primary" id="ep-save-btn">💾 บันทึก</button>
     </div>`;
@@ -19128,6 +19298,7 @@ function showProductRefsModal(id, pname, refs) {
     '<div style="font-size:12px;color:var(--text3);margin-bottom:10px">👉 คลิกที่รายการเพื่อเปิดดูเอกสาร หรือกด "ซ่อนสินค้า" เพื่อเอาออกจากรายการโดยไม่กระทบเอกสารเก่า</div>'+
     '<div style="max-height:50vh;overflow:auto;margin-bottom:8px">'+sections.join('')+'</div>'+
     '<div class="modal-footer" style="justify-content:space-between;gap:8px">'+
+      '<button class="btn btn-warning" onclick="document.getElementById(\''+RID+'\').remove(); openProductMergeModal(\''+id+'\')">🔗 รวมสินค้านี้เข้ากับสินค้าหลัก (Merge Duplicate)</button> ' +
       '<button class="btn btn-danger" onclick="document.getElementById(\''+RID+'\').remove(); archiveProduct(\''+id+'\')">🙈 ซ่อนสินค้าแทน</button>'+
       '<button class="btn btn-secondary" onclick="document.getElementById(\''+RID+'\').remove()">ปิด</button>'+
     '</div>';
@@ -25388,7 +25559,7 @@ function sortQuoteItems(items, quoteMeta) {
 
 async function openNewQuote() {
   editingQuoteId = null; editingQuoteStatus = null;
-  quoteItems = [{ product_id: null, product_name: '', qty: 1, sell_price: 0, discount: 0, discount_type: 'amount', is_custom: false, photos: [] }];
+  quoteItems = [];
   // reset ฟอร์มให้ว่าง (กันค่าค้างจากการแก้ไขก่อนหน้า)
   const set=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v;};
   set('qt-date', today());
@@ -25409,15 +25580,6 @@ async function openNewQuote() {
   await loadEmployeeOptions('qt-emp');
   loadOrderCustomerList();   // สำหรับ auto-fill ลูกค้าเดิม
   openModal('modal-quote');
-
-  // Focus and open product search dropdown like Order modal
-  setTimeout(() => {
-    const firstInp = document.getElementById('qt-prod-inp-0');
-    if (firstInp) {
-      firstInp.focus();
-      searchQuoteProduct(0, '');
-    }
-  }, 150);
 }
 
 // แก้ไขใบเสนอราคาที่บันทึกแล้ว — ใช้ฟอร์มเดียวกับสร้างใหม่ แต่ populate ค่าเดิม
@@ -25487,16 +25649,9 @@ window._quoteAutocompleteClicking = false;
 async function searchQuoteProduct(rowIdx, q) {
   const ddid = 'qt-prod-dd-' + rowIdx;
   const inpid = 'qt-prod-inp-' + rowIdx;
-  let dd = document.getElementById(ddid);
+  const dd = document.getElementById(ddid);
   const inp = document.getElementById(inpid);
-  if (!inp) return;
-  if (!dd) {
-    dd = document.createElement('div');
-    dd.id = ddid;
-    dd.className = 'prod-autocomplete-dropdown';
-    dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
-    document.body.appendChild(dd);
-  }
+  if (!dd || !inp) return;
 
   if ((!productList || !productList.length) && (!allProducts || !allProducts.length)) {
     await ensureQuoteProductList();
@@ -25518,20 +25673,13 @@ async function searchQuoteProduct(rowIdx, q) {
           ? `<span style="background:#dcfce7;color:#15803d;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #86efac;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">📦 สต๊อก ${fmt(stockVal)}</span>`
           : `<span style="background:#fee2e2;color:#b91c1c;font-size:11px;font-weight:700;padding:3px 8px;border-radius:8px;border:1px solid #fca5a5;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">⚠️ หมด (0)</span>`;
 
-        const fStock = Number(p.factory_stock || 0);
-        const fStockBadge = fStock > 0
-          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:2px 6px;border-radius:6px;border:1px solid #fde68a;flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:3px">🏭 รง. ${fmt(fStock)}</span>`
-          : '';
-
         const badges = [];
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
-        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
+        if (p.supplier_sku) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku)}</span>`);
         if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
-        const price = Number(p.sale_price !== undefined && p.sale_price !== null ? p.sale_price : (p.sell_price || 0));
-        if (price > 0) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(price)}</span>`);
-        if (p.current_cost) badges.push(`<span style="background:#f8fafc;color:#64748b;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:10.5px">ทุนเฉลี่ย: ฿${Number(p.current_cost).toFixed(2)}</span>`);
+        if (p.sell_price) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:700">฿${fmtB(p.sell_price)}</span>`);
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
 
         return `
@@ -25543,7 +25691,7 @@ async function searchQuoteProduct(rowIdx, q) {
               <div style="font-weight:700;color:#0f172a;font-size:13px;line-height:1.4;white-space:normal;word-break:break-word">${escapeHTML(p.name)}</div>
               ${badgeHtml}
             </div>
-            <div style="margin-top:2px;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:3px">${stockBadge}${fStockBadge}</div>
+            <div style="margin-top:2px;flex-shrink:0">${stockBadge}</div>
           </div>`;
       }).join('');
     }
@@ -25573,8 +25721,11 @@ async function searchQuoteProduct(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter with relevance ranking
-  const localFiltered = filterAndSortProducts(prods, ql, 40);
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
+    : prods.slice(0, 30);
+  
   renderRows(localFiltered);
 
   // 2. Server-side async smart search (120ms debounce across 23,000+ items)
@@ -25585,7 +25736,7 @@ async function searchQuoteProduct(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
-          const updated = filterAndSortProducts(prodsNow, ql, 40);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
           renderRows(updated);
         }
       } catch(e) {}
@@ -26049,7 +26200,6 @@ function renderQuoteItems() {
         dd.id = 'qt-prod-dd-' + i;
         dd.className = 'prod-autocomplete-dropdown';
         dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
-        document.body.appendChild(dd);
       }
 
       inp.oninput = () => {
@@ -26412,19 +26562,7 @@ function renderQuoteItems() {
   calcQuoteTotal();
 }
 
-function addQuoteItem() {
-  const nextIdx = quoteItems.length;
-  quoteItems.push({product_id: null, product_name: '', qty: 1, sell_price: 0, discount: 0, discount_type: 'amount', is_custom: false, photos: []});
-  renderQuoteItems();
-  calcQuoteTotal();
-  setTimeout(() => {
-    const nextInp = document.getElementById('qt-prod-inp-' + nextIdx);
-    if (nextInp) {
-      nextInp.focus();
-      searchQuoteProduct(nextIdx, '');
-    }
-  }, 60);
-}
+function addQuoteItem(){quoteItems.push({product_id:null,product_name:'',qty:1,sell_price:0,discount:0,discount_type:'amount',is_custom:false,photos:[]});renderQuoteItems();}
 
 function calcQuoteTotal(){
   const subtotal = quoteItems.reduce((s,it,idx)=>{
@@ -31295,9 +31433,6 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
         internal_note: it.internal_note || ''
       };
     });
-  } else {
-    // Start with 1 empty row ready for typing & searching like Order page
-    poItems = [{ product_id: null, product_name: '', qty_ordered: 1, unit_cost: '', internal_note: '' }];
   }
 
   if (preferredSupplierId) {
@@ -31316,22 +31451,11 @@ async function openNewPO(prefilledItems = null, preferredSupplierId = null) {
   }
 
   togglePoCurrency();
-  renderPOItems();
-  calcPOTotal();
   openModal('modal-po');
   // โหลด supplier dropdown หลัง modal เปิด
   await loadSupplierDropdown('po-supplier-sel', preferredSupplierId || null);
   await loadPOSOSources();
   updatePOSuggestionBadge();
-
-  // Focus and open product search dropdown like Order modal
-  setTimeout(() => {
-    const firstInp = document.getElementById('po-prod-inp-0');
-    if (firstInp) {
-      firstInp.focus();
-      searchPOProduct(0, '');
-    }
-  }, 200);
 }
 
 // ── SO Source Integration for PO (ดึงข้อมูลสินค้าจาก Sales Order เข้า PO) ──
@@ -32566,16 +32690,9 @@ let _poSearchTimer = null;
 function searchPOProduct(rowIdx, q) {
   const ddid = 'po-prod-dd-' + rowIdx;
   const inpid = 'po-prod-inp-' + rowIdx;
-  let dd = document.getElementById(ddid);
+  const dd = document.getElementById(ddid);
   const inp = document.getElementById(inpid);
-  if (!inp) return;
-  if (!dd) {
-    dd = document.createElement('div');
-    dd.id = ddid;
-    dd.className = 'prod-autocomplete-dropdown';
-    dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
-    document.body.appendChild(dd);
-  }
+  if (!dd || !inp) return;
 
   const prods = (productList && productList.length) ? productList : (allProducts || []);
   const ql = (q || '').trim();
@@ -32606,16 +32723,12 @@ function searchPOProduct(rowIdx, q) {
         const badges = [];
         if (p.category) badges.push(`<span style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;border:1px solid #cbd5e1;font-weight:600">📁 ${escapeHTML(p.category)}</span>`);
         if (p.sku) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:600">SKU: ${escapeHTML(p.sku)}</span>`);
-        if (p.supplier_sku || p.supplier_code) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Code: ${escapeHTML(p.supplier_sku || p.supplier_code)}</span>`);
-        if (p.part_no) badges.push(`<span style="background:#f8fafc;color:#334155;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0">Part: ${escapeHTML(p.part_no)}</span>`);
         const supTHB = getProductSupplierTHB(p);
         const supUSD = getProductSupplierUSD(p);
         if (supTHB) badges.push(`<span style="background:#eff6ff;color:#1d4ed8;padding:2px 6px;border-radius:4px;border:1px solid #bfdbfe;font-weight:700">🇹🇭 ${escapeHTML(supTHB)}</span>`);
         if (supUSD) badges.push(`<span style="background:#fdf4ff;color:#86198f;padding:2px 6px;border-radius:4px;border:1px solid #f0abfc;font-weight:700">🇺🇸 ${escapeHTML(supUSD)}</span>`);
         if (p.supplier_description && p.supplier_description !== p.name) badges.push(`<span style="background:#fffbeb;color:#b45309;padding:2px 6px;border-radius:4px;border:1px solid #fde68a;font-weight:600">Desc: ${escapeHTML(p.supplier_description)}</span>`);
         badges.push(`<span style="background:#e0f2fe;color:#0369a1;padding:2px 6px;border-radius:4px;border:1px solid #bae6fd;font-weight:700">💵 ซื้อ: ${priceLabel}</span>`);
-        const sellP = Number(p.sale_price !== undefined && p.sale_price !== null ? p.sale_price : (p.sell_price || 0));
-        if (sellP > 0) badges.push(`<span style="background:#fefce8;color:#a16207;padding:2px 6px;border-radius:4px;border:1px solid #fef08a;font-weight:600">🏷️ ขาย: ฿${fmtB(sellP)}</span>`);
         if (p.current_cost) badges.push(`<span style="background:#f8fafc;color:#64748b;padding:2px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:10.5px">ทุนเฉลี่ย: ฿${Number(p.current_cost).toFixed(3)}</span>`);
 
         const badgeHtml = badges.length ? `<div style="font-size:11px;margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;align-items:center">${badges.join('')}</div>` : '';
@@ -32647,8 +32760,11 @@ function searchPOProduct(rowIdx, q) {
     positionProductAutocompletePortal(inp, dd);
   }
 
-  // 1. In-memory filter with relevance ranking
-  const localFiltered = filterAndSortProducts(prods, ql, 40);
+  // 1. In-memory filter
+  const localFiltered = ql
+    ? prods.filter(p => wcProdMatch(p, ql)).slice(0, 40)
+    : prods.slice(0, 30);
+  
   renderRows(localFiltered);
 
   // 2. Server-side async smart search (120ms debounce across 23,000+ items)
@@ -32659,7 +32775,7 @@ function searchPOProduct(rowIdx, q) {
         const fetched = await queryServerProductsSmart(ql);
         if (fetched && fetched.length) {
           const prodsNow = (productList && productList.length) ? productList : (allProducts || []);
-          const updated = filterAndSortProducts(prodsNow, ql, 40);
+          const updated = prodsNow.filter(p => wcProdMatch(p, ql)).slice(0, 40);
           renderRows(updated);
         }
       } catch(e) {}
@@ -32922,7 +33038,6 @@ function renderPOItems() {
         dd.id = 'po-prod-dd-' + i;
         dd.className = 'prod-autocomplete-dropdown';
         dd.style.cssText = 'display:none;position:fixed;z-index:2147483647;background:#fff;border:1.5px solid #94a3b8;border-radius:9px;max-height:520px;overflow-y:auto;box-shadow:0 16px 40px rgba(0,0,0,0.25)';
-        document.body.appendChild(dd);
       }
 
       inp.oninput = () => {
@@ -32972,27 +33087,6 @@ function renderPOItems() {
         qpBtn.title = 'เปิดหน้าต่างอัปเดตราคาซื้อ Master ในระบบ';
         qpBtn.onclick = () => openPOProductQuickPriceModal(selectedProduct.id, i);
         badgeRow.appendChild(qpBtn);
-
-        // One-click Sync Master Name button if custom name differs from updated DB product name
-        if (selectedProduct.name && (it.product_name || '').trim() !== selectedProduct.name.trim()) {
-          const syncNameBtn = document.createElement('button');
-          syncNameBtn.type = 'button';
-          syncNameBtn.className = 'btn btn-secondary btn-sm';
-          syncNameBtn.style.cssText = 'padding:1px 6px;font-size:10.5px;background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;cursor:pointer;font-weight:700;border-radius:4px;display:inline-flex;align-items:center;gap:3px';
-          syncNameBtn.innerHTML = '🔄 ซิงค์ชื่อตามคลัง';
-          syncNameBtn.title = `กดเพื่ออัปเดตชื่อในช่องพิมพ์เป็น "${escapeHTML(selectedProduct.name)}" ตามมาตรฐานใหม่ของคลังสินค้า`;
-          syncNameBtn.onclick = () => {
-            poItems[i].product_name = selectedProduct.name;
-            const customEl = document.getElementById('po-custom-inp-' + i);
-            if (customEl) customEl.value = selectedProduct.name;
-            const inpEl = document.getElementById('po-prod-inp-' + i);
-            if (inpEl) inpEl.value = selectedProduct.name;
-            renderPOItems();
-            calcPOTotal();
-            toast(`อัปเดตชื่อเป็น "${selectedProduct.name}" แล้ว ✓`, 'success');
-          };
-          badgeRow.appendChild(syncNameBtn);
-        }
       } else {
         badgeRow.innerHTML = '<span style="color:#f59e0b;font-weight:600;font-size:11px">⚠️ ไม่เชื่อมโยงคลัง (ไม่รับเข้าคลัง)</span>';
       }
@@ -33120,18 +33214,12 @@ function renderPOItems() {
     matrixWrap.appendChild(table);
 
     // Matrix footer toolbar
-    const outOfSyncCount = poItems.filter(it => {
-      const p = prods.find(x => x.id === it.product_id);
-      return p && p.name && (it.product_name || '').trim() !== p.name.trim();
-    }).length;
-
     const footerBar = document.createElement('div');
     footerBar.className = 'sap-matrix-footer';
     footerBar.innerHTML = `
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <div style="display:flex;gap:6px">
         <button type="button" class="btn btn-secondary btn-sm" onclick="addPOItem()" style="background:#f0fdf4;color:#16a34a;border:1px solid #86efac;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">+ เพิ่มรายการใน PO (Add Row)</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="openQuickProductModal('po', -1, '')" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">⚡ + สร้างสินค้าใหม่เข้าคลัง (Quick Product)</button>
-        ${outOfSyncCount > 0 ? `<button type="button" class="btn btn-secondary btn-sm" onclick="syncAllPONamesFromMaster()" style="background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;font-weight:700;font-size:11.5px;padding:3px 10px;border-radius:4px;cursor:pointer">🔄 ซิงค์ชื่อทุกรายการตามคลังสินค้า (${outOfSyncCount} รายการ)</button>` : ''}
       </div>
       <div style="font-size:11.5px;color:#64748b;font-weight:600">${poItems.length} รายการ</div>
     `;
@@ -33385,35 +33473,7 @@ function renderPOItems() {
   calcPOTotal();
 }
 
-function addPOItem() {
-  const nextIdx = poItems.length;
-  poItems.push({product_id: null, product_name: '', qty_ordered: 1, unit_cost: '', internal_note: ''});
-  renderPOItems();
-  calcPOTotal();
-  setTimeout(() => {
-    const nextInp = document.getElementById('po-prod-inp-' + nextIdx);
-    if (nextInp) {
-      nextInp.focus();
-      searchPOProduct(nextIdx, '');
-    }
-  }, 60);
-}
-
-function syncAllPONamesFromMaster() {
-  const prods = (productList && productList.length) ? productList : (allProducts || []);
-  let count = 0;
-  poItems.forEach(it => {
-    const p = prods.find(x => x.id === it.product_id);
-    if (p && p.name && (it.product_name || '').trim() !== p.name.trim()) {
-      it.product_name = p.name;
-      count++;
-    }
-  });
-  renderPOItems();
-  calcPOTotal();
-  toast(`ซิงค์ชื่อตามมาตรฐานคลังเรียบร้อย ${count} รายการ ✓`, 'success');
-}
-window.syncAllPONamesFromMaster = syncAllPONamesFromMaster;
+function addPOItem(){poItems.push({product_id:null,product_name:'',qty_ordered:1,unit_cost:'',internal_note:''});renderPOItems();}
 
 // ── Quick Buy Price Modal for PO (บันทึกราคาซื้อโดยไม่ปิดหน้า PO) ──
 function openPOProductQuickPriceModal(productId, rowIdx) {
@@ -40468,11 +40528,11 @@ async function openBatchSOtoPOModal() {
             <div>
               <div class="sap-field-row">
                 <span class="sap-field-label">Posting Date</span>
-                <input type="date" id="bpo-date" value="${today()}" onchange="const exp=document.getElementById('bpo-expected');if(exp){exp.value=this.value;exp.dispatchEvent(new Event('change'));}" style="width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12.5px;box-sizing:border-box">
+                <input type="date" id="bpo-date" value="${today()}" style="width:100%;background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:4px 8px;font-size:12.5px;box-sizing:border-box">
               </div>
               <div class="sap-field-row">
                 <span class="sap-field-label" style="color:#0284c7;font-weight:700">Delivery Date</span>
-                <input type="date" id="bpo-expected" value="${today()}" style="width:100%;background:#f0f9ff;border:1.5px solid #93c5fd;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:700;color:#0369a1;box-sizing:border-box">
+                <input type="date" id="bpo-expected" value="${(()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10);})()}" style="width:100%;background:#f0f9ff;border:1.5px solid #93c5fd;border-radius:6px;padding:4px 8px;font-size:12.5px;font-weight:700;color:#0369a1;box-sizing:border-box">
               </div>
               <div class="sap-field-row">
                 <span class="sap-field-label">Document Status</span>
@@ -53535,31 +53595,13 @@ function openChangelogModal() {
   }
 
   const logs = [
-    { v:'4.16.7', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ปรับปรุงระบบค้นหาสินค้าในใบเสนอราคา (Quotation) เทียบเท่าหน้า Order สมบูรณ์แบบ 100%', items:[
-      '📋 <b>Live Autocomplete Dropdown เต็มรูปแบบในใบเสนอราคา:</b> เปิดการแสดงผลหน้าต่าง Dropdown ค้นหาสินค้าทันทีที่คลิกหรือพิมพ์ในช่อง Item No. / Description ทั้งบน Desktop PC และ Mobile พร้อมแนบ Portal ความสำคัญสูงสุด',
-      '🏷️ <b>ป้ายข้อมูลสต๊อกและสเปกครบถ้วนเหมือนหน้า Order:</b> แสดงสต๊อกคลัง (📦 สต๊อก), สต๊อกโรงงาน (🏭 รง.), หมวดหมู่สินค้า, รหัส SKU, Code ซัพพลายเออร์, Part No, สเปก Desc, ราคาขาย (Sell Price) และทุนเฉลี่ย',
-      '⚡ <b>เริ่มสร้างใบเสนอราคาได้ทันที (Auto-focus & Quick Row):</b> เปิดหน้าต่างใบเสนอราคาใหม่จะเริ่มต้นด้วยแถวแรกพร้อม Focus ค้นหาทันที และเมื่อกด "+ เพิ่มรายการ" จะเลื่อนและเปิดค้นหาแถวใหม่อัตโนมัติ พร้อมปุ่มสร้างสินค้าใหม่เข้าคลังในตัว Dropdown'
+    { v:'4.16.8', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบรวมสินค้าซ้ำอัจฉริยะ (Product Merge Tool) โอนย้ายประวัติ PO, Order, สต๊อก เข้าสินค้าหลักใน 1 คลิก', items:[
+      '🔗 <b>ระบบรวมสินค้าซ้ำ (Product Merge Tool):</b> เพิ่มเครื่องมือรวมสินค้าซ้ำ สามารถกดรวมสินค้าได้ทันทีจากหน้าแก้ไขสินค้า (✏️ แก้ไขสินค้า) และหน้าต่างแจ้งเตือนเมื่อลบสินค้าไม่ได้ (🔗 สินค้านี้ถูกใช้งานอยู่)',
+      '📦 <b>โอนย้ายประวัติเอกสารอัตโนมัติครบ 100%:</b> โอนรายการในใบสั่งซื้อ (PO Items รวมถึงยอดรอเข้า +10), รายการขายในออเดอร์ (Order Items), ใบเสนอราคา (Quotation Items) และการเคลื่อนไหวสต๊อก (Stock Movements) ไปยังสินค้าหลักที่เลือกอย่างปลอดภัย ไร้รอยต่อ',
+      '🛡️ <b>ปิดการใช้งานสินค้าซ้ำอัตโนมัติ (Safe Deactivation):</b> สินค้าซ้ำต้นทางจะถูก Deactivate (Active = False) และเปลี่ยนรหัส SKU กำกับ [MERGED] ป้องกันความซ้ำซ้อนในแคตตาล็อกและการค้นหา แต่ยังคงเก็บข้อมูลไว้ในระบบเพื่อความปลอดภัยทางบัญชีย้อนหลัง'
     ]},
-    { v:'4.16.6', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'ปรับปรุงระบบค้นหาสินค้าอัจฉริยะ (Smart Dimension Match & Relevance Ranking) ค้นหาแคบลง แม่นยำ 100% ตรงสเปกทันที', items:[
-      '🎯 <b>ระบบกรองขนาดเป๊ะ (Smart Dimension Exact Matching):</b> เมื่อพิมพ์ค้นหาที่มีขนาด เช่น <code>21X32X7</code> หรือ <code>21-32-7</code> หรือ <code>21 32 7</code> ระบบจะตรวจจับและจับคู่เฉพาะสินค้าที่มีขนาดสเปกตรงกันเท่านั้น จะไม่แสดงสินค้าขนาดอื่น (เช่น <code>280X320X20</code> หรือ <code>18X35X7</code>) มาปะปนอีกต่อไป',
-      '🔢 <b>ตรวจสอบขอบเขตตัวเลขจริง (Whole-Number Boundary Matching):</b> ป้องกันตัวเลขสั้นๆ เช่น <code>21</code> ไม่ให้ไปจับคู่กับเศษตัวเลขภายในรหัสสินค้าอื่น เช่น รหัส <code>0212</code> หรือ <code>196782</code> โดยตัวเลขจะต้องเป็นขนาดหรือคำโดดตรงเป๊ะเท่านั้น',
-      '⭐ <b>จัดเรียงลำดับความแม่นยำสูงสุดขึ้นอันดับ 1 (Relevance Score Ranking):</b> สินค้าที่ชื่อ, SKU, หรือสเปกตรงกับคำค้นหามากที่สุดจะขึ้นเป็นอันดับแรกทันที ไม่ต้องเสียเวลาเลื่อนหา ทั้งใน Purchase Order, Order, Quotation และการแก้ไขใบสั่งซื้อ'
-    ]},
-    { v:'4.16.5', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', date:'2026-11-27', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบค้นหาสินค้าแบบ Live Autocomplete อัจฉริยะใน Purchase Order ใหม่เทียบเท่าหน้า Order', items:[
-      '🛒 <b>ระบบค้นหาสินค้าทันที (Instant Product Search Dropdown):</b> เพิ่มระบบ Dropdown ค้นหาสินค้าอัตโนมัติในช่อง Item No. / Description ของ Purchase Order ใหม่ พิมพ์หรือแตะที่ช่องจะแสดงผลลัพธ์ทันที รองรับการค้นหาตามชื่อสินค้า, ขนาดซีล (เช่น 21X32X7, 21-32-7), รหัส SKU, รหัสผู้ขาย (Supplier SKU / Code) หรือ Part No',
-      '🏷️ <b>ป้ายข้อมูลสินค้าครบถ้วนแบบหน้า Order:</b> แสดงข้อมูลหมวดหมู่ (Category), รหัส SKU, Supplier Code, Part No, สเปก Desc, ซัพพลายเออร์ THB/USD, ราคาซื้อ (คำนวณตามสกุลเงิน PO อัตโนมัติ), ราคาขาย, ทุนเฉลี่ย พร้อมสถานะสต๊อกคลัง (📦 สต๊อก) และสต๊อกโรงงาน (🏭 รง.)',
-      '⚡ <b>เริ่มกรอกได้ทันที (Auto-focus & 1-Click Select):</b> เมื่อเปิด Purchase Order ใหม่ ระบบจะเปิดแถวแรกพร้อม Focus ช่องค้นหาให้อัตโนมัติ และเมื่อกด "+ เพิ่ม SKU" จะเลื่อนและเปิดค้นหาให้ทันที พร้อมปุ่ม ➕ สร้างสินค้าใหม่เข้าคลังในตัว Dropdown'
-    ]},
-    { v:'4.16.4', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'ตั้งค่า Delivery Date เป็นวันเดียวกับ Posting Date เริ่มต้นในหน้า Batch PO (สร้างใบสั่งซื้อจากรายการขาย)', items:[
-      '📅 <b>Delivery Date ตรงกับ Posting Date อัตโนมัติ:</b> กำหนดให้ช่อง Delivery Date (วันนัดรับสินค้า) ในหน้าต่างสร้างใบสั่งซื้อจากรายการขายรวมออเดอร์ (Batch PO) มีค่าเริ่มต้นเป็นวันเดียวกับ Posting Date (วันที่สั่งซื้อ) เพื่อความคล่องตัวในการสั่งซื้อ',
-      '🔄 <b>Auto Date Synchronization:</b> เมื่อผู้ใช้ปรับเปลี่ยนวันที่สั่งซื้อ (Posting Date) ระบบจะปรับวันนัดรับสินค้า (Delivery Date) ให้ตรงกันทันทีโดยอัตโนมัติ'
-    ]},
-    { v:'4.16.3', date:'2026-11-27', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'อัปเดตชื่อสินค้าและ SKU ออยซีลตามมาตรฐานใหม่ 10,866 รายการ พร้อมปุ่มซิงค์ชื่อคลังใน PO และระบบจัดเรียงลำดับ Drag & Drop', items:[
-      '📦 <b>อัปเดตโครงสร้างชื่อสินค้าและ SKU ออยซีล 10,866 รายการในฐานข้อมูล:</b> ปรับปรุงชื่อสินค้าทั้งหมดให้ตรงตามมาตรฐาน <code>[ประเภทซีล] OIL SEAL [เนื้อยาง] [ใน]X[นอก]X[หนา]</code> (เช่น <code>TC OIL SEAL VITON 21X32X7</code>) และ SKU แบบยาว <code>OIL SEAL [เนื้อยาง] [ใน]X[นอก]X[หนา] [ประเภทซีล]</code> (เช่น <code>OIL SEAL VITON 21X32X7 TC</code>) ในฐานข้อมูล Supabase ครบถ้วน 100%',
-      '🔄 <b>ปุ่มซิงค์ชื่อสินค้าตามคลัง (Sync Master Name in PO):</b> เพิ่มปุ่ม <code>🔄 ซิงค์ชื่อตามคลัง</code> ในรายการสินค้าของ PO Draft เพื่อให้ผู้ใช้สามารถอัปเดตชื่อสเปกสินค้าเก่าให้เป็นชื่อมาตรฐานใหม่ในคลังได้ในคลิกเดียว พร้อมปุ่มซิงค์ทุกรายการทั้งใบสั่งซื้อ',
-      '🖐️ <b>ระบบ Drag & Drop และ Jump Selector ทุกลำดับเอกสาร:</b> จัดเรียงลำดับรายการสินค้าได้อย่างอิสระผ่านไอคอนจับลาก <code>⠿</code> หรือเลือกจาก Dropdown ในทุกเอกสาร (Order, Quotation, Purchase Order, AR Invoice, AP Invoice) พร้อมล็อคตำแหน่งถาวร'
-    ]},
-    { v:'4.16.2', date:'2026-11-26', badge:'Feature', color:'#64748b', bg:'#f1f5f9', title:'จำกัด Drag & Drop เฉพาะไอคอน ⠿ และตรวจสอบดึงข้อมูลสินค้าจริง/สร้างสินค้าใหม่อัตโนมัติเมื่อ Convert ใบเสนอราคา', items:[
+
+    { v:'4.16.2', date:'2026-11-26', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'จำกัด Drag & Drop เฉพาะไอคอน ⠿ และตรวจสอบดึงข้อมูลสินค้าจริง/สร้างสินค้าใหม่อัตโนมัติเมื่อ Convert ใบเสนอราคา', items:[
       '🖐️ <b>ระบบจับลาก Drag & Drop เฉพาะไอคอน <code>⠿</code>:</b> ปรับปรุงระบบลากแถวสินค้าให้ทำงานเมื่อคลิกค้างที่ไอคอนจับลาก <code>⠿</code> เท่านั้น หากเมาส์อยู่ในช่องพิมพ์ข้อความ (Input/Textarea/Select) ระบบจะปิดโหมด Drag ทันที ทำให้ผู้ใช้สามารถคลิก ไฮไลต์เลือกตัวหนังสือ แก้ไขข้อความได้อย่างราบรื่น 100% ไม่หลุดไปลากแถวสินค้าโดยไม่ตั้งใจ',
       '🔄 <b>Convert Quotation → Order ตรวจสอบฐานข้อมูลจริง (DB Product Sync):</b> ก่อนแปลงใบเสนอราคาเป็นออเดอร์ ระบบจะดึงและตรวจสอบข้อมูลสินค้าจากตาราง <code>products</code> ในฐานข้อมูล Supabase โดยตรง (ครอบคลุมทั้งสินค้าตาม ID, SKU และชื่อสินค้า) เพื่อให้ได้ข้อมูลสเปก ราคา และต้นทุนที่เป็นปัจจุบันที่สุด',
       '✨ <b>ระบบแจ้งเตือนและสร้างสินค้าใหม่อัตโนมัติ (Auto-create Missing Products):</b> หากพบสินค้าในใบเสนอราคาที่ยังไม่มีอยู่ในฐานข้อมูล ระบบจะแจ้งเตือนพร้อมรายชื่อสินค้า และมีปุ่มให้กดสร้างสินค้าใหม่เข้าคลังสินค้าทันที โดยกำหนด SKU, ราคาขาย และต้นทุนให้อัตโนมัติ พร้อมอัปเดตข้อมูลเชื่อมโยงทั้งในใบเสนอราคาและออเดอร์ ข้อมูลจึงสมบูรณ์ไม่ผิดพลาด',
