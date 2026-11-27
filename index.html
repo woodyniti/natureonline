@@ -37,8 +37,8 @@
 })();
 
 // ── Aggressive Cache Cleaner & Service Worker Unregister ──
-const CURRENT_APP_VERSION = 'sealthai-v4.16.9';
-const DISPLAY_APP_VERSION = 'v4.16.9';
+const CURRENT_APP_VERSION = 'sealthai-v4.17.0';
+const DISPLAY_APP_VERSION = 'v4.17.0';
 
 if ('caches' in window) {
   caches.keys().then(keys => {
@@ -1788,7 +1788,7 @@ th.sortable.desc::after { content:' ↓'; color:var(--accent); }
         <div class="flex-center gap-2">
           <button class="hamburger" onclick="toggleSidebar()">☰</button>
           <div class="topbar-title" id="page-title">Dashboard</div>
-          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.16.9)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.16.9 🚀</span>
+          <span onclick="openChangelogModal()" title="คลิกเพื่อดูบันทึกประวัติการอัปเดตระบบ (v4.17.0)" style="cursor:pointer;background:#e0f2fe;color:#0284c7;font-weight:800;padding:2px 8px;border-radius:6px;font-size:11px;font-family:var(--mono);border:1px solid #bae6fd;white-space:nowrap;margin-left:4px">v4.17.0 🚀</span>
         </div>
         <div class="topbar-actions" id="topbar-actions"></div>
         <button id="pwa-install-btn" onclick="pwaInstall()" style="display:none;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">📲 ติดตั้งแอป</button>
@@ -34284,7 +34284,26 @@ async function loadPOSkuMap(items) {
   }
 }
 
+function ensurePODetailModalInDOM() {
+  let modal = document.getElementById('modal-po-detail');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'modal-po-detail';
+    modal.style.zIndex = '1300';
+    modal.innerHTML = `
+      <div class="modal sap-modal-large" style="max-width:min(1400px,calc(100vw - 32px))">
+        <div id="po-detail-content"></div>
+        <div class="modal-footer" id="po-detail-footer" style="display:none"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+  return modal;
+}
+
 async function viewPO(poId) {
+  ensurePODetailModalInDOM();
   const _iplModal = document.getElementById('modal-inventory-posting');
   const _isIplOpen = _iplModal && _iplModal.classList.contains('open');
   const _hasModalOpen = Boolean(document.querySelector('.modal-overlay.open:not(#modal-po-detail)'));
@@ -36431,12 +36450,13 @@ function viewWeeklySupplierDetail(id) {
           <thead>
             <tr style="background:#f8fafc">
               <th style="width:65px;text-align:center">นำมาคิด</th>
-              <th>เลขที่ PO</th>
+              <th>เลขที่ PO (คลิกดูรายการ)</th>
               <th>วันที่</th>
               <th class="text-right">ยอดก่อน VAT</th>
               <th class="text-right">ส่วนลด</th>
               <th class="text-right">ยอดซื้อสุทธิ (Net Base)</th>
               <th style="text-align:center;width:105px">สถานะการคิด</th>
+              <th style="text-align:center;width:95px">รายการสินค้า</th>
             </tr>
           </thead>
           <tbody>
@@ -36446,7 +36466,11 @@ function viewWeeklySupplierDetail(id) {
                   <input type="checkbox" ${p.is_excluded ? '' : 'checked'} ${isApprovedOrPaid ? 'disabled title="รายการนี้ล็อคแล้ว"' : ''} onchange="toggleWeeklySupplierPO('${escapeHTML(row.id)}', '${escapeHTML(p.id)}', this.checked)" style="width:16px;height:16px;cursor:${isApprovedOrPaid?'not-allowed':'pointer'}">
                 </td>
                 <td>
-                  <b style="${p.is_excluded ? 'text-decoration:line-through;color:#94a3b8' : 'color:var(--text)'}">${escapeHTML(p.po_no)}</b>
+                  <a href="javascript:void(0)" onclick="viewPO('${escapeHTML(p.id)}')" 
+                    title="คลิกเพื่อดูรายการสินค้าในใบสั่งซื้อ ${escapeHTML(p.po_no)} (เปิดหน้าต่างซ้อน)"
+                    style="color:#0284c7;font-weight:700;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+                    <span style="${p.is_excluded ? 'text-decoration:line-through;color:#94a3b8' : 'color:#0284c7'}">🛒 ${escapeHTML(p.po_no)}</span>
+                  </a>
                 </td>
                 <td style="color:${p.is_excluded ? '#94a3b8' : 'inherit'}">${p.po_date}</td>
                 <td class="text-right font-mono" style="color:${p.is_excluded ? '#94a3b8' : 'inherit'}">${fmtB(p.subtotal)}</td>
@@ -36456,6 +36480,14 @@ function viewWeeklySupplierDetail(id) {
                   ${p.is_excluded 
                     ? '<span class="badge" style="font-size:10px;background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;padding:2px 6px;white-space:nowrap">🚫 ไม่นำมาคำนวณ</span>' 
                     : '<span class="badge" style="font-size:10px;background:#dcfce7;color:#15803d;border:1px solid #86efac;padding:2px 6px;white-space:nowrap">✓ คำนวณยอด</span>'}
+                </td>
+                <td style="text-align:center">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="viewPO('${escapeHTML(p.id)}')" 
+                    title="เปิดดูรายการสินค้าที่ซื้อใน PO ${escapeHTML(p.po_no)} (เปิดหน้าต่างซ้อน)"
+                    style="padding:3px 8px;font-size:11px;font-weight:700;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;display:inline-flex;align-items:center;gap:3px;cursor:pointer;white-space:nowrap">
+                    <span>🔍</span>
+                    <span>ดูสินค้า</span>
+                  </button>
                 </td>
               </tr>
             `).join('')}
@@ -53877,6 +53909,11 @@ function openChangelogModal() {
   }
 
   const logs = [
+    { v:'4.17.0', date:'2026-11-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'เปิดดูรายการสินค้าใน PO จากหน้ารายละเอียดค่าใช้จ่าย Supplier (supplierWeeklyExpense) แบบหน้าต่างซ้อน (Layered Modal)', items:[
+      '🛒 <b>ดูรายการสินค้าใน PO แบบหน้าต่างซ้อน (Layered Modal):</b> ในหน้ารายละเอียดค่าใช้จ่าย Supplier รายสัปดาห์ (modal-sw-detail) สามารถคลิกที่เลขที่ PO หรือกดปุ่ม <b>[🔍 ดูสินค้า]</b> เพื่อเปิดดูรายการสินค้าที่ซื้อใน PO ใบนั้นได้ทันที',
+      '🪟 <b>ไม่ต้องปิดหน้าต่างเดิม (Multi-Layer Workflow):</b> หน้าต่าง PO จะเปิดซ้อนทับขึ้นมาด้านบน และเมื่อตรวจดูเสร็จแล้วกดปิด จะกลับมายังหน้ารายละเอียดค่าใช้จ่ายเดิมได้ทันทีโดยไม่ต้องเริ่มค้นหาใหม่',
+      '🛡️ <b>Standalone PO Modal In DOM:</b> ระบบรองรับการเปิดดู PO จากทุกหน้าในระบบ แม้ไม่ได้เปิดหน้าจัดซื้อ (Purchase) ไว้ล่วงหน้า'
+    ]},
     { v:'4.16.9', date:'2026-11-28', badge:'Latest', color:'#16a34a', bg:'#dcfce7', title:'ระบบค้นหาอัจฉริยะแบบ Case-Insensitive ครบทุกระบบ และ Smart Blur Auto-Link', items:[
       '🔤 <b>ระบบค้นหาไม่แบ่งแยกตัวพิมพ์เล็ก-ใหญ่ (Universal Case-Insensitive Search):</b> ค้นหาด้วยตัวพิมพ์เล็กหรือใหญ่ (เช่น tc, TC, viton, VITON, dkb, DKB, nbr, NBR, 21x32x7, 21X32X7) ให้ผลลัพธ์ตรงกัน 100% ทุกจุดทั่วทั้งระบบ (แคตตาล็อก, ใบสั่งซื้อ PO, ออเดอร์ Order, ใบเสนอราคา Quote, Batch PO, Stock, CRM, Supplier)',
       '📏 <b>ปรับปรุงระบบวิเคราะห์ขนาด (Dimension Normalizer):</b> รองรับขนาด 2 สเต็ป/Compound (เช่น 40X52X7/10 และ 40-52-7(G)/10(H)) และขนาดตัวเลขเรียง 3 ชุด (เช่น 21 32 7) ค้นหาและจับคู่ข้ามรูปแบบได้แม่นยำ 100%',
